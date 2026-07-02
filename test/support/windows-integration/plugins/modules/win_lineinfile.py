@@ -7,7 +7,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: win_lineinfile
 short_description: Ensure a particular line is in a file, or replace an existing line using a back-referenced regular expression
@@ -107,9 +107,9 @@ seealso:
 - module: lineinfile
 author:
 - Brian Lloyd (@brianlloyd)
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 # Before Ansible 2.3, option 'dest', 'destfile' or 'name' was used instead of 'path'
 - name: Insert path without converting \r\n
   win_lineinfile:
@@ -162,9 +162,9 @@ EXAMPLES = r'''
     backrefs: yes
     regex: '(^name=)'
     line: '$1JohnDoe'
-'''
+"""
 
-RETURN = r'''
+RETURN = r"""
 backup:
   description:
   - Name of the backup file that was created.
@@ -177,4 +177,4 @@ backup_file:
   returned: if backup=yes
   type: str
   sample: C:\Path\To\File.txt.11540.20150212-220915.bak
-'''
+"""

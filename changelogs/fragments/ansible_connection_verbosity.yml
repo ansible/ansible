@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-connection now supports verbosity directly on cli

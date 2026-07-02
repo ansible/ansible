@@ -1,0 +1,41 @@
+DOCUMENTATION:
+  name: win_splitdrive
+  author: ansible core team
+  version_added: "2.0"
+  short_description: Split a Windows path by the drive letter
+  description:
+    - Returns a list with the first component being the drive letter and the second, the rest of the path.
+    - If the path contains a drive letter, drive will contain everything up to and including the colon.
+    - If the path contains a UNC (Universal Naming Convention) path, drive will contain the host name and share, up to but not including the fourth separator.
+  options:
+    _input:
+      description: A Windows path.
+      type: str
+      required: true
+
+EXAMPLES: |
+
+  # To get the last name of a file Windows path, like ['C:', '\Users\asdf\foo.txt'] out of 'C:\Users\asdf\foo.txt'
+  {{ mypath | win_splitdrive }}
+
+  # To get path from UNC (Universal Naming Convention) path, like ['//host/computer', '/dir/a'] out of '//host/computer/dir/a'
+
+  # just the drive letter, like ['C:'] out of 'C:\Users\asdf\foo.txt'
+  {{ mypath | win_splitdrive | first }}
+
+  # path w/o drive letter, like ['\Users\asdf\foo.txt'] out of 'C:\Users\asdf\foo.txt'
+  {{ mypath | win_splitdrive | last }}
+
+  # just the hostname and share, like ['//host/computer'] out of '//host/computer/dir/a'
+  {{ mypath | win_splitdrive | first }}
+
+  # path w/o hostname and share, like ['/dir/a'] out of '//host/computer/dir/a'
+  {{ mypath | win_splitdrive | last }}
+
+RETURN:
+  _value:
+    description:
+    - List in which the first element is the drive letter with colon and the second the rest of the path.
+    - In case of UNC path, first element is the hostname and share and the second the rest of the path.
+    type: list
+    elements: str

@@ -46,7 +46,7 @@ Function Get-CertFile($module, $path, $password, $key_exportable, $key_storage) 
         $store_flags = $store_flags -bor [System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::Exportable
     }
 
-    # TODO: If I'm feeling adventurours, write code to parse PKCS#12 PEM encoded
+    # TODO: If I'm feeling adventurous, write code to parse PKCS#12 PEM encoded
     # file as .NET does not have an easy way to import this
     $certs = New-Object -TypeName System.Security.Cryptography.X509Certificates.X509Certificate2Collection
 
@@ -140,7 +140,7 @@ Function Get-CertFileType($path, $password) {
     } elseif ($certs[0].HasPrivateKey) {
         return "pkcs12"
     } elseif ($path.EndsWith(".pfx") -or $path.EndsWith(".p12")) {
-        # no way to differenciate a pfx with a der file so we must rely on the
+        # no way to differentiate a pfx with a der file so we must rely on the
         # extension
         return "pkcs12"
     } else {

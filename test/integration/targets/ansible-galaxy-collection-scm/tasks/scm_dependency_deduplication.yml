@@ -12,23 +12,23 @@
         'Starting collection install process'
         in command.stdout_lines
       - >-
-        "Installing 'namespace_1.collection_1:1.0.0' to
-        '{{ install_path }}/namespace_1/collection_1'"
+        "Installing 'namespace_1.collection_1:1.0.0' to '" +
+        install_path + "/namespace_1/collection_1'"
         in command.stdout_lines
       - >-
-        'Created collection for namespace_1.collection_1:1.0.0 at
-        {{ install_path }}/namespace_1/collection_1'
+        'Created collection for namespace_1.collection_1:1.0.0 at ' +
+        install_path + '/namespace_1/collection_1'
         in command.stdout_lines
       - >-
         'namespace_1.collection_1:1.0.0 was installed successfully'
         in command.stdout_lines
       - >-
-        "Installing 'namespace_2.collection_2:1.0.0' to
-        '{{ install_path }}/namespace_2/collection_2'"
+        "Installing 'namespace_2.collection_2:1.0.0' to '" +
+        install_path + "/namespace_2/collection_2'"
         in command.stdout_lines
       - >-
-        'Created collection for namespace_2.collection_2:1.0.0 at
-        {{ install_path }}/namespace_2/collection_2'
+        'Created collection for namespace_2.collection_2:1.0.0 at ' +
+        install_path + '/namespace_2/collection_2'
         in command.stdout_lines
       - >-
         'namespace_2.collection_2:1.0.0 was installed successfully'
@@ -57,23 +57,23 @@
         'Starting collection install process'
         in command.stdout_lines
       - >-
-        "Installing 'namespace_1.collection_1:1.0.0' to
-        '{{ install_path }}/namespace_1/collection_1'"
+        "Installing 'namespace_1.collection_1:1.0.0' to '" + 
+        install_path + "/namespace_1/collection_1'"
         in command.stdout_lines
       - >-
-        'Created collection for namespace_1.collection_1:1.0.0 at
-        {{ install_path }}/namespace_1/collection_1'
+        'Created collection for namespace_1.collection_1:1.0.0 at ' + 
+        install_path + '/namespace_1/collection_1'
         in command.stdout_lines
       - >-
         'namespace_1.collection_1:1.0.0 was installed successfully'
         in command.stdout_lines
       - >-
-        "Installing 'namespace_2.collection_2:1.0.0' to
-        '{{ install_path }}/namespace_2/collection_2'"
+        "Installing 'namespace_2.collection_2:1.0.0' to '" +
+        install_path + "/namespace_2/collection_2'"
         in command.stdout_lines
       - >-
-        'Created collection for namespace_2.collection_2:1.0.0 at
-        {{ install_path }}/namespace_2/collection_2'
+        'Created collection for namespace_2.collection_2:1.0.0 at ' + 
+        install_path + '/namespace_2/collection_2'
         in command.stdout_lines
       - >-
         'namespace_2.collection_2:1.0.0 was installed successfully'

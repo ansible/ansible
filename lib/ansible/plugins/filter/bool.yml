@@ -1,0 +1,35 @@
+DOCUMENTATION:
+  name: bool
+  version_added: "historical"
+  short_description: coerce some well-known truthy/falsy values to a boolean
+  description:
+    - Attempt to convert the input value into a boolean (V(True) or V(False)) from a common set of well-known values.
+    - Valid true values are (V(True), 'yes', 'on', '1', 'true', 1).
+    - Valid false values are (V(False), 'no', 'off', '0', 'false', 0).
+    #- An error will result if an invalid value is supplied.
+    - A deprecation warning will result if an invalid value is supplied.
+    - For more permissive boolean conversion, consider the P(ansible.builtin.truthy#test) or P(ansible.builtin.falsy#test) tests.
+    - String comparisons are case-insensitive.
+
+  positional: _input
+  options:
+    _input:
+      description: Data to convert.
+      type: raw
+      required: true
+
+EXAMPLES: |
+
+  # in vars
+  vars:
+    isbool: "{{ (a == b) | bool }} "
+    otherbool: "{{ anothervar | bool }} "
+
+  # in a task
+  ...
+  when: some_string_value | bool
+
+RETURN:
+  _value:
+    description: The boolean result of coercing the input expression to a V(True) or V(False) value.
+    type: bool

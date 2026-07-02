@@ -3,9 +3,9 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 """Requirement provider interfaces."""
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
+import collections.abc as _c
 import functools
 import typing as t
 
@@ -14,20 +14,21 @@ if t.TYPE_CHECKING:
         ConcreteArtifactsManager,
     )
     from ansible.galaxy.collection.galaxy_api_proxy import MultiGalaxyAPIProxy
+    from ansible.galaxy.api import GalaxyAPI
+
+    from resolvelib.structs import RequirementInformation
 
 from ansible.galaxy.collection.gpg import get_signature_from_source
 from ansible.galaxy.dependency_resolution.dataclasses import (
     Candidate,
     Requirement,
+    AnsibleRequirement,
 )
 from ansible.galaxy.dependency_resolution.versioning import (
     is_pre_release,
     meets_requirements,
 )
-from ansible.module_utils.six import string_types
 from ansible.utils.version import SemanticVersion, LooseVersion
-
-from collections.abc import Set
 
 try:
     from resolvelib import AbstractProvider
@@ -40,53 +41,24 @@ except ImportError:
 
 
 # TODO: add python requirements to ansible-test's ansible-core distribution info and remove the hardcoded lowerbound/upperbound fallback
-RESOLVELIB_LOWERBOUND = SemanticVersion("0.5.3")
-RESOLVELIB_UPPERBOUND = SemanticVersion("0.9.0")
+RESOLVELIB_LOWERBOUND = SemanticVersion("0.8.0")
+RESOLVELIB_UPPERBOUND = SemanticVersion("2.0.0")
 RESOLVELIB_VERSION = SemanticVersion.from_loose_version(LooseVersion(resolvelib_version))
 
 
-class PinnedCandidateRequests(Set):
-    """Custom set class to store Candidate objects. Excludes the 'signatures' attribute when determining if a Candidate instance is in the set."""
-    CANDIDATE_ATTRS = ('fqcn', 'ver', 'src', 'type')
-
-    def __init__(self, candidates):
-        self._candidates = set(candidates)
-
-    def __iter__(self):
-        return iter(self._candidates)
-
-    def __contains__(self, value):
-        if not isinstance(value, Candidate):
-            raise ValueError(f"Expected a Candidate object but got {value!r}")
-        for candidate in self._candidates:
-            # Compare Candidate attributes excluding "signatures" since it is
-            # unrelated to whether or not a matching Candidate is user-requested.
-            # Candidate objects in the set are not expected to have signatures.
-            for attr in PinnedCandidateRequests.CANDIDATE_ATTRS:
-                if getattr(value, attr) != getattr(candidate, attr):
-                    break
-            else:
-                return True
-        return False
-
-    def __len__(self):
-        return len(self._candidates)
-
-
-class CollectionDependencyProviderBase(AbstractProvider):
+class CollectionDependencyProvider(AbstractProvider):
     """Delegate providing a requirement interface for the resolver."""
 
     def __init__(
-            self,  # type: CollectionDependencyProviderBase
-            apis,  # type: MultiGalaxyAPIProxy
-            concrete_artifacts_manager=None,  # type: ConcreteArtifactsManager
-            user_requirements=None,  # type: t.Iterable[Requirement]
-            preferred_candidates=None,  # type: t.Iterable[Candidate]
-            with_deps=True,  # type: bool
-            with_pre_releases=False,  # type: bool
-            upgrade=False,  # type: bool
-            include_signatures=True,  # type: bool
-    ):  # type: (...) -> None
+            self,
+            apis: MultiGalaxyAPIProxy,
+            concrete_artifacts_manager: ConcreteArtifactsManager,
+            preferred_candidates: _c.Iterable[Candidate] | None = None,
+            with_deps: bool = True,
+            with_pre_releases: bool = False,
+            upgrade: bool = False,
+            include_signatures: bool = True,
+    ) -> None:
         r"""Initialize helper attributes.
 
         :param api: An instance of the multiple Galaxy APIs wrapper.
@@ -116,15 +88,9 @@ class CollectionDependencyProviderBase(AbstractProvider):
             Requirement.from_requirement_dict,
             art_mgr=concrete_artifacts_manager,
         )
-        self._pinned_candidate_requests = PinnedCandidateRequests(
-            # NOTE: User-provided signatures are supplemental, so signatures
-            # NOTE: are not used to determine if a candidate is user-requested
-            Candidate(req.fqcn, req.ver, req.src, req.type, None)
-            for req in (user_requirements or ())
-            if req.is_concrete_artifact or (
-                req.ver != '*' and
-                not req.ver.startswith(('<', '>', '!='))
-            )
+        self._make_ansible_requirement = functools.partial(
+            AnsibleRequirement.from_collection,
+            concrete_artifacts_manager,
         )
         self._preferred_candidates = set(preferred_candidates or ())
         self._with_deps = with_deps
@@ -132,44 +98,10 @@ class CollectionDependencyProviderBase(AbstractProvider):
         self._upgrade = upgrade
         self._include_signatures = include_signatures
 
-    def _is_user_requested(self, candidate):  # type: (Candidate) -> bool
-        """Check if the candidate is requested by the user."""
-        if candidate in self._pinned_candidate_requests:
-            return True
-
-        if candidate.is_online_index_pointer and candidate.src is not None:
-            # NOTE: Candidate is a namedtuple, it has a source server set
-            # NOTE: to a specific GalaxyAPI instance or `None`. When the
-            # NOTE: user runs
-            # NOTE:
-            # NOTE:     $ ansible-galaxy collection install ns.coll
-            # NOTE:
-            # NOTE: then it's saved in `self._pinned_candidate_requests`
-            # NOTE: as `('ns.coll', '*', None, 'galaxy')` but then
-            # NOTE: `self.find_matches()` calls `self.is_satisfied_by()`
-            # NOTE: with Candidate instances bound to each specific
-            # NOTE: server available, those look like
-            # NOTE: `('ns.coll', '*', GalaxyAPI(...), 'galaxy')` and
-            # NOTE: wouldn't match the user requests saved in
-            # NOTE: `self._pinned_candidate_requests`. This is why we
-            # NOTE: normalize the collection to have `src=None` and try
-            # NOTE: again.
-            # NOTE:
-            # NOTE: When the user request comes from `requirements.yml`
-            # NOTE: with the `source:` set, it'll match the first check
-            # NOTE: but it still can have entries with `src=None` so this
-            # NOTE: normalized check is still necessary.
-            # NOTE:
-            # NOTE: User-provided signatures are supplemental, so signatures
-            # NOTE: are not used to determine if a candidate is user-requested
-            return Candidate(
-                candidate.fqcn, candidate.ver, None, candidate.type, None
-            ) in self._pinned_candidate_requests
-
-        return False
-
-    def identify(self, requirement_or_candidate):
-        # type: (t.Union[Candidate, Requirement]) -> str
+    def identify(
+        self,
+        requirement_or_candidate: Candidate | Requirement,
+    ) -> str:
         """Given requirement or candidate, return an identifier for it.
 
         This is used to identify a requirement or candidate, e.g.
@@ -180,8 +112,19 @@ class CollectionDependencyProviderBase(AbstractProvider):
         """
         return requirement_or_candidate.canonical_package_id
 
-    def get_preference(self, *args, **kwargs):
-        # type: (t.Any, t.Any) -> t.Union[float, int]
+    def get_preference(
+        self,
+        identifier: str,
+        resolutions: _c.Mapping[str, Candidate],
+        candidates: _c.Mapping[str, _c.Iterator[Candidate]],
+        information: _c.Mapping[
+            str,
+            _c.Iterator[RequirementInformation[Requirement, Candidate]],
+        ],
+        backtrack_causes: _c.Sequence[
+            RequirementInformation[Requirement, Candidate],
+        ],
+    ) -> float | int:
         """Return sort key function return value for given requirement.
 
         This result should be based on preference that is defined as
@@ -189,43 +132,11 @@ class CollectionDependencyProviderBase(AbstractProvider):
         The lower the return value is, the more preferred this
         group of arguments is.
 
-        resolvelib >=0.5.3, <0.7.0
-
-        :param resolution: Currently pinned candidate, or ``None``.
-
-        :param candidates: A list of possible candidates.
-
-        :param information: A list of requirement information.
-
-        Each ``information`` instance is a named tuple with two entries:
-
-          * ``requirement`` specifies a requirement contributing to
-            the current candidate list
-
-          * ``parent`` specifies the candidate that provides
-            (dependend on) the requirement, or `None`
-            to indicate a root requirement.
-
-        resolvelib >=0.7.0, < 0.8.0
-
         :param identifier: The value returned by ``identify()``.
 
         :param resolutions: Mapping of identifier, candidate pairs.
 
-        :param candidates: Possible candidates for the identifer.
-            Mapping of identifier, list of candidate pairs.
-
-        :param information: Requirement information of each package.
-            Mapping of identifier, list of named tuple pairs.
-            The named tuples have the entries ``requirement`` and ``parent``.
-
-        resolvelib >=0.8.0, <= 0.8.1
-
-        :param identifier: The value returned by ``identify()``.
-
-        :param resolutions: Mapping of identifier, candidate pairs.
-
-        :param candidates: Possible candidates for the identifer.
+        :param candidates: Possible candidates for the identifier.
             Mapping of identifier, list of candidate pairs.
 
         :param information: Requirement information of each package.
@@ -235,7 +146,7 @@ class CollectionDependencyProviderBase(AbstractProvider):
         :param backtrack_causes: Sequence of requirement information that were
             the requirements that caused the resolver to most recently backtrack.
 
-        The preference could depend on a various of issues, including
+        The preference could depend on various of issues, including
         (not necessarily in this order):
 
           * Is this package pinned in the current resolution result?
@@ -256,10 +167,6 @@ class CollectionDependencyProviderBase(AbstractProvider):
         the value is, the more preferred this requirement is (i.e. the
         sorting function is called with ``reverse=False``).
         """
-        raise NotImplementedError
-
-    def _get_preference(self, candidates):
-        # type: (list[Candidate]) -> t.Union[float, int]
         if any(
                 candidate in self._preferred_candidates
                 for candidate in candidates
@@ -269,8 +176,12 @@ class CollectionDependencyProviderBase(AbstractProvider):
             return float('-inf')
         return len(candidates)
 
-    def find_matches(self, *args, **kwargs):
-        # type: (t.Any, t.Any) -> list[Candidate]
+    def find_matches(
+        self,
+        identifier: str,
+        requirements: _c.Mapping[str, _c.Iterator[Requirement]],
+        incompatibilities: _c.Mapping[str, _c.Iterator[Candidate]],
+    ) -> list[Candidate]:
         r"""Find all possible candidates satisfying given requirements.
 
         This tries to get candidates based on the requirements' types.
@@ -279,34 +190,19 @@ class CollectionDependencyProviderBase(AbstractProvider):
         remote archives), the one-and-only match is returned
 
         For a "named" requirement, Galaxy-compatible APIs are consulted
-        to find concrete candidates for this requirement. Of theres a
+        to find concrete candidates for this requirement. If there's a
         pre-installed candidate, it's prepended in front of others.
-
-        resolvelib >=0.5.3, <0.6.0
-
-        :param requirements: A collection of requirements which all of \
-                             the returned candidates must match. \
-                             All requirements are guaranteed to have \
-                             the same identifier. \
-                             The collection is never empty.
-
-        resolvelib >=0.6.0
-
-        :param identifier: The value returned by ``identify()``.
-
-        :param requirements: The requirements all returned candidates must satisfy.
-            Mapping of identifier, iterator of requirement pairs.
-
-        :param incompatibilities: Incompatible versions that must be excluded
-            from the returned list.
-
-        :returns: An iterable that orders candidates by preference, \
-                  e.g. the most preferred candidate comes first.
         """
-        raise NotImplementedError
+        results = []
+        for match in self._find_matches(list(requirements[identifier])):
+            if any(match.ver == incompat.ver for incompat in incompatibilities[identifier]):
+                continue
 
-    def _find_matches(self, requirements):
-        # type: (list[Requirement]) -> list[Candidate]
+            match._requirements = list(requirements[identifier])
+            results.append(match)
+        return results
+
+    def _find_matches(self, requirements: list[Requirement]) -> list[Candidate]:
         # FIXME: The first requirement may be a Git repo followed by
         # FIXME: its cloned tmp dir. Using only the first one creates
         # FIXME: loops that prevent any further dependency exploration.
@@ -316,8 +212,27 @@ class CollectionDependencyProviderBase(AbstractProvider):
         # The fqcn is guaranteed to be the same
         version_req = "A SemVer-compliant version or '*' is required. See https://semver.org to learn how to compose it correctly. "
         version_req += "This is an issue with the collection."
+
+        if first_req.type == "requires_ansible":
+            for r in requirements:
+                if r.has_candidate is None:
+                    return []
+            return [first_req.has_candidate]
+
+        # If we're upgrading collections, we can't calculate preinstalled_candidates until the latest matches are found.
+        # Otherwise, we can potentially avoid a Galaxy API call by doing this first.
+        preinstalled_candidates = set()
+        if not self._upgrade and first_req.type == 'galaxy':
+            preinstalled_candidates = {
+                candidate for candidate in self._preferred_candidates
+                if candidate.fqcn == fqcn and
+                all(self.is_satisfied_by(requirement, candidate) for requirement in requirements)
+            }
         try:
-            coll_versions = self._api_proxy.get_collection_versions(first_req)
+            coll_versions: _c.Iterable[tuple[str, GalaxyAPI]] = (
+                [] if preinstalled_candidates
+                else self._api_proxy.get_collection_versions(first_req)
+            )
         except TypeError as exc:
             if first_req.is_concrete_artifact:
                 # Non hashable versions will cause a TypeError
@@ -345,7 +260,7 @@ class CollectionDependencyProviderBase(AbstractProvider):
                 # NOTE: Another known mistake is setting a minor part of the SemVer notation
                 # NOTE: skipping the "patch" bit like "1.0" which is assumed non-compliant even
                 # NOTE: after the conversion to string.
-                if not isinstance(version, string_types):
+                if not isinstance(version, str):
                     raise ValueError(version_err)
                 elif version != '*':
                     try:
@@ -360,28 +275,81 @@ class CollectionDependencyProviderBase(AbstractProvider):
 
         latest_matches = []
         signatures = []
-        extra_signature_sources = []  # type: list[str]
+        extra_signature_sources: list[str] = []
+
+        discarding_pre_releases_acceptable = any(
+            not is_pre_release(candidate_version)
+            for candidate_version, _src_server in coll_versions
+        )
+
+        # NOTE: The optimization of conditionally looping over the requirements
+        # NOTE: is used to skip having to compute the pinned status of all
+        # NOTE: requirements and apply version normalization to the found ones.
+        all_pinned_requirement_version_numbers = {
+            # NOTE: Pinned versions can start with a number, but also with an
+            # NOTE: equals sign. Stripping it at the beginning should be
+            # NOTE: enough. If there's a space after equals, the second strip
+            # NOTE: will take care of it.
+            # NOTE: Without this conversion, requirements versions like
+            # NOTE: '1.2.3-alpha.4' work, but '=1.2.3-alpha.4' don't.
+            requirement.ver.lstrip('=').strip()
+            for requirement in requirements
+            if requirement.is_pinned
+        } if discarding_pre_releases_acceptable else set()
+
         for version, src_server in coll_versions:
             tmp_candidate = Candidate(fqcn, version, src_server, 'galaxy', None)
 
-            unsatisfied = False
             for requirement in requirements:
-                unsatisfied |= not self.is_satisfied_by(requirement, tmp_candidate)
+                candidate_satisfies_requirement = self.is_satisfied_by(
+                    requirement, tmp_candidate,
+                )
+                if not candidate_satisfies_requirement:
+                    break
+
+                should_disregard_pre_release_candidate = (
+                    # NOTE: Do not discard pre-release candidates in the
+                    # NOTE: following cases:
+                    # NOTE:   * the end-user requested pre-releases explicitly;
+                    # NOTE:   * the candidate is a concrete artifact (e.g. a
+                    # NOTE:     Git repository, subdirs, a tarball URL, or a
+                    # NOTE:     local dir or file etc.);
+                    # NOTE:   * the candidate's pre-release version exactly
+                    # NOTE:     matches a version specifically requested by one
+                    # NOTE:     of the requirements in the current match
+                    # NOTE:     discovery round (i.e. matching a requirement
+                    # NOTE:     that is not a range but an explicit specific
+                    # NOTE:     version pin). This works when some requirements
+                    # NOTE:     request version ranges but others (possibly on
+                    # NOTE:     different dependency tree level depths) demand
+                    # NOTE:     pre-release dependency versions, even if those
+                    # NOTE:     dependencies are transitive.
+                    is_pre_release(tmp_candidate.ver)
+                    and discarding_pre_releases_acceptable
+                    and not (
+                        self._with_pre_releases
+                        or tmp_candidate.is_concrete_artifact
+                        or version in all_pinned_requirement_version_numbers
+                    )
+                )
+                if should_disregard_pre_release_candidate:
+                    break
+
                 # FIXME
-                # unsatisfied |= not self.is_satisfied_by(requirement, tmp_candidate) or not (
-                #    requirement.src is None or  # if this is true for some candidates but not all it will break key param - Nonetype can't be compared to str
+                # candidate_is_from_requested_source = (
+                #    requirement.src is None  # if this is true for some candidates but not all it will break key param - Nonetype can't be compared to str
                 #    or requirement.src == candidate.src
                 # )
-                if unsatisfied:
-                    break
+                # if not candidate_is_from_requested_source:
+                #     break
+
                 if not self._include_signatures:
                     continue
 
                 extra_signature_sources.extend(requirement.signature_sources or [])
 
-            if not unsatisfied:
+            else:  # candidate satisfies requirements, `break` never happened
                 if self._include_signatures:
-                    signatures = src_server.get_collection_signatures(first_req.namespace, first_req.name, version)
                     for extra_source in extra_signature_sources:
                         signatures.append(get_signature_from_source(extra_source))
                 latest_matches.append(
@@ -395,50 +363,39 @@ class CollectionDependencyProviderBase(AbstractProvider):
             reverse=True,  # prefer newer versions over older ones
         )
 
-        preinstalled_candidates = {
-            candidate for candidate in self._preferred_candidates
-            if candidate.fqcn == fqcn and
-            (
-                # check if an upgrade is necessary
-                all(self.is_satisfied_by(requirement, candidate) for requirement in requirements) and
+        if not preinstalled_candidates:
+            preinstalled_candidates = {
+                candidate for candidate in self._preferred_candidates
+                if candidate.fqcn == fqcn and
                 (
-                    not self._upgrade or
-                    # check if an upgrade is preferred
-                    all(SemanticVersion(latest.ver) <= SemanticVersion(candidate.ver) for latest in latest_matches)
+                    # check if an upgrade is necessary
+                    all(self.is_satisfied_by(requirement, candidate) for requirement in requirements) and
+                    (
+                        not self._upgrade or
+                        # check if an upgrade is preferred
+                        all(SemanticVersion(latest.ver) <= SemanticVersion(candidate.ver) for latest in latest_matches)
+                    )
                 )
-            )
-        }
+            }
 
         return list(preinstalled_candidates) + latest_matches
 
-    def is_satisfied_by(self, requirement, candidate):
-        # type: (Requirement, Candidate) -> bool
+    def is_satisfied_by(
+        self,
+        requirement: Requirement,
+        candidate: Candidate,
+    ) -> bool:
         r"""Whether the given requirement is satisfiable by a candidate.
 
         :param requirement: A requirement that produced the `candidate`.
 
-        :param candidate: A pinned candidate supposedly matchine the \
+        :param candidate: A pinned candidate supposedly matching the \
                           `requirement` specifier. It is guaranteed to \
                           have been generated from the `requirement`.
 
         :returns: Indication whether the `candidate` is a viable \
                   solution to the `requirement`.
         """
-        # NOTE: Only allow pre-release candidates if we want pre-releases
-        # NOTE: or the req ver was an exact match with the pre-release
-        # NOTE: version. Another case where we'd want to allow
-        # NOTE: pre-releases is when there are several user requirements
-        # NOTE: and one of them is a pre-release that also matches a
-        # NOTE: transitive dependency of another requirement.
-        allow_pre_release = self._with_pre_releases or not (
-            requirement.ver == '*' or
-            requirement.ver.startswith('<') or
-            requirement.ver.startswith('>') or
-            requirement.ver.startswith('!=')
-        ) or self._is_user_requested(candidate)
-        if is_pre_release(candidate.ver) and not allow_pre_release:
-            return False
-
         # NOTE: This is a set of Pipenv-inspired optimizations. Ref:
         # https://github.com/sarugaku/passa/blob/2ac00f1/src/passa/models/providers.py#L58-L74
         if (
@@ -448,29 +405,38 @@ class CollectionDependencyProviderBase(AbstractProvider):
         ):
             return True
 
+        if requirement.type == 'requires_ansible':
+            return requirement.is_satisfied_by(candidate)
+
         return meets_requirements(
             version=candidate.ver,
             requirements=requirement.ver,
         )
 
-    def get_dependencies(self, candidate):
-        # type: (Candidate) -> list[Candidate]
+    def get_dependencies(self, candidate: Candidate) -> t.Iterator[Requirement]:
         r"""Get direct dependencies of a candidate.
 
         :returns: A collection of requirements that `candidate` \
                   specifies as its dependencies.
         """
+        if candidate.type == "requires_ansible":
+            return
+
         # FIXME: If there's several galaxy servers set, there may be a
         # FIXME: situation when the metadata of the same collection
         # FIXME: differs. So how do we resolve this case? Priority?
         # FIXME: Taking into account a pinned hash? Exploding on
         # FIXME: any differences?
-        # NOTE: The underlying implmentation currently uses first found
+        # NOTE: The underlying implementation currently uses first found
         req_map = self._api_proxy.get_collection_dependencies(candidate)
+
+        if (requires_ansible := self._make_ansible_requirement(candidate)):
+            requires_ansible._parent = candidate
+            yield requires_ansible
 
         # NOTE: This guard expression MUST perform an early exit only
         # NOTE: after the `get_collection_dependencies()` call because
-        # NOTE: internally it polulates the artifact URL of the candidate,
+        # NOTE: internally it populates the artifact URL of the candidate,
         # NOTE: its SHA hash and the Galaxy API token. These are still
         # NOTE: necessary with `--no-deps` because even with the disabled
         # NOTE: dependency resolution the outer layer will still need to
@@ -478,59 +444,9 @@ class CollectionDependencyProviderBase(AbstractProvider):
         #
         # NOTE: Virtual candidates should always return dependencies
         # NOTE: because they are ephemeral and non-installable.
-        if not self._with_deps and not candidate.is_virtual:
-            return []
-
-        return [
-            self._make_req_from_dict({'name': dep_name, 'version': dep_req})
-            for dep_name, dep_req in req_map.items()
-        ]
-
-
-# Classes to handle resolvelib API changes between minor versions for 0.X
-class CollectionDependencyProvider050(CollectionDependencyProviderBase):
-    def find_matches(self, requirements):  # type: ignore[override]
-        # type: (list[Requirement]) -> list[Candidate]
-        return self._find_matches(requirements)
-
-    def get_preference(self, resolution, candidates, information):  # type: ignore[override]
-        # type: (t.Optional[Candidate], list[Candidate], list[t.NamedTuple]) -> t.Union[float, int]
-        return self._get_preference(candidates)
-
-
-class CollectionDependencyProvider060(CollectionDependencyProviderBase):
-    def find_matches(self, identifier, requirements, incompatibilities):  # type: ignore[override]
-        # type: (str, t.Mapping[str, t.Iterator[Requirement]], t.Mapping[str, t.Iterator[Requirement]]) -> list[Candidate]
-        return [
-            match for match in self._find_matches(list(requirements[identifier]))
-            if not any(match.ver == incompat.ver for incompat in incompatibilities[identifier])
-        ]
-
-    def get_preference(self, resolution, candidates, information):  # type: ignore[override]
-        # type: (t.Optional[Candidate], list[Candidate], list[t.NamedTuple]) -> t.Union[float, int]
-        return self._get_preference(candidates)
-
-
-class CollectionDependencyProvider070(CollectionDependencyProvider060):
-    def get_preference(self, identifier, resolutions, candidates, information):  # type: ignore[override]
-        # type: (str, t.Mapping[str, Candidate], t.Mapping[str, t.Iterator[Candidate]], t.Iterator[t.NamedTuple]) -> t.Union[float, int]
-        return self._get_preference(list(candidates[identifier]))
-
-
-class CollectionDependencyProvider080(CollectionDependencyProvider060):
-    def get_preference(self, identifier, resolutions, candidates, information, backtrack_causes):  # type: ignore[override]
-        # type: (str, t.Mapping[str, Candidate], t.Mapping[str, t.Iterator[Candidate]], t.Iterator[t.NamedTuple], t.Sequence) -> t.Union[float, int]
-        return self._get_preference(list(candidates[identifier]))
-
-
-def _get_provider():  # type () -> CollectionDependencyProviderBase
-    if RESOLVELIB_VERSION >= SemanticVersion("0.8.0"):
-        return CollectionDependencyProvider080
-    if RESOLVELIB_VERSION >= SemanticVersion("0.7.0"):
-        return CollectionDependencyProvider070
-    if RESOLVELIB_VERSION >= SemanticVersion("0.6.0"):
-        return CollectionDependencyProvider060
-    return CollectionDependencyProvider050
-
-
-CollectionDependencyProvider = _get_provider()
+        for dep_name, dep_req in req_map.items():
+            if not (self._with_deps or candidate.is_virtual):
+                continue
+            dependency = self._make_req_from_dict({'name': dep_name, 'version': dep_req})
+            dependency._parent = candidate
+            yield dependency

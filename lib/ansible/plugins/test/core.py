@@ -15,54 +15,75 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
+import functools
 import re
 import operator as py_operator
 
 from collections.abc import MutableMapping, MutableSequence
 
+from jinja2.tests import test_defined, test_undefined
+
 from ansible.module_utils.compat.version import LooseVersion, StrictVersion
 
 from ansible import errors
-from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils.common.text.converters import to_native, to_text, to_bytes
+from ansible._internal._templating._jinja_common import Marker, UndefinedMarker
 from ansible.module_utils.parsing.convert_bool import boolean
+from ansible.template import accept_args_markers
+from ansible.parsing.vault import is_encrypted_file, VaultHelper, VaultLib
 from ansible.utils.display import Display
 from ansible.utils.version import SemanticVersion
+
+try:
+    from packaging.version import Version as PEP440Version
+    HAS_PACKAGING = True
+except ImportError:
+    HAS_PACKAGING = False
 
 display = Display()
 
 
+def timedout(result):
+    """ Test if task result yields a time out"""
+    if not isinstance(result, MutableMapping):
+        raise errors.AnsibleFilterError("The 'timedout' test expects a dictionary")
+
+    return bool(result.get('timedout') and bool(result['timedout'].get('period')))
+
+
 def failed(result):
-    ''' Test if task result yields failed '''
+    """ Test if task result yields failed """
     if not isinstance(result, MutableMapping):
         raise errors.AnsibleFilterError("The 'failed' test expects a dictionary")
-    return result.get('failed', False)
+
+    return bool(result.get('failed'))
 
 
 def success(result):
-    ''' Test if task result yields success '''
-    return not failed(result)
+    """ Test if task result yields success """
+    return not bool(failed(result))
 
 
 def unreachable(result):
-    ''' Test if task result yields unreachable '''
+    """ Test if task result yields unreachable """
     if not isinstance(result, MutableMapping):
         raise errors.AnsibleFilterError("The 'unreachable' test expects a dictionary")
-    return result.get('unreachable', False)
+
+    return bool(result.get('unreachable'))
 
 
 def reachable(result):
-    ''' Test if task result yields reachable '''
-    return not unreachable(result)
+    """ Test if task result yields reachable """
+    return bool(not unreachable(result))
 
 
 def changed(result):
-    ''' Test if task result yields changed '''
+    """ Test if task result yields changed """
     if not isinstance(result, MutableMapping):
         raise errors.AnsibleFilterError("The 'changed' test expects a dictionary")
+
     if 'changed' not in result:
         changed = False
         if (
@@ -71,29 +92,31 @@ def changed(result):
             isinstance(result['results'][0], MutableMapping)
         ):
             for res in result['results']:
-                if res.get('changed', False):
+                if res.get('changed'):
                     changed = True
                     break
     else:
-        changed = result.get('changed', False)
-    return changed
+        changed = result.get('changed')
+
+    return bool(changed)
 
 
 def skipped(result):
-    ''' Test if task result yields skipped '''
+    """ Test if task result yields skipped """
     if not isinstance(result, MutableMapping):
         raise errors.AnsibleFilterError("The 'skipped' test expects a dictionary")
-    return result.get('skipped', False)
+
+    return bool(result.get('skipped'))
 
 
 def started(result):
-    ''' Test if async task has started '''
+    """ Test if async task has started """
     if not isinstance(result, MutableMapping):
         raise errors.AnsibleFilterError("The 'started' test expects a dictionary")
+
     if 'started' in result:
         # For async tasks, return status
-        # NOTE: The value of started is 0 or 1, not False or True :-/
-        return result.get('started', 0) == 1
+        return bool(result.get('started'))
     else:
         # For non-async tasks, warn user, but return as if started
         display.warning("The 'started' test expects an async task, but a non-async task was tested")
@@ -101,13 +124,13 @@ def started(result):
 
 
 def finished(result):
-    ''' Test if async task has finished '''
+    """ Test if async task has finished """
     if not isinstance(result, MutableMapping):
         raise errors.AnsibleFilterError("The 'finished' test expects a dictionary")
+
     if 'finished' in result:
         # For async tasks, return status
-        # NOTE: The value of finished is 0 or 1, not False or True :-/
-        return result.get('finished', 0) == 1
+        return bool(result.get('finished'))
     else:
         # For non-async tasks, warn user, but return as if finished
         display.warning("The 'finished' test expects an async task, but a non-async task was tested")
@@ -115,12 +138,13 @@ def finished(result):
 
 
 def regex(value='', pattern='', ignorecase=False, multiline=False, match_type='search'):
-    ''' Expose `re` as a boolean filter using the `search` method by default.
+    """ Expose `re` as a boolean filter using the `search` method by default.
         This is likely only useful for `search` and `match` which already
         have their own filters.
-    '''
-    # In addition to ensuring the correct type, to_text here will ensure
-    # _fail_with_undefined_error happens if the value is Undefined
+    """
+    valid_match_types = ('search', 'match', 'fullmatch')
+    if match_type not in valid_match_types:
+        raise errors.AnsibleTemplatePluginError(f"Invalid match_type specified. Expected one of: {', '.join(valid_match_types)}.", obj=match_type)
     value = to_text(value, errors='surrogate_or_strict')
     flags = 0
     if ignorecase:
@@ -128,29 +152,48 @@ def regex(value='', pattern='', ignorecase=False, multiline=False, match_type='s
     if multiline:
         flags |= re.M
     _re = re.compile(pattern, flags=flags)
-    return bool(getattr(_re, match_type, 'search')(value))
+    return bool(getattr(_re, match_type)(value))
 
 
-def vault_encrypted(value):
-    """Evaulate whether a variable is a single vault encrypted value
+@accept_args_markers
+def vault_encrypted(value: object) -> bool:
+    """Evaluate whether a variable is a single vault encrypted value
 
     .. versionadded:: 2.10
     """
-    return getattr(value, '__ENCRYPTED__', False) and value.is_encrypted()
+    if ciphertext := VaultHelper.get_ciphertext(value, with_tags=False):
+        return VaultLib.is_encrypted(ciphertext)
+
+    if isinstance(value, Marker):
+        value.trip()
+
+    return False
+
+
+def vaulted_file(value):
+    """Evaluate whether a file is a vault
+
+    .. versionadded:: 2.18
+    """
+    try:
+        with open(to_bytes(value), 'rb') as f:
+            return is_encrypted_file(f)
+    except OSError as ex:
+        raise errors.AnsibleFilterError(f"Cannot test if the file {value!r} is a vault.") from ex
 
 
 def match(value, pattern='', ignorecase=False, multiline=False):
-    ''' Perform a `re.match` returning a boolean '''
+    """ Perform a `re.match` returning a boolean """
     return regex(value, pattern, ignorecase, multiline, 'match')
 
 
 def search(value, pattern='', ignorecase=False, multiline=False):
-    ''' Perform a `re.search` returning a boolean '''
+    """ Perform a `re.search` returning a boolean """
     return regex(value, pattern, ignorecase, multiline, 'search')
 
 
 def version_compare(value, version, operator='eq', strict=None, version_type=None):
-    ''' Perform a version comparison on a value '''
+    """ Perform a version comparison on a value """
     op_map = {
         '==': 'eq', '=': 'eq', 'eq': 'eq',
         '<': 'lt', 'lt': 'lt',
@@ -165,6 +208,7 @@ def version_compare(value, version, operator='eq', strict=None, version_type=Non
         'strict': StrictVersion,
         'semver': SemanticVersion,
         'semantic': SemanticVersion,
+        'pep440': PEP440Version,
     }
 
     if strict is not None and version_type is not None:
@@ -175,6 +219,9 @@ def version_compare(value, version, operator='eq', strict=None, version_type=Non
 
     if not version:
         raise errors.AnsibleFilterError("Version parameter to compare against cannot be empty")
+
+    if version_type == 'pep440' and not HAS_PACKAGING:
+        raise errors.AnsibleFilterError("The pep440 version_type requires the Python 'packaging' library")
 
     Version = LooseVersion
     if strict:
@@ -229,8 +276,28 @@ def falsy(value, convert_bool=False):
     return not truthy(value, convert_bool=convert_bool)
 
 
+@accept_args_markers
+@functools.wraps(test_defined)
+def wrapped_test_defined(value: object) -> Marker | bool:
+    """Wrapper around Jinja's `defined` test to avoid mutating the externally-owned function with our marker attribute."""
+    if isinstance(value, Marker) and not isinstance(value, UndefinedMarker):
+        return value
+
+    return test_defined(value)
+
+
+@accept_args_markers
+@functools.wraps(test_undefined)
+def wrapped_test_undefined(value: object) -> Marker | bool:
+    """Wrapper around Jinja's `undefined` test to avoid mutating the externally-owned function with our marker attribute."""
+    if isinstance(value, Marker) and not isinstance(value, UndefinedMarker):
+        return value
+
+    return test_undefined(value)
+
+
 class TestModule(object):
-    ''' Ansible core jinja2 tests '''
+    """ Ansible core jinja2 tests """
 
     def tests(self):
         return {
@@ -242,6 +309,7 @@ class TestModule(object):
             'successful': success,
             'reachable': reachable,
             'unreachable': unreachable,
+            'timedout': timedout,
 
             # changed testing
             'changed': changed,
@@ -274,4 +342,9 @@ class TestModule(object):
 
             # vault
             'vault_encrypted': vault_encrypted,
+            'vaulted_file': vaulted_file,
+
+            # overrides that require special arg handling
+            'defined': wrapped_test_defined,
+            'undefined': wrapped_test_undefined,
         }

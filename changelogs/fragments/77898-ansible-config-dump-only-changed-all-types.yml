@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-config dump - Only display plugin type headers when plugin options are changed if --only-changed is specified.

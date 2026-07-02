@@ -21,8 +21,7 @@ body:
 
       If unsure, consider filing a [new proposal] instead outlining your
       use-cases, the research and implementation considerations. Then,
-      start a discussion on one of the public [IRC meetings] we have just
-      for this.
+      start a discussion in the [Ansible forum][forum].
 
 
       <details>
@@ -44,23 +43,24 @@ body:
       Also test if the devel branch does not already implement this.
 
 
-      **Tip:** If you are seeking community support, please consider
-      [starting a mailing list thread or chatting in IRC][ML||IRC].
+      **Tip:** If you are seeking community support, please see
+      [Communicating with the Ansible community][communication] to
+      get in touch and ask questions.
 
 
 
       [contribute to collections]:
       https://docs.ansible.com/ansible-core/devel/community/contributing_maintained_collections.html?utm_medium=github&utm_source=issue_form--feature_request.yml
 
-      [IRC meetings]:
-        https://docs.ansible.com/ansible-core/devel/community/communication.html?utm_medium=github&utm_source=issue_form--feature_request.yml#irc-meetings
+      [communication]:
+      https://docs.ansible.com/ansible/devel/community/communication.html
 
-      [issue search]: ../search?q=is%3Aissue&type=issues
+      [issue search]: https://github.com/ansible/ansible/search?q=is%3Aissue&type=issues
 
-      [ML||IRC]:
-      https://docs.ansible.com/ansible-core/devel/community/communication.html?utm_medium=github&utm_source=issue_form--feature_request.yml#mailing-list-information
+      [forum help]:
+      https://forum.ansible.com/c/help/6
 
-      [new proposal]: ../../proposals/issues/new
+      [new proposal]: https://github.com/ansible/proposals/issues/new
 
 
 - type: textarea
@@ -90,7 +90,7 @@ body:
       instead outlining your research and implementation considerations.
 
 
-      [new proposal]: ../../proposals/issues/new
+      [new proposal]: https://github.com/ansible/proposals/issues/new
     placeholder: >-
       I am trying to do X with ansible-core from the devel branch on GitHub and
       I think that implementing a feature Y would be very helpful for me and
@@ -101,23 +101,7 @@ body:
 - type: dropdown
   attributes:
     label: Issue Type
-    description: >
-      Please select the single available option in the drop-down.
-
-      <details>
-        <summary>
-          <em>Why?</em>
-        </summary>
-
-        We would do it by ourselves but unfortunatelly, the curent
-        edition of GitHub Issue Forms Alpha does not support this yet 🤷
-
-
-        _We will make it easier in the future, once GitHub
-        supports dropdown defaults. Promise!_
-
-      </details>
-    # FIXME: Once GitHub allows defining the default choice, update this
+    description: This is a marker for our automatic bot. Do not change it.
     options:
     - Feature Idea
   validations:
@@ -139,7 +123,7 @@ body:
 
 
       [collections org]: /ansible-collections
-    placeholder: dnf, apt, yum, pip, user etc.
+    placeholder: dnf, apt, pip, user etc.
   validations:
     required: true
 
@@ -176,7 +160,7 @@ body:
 
 
       [ansibot help]:
-      /ansible/ansibullbot/blob/master/ISSUE_HELP.md#for-issue-submitters
+      /ansible/ansibotmini#ansibotmini
 
 
 - type: checkboxes
@@ -185,7 +169,7 @@ body:
     description: |
       Read the [Ansible Code of Conduct][CoC] first.
 
-      [CoC]: https://docs.ansible.com/ansible/latest/community/code_of_conduct.html?utm_medium=github&utm_source=issue_form--feature_request.yml
+      [CoC]: https://docs.ansible.com/ansible/devel/community/code_of_conduct.html?utm_medium=github&utm_source=issue_form--feature_request.yml
     options:
     - label: I agree to follow the Ansible Code of Conduct
       required: true

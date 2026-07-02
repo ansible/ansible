@@ -1,0 +1,37 @@
+- block:
+# DTFIX3: plug in variable visitor on TOML output and re-enable this test
+#  - name: check baseline
+#    command: ansible-inventory -i '{{ role_path }}/files/valid_sample.yml' --list --toml
+#    register: limited
+#
+#  - name: ensure non empty host list
+#    assert:
+#      that:
+#        - "'something' in inv['somegroup']['hosts']"
+#
+#  - name: check that limit removes host
+#    command: ansible-inventory -i '{{ role_path }}/files/valid_sample.yml'  --limit '!something' --list --toml
+#    register: limited
+#    ignore_errors: true
+#
+#  - name: ensure empty host list
+#    assert:
+#      that:
+#        - limited is failed
+
+  - name: check dupes
+    command: ansible-inventory -i '{{ role_path }}/files/complex.ini' --list --toml
+    register: limited
+
+  - debug: var=inv
+
+  - name: ensure host only appears on directly assigned
+    assert:
+      that:
+        - "'hosts' not in inv['parent_1']"
+        - "'hosts' not in inv['parent_2']"
+        - "'hosts' in inv['parent_3']"
+        - "'test1' in inv['test_group1']['hosts']"
+  vars:
+    inv: '{{limited.stdout|from_toml}}'
+  delegate_to: localhost

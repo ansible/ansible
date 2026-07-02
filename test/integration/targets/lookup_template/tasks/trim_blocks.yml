@@ -1,0 +1,32 @@
+# VERIFY trim_blocks
+- name: Render a template with "trim_blocks" set to False
+  copy:
+    content: "{{ lookup('template', 'trim_blocks.j2', trim_blocks=False) }}"
+    dest: "{{ output_dir }}/trim_blocks_false.templated"
+  register: trim_blocks_false_result
+
+- name: Get checksum of known good trim_blocks_false.expected
+  stat:
+    path: "{{ role_path }}/files/trim_blocks_false.expected"
+  register: trim_blocks_false_good
+
+- name: Verify templated trim_blocks_false matches known good using checksum
+  assert:
+    that:
+      - "trim_blocks_false_result.checksum == trim_blocks_false_good.stat.checksum"
+
+- name: Render a template with "trim_blocks" set to True
+  copy:
+    content: "{{ lookup('template', 'trim_blocks.j2', trim_blocks=True) }}"
+    dest: "{{ output_dir }}/trim_blocks_true.templated"
+  register: trim_blocks_true_result
+
+- name: Get checksum of known good trim_blocks_true.expected
+  stat:
+    path: "{{ role_path }}/files/trim_blocks_true.expected"
+  register: trim_blocks_true_good
+
+- name: Verify templated trim_blocks_true matches known good using checksum
+  assert:
+    that:
+      - "trim_blocks_true_result.checksum == trim_blocks_true_good.stat.checksum"

@@ -17,7 +17,7 @@ modules:
   #                   This is the default value if no configuration is provided.
   #  - 'controller' - All Python versions supported by the Ansible controller.
   #                   This indicates the modules/module_utils can only run on the controller.
-  #                   Intended for use only with modules/module_utils that depend on ansible-connection, which only runs on the controller.
+  #                   Intended for use only with modules/module_utils that depend on the Ansible persistent connection helper, which only runs on the controller.
   #                   Unit tests for modules/module_utils will be permitted to import any Ansible code, instead of only module_utils.
   #  - SpecifierSet - A PEP 440 specifier set indicating the supported Python versions.
   #                   This is only needed when modules/module_utils do not support all Python versions supported by Ansible.

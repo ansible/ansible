@@ -16,5 +16,5 @@
 - name: Test DebianStrategy using assertions
   assert:
     that:
-      - "'{{ ansible_distribution_release }}-bebop.ansible.example.com' in get_hostname.stdout"
-      - "'{{ ansible_distribution_release }}-bebop.ansible.example.com' in grep_hostname.stdout"
+      - "ansible_distribution_release ~ '-bebop.ansible.example.com' in get_hostname.stdout"
+      - "ansible_distribution_release ~ '-bebop.ansible.example.com' in grep_hostname.stdout"

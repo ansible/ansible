@@ -1,8 +1,8 @@
 """Sanity test for the sanity ignore file."""
+
 from __future__ import annotations
 
 import os
-import typing as t
 
 from . import (
     SanityFailure,
@@ -26,20 +26,21 @@ from ...config import (
 
 class IgnoresTest(SanityVersionNeutral):
     """Sanity test for sanity test ignore entries."""
+
     @property
-    def can_ignore(self):  # type: () -> bool
+    def can_ignore(self) -> bool:
         """True if the test supports ignore entries."""
         return False
 
     @property
-    def no_targets(self):  # type: () -> bool
+    def no_targets(self) -> bool:
         """True if the test does not use test targets. Mutually exclusive with all_targets."""
         return True
 
-    def test(self, args, targets):  # type: (SanityConfig, SanityTargets) -> TestResult
+    def test(self, args: SanityConfig, targets: SanityTargets) -> TestResult:
         sanity_ignore = SanityIgnoreParser.load(args)
 
-        messages = []  # type: t.List[SanityMessage]
+        messages: list[SanityMessage] = []
 
         # parse errors
 

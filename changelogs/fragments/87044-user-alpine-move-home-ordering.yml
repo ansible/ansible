@@ -1,0 +1,2 @@
+bugfixes:
+  - user - fix ``move_home`` on BusyBox/Alpine to move existing home contents before rewriting ``/etc/passwd`` (https://github.com/ansible/ansible/pull/87044).

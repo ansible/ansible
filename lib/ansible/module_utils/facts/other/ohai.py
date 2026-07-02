@@ -13,12 +13,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import json
-
-import ansible.module_utils.compat.typing as t
+import typing as t
 
 from ansible.module_utils.facts.namespace import PrefixFactNamespace
 
@@ -26,7 +24,7 @@ from ansible.module_utils.facts.collector import BaseFactCollector
 
 
 class OhaiFactCollector(BaseFactCollector):
-    '''This is a subclass of Facts for including information gathered from Ohai.'''
+    """This is a subclass of Facts for including information gathered from Ohai."""
     name = 'ohai'
     _fact_ids = set()  # type: t.Set[str]
 
@@ -37,10 +35,11 @@ class OhaiFactCollector(BaseFactCollector):
                                                 namespace=namespace)
 
     def find_ohai(self, module):
-        ohai_path = module.get_bin_path('ohai')
-        return ohai_path
+        return module.get_bin_path(
+            'ohai'
+        )
 
-    def run_ohai(self, module, ohai_path,):
+    def run_ohai(self, module, ohai_path):
         rc, out, err = module.run_command(ohai_path)
         return rc, out, err
 
@@ -68,7 +67,6 @@ class OhaiFactCollector(BaseFactCollector):
         try:
             ohai_facts = json.loads(ohai_output)
         except Exception:
-            # FIXME: useful error, logging, something...
-            pass
+            module.warn("Failed to gather ohai facts")
 
         return ohai_facts

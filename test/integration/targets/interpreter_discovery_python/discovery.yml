@@ -1,0 +1,5 @@
+- hosts: testhost
+  gather_facts: yes
+  tasks:
+    - include_tasks:
+        file: tasks/main.yml

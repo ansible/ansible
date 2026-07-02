@@ -22,6 +22,4 @@
   assert:
     that:
       - ret is failed
-      - "not ret.msg.startswith('MODULE FAILURE')"
-      - '"Destination dir ''" ~ remote_dir_expanded ~ "/non/existent'' not writable" in ret.msg'
-      - ret.status == 200
+      - ret.msg is search "Could not replace"

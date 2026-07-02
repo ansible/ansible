@@ -1,4 +1,5 @@
 """Windows integration testing."""
+
 from __future__ import annotations
 
 import os
@@ -45,7 +46,7 @@ from ...data import (
 )
 
 
-def command_windows_integration(args):  # type: (WindowsIntegrationConfig) -> None
+def command_windows_integration(args: WindowsIntegrationConfig) -> None:
     """Entry point for the `windows-integration` command."""
     handle_layout_messages(data_context().content.integration_messages)
 

@@ -19,15 +19,16 @@ body:
       Also test if the latest release and devel branch are affected too.
 
 
-      **Tip:** If you are seeking community support, please consider
-      [starting a mailing list thread or chatting in IRC][ML||IRC].
+      **Tip:** If you are seeking community support, please see
+      [Communicating with the Ansible community][communication] to
+      get in touch and ask questions.
 
 
 
-      [ML||IRC]:
-      https://docs.ansible.com/ansible-core/devel/community/communication.html?utm_medium=github&utm_source=issue_form--bug_report.yml#mailing-list-information
+      [communication]:
+      https://docs.ansible.com/ansible/devel/community/communication.html
 
-      [issue search]: ../search?q=is%3Aissue&type=issues
+      [issue search]: https://github.com/ansible/ansible/search?q=is%3Aissue&type=issues
 
       [XKCD 1172]: https://xkcd.com/1172/
 
@@ -46,23 +47,7 @@ body:
 - type: dropdown
   attributes:
     label: Issue Type
-    description: >
-      Please select the single available option in the drop-down.
-
-      <details>
-        <summary>
-          <em>Why?</em>
-        </summary>
-
-        We would do it by ourselves but unfortunatelly, the curent
-        edition of GitHub Issue Forms Alpha does not support this yet 🤷
-
-
-        _We will make it easier in the future, once GitHub
-        supports dropdown defaults. Promise!_
-
-      </details>
-    # FIXME: Once GitHub allows defining the default choice, update this
+    description: This is a marker for our automatic bot. Do not change it.
     options:
     - Bug Report
   validations:
@@ -87,7 +72,7 @@ body:
 
 
       [collections org]: /ansible-collections
-    placeholder: dnf, apt, yum, pip, user etc.
+    placeholder: dnf, apt, pip, user etc.
   validations:
     required: true
 
@@ -96,7 +81,7 @@ body:
     label: Ansible Version
     description: >-
       Paste verbatim output from `ansible --version` below, under
-      the prompt line. Please don't wrap it with tripple backticks — your
+      the prompt line. Please don't wrap it with triple backticks — your
       whole input will be turned into a code snippet automatically.
     render: console
     value: |
@@ -120,8 +105,9 @@ body:
     label: Configuration
     description: >-
       Paste verbatim output from `ansible-config dump --only-changed -t all` below, under the prompt line.
-      (if using a version older than ansible-core 2.12 you should omit the '-t all')
-      Please don't wrap it with tripple backticks — your
+      Remember to redact secret values. You can easily filter Galaxy server secrets using grep,
+      for example `ansible-config dump --only-changed -t all | grep -Ev 'token|password|client_secret'`.
+      Please don't wrap it with triple backticks — your
       whole input will be turned into a code snippet automatically.
     render: console
     value: |
@@ -151,7 +137,7 @@ body:
   attributes:
     label: Steps to Reproduce
     description: |
-      Describe exactly how to reproduce the problem, using a minimal test-case. It would *really* help us understand your problem if you could also pased any playbooks, configs and commands you used.
+      Describe exactly how to reproduce the problem, using a minimal test-case. It would *really* help us understand your problem if you could also provide any playbooks, configs and commands you used.
 
       **HINT:** You can paste https://gist.github.com links for larger files.
     value: |
@@ -193,7 +179,7 @@ body:
     description: |
       Describe what actually happened. If possible run with extra verbosity (`-vvvv`).
 
-      Paste verbatim command output and don't wrap it with tripple backticks — your
+      Paste verbatim command output and don't wrap it with triple backticks — your
       whole input will be turned into a code snippet automatically.
     render: console
     placeholder: >-
@@ -249,7 +235,7 @@ body:
 
 
       [ansibot help]:
-      /ansible/ansibullbot/blob/master/ISSUE_HELP.md#for-issue-submitters
+      /ansible/ansibotmini#ansibotmini
 
 
 - type: checkboxes
@@ -258,7 +244,7 @@ body:
     description: |
       Read the [Ansible Code of Conduct][CoC] first.
 
-      [CoC]: https://docs.ansible.com/ansible/latest/community/code_of_conduct.html?utm_medium=github&utm_source=issue_form--bug_report.yml
+      [CoC]: https://docs.ansible.com/ansible/devel/community/code_of_conduct.html?utm_medium=github&utm_source=issue_form--bug_report.yml
     options:
     - label: I agree to follow the Ansible Code of Conduct
       required: true

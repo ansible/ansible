@@ -15,17 +15,15 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-from units.compat.mock import Mock, patch
+from unittest.mock import Mock, patch
 
 from .. base import BaseFactsTest
 
 from ansible.module_utils.facts.other.facter import FacterFactCollector
 
-facter_json_output = '''
+facter_json_output = """
 {
   "operatingsystemmajrelease": "25",
   "hardwareisa": "x86_64",
@@ -179,7 +177,7 @@ facter_json_output = '''
   "uptime_hours": 432,
   "kernelversion": "4.9.14"
 }
-'''
+"""
 
 
 class TestFacterCollector(BaseFactsTest):

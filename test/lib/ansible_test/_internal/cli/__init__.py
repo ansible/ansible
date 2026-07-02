@@ -1,4 +1,5 @@
 """Command line parsing."""
+
 from __future__ import annotations
 
 import argparse
@@ -28,7 +29,7 @@ from ..util import (
 )
 
 
-def parse_args(argv=None):  # type: (t.Optional[t.List[str]]) -> argparse.Namespace
+def parse_args(argv: t.Optional[list[str]] = None) -> argparse.Namespace:
     """Parse command line arguments."""
     completer = CompositeActionCompletionFinder()
 

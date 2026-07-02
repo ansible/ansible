@@ -17,16 +17,13 @@
 
 # for __setstate__/__getstate__ tests
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-import pickle
+import unittest
 
-from units.compat import unittest
 
 from ansible.inventory.group import Group
 from ansible.inventory.host import Host
-from ansible.module_utils.six import string_types
 
 
 class TestHost(unittest.TestCase):
@@ -51,7 +48,7 @@ class TestHost(unittest.TestCase):
 
     def test_repr(self):
         host_repr = repr(self.hostA)
-        self.assertIsInstance(host_repr, string_types)
+        self.assertIsInstance(host_repr, str)
 
     def test_add_group(self):
         group = Group('some_group')
@@ -69,35 +66,11 @@ class TestHost(unittest.TestCase):
 
     def test_equals_none(self):
         other = None
-        self.hostA == other
-        other == self.hostA
-        self.hostA != other
-        other != self.hostA
+        assert not (self.hostA == other)
+        assert not (other == self.hostA)
+        assert self.hostA != other
+        assert other != self.hostA
         self.assertNotEqual(self.hostA, other)
-
-    def test_serialize(self):
-        group = Group('some_group')
-        self.hostA.add_group(group)
-        data = self.hostA.serialize()
-        self.assertIsInstance(data, dict)
-
-    def test_serialize_then_deserialize(self):
-        group = Group('some_group')
-        self.hostA.add_group(group)
-        hostA_data = self.hostA.serialize()
-
-        hostA_clone = Host()
-        hostA_clone.deserialize(hostA_data)
-        self.assertEqual(self.hostA, hostA_clone)
-
-    def test_set_state(self):
-        group = Group('some_group')
-        self.hostA.add_group(group)
-
-        pickled_hostA = pickle.dumps(self.hostA)
-
-        hostA_clone = pickle.loads(pickled_hostA)
-        self.assertEqual(self.hostA, hostA_clone)
 
 
 class TestHostWithPort(TestHost):

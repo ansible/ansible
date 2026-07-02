@@ -1,0 +1,25 @@
+- name: Test pause module input isn't captured with a timeout
+  hosts: localhost
+  become: no
+  gather_facts: no
+
+  tasks:
+    - name: pause with the default message
+      pause:
+        seconds: 3
+      register: default_msg_pause
+
+    - name: pause with a custom message
+      pause:
+        prompt: Wait for three seconds
+        seconds: 3
+      register: custom_msg_pause
+
+    - name: Ensure that input was not captured
+      assert:
+        that:
+          - default_msg_pause.user_input == ''
+          - custom_msg_pause.user_input == ''
+
+    - debug:
+        msg: Task after pause

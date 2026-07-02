@@ -1,4 +1,5 @@
 """PyYAML compatibility."""
+
 from __future__ import annotations
 
 import typing as t
@@ -9,13 +10,14 @@ from functools import (
 
 try:
     import yaml as _yaml
-    YAML_IMPORT_ERROR = None
+
+    YAML_IMPORT_ERROR = None  # pylint: disable=invalid-name
 except ImportError as ex:
     yaml_load = None  # pylint: disable=invalid-name
-    YAML_IMPORT_ERROR = ex
+    YAML_IMPORT_ERROR = ex  # pylint: disable=invalid-name
 else:
     try:
-        _SafeLoader = _yaml.CSafeLoader  # type: t.Union[t.Type[_yaml.CSafeLoader], t.Type[_yaml.SafeLoader]]
+        _SafeLoader: t.Union[t.Type[_yaml.CSafeLoader], t.Type[_yaml.SafeLoader]] = _yaml.CSafeLoader
     except AttributeError:
         _SafeLoader = _yaml.SafeLoader
 

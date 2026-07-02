@@ -1,4 +1,5 @@
 """Disallow use of the get_exception function."""
+
 from __future__ import annotations
 
 import re

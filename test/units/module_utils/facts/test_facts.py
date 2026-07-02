@@ -16,17 +16,15 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 
 import pytest
 
 # for testing
-from units.compat import unittest
-from units.compat.mock import Mock, patch
+import unittest
+from unittest.mock import Mock, patch
 
 from ansible.module_utils import facts
 from ansible.module_utils.facts import hardware
@@ -517,7 +515,7 @@ MTAB_ENTRIES = [
     ],
     ['fusectl', '/sys/fs/fuse/connections', 'fusectl', 'rw,relatime', '0', '0'],
     # Mount path with space in the name
-    # The space is encoded as \040 since the fields in /etc/mtab are space-delimeted
+    # The space is encoded as \040 since the fields in /etc/mtab are space-delimited
     ['/dev/sdz9', r'/mnt/foo\040bar', 'ext4', 'rw,relatime', '0', '0'],
     ['\\\\Windows\\share', '/data/', 'cifs', 'credentials=/root/.creds', '0', '0'],
 ]

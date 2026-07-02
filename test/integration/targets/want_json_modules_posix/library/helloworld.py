@@ -16,8 +16,7 @@
 
 # WANT_JSON
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import json
 import sys
@@ -25,7 +24,7 @@ import sys
 try:
     with open(sys.argv[1], 'r') as f:
         data = json.load(f)
-except (IOError, OSError, IndexError):
+except (OSError, IndexError):
     print(json.dumps(dict(msg="No argument file provided", failed=True)))
     sys.exit(1)
 

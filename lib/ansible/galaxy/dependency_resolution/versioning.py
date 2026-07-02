@@ -3,8 +3,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 """Version comparison helpers."""
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import operator
 
@@ -12,8 +11,7 @@ from ansible.module_utils.compat.version import LooseVersion
 from ansible.utils.version import SemanticVersion
 
 
-def is_pre_release(version):
-    # type: (str) -> bool
+def is_pre_release(version: str) -> bool:
     """Figure out if a given version is a pre-release."""
     try:
         return SemanticVersion(version).is_prerelease
@@ -21,8 +19,7 @@ def is_pre_release(version):
         return False
 
 
-def meets_requirements(version, requirements):
-    # type: (str, str) -> bool
+def meets_requirements(version: str, requirements: str) -> bool:
     """Verify if a given version satisfies all the requirements.
 
     Supported version identifiers are:

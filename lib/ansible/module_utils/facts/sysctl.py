@@ -13,50 +13,49 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import re
 
-from ansible.module_utils._text import to_text
-
 
 def get_sysctl(module, prefixes):
-    sysctl_cmd = module.get_bin_path('sysctl')
-    cmd = [sysctl_cmd]
-    cmd.extend(prefixes)
 
     sysctl = dict()
+    sysctl_cmd = module.get_bin_path('sysctl')
+    if sysctl_cmd is not None:
 
-    try:
-        rc, out, err = module.run_command(cmd)
-    except (IOError, OSError) as e:
-        module.warn('Unable to read sysctl: %s' % to_text(e))
-        rc = 1
+        cmd = [sysctl_cmd]
+        cmd.extend(prefixes)
 
-    if rc == 0:
-        key = ''
-        value = ''
-        for line in out.splitlines():
-            if not line.strip():
-                continue
+        try:
+            rc, out, err = module.run_command(cmd)
+        except OSError as ex:
+            module.error_as_warning('Unable to read sysctl.', exception=ex)
+            rc = 1
 
-            if line.startswith(' '):
-                # handle multiline values, they will not have a starting key
-                # Add the newline back in so people can split on it to parse
-                # lines if they need to.
-                value += '\n' + line
-                continue
+        if rc == 0:
+            key = ''
+            value = ''
+            for line in out.splitlines():
+                if not line.strip():
+                    continue
+
+                if line.startswith(' '):
+                    # handle multiline values, they will not have a starting key
+                    # Add the newline back in so people can split on it to parse
+                    # lines if they need to.
+                    value += '\n' + line
+                    continue
+
+                if key:
+                    sysctl[key] = value.strip()
+
+                try:
+                    (key, value) = re.split(r'\s?=\s?|: ', line, maxsplit=1)
+                except Exception as ex:
+                    module.error_as_warning(f'Unable to split sysctl line {line!r}.', exception=ex)
 
             if key:
                 sysctl[key] = value.strip()
-
-            try:
-                (key, value) = re.split(r'\s?=\s?|: ', line, maxsplit=1)
-            except Exception as e:
-                module.warn('Unable to split sysctl line (%s): %s' % (to_text(line), to_text(e)))
-
-        if key:
-            sysctl[key] = value.strip()
 
     return sysctl

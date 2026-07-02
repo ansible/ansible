@@ -16,8 +16,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import codecs
 import os
@@ -26,8 +25,8 @@ import re
 import tempfile
 
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsibleAction, _AnsibleActionDone, AnsibleActionFail
-from ansible.module_utils._text import to_native, to_text
+from ansible.errors import AnsibleActionFail
+from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
 from ansible.utils.hashing import checksum_s
@@ -38,7 +37,7 @@ class ActionModule(ActionBase):
     TRANSFERS_FILES = True
 
     def _assemble_from_fragments(self, src_path, delimiter=None, compiled_regexp=None, ignore_hidden=False, decrypt=True):
-        ''' assemble a file from a directory of fragments '''
+        """ assemble a file from a directory of fragments """
 
         tmpfd, temp_path = tempfile.mkstemp(dir=C.DEFAULT_LOCAL_TMP)
         tmp = os.fdopen(tmpfd, 'wb')
@@ -82,9 +81,10 @@ class ActionModule(ActionBase):
 
     def run(self, tmp=None, task_vars=None):
 
-        self._supports_check_mode = False
+        self._supports_check_mode = True
 
-        result = super(ActionModule, self).run(tmp, task_vars)
+        super(ActionModule, self).run(tmp, task_vars)
+
         del tmp  # tmp no longer has any effect
 
         if task_vars is None:
@@ -105,13 +105,9 @@ class ActionModule(ActionBase):
 
             if boolean(remote_src, strict=False):
                 # call assemble via ansible.legacy to allow library/ overrides of the module without collection search
-                result.update(self._execute_module(module_name='ansible.legacy.assemble', task_vars=task_vars))
-                raise _AnsibleActionDone()
-            else:
-                try:
-                    src = self._find_needle('files', src)
-                except AnsibleError as e:
-                    raise AnsibleActionFail(to_native(e))
+                return self._execute_module(module_name='ansible.legacy.assemble', task_vars=task_vars)
+
+            src = self._find_needle('files', src)
 
             if not os.path.isdir(src):
                 raise AnsibleActionFail(u"Source (%s) is not a directory" % src)
@@ -140,7 +136,7 @@ class ActionModule(ActionBase):
 
             if path_checksum != dest_stat['checksum']:
 
-                if self._play_context.diff:
+                if self._task.diff:
                     diff = self._get_diff_data(dest, path, task_vars)
 
                 remote_path = self._connection._shell.join_path(self._connection._shell.tmpdir, 'src')
@@ -154,13 +150,9 @@ class ActionModule(ActionBase):
                 res = self._execute_module(module_name='ansible.legacy.copy', module_args=new_module_args, task_vars=task_vars)
                 if diff:
                     res['diff'] = diff
-                result.update(res)
+                return res
             else:
-                result.update(self._execute_module(module_name='ansible.legacy.file', module_args=new_module_args, task_vars=task_vars))
+                return self._execute_module(module_name='ansible.legacy.file', module_args=new_module_args, task_vars=task_vars)
 
-        except AnsibleAction as e:
-            result.update(e.result)
         finally:
             self._remove_tmp_path(self._connection._shell.tmpdir)
-
-        return result

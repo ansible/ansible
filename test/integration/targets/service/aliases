@@ -1,4 +1,4 @@
 destructive
+needs/root
 shippable/posix/group1
-skip/osx
 skip/macos

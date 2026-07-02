@@ -1,9 +1,9 @@
 """Become abstraction for interacting with test hosts."""
+
 from __future__ import annotations
 
 import abc
 import shlex
-import typing as t
 
 from .util import (
     get_subclasses,
@@ -12,24 +12,31 @@ from .util import (
 
 class Become(metaclass=abc.ABCMeta):
     """Base class for become implementations."""
+
+    @classmethod
+    def name(cls) -> str:
+        """The name of this plugin."""
+        return cls.__name__.lower()
+
     @property
     @abc.abstractmethod
-    def method(self):  # type: () -> str
+    def method(self) -> str:
         """The name of the Ansible become plugin that is equivalent to this."""
 
     @abc.abstractmethod
-    def prepare_command(self, command):  # type: (t.List[str]) -> t.List[str]
+    def prepare_command(self, command: list[str]) -> list[str]:
         """Return the given command, if any, with privilege escalation."""
 
 
 class Doas(Become):
     """Become using 'doas'."""
+
     @property
-    def method(self):  # type: () -> str
+    def method(self) -> str:
         """The name of the Ansible become plugin that is equivalent to this."""
         raise NotImplementedError('Ansible has no built-in doas become plugin.')
 
-    def prepare_command(self, command):  # type: (t.List[str]) -> t.List[str]
+    def prepare_command(self, command: list[str]) -> list[str]:
         """Return the given command, if any, with privilege escalation."""
         become = ['doas', '-n']
 
@@ -41,14 +48,29 @@ class Doas(Become):
         return become
 
 
+class DoasSudo(Doas):
+    """Become using 'doas' in ansible-test and then after bootstrapping use 'sudo' for other ansible commands."""
+
+    @classmethod
+    def name(cls) -> str:
+        """The name of this plugin."""
+        return 'doas_sudo'
+
+    @property
+    def method(self) -> str:
+        """The name of the Ansible become plugin that is equivalent to this."""
+        return 'sudo'
+
+
 class Su(Become):
     """Become using 'su'."""
+
     @property
-    def method(self):  # type: () -> str
+    def method(self) -> str:
         """The name of the Ansible become plugin that is equivalent to this."""
         return 'su'
 
-    def prepare_command(self, command):  # type: (t.List[str]) -> t.List[str]
+    def prepare_command(self, command: list[str]) -> list[str]:
         """Return the given command, if any, with privilege escalation."""
         become = ['su', '-l', 'root']
 
@@ -58,14 +80,29 @@ class Su(Become):
         return become
 
 
-class Sudo(Become):
-    """Become using 'sudo'."""
+class SuSudo(Su):
+    """Become using 'su' in ansible-test and then after bootstrapping use 'sudo' for other ansible commands."""
+
+    @classmethod
+    def name(cls) -> str:
+        """The name of this plugin."""
+        return 'su_sudo'
+
     @property
-    def method(self):  # type: () -> str
+    def method(self) -> str:
         """The name of the Ansible become plugin that is equivalent to this."""
         return 'sudo'
 
-    def prepare_command(self, command):  # type: (t.List[str]) -> t.List[str]
+
+class Sudo(Become):
+    """Become using 'sudo'."""
+
+    @property
+    def method(self) -> str:
+        """The name of the Ansible become plugin that is equivalent to this."""
+        return 'sudo'
+
+    def prepare_command(self, command: list[str]) -> list[str]:
         """Return the given command, if any, with privilege escalation."""
         become = ['sudo', '-in']
 
@@ -75,4 +112,4 @@ class Sudo(Become):
         return become
 
 
-SUPPORTED_BECOME_METHODS = {cls.__name__.lower(): cls for cls in get_subclasses(Become)}
+SUPPORTED_BECOME_METHODS = {cls.name(): cls for cls in get_subclasses(Become)}

@@ -9,10 +9,7 @@ export PIP_DISABLE_PIP_VERSION_CHECK=1
 source virtualenv.sh
 
 
->&2 echo \
-    === Test that the module \
-    gets picked up if discoverable \
-    via PYTHONPATH env var ===
+>&2 echo '=== Test that the module gets picked up if discoverable via PYTHONPATH env var ==='
 PYTHONPATH="${PWD}/ansible-collection-python-dist-boo:$PYTHONPATH" \
 ansible \
     -m python.dist.boo \
@@ -21,15 +18,12 @@ ansible \
     "$@" | grep -E '"greeting": "Hello, Bob!",'
 
 
->&2 echo \
-    === Test that the module \
-    gets picked up if installed \
-    into site-packages ===
-python -m pip install pep517
-( # Build a binary Python dist (a wheel) using PEP517:
+>&2 echo '=== Test that the module gets picked up if installed into site-packages ==='
+python -m pip install build
+( # Build a binary Python dist (a wheel) using build:
   cp -r ansible-collection-python-dist-boo "${OUTPUT_DIR}/"
   cd "${OUTPUT_DIR}/ansible-collection-python-dist-boo"
-  python -m pep517.build --binary --out-dir dist .
+  python -m build -w -o dist .
 )
 # Install a pre-built dist with pip:
 python -m pip install \
@@ -45,10 +39,7 @@ ansible \
     "$@" | grep -E '"greeting": "Hello, Frodo!",'
 
 
->&2 echo \
-    === Test that ansible_collections \
-    root takes precedence over \
-    PYTHONPATH/site-packages ===
+>&2 echo '=== Test that ansible_collections root takes precedence over PYTHONPATH/site-packages ==='
 # This is done by injecting a module with the same FQCN
 # into another collection root.
 ANSIBLE_COLLECTIONS_PATH="${PWD}/ansible-collection-python-dist-foo" \

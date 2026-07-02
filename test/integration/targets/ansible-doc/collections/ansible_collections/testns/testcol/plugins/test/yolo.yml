@@ -1,0 +1,37 @@
+DOCUMENTATION:
+  name: yolo
+  short_description: you only live once
+  description:
+    - This is always true
+  options:
+    _input:
+      description: does not matter
+      type: raw
+      required: true
+  seealso:
+    - module: ansible.builtin.test
+    - module: testns.testcol.fakemodule
+      description: A fake module
+    - plugin: testns.testcol.noop
+      plugin_type: lookup
+    - plugin: testns.testcol.grouped
+      plugin_type: filter
+      description: A grouped filter.
+    - plugin: ansible.builtin.combine
+      plugin_type: filter
+    - plugin: ansible.builtin.file
+      plugin_type: lookup
+      description: Read a file on the controller.
+    - link: https://docs.ansible.com
+      name: Ansible docsite
+      description: See also the Ansible docsite.
+    - ref: foo_bar
+      description: Some foo bar.
+
+EXAMPLES: |
+  {{ 'anything' is yolo }}
+
+RETURN:
+  output:
+    type: boolean
+    description: always true

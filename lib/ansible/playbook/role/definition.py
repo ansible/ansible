@@ -15,22 +15,19 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleAssertionError
-from ansible.module_utils.six import string_types
-from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping
-from ansible.playbook.attribute import FieldAttribute
+from ansible.module_utils._internal._datatag import AnsibleTagHelper
+from ansible.playbook.attribute import NonInheritableFieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.collectionsearch import CollectionSearch
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.taggable import Taggable
-from ansible.template import Templar
+from ansible._internal._templating._engine import TemplateEngine
 from ansible.utils.collection_loader import AnsibleCollectionRef
 from ansible.utils.collection_loader._collection_finder import _get_collection_role_path
 from ansible.utils.path import unfrackpath
@@ -43,7 +40,7 @@ display = Display()
 
 class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
 
-    role = FieldAttribute(isa='string')
+    role = NonInheritableFieldAttribute(isa='string')
 
     def __init__(self, play=None, role_basedir=None, variable_manager=None, loader=None, collection_list=None):
 
@@ -72,7 +69,7 @@ class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
         if isinstance(ds, int):
             ds = "%s" % ds
 
-        if not isinstance(ds, dict) and not isinstance(ds, string_types) and not isinstance(ds, AnsibleBaseYAMLObject):
+        if not isinstance(ds, dict) and not isinstance(ds, str):
             raise AnsibleAssertionError()
 
         if isinstance(ds, dict):
@@ -81,12 +78,9 @@ class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
         # save the original ds for use later
         self._ds = ds
 
-        # we create a new data structure here, using the same
-        # object used internally by the YAML parsing code so we
-        # can preserve file:line:column information if it exists
-        new_ds = AnsibleMapping()
-        if isinstance(ds, AnsibleBaseYAMLObject):
-            new_ds.ansible_pos = ds.ansible_pos
+        # the new, cleaned datastructure, which will have legacy items reduced to a standard structure suitable for the
+        # attributes of the task class; copy any tagged data to preserve things like origin
+        new_ds = AnsibleTagHelper.tag_copy(ds, {})
 
         # first we pull the role name out of the data structure,
         # and then use that to determine the role path (which may
@@ -99,7 +93,7 @@ class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
         # result and the role name
         if isinstance(ds, dict):
             (new_role_def, role_params) = self._split_role_params(ds)
-            new_ds.update(new_role_def)
+            new_ds |= new_role_def
             self._role_params = role_params
 
         # set the role name in the new ds
@@ -112,35 +106,35 @@ class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
         return new_ds
 
     def _load_role_name(self, ds):
-        '''
+        """
         Returns the role name (either the role: or name: field) from
         the role definition, or (when the role definition is a simple
         string), just that string
-        '''
+        """
 
-        if isinstance(ds, string_types):
+        if isinstance(ds, str):
             return ds
 
         role_name = ds.get('role', ds.get('name'))
-        if not role_name or not isinstance(role_name, string_types):
+        if not role_name or not isinstance(role_name, str):
             raise AnsibleError('role definitions must contain a role name', obj=ds)
 
         # if we have the required datastructures, and if the role_name
         # contains a variable, try and template it now
         if self._variable_manager:
             all_vars = self._variable_manager.get_vars(play=self._play)
-            templar = Templar(loader=self._loader, variables=all_vars)
+            templar = TemplateEngine(loader=self._loader, variables=all_vars)
             role_name = templar.template(role_name)
 
         return role_name
 
     def _load_role_path(self, role_name):
-        '''
+        """
         the 'role', as specified in the ds (or as a bare string), can either
         be a simple name or a full path. If it is a full path, we use the
         basename as the role name, otherwise we take the name as-given and
         append it to the default role path
-        '''
+        """
 
         # create a templar class to template the dependency names, in
         # case they contain variables
@@ -149,7 +143,7 @@ class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
         else:
             all_vars = dict()
 
-        templar = Templar(loader=self._loader, variables=all_vars)
+        templar = TemplateEngine(loader=self._loader, variables=all_vars)
         role_name = templar.template(role_name)
 
         role_tuple = None
@@ -200,13 +194,14 @@ class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
             return (role_name, role_path)
 
         searches = (self._collection_list or []) + role_search_paths
-        raise AnsibleError("the role '%s' was not found in %s" % (role_name, ":".join(searches)), obj=self._ds)
+
+        raise AnsibleError(f"The role {role_name!r} was not found in: {':'.join(searches)}", obj=self._ds)
 
     def _split_role_params(self, ds):
-        '''
+        """
         Splits any random role params off from the role spec and store
         them in a dictionary of params for parsing later
-        '''
+        """
 
         role_def = dict()
         role_params = dict()

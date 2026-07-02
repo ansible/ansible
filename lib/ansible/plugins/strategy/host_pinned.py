@@ -14,11 +14,9 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
     name: host_pinned
     short_description: Executes tasks on each host without interruption
     description:
@@ -30,7 +28,7 @@ DOCUMENTATION = '''
           Other than that, it behaves just like the "free" strategy.
     version_added: "2.7"
     author: Ansible Core Team
-'''
+"""
 
 from ansible.plugins.strategy.free import StrategyModule as FreeStrategyModule
 from ansible.utils.display import Display

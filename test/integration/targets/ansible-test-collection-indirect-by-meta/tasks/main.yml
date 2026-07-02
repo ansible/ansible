@@ -1,0 +1,3 @@
+- name: Set a fact indicating this collection was loaded as a dependency
+  set_fact:
+    by_meta_loaded: true

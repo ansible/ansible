@@ -1,4 +1,5 @@
 - hosts: localhost
+  gather_facts: false
   tasks:
     - set_fact:
         unvaulted: "{{ lookup('unvault', 'vault') }}"

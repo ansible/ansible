@@ -28,10 +28,9 @@ from io import BytesIO, TextIOWrapper
 import yaml
 import yaml.reader
 
-from ansible.module_utils._text import to_text
+from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.yaml import SafeLoader
-from ansible.module_utils.six import string_types
 from ansible.parsing.yaml.loader import AnsibleLoader
 
 
@@ -154,11 +153,9 @@ def parse_yaml(value, lineno, module, name, load_all=False, ansible_loader=False
         if load_all:
             data = list(data)
     except yaml.MarkedYAMLError as e:
-        e.problem_mark.line += lineno - 1
-        e.problem_mark.name = '%s.%s' % (module, name)
         errors.append({
             'msg': '%s is not valid YAML' % name,
-            'line': e.problem_mark.line + 1,
+            'line': e.problem_mark.line + lineno,
             'column': e.problem_mark.column + 1
         })
         traces.append(e)
@@ -194,13 +191,14 @@ def compare_unordered_lists(a, b):
       - unordered lists
       - unhashable elements
     """
-    return len(a) == len(b) and all(x in b for x in a)
+    return len(a) == len(b) and all(x in b for x in a) and all(x in a for x in b)
 
 
 class NoArgsAnsibleModule(AnsibleModule):
     """AnsibleModule that does not actually load params. This is used to get access to the
     methods within AnsibleModule without having to fake a bunch of data
     """
+
     def _load_params(self):
         self.params = {'_ansible_selinux_special_fs': [], '_ansible_remote_tmp': '/tmp', '_ansible_keep_remote_files': False, '_ansible_check_mode': False}
 
@@ -212,7 +210,7 @@ def parse_isodate(v, allow_date):
         msg = 'Expected ISO 8601 date string (YYYY-MM-DD) or YAML date'
     else:
         msg = 'Expected ISO 8601 date string (YYYY-MM-DD)'
-    if not isinstance(v, string_types):
+    if not isinstance(v, str):
         raise ValueError(msg)
     # From Python 3.7 in, there is datetime.date.fromisoformat(). For older versions,
     # we have to do things manually.

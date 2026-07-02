@@ -17,8 +17,9 @@ if command -v sshpass > /dev/null; then
         # ansible with timeout. If we time out, our custom prompt was successfully
         # searched for. It's a weird way of doing things, but it does ensure
         # that the flag gets passed to sshpass.
-        timeout 5 ansible -m ping \
+        ../test_utils/scripts/timeout.py 5 -- ansible -m ping \
             -e ansible_connection=ssh \
+            -e ansible_ssh_password_mechanism=sshpass \
             -e ansible_sshpass_prompt=notThis: \
             -e ansible_password=foo \
             -e ansible_user=definitelynotroot \
@@ -34,6 +35,7 @@ if command -v sshpass > /dev/null; then
     else
         ansible -m ping \
             -e ansible_connection=ssh \
+            -e ansible_ssh_password_mechanism=sshpass \
             -e ansible_sshpass_prompt=notThis: \
             -e ansible_password=foo \
             -e ansible_user=definitelynotroot \
@@ -66,7 +68,7 @@ fi
 # sftp
 ./posix.sh "$@"
 # scp
-ANSIBLE_SCP_IF_SSH=true ./posix.sh "$@" "${scp_args[@]}"
+ANSIBLE_SSH_TRANSFER_METHOD=scp ./posix.sh "$@" "${scp_args[@]}"
 # piped
 ANSIBLE_SSH_TRANSFER_METHOD=piped ./posix.sh "$@"
 
@@ -79,3 +81,19 @@ ANSIBLE_CONFIG=./test_ssh_defaults.cfg ansible-playbook verify_config.yml "$@"
 # ensure we handle cp with spaces correctly, otherwise would fail with
 # `"Failed to connect to the host via ssh: command-line line 0: keyword controlpath extra arguments at end of line"`
 ANSIBLE_SSH_CONTROL_PATH='/tmp/ssh cp with spaces' ansible -m ping all -e ansible_connection=ssh -i test_connection.inventory "$@"
+
+# Test that timeout on waiting on become is an unreachable error
+ansible-playbook test_unreachable_become_timeout.yml "$@"
+
+ANSIBLE_ROLES_PATH=../ ansible-playbook "$@" -i ../../inventory test_ssh_askpass.yml
+
+# ensure that SSH client verbosity is independent of Ansible verbosity - no `debugN:` lines at high Ansible verbosity
+ansible ssh -m raw -a whoami -i test_connection.inventory -vvvvv | grep -v 'debug.:'
+
+# enable SSH client verbosity level 1 via env; ensure debugN: but no debug2 or debug3 lines
+ANSIBLE_SSH_VERBOSITY=1 ansible ssh -m raw -a whoami -i test_connection.inventory -vvvvv | grep 'debug.:' | grep -v 'debug(2|3):'
+
+# enable SSH client verbosity level 3 via var; ensure debug3 lines
+ansible ssh -m raw -a whoami -i test_connection.inventory -vvvvv -e ansible_ssh_verbosity=3 2>&1 | grep 'debug3:'
+
+echo PASS

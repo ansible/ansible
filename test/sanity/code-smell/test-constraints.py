@@ -43,7 +43,7 @@ def main():
             constraints = raw_constraints.strip()
             comment = requirement.group('comment')
 
-            is_pinned = re.search('^ *== *[0-9.]+(\\.post[0-9]+)?$', constraints)
+            is_pinned = re.search('^ *== *[0-9.]+(rc[0-9]+)?(\\.post[0-9]+)?$', constraints)
 
             if is_sanity:
                 sanity = frozen_sanity.setdefault(name, [])
@@ -65,26 +65,17 @@ def main():
                     # keeping constraints for tests other than sanity tests in one file helps avoid conflicts
                     print('%s:%d:%d: put the constraint (%s%s) in `%s`' % (path, lineno, 1, name, raw_constraints, constraints_path))
 
-    for name, requirements in frozen_sanity.items():
-        if len(set(req[3].group('constraints').strip() for req in requirements)) != 1:
-            for req in requirements:
-                print('%s:%d:%d: sanity constraint (%s) does not match others for package `%s`' % (
-                    req[0], req[1], req[3].start('constraints') + 1, req[3].group('constraints'), name))
-
 
 def check_ansible_test(path: str, requirements: list[tuple[int, str, re.Match]]) -> None:
     sys.path.insert(0, str(pathlib.Path(__file__).parent.parent.parent.joinpath('lib')))
 
-    from ansible_test._internal.python_requirements import VIRTUALENV_VERSION
     from ansible_test._internal.coverage_util import COVERAGE_VERSIONS
     from ansible_test._internal.util import version_to_str
 
-    expected_lines = set([
-        f"virtualenv == {VIRTUALENV_VERSION} ; python_version < '3'",
-    ] + [
+    expected_lines = {
         f"coverage == {item.coverage_version} ; python_version >= '{version_to_str(item.min_python)}' and python_version <= '{version_to_str(item.max_python)}'"
         for item in COVERAGE_VERSIONS
-    ])
+    }
 
     for idx, requirement in enumerate(requirements):
         lineno, line, match = requirement
@@ -101,8 +92,10 @@ def check_ansible_test(path: str, requirements: list[tuple[int, str, re.Match]])
 
 def parse_requirements(lines):
     # see https://www.python.org/dev/peps/pep-0508/#names
-    pattern = re.compile(r'^(?P<name>[A-Z0-9][A-Z0-9._-]*[A-Z0-9]|[A-Z0-9])(?P<extras> *\[[^]]*])?(?P<constraints>[^;#]*)(?P<markers>[^#]*)(?P<comment>.*)$',
-                         re.IGNORECASE)
+    pattern = re.compile(
+        pattern=r'^(?P<name>[A-Z0-9][A-Z0-9._-]*[A-Z0-9]|[A-Z0-9])(?P<extras> *\[[^]]*])?(?P<constraints>[^;#]*)(?P<markers>[^#]*)(?P<comment>.*)$',
+        flags=re.IGNORECASE,
+    )
 
     matches = [(lineno, line, pattern.search(line)) for lineno, line in enumerate(lines, start=1)]
     requirements = []

@@ -15,11 +15,12 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-from units.compat import unittest
+import unittest
+
+import pytest
+
 from units.mock.loader import DictDataLoader
 
 from ansible import context
@@ -40,7 +41,9 @@ class TestPlaybookCLI(unittest.TestCase):
         inventory = InventoryManager(loader=fake_loader, sources='testhost,')
 
         variable_manager.set_host_facts('testhost', {'canary': True})
-        self.assertTrue('testhost' in variable_manager._fact_cache)
+        variable_manager._fact_cache.get('testhost')
 
         cli._flush_cache(inventory, variable_manager)
-        self.assertFalse('testhost' in variable_manager._fact_cache)
+
+        with pytest.raises(KeyError):
+            variable_manager._fact_cache.get('testhost')

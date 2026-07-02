@@ -3,6 +3,7 @@
 set -eux
 
 export ANSIBLE_ROLES_PATH=./roles
+export ANSIBLE_GATHERING=explicit
 
 function gen_task_files() {
     for i in $(printf "%03d " {1..39}); do
@@ -68,7 +69,7 @@ ANSIBLE_STRATEGY='free' ansible-playbook test_copious_include_tasks.yml  -i inve
 ANSIBLE_STRATEGY='free' ansible-playbook test_copious_include_tasks_fqcn.yml  -i inventory "$@"
 rm -f tasks/hello/*.yml
 
-# Inlcuded tasks should inherit attrs from non-dynamic blocks in parent chain
+# Included tasks should inherit attrs from non-dynamic blocks in parent chain
 # https://github.com/ansible/ansible/pull/38827
 ANSIBLE_STRATEGY='linear' ansible-playbook test_grandparent_inheritance.yml -i inventory "$@"
 ANSIBLE_STRATEGY='linear' ansible-playbook test_grandparent_inheritance_fqcn.yml -i inventory "$@"
@@ -80,7 +81,7 @@ ANSIBLE_STRATEGY='free' ansible-playbook undefined_var/playbook.yml  -i inventor
 # include_ + apply (explicit inheritance)
 ANSIBLE_STRATEGY='linear' ansible-playbook apply/include_apply.yml -i inventory "$@" --tags foo
 set +e
-OUT=$(ANSIBLE_STRATEGY='linear' ansible-playbook apply/import_apply.yml -i inventory "$@" --tags foo 2>&1 | grep 'ERROR! Invalid options for import_tasks: apply')
+OUT=$(ANSIBLE_STRATEGY='linear' ansible-playbook apply/import_apply.yml -i inventory "$@" --tags foo 2>&1 | grep 'Invalid options for import_tasks: apply')
 set -e
 if [[ -z "$OUT" ]]; then
     echo "apply on import_tasks did not cause error"
@@ -105,7 +106,7 @@ ANSIBLE_HOST_PATTERN_MISMATCH=warning ansible-playbook run_once/playbook.yml "$@
 
 # https://github.com/ansible/ansible/issues/48936
 ansible-playbook -v handler_addressing/playbook.yml 2>&1 | tee test_handler_addressing.out
-test "$(grep -E -c 'include handler task|ERROR! The requested handler '"'"'do_import'"'"' was not found' test_handler_addressing.out)" = 2
+test "$(grep -E -c 'include handler task|The requested handler '"'"'do_import'"'"' was not found' test_handler_addressing.out)" = 2
 
 # https://github.com/ansible/ansible/issues/49969
 ansible-playbook -v parent_templating/playbook.yml 2>&1 | tee test_parent_templating.out
@@ -120,6 +121,15 @@ ansible-playbook valid_include_keywords/playbook.yml "$@"
 # https://github.com/ansible/ansible/issues/64902
 ansible-playbook tasks/test_allow_single_role_dup.yml 2>&1 | tee test_allow_single_role_dup.out
 test "$(grep -c 'ok=3' test_allow_single_role_dup.out)" = 1
+
+# Test allow_duplicate with include_role and import_role
+test "$(ansible-playbook tasks/test_dynamic_allow_dup.yml --tags include | grep -c 'Tasks file inside role')" = 2
+test "$(ansible-playbook tasks/test_dynamic_allow_dup.yml --tags import | grep -c 'Tasks file inside role')" = 2
+
+# test templating public, allow_duplicates, and rolespec_validate
+ansible-playbook tasks/test_templating_IncludeRole_FA.yml 2>&1 | tee IncludeRole_FA_template.out
+test "$(grep -c 'ok=6' IncludeRole_FA_template.out)" = 1
+test "$(grep -c 'failed=0' IncludeRole_FA_template.out)" = 1
 
 # https://github.com/ansible/ansible/issues/66764
 ANSIBLE_HOST_PATTERN_MISMATCH=error ansible-playbook empty_group_warning/playbook.yml
@@ -139,3 +149,15 @@ test "$(grep out.txt -ce 'In imported role')" = 3
 # https://github.com/ansible/ansible/issues/73657
 ansible-playbook issue73657.yml 2>&1 | tee issue73657.out
 test "$(grep -c 'SHOULD_NOT_EXECUTE' issue73657.out)" = 0
+
+# https://github.com/ansible/ansible/issues/83874
+ansible-playbook test_null_include_filename.yml 2>&1 | tee test_null_include_filename.out
+test "$(grep -c 'No file specified for ansible.builtin.include_tasks' test_null_include_filename.out)" = 1
+test "$(grep -c '.*/include_import/null_filename/tasks.yml:4:3.*' test_null_include_filename.out)" = 1
+test "$(grep -c '\- name: invalid include_task definition' test_null_include_filename.out)" = 1
+
+# https://github.com/ansible/ansible/issues/69882
+set +e
+ansible-playbook test_nested_non_existent_tasks.yml 2>&1 | tee test_nested_non_existent_tasks.out
+set -e
+test "$(grep -c 'Could not find or access' test_nested_non_existent_tasks.out)" = 2

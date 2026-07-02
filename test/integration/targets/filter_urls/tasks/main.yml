@@ -18,7 +18,3 @@
       - "{'foo': 'bar'}|urlencode == 'foo=bar'"
       - "{'foo': 'bar', 'baz': 'buz'}|urlencode == 'foo=bar&baz=buz'"
       - "()|urlencode == ''"
-
-# Needed (temporarily) due to coverage reports not including the last task.
-- assert:
-    that: true

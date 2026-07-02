@@ -99,6 +99,7 @@
   gather_facts: false
   roles:
     - role: test_handlers_listen
+    - role: ns.col.test_handlers_listen
   tasks:
     - name: test notify handlers listen in roles
       command: uptime
@@ -113,6 +114,20 @@
           - "notify_listen_ran_4_3 is defined"
           - "notify_listen_in_role_4 is defined"
           - "notify_listen_from_role_4 is defined"
+    - name: test notifying handlers using the role name prefix
+      command: uptime
+      notify:
+        - 'test_handlers_listen : notify_specific_role_listen'
+        - 'test_handlers_listen : notify_specific_collection_role_listen'
+    - meta: flush_handlers
+    - assert:
+        that:
+          - notify_listen_in_specific_collection_role is defined
+          - notify_listen_in_specific_role is defined
+    - name: test notifying the collection listener by the role's FQCN also works
+      command: uptime
+      notify:
+        - 'ns.col.test_handlers_listen : notify_specific_collection_role_listen'
   handlers:
     - name: notify_listen_ran_4_1
       set_fact:

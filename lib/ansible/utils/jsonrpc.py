@@ -1,17 +1,17 @@
 # (c) 2017, Peter Sprygada <psprygad@redhat.com>
 # (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import json
 import pickle
 import traceback
 
-from ansible.module_utils._text import to_text
+from ansible.module_utils._internal import _no_six
+from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.connection import ConnectionError
-from ansible.module_utils.six import binary_type, text_type
 from ansible.utils.display import Display
+from ansible.utils.vars import transform_to_native_types
 
 display = Display()
 
@@ -80,11 +80,12 @@ class JsonRpcServer(object):
 
     def response(self, result=None):
         response = self.header()
-        if isinstance(result, binary_type):
+        if isinstance(result, bytes):
             result = to_text(result)
-        if not isinstance(result, text_type):
+        if not isinstance(result, str):
             response["result_type"] = "pickle"
-            result = to_text(pickle.dumps(result, protocol=0))
+            # typically consumed in a module context; transform custom types (e.g. tagged/vaulted values) to native to prevent unpickling failures
+            result = to_text(pickle.dumps(transform_to_native_types(result, redact=False)))
         response['result'] = result
         return response
 
@@ -111,3 +112,7 @@ class JsonRpcServer(object):
 
     def internal_error(self, data=None):
         return self.error(-32603, 'Internal error', data)
+
+
+def __getattr__(importable_name):
+    return _no_six.deprecate(importable_name, __name__, "binary_type", "text_type")

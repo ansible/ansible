@@ -3,19 +3,13 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
+import builtins
 import errno
 import os
 
 from itertools import product
-
-try:
-    import builtins
-except ImportError:
-    import __builtin__ as builtins
 
 import pytest
 
@@ -157,7 +151,7 @@ def test_missing_lchmod_is_link(am, mock_stats, mocker, monkeypatch, check_mode)
     mocker.stopall()
 
 
-@pytest.mark.parametrize('stdin,',
+@pytest.mark.parametrize('stdin',
                          ({},),
                          indirect=['stdin'])
 def test_missing_lchmod_is_link_in_sticky_dir(am, mock_stats, mocker):

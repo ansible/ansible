@@ -8,3 +8,8 @@
   set_fact:
     notify_listen_in_role_4: True
   listen: notify_listen_in_role
+
+- name: test notifying listen namespaced by the role
+  set_fact:
+    notify_listen_in_specific_role: True
+  listen: notify_specific_role_listen

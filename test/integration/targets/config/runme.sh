@@ -2,12 +2,11 @@
 
 set -eux
 
-# ignore empty env var and use default
-# shellcheck disable=SC1007
-ANSIBLE_TIMEOUT= ansible -m ping testhost -i ../../inventory "$@"
+# use default timeout
+ANSIBLE_TIMEOUT='' ansible -m ping testhost -i ../../inventory "$@"
 
 # env var is wrong type, this should be a fatal error pointing at the setting
-ANSIBLE_TIMEOUT='lola' ansible -m ping testhost -i ../../inventory "$@" 2>&1|grep 'Invalid type for configuration option setting: DEFAULT_TIMEOUT'
+ANSIBLE_TIMEOUT='lola' ansible -m ping testhost -i ../../inventory "$@" 2>&1 | grep "Config 'DEFAULT_TIMEOUT' from 'env: ANSIBLE_TIMEOUT' has an invalid value"
 
 # https://github.com/ansible/ansible/issues/69577
 ANSIBLE_REMOTE_TMP="$HOME/.ansible/directory_with_no_space"  ansible -m ping testhost -i ../../inventory "$@"
@@ -41,3 +40,9 @@ do
 	ANSIBLE_LOOKUP_PLUGINS=./ ansible-config init types -t lookup -f "${format}" > "files/types.new.${format}"
 	diff -u "files/types.${format}" "files/types.new.${format}"
 done
+
+# ensure we don't show default templates, but templated defaults
+[ "$(ansible-config init |grep '={{' -c )" -eq 0 ]
+
+# test seldom used '_and_origin' api 
+ansible-playbook match_option_methods.yml "$@"

@@ -1,4 +1,5 @@
 """Command line parsing for all commands."""
+
 from __future__ import annotations
 
 import argparse
@@ -44,9 +45,9 @@ from .units import (
 
 
 def do_commands(
-        parent,  # type: argparse.ArgumentParser
-        completer,  # type: CompositeActionCompletionFinder
-):  # type: (...) -> None
+    parent: argparse.ArgumentParser,
+    completer: CompositeActionCompletionFinder,
+) -> None:
     """Command line parsing for all commands."""
     common = argparse.ArgumentParser(add_help=False)
 
@@ -89,6 +90,16 @@ def do_commands(
         type=int,
         default=display.columns,
         help='truncate some long output (0=disabled) (default: auto)',
+    )
+
+    common.add_argument(
+        '--display-traceback',
+        dest='display_traceback',
+        metavar='TB',
+        type=str,
+        default='never',
+        choices=('error', 'warning', 'deprecated', 'always', 'never'),
+        help='set ANSIBLE_DISPLAY_TRACEBACK (%(choices)s) (default: %(default)s)',
     )
 
     common.add_argument(
@@ -149,11 +160,6 @@ def do_commands(
         '--coverage-check',
         action='store_true',
         help='only verify code coverage can be enabled',
-    )
-
-    testing.add_argument(
-        '--metadata',
-        help=argparse.SUPPRESS,
     )
 
     testing.add_argument(
@@ -227,7 +233,7 @@ def do_commands(
     do_units(subparsers, test, completer)
 
 
-def color(value):  # type: (str) -> bool
+def color(value: str) -> bool:
     """Strict converter for color option."""
     if value == 'yes':
         return True

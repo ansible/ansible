@@ -7,17 +7,16 @@
 # it runs the 'command' module with special arguments and it behaves differently.
 # See the command source and the comment "#USE_SHELL".
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: shell
 short_description: Execute shell commands on targets
 description:
-     - The C(shell) module takes the command name followed by a list of space-delimited arguments.
-     - Either a free form command or C(cmd) parameter is required, see the examples.
+     - The M(ansible.builtin.shell) module takes the command name followed by a list of space-delimited arguments.
+     - Either a free form command or O(cmd) parameter is required, see the examples.
      - It is almost exactly like the M(ansible.builtin.command) module but runs
        the command through a shell (C(/bin/sh)) on the remote node.
      - For Windows targets, use the M(ansible.windows.win_shell) module instead.
@@ -69,7 +68,7 @@ extends_documentation_fragment:
     - action_common_attributes.raw
 attributes:
     check_mode:
-        details: while the command itself is arbitrary and cannot be subject to the check mode semantics it adds C(creates)/C(removes) options as a workaround
+        details: while the command itself is arbitrary and cannot be subject to the check mode semantics it adds O(creates)/O(removes) options as a workaround
         support: partial
     diff_mode:
         support: none
@@ -90,6 +89,8 @@ notes:
   - An alternative to using inline shell scripts with this module is to use
     the M(ansible.builtin.script) module possibly together with the M(ansible.builtin.template) module.
   - For rebooting systems, use the M(ansible.builtin.reboot) or M(ansible.windows.win_reboot) module.
+  - If the command returns non UTF-8 data, it must be encoded to avoid issues. One option is to pipe
+    the output through C(base64).
 seealso:
 - module: ansible.builtin.command
 - module: ansible.builtin.raw
@@ -98,9 +99,9 @@ seealso:
 author:
     - Ansible Core Team
     - Michael DeHaan
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: Execute the command in remote shell; stdout goes to the specified file on the remote
   ansible.builtin.shell: somescript.sh >> somelog.txt
 
@@ -149,9 +150,9 @@ EXAMPLES = r'''
   args:
     executable: /usr/bin/expect
   delegate_to: localhost
-'''
+"""
 
-RETURN = r'''
+RETURN = r"""
 msg:
     description: changed
     returned: always
@@ -202,4 +203,4 @@ stderr_lines:
     returned: always
     type: list
     sample: [u'ls cannot access foo: No such file or directory', u'ls …']
-'''
+"""

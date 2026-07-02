@@ -9,7 +9,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: win_copy
 version_added: '1.9.2'
@@ -61,7 +61,7 @@ options:
       is different than destination.
     - If set to C(no), the file will only be transferred if the
       destination does not exist.
-    - If set to C(no), no checksuming of the content is performed which can
+    - If set to C(no), no checksumming of the content is performed which can
       help improve performance on larger files.
     type: bool
     default: yes
@@ -109,9 +109,9 @@ seealso:
 author:
 - Jon Hawkesworth (@jhawkesworth)
 - Jordan Borean (@jborean93)
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: Copy a single file
   win_copy:
     src: /srv/myfiles/foo.conf
@@ -166,9 +166,9 @@ EXAMPLES = r'''
     # This ensures the become user will have permissions for the operation
     # Make sure to specify a folder both the ansible_user and the become_user have access to (i.e not %TEMP% which is user specific and requires Admin)
     ansible_remote_tmp: 'c:\tmp'
-'''
+"""
 
-RETURN = r'''
+RETURN = r"""
 backup_file:
     description: Name of the backup file that was created.
     returned: if backup=yes
@@ -204,4 +204,4 @@ original_basename:
     returned: changed, src is a file
     type: str
     sample: foo.txt
-'''
+"""

@@ -1,0 +1,12 @@
+- hosts: all
+  tasks:
+    - name: Check for apk
+      ansible.builtin.command: apk info
+      ignore_errors: true
+      register: apk_exists
+
+    - name: Elicit a warning about the missing binary
+      ansible.builtin.package_facts:
+        manager: apk
+      when: apk_exists is failed
+      failed_when: false

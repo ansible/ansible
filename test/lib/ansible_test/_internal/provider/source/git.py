@@ -1,8 +1,8 @@
 """Source provider for a content root managed by git version control."""
+
 from __future__ import annotations
 
 import os
-import typing as t
 
 from ...git import (
     Git,
@@ -14,6 +14,7 @@ from ...encoding import (
 
 from ...util import (
     SubprocessError,
+    display,
 )
 
 from . import (
@@ -23,12 +24,13 @@ from . import (
 
 class GitSource(SourceProvider):
     """Source provider for a content root managed by git version control."""
+
     @staticmethod
-    def is_content_root(path):  # type: (str) -> bool
+    def is_content_root(path: str) -> bool:
         """Return True if the given path is a content root for this provider."""
         return os.path.exists(os.path.join(path, '.git'))
 
-    def get_paths(self, path):  # type: (str) -> t.List[str]
+    def get_paths(self, path: str) -> list[str]:
         """Return the list of available content paths under the given path."""
         paths = self.__get_paths(path)
 
@@ -49,7 +51,13 @@ class GitSource(SourceProvider):
             submodule_paths = [os.path.relpath(p, rel_path) for p in submodule_paths if p.startswith(rel_path)]
 
         for submodule_path in submodule_paths:
-            paths.extend(os.path.join(submodule_path, p) for p in self.__get_paths(os.path.join(path, submodule_path)))
+            submodule_full_path = os.path.join(path, submodule_path)
+
+            if not os.path.exists(submodule_full_path):
+                display.warning(f"Missing submodule: {submodule_path}")
+                continue
+
+            paths.extend(os.path.join(submodule_path, p) for p in self.__get_paths(submodule_full_path))
 
         # git reports submodule directories as regular files
         paths = [p for p in paths if p not in submodule_paths]
@@ -57,7 +65,7 @@ class GitSource(SourceProvider):
         return paths
 
     @staticmethod
-    def __get_paths(path):  # type: (str) -> t.List[str]
+    def __get_paths(path: str) -> list[str]:
         """Return the list of available content paths under the given path."""
         git = Git(path)
         paths = git.get_file_names(['--cached', '--others', '--exclude-standard'])

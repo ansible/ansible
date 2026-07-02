@@ -5,8 +5,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 # PYTHON_ARGCOMPLETE_OK
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 # ansible.cli needs to be imported first, to ensure the source bin/* scripts run that code first
 from ansible.cli import CLI
@@ -21,8 +20,8 @@ import sys
 from ansible import constants as C
 from ansible import context
 from ansible.cli.arguments import option_helpers as opt_help
-from ansible.executor.task_queue_manager import TaskQueueManager
-from ansible.module_utils._text import to_native, to_text
+from ansible.executor.task_queue_manager import AnsibleEndPlay, TaskQueueManager
+from ansible.module_utils.common.text.converters import to_native, to_text
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.parsing.splitter import parse_kv
 from ansible.playbook.play import Play
@@ -30,36 +29,41 @@ from ansible.plugins.list import list_plugins
 from ansible.plugins.loader import module_loader, fragment_loader
 from ansible.utils import plugin_docs
 from ansible.utils.color import stringc
+from ansible._internal._datatag._tags import TrustedAsTemplate
 from ansible.utils.display import Display
 
 display = Display()
 
 
 class ConsoleCLI(CLI, cmd.Cmd):
-    '''
+    """
        A REPL that allows for running ad-hoc tasks against a chosen inventory
        from a nice shell with built-in tab completion (based on dominis'
-       ansible-shell).
+       ``ansible-shell``).
 
        It supports several commands, and you can modify its configuration at
        runtime:
 
-       - `cd [pattern]`: change host/group (you can use host patterns eg.: app*.dc*:!app01*)
-       - `list`: list available hosts in the current path
-       - `list groups`: list groups included in the current path
-       - `become`: toggle the become flag
-       - `!`: forces shell module instead of the ansible module (!yum update -y)
-       - `verbosity [num]`: set the verbosity level
-       - `forks [num]`: set the number of forks
-       - `become_user [user]`: set the become_user
-       - `remote_user [user]`: set the remote_user
-       - `become_method [method]`: set the privilege escalation method
-       - `check [bool]`: toggle check mode
-       - `diff [bool]`: toggle diff mode
-       - `timeout [integer]`: set the timeout of tasks in seconds (0 to disable)
-       - `help [command/module]`: display documentation for the command or module
-       - `exit`: exit ansible-console
-    '''
+       - ``cd [pattern]``: change host/group
+         (you can use host patterns eg.: ``app*.dc*:!app01*``)
+       - ``list``: list available hosts in the current path
+       - ``list groups``: list groups included in the current path
+       - ``become``: toggle the become flag
+       - ``!``: forces shell module instead of the ansible module
+         (``!yum update -y``)
+       - ``verbosity [num]``: set the verbosity level
+       - ``forks [num]``: set the number of forks
+       - ``become_user [user]``: set the become_user
+       - ``remote_user [user]``: set the remote_user
+       - ``become_method [method]``: set the privilege escalation method
+       - ``check [bool]``: toggle check mode
+       - ``diff [bool]``: toggle diff mode
+       - ``timeout [integer]``: set the timeout of tasks in seconds
+         (0 to disable)
+       - ``help [command/module]``: display documentation for
+         the command or module
+       - ``exit``: exit ``ansible-console``
+    """
 
     name = 'ansible-console'
     modules = []  # type: list[str] | None
@@ -68,6 +72,8 @@ class ConsoleCLI(CLI, cmd.Cmd):
 
     # use specific to console, but fallback to highlight for backwards compatibility
     NORMAL_PROMPT = C.COLOR_CONSOLE_PROMPT or C.COLOR_HIGHLIGHT
+
+    USES_CONNECTION = True
 
     def __init__(self, args):
 
@@ -153,9 +159,9 @@ class ConsoleCLI(CLI, cmd.Cmd):
     def list_modules(self):
         return list_plugins('module', self.collections)
 
-    def default(self, arg, forceshell=False):
+    def default(self, line, forceshell=False):
         """ actually runs modules """
-        if arg.startswith("#"):
+        if line.startswith("#"):
             return False
 
         if not self.cwd:
@@ -164,10 +170,10 @@ class ConsoleCLI(CLI, cmd.Cmd):
 
         # defaults
         module = 'shell'
-        module_args = arg
+        module_args = line
 
         if forceshell is not True:
-            possible_module, *possible_args = arg.split()
+            possible_module, *possible_args = line.split()
             if module_loader.find_plugin(possible_module):
                 # we found module!
                 module = possible_module
@@ -175,6 +181,8 @@ class ConsoleCLI(CLI, cmd.Cmd):
                     module_args = ' '.join(possible_args)
                 else:
                     module_args = ''
+
+        module_args = TrustedAsTemplate().tag(module_args)
 
         if self.callback:
             cb = self.callback
@@ -186,7 +194,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
         result = None
         try:
             check_raw = module in C._ACTION_ALLOWS_RAW_ARGS
-            task = dict(action=dict(module=module, args=parse_kv(module_args, check_raw=check_raw)), timeout=self.task_timeout)
+            task = dict(action=module, args=parse_kv(module_args, check_raw=check_raw), timeout=self.task_timeout)
             play_ds = dict(
                 name="Ansible Shell",
                 hosts=self.cwd,
@@ -214,7 +222,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
                     variable_manager=self.variable_manager,
                     loader=self.loader,
                     passwords=self.passwords,
-                    stdout_callback=cb,
+                    stdout_callback_name=cb,
                     run_additional_callbacks=C.DEFAULT_LOAD_CALLBACK_PLUGINS,
                     run_tree=False,
                     forks=self.forks,
@@ -222,6 +230,8 @@ class ConsoleCLI(CLI, cmd.Cmd):
 
                 result = self._tqm.run(play)
                 display.debug(result)
+            except AnsibleEndPlay as e:
+                result = e.result
             finally:
                 if self._tqm:
                     self._tqm.cleanup()
@@ -234,11 +244,8 @@ class ConsoleCLI(CLI, cmd.Cmd):
         except KeyboardInterrupt:
             display.error('User interrupted execution')
             return False
-        except Exception as e:
-            if self.verbosity >= 3:
-                import traceback
-                display.v(traceback.format_exc())
-            display.error(to_text(e))
+        except Exception as ex:
+            display.error(ex)
             return False
 
     def emptyline(self):
@@ -477,7 +484,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
         if module_name:
             in_path = module_loader.find_plugin(module_name)
             if in_path:
-                oc, a, _dummy1, _dummy2 = plugin_docs.get_docstring(in_path, fragment_loader)
+                oc, a, _dummy1, _dummy2 = plugin_docs.get_docstring(filename=in_path, fragment_loader=fragment_loader)
                 if oc:
                     display.display(oc['short_description'])
                     display.display('Parameters:')
@@ -512,7 +519,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
 
     def module_args(self, module_name):
         in_path = module_loader.find_plugin(module_name)
-        oc, a, _dummy1, _dummy2 = plugin_docs.get_docstring(in_path, fragment_loader, is_module=True)
+        oc, a, _dummy1, _dummy2 = plugin_docs.get_docstring(filename=in_path, fragment_loader=fragment_loader, plugin_type='module')
         return list(oc['options'].keys())
 
     def run(self):
@@ -542,7 +549,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
                 if path:
                     module_loader.add_directory(path)
 
-        # dynamically add 'cannonical' modules as commands, aliases coudld be used and dynamically loaded
+        # dynamically add 'canonical' modules as commands, aliases could be used and dynamically loaded
         self.modules = self.list_modules()
         for module in self.modules:
             setattr(self, 'do_' + module, lambda arg, module=module: self.default(module + ' ' + arg))
@@ -568,7 +575,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
         histfile = os.path.join(os.path.expanduser("~"), ".ansible-console_history")
         try:
             readline.read_history_file(histfile)
-        except IOError:
+        except OSError:
             pass
 
         atexit.register(readline.write_history_file, histfile)
@@ -576,7 +583,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
         self.cmdloop()
 
     def __getattr__(self, name):
-        ''' handle not found to populate dynamically a module function if module matching name exists '''
+        """ handle not found to populate dynamically a module function if module matching name exists """
         attr = None
 
         if name.startswith('do_'):

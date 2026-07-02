@@ -2,10 +2,9 @@
 
 # Copyright: (c) 2020, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: httptester_kinit
 short_description: Get Kerberos ticket
@@ -21,18 +20,17 @@ options:
     type: str
 author:
 - Ansible Project
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 #
-'''
+"""
 
-RETURN = r'''
+RETURN = r"""
 #
-'''
+"""
 
 import contextlib
-import errno
 import os
 import subprocess
 
@@ -107,9 +105,7 @@ def main():
         process = subprocess.Popen(['%skrb5-config' % prefix, '--version'], stdout=subprocess.PIPE)
         stdout, stderr = process.communicate()
         version = to_text(stdout)
-    except OSError as e:
-        if e.errno != errno.ENOENT:
-            raise
+    except FileNotFoundError:
         version = 'Unknown (no krb5-config)'
 
     kinit_args = ['%skinit' % prefix]

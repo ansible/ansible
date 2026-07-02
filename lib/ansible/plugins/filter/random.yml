@@ -1,0 +1,35 @@
+DOCUMENTATION:
+  name: random
+  version_added: "2.6"
+  short_description: random number or list item
+  description:
+    - Use the input to either select a random element of a list or generate a random number.
+  positional: _input, start, step, seed
+  options:
+    _input:
+      description: A number or list/sequence, if it is a number it is the top bound for random  number generation, if it is a sequence or list, the source of the random element selected.
+      type: raw
+      required: true
+    start:
+      description: Bottom bound for the random number/element generated.
+      type: int
+    step:
+      description: Subsets the defined range by only using this value to select the increments of it between start and end.
+      type: int
+      default: 1
+    seed:
+      description: If specified use a pseudo random selection instead (repeatable).
+      type: str
+
+EXAMPLES: |
+
+  # can be any item from the list
+  random_item: "{{ ['a','b','c'] | random }}"
+
+  # cron line, select random minute repeatable for each host
+  "{{ 60 | random(seed=inventory_hostname) }} * * * * root /script/from/cron"
+
+RETURN:
+  _value:
+    description: Random number or list element.
+    type: raw

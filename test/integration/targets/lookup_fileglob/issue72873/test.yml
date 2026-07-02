@@ -5,7 +5,7 @@
      dir: files
   tasks:
   - file: path='{{ dir }}' state=directory
-  
+
   - file: path='setvars.bat' state=touch  # in current directory!
 
   - file: path='{{ dir }}/{{ item }}' state=touch
@@ -20,11 +20,11 @@
 
   - name: Get working order results and sort them
     set_fact:
-        working: '{{ query("fileglob", "setvars.bat", "{{ dir }}/*.[ch]") | sort }}'
+        working: '{{ query("fileglob", "setvars.bat", dir ~ "/*.[ch]") | sort }}'
 
   - name: Get broken order results and sort them
     set_fact:
-        broken: '{{ query("fileglob", "{{ dir }}/*.[ch]", "setvars.bat") | sort }}'
+        broken: '{{ query("fileglob", dir ~ "/*.[ch]", "setvars.bat") | sort }}'
 
   - assert:
       that:

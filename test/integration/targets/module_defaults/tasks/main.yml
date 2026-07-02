@@ -3,23 +3,30 @@
     test_file: /tmp/ansible-test.module_defaults.foo
   module_defaults:
     debug:
-      msg: test default
+      msg: test {{ "default" }}
     file:
       path: '{{ test_file }}'
   block:
     - debug:
       register: foo
 
+    - local_action:
+        module: debug
+      register: local_action_foo
+
     - name: test that 'debug' task used default 'msg' param
       assert:
-        that: foo.msg == "test default"
+        that:
+          - foo.msg == "test default"
+          - local_action_foo.msg == "test default"
 
     - name: remove test file
       file:
         state: absent
 
     - name: touch test file
-      file:
+      local_action:
+        module: file
         state: touch
 
     - name: stat test file
@@ -68,7 +75,7 @@
 
       - assert:
           that:
-            foo.msg == "Hello world!"
+            foo.msg == "Hello overridden world!"
 
     - name: test that module defaults can be overridden by module params
       block:
@@ -80,10 +87,15 @@
           that:
             foo.msg == "another test message"
 
-      - debug:
-          msg: '{{ omit }}'
-        register: foo
+- name: ensure that untemplate-able module_defaults breaks task templating
+  module_defaults:
+    ansible.builtin.ping:
+      data: '{{ busted_invalid_var }}'
+  ansible.builtin.ping:  # debug was chosen because it ignores failures during task templating; this ensures the expected failure comes from task templating of module_defaults
+  ignore_errors: true
+  register: result
 
-      - assert:
-          that:
-            foo.msg == "Hello world!"
+- assert:
+    that:
+      - result is failed
+      - result.msg is contains("'busted_invalid_var' is undefined")

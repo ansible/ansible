@@ -1,3 +1,0 @@
-minor_changes:
-  - ansible - At startup the stdin/stdout/stderr file handles are checked to verify they are using blocking IO.
-              If not, the process exits with an error reporting which file handle(s) are using non-blocking IO.

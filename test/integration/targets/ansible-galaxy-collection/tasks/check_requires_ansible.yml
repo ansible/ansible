@@ -1,0 +1,138 @@
+- environment:
+    ANSIBLE_NOCOLOR: True
+    ANSIBLE_FORCE_COLOR: false
+  vars:
+    test_base_dir: "{{ [remote_tmp_dir, 'requires_ansible_' ~ subcommand] | path_join }}"
+    temp1: "{{ [test_base_dir, 'collections'] | path_join }}"
+    temp2: "{{ [test_base_dir, 'other_collections'] | path_join }}"
+    install_or_download: "ansible-galaxy collection {{ subcommand }}{{ (subcommand == 'install') | ternary(' --force-with-deps', '')}}"
+    failed_error: |
+        \[ERROR\]: Failed to resolve the requested dependencies map\. Could not satisfy the following requirements:
+        \* ns_requires_ansible\.name_requires_ansible:1\.0\.0 \(direct request\) requires ansible-core <1\.1
+    hint: >-
+        Hint: To disregard whether the collection supports the current version
+        of ansible-core, configure COLLECTIONS_ON_ANSIBLE_VERSION_MISMATCH as "ignore"
+    undocumented_warning: >-
+      \[WARNING\]: ns_requires_ansible\.name_requires_ansible:.* does not have requires_ansible metadata.
+  block:
+  - name: "{{ subcommand }} incompatible collection"
+    command: "{{ install_or_download }} -p {{ temp1 }} ns_requires_ansible.name_requires_ansible"
+    register: expected_fail
+    failed_when: expected_fail is success
+
+  - assert:
+      that:
+        - expected_fail.stderr is search(failed_error, multiline=True)
+        - expected_fail.stderr is search(hint)
+
+  - name: "{{ subcommand }} specific version of incompatible collection"
+    command: "{{ install_or_download }} -p {{ temp1 }} 'ns_requires_ansible.name_requires_ansible:1.0.0'"
+    register: expected_fail
+    failed_when: expected_fail is success
+
+  - assert:
+      that:
+        - expected_fail.stderr is search(failed_error, multiline=True)
+        - expected_fail.stderr is search(hint)
+
+  - name: Download incompatible tarfile for tarfile tests
+    command: ansible-galaxy collection download -p {{ temp1 }} ns_requires_ansible.name_requires_ansible
+    environment:
+      ANSIBLE_COLLECTIONS_ON_ANSIBLE_VERSION_MISMATCH: ignore
+
+  - name: "{{ subcommand }} incompatible tarfile"
+    command: "{{ install_or_download }} -p {{ temp2 }} {{ temp1 }}/ns_requires_ansible-name_requires_ansible-1.0.0.tar.gz"
+    register: expected_fail
+    failed_when: expected_fail is success
+
+  - assert:
+      that:
+        - expected_fail.stderr is search(failed_error, multiline=True)
+        - expected_fail.stderr is search(hint)
+
+  - name: "{{ subcommand }} tarfile and allow mismatched version"
+    command: "{{ install_or_download }} -p {{ temp2 }} {{ temp1 }}/ns_requires_ansible-name_requires_ansible-1.0.0.tar.gz"
+    environment:
+      ANSIBLE_COLLECTIONS_ON_ANSIBLE_VERSION_MISMATCH: ignore
+
+  - name: setup - {{ subcommand }} build directory
+    block:
+      - name: setup - init collection build directory
+        command: ansible-galaxy collection init ns_requires_ansible.name_requires_ansible --init-path {{ temp2 }}/ansible_collections
+
+      - name: setup - add  requires_ansible in the runtime file
+        shell: >-
+          echo 'requires_ansible: "<1.1"' > {{ temp2 }}/ansible_collections/ns_requires_ansible/name_requires_ansible/meta/runtime.yml
+    when: subcommand == 'download'
+
+  - name: "{{ subcommand }} incompatible directory"
+    command: "{{ install_or_download }} -p {{ temp1 }} {{ temp2 }}/ansible_collections/ns_requires_ansible/name_requires_ansible"
+    register: expected_fail
+    failed_when: expected_fail is success
+
+  - assert:
+      that:
+        - expected_fail.stderr is search(failed_error, multiline=True)
+        - expected_fail.stderr is search(hint)
+
+  - name: "{{ subcommand }} directory and allow mismatched version"
+    command: "{{ install_or_download }} -p {{ temp1 }} {{ temp2 }}/ansible_collections/ns_requires_ansible/name_requires_ansible"
+    environment:
+      ANSIBLE_COLLECTIONS_ON_ANSIBLE_VERSION_MISMATCH: ignore
+
+  - name: setup - {{ subcommand }} remove requires_ansible metadata
+    file:
+      path: "{{ temp2 }}/ansible_collections/ns_requires_ansible/name_requires_ansible/meta/runtime.yml"
+      state: absent
+
+  - name: "{{ subcommand }} directory with undocumented, optional requires_ansible metadata"
+    command: "{{ install_or_download }} -p {{ temp1 }} {{ temp2 }}/ansible_collections/ns_requires_ansible/name_requires_ansible"
+    register: expected_success
+
+  - assert:
+      that:
+        - expected_success.stderr is search(undocumented_warning)
+
+  - name: "{{ subcommand }} collection with incompatible dependency"
+    command: "{{ install_or_download }} -p {{ temp1 }} 'ns_requires_ansible.dependency:2.0.0'"
+    register: expected_error
+    failed_when: expected_error is not failed
+
+  - assert:
+      that:
+        - expected_error.stderr is search(expected_message, multiline=True)
+    vars:
+      expected_message: |
+        \[ERROR\]: Failed to resolve the requested dependencies map\. Could not satisfy the following requirements:
+        \* ns_requires_ansible\.name_requires_ansible:1\.0\.0 \(dependency of ns_requires_ansible\.dependency:2\.0\.0\) requires ansible-core <1\.1
+
+  - name: "{{ subcommand }} collection version without incompatible dependency"
+    command: "{{ install_or_download }} -p {{ temp1 }} ns_requires_ansible.dependency"
+    register: expected_success
+
+  - assert:
+      that:
+        - expected_success.stdout is search(expected_message)
+    vars:
+      expected_message: >-
+        '?ns_requires_ansible\.dependency:1\.0\.0'? was {{ subcommand }}ed successfully
+
+  - name: "{{ subcommand }} collection with unsuccessful backtracking"
+    command: "{{ install_or_download }} ns_requires_ansible.backtracking_error"
+    register: expected_fail
+    failed_when: expected_fail is success
+
+  - assert:
+      that:
+        - expected_fail.stderr is search(expected_message, multiline=True)
+        - expected_fail.stderr is search(hint)
+    vars:
+      expected_message: |
+        \[ERROR\]: Failed to resolve the requested dependencies map\. Could not satisfy the following requirements:
+        \* ns_requires_ansible\.name_requires_ansible:1\.0\.0 \(dependency of ns_requires_ansible\.dependency_incompat:1\.0\.0\) requires ansible-core <1\.1
+
+  always:
+  - name: Clean up test dir
+    file:
+      path: "{{ test_base_dir }}"
+      state: absent

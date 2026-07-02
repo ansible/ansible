@@ -1,24 +1,14 @@
-- name: use Debian mirror
-  set_fact:
-    distro_mirror: http://ftp.debian.org/debian
-  when: ansible_distribution == 'Debian'
-
-- name: use Ubuntu mirror
-  set_fact:
-    distro_mirror: http://archive.ubuntu.com/ubuntu
-  when: ansible_distribution == 'Ubuntu'
-
-# UNINSTALL 'python-apt'
-#  The `apt` module has the smarts to auto-install `python-apt(3)`.  To test, we
-#  will first uninstall `python-apt`.
-- name: uninstall python-apt with apt
+# UNINSTALL 'python3-apt'
+#  The `apt` module has the smarts to auto-install `python3-apt`.  To test, we
+#  will first uninstall `python3-apt`.
+- name: uninstall python3-apt with apt
   apt:
-    pkg: [python-apt, python3-apt]
+    pkg: python3-apt
     state: absent
     purge: yes
   register: apt_result
 
-# In check mode, auto-install of `python-apt` must fail
+# In check mode, auto-install of `python3-apt` must fail
 - name: test fail uninstall hello without required apt deps in check mode
   apt:
     pkg: hello
@@ -32,12 +22,24 @@
   assert:
     that:
     - apt_result is failed
-    - '"If run normally this module can auto-install it." in apt_result.msg'
+    - '"If run normally this module can auto-install it" in apt_result.msg'
 
 - name: check with dpkg
-  shell: dpkg -s python-apt python3-apt
+  shell: dpkg -s python3-apt
   register: dpkg_result
   ignore_errors: true
+
+- name: Test the auto_install_module_deps option
+  apt:
+    pkg: hello
+    auto_install_module_deps: false
+  register: r
+  ignore_errors: true
+
+- assert:
+    that:
+      - r is failed
+      - r.msg is contains("Could not import the python3-apt module")
 
 # UNINSTALL 'hello'
 #   With 'python-apt' uninstalled, the first call to 'apt' should install
@@ -83,11 +85,25 @@
       - apt_install_fnmatch is changed
       - apt_uninstall_fnmatch is changed
 
+- name: Test update_cache 1 (check mode)
+  apt:
+    update_cache: true
+    cache_valid_time: 10
+  register: apt_update_cache_1_check_mode
+  check_mode: true
+
 - name: Test update_cache 1
   apt:
     update_cache: true
     cache_valid_time: 10
   register: apt_update_cache_1
+
+- name: Test update_cache 2 (check mode)
+  apt:
+    update_cache: true
+    cache_valid_time: 10
+  register: apt_update_cache_2_check_mode
+  check_mode: true
 
 - name: Test update_cache 2
   apt:
@@ -98,7 +114,9 @@
 - name: verify update_cache
   assert:
     that:
+      - apt_update_cache_1_check_mode is changed
       - apt_update_cache_1 is changed
+      - apt_update_cache_2_check_mode is not changed
       - apt_update_cache_2 is not changed
 
 - name: uninstall apt bindings with apt again
@@ -203,6 +221,146 @@
 - name: uninstall hello with apt
   apt: pkg=hello state=absent purge=yes
 
+### Get the most recent version string of the hello package
+### (It will be used in the subsequent tests)
+- name: Search the apt cache for the hello package
+  shell: apt-cache policy hello | grep Candidate | awk '{print $2}'
+  register: apt_cache_result
+
+- name: Store the latest hello package version string
+  set_fact:
+    hello_version_current: "{{ apt_cache_result.stdout_lines[0] }}"
+
+### Install an exact package version with =
+- name: Install an exact version of the hello package
+  apt:
+    name: "hello={{ hello_version_current }}"
+    state: present
+  register: apt_result
+
+- name: Check hello version install with dpkg
+  shell: dpkg-query -l hello
+  failed_when: no
+  register: dpkg_result
+
+- name: Verify installation of hello
+  assert:
+    that:
+        - "apt_result.changed"
+        - "dpkg_result.rc == 0"
+
+- name: Check hello version
+  shell: dpkg -s hello | grep Version | awk '{print $2}'
+  register: hello_version_installed
+
+- name: Check that the latest version was installed
+  assert:
+    that:
+    - hello_version_installed.stdout_lines[0] == hello_version_current
+
+- name: Uninstall hello with apt
+  apt:
+    name: hello
+    state: absent
+    purge: yes
+
+### Installing an unavailable package version with = must fail
+- name: Try to install an unavailable version of the hello package
+  apt:
+    name: "hello=10"
+    state: present
+  register: apt_result
+  ignore_errors: true
+
+- name: Check hello version install with dpkg
+  shell: dpkg-query -l hello
+  failed_when: no
+  register: dpkg_result
+
+- name: Verify installation of hello
+  assert:
+    that:
+        - apt_result is failed
+        - "not apt_result.changed"
+        - "dpkg_result.rc != 0"
+
+### Install the latest package version with >=
+- name: Install the most recent version of a package with the >= operator
+  apt:
+    name: "hello>={{ hello_version_current }}"
+    state: present
+  register: apt_result
+
+- name: Check hello version install with dpkg
+  shell: dpkg-query -l hello
+  failed_when: no
+  register: dpkg_result
+
+- name: Verify installation of hello
+  assert:
+    that:
+        - "apt_result.changed"
+        - "dpkg_result.rc == 0"
+
+- name: Check hello version
+  shell: dpkg -s hello | grep Version | awk '{print $2}'
+  register: hello_version_installed
+
+- name: Check that the latest version was installed
+  assert:
+    that:
+    - hello_version_installed.stdout_lines[0] == hello_version_current
+
+- name: Uninstall hello with apt
+  apt:
+    name: hello
+    state: absent
+    purge: yes
+
+### Install a more recent package version with >=
+- name: Install some version of a package with the >= operator
+  apt:
+    name: "hello>=1"
+    state: present
+  register: apt_result
+
+- name: Check hello version install with dpkg
+  shell: dpkg-query -l hello
+  failed_when: no
+  register: dpkg_result
+
+- name: Verify installation of hello
+  assert:
+    that:
+        - "apt_result.changed"
+        - "dpkg_result.rc == 0"
+
+- name: Uninstall hello with apt
+  apt:
+    name: hello
+    state: absent
+    purge: yes
+
+### Installing an unavailable package version with >= must fail
+- name: Try to install an unavailable package version with the >= operator
+  apt:
+    name: "hello>=10"
+    state: present
+  register: apt_result
+  ignore_errors: true
+
+- name: Check hello version install with dpkg
+  shell: dpkg-query -l hello
+  failed_when: no
+  register: dpkg_result
+
+- name: Verify installation of hello
+  assert:
+    that:
+        - apt_result is failed
+        - "not apt_result.changed"
+        - "dpkg_result.rc != 0"
+
 # INSTALL WITHOUT REMOVALS
 - name: Install hello, that conflicts with hello-traditional
   apt:
@@ -217,7 +375,6 @@
 - name: verify installation of hello
   assert:
     that:
-        - "apt_result.changed"
         - "dpkg_result.rc == 0"
 
 - name: Try installing hello-traditional, that conflicts with hello
@@ -228,11 +385,17 @@
   ignore_errors: yes
   register: apt_result
 
+- name: hello-traditional was removed in newer versions, but we can build if needed.
+  include_tasks: hello-traditional.yml
+  when:
+    - apt_result is failed
+    - '"No package matching" in apt_result.msg'
+
 - name: verify failure of installing hello-traditional, because it is required to remove hello to install.
   assert:
     that:
       - apt_result is failed
-      - '"Packages need to be removed but remove is disabled." in apt_result.msg'
+      - '"Packages need to be removed but remove is disabled." in apt_result.msg or "Conflicts with the installed package" in apt_result.msg'
 
 - name: uninstall hello with apt
   apt:
@@ -259,7 +422,7 @@
   apt: pkg=hello state=absent purge=yes
 
 - name: install deb file from URL
-  apt: deb="{{ distro_mirror }}/pool/main/h/hello/hello_{{ hello_version.stdout }}_{{ hello_architecture.stdout }}.deb"
+  apt: "deb=https://ci-files.testing.ansible.com/test/integration/targets/apt/hello_{{ hello_old_version }}_{{ hello_architecture.stdout }}.deb"
   register: apt_url
 
 - name: verify installation of hello
@@ -303,16 +466,16 @@
     dest: /etc/apt/sources.list.d/non-existing.list
     content: deb http://ppa.launchpad.net/non-existing trusty main
 
-- name: test for sane error message
+- name: test for logical error message
   apt:
     update_cache: yes
   register: apt_result
   ignore_errors: yes
 
-- name: verify sane error message
+- name: verify logical error message
   assert:
     that:
-      - "'Failed to fetch' in apt_result['msg']"
+      - "'Failed to update apt cache' in apt_result['msg']"
       - "'403' in apt_result['msg']"
 
 - name: Clean up
@@ -356,7 +519,12 @@
       - libcaca-dev
       - libslang2-dev
 
-# https://github.com/ansible/ansible/issues/38995
+# # https://github.com/ansible/ansible/issues/38995
+- name: Make sure that at least one build dependency is missing
+  apt:
+    name: build-essential
+    state: absent
+
 - name: build-dep for a package
   apt:
     name: tree
@@ -440,7 +608,7 @@
 
 # https://github.com/ansible/ansible/issues/65325
 - name: Download and install old version of hello (to test allow_change_held_packages option)
-  apt: "deb=https://ci-files.testing.ansible.com/test/integration/targets/dpkg_selections/hello_{{ hello_old_version }}_amd64.deb"
+  apt: "deb=https://ci-files.testing.ansible.com/test/integration/targets/apt/hello_{{ hello_old_version }}_{{ hello_architecture.stdout }}.deb"
   notify:
     - remove package hello
 
@@ -508,6 +676,55 @@
       - "allow_change_held_packages_no_update is not changed"
       - "allow_change_held_packages_hello_version.stdout == allow_change_held_packages_hello_version_again.stdout"
 
+# Remove pkg on hold
+- name: Put hello on hold
+  shell: apt-mark hold hello
+
+- name: Get hold list
+  shell: apt-mark showhold
+  register: hello_hold
+
+- name: Check that the package hello is on the hold list
+  assert:
+    that:
+      - "'hello' in hello_hold.stdout"
+
+- name: Try removing package hello
+  apt:
+    name: hello
+    state: absent
+  register: package_removed
+  ignore_errors: true
+
+- name: verify the package is not removed with dpkg
+  shell: dpkg -l hello
+  register: dpkg_result
+
+- name: Verify that package was not removed
+  assert:
+    that:
+    - package_removed is failed
+    - dpkg_result is success
+
+- name: Try removing package (allow_change_held_packages=yes)
+  apt:
+    name: hello
+    state: absent
+    allow_change_held_packages: yes
+  register: package_removed
+
+- name: verify the package is removed with dpkg
+  shell: dpkg -l hello
+  register: dpkg_result
+  ignore_errors: true
+
+- name: Verify that package removal was successful
+  assert:
+    that:
+    - package_removed is success
+    - dpkg_result is failed
+    - package_removed.changed
+
 # Virtual package
 - name: Install a virtual package
   apt:
@@ -529,3 +746,26 @@
       - elpa-yaml-mode
     state: absent
     purge: yes
+
+# https://github.com/ansible/ansible/issues/82611
+- name: clean apt cache
+  apt:
+    clean: true
+
+- name: check for /var/cache/apt/pkgcache.bin
+  stat:
+    path: /var/cache/apt/pkgcache.bin
+  register: pkgcache_bin
+
+- name: check for /var/cache/apt/srcpkgcache.bin
+  stat:
+    path: /var/cache/apt/srcpkgcache.bin
+  register: srcpkgcache_bin
+
+- name: verify apt cache files are cleaned
+  assert:
+    that:
+      - not pkgcache_bin.stat.exists
+      - not srcpkgcache_bin.stat.exists
+    fail_msg: "apt cache files still exist."
+    success_msg: "apt cache files are cleaned."

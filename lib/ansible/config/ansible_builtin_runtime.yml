@@ -5,6 +5,10 @@ plugin_routing:
     # test entries
     redirected_local:
       redirect: ansible.builtin.local
+    deprecated_core_connection:
+      deprecation:
+        removal_version: "2.999"
+        warning_text: test connection deprecation warning text
     buildah:
       redirect: containers.podman.buildah
     podman:
@@ -49,6 +53,8 @@ plugin_routing:
       redirect: ansible.netcommon.network_cli
     persistent:
       redirect: ansible.netcommon.persistent
+    smart:
+      redirect: ansible.legacy.ssh
   modules:
     # test entry
     formerly_core_ping:
@@ -56,6 +62,11 @@ plugin_routing:
     # test entry
     uses_redirected_action:
       redirect: ansible.builtin.ping
+    # test entry
+    deprecated_core_module:
+      deprecation:
+        removal_version: '2.999'
+        warning_text: test module deprecation warning text
     podman_container_info:
       redirect: containers.podman.podman_container_info
     podman_image_info:
@@ -2162,7 +2173,7 @@ plugin_routing:
       redirect: community.network.exos_vlans
     bigip_asm_policy:
       tombstone:
-        removal_date: 2019-11-06
+        removal_date: "2019-11-06"
         warning_text: bigip_asm_policy has been removed please use bigip_asm_policy_manage instead.
     bigip_device_facts:
       redirect: f5networks.f5_modules.bigip_device_info
@@ -2176,11 +2187,11 @@ plugin_routing:
       redirect: f5networks.f5_modules.bigip_device_traffic_group
     bigip_facts:
       tombstone:
-        removal_date: 2019-11-06
+        removal_date: "2019-11-06"
         warning_text: bigip_facts has been removed please use bigip_device_info module.
     bigip_gtm_facts:
       tombstone:
-        removal_date: 2019-11-06
+        removal_date: "2019-11-06"
         warning_text: bigip_gtm_facts has been removed please use bigip_device_info module.
     faz_device:
       redirect: community.fortios.faz_device
@@ -2708,6 +2719,14 @@ plugin_routing:
       redirect: community.general.apk
     apt_rpm:
       redirect: community.general.apt_rpm
+    apt_repository:
+      deprecation:
+        removal_version: "2.25"
+        warning_text: Use deb822_repository instead.
+    apt_key:
+      deprecation:
+        removal_version: "2.25"
+        warning_text: Use deb822_repository instead.
     flatpak:
       redirect: community.general.flatpak
     flatpak_remote:
@@ -7641,7 +7660,7 @@ plugin_routing:
       redirect: ngine_io.exoscale.exoscale
     f5_utils:
       tombstone:
-        removal_date: 2019-11-06
+        removal_date: "2019-11-06"
     firewalld:
       redirect: ansible.posix.firewalld
     gcdns:
@@ -9084,6 +9103,12 @@ plugin_routing:
       redirect: dellemc.os6.os6
     vyos:
       redirect: vyos.vyos.vyos
+    include:
+      tombstone:
+        removal_date: "2023-05-16"
+        warning_text: Use include_tasks or import_tasks instead.
+    yum:
+      redirect: ansible.builtin.dnf
   become:
     doas:
       redirect: community.general.doas

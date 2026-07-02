@@ -1,10 +1,13 @@
 """Support code for working without a supported CI provider."""
+
 from __future__ import annotations
 
-import os
+import abc
+import inspect
 import platform
 import random
 import re
+import pathlib
 import typing as t
 
 from ..config import (
@@ -23,11 +26,14 @@ from ..git import (
 from ..util import (
     ApplicationError,
     display,
+    get_subclasses,
     is_binary_file,
     SubprocessError,
 )
 
 from . import (
+    AuthContext,
+    AuthHelper,
     CIProvider,
 )
 
@@ -36,24 +42,25 @@ CODE = ''  # not really a CI provider, so use an empty string for the code
 
 class Local(CIProvider):
     """CI provider implementation when not using CI."""
+
     priority = 1000
 
     @staticmethod
-    def is_supported():  # type: () -> bool
+    def is_supported() -> bool:
         """Return True if this provider is supported in the current running environment."""
         return True
 
     @property
-    def code(self):  # type: () -> str
+    def code(self) -> str:
         """Return a unique code representing this provider."""
         return CODE
 
     @property
-    def name(self):  # type: () -> str
+    def name(self) -> str:
         """Return descriptive name for this provider."""
         return 'Local'
 
-    def generate_resource_prefix(self):  # type: () -> str
+    def generate_resource_prefix(self) -> str:
         """Return a resource prefix specific to this CI provider."""
         prefix = 'ansible-test-%d-%s' % (
             random.randint(10000000, 99999999),
@@ -62,11 +69,11 @@ class Local(CIProvider):
 
         return prefix
 
-    def get_base_branch(self):  # type: () -> str
-        """Return the base branch or an empty string."""
+    def get_base_commit(self, args: CommonConfig) -> str:
+        """Return the base commit or an empty string."""
         return ''
 
-    def detect_changes(self, args):  # type: (TestConfig) -> t.Optional[t.List[str]]
+    def detect_changes(self, args: TestConfig) -> t.Optional[list[str]]:
         """Initialize change detection."""
         result = LocalChanges(args)
 
@@ -116,40 +123,27 @@ class Local(CIProvider):
 
         return sorted(names)
 
-    def supports_core_ci_auth(self):  # type: () -> bool
+    def supports_core_ci_auth(self) -> bool:
         """Return True if Ansible Core CI is supported."""
-        path = self._get_aci_key_path()
-        return os.path.exists(path)
+        return Authenticator.available()
 
-    def prepare_core_ci_auth(self):  # type: () -> t.Dict[str, t.Any]
-        """Return authentication details for Ansible Core CI."""
-        path = self._get_aci_key_path()
-        auth_key = read_text_file(path).strip()
+    def prepare_core_ci_request(self, config: dict[str, object], context: AuthContext) -> dict[str, object]:
+        if not (authenticator := Authenticator.load()):
+            raise ApplicationError('Ansible Core CI authentication has not been configured.')
 
-        request = dict(
-            key=auth_key,
-            nonce=None,
-        )
+        display.info(f'Using {authenticator} for Ansible Core CI.', verbosity=1)
 
-        auth = dict(
-            remote=request,
-        )
+        return authenticator.prepare_auth_request(config, context)
 
-        return auth
-
-    def get_git_details(self, args):  # type: (CommonConfig) -> t.Optional[t.Dict[str, t.Any]]
+    def get_git_details(self, args: CommonConfig) -> t.Optional[dict[str, t.Any]]:
         """Return details about git in the current environment."""
         return None  # not yet implemented for local
-
-    @staticmethod
-    def _get_aci_key_path():  # type: () -> str
-        path = os.path.expanduser('~/.ansible-core-ci.key')
-        return path
 
 
 class InvalidBranch(ApplicationError):
     """Exception for invalid branch specification."""
-    def __init__(self, branch, reason):  # type: (str, str) -> None
+
+    def __init__(self, branch: str, reason: str) -> None:
         message = 'Invalid branch: %s\n%s' % (branch, reason)
 
         super().__init__(message)
@@ -159,7 +153,8 @@ class InvalidBranch(ApplicationError):
 
 class LocalChanges:
     """Change information for local work."""
-    def __init__(self, args):  # type: (TestConfig) -> None
+
+    def __init__(self, args: TestConfig) -> None:
         self.args = args
         self.git = Git()
 
@@ -198,7 +193,7 @@ class LocalChanges:
         # diff of all tracked files from fork point to working copy
         self.diff = self.git.get_diff([self.fork_point])
 
-    def is_official_branch(self, name):  # type: (str) -> bool
+    def is_official_branch(self, name: str) -> bool:
         """Return True if the given branch name an official branch for development or releases."""
         if self.args.base_branch:
             return name == self.args.base_branch
@@ -210,3 +205,95 @@ class LocalChanges:
             return True
 
         return False
+
+
+class Authenticator(metaclass=abc.ABCMeta):
+    """Base class for authenticators."""
+
+    @staticmethod
+    def list() -> list[type[Authenticator]]:
+        """List all authenticators in priority order."""
+        return sorted((sc for sc in get_subclasses(Authenticator) if not inspect.isabstract(sc)), key=lambda obj: obj.priority())
+
+    @staticmethod
+    def load() -> Authenticator | None:
+        """Load an authenticator instance, returning None if not configured."""
+        for implementation in Authenticator.list():
+            if implementation.config_file().exists():
+                return implementation()
+
+        return None
+
+    @staticmethod
+    def available() -> bool:
+        """Return True if an authenticator is available, otherwise False."""
+        return bool(Authenticator.load())
+
+    @classmethod
+    @abc.abstractmethod
+    def priority(cls) -> int:
+        """Priority used to determine which authenticator is tried first, from lowest to highest."""
+
+    @classmethod
+    @abc.abstractmethod
+    def config_file(cls) -> pathlib.Path:
+        """Path to the config file for this authenticator."""
+
+    @abc.abstractmethod
+    def prepare_auth_request(self, config: dict[str, object], context: AuthContext) -> dict[str, object]:
+        """Prepare an authenticated Ansible Core CI request using the given config and context."""
+
+    def __str__(self) -> str:
+        return self.__class__.__name__
+
+
+class PasswordAuthenticator(Authenticator):
+    """Authenticate using a password."""
+
+    @classmethod
+    def priority(cls) -> int:
+        return 200
+
+    @classmethod
+    def config_file(cls) -> pathlib.Path:
+        return pathlib.Path('~/.ansible-core-ci.key').expanduser()
+
+    def prepare_auth_request(self, config: dict[str, object], context: AuthContext) -> dict[str, object]:
+        parts = self.config_file().read_text().strip().split(maxsplit=1)
+        username, password = parts
+
+        request: dict[str, object] = dict(
+            type="remote:password",
+            config=config,
+            username=username,
+            password=password,
+        )
+
+        return request
+
+
+class SshAuthenticator(Authenticator):
+    """Authenticate using an SSH key."""
+
+    @classmethod
+    def priority(cls) -> int:
+        return 100
+
+    @classmethod
+    def config_file(cls) -> pathlib.Path:
+        return pathlib.Path('~/.ansible-core-ci.auth').expanduser()
+
+    def prepare_auth_request(self, config: dict[str, object], context: AuthContext) -> dict[str, object]:
+        parts = self.config_file().read_text().strip().split(maxsplit=1)
+        username, key_file = parts
+
+        request: dict[str, object] = dict(
+            type="remote:ssh",
+            config=config,
+            username=username,
+        )
+
+        auth_helper = AuthHelper(pathlib.Path(key_file).expanduser())
+        auth_helper.sign_request(request, context)
+
+        return request

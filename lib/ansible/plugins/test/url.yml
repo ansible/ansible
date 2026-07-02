@@ -2,7 +2,7 @@ DOCUMENTATION:
   name: url
   author: Ansible Core
   version_added: "2.14"
-  short_description: check if string is a valid URL
+  short_description: is the string a valid URL
   description:
     - Validates a string to conform to the URL standard.
   options:
@@ -25,5 +25,5 @@ EXAMPLES: |
   {{ 'ftp://admin:secret@example.com/path/to/myfile.yml' is url }}
 RETURN:
   _value:
-    description: Returns C(false) if the string is not a URL, C(true) otherwise.
+    description: Returns V(false) if the string is not a URL, V(true) otherwise.
     type: boolean

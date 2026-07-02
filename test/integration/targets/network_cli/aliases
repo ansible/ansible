@@ -1,3 +1,0 @@
-# Keeping incidental for efficiency, to avoid spinning up another VM
-shippable/vyos/incidental
-network/vyos

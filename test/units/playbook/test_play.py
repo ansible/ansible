@@ -15,14 +15,11 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import pytest
 
 from ansible.errors import AnsibleAssertionError, AnsibleParserError
-from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
 from ansible.playbook.block import Block
 from ansible.playbook.play import Play
 from ansible.playbook.role import Role
@@ -31,18 +28,9 @@ from ansible.playbook.task import Task
 from units.mock.loader import DictDataLoader
 
 
-def test_empty_play():
-    p = Play.load({})
-
-    assert str(p) == ''
-
-
 def test_play_with_hosts_string():
     p = Play.load({'hosts': 'foo'})
 
-    assert str(p) == 'foo'
-
-    # Test the caching since self.name should be set by previous call.
     assert p.get_name() == 'foo'
 
 
@@ -228,7 +216,6 @@ def test_play_none_hosts(value):
         True,
         1,
         1.75,
-        AnsibleVaultEncryptedUnicode('secret'),
     )
 )
 def test_play_invalid_hosts_sequence(value):
@@ -244,7 +231,6 @@ def test_play_invalid_hosts_sequence(value):
         [set((None, 'one'))],
         ['one', 'two', {'three': None}],
         ['one', 'two', {'three': 'four'}],
-        [AnsibleVaultEncryptedUnicode('secret')],
     )
 )
 def test_play_invalid_hosts_value(value):

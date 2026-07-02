@@ -1,18 +1,4 @@
-- name: Ensure hostname doesn't confuse NetworkManager
-  when: ansible_os_family == 'RedHat' and ansible_distribution_major_version is version('8')
-  block:
-    - name: slurp /var/log/messages
-      slurp:
-        path: /var/log/messages
-      become: yes
-      register: messages_before
-
-    - assert:
-        that:
-          - >
-            'current hostname was changed outside NetworkManager' not in messages_before.content|b64decode
-
-- name: Run hostname module for real now
+- name: Run hostname module
   become: 'yes'
   hostname:
     name: crocodile.ansible.test.doesthiswork.net.example.com
@@ -21,20 +7,6 @@
 - name: Get hostname
   command: hostname
   register: current_after_hn2
-
-- name: Ensure hostname doesn't confuse NetworkManager
-  when: ansible_os_family == 'RedHat' and ansible_distribution_major_version is version('8')
-  block:
-    - name: slurp /var/log/messages
-      slurp:
-        path: /var/log/messages
-      become: yes
-      register: messages_after
-
-    - assert:
-        that:
-          - >
-            'current hostname was changed outside NetworkManager' not in messages_after.content|b64decode
 
 - name: Run hostname again to ensure it does not change
   become: 'yes'

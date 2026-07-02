@@ -1,0 +1,2 @@
+bugfixes:
+  - basic.py - Fix typo in deprecation message for use of the ``get_platform`` function.

@@ -1,0 +1,16 @@
+- hosts: A,B
+  gather_facts: false
+  force_handlers: true
+  tasks:
+    - fail:
+      when: inventory_hostname == "A"
+
+    - run_once: true
+      block:
+        - debug:
+            msg: task1
+        - debug:
+            msg: task2
+
+    - debug:
+        msg: hosts_left

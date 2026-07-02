@@ -220,7 +220,7 @@ Function Extract-ZipLegacy($src, $dest) {
             #  -    4: do not display a progress dialog box
             $dest_path.CopyHere($entry, 1044)
 
-            # once file is extraced, we need to rename it with non base64 name
+            # once file is extracted, we need to rename it with non base64 name
             $combined_encoded_path = [System.IO.Path]::Combine($dest, $encoded_archive_entry)
             Move-Item -LiteralPath $combined_encoded_path -Destination $entry_target_path -Force | Out-Null
         }

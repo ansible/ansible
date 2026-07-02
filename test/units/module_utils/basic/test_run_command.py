@@ -2,19 +2,15 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-import errno
+import selectors
 from itertools import product
 from io import BytesIO
 
 import pytest
 
-from ansible.module_utils._text import to_native
-from ansible.module_utils.six import PY2
-from ansible.module_utils.compat import selectors
+from ansible.module_utils.common.text.converters import to_native
 
 
 class OpenBytesIO(BytesIO):
@@ -29,10 +25,6 @@ class OpenBytesIO(BytesIO):
 
 @pytest.fixture
 def mock_os(mocker):
-    def mock_os_chdir(path):
-        if path == '/inaccessible':
-            raise OSError(errno.EPERM, "Permission denied: '/inaccessible'")
-
     def mock_os_abspath(path):
         if path.startswith('/'):
             return path
@@ -46,15 +38,9 @@ def mock_os(mocker):
     os.environ = {'PATH': '/bin'}
     os.getcwd.return_value = '/home/foo'
     os.path.isdir.return_value = True
-    os.chdir.side_effect = mock_os_chdir
     os.path.abspath.side_effect = mock_os_abspath
 
     yield os
-
-
-class DummyFileObj():
-    def __init__(self, fileobj):
-        self.fileobj = fileobj
 
 
 class SpecialBytesIO(BytesIO):
@@ -109,7 +95,7 @@ def mock_subprocess(mocker):
             super(MockSelector, self).close()
             self._file_objs = []
 
-    selectors.DefaultSelector = MockSelector
+    selectors.PollSelector = MockSelector
 
     subprocess = mocker.patch('ansible.module_utils.basic.subprocess')
     subprocess._output = {mocker.sentinel.stdout: SpecialBytesIO(b'', fh=mocker.sentinel.stdout),
@@ -140,8 +126,6 @@ class TestRunCommandArgs:
                 ('/bin/ls a " b" "c "', [b'/bin/ls', b'a', b' b', b'c '], b'/bin/ls a " b" "c "'),
     )
 
-    # pylint bug: https://github.com/PyCQA/pylint/issues/511
-    # pylint: disable=undefined-variable
     @pytest.mark.parametrize('cmd, expected, shell, stdin',
                              ((arg, cmd_str if sh else cmd_lst, sh, {})
                               for (arg, cmd_lst, cmd_str), sh in product(ARGS_DATA, (True, False))),
@@ -194,7 +178,7 @@ class TestRunCommandPrompt:
     @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
     def test_prompt_no_match(self, mocker, rc_am):
         rc_am._os._cmd_out[mocker.sentinel.stdout] = BytesIO(b'hello')
-        (rc, _, _) = rc_am.run_command('foo', prompt_regex='[pP]assword:')
+        (rc, stdout, stderr) = rc_am.run_command('foo', prompt_regex='[pP]assword:')
         assert rc == 0
 
     @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
@@ -204,7 +188,7 @@ class TestRunCommandPrompt:
                                                     fh=mocker.sentinel.stdout),
                                      mocker.sentinel.stderr:
                                      SpecialBytesIO(b'', fh=mocker.sentinel.stderr)}
-        (rc, _, _) = rc_am.run_command('foo', prompt_regex=r'[pP]assword:', data=None)
+        (rc, stdout, stderr) = rc_am.run_command('foo', prompt_regex=r'[pP]assword:', data=None)
         assert rc == 257
 
 
@@ -212,7 +196,7 @@ class TestRunCommandRc:
     @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
     def test_check_rc_false(self, rc_am):
         rc_am._subprocess.Popen.return_value.returncode = 1
-        (rc, _, _) = rc_am.run_command('/bin/false', check_rc=False)
+        (rc, stdout, stderr) = rc_am.run_command('/bin/false', check_rc=False)
         assert rc == 1
 
     @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
@@ -269,10 +253,83 @@ def test_run_command_fds(mocker, rc_am):
     except SystemExit:
         pass
 
-    if PY2:
-        assert subprocess_mock.Popen.call_args[1]['close_fds'] is False
-        assert 'pass_fds' not in subprocess_mock.Popen.call_args[1]
+    assert subprocess_mock.Popen.call_args[1]['pass_fds'] == (101, 42)
+    assert subprocess_mock.Popen.call_args[1]['close_fds'] is True
 
-    else:
-        assert subprocess_mock.Popen.call_args[1]['pass_fds'] == (101, 42)
-        assert subprocess_mock.Popen.call_args[1]['close_fds'] is True
+
+class TestRunCommandNoneRead:
+    """
+    Test handling of read() returning None from non-blocking pipes.
+
+    This tests the fix for issue #86920 where read() can return None
+    in certain edge cases with non-blocking I/O, which would cause
+    TypeError when trying to concatenate None to bytes.
+    """
+
+    class NoneReturningBytesIO(SpecialBytesIO):
+        """
+        BytesIO that returns None on first read, then actual data.
+
+        This simulates edge cases where non-blocking read() returns None
+        to indicate "no data available right now" rather than empty bytes.
+        """
+
+        def __init__(self, *args, **kwargs):
+            # Pop 'data' before calling super().__init__() since BytesIO doesn't accept it
+            self.data = kwargs.pop('data', b'test output')
+            self.read_count = 0
+            super(TestRunCommandNoneRead.NoneReturningBytesIO, self).__init__(*args, **kwargs)
+
+        def read(self, size=-1):
+            self.read_count += 1
+            if self.read_count == 1:
+                # First read returns None (no data available)
+                return None
+            elif self.read_count == 2:
+                # Second read returns actual data
+                return self.data
+            else:
+                # Subsequent reads return empty bytes (EOF)
+                return b''
+
+    @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
+    def test_none_from_stdout_read(self, mocker, rc_am):
+        """Test that None returned from stdout.read() doesn't cause TypeError."""
+        rc_am._subprocess._output = {
+            mocker.sentinel.stdout:
+                self.NoneReturningBytesIO(fh=mocker.sentinel.stdout, data=b'command output'),
+            mocker.sentinel.stderr:
+                SpecialBytesIO(b'', fh=mocker.sentinel.stderr)
+        }
+        (rc, stdout, stderr) = rc_am.run_command('/bin/test')
+        assert rc == 0
+        assert stdout == 'command output'
+        assert stderr == ''
+
+    @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
+    def test_none_from_stderr_read(self, mocker, rc_am):
+        """Test that None returned from stderr.read() doesn't cause TypeError."""
+        rc_am._subprocess._output = {
+            mocker.sentinel.stdout:
+                SpecialBytesIO(b'', fh=mocker.sentinel.stdout),
+            mocker.sentinel.stderr:
+                self.NoneReturningBytesIO(fh=mocker.sentinel.stderr, data=b'error output')
+        }
+        (rc, stdout, stderr) = rc_am.run_command('/bin/test')
+        assert rc == 0
+        assert stdout == ''
+        assert stderr == 'error output'
+
+    @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
+    def test_none_from_both_pipes(self, mocker, rc_am):
+        """Test that None returned from both pipes doesn't cause TypeError."""
+        rc_am._subprocess._output = {
+            mocker.sentinel.stdout:
+                self.NoneReturningBytesIO(fh=mocker.sentinel.stdout, data=b'stdout data'),
+            mocker.sentinel.stderr:
+                self.NoneReturningBytesIO(fh=mocker.sentinel.stderr, data=b'stderr data')
+        }
+        (rc, stdout, stderr) = rc_am.run_command('/bin/test')
+        assert rc == 0
+        assert stdout == 'stdout data'
+        assert stderr == 'stderr data'

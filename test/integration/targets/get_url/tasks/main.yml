@@ -1,20 +1,6 @@
 # Test code for the get_url module
 # (c) 2014, Richard Isaacson <richard.c.isaacson@gmail.com>
-
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <https://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 - name: Determine if python looks like it will support modern ssl features like SNI
   command: "{{ ansible_python.executable }} -c 'from ssl import SSLContext'"
@@ -332,13 +318,13 @@
 
 - name: create src file
   copy:
-    dest: '{{ files_dir }}/27617.txt'
+    dest: '{{ files_dir }}/{{ item }}.txt'
     content: "ptux"
-
-- name: create duplicate src file
-  copy:
-    dest: '{{ files_dir }}/71420.txt'
-    content: "ptux"
+  loop:
+    - 27617
+    - 71420
+    - 86132
+    - 86132_single_space
 
 - name: create sha1 checksum file of src
   copy:
@@ -346,6 +332,8 @@
     content: |
       a97e6837f60cec6da4491bab387296bbcd72bdba  27617.txt
       a97e6837f60cec6da4491bab387296bbcd72bdba  71420.txt
+      a97e6837f60cec6da4491bab387296bbcd72bdba       86132.txt
+      a97e6837f60cec6da4491bab387296bbcd72bdba 86132_single_space.txt
       3911340502960ca33aece01129234460bfeb2791  not_target1.txt
       1b4b6adf30992cedb0f6edefd6478ff0a593b2e4  not_target2.txt
 
@@ -355,6 +343,8 @@
     content: |
       b1b6ce5073c8fac263a8fc5edfffdbd5dec1980c784e09c5bc69f8fb6056f006.  27617.txt
       b1b6ce5073c8fac263a8fc5edfffdbd5dec1980c784e09c5bc69f8fb6056f006.  71420.txt
+      b1b6ce5073c8fac263a8fc5edfffdbd5dec1980c784e09c5bc69f8fb6056f006.     86132.txt
+      b1b6ce5073c8fac263a8fc5edfffdbd5dec1980c784e09c5bc69f8fb6056f006. 86132_single_space.txt
       30949cc401e30ac494d695ab8764a9f76aae17c5d73c67f65e9b558f47eff892  not_target1.txt
       d0dbfc1945bc83bf6606b770e442035f2c4e15c886ee0c22fb3901ba19900b5b  not_target2.txt
 
@@ -364,6 +354,8 @@
     content: |
       b1b6ce5073c8fac263a8fc5edfffdbd5dec1980c784e09c5bc69f8fb6056f006.  ./27617.txt
       b1b6ce5073c8fac263a8fc5edfffdbd5dec1980c784e09c5bc69f8fb6056f006.  ./71420.txt
+      b1b6ce5073c8fac263a8fc5edfffdbd5dec1980c784e09c5bc69f8fb6056f006.     ./86132.txt
+      b1b6ce5073c8fac263a8fc5edfffdbd5dec1980c784e09c5bc69f8fb6056f006. ./86132_single_space.txt
       30949cc401e30ac494d695ab8764a9f76aae17c5d73c67f65e9b558f47eff892  ./not_target1.txt
       d0dbfc1945bc83bf6606b770e442035f2c4e15c886ee0c22fb3901ba19900b5b  ./not_target2.txt
 
@@ -373,8 +365,19 @@
     content: |
       b1b6ce5073c8fac263a8fc5edfffdbd5dec1980c784e09c5bc69f8fb6056f006. *27617.txt
       b1b6ce5073c8fac263a8fc5edfffdbd5dec1980c784e09c5bc69f8fb6056f006. *71420.txt
+      b1b6ce5073c8fac263a8fc5edfffdbd5dec1980c784e09c5bc69f8fb6056f006.    *86132.txt
+      b1b6ce5073c8fac263a8fc5edfffdbd5dec1980c784e09c5bc69f8fb6056f006. *86132_single_space.txt
       30949cc401e30ac494d695ab8764a9f76aae17c5d73c67f65e9b558f47eff892 *not_target1.txt
       d0dbfc1945bc83bf6606b770e442035f2c4e15c886ee0c22fb3901ba19900b5b *not_target2.txt
+
+- name: create sha256 checksum file of src in BSD-style checksum (--tag)
+  copy:
+    dest: '{{ files_dir }}/sha256sum_bsd_style.txt'
+    content: |
+      SHA256 (27617.txt) = b1b6ce5073c8fac263a8fc5edfffdbd5dec1980c784e09c5bc69f8fb6056f006.
+      SHA256 (71420.txt) = b1b6ce5073c8fac263a8fc5edfffdbd5dec1980c784e09c5bc69f8fb6056f006.
+      SHA256 (not_target1.txt) = 30949cc401e30ac494d695ab8764a9f76aae17c5d73c67f65e9b558f47eff892
+      SHA256 (not_target2.txt) = d0dbfc1945bc83bf6606b770e442035f2c4e15c886ee0c22fb3901ba19900b5b
 
 # completing 27617 with bug 54390
 - name: create sha256 checksum only with no filename inside
@@ -387,6 +390,8 @@
     src: "testserver.py"
     dest: "{{ remote_tmp_dir }}/testserver.py"
 
+# NOTE: This http test server will live for only the timeout specified in "async", so all uses
+# of it must be grouped relatively close together.
 - name: start SimpleHTTPServer for issues 27617
   shell: cd {{ files_dir }} && {{ ansible_python.executable }} {{ remote_tmp_dir}}/testserver.py {{ http_port }}
   async: 90
@@ -397,6 +402,8 @@
     host: 'localhost'
     port: '{{ http_port }}'
     state: started
+
+- include_tasks: hashlib.yml
 
 - name: download src with sha1 checksum url in check mode
   get_url:
@@ -460,6 +467,17 @@
 - stat:
     path: "{{ remote_tmp_dir }}/27617sha256_with_dot.txt"
   register: stat_result_sha256_with_file_scheme
+
+- name: download src with sha256 checksum url with BSD style checksum
+  get_url:
+    url: 'http://localhost:{{ http_port }}/27617.txt'
+    dest: '{{ remote_tmp_dir }}/27617sha256_with_bsd_style.txt'
+    checksum: 'sha256:file://{{ files_dir }}/sha256sum_bsd_style.txt'
+  register: result_sha256_with_bsd_style
+
+- stat:
+    path: "{{ remote_tmp_dir }}/27617sha256_with_bsd_style.txt"
+  register: stat_result_sha256_with_bsd_style
 
 - name: download 71420.txt with sha1 checksum url
   get_url:
@@ -527,6 +545,61 @@
     path: "{{ remote_tmp_dir }}/27617.txt"
   register: stat_result_sha256_checksum_only
 
+- name: download 86132.txt with sha1 checksum url
+  get_url:
+    url: 'http://localhost:{{ http_port }}/86132.txt'
+    dest: '{{ remote_tmp_dir }}'
+    checksum: 'sha1:http://localhost:{{ http_port }}/sha1sum.txt'
+  register: result_sha1_86132
+
+- stat:
+    path: "{{ remote_tmp_dir }}/86132.txt"
+  register: stat_result_sha1_86132
+
+- name: download 86132.txt with sha256 checksum url
+  get_url:
+    url: 'http://localhost:{{ http_port }}/86132.txt'
+    dest: '{{ remote_tmp_dir }}/86132sha256.txt'
+    checksum: 'sha256:http://localhost:{{ http_port }}/sha256sum.txt'
+  register: result_sha256_86132
+
+- stat:
+    path: "{{ remote_tmp_dir }}/86132.txt"
+  register: stat_result_sha256_86132
+
+- name: download 86132.txt with sha256 checksum url with dot leading paths
+  get_url:
+    url: 'http://localhost:{{ http_port }}/86132.txt'
+    dest: '{{ remote_tmp_dir }}/86132sha256_with_dot.txt'
+    checksum: 'sha256:http://localhost:{{ http_port }}/sha256sum_with_dot.txt'
+  register: result_sha256_with_dot_86132
+
+- stat:
+    path: "{{ remote_tmp_dir }}/86132sha256_with_dot.txt"
+  register: stat_result_sha256_with_dot_86132
+
+- name: download 86132.txt with sha256 checksum url with asterisk leading paths
+  get_url:
+    url: 'http://localhost:{{ http_port }}/86132.txt'
+    dest: '{{ remote_tmp_dir }}/86132sha256_with_asterisk.txt'
+    checksum: 'sha256:http://localhost:{{ http_port }}/sha256sum_with_asterisk.txt'
+  register: result_sha256_with_asterisk_86132
+
+- stat:
+    path: "{{ remote_tmp_dir }}/86132sha256_with_asterisk.txt"
+  register: stat_result_sha256_with_asterisk_86132
+
+- name: download 86132_single_space.txt with sha256 checksum url
+  get_url:
+    url: 'http://localhost:{{ http_port }}/86132_single_space.txt'
+    dest: '{{ remote_tmp_dir }}/86132_single_space.txt'
+    checksum: 'sha256:http://localhost:{{ http_port }}/sha256sum.txt'
+  register: result_sha256_86132_single_space
+
+- stat:
+    path: "{{ remote_tmp_dir }}/86132_single_space.txt"
+  register: stat_result_sha256_86132_single_space
+
 - name: Assert that the file was downloaded
   assert:
     that:
@@ -536,11 +609,13 @@
       - result_sha256_with_dot is changed
       - result_sha256_with_asterisk is changed
       - result_sha256_with_file_scheme is changed
+      - result_sha256_with_bsd_style is changed
       - "stat_result_sha1.stat.exists == true"
       - "stat_result_sha256.stat.exists == true"
       - "stat_result_sha256_with_dot.stat.exists == true"
       - "stat_result_sha256_with_asterisk.stat.exists == true"
       - "stat_result_sha256_with_file_scheme.stat.exists == true"
+      - stat_result_sha256_with_bsd_style.stat.exists
       - result_sha1_71420 is changed
       - result_sha256_71420 is changed
       - result_sha256_with_dot_71420 is changed
@@ -553,6 +628,29 @@
       - "stat_result_sha256_with_asterisk_71420.stat.exists == true"
       - "stat_result_sha256_with_file_scheme_71420.stat.exists == true"
       - "stat_result_sha256_checksum_only.stat.exists == true"
+      - result_sha1_86132 is changed
+      - result_sha256_86132 is changed
+      - result_sha256_with_dot_86132 is changed
+      - result_sha256_with_asterisk_86132 is changed
+      - "stat_result_sha1_86132.stat.exists == true"
+      - "stat_result_sha256_86132.stat.exists == true"
+      - "stat_result_sha256_with_dot_86132.stat.exists == true"
+      - "stat_result_sha256_with_asterisk_86132.stat.exists == true"
+      - result_sha256_86132_single_space is changed
+      - "stat_result_sha256_86132_single_space.stat.exists == true"
+
+- name: Test for incomplete data read (issue 85164)
+  get_url:
+    url: 'http://localhost:{{ http_port }}/incompleteRead'
+    dest: '{{ remote_tmp_dir }}/85164.txt'
+  ignore_errors: true
+  register: result
+
+- name: Assert we have an incomplete read failure
+  assert:
+    that:
+      - result is failed
+      - '"Incomplete read" in result.msg'
 
 #https://github.com/ansible/ansible/issues/16191
 - name: Test url split with no filename
@@ -578,6 +676,36 @@
     that:
       - (result.content | b64decode | from_json).headers.get('Foo') == 'bar'
       - (result.content | b64decode | from_json).headers.get('Baz') == 'qux'
+
+- name: Test gzip decompression
+  get_url:
+    url: https://{{ httpbin_host }}/gzip
+    dest: "{{ remote_tmp_dir }}/gzip.json"
+
+- name: Get gzip file contents
+  slurp:
+    path: "{{ remote_tmp_dir }}/gzip.json"
+  register: gzip_json
+
+- name: validate gzip decompression
+  assert:
+    that:
+      - (gzip_json.content|b64decode|from_json).gzipped
+
+- name: Test gzip no decompression
+  get_url:
+    url: https://{{ httpbin_host }}/gzip
+    dest: "{{ remote_tmp_dir }}/gzip.json.gz"
+    decompress: no
+
+- name: Get gzip file contents
+  command: 'gunzip -c {{ remote_tmp_dir }}/gzip.json.gz'
+  register: gzip_json
+
+- name: validate gzip no decompression
+  assert:
+    that:
+      - (gzip_json.stdout|from_json).gzipped
 
 - name: Test client cert auth, with certs
   get_url:
@@ -635,4 +763,75 @@
       environment:
         KRB5_CONFIG: '{{ krb5_config }}'
         KRB5CCNAME: FILE:{{ remote_tmp_dir }}/krb5.cc
+        OPENSSL_CONF: '{{ krb5_openssl_conf }}'
   when: krb5_config is defined
+
+- name: Test ciphers
+  import_tasks: ciphers.yml
+  when: false  # skipped until we have a way to disable TLS 1.3 on the client or server, since cipher suite selection won't break TLS 1.3
+
+- name: Test use_netrc=False
+  import_tasks: use_netrc.yml
+
+# https://github.com/ansible/ansible/pull/64092
+# Calling get_url with bad checksum should not delete the target file
+- name: Define test files for checksum verification
+  set_fact:
+    checksum_verify_dstfile: "{{ remote_tmp_dir }}/checksum-verify-test.txt"
+
+- name: Download file
+  get_url:
+    url: https://{{ httpbin_host }}/get
+    dest: "{{ checksum_verify_dstfile}}"
+  register: result
+
+- stat:
+    path: "{{ checksum_verify_dstfile }}"
+  register: stat_result_checksum_verify
+
+- name: Assert success
+  assert:
+    that:
+      - result is changed
+      - '"OK" in result.msg'
+      - stat_result_checksum_verify.stat.exists
+
+- name: Download file again, with wrong checksum
+  get_url:
+    url: https://{{ httpbin_host }}/get
+    dest: "{{ checksum_verify_dstfile}}"
+    checksum: "sha256:18b2a70b53c350ad49e4eafb69560bf77ba2ef4f3c93376b65f18b753c912809"
+  register: result
+  failed_when:
+    - result is successful
+
+- stat:
+    path: "{{ checksum_verify_dstfile }}"
+  register: stat_result_checksum_verify
+
+- name: Assert destination file was not removed
+  assert:
+    that:
+      - result is not changed
+      - '"did not match" in result.msg'
+      - stat_result_checksum_verify.stat.exists
+
+- name: Test downloading to dir with content-disposition attachment
+  get_url:
+    url: 'https://{{ httpbin_host }}/response-headers?Content-Disposition=attachment%3B%20filename%3D%22filename.json%22'
+    dest: "{{ remote_tmp_dir }}"
+  register: get_dir_filename
+
+- assert:
+    that:
+      - get_dir_filename.dest == remote_tmp_dir ~ "/filename.json"
+
+- name: Test downloading to dir with content-disposition inline
+  get_url:
+    url: 'https://{{ httpbin_host }}/response-headers?Content-Disposition=inline%3B%20filename%3D%22filename.json%22'
+    dest: "{{ remote_tmp_dir }}"
+  register: get_dir_filename
+
+- assert:
+    that:
+      - get_dir_filename.dest == remote_tmp_dir ~ "/filename.json"

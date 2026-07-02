@@ -17,12 +17,6 @@
 
 # Ensure unreadable file and directory handling and error messages
 # https://github.com/ansible/ansible/issues/67340
-- name: create test user
-  user:
-    name: "{{ become_test_user }}"
-    create_home: yes
-  notify:
-    - "remove test user and their home dir"
 
 - name: create unreadable file
   copy:
@@ -35,9 +29,10 @@
   slurp:
     src: "{{ remote_tmp_dir }}/qux.txt"
   register: slurp_unreadable_file
-  become: yes
-  become_user: "{{ become_test_user }}"
-  become_method: su
+  vars: &test_user_become
+    ansible_become: yes
+    ansible_become_user: "{{ test_user_name }}"
+    ansible_become_password: "{{ test_user_plaintext_password }}"
   ignore_errors: yes
 
 - name: create unreadable directory
@@ -51,9 +46,7 @@
   slurp:
     src: "{{ remote_tmp_dir }}/test_data"
   register: slurp_unreadable_dir
-  become: yes
-  become_user: "{{ become_test_user }}"
-  become_method: su
+  vars: *test_user_become
   ignore_errors: yes
 
 - name: Try to access file as directory
@@ -66,16 +59,16 @@
   assert:
     that:
       - slurp_missing is failed
-      - slurp_missing.msg is search('file not found')
+      - slurp_missing.msg is search('File not found')
       - slurp_missing is not changed
       - slurp_unreadable_file is failed
-      - slurp_unreadable_file.msg is regex('^file is not readable:')
+      - slurp_unreadable_file.msg is regex('^File is not readable:')
       - slurp_unreadable_file is not changed
       - slurp_unreadable_dir is failed
-      - slurp_unreadable_dir.msg is regex('^file is not readable:')
+      - slurp_unreadable_dir.msg is regex('^File is not readable:')
       - slurp_unreadable_dir is not changed
       - slurp_path_file_as_dir is failed
-      - slurp_path_file_as_dir is search('unable to slurp file')
+      - slurp_path_file_as_dir is search('Unable to slurp file')
       - slurp_dir is failed
-      - slurp_dir.msg is search('source is a directory and must be a file')
+      - slurp_dir.msg is search('Source is a directory and must be a file')
       - slurp_dir is not changed

@@ -28,7 +28,7 @@
     - name: validate output
       assert:
         that:
-          - 'ansible_pkg_mgr == "dnf"'
+          - 'ansible_pkg_mgr in ("dnf", "dnf5")'
   always:
     - name: remove apt
       dnf:
@@ -69,28 +69,53 @@
 # Verify module_defaults for package and the underlying module are utilized
 # Validates: https://github.com/ansible/ansible/issues/72918
 - block:
-    # 'name' is required
+    # note: dnf module unexpectedly succeeds when no arguments are provided.
+    # Until the requires_one_of (?) bug is fixed, this test asserts changes are made to avoid false positives.
     - name: install apt with package defaults
       package:
       module_defaults:
         package:
           name: apt
           state: present
+      register: result
 
+    - assert:
+        that: result is changed
+
+    - name: uninstall apt between tests
+      dnf5:
+        name: apt
+        state: absent
+
+    # Validate package handles applying templated defaults for dnf
+    # https://github.com/ansible/ansible/issues/85848
     - name: install apt with dnf defaults (auto)
       package:
       module_defaults:
-        dnf:
-          name: apt
+        dnf5:
+          name: "{{ 'apt' }}"
           state: present
+      register: result
 
-    - name: install apt with dnf defaults (use dnf)
+    - assert:
+        that: result is changed
+
+    - name: uninstall apt between tests
+      dnf5:
+        name: apt
+        state: absent
+
+    - name: install apt with dnf defaults (use dnf5)
       package:
-        use: dnf
+        use: dnf5
       module_defaults:
-        dnf:
+        dnf5:
           name: apt
           state: present
+      register: result
+
+    - assert:
+        that: result is changed
   always:
     - name: remove apt
       dnf:
@@ -102,11 +127,8 @@
   set_fact:
     package_distros:
         - RedHat
-        - CentOS
-        - ScientificLinux
         - Fedora
         - Ubuntu
-        - Debian
 
 - block:
     - name: remove at package
@@ -149,17 +171,17 @@
   when: ansible_distribution in package_distros
 
 ##
-## yum
+## dnf
 ##
-#Validation for new parameter 'use' in yum action plugin which aliases to 'use_backend'
+#Validation for new parameter 'use' in dnf action plugin which aliases to 'use_backend'
 #Issue: https://github.com/ansible/ansible/issues/70774
 - block:
     - name: verify if using both the parameters 'use' and 'use_backend' throw error
-      yum:
+      dnf:
         name: at
         state: present
-        use_backend: yum
-        use: yum
+        use_backend: dnf
+        use: dnf
       ignore_errors: yes
       register: result
 
@@ -170,7 +192,7 @@
           - "not result is changed"
 
     - name: verify if package installation is successful using 'use' parameter
-      yum:
+      dnf:
         name: at
         state: present
         use: dnf
@@ -182,7 +204,7 @@
           - "result is changed"
 
     - name: remove at package
-      yum:
+      dnf:
         name: at
         state: absent
         use: dnf
@@ -194,7 +216,7 @@
           - "result is changed"
 
     - name: verify if package installation is successful using 'use_backend' parameter
-      yum:
+      dnf:
         name: at
         state: present
         use_backend: dnf
@@ -206,7 +228,7 @@
           - "result is changed"
 
     - name: remove at package
-      yum:
+      dnf:
         name: at
         state: absent
         use_backend: dnf
@@ -218,7 +240,7 @@
           - "result is changed"
 
     - name: verify if package installation is successful without using 'use_backend' and 'use' parameters
-      yum:
+      dnf:
         name: at
         state: present
       register: result
@@ -229,7 +251,7 @@
           - "result is changed"
 
     - name: remove at package
-      yum:
+      dnf:
         name: at
         state: absent
       register: result
@@ -240,3 +262,19 @@
           - "result is changed"
 
   when: ansible_distribution == "Fedora"
+
+
+- name: test ansible_package_use
+  block:
+  - name: test with var
+    package:
+      name: doesnotmatter
+    vars:
+      ansible_package_use: lola
+    ignore_errors: true
+    register: use_to_use
+
+  - assert:
+      that:
+        - use_to_use is failed
+        - "'Could not find a matching action' in use_to_use['msg']"

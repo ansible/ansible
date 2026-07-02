@@ -1,12 +1,11 @@
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 import tempfile
 from ansible.module_utils import basic
 
-from units.compat import unittest
-from ansible.module_utils._text import to_bytes
+import unittest
+from ansible.module_utils.common.text.converters import to_bytes
 from ansible.module_utils.basic import AnsibleModule
 
 from ansible.modules.known_hosts import compute_diff, sanity_check

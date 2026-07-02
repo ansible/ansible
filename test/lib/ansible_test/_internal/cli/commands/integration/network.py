@@ -1,7 +1,9 @@
 """Command line parsing for the `network-integration` command."""
+
 from __future__ import annotations
 
 import argparse
+import collections.abc as c
 import os
 import typing as t
 
@@ -34,22 +36,23 @@ from ...completers import (
 
 
 def do_network_integration(
-        subparsers,
-        parent,  # type: argparse.ArgumentParser
-        add_integration_common,  # type: t.Callable[[argparse.ArgumentParser], None]
-        completer,  # type: CompositeActionCompletionFinder
+    subparsers,
+    parent: argparse.ArgumentParser,
+    add_integration_common: c.Callable[[argparse.ArgumentParser], None],
+    completer: CompositeActionCompletionFinder,
 ):
     """Command line parsing for the `network-integration` command."""
-    parser = subparsers.add_parser(
+    parser: argparse.ArgumentParser = subparsers.add_parser(
         'network-integration',
         parents=[parent],
         help='network integration tests',
-    )  # type: argparse.ArgumentParser
+    )
 
     parser.set_defaults(
         func=command_network_integration,
         targets_func=walk_network_integration_targets,
-        config=NetworkIntegrationConfig)
+        config=NetworkIntegrationConfig,
+    )
 
     network_integration = t.cast(argparse.ArgumentParser, parser.add_argument_group(title='network integration test arguments'))
 
@@ -64,7 +67,7 @@ def do_network_integration(
     add_environments(parser, completer, ControllerMode.DELEGATED, TargetMode.NETWORK_INTEGRATION)  # network-integration
 
 
-def complete_network_testcase(prefix: str, parsed_args: argparse.Namespace, **_) -> t.List[str]:
+def complete_network_testcase(prefix: str, parsed_args: argparse.Namespace, **_) -> list[str]:
     """Return a list of test cases matching the given prefix if only one target was parsed from the command line, otherwise return an empty list."""
     testcases = []
 

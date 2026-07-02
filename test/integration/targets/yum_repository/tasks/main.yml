@@ -1,5 +1,5 @@
 - name: Run tests
-  when: ansible_facts.distribution in ['CentOS', 'Fedora']
+  when: ansible_facts.distribution == 'Fedora'
   block:
     - name: ensure {{ yum_repository_test_package }} is uninstalled to begin with
       action: "{{ ansible_facts.pkg_mgr }}"
@@ -96,11 +96,10 @@
         name: "{{ yum_repository_test_repo.name }}"
         baseurl: "{{ yum_repository_test_repo.baseurl }}"
         description: New description
-        async: no
+        countme: yes
         enablegroups: no
         file: "{{ yum_repository_test_repo.name ~ 2 }}"
         ip_resolve: 4
-        keepalive: no
         module_hotfixes: no
       register: test_repo_add1
 
@@ -112,11 +111,10 @@
     - name: check that options are correctly getting written to the repo file
       assert:
         that:
-          - "'async = 0' in repo_file_contents"
           - "'name = New description' in repo_file_contents"
+          - "'countme = 1' in repo_file_contents"
           - "'enablegroups = 0' in repo_file_contents"
           - "'ip_resolve = 4' in repo_file_contents"
-          - "'keepalive = 0' in repo_file_contents"
           - "'module_hotfixes = 0' in repo_file_contents"
       vars:
         repo_file_contents: "{{ slurp.content | b64decode }}"
@@ -126,11 +124,10 @@
         name: "{{ yum_repository_test_repo.name }}"
         baseurl: "{{ yum_repository_test_repo.baseurl }}"
         description: New description
-        async: no
+        countme: yes
         enablegroups: no
         file: "{{ yum_repository_test_repo.name ~ 2 }}"
         ip_resolve: 4
-        keepalive: no
         module_hotfixes: no
       register: test_repo_add2
 

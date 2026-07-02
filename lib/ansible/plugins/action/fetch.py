@@ -14,14 +14,12 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 import base64
-from ansible.errors import AnsibleError, AnsibleActionFail, AnsibleActionSkip
+from ansible.errors import AnsibleConnectionFailure, AnsibleError, AnsibleActionFail, AnsibleActionSkip
 from ansible.module_utils.common.text.converters import to_bytes, to_text
-from ansible.module_utils.six import string_types
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
 from ansible.utils.display import Display
@@ -34,7 +32,7 @@ display = Display()
 class ActionModule(ActionBase):
 
     def run(self, tmp=None, task_vars=None):
-        ''' handler for fetch operations '''
+        """ handler for fetch operations """
         if task_vars is None:
             task_vars = dict()
 
@@ -42,7 +40,7 @@ class ActionModule(ActionBase):
         del tmp  # tmp no longer has any effect
 
         try:
-            if self._play_context.check_mode:
+            if self._task.check_mode:
                 raise AnsibleActionSkip('check mode not (yet) supported for this module')
 
             source = self._task.args.get('src', None)
@@ -52,11 +50,11 @@ class ActionModule(ActionBase):
             validate_checksum = boolean(self._task.args.get('validate_checksum', True), strict=False)
 
             msg = ''
-            # validate source and dest are strings FIXME: use basic.py and module specs
-            if not isinstance(source, string_types):
+            # FIXME: validate source and dest are strings; use basic.py and module specs
+            if not isinstance(source, str):
                 msg = "Invalid type supplied for source option, it must be a string"
 
-            if not isinstance(dest, string_types):
+            if not isinstance(dest, str):
                 msg = "Invalid type supplied for dest option, it must be a string"
 
             if source is None or dest is None:
@@ -75,6 +73,8 @@ class ActionModule(ActionBase):
                 # Follow symlinks because fetch always follows symlinks
                 try:
                     remote_stat = self._execute_remote_stat(source, all_vars=task_vars, follow=True)
+                except AnsibleConnectionFailure:
+                    raise
                 except AnsibleError as ae:
                     result['changed'] = False
                     result['file'] = source
@@ -118,7 +118,7 @@ class ActionModule(ActionBase):
 
                     if 'not found' in slurpres.get('msg', ''):
                         result['msg'] = "the remote file does not exist, not transferring, ignored"
-                    elif slurpres.get('msg', '').startswith('source is a directory'):
+                    elif slurpres.get('msg', '').lower().startswith('source is a directory'):
                         result['msg'] = "remote file is a directory, fetch cannot work on directories"
 
                     return result
@@ -130,7 +130,6 @@ class ActionModule(ActionBase):
 
             # calculate the destination name
             if os.path.sep not in self._connection._shell.join_path('a', ''):
-                source = self._connection._shell._unquote(source)
                 source_local = source.replace('\\', '/')
             else:
                 source_local = source
@@ -148,6 +147,10 @@ class ActionModule(ActionBase):
                     # destination filename
                     base = os.path.basename(source_local)
                     dest = os.path.join(dest, base)
+
+                    if os.path.isdir(to_bytes(dest, errors='surrogate_or_strict')):
+                        raise AnsibleActionFail(
+                            f"calculated dest '{dest}' is an existing directory, use another path that does not point to an existing directory")
                 if not dest.startswith("/"):
                     # if dest does not start with "/", we'll assume a relative path
                     dest = self._loader.path_dwim(dest)
@@ -173,11 +176,10 @@ class ActionModule(ActionBase):
                     self._connection.fetch_file(source, dest)
                 else:
                     try:
-                        f = open(to_bytes(dest, errors='surrogate_or_strict'), 'wb')
-                        f.write(remote_data)
-                        f.close()
-                    except (IOError, OSError) as e:
-                        raise AnsibleActionFail("Failed to fetch the file: %s" % e)
+                        with open(to_bytes(dest, errors='surrogate_or_strict'), 'wb') as f:
+                            f.write(remote_data)
+                    except OSError as ex:
+                        raise AnsibleActionFail("Failed to fetch the file.") from ex
                 new_checksum = secure_hash(dest)
                 # For backwards compatibility. We'll return None on FIPS enabled systems
                 try:
@@ -190,7 +192,7 @@ class ActionModule(ActionBase):
                                        msg="checksum mismatch", file=source, dest=dest, remote_md5sum=None,
                                        checksum=new_checksum, remote_checksum=remote_checksum))
                 else:
-                    result.update({'changed': True, 'md5sum': new_md5, 'dest': dest,
+                    result.update({'changed': True, 'md5sum': new_md5, 'file': source, 'dest': dest,
                                    'remote_md5sum': None, 'checksum': new_checksum,
                                    'remote_checksum': remote_checksum})
             else:

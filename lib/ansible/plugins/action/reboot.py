@@ -2,16 +2,15 @@
 # Copyright: (c) 2018, Sam Doran <sdoran@redhat.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-import random
+import secrets
 import time
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from ansible.errors import AnsibleError, AnsibleConnectionFailure
-from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils.common.text.converters import to_native, to_text
 from ansible.module_utils.common.validation import check_type_list, check_type_str
 from ansible.plugins.action import ActionBase
 from ansible.utils.display import Display
@@ -129,7 +128,7 @@ class ActionModule(ActionBase):
         else:
             args = self._get_value_from_facts('SHUTDOWN_COMMAND_ARGS', distribution, 'DEFAULT_SHUTDOWN_COMMAND_ARGS')
 
-            # Convert seconds to minutes. If less that 60, set it to 0.
+            # Convert seconds to minutes. If less than 60, set it to 0.
             delay_min = self.pre_reboot_delay // 60
             reboot_message = self._task.args.get('msg', self.DEFAULT_REBOOT_MESSAGE)
             return args.format(delay_sec=self.pre_reboot_delay, delay_min=delay_min, message=reboot_message)
@@ -236,14 +235,18 @@ class ActionModule(ActionBase):
         display.vvv("{action}: attempting to get system boot time".format(action=self._task.action))
         connect_timeout = self._task.args.get('connect_timeout', self._task.args.get('connect_timeout_sec', self.DEFAULT_CONNECT_TIMEOUT))
 
-        # override connection timeout from defaults to custom value
+        # override connection timeout from defaults to the custom value
         if connect_timeout:
             try:
                 display.debug("{action}: setting connect_timeout to {value}".format(action=self._task.action, value=connect_timeout))
                 self._connection.set_option("connection_timeout", connect_timeout)
-                self._connection.reset()
-            except AttributeError:
-                display.warning("Connection plugin does not allow the connection timeout to be overridden")
+            except AnsibleError:
+                try:
+                    self._connection.set_option("timeout", connect_timeout)
+                except (AnsibleError, AttributeError):
+                    display.warning("Connection plugin does not allow the connection timeout to be overridden")
+
+            self._connection.reset()
 
         # try and get boot time
         try:
@@ -280,14 +283,15 @@ class ActionModule(ActionBase):
         display.vvv("{action}: system successfully rebooted".format(action=self._task.action))
 
     def do_until_success_or_timeout(self, action, reboot_timeout, action_desc, distribution, action_kwargs=None):
-        max_end_time = datetime.utcnow() + timedelta(seconds=reboot_timeout)
+        max_end_time = datetime.now(timezone.utc) + timedelta(seconds=reboot_timeout)
         if action_kwargs is None:
             action_kwargs = {}
 
         fail_count = 0
         max_fail_sleep = 12
+        last_error_msg = ''
 
-        while datetime.utcnow() < max_end_time:
+        while datetime.now(timezone.utc) < max_end_time:
             try:
                 action(distribution=distribution, **action_kwargs)
                 if action_desc:
@@ -299,8 +303,8 @@ class ActionModule(ActionBase):
                         self._connection.reset()
                     except AnsibleConnectionFailure:
                         pass
-                # Use exponential backoff with a max timout, plus a little bit of randomness
-                random_int = random.randint(0, 1000) / 1000
+                # Use exponential backoff with a max timeout, plus a little bit of randomness
+                random_int = secrets.randbelow(1000) / 1000
                 fail_sleep = 2 ** fail_count + random_int
                 if fail_sleep > max_fail_sleep:
 
@@ -310,14 +314,18 @@ class ActionModule(ActionBase):
                         error = to_text(e).splitlines()[-1]
                     except IndexError as e:
                         error = to_text(e)
-                    display.debug("{action}: {desc} fail '{err}', retrying in {sleep:.4} seconds...".format(
-                        action=self._task.action,
-                        desc=action_desc,
-                        err=error,
-                        sleep=fail_sleep))
+                    last_error_msg = f"{self._task.action}: {action_desc} fail '{error}'"
+                    msg = f"{last_error_msg}, retrying in {fail_sleep:.4f} seconds..."
+
+                    display.debug(msg)
+                    display.vvv(msg)
                 fail_count += 1
                 time.sleep(fail_sleep)
 
+        if last_error_msg:
+            msg = f"Last error message before the timeout exception - {last_error_msg}"
+            display.debug(msg)
+            display.vvv(msg)
         raise TimedOutException('Timed out waiting for {desc} (timeout={timeout})'.format(desc=action_desc, timeout=reboot_timeout))
 
     def perform_reboot(self, task_vars, distribution):
@@ -336,7 +344,7 @@ class ActionModule(ActionBase):
             display.debug('{action}: AnsibleConnectionFailure caught and handled: {error}'.format(action=self._task.action, error=to_text(e)))
             reboot_result['rc'] = 0
 
-        result['start'] = datetime.utcnow()
+        result['start'] = datetime.now(timezone.utc)
 
         if reboot_result['rc'] != 0:
             result['failed'] = True
@@ -368,17 +376,25 @@ class ActionModule(ActionBase):
             try:
                 connect_timeout = self._connection.get_option('connection_timeout')
             except KeyError:
-                pass
+                try:
+                    connect_timeout = self._connection.get_option('timeout')
+                except KeyError:
+                    pass
             else:
                 if original_connection_timeout != connect_timeout:
                     try:
-                        display.debug("{action}: setting connect_timeout back to original value of {value}".format(
-                            action=self._task.action,
-                            value=original_connection_timeout))
-                        self._connection.set_option("connection_timeout", original_connection_timeout)
+                        display.debug("{action}: setting connect_timeout/timeout back to original value of {value}".format(action=self._task.action,
+                                                                                                                           value=original_connection_timeout))
+                        try:
+                            self._connection.set_option("connection_timeout", original_connection_timeout)
+                        except AnsibleError:
+                            try:
+                                self._connection.set_option("timeout", original_connection_timeout)
+                            except AnsibleError:
+                                raise
+                        # reset the connection to clear the custom connection timeout
                         self._connection.reset()
                     except (AnsibleError, AttributeError) as e:
-                        # reset the connection to clear the custom connection timeout
                         display.debug("{action}: failed to reset connection_timeout back to default: {error}".format(action=self._task.action,
                                                                                                                      error=to_text(e)))
 
@@ -404,14 +420,13 @@ class ActionModule(ActionBase):
 
     def run(self, tmp=None, task_vars=None):
         self._supports_check_mode = True
-        self._supports_async = True
 
-        # If running with local connection, fail so we don't reboot ourself
+        # If running with local connection, fail so we don't reboot ourselves
         if self._connection.transport == 'local':
             msg = 'Running {0} with local connection would reboot the control node.'.format(self._task.action)
             return {'changed': False, 'elapsed': 0, 'rebooted': False, 'failed': True, 'msg': msg}
 
-        if self._play_context.check_mode:
+        if self._task.check_mode:
             return {'changed': True, 'elapsed': 0, 'rebooted': True}
 
         if task_vars is None:
@@ -437,17 +452,22 @@ class ActionModule(ActionBase):
 
         # Get the original connection_timeout option var so it can be reset after
         original_connection_timeout = None
+
+        display.debug("{action}: saving original connect_timeout of {timeout}".format(action=self._task.action, timeout=original_connection_timeout))
         try:
             original_connection_timeout = self._connection.get_option('connection_timeout')
-            display.debug("{action}: saving original connect_timeout of {timeout}".format(action=self._task.action, timeout=original_connection_timeout))
         except KeyError:
-            display.debug("{action}: connect_timeout connection option has not been set".format(action=self._task.action))
+            try:
+                original_connection_timeout = self._connection.get_option('timeout')
+            except KeyError:
+                display.debug("{action}: connect_timeout connection option has not been set".format(action=self._task.action))
+
         # Initiate reboot
         reboot_result = self.perform_reboot(task_vars, distribution)
 
         if reboot_result['failed']:
             result = reboot_result
-            elapsed = datetime.utcnow() - reboot_result['start']
+            elapsed = datetime.now(timezone.utc) - reboot_result['start']
             result['elapsed'] = elapsed.seconds
             return result
 
@@ -459,7 +479,7 @@ class ActionModule(ActionBase):
         # Make sure reboot was successful
         result = self.validate_reboot(distribution, original_connection_timeout, action_kwargs={'previous_boot_time': previous_boot_time})
 
-        elapsed = datetime.utcnow() - reboot_result['start']
+        elapsed = datetime.now(timezone.utc) - reboot_result['start']
         result['elapsed'] = elapsed.seconds
 
         return result

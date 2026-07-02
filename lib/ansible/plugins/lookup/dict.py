@@ -1,8 +1,7 @@
 # (c) 2014, Kent R. Spillner <kspillner@acm.org>
 # (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 DOCUMENTATION = """
     name: dict
@@ -11,6 +10,7 @@ DOCUMENTATION = """
     description:
         - Takes dictionaries as input and returns a list with each item in the list being a dictionary with 'key' and 'value' as
           keys to the previous dictionary's structure.
+    positional: _terms
     options:
         _terms:
             description:
@@ -49,7 +49,7 @@ tasks:
 RETURN = """
   _list:
     description:
-      - list of composed dictonaries with key and value
+      - list of composed dictionaries with key and value
     type: list
 """
 
@@ -62,16 +62,11 @@ from ansible.plugins.lookup import LookupBase
 class LookupModule(LookupBase):
 
     def run(self, terms, variables=None, **kwargs):
-
-        # NOTE: can remove if with_ is removed
-        if not isinstance(terms, list):
-            terms = [terms]
-
         results = []
         for term in terms:
             # Expect any type of Mapping, notably hostvars
             if not isinstance(term, Mapping):
-                raise AnsibleError("with_dict expects a dict")
+                raise AnsibleError(f"the 'dict' lookup plugin expects a dictionary, got '{term}' of type {type(term)})")
 
             results.extend(self._flatten_hash_to_list(term))
         return results

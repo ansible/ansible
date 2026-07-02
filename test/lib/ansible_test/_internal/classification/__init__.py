@@ -1,4 +1,5 @@
 """Classify changes in Ansible code."""
+
 from __future__ import annotations
 
 import collections
@@ -54,24 +55,24 @@ from ..data import (
 FOCUSED_TARGET = '__focused__'
 
 
-def categorize_changes(args, paths, verbose_command=None):  # type: (TestConfig, t.List[str], t.Optional[str]) -> ChangeDescription
+def categorize_changes(args: TestConfig, paths: list[str], verbose_command: t.Optional[str] = None) -> ChangeDescription:
     """Categorize the given list of changed paths and return a description of the changes."""
     mapper = PathMapper(args)
 
-    commands = {
+    commands: dict[str, set[str]] = {
         'sanity': set(),
         'units': set(),
         'integration': set(),
         'windows-integration': set(),
         'network-integration': set(),
-    }  # type: t.Dict[str, t.Set[str]]
+    }
 
     focused_commands = collections.defaultdict(set)
 
-    deleted_paths = set()  # type: t.Set[str]
-    original_paths = set()  # type: t.Set[str]
-    additional_paths = set()  # type: t.Set[str]
-    no_integration_paths = set()  # type: t.Set[str]
+    deleted_paths: set[str] = set()
+    original_paths: set[str] = set()
+    additional_paths: set[str] = set()
+    no_integration_paths: set[str] = set()
 
     for path in paths:
         if not os.path.exists(path):
@@ -156,8 +157,8 @@ def categorize_changes(args, paths, verbose_command=None):  # type: (TestConfig,
         if any(target == 'all' for target in targets):
             commands[command] = {'all'}
 
-    sorted_commands = dict((c, sorted(targets)) for c, targets in commands.items() if targets)
-    focused_commands = dict((c, sorted(targets)) for c, targets in focused_commands.items())
+    sorted_commands = dict((cmd, sorted(targets)) for cmd, targets in commands.items() if targets)
+    focused_commands = dict((cmd, sorted(targets)) for cmd, targets in focused_commands.items())
 
     for command, targets in sorted_commands.items():
         if targets == ['all']:
@@ -176,7 +177,8 @@ def categorize_changes(args, paths, verbose_command=None):  # type: (TestConfig,
 
 class PathMapper:
     """Map file paths to test commands and targets."""
-    def __init__(self, args):  # type: (TestConfig) -> None
+
+    def __init__(self, args: TestConfig) -> None:
         self.args = args
         self.integration_all_target = get_integration_all_target(self.args)
 
@@ -206,11 +208,11 @@ class PathMapper:
         self.prefixes = load_integration_prefixes()
         self.integration_dependencies = analyze_integration_target_dependencies(self.integration_targets)
 
-        self.python_module_utils_imports = {}  # type: t.Dict[str, t.Set[str]]  # populated on first use to reduce overhead when not needed
-        self.powershell_module_utils_imports = {}  # type: t.Dict[str, t.Set[str]]  # populated on first use to reduce overhead when not needed
-        self.csharp_module_utils_imports = {}  # type: t.Dict[str, t.Set[str]]  # populated on first use to reduce overhead when not needed
+        self.python_module_utils_imports: dict[str, set[str]] = {}  # populated on first use to reduce overhead when not needed
+        self.powershell_module_utils_imports: dict[str, set[str]] = {}  # populated on first use to reduce overhead when not needed
+        self.csharp_module_utils_imports: dict[str, set[str]] = {}  # populated on first use to reduce overhead when not needed
 
-        self.paths_to_dependent_targets = {}  # type: t.Dict[str, t.Set[IntegrationTarget]]
+        self.paths_to_dependent_targets: dict[str, set[IntegrationTarget]] = {}
 
         for target in self.integration_targets:
             for path in target.needs_file:
@@ -219,7 +221,7 @@ class PathMapper:
 
                 self.paths_to_dependent_targets[path].add(target)
 
-    def get_dependent_paths(self, path):  # type: (str) -> t.List[str]
+    def get_dependent_paths(self, path: str) -> list[str]:
         """Return a list of paths which depend on the given path, recursively expanding dependent paths as well."""
         unprocessed_paths = set(self.get_dependent_paths_non_recursive(path))
         paths = set()
@@ -238,7 +240,7 @@ class PathMapper:
 
         return sorted(paths)
 
-    def get_dependent_paths_non_recursive(self, path):  # type: (str) -> t.List[str]
+    def get_dependent_paths_non_recursive(self, path: str) -> list[str]:
         """Return a list of paths which depend on the given path, including dependent integration test target paths."""
         paths = self.get_dependent_paths_internal(path)
         paths += [target.path + '/' for target in self.paths_to_dependent_targets.get(path, set())]
@@ -246,7 +248,7 @@ class PathMapper:
 
         return paths
 
-    def get_dependent_paths_internal(self, path):  # type: (str) -> t.List[str]
+    def get_dependent_paths_internal(self, path: str) -> list[str]:
         """Return a list of paths which depend on the given path."""
         ext = os.path.splitext(os.path.split(path)[1])[1]
 
@@ -265,7 +267,7 @@ class PathMapper:
 
         return []
 
-    def get_python_module_utils_usage(self, path):  # type: (str) -> t.List[str]
+    def get_python_module_utils_usage(self, path: str) -> list[str]:
         """Return a list of paths which depend on the given path which is a Python module_utils file."""
         if not self.python_module_utils_imports:
             display.info('Analyzing python module_utils imports...')
@@ -278,7 +280,7 @@ class PathMapper:
 
         return sorted(self.python_module_utils_imports[name])
 
-    def get_powershell_module_utils_usage(self, path):  # type: (str) -> t.List[str]
+    def get_powershell_module_utils_usage(self, path: str) -> list[str]:
         """Return a list of paths which depend on the given path which is a PowerShell module_utils file."""
         if not self.powershell_module_utils_imports:
             display.info('Analyzing powershell module_utils imports...')
@@ -291,7 +293,7 @@ class PathMapper:
 
         return sorted(self.powershell_module_utils_imports[name])
 
-    def get_csharp_module_utils_usage(self, path):  # type: (str) -> t.List[str]
+    def get_csharp_module_utils_usage(self, path: str) -> list[str]:
         """Return a list of paths which depend on the given path which is a C# module_utils file."""
         if not self.csharp_module_utils_imports:
             display.info('Analyzing C# module_utils imports...')
@@ -304,7 +306,7 @@ class PathMapper:
 
         return sorted(self.csharp_module_utils_imports[name])
 
-    def get_integration_target_usage(self, path):  # type: (str) -> t.List[str]
+    def get_integration_target_usage(self, path: str) -> list[str]:
         """Return a list of paths which depend on the given path which is an integration target file."""
         target_name = path.split('/')[3]
         dependents = [os.path.join(data_context().content.integration_targets_path, target) + os.path.sep
@@ -312,7 +314,7 @@ class PathMapper:
 
         return dependents
 
-    def classify(self, path):  # type: (str) -> t.Optional[t.Dict[str, str]]
+    def classify(self, path: str) -> t.Optional[dict[str, str]]:
         """Classify the given path and return an optional dictionary of the results."""
         result = self._classify(path)
 
@@ -326,7 +328,7 @@ class PathMapper:
 
         return result
 
-    def _classify(self, path):  # type: (str) -> t.Optional[t.Dict[str, str]]
+    def _classify(self, path: str) -> t.Optional[dict[str, str]]:
         """Return the classification for the given path."""
         if data_context().content.is_ansible:
             return self._classify_ansible(path)
@@ -336,13 +338,13 @@ class PathMapper:
 
         return None
 
-    def _classify_common(self, path):  # type: (str) -> t.Optional[t.Dict[str, str]]
+    def _classify_common(self, path: str) -> t.Optional[dict[str, str]]:
         """Return the classification for the given path using rules common to all layouts."""
         dirname = os.path.dirname(path)
         filename = os.path.basename(path)
         name, ext = os.path.splitext(filename)
 
-        minimal = {}  # type: t.Dict[str, str]
+        minimal: dict[str, str] = {}
 
         if os.path.sep not in path:
             if filename in (
@@ -379,9 +381,9 @@ class PathMapper:
         if is_subdir(path, data_context().content.integration_path):
             if dirname == data_context().content.integration_path:
                 for command in (
-                        'integration',
-                        'windows-integration',
-                        'network-integration',
+                    'integration',
+                    'windows-integration',
+                    'network-integration',
                 ):
                     if name == command and ext == '.cfg':
                         return {
@@ -532,13 +534,6 @@ class PathMapper:
                     'units': units_path,
                 }
 
-            if name == 'paramiko_ssh':
-                return {
-                    'integration': integration_name,
-                    'network-integration': self.integration_all_target,
-                    'units': units_path,
-                }
-
             # other connection plugins have isolated integration and unit tests
 
             return {
@@ -621,7 +616,7 @@ class PathMapper:
 
         return None
 
-    def _classify_collection(self, path):  # type: (str) -> t.Optional[t.Dict[str, str]]
+    def _classify_collection(self, path: str) -> t.Optional[dict[str, str]]:
         """Return the classification for the given path using rules specific to collections."""
         result = self._classify_common(path)
 
@@ -631,7 +626,7 @@ class PathMapper:
         filename = os.path.basename(path)
         dummy, ext = os.path.splitext(filename)
 
-        minimal = {}  # type: t.Dict[str, str]
+        minimal: dict[str, str] = {}
 
         if path.startswith('changelogs/'):
             return minimal
@@ -641,41 +636,73 @@ class PathMapper:
 
         if '/' not in path:
             if path in (
-                    '.gitignore',
-                    'COPYING',
-                    'LICENSE',
-                    'Makefile',
+                '.gitignore',
+                'COPYING',
+                'LICENSE',
+                'Makefile',
             ):
                 return minimal
 
             if ext in (
-                    '.in',
-                    '.md',
-                    '.rst',
-                    '.toml',
-                    '.txt',
+                '.in',
+                '.md',
+                '.rst',
+                '.toml',
+                '.txt',
             ):
                 return minimal
 
         return None
 
-    def _classify_ansible(self, path):  # type: (str) -> t.Optional[t.Dict[str, str]]
+    def _classify_ansible(self, path: str) -> t.Optional[dict[str, str]]:
         """Return the classification for the given path using rules specific to Ansible."""
-        if path.startswith('test/units/compat/'):
-            return {
-                'units': 'test/units/',
+        dirname = os.path.dirname(path)
+        filename = os.path.basename(path)
+        name, ext = os.path.splitext(filename)
+
+        minimal: dict[str, str] = {}
+
+        packaging = {
+            'integration': 'packaging/',
+        }
+
+        # Early classification that needs to occur before common classification belongs here.
+
+        if dirname == '.azure-pipelines/commands':
+            test_map = {
+                'cloud.sh': 'integration:cloud/',
+                'linux.sh': 'integration:all',
+                'network.sh': 'network-integration:all',
+                'remote.sh': 'integration:all',
+                'sanity.sh': 'sanity:all',
+                'units.sh': 'units:all',
+                'windows.sh': 'windows-integration:all',
             }
+
+            test_match = test_map.get(filename)
+
+            if test_match:
+                test_command, test_target = test_match.split(':')
+
+                return {
+                    test_command: test_target,
+                }
+
+            cloud_target = f'cloud/{name}/'
+
+            if cloud_target in self.integration_targets_by_alias:
+                return {
+                    'integration': cloud_target,
+                }
+
+        # Classification common to both ansible and collections.
 
         result = self._classify_common(path)
 
         if result is not None:
             return result
 
-        dirname = os.path.dirname(path)
-        filename = os.path.basename(path)
-        name, ext = os.path.splitext(filename)
-
-        minimal = {}  # type: t.Dict[str, str]
+        # Classification here is specific to ansible, and runs after common classification.
 
         if path.startswith('bin/'):
             return all_tests(self.args)  # broad impact, run all tests
@@ -683,15 +710,7 @@ class PathMapper:
         if path.startswith('changelogs/'):
             return minimal
 
-        if path.startswith('docs/'):
-            return minimal
-
-        if path.startswith('examples/'):
-            if path == 'examples/scripts/ConfigureRemotingForAnsible.ps1':
-                return {
-                    'windows-integration': 'connection_winrm',
-                }
-
+        if path.startswith('context/'):
             return minimal
 
         if path.startswith('hacking/'):
@@ -715,6 +734,13 @@ class PathMapper:
             return minimal
 
         if path.startswith('packaging/'):
+            packaging_target = f'packaging_{os.path.splitext(path.split(os.path.sep)[1])[0]}'
+
+            if packaging_target in self.integration_targets_by_name:
+                return {
+                    'integration': packaging_target,
+                }
+
             return minimal
 
         if path.startswith('test/ansible_test/'):
@@ -746,28 +772,28 @@ class PathMapper:
         if path.startswith('test/lib/ansible_test/_internal/commands/sanity/'):
             return {
                 'sanity': 'all',  # test infrastructure, run all sanity checks
-                'integration': 'ansible-test',  # run ansible-test self tests
+                'integration': 'ansible-test/',  # run ansible-test self tests
             }
 
         if path.startswith('test/lib/ansible_test/_internal/commands/units/'):
             return {
                 'units': 'all',  # test infrastructure, run all unit tests
-                'integration': 'ansible-test',  # run ansible-test self tests
+                'integration': 'ansible-test/',  # run ansible-test self tests
             }
 
         if path.startswith('test/lib/ansible_test/_data/requirements/'):
             if name in (
-                    'integration',
-                    'network-integration',
-                    'windows-integration',
+                'integration',
+                'network-integration',
+                'windows-integration',
             ):
                 return {
                     name: self.integration_all_target,
                 }
 
             if name in (
-                    'sanity',
-                    'units',
+                'sanity',
+                'units',
             ):
                 return {
                     name: 'all',
@@ -776,13 +802,13 @@ class PathMapper:
         if path.startswith('test/lib/ansible_test/_util/controller/sanity/') or path.startswith('test/lib/ansible_test/_util/target/sanity/'):
             return {
                 'sanity': 'all',  # test infrastructure, run all sanity checks
-                'integration': 'ansible-test',  # run ansible-test self tests
+                'integration': 'ansible-test/',  # run ansible-test self tests
             }
 
         if path.startswith('test/lib/ansible_test/_util/target/pytest/'):
             return {
                 'units': 'all',  # test infrastructure, run all unit tests
-                'integration': 'ansible-test',  # run ansible-test self tests
+                'integration': 'ansible-test/',  # run ansible-test self tests
             }
 
         if path.startswith('test/lib/'):
@@ -791,66 +817,32 @@ class PathMapper:
         if path.startswith('test/support/'):
             return all_tests(self.args)  # test infrastructure, run all tests
 
-        if path.startswith('test/utils/shippable/'):
-            if dirname == 'test/utils/shippable':
-                test_map = {
-                    'cloud.sh': 'integration:cloud/',
-                    'linux.sh': 'integration:all',
-                    'network.sh': 'network-integration:all',
-                    'remote.sh': 'integration:all',
-                    'sanity.sh': 'sanity:all',
-                    'units.sh': 'units:all',
-                    'windows.sh': 'windows-integration:all',
-                }
-
-                test_match = test_map.get(filename)
-
-                if test_match:
-                    test_command, test_target = test_match.split(':')
-
-                    return {
-                        test_command: test_target,
-                    }
-
-                cloud_target = 'cloud/%s/' % name
-
-                if cloud_target in self.integration_targets_by_alias:
-                    return {
-                        'integration': cloud_target,
-                    }
-
-            return all_tests(self.args)  # test infrastructure, run all tests
-
-        if path.startswith('test/utils/'):
-            return minimal
-
         if '/' not in path:
             if path in (
-                    '.gitattributes',
-                    '.gitignore',
-                    '.mailmap',
-                    'COPYING',
-                    'Makefile',
+                '.gitattributes',
+                '.gitignore',
+                '.mailmap',
+                'COPYING',
+                'Makefile',
             ):
                 return minimal
 
             if path in (
-                    'setup.py',
+                'MANIFEST.in',
+                'pyproject.toml',
+                'requirements.txt',
             ):
-                return all_tests(self.args)  # broad impact, run all tests
+                return packaging
 
             if ext in (
-                    '.in',
-                    '.md',
-                    '.rst',
-                    '.toml',
-                    '.txt',
+                '.md',
+                '.rst',
             ):
                 return minimal
 
         return None  # unknown, will result in fall-back to run all tests
 
-    def _simple_plugin_tests(self, plugin_type, plugin_name):  # type: (str, str) -> t.Dict[str, t.Optional[str]]
+    def _simple_plugin_tests(self, plugin_type: str, plugin_name: str) -> dict[str, t.Optional[str]]:
         """
         Return tests for the given plugin type and plugin name.
         This function is useful for plugin types which do not require special processing.
@@ -876,7 +868,7 @@ class PathMapper:
         )
 
 
-def all_tests(args, force=False):  # type: (TestConfig, bool) -> t.Dict[str, str]
+def all_tests(args: TestConfig, force: bool = False) -> dict[str, str]:
     """Return the targets for each test command when all tests should be run."""
     if force:
         integration_all_target = 'all'
@@ -892,7 +884,7 @@ def all_tests(args, force=False):  # type: (TestConfig, bool) -> t.Dict[str, str
     }
 
 
-def get_integration_all_target(args):  # type: (TestConfig) -> str
+def get_integration_all_target(args: TestConfig) -> str:
     """Return the target to use when all tests should be run."""
     if isinstance(args, IntegrationConfig):
         return args.changed_all_target

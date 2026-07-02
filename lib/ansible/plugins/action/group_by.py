@@ -14,19 +14,18 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 from ansible.plugins.action import ActionBase
-from ansible.module_utils.six import string_types
 
 
 class ActionModule(ActionBase):
-    ''' Create inventory groups based on variables '''
+    """ Create inventory groups based on variables """
 
     # We need to be able to modify the inventory
     TRANSFERS_FILES = False
     _VALID_ARGS = frozenset(('key', 'parents'))
+    _requires_connection = False
 
     def run(self, tmp=None, task_vars=None):
         if task_vars is None:
@@ -41,11 +40,13 @@ class ActionModule(ActionBase):
             return result
 
         group_name = self._task.args.get('key')
+
         parent_groups = self._task.args.get('parents', ['all'])
-        if isinstance(parent_groups, string_types):
+        if isinstance(parent_groups, str):
             parent_groups = [parent_groups]
 
-        result['changed'] = False
         result['add_group'] = group_name.replace(' ', '-')
         result['parent_groups'] = [name.replace(' ', '-') for name in parent_groups]
+        result['changed'] = self.add_group(group_name, parent_group_names=result['parent_groups'])
+
         return result

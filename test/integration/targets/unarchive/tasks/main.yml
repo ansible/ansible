@@ -5,8 +5,11 @@
 - import_tasks: test_tar_gz_creates.yml
 - import_tasks: test_tar_gz_owner_group.yml
 - import_tasks: test_tar_gz_keep_newer.yml
+- import_tasks: test_tar_gz_size_differs.yml
+- import_tasks: test_tar_gz_content_differs.yml
 - import_tasks: test_tar_zst.yml
 - import_tasks: test_zip.yml
+- import_tasks: test_zip_timezone_dst.yml
 - import_tasks: test_exclude.yml
 - import_tasks: test_include.yml
 - import_tasks: test_parent_not_writeable.yml
@@ -20,3 +23,4 @@
 - import_tasks: test_different_language_var.yml
 - import_tasks: test_invalid_options.yml
 - import_tasks: test_ownership_top_folder.yml
+- import_tasks: test_relative_dest.yml

@@ -11,7 +11,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: win_stat
 version_added: "1.7"
@@ -56,9 +56,9 @@ seealso:
 - module: win_owner
 author:
 - Chris Church (@cchurch)
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: Obtain information about a file
   win_stat:
     path: C:\foo.ini
@@ -97,9 +97,9 @@ EXAMPLES = r'''
 
 - debug:
     var: sha256_checksum.stat.checksum
-'''
+"""
 
-RETURN = r'''
+RETURN = r"""
 changed:
     description: Whether anything was changed
     returned: always
@@ -233,4 +233,4 @@ stat:
             returned: success, path exists, file is not a link
             type: int
             sample: 1024
-'''
+"""

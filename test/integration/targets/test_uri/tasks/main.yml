@@ -15,7 +15,7 @@
         - "'http://admin:secret@example.com' is uri"
         - "'ftps://admin:secret@example.com' is uri"
         - "'admin:secret@example.com' is uri" # scheme is implied
-        - "'http://admin:secret@example.com/myfile?parm=1&param=2' is uri"
+        - "'http://admin:secret@example.com/myfile?param=1&param=2' is uri"
         - "'urn:isbn:9780307476463' is uri" # book ref
 
   - name: Assert url tests
@@ -33,7 +33,7 @@
         - "'http://admin:secret@example.com' is url"
         - "'ftps://admin:secret@example.com' is url"
         - "'admin:secret@example.com' is not url"
-        - "'http://admin:secret@example.com/myfile?parm=1&param=2' is url"
+        - "'http://admin:secret@example.com/myfile?param=1&param=2' is url"
         - "'urn:isbn:9780307476463' is not url" # book ref
   - name: assert urn
     assert:

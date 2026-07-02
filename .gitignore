@@ -73,7 +73,16 @@ coverage.xml
 /test/cache/*
 # Development
 /test/develop
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
 venv
+env
 Vagrantfile
 .vagrant
 # Backwards compatibility with `stable-2.9` and earlier branches.
@@ -83,15 +92,20 @@ Vagrantfile
 /lib/ansible_base.egg-info/
 # First used in the `devel` branch during Ansible 2.11 development.
 /lib/ansible_core.egg-info/
+# First used in the `devel` branch during Ansible 2.18 development.
+/ansible_core.egg-info/
+# First used in the `devel` branch during Ansible 2.21 development.
+lib/ansible_core-*.dist-info/
 # vendored lib dir
 lib/ansible/_vendor/*
 !lib/ansible/_vendor/__init__.py
+# PowerShell signed hashlist
+lib/ansible/config/powershell_signatures.psd1
+*.authenticode
 # test stuff
 /test/integration/cloud-config-*.*
 !/test/integration/cloud-config-*.*.template
 .python-version
-/hacking/tests/selinux/*.mod
-/hacking/tests/selinux/*.pp
 # Release directory
 packaging/release/ansible_release
 /.cache/
@@ -115,3 +129,5 @@ test/units/.coverage.*
 /SYMLINK_CACHE.json
 changelogs/.plugin-cache.yaml
 .ansible-test-timeout.json
+# Agents
+CLAUDE.local.md

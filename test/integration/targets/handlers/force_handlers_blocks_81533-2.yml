@@ -1,0 +1,12 @@
+- hosts: A,B
+  gather_facts: false
+  force_handlers: true
+  tasks:
+    - fail:
+      when: inventory_hostname == "A"
+
+    - meta: clear_host_errors
+      when: false
+
+    - debug:
+        msg: hosts_left

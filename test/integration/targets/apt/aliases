@@ -1,6 +1,6 @@
-shippable/posix/group5
+shippable/posix/group2
 destructive
+needs/root
 skip/freebsd
-skip/osx
 skip/macos
 skip/rhel

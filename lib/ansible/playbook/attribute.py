@@ -15,13 +15,14 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-from copy import copy, deepcopy
+import typing as t
 
 from ansible.utils.sentinel import Sentinel
+
+if t.TYPE_CHECKING:
+    from ansible.playbook.base import FieldAttributeBase
 
 _CONTAINERS = frozenset(('list', 'dict', 'set'))
 
@@ -109,7 +110,7 @@ class Attribute:
     def __ge__(self, other):
         return other.priority >= self.priority
 
-    def __get__(self, obj, obj_type=None):
+    def __get__(self, obj: FieldAttributeBase, obj_type=None):
         method = f'_get_attr_{self.name}'
         if hasattr(obj, method):
             # NOTE this appears to be not used in the codebase,
@@ -131,7 +132,7 @@ class Attribute:
 
         return value
 
-    def __set__(self, obj, value):
+    def __set__(self, obj: FieldAttributeBase, value):
         setattr(obj, f'_{self.name}', value)
         if self.alias is not None:
             setattr(obj, f'_{self.alias}', value)
@@ -178,25 +179,5 @@ class FieldAttribute(Attribute):
             value = self.default
             if callable(value):
                 value = value()
-                setattr(obj, f'_{self.name}', value)
-
-        return value
-
-
-class ConnectionFieldAttribute(FieldAttribute):
-    def __get__(self, obj, obj_type=None):
-        from ansible.module_utils.compat.paramiko import paramiko
-        from ansible.utils.ssh_functions import check_for_controlpersist
-        value = super().__get__(obj, obj_type)
-
-        if value == 'smart':
-            value = 'ssh'
-            # see if SSH can support ControlPersist if not use paramiko
-            if not check_for_controlpersist('ssh') and paramiko is not None:
-                value = "paramiko"
-
-        # if someone did `connection: persistent`, default it to using a persistent paramiko connection to avoid problems
-        elif value == 'persistent' and paramiko is not None:
-            value = 'paramiko'
 
         return value

@@ -1,4 +1,4 @@
-# Server 2008 R2 uses a 3rd party program to foward the ports and it may
+# Server 2008 R2 uses a 3rd party program to forward the ports and it may
 # not be ready straight away, we give it at least 5 minutes before
 # conceding defeat
 - name: Windows - make sure the port forwarder is active

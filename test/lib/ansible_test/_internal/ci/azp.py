@@ -1,6 +1,8 @@
 """Support code for working with Azure Pipelines."""
+
 from __future__ import annotations
 
+import json
 import os
 import tempfile
 import uuid
@@ -26,13 +28,15 @@ from ..http import (
 
 from ..util import (
     display,
+    ApplicationError,
     MissingEnvironmentVariable,
 )
 
 from . import (
+    AuthContext,
     ChangeDetectionNotSupported,
     CIProvider,
-    CryptographyAuthHelper,
+    GeneratingAuthHelper,
 )
 
 CODE = 'azp'
@@ -40,25 +44,28 @@ CODE = 'azp'
 
 class AzurePipelines(CIProvider):
     """CI provider implementation for Azure Pipelines."""
-    def __init__(self):
+
+    def __init__(self) -> None:
         self.auth = AzurePipelinesAuthHelper()
 
+        self._changes: AzurePipelinesChanges | None = None
+
     @staticmethod
-    def is_supported():  # type: () -> bool
+    def is_supported() -> bool:
         """Return True if this provider is supported in the current running environment."""
         return os.environ.get('SYSTEM_COLLECTIONURI', '').startswith('https://dev.azure.com/')
 
     @property
-    def code(self):  # type: () -> str
+    def code(self) -> str:
         """Return a unique code representing this provider."""
         return CODE
 
     @property
-    def name(self):  # type: () -> str
+    def name(self) -> str:
         """Return descriptive name for this provider."""
         return 'Azure Pipelines'
 
-    def generate_resource_prefix(self):  # type: () -> str
+    def generate_resource_prefix(self) -> str:
         """Return a resource prefix specific to this CI provider."""
         try:
             prefix = 'azp-%s-%s-%s' % (
@@ -67,22 +74,24 @@ class AzurePipelines(CIProvider):
                 os.environ['SYSTEM_JOBIDENTIFIER'],
             )
         except KeyError as ex:
-            raise MissingEnvironmentVariable(name=ex.args[0])
+            raise MissingEnvironmentVariable(name=ex.args[0]) from None
 
         return prefix
 
-    def get_base_branch(self):  # type: () -> str
-        """Return the base branch or an empty string."""
-        base_branch = os.environ.get('SYSTEM_PULLREQUEST_TARGETBRANCH') or os.environ.get('BUILD_SOURCEBRANCHNAME')
+    def get_base_commit(self, args: CommonConfig) -> str:
+        """Return the base commit or an empty string."""
+        return self._get_changes(args).base_commit or ''
 
-        if base_branch:
-            base_branch = 'origin/%s' % base_branch
+    def _get_changes(self, args: CommonConfig) -> AzurePipelinesChanges:
+        """Return an AzurePipelinesChanges instance, which will be created on first use."""
+        if not self._changes:
+            self._changes = AzurePipelinesChanges(args)
 
-        return base_branch or ''
+        return self._changes
 
-    def detect_changes(self, args):  # type: (TestConfig) -> t.Optional[t.List[str]]
+    def detect_changes(self, args: TestConfig) -> t.Optional[list[str]]:
         """Initialize change detection."""
-        result = AzurePipelinesChanges(args)
+        result = self._get_changes(args)
 
         if result.is_pr:
             job_type = 'pull request'
@@ -102,33 +111,30 @@ class AzurePipelines(CIProvider):
 
         return result.paths
 
-    def supports_core_ci_auth(self):  # type: () -> bool
+    def supports_core_ci_auth(self) -> bool:
         """Return True if Ansible Core CI is supported."""
         return True
 
-    def prepare_core_ci_auth(self):  # type: () -> t.Dict[str, t.Any]
-        """Return authentication details for Ansible Core CI."""
+    def prepare_core_ci_request(self, config: dict[str, object], context: AuthContext) -> dict[str, object]:
         try:
-            request = dict(
+            request: dict[str, object] = dict(
+                type="azp:ssh",
+                config=config,
                 org_name=os.environ['SYSTEM_COLLECTIONURI'].strip('/').split('/')[-1],
                 project_name=os.environ['SYSTEM_TEAMPROJECT'],
                 build_id=int(os.environ['BUILD_BUILDID']),
                 task_id=str(uuid.UUID(os.environ['SYSTEM_TASKINSTANCEID'])),
             )
         except KeyError as ex:
-            raise MissingEnvironmentVariable(name=ex.args[0])
+            raise MissingEnvironmentVariable(name=ex.args[0]) from None
 
-        self.auth.sign_request(request)
+        self.auth.sign_request(request, context)
 
-        auth = dict(
-            azp=request,
-        )
+        return request
 
-        return auth
-
-    def get_git_details(self, args):  # type: (CommonConfig) -> t.Optional[t.Dict[str, t.Any]]
+    def get_git_details(self, args: CommonConfig) -> t.Optional[dict[str, t.Any]]:
         """Return details about git in the current environment."""
-        changes = AzurePipelinesChanges(args)
+        changes = self._get_changes(args)
 
         details = dict(
             base_commit=changes.base_commit,
@@ -138,17 +144,18 @@ class AzurePipelines(CIProvider):
         return details
 
 
-class AzurePipelinesAuthHelper(CryptographyAuthHelper):
-    """
-    Authentication helper for Azure Pipelines.
-    Based on cryptography since it is provided by the default Azure Pipelines environment.
-    """
-    def publish_public_key(self, public_key_pem):  # type: (str) -> None
-        """Publish the given public key."""
+class AzurePipelinesAuthHelper(GeneratingAuthHelper):
+    """Authentication helper for Azure Pipelines."""
+
+    def generate_key_pair(self) -> None:
+        super().generate_key_pair()
+
+        public_key_pem = self.public_key_file.read_text()
+
         try:
             agent_temp_directory = os.environ['AGENT_TEMPDIRECTORY']
         except KeyError as ex:
-            raise MissingEnvironmentVariable(name=ex.args[0])
+            raise MissingEnvironmentVariable(name=ex.args[0]) from None
 
         # the temporary file cannot be deleted because we do not know when the agent has processed it
         # placing the file in the agent's temp directory allows it to be picked up when the job is running in a container
@@ -162,7 +169,8 @@ class AzurePipelinesAuthHelper(CryptographyAuthHelper):
 
 class AzurePipelinesChanges:
     """Change information for an Azure Pipelines build."""
-    def __init__(self, args):  # type: (CommonConfig) -> None
+
+    def __init__(self, args: CommonConfig) -> None:
         self.args = args
         self.git = Git()
 
@@ -174,7 +182,7 @@ class AzurePipelinesChanges:
             self.source_branch_name = os.environ['BUILD_SOURCEBRANCHNAME']
             self.pr_branch_name = os.environ.get('SYSTEM_PULLREQUEST_TARGETBRANCH')
         except KeyError as ex:
-            raise MissingEnvironmentVariable(name=ex.args[0])
+            raise MissingEnvironmentVariable(name=ex.args[0]) from None
 
         if self.source_branch.startswith('refs/tags/'):
             raise ChangeDetectionNotSupported('Change detection is not supported for tags.')
@@ -213,8 +221,21 @@ class AzurePipelinesChanges:
             self.paths = None  # act as though change detection not enabled, do not filter targets
             self.diff = []
 
-    def get_successful_merge_run_commits(self):  # type: () -> t.Set[str]
-        """Return a set of recent successsful merge commits from Azure Pipelines."""
+    def get_successful_merge_run_commits(self) -> set[str]:
+        """
+        Return a set of recent successful merge commits from Azure Pipelines.
+        A warning will be displayed and no commits returned if an error occurs.
+        """
+        try:
+            commits = self._get_successful_merge_run_commits()
+        except ApplicationError as ex:
+            commits = set()
+            display.warning(f'Cannot determine changes. All tests will be executed. Reason: {ex}')
+
+        return commits
+
+    def _get_successful_merge_run_commits(self) -> set[str]:
+        """Return a set of recent successful merge commits from Azure Pipelines."""
         parameters = dict(
             maxBuildsPerDefinition=100,  # max 5000
             queryOrder='queueTimeDescending',  # assumes under normal circumstances that later queued jobs are for later commits
@@ -224,24 +245,33 @@ class AzurePipelinesChanges:
             repositoryId='%s/%s' % (self.org, self.project),
         )
 
-        url = '%s%s/_apis/build/builds?api-version=6.0&%s' % (self.org_uri, self.project, urllib.parse.urlencode(parameters))
+        url = '%s%s/_apis/build/builds?api-version=7.1&%s' % (self.org_uri, self.project, urllib.parse.urlencode(parameters))
 
         http = HttpClient(self.args, always=True)
         response = http.get(url)
 
-        # noinspection PyBroadException
         try:
-            result = response.json()
-        except Exception:  # pylint: disable=broad-except
-            # most likely due to a private project, which returns an HTTP 203 response with HTML
-            display.warning('Unable to find project. Cannot determine changes. All tests will be executed.')
-            return set()
+            result = json.loads(response.response)
+            result_type = 'JSON'
+        except json.JSONDecodeError:
+            result = ...
+            result_type = 'Non-JSON'
 
-        commits = set(build['sourceVersion'] for build in result['value'])
+        result_description = f'HTTP {response.status_code} {result_type} result'
+
+        if response.status_code != 200 or result is ...:
+            raise ApplicationError(f'Unable to find project due to {result_description}.')
+
+        try:
+            commits = {build['sourceVersion'] for build in result['value']}
+        except KeyError as ex:
+            raise ApplicationError(f'Missing {ex.args[0]!r} key in response from {result_description}.') from ex
+        except (ValueError, TypeError) as ex:
+            raise ApplicationError(f'Unexpected response format from {result_description}: {ex}') from ex
 
         return commits
 
-    def get_last_successful_commit(self, commits):  # type: (t.Set[str]) -> t.Optional[str]
+    def get_last_successful_commit(self, commits: set[str]) -> t.Optional[str]:
         """Return the last successful commit from git history that is found in the given commit list, or None."""
         commit_history = self.git.get_rev_list(max_count=100)
         ordered_successful_commits = [commit for commit in commit_history if commit in commits]
@@ -249,12 +279,12 @@ class AzurePipelinesChanges:
         return last_successful_commit
 
 
-def vso_add_attachment(file_type, file_name, path):  # type: (str, str, str) -> None
+def vso_add_attachment(file_type: str, file_name: str, path: str) -> None:
     """Upload and attach a file to the current timeline record."""
     vso('task.addattachment', dict(type=file_type, name=file_name), path)
 
 
-def vso(name, data, message):  # type: (str, t.Dict[str, str], str) -> None
+def vso(name: str, data: dict[str, str], message: str) -> None:
     """
     Write a logging command for the Azure Pipelines agent to process.
     See: https://docs.microsoft.com/en-us/azure/devops/pipelines/scripts/logging-commands?view=azure-devops&tabs=bash

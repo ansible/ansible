@@ -1,32 +1,20 @@
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Contributors to the Ansible project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
+import configparser
 import glob
 import json
 import os
 import stat
+import typing as t
 
-import ansible.module_utils.compat.typing as t
+from io import StringIO
 
-from ansible.module_utils._text import to_text
+from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.facts.utils import get_file_content
 from ansible.module_utils.facts.collector import BaseFactCollector
-from ansible.module_utils.six.moves import configparser, StringIO
 
 
 class LocalFactCollector(BaseFactCollector):
@@ -50,14 +38,21 @@ class LocalFactCollector(BaseFactCollector):
         for fn in sorted(glob.glob(fact_path + '/*.fact')):
             # use filename for key where it will sit under local facts
             fact_base = os.path.basename(fn).replace('.fact', '')
-            if stat.S_IXUSR & os.stat(fn)[stat.ST_MODE]:
-                failed = None
+            failed = None
+            try:
+                executable_fact = stat.S_IXUSR & os.stat(fn)[stat.ST_MODE]
+            except OSError as e:
+                failed = 'Could not stat fact (%s): %s' % (fn, to_text(e))
+                local[fact_base] = failed
+                module.warn(failed)
+                continue
+            if executable_fact:
                 try:
                     # run it
                     rc, out, err = module.run_command(fn)
                     if rc != 0:
                         failed = 'Failure executing fact script (%s), rc: %s, err: %s' % (fn, rc, err)
-                except (IOError, OSError) as e:
+                except OSError as e:
                     failed = 'Could not execute fact script (%s): %s' % (fn, to_text(e))
 
                 if failed is not None:
@@ -84,9 +79,9 @@ class LocalFactCollector(BaseFactCollector):
                 # if that fails read it with ConfigParser
                 cp = configparser.ConfigParser()
                 try:
-                    cp.readfp(StringIO(out))
+                    cp.read_file(StringIO(out))
                 except configparser.Error:
-                    fact = "error loading facts as JSON or ini - please check content: %s" % fn
+                    fact = f"error loading facts as JSON or ini - please check content: {fn}"
                     module.warn(fact)
                 else:
                     fact = {}
@@ -94,8 +89,14 @@ class LocalFactCollector(BaseFactCollector):
                         if sect not in fact:
                             fact[sect] = {}
                         for opt in cp.options(sect):
-                            val = cp.get(sect, opt)
-                            fact[sect][opt] = val
+                            try:
+                                val = cp.get(sect, opt)
+                            except configparser.Error as ex:
+                                fact = f"error loading facts as ini - please check content: {fn} ({ex})"
+                                module.warn(fact)
+                                continue
+                            else:
+                                fact[sect][opt] = val
             except Exception as e:
                 fact = "Failed to convert (%s) to JSON: %s" % (fn, to_text(e))
                 module.warn(fact)

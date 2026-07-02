@@ -1,2 +1,0 @@
-bugfixes:
-- pip - fix cases where resolution of pip Python module fails when importlib.util has not already been imported

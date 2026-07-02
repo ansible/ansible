@@ -9,8 +9,15 @@
       debug:
         msg: notifying handler
       changed_when: yes
-      notify: include a task from the handlers section
+      notify:
+        - include a task from the handlers section
+        - include a task in a loop from the handlers section
 
   handlers:
     - name: include a task from the handlers section
       include_tasks: handlers.yml
+
+    - name: include a task in a loop from the handlers section
+      include_tasks: "{{ item }}"
+      with_first_found:
+        - handlers.yml

@@ -4,4 +4,4 @@
 
 - assert:
     that:
-      - 'result.msg == "Unexpected failure during module execution: boom"'
+      - 'result.msg == "Task failed: boom"'

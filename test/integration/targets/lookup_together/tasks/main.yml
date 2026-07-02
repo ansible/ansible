@@ -26,4 +26,4 @@
     - assert:
         that:
           - ansible_failed_task.name == "EXPECTED FAILURE - test empty list"
-          - ansible_failed_result.msg == "with_together requires at least one element in each list"
+          - ansible_failed_result.msg is contains "with_together requires at least one element in each list"

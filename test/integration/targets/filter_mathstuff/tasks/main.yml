@@ -64,44 +64,44 @@
     that:
       - '[1,2,3]|intersect([4,5,6]) == []'
       - '[1,2,3]|intersect([3,4,5,6]) == [3]'
-      - '[1,2,3]|intersect([3,2,1]) == [1,2,3]'
-      - '(1,2,3)|intersect((4,5,6))|list == []'
-      - '(1,2,3)|intersect((3,4,5,6))|list == [3]'
+      - '[1,2,3]|intersect([3,2,1]) | sort == [1,2,3]'
+      - '(1,2,3)|intersect((4,5,6)) == []'
+      - '(1,2,3)|intersect((3,4,5,6)) == [3]'
       - '["a","A","b"]|intersect(["B","c","C"]) == []'
       - '["a","A","b"]|intersect(["b","B","c","C"]) == ["b"]'
-      - '["a","A","b"]|intersect(["b","A","a"]) == ["a","A","b"]'
-      - '("a","A","b")|intersect(("B","c","C"))|list == []'
-      - '("a","A","b")|intersect(("b","B","c","C"))|list == ["b"]'
+      - '["a","A","b"]|intersect(["b","A","a"]) | sort(case_sensitive=True) == ["A","a","b"]'
+      - '("a","A","b")|intersect(("B","c","C")) == []'
+      - '("a","A","b")|intersect(("b","B","c","C")) == ["b"]'
 
 - name: Verify difference
   tags: difference
   assert:
     that:
-      - '[1,2,3]|difference([4,5,6]) == [1,2,3]'
-      - '[1,2,3]|difference([3,4,5,6]) == [1,2]'
+      - '[1,2,3]|difference([4,5,6]) | sort == [1,2,3]'
+      - '[1,2,3]|difference([3,4,5,6]) | sort == [1,2]'
       - '[1,2,3]|difference([3,2,1]) == []'
-      - '(1,2,3)|difference((4,5,6))|list == [1,2,3]'
-      - '(1,2,3)|difference((3,4,5,6))|list == [1,2]'
-      - '["a","A","b"]|difference(["B","c","C"]) == ["a","A","b"]'
-      - '["a","A","b"]|difference(["b","B","c","C"]) == ["a","A"]'
+      - '(1,2,3)|difference((4,5,6)) | sort == [1,2,3]'
+      - '(1,2,3)|difference((3,4,5,6)) | sort == [1,2]'
+      - '["a","A","b"]|difference(["B","c","C"]) | sort(case_sensitive=True) == ["A","a","b"]'
+      - '["a","A","b"]|difference(["b","B","c","C"]) | sort(case_sensitive=True) == ["A","a"]'
       - '["a","A","b"]|difference(["b","A","a"]) == []'
-      - '("a","A","b")|difference(("B","c","C"))|list|sort(case_sensitive=True) == ["A","a","b"]'
-      - '("a","A","b")|difference(("b","B","c","C"))|list|sort(case_sensitive=True) == ["A","a"]'
+      - '("a","A","b")|difference(("B","c","C")) | sort(case_sensitive=True) == ["A","a","b"]'
+      - '("a","A","b")|difference(("b","B","c","C")) | sort(case_sensitive=True) == ["A","a"]'
 
 - name: Verify symmetric_difference
   tags: symmetric_difference
   assert:
     that:
-      - '[1,2,3]|symmetric_difference([4,5,6]) == [1,2,3,4,5,6]'
-      - '[1,2,3]|symmetric_difference([3,4,5,6]) == [1,2,4,5,6]'
+      - '[1,2,3]|symmetric_difference([4,5,6]) | sort == [1,2,3,4,5,6]'
+      - '[1,2,3]|symmetric_difference([3,4,5,6]) | sort == [1,2,4,5,6]'
       - '[1,2,3]|symmetric_difference([3,2,1]) == []'
-      - '(1,2,3)|symmetric_difference((4,5,6))|list == [1,2,3,4,5,6]'
-      - '(1,2,3)|symmetric_difference((3,4,5,6))|list == [1,2,4,5,6]'
-      - '["a","A","b"]|symmetric_difference(["B","c","C"]) == ["a","A","b","B","c","C"]'
-      - '["a","A","b"]|symmetric_difference(["b","B","c","C"]) == ["a","A","B","c","C"]'
+      - '(1,2,3)|symmetric_difference((4,5,6)) | sort == [1,2,3,4,5,6]'
+      - '(1,2,3)|symmetric_difference((3,4,5,6)) | sort == [1,2,4,5,6]'
+      - '["a","A","b"]|symmetric_difference(["B","c","C"]) | sort(case_sensitive=True) == ["A","B","C","a","b","c"]'
+      - '["a","A","b"]|symmetric_difference(["b","B","c","C"]) | sort(case_sensitive=True) == ["A","B","C","a","c"]'
       - '["a","A","b"]|symmetric_difference(["b","A","a"]) == []'
-      - '("a","A","b")|symmetric_difference(("B","c","C"))|list|sort(case_sensitive=True) == ["A","B","C","a","b","c"]'
-      - '("a","A","b")|symmetric_difference(("b","B","c","C"))|list|sort(case_sensitive=True) == ["A","B","C","a","c"]'
+      - '("a","A","b")|symmetric_difference(("B","c","C")) | sort(case_sensitive=True) == ["A","B","C","a","b","c"]'
+      - '("a","A","b")|symmetric_difference(("b","B","c","C")) | sort(case_sensitive=True) == ["A","B","C","a","c"]'
 
 - name: Verify union
   tags: union
@@ -112,11 +112,11 @@
       - '[1,2,3]|union([3,2,1]) == [1,2,3]'
       - '(1,2,3)|union((4,5,6))|list == [1,2,3,4,5,6]'
       - '(1,2,3)|union((3,4,5,6))|list == [1,2,3,4,5,6]'
-      - '["a","A","b"]|union(["B","c","C"]) == ["a","A","b","B","c","C"]'
-      - '["a","A","b"]|union(["b","B","c","C"]) == ["a","A","b","B","c","C"]'
-      - '["a","A","b"]|union(["b","A","a"]) == ["a","A","b"]'
-      - '("a","A","b")|union(("B","c","C"))|list|sort(case_sensitive=True) == ["A","B","C","a","b","c"]'
-      - '("a","A","b")|union(("b","B","c","C"))|list|sort(case_sensitive=True) == ["A","B","C","a","b","c"]'
+      - '["a","A","b"]|union(["B","c","C"]) | sort(case_sensitive=True) == ["A","B","C","a","b","c"]'
+      - '["a","A","b"]|union(["b","B","c","C"]) | sort(case_sensitive=True) == ["A","B","C","a","b","c"]'
+      - '["a","A","b"]|union(["b","A","a"]) | sort(case_sensitive=True) == ["A","a","b"]'
+      - '("a","A","b")|union(("B","c","C")) | sort(case_sensitive=True) == ["A","B","C","a","b","c"]'
+      - '("a","A","b")|union(("b","B","c","C")) | sort(case_sensitive=True) == ["A","B","C","a","b","c"]'
 
 - name: Verify min
   tags: min
@@ -209,14 +209,14 @@
   tags: human_to_bytes
   assert:
     that:
-      - "{{'0'|human_to_bytes}}        == 0"
-      - "{{'0.1'|human_to_bytes}}      == 0"
-      - "{{'0.9'|human_to_bytes}}      == 1"
-      - "{{'1'|human_to_bytes}}        == 1"
-      - "{{'10.00 KB'|human_to_bytes}} == 10240"
-      - "{{   '11 MB'|human_to_bytes}} == 11534336"
-      - "{{  '1.1 GB'|human_to_bytes}} == 1181116006"
-      - "{{'10.00 Kb'|human_to_bytes(isbits=True)}} == 10240"
+      - "'0'|human_to_bytes        == 0"
+      - "'0.1'|human_to_bytes      == 0"
+      - "'0.9'|human_to_bytes      == 1"
+      - "'1'|human_to_bytes        == 1"
+      - "'10.00 KB'|human_to_bytes == 10240"
+      - "   '11 MB'|human_to_bytes == 11534336"
+      - "  '1.1 GB'|human_to_bytes == 1181116006"
+      - "'10.00 Kb'|human_to_bytes(isbits=True) == 10240"
 
 - name: Verify human_to_bytes (bad string)
   set_fact:
@@ -228,7 +228,7 @@
 - name: Verify human_to_bytes (bad string)
   tags: human_to_bytes
   assert:
-    that: "{{_human_bytes_test.failed}}"
+    that: "_human_bytes_test.failed"
 
 - name: Verify that union can be chained
   tags: union
@@ -236,7 +236,7 @@
     unions: '{{ [1,2,3]|union([4,5])|union([6,7]) }}'
   assert:
     that:
-      - "unions|type_debug == 'list'"
+      - unions|type_debug == 'list'
       - "unions|length == 7"
 
 - name: Test union with unhashable item
@@ -245,7 +245,7 @@
     unions: '{{ [1,2,3]|union([{}]) }}'
   assert:
     that:
-      - "unions|type_debug == 'list'"
+      - unions|type_debug == 'list'
       - "unions|length == 4"
 
 - name: Verify rekey_on_member with invalid "duplicates" kwarg
@@ -289,9 +289,9 @@
     that:
       - rekey_on_member_exc1_res is failed
       - '"duplicates parameter to rekey_on_member has unknown value" in rekey_on_member_exc1_res.msg'
-      - '[{"proto": "eigrp", "state": "enabled"}, {"proto": "ospf", "state": "enabled"}]|rekey_on_member("proto") == {"eigrp": {"proto": "eigrp", "state": "enabled"}, "ospf": {"proto": "ospf", "state": "enabled"}}'
-      - '{"a": {"proto": "eigrp", "state": "enabled"}, "b": {"proto": "ospf", "state": "enabled"}}|rekey_on_member("proto") == {"eigrp": {"proto": "eigrp", "state": "enabled"}, "ospf": {"proto": "ospf", "state": "enabled"}}'
-      - '[{"proto": "eigrp", "state": "enabled"}, {"proto": "eigrp", "state": "enabled"}]|rekey_on_member("proto", duplicates="overwrite") == {"eigrp": {"proto": "eigrp", "state": "enabled"}}'
+      - '[{"proto": "eigrp", "state": "enabled"}, {"proto": "ospf", "state": "enabled"}]|rekey_on_member("proto") == {"eigrp": {"proto": "eigrp", "state": "enabled"}, "ospf": {"proto": "ospf", "state": "enabled"} }'
+      - '{"a": {"proto": "eigrp", "state": "enabled"}, "b": {"proto": "ospf", "state": "enabled"} }|rekey_on_member("proto") == {"eigrp": {"proto": "eigrp", "state": "enabled"}, "ospf": {"proto": "ospf", "state": "enabled"} }'
+      - '[{"proto": "eigrp", "state": "enabled"}, {"proto": "eigrp", "state": "enabled"}]|rekey_on_member("proto", duplicates="overwrite") == {"eigrp": {"proto": "eigrp", "state": "enabled"} }'
       - rekey_on_member_exc2_res is failed
       - '"Type is not a valid list, set, or dict" in rekey_on_member_exc2_res.msg'
       - rekey_on_member_exc3_res is failed
@@ -299,7 +299,7 @@
       - rekey_on_member_exc4_res is failed
       - '"was not found" in rekey_on_member_exc4_res.msg'
       - rekey_on_member_exc5_res is failed
-      - '"is not unique, cannot correctly turn into dict" in rekey_on_member_exc5_res.msg'
+      - '"is not unique, cannot convert to dict" in rekey_on_member_exc5_res.msg'
 
 - name: test undefined positional args for rekey_on_member are properly handled
   vars:
@@ -311,10 +311,4 @@
     - assert:
         that: "test_var == 'test'"
     - assert:
-        that: "rekeyed == {'value': {'test': 'value'}}"
-
-# TODO: For some reason, the coverage tool isn't accounting for the last test
-# so add another "last test" to fake it...
-- assert:
-    that:
-      - true
+        that: "rekeyed == {'value': {'test': 'value'} }"

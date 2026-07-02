@@ -6,7 +6,8 @@
 jobs:
   - job: Coverage
     displayName: Code Coverage
-    container: default
+    container: $[ variables.defaultContainer ]
+    timeoutInMinutes: 10
     workspace:
       clean: all
     steps:

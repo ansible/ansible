@@ -15,15 +15,17 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import json
 
+from ansible.utils.display import Display
+
+Display().deprecated(f'{__name__!r} is deprecated.', version='2.23', help_text='Call `json.dumps` directly instead.')
+
 
 def jsonify(result, format=False):
-    ''' format JSON output (uncompressed or uncompressed) '''
+    """Format JSON output."""
 
     if result is None:
         return "{}"

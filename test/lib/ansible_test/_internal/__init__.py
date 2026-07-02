@@ -1,4 +1,5 @@
 """Test runner for all Ansible tests."""
+
 from __future__ import annotations
 
 import os
@@ -11,9 +12,16 @@ from .init import (
     CURRENT_RLIMIT_NOFILE,
 )
 
+from .constants import (
+    STATUS_HOST_CONNECTION_ERROR,
+)
+
 from .util import (
     ApplicationError,
+    HostConnectionError,
+    TimeoutExpiredError,
     display,
+    report_locale,
 )
 
 from .delegation import (
@@ -36,6 +44,7 @@ from .data import (
 
 from .util_common import (
     CommonConfig,
+    ExitHandler,
 )
 
 from .cli import (
@@ -46,19 +55,35 @@ from .provisioning import (
     PrimeContainers,
 )
 
+from .config import (
+    TestConfig,
+)
 
-def main(cli_args=None):  # type: (t.Optional[t.List[str]]) -> None
+from .debugging import (
+    initialize_debugger,
+)
+
+
+def main(cli_args: t.Optional[list[str]] = None) -> None:
+    """Wrapper around the main program function to invoke cleanup functions at exit."""
+    with ExitHandler.context():
+        main_internal(cli_args)
+
+
+def main_internal(cli_args: t.Optional[list[str]] = None) -> None:
     """Main program function."""
     try:
         os.chdir(data_context().content.root)
         args = parse_args(cli_args)
-        config = args.config(args)  # type: CommonConfig
+        config: CommonConfig = args.config(args)
         display.verbosity = config.verbosity
         display.truncate = config.truncate
         display.redact = config.redact
         display.color = config.color
         display.fd = sys.stderr if config.display_stderr else sys.stdout
+        initialize_debugger(config)
         configure_timeout(config)
+        report_locale(isinstance(config, TestConfig) and not config.delegate)
 
         display.info('RLIMIT_NOFILE: %s' % (CURRENT_RLIMIT_NOFILE,), verbosity=2)
 
@@ -88,10 +113,17 @@ def main(cli_args=None):  # type: (t.Optional[t.List[str]]) -> None
 
         display.review_warnings()
         config.success = True
+    except HostConnectionError as ex:
+        display.fatal(str(ex))
+        ex.run_callback()
+        sys.exit(STATUS_HOST_CONNECTION_ERROR)
     except ApplicationWarning as ex:
         display.warning('%s' % ex)
         sys.exit(0)
     except ApplicationError as ex:
+        display.fatal('%s' % ex)
+        sys.exit(1)
+    except TimeoutExpiredError as ex:
         display.fatal('%s' % ex)
         sys.exit(1)
     except KeyboardInterrupt:

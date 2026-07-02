@@ -1,0 +1,73 @@
+---
+- name: create a group with a specific gid
+  group:
+    name: testgroupone
+    gid: 8000
+    state: present
+  register: group_test0_1
+
+- name: create another group without a specific gid
+  group:
+    name: testgrouptwo
+    state: present
+  register: group_test0_2
+
+- name: show that the last group gets an id higher than the previous highest one
+  assert:
+    that:
+      group_test0_1.gid < group_test0_2.gid
+
+- name: create a group within gid_max range
+  group:
+    name: testgroupthree
+    gid_max: 1999
+    state: present
+  register: group_test0_3
+
+- name: assert that a group with gid_max gets a lower gid
+  assert:
+    that:
+      group_test0_2.gid > group_test0_3.gid
+
+- name: proof of range limits
+  block: 
+    - name: create group 1 within min 1500 and max 1501
+      group:
+        name: testgroupfour
+        gid_min: 1500
+        gid_max: 1501
+        state: present
+      register: group_test0_4
+
+    - name: create group 2 within min 1500 and max 1501
+      group:
+        name: testgroupfive
+        gid_min: 1500
+        gid_max: 1501
+        state: present
+      register: group_test0_5
+
+    - name: create group 3 within min 1500 and max 1501 and show that the range applies
+      group:
+        name: testgroupsix
+        gid_min: 1500
+        gid_max: 1501
+        state: present
+      register: group_test0_6
+      failed_when: not group_test0_6.failed
+
+- name: show that creating a group by setting both gid_min and local is not possible
+  group:
+    name: gidminlocalgroup_test_1
+    gid_min: 1000
+    local: true
+  register: gidminlocalgroup_test_1
+  failed_when: not gidminlocalgroup_test_1.failed
+
+- name: show that creating a group by setting both gid_max and local is not possible
+  group:
+    name: gidmaxlocalgroup_test_1
+    gid_max: 2000
+    local: true
+  register: gidmaxlocalgroup_test_1
+  failed_when: not gidmaxlocalgroup_test_1.failed

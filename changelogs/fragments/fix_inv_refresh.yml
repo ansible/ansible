@@ -1,2 +1,0 @@
-bugfixes:
-  - '"meta: refresh_inventory" does not clobber entries added by add_host/group_by anymore.'

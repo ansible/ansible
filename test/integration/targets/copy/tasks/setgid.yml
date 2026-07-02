@@ -1,0 +1,27 @@
+- block:
+    - name: Create test directory
+      file:
+        path: "{{ remote_tmp_dir }}/test_setgid"
+        state: directory
+        mode: '2750'
+        recurse: yes
+        owner: '{{ remote_unprivileged_user }}'
+        group: '{{ remote_unprivileged_user_group }}'
+
+    - name: Test creating a file respects setgid on parent dir
+      copy:
+        content: |
+          test file
+        dest: "{{ remote_tmp_dir }}/test_setgid/test.txt"
+
+    - stat:
+        path: "{{ remote_tmp_dir }}/test_setgid/test.txt"
+      register: result
+
+    - assert:
+        that:
+          - result.stat.gr_name == remote_unprivileged_user_group
+  always:
+    - file:
+        path: "{{ remote_tmp_dir }}/test_setgid"
+        state: absent

@@ -5,7 +5,7 @@
 
 - assert:
     that:
-        - 'none_var is sameas none'
-        - 'none_var|type_debug == "NoneType"'
-        - 'none_var_direct is sameas none'
-        - 'none_var_direct|type_debug == "NoneType"'
+        - none_var is sameas none
+        - none_var|type_debug == "NoneType"
+        - none_var_direct is sameas none
+        - none_var_direct|type_debug == "NoneType"

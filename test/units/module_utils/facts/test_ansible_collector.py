@@ -15,13 +15,11 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 # for testing
-from units.compat import unittest
-from units.compat.mock import Mock, patch
+import unittest
+from unittest.mock import Mock, patch
 
 from ansible.module_utils.facts import collector
 from ansible.module_utils.facts import ansible_collector
@@ -67,7 +65,7 @@ ALL_COLLECTOR_CLASSES = \
      EnvFactCollector,
      DnsFactCollector,
      PythonFactCollector,
-     # FIXME: re-enable when hardware doesnt Hardware() doesnt munge self.facts
+     # FIXME: re-enable when hardware doesn't Hardware() doesn't munge self.facts
      #                         HardwareCollector
      NetworkCollector,
      VirtualCollector,
@@ -202,7 +200,7 @@ class TestCollectedFacts(unittest.TestCase):
                       'env']
     not_expected_facts = ['facter', 'ohai']
 
-    collected_facts = {}
+    collected_facts: dict[str, str] = {}
 
     def _mock_module(self, gather_subset=None):
         return mock_module(gather_subset=self.gather_subset)
@@ -380,7 +378,7 @@ class TestCollectorDepsWithFilter(unittest.TestCase):
         facts_dict = fact_collector.collect(module=_mock_module,
                                             collected_facts=collected_facts)
         self.assertIn('concat_fact', facts_dict)
-        self.assertTrue('THE_NEEDED_FACT_VALUE' in facts_dict['concat_fact'])
+        self.assertIn('THE_NEEDED_FACT_VALUE', facts_dict['concat_fact'])
 
     def test_concat_collector_with_filter_on_concat(self):
         _mock_module = mock_module(gather_subset=['all', '!facter', '!ohai'],
@@ -398,8 +396,8 @@ class TestCollectorDepsWithFilter(unittest.TestCase):
         facts_dict = fact_collector.collect(module=_mock_module,
                                             collected_facts=collected_facts)
         self.assertIn('concat_fact', facts_dict)
-        self.assertTrue('THE_NEEDED_FACT_VALUE' in facts_dict['concat_fact'])
-        self.assertTrue('compound' in facts_dict['concat_fact'])
+        self.assertIn('THE_NEEDED_FACT_VALUE', facts_dict['concat_fact'])
+        self.assertIn('compound', facts_dict['concat_fact'])
 
     def _collect(self, _mock_module, collected_facts=None):
         _collectors = self._collectors(_mock_module)
@@ -439,6 +437,21 @@ class TestOnlyExceptionCollector(TestCollectedFacts):
                     all_collector_classes=None,
                     minimal_gather_subset=None):
         return [ExceptionThrowingCollector()]
+
+
+class NoneReturningCollector(collector.BaseFactCollector):
+    def collect(self, module=None, collected_facts=None):
+        return None
+
+
+class TestOnlyNoneCollector(TestCollectedFacts):
+    expected_facts = []
+    min_fact_count = 0
+
+    def _collectors(self, module,
+                    all_collector_classes=None,
+                    minimal_gather_subset=None):
+        return [NoneReturningCollector(namespace='ansible')]
 
 
 class TestMinimalCollectedFacts(TestCollectedFacts):

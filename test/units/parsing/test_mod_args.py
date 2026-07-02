@@ -2,11 +2,9 @@
 # Copyright 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 import pytest
-import re
 
 from ansible.errors import AnsibleParserError
 from ansible.parsing.mod_args import ModuleArgsParser
@@ -118,20 +116,20 @@ class TestModArgsDwim:
 
         assert err.value.args[0] == msg
 
+    @pytest.mark.usefixtures('collection_loader')
     def test_multiple_actions_ping_shell(self):
         args_dict = {'ping': 'data=hi', 'shell': 'echo hi'}
         m = ModuleArgsParser(args_dict)
         with pytest.raises(AnsibleParserError) as err:
             m.parse()
 
-        assert err.value.args[0].startswith("conflicting action statements: ")
-        actions = set(re.search(r'(\w+), (\w+)', err.value.args[0]).groups())
-        assert actions == set(['ping', 'shell'])
+        assert err.value.args[0] == f'conflicting action statements: {", ".join(args_dict)}'
 
+    @pytest.mark.usefixtures('collection_loader')
     def test_bogus_action(self):
         args_dict = {'bogusaction': {}}
         m = ModuleArgsParser(args_dict)
         with pytest.raises(AnsibleParserError) as err:
             m.parse()
 
-        assert err.value.args[0].startswith("couldn't resolve module/action 'bogusaction'")
+        assert err.value.args[0].startswith(f"couldn't resolve module/action '{next(iter(args_dict))}'")

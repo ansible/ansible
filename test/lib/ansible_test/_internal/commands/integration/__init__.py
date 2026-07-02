@@ -1,10 +1,14 @@
 """Ansible integration test infrastructure."""
+
 from __future__ import annotations
 
+import collections.abc as c
 import contextlib
+import dataclasses
 import datetime
 import json
 import os
+import pathlib
 import re
 import shutil
 import tempfile
@@ -39,7 +43,6 @@ from ...target import (
     walk_integration_targets,
     IntegrationTarget,
     walk_internal_targets,
-    TIntegrationTarget,
     IntegrationTargetType,
 )
 
@@ -48,7 +51,6 @@ from ...config import (
     NetworkIntegrationConfig,
     PosixIntegrationConfig,
     WindowsIntegrationConfig,
-    TIntegrationConfig,
 )
 
 from ...io import (
@@ -56,9 +58,15 @@ from ...io import (
     read_text_file,
 )
 
+from ...constants import (
+    TIMEOUT_MARGIN_SECONDS,
+)
+
 from ...util import (
+    ANSIBLE_TEST_CONTROLLER_ROOT,
     ApplicationError,
     display,
+    get_ansible_version,
     SubprocessError,
     remove_tree,
 )
@@ -69,6 +77,7 @@ from ...util_common import (
     run_command,
     write_json_test_results,
     check_pyyaml,
+    get_powershell_injector_env,
 )
 
 from ...coverage_util import (
@@ -89,6 +98,7 @@ from .cloud import (
 
 from ...data import (
     data_context,
+    PayloadConfig,
 )
 
 from ...host_configs import (
@@ -98,9 +108,11 @@ from ...host_configs import (
 
 from ...host_profiles import (
     ControllerProfile,
+    ControllerHostProfile,
     HostProfile,
     PosixProfile,
     SshTargetHostProfile,
+    DebuggableProfile,
 )
 
 from ...provisioning import (
@@ -127,14 +139,16 @@ from .coverage import (
     CoverageManager,
 )
 
-THostProfile = t.TypeVar('THostProfile', bound=HostProfile)
+from ...timeout import (
+    get_timeout,
+)
 
 
-def generate_dependency_map(integration_targets):  # type: (t.List[IntegrationTarget]) -> t.Dict[str, t.Set[IntegrationTarget]]
+def generate_dependency_map(integration_targets: list[IntegrationTarget]) -> dict[str, set[IntegrationTarget]]:
     """Analyze the given list of integration test targets and return a dictionary expressing target names and the targets on which they depend."""
     targets_dict = dict((target.name, target) for target in integration_targets)
     target_dependencies = analyze_integration_target_dependencies(integration_targets)
-    dependency_map = {}  # type: t.Dict[str, t.Set[IntegrationTarget]]
+    dependency_map: dict[str, set[IntegrationTarget]] = {}
 
     invalid_targets = set()
 
@@ -157,9 +171,9 @@ def generate_dependency_map(integration_targets):  # type: (t.List[IntegrationTa
     return dependency_map
 
 
-def get_files_needed(target_dependencies):  # type: (t.List[IntegrationTarget]) -> t.List[str]
+def get_files_needed(target_dependencies: list[IntegrationTarget]) -> list[str]:
     """Return a list of files needed by the given list of target dependencies."""
-    files_needed = []  # type: t.List[str]
+    files_needed: list[str] = []
 
     for target_dependency in target_dependencies:
         files_needed += target_dependency.needs_file
@@ -174,7 +188,52 @@ def get_files_needed(target_dependencies):  # type: (t.List[IntegrationTarget]) 
     return files_needed
 
 
-def check_inventory(args, inventory_path):  # type: (IntegrationConfig, str) -> None
+def get_collection_roots_needed(target_dependencies: list[IntegrationTarget]) -> list[str]:
+    """
+    Return a list of collection roots needed by the given list of target dependencies.
+    This feature is only supported for ansible-core, not collections.
+    To be recognized, a collection must reside in the following directory:
+    test/integration/targets/{target_name}/ansible_collections/ansible_test/{target_name}
+    If the target name has dashes, they will be replaced with underscores for the collection name.
+    It is an error if the collection root contains additional namespaces or collections.
+    This is enforced to ensure there are no naming conflicts between collection roots.
+    """
+    if not data_context().content.is_ansible:
+        return []
+
+    collection_roots: list[str] = []
+    namespace_name = 'ansible_test'
+
+    for target_dependency in target_dependencies:
+        collection_root = os.path.join(data_context().content.integration_targets_path, target_dependency.name)
+        collection_name = target_dependency.name.replace('-', '_')
+        namespaces_path = os.path.join(collection_root, 'ansible_collections')
+        namespace_path = os.path.join(namespaces_path, namespace_name)
+        collection_path = os.path.join(namespace_path, collection_name)
+
+        if not os.path.isdir(collection_path):
+            continue
+
+        namespaces = set(os.listdir(namespaces_path))
+        namespaces.remove(namespace_name)
+
+        if namespaces:
+            raise ApplicationError(f"Additional test collection namespaces not supported: {', '.join(sorted(namespaces))}")
+
+        collections = set(os.listdir(namespace_path))
+        collections.remove(collection_name)
+
+        if collections:
+            raise ApplicationError(f"Additional test collections not supported: {', '.join(sorted(collections))}")
+
+        collection_roots.append(collection_root)
+
+    collection_roots = sorted(set(collection_roots))
+
+    return collection_roots
+
+
+def check_inventory(args: IntegrationConfig, inventory_path: str) -> None:
     """Check the given inventory for issues."""
     if not isinstance(args.controller, OriginConfig):
         if os.path.exists(inventory_path):
@@ -196,27 +255,29 @@ def get_inventory_absolute_path(args: IntegrationConfig, target: InventoryConfig
     return path
 
 
-def get_inventory_relative_path(args):  # type: (IntegrationConfig) -> str
+def get_inventory_relative_path(args: IntegrationConfig) -> str:
     """Return the inventory path used for the given integration configuration relative to the content root."""
-    inventory_names = {
+    inventory_names: dict[t.Type[IntegrationConfig], str] = {
         PosixIntegrationConfig: 'inventory',
         WindowsIntegrationConfig: 'inventory.winrm',
         NetworkIntegrationConfig: 'inventory.networking',
-    }  # type: t.Dict[t.Type[IntegrationConfig], str]
+    }
 
     return os.path.join(data_context().content.integration_path, inventory_names[type(args)])
 
 
-def delegate_inventory(args, inventory_path_src):  # type: (IntegrationConfig, str) -> None
+def delegate_inventory(args: IntegrationConfig, inventory_path_src: str) -> None:
     """Make the given inventory available during delegation."""
     if isinstance(args, PosixIntegrationConfig):
         return
 
-    def inventory_callback(files):  # type: (t.List[t.Tuple[str, str]]) -> None
+    def inventory_callback(payload_config: PayloadConfig) -> None:
         """
         Add the inventory file to the payload file list.
         This will preserve the file during delegation even if it is ignored or is outside the content and install roots.
         """
+        files = payload_config.files
+
         inventory_path = get_inventory_relative_path(args)
         inventory_tuple = inventory_path_src, inventory_path
 
@@ -238,10 +299,10 @@ def delegate_inventory(args, inventory_path_src):  # type: (IntegrationConfig, s
 
 @contextlib.contextmanager
 def integration_test_environment(
-        args,  # type: IntegrationConfig
-        target,  # type: IntegrationTarget
-        inventory_path_src,  # type: str
-):  # type: (...) -> t.Iterator[IntegrationEnvironment]
+    args: IntegrationConfig,
+    target: IntegrationTarget,
+    inventory_path_src: str,
+) -> c.Iterator[IntegrationEnvironment]:
     """Context manager that prepares the integration test environment and cleans it up."""
     ansible_config_src = args.get_ansible_config()
     ansible_config_relative = os.path.join(data_context().content.integration_path, '%s.cfg' % args.command)
@@ -255,7 +316,11 @@ def integration_test_environment(
         ansible_config = ansible_config_src
         vars_file = os.path.join(data_context().content.root, data_context().content.integration_vars_path)
 
-        yield IntegrationEnvironment(data_context().content.root, integration_dir, targets_dir, inventory_path, ansible_config, vars_file)
+        test_env = IntegrationEnvironment(data_context().content.root, integration_dir, targets_dir, inventory_path, ansible_config, vars_file)
+
+        with test_env.run():
+            yield test_env
+
         return
 
     # When testing a collection, the temporary directory must reside within the collection.
@@ -286,6 +351,7 @@ def integration_test_environment(
         target_dependencies = sorted([target] + list(cache.dependency_map.get(target.name, set())))
 
         files_needed = get_files_needed(target_dependencies)
+        collection_roots = get_collection_roots_needed(target_dependencies)
 
         integration_dir = os.path.join(temp_dir, data_context().content.integration_path)
         targets_dir = os.path.join(temp_dir, data_context().content.integration_targets_path)
@@ -309,7 +375,7 @@ def integration_test_environment(
         directory_copies = [
             (
                 os.path.join(integration_targets_relative_path, target.relative_path),
-                os.path.join(temp_dir, integration_targets_relative_path, target.relative_path)
+                os.path.join(temp_dir, integration_targets_relative_path, target.relative_path),
             )
             for target in target_dependencies
         ]
@@ -324,7 +390,7 @@ def integration_test_environment(
             display.info('Copying %s/ to %s/' % (dir_src, dir_dst), verbosity=2)
 
             if not args.explain:
-                shutil.copytree(to_bytes(dir_src), to_bytes(dir_dst), symlinks=True)  # type: ignore[arg-type]  # incorrect type stub omits bytes path support
+                shutil.copytree(to_bytes(dir_src), to_bytes(dir_dst), symlinks=True)  # type: ignore[type-var,arg-type]  # type stub omits bytes path support
 
         for file_src, file_dst in file_copies:
             display.info('Copying %s to %s' % (file_src, file_dst), verbosity=2)
@@ -333,7 +399,10 @@ def integration_test_environment(
                 make_dirs(os.path.dirname(file_dst))
                 shutil.copy2(file_src, file_dst)
 
-        yield IntegrationEnvironment(temp_dir, integration_dir, targets_dir, inventory_path, ansible_config, vars_file)
+        test_env = IntegrationEnvironment(temp_dir, integration_dir, targets_dir, inventory_path, ansible_config, vars_file, collection_roots)
+
+        with test_env.run():
+            yield test_env
     finally:
         if not args.explain:
             remove_tree(temp_dir)
@@ -341,10 +410,10 @@ def integration_test_environment(
 
 @contextlib.contextmanager
 def integration_test_config_file(
-        args,  # type: IntegrationConfig
-        env_config,  # type: CloudEnvironmentConfig
-        integration_dir,  # type: str
-):  # type: (...) -> t.Iterator[t.Optional[str]]
+    args: IntegrationConfig,
+    env_config: CloudEnvironmentConfig,
+    integration_dir: str,
+) -> c.Iterator[t.Optional[str]]:
     """Context manager that provides a config file for integration tests, if needed."""
     if not env_config:
         yield None
@@ -352,12 +421,12 @@ def integration_test_config_file(
 
     config_vars = (env_config.ansible_vars or {}).copy()
 
-    config_vars.update(dict(
+    config_vars.update(
         ansible_test=dict(
             environment=env_config.env_vars,
             module_defaults=env_config.module_defaults,
         )
-    ))
+    )
 
     config_file = json.dumps(config_vars, indent=4, sort_keys=True)
 
@@ -370,11 +439,11 @@ def integration_test_config_file(
 
 
 def create_inventory(
-        args,  # type: IntegrationConfig
-        host_state,  # type: HostState
-        inventory_path,  # type: str
-        target,  # type: IntegrationTarget
-):  # type: (...) -> None
+    args: IntegrationConfig,
+    host_state: HostState,
+    inventory_path: str,
+    target: IntegrationTarget,
+) -> None:
     """Create inventory."""
     if isinstance(args, PosixIntegrationConfig):
         if target.target_type == IntegrationTargetType.CONTROLLER:
@@ -396,13 +465,13 @@ def create_inventory(
 
 
 def command_integration_filtered(
-        args,  # type: IntegrationConfig
-        host_state,  # type: HostState
-        targets,  # type: t.Tuple[IntegrationTarget, ...]
-        all_targets,  # type: t.Tuple[IntegrationTarget, ...]
-        inventory_path,  # type: str
-        pre_target=None,  # type: t.Optional[t.Callable[[IntegrationTarget], None]]
-        post_target=None,  # type: t.Optional[t.Callable[[IntegrationTarget], None]]
+    args: IntegrationConfig,
+    host_state: HostState,
+    targets: tuple[IntegrationTarget, ...],
+    all_targets: tuple[IntegrationTarget, ...],
+    inventory_path: str,
+    pre_target: t.Optional[c.Callable[[IntegrationTarget], None]] = None,
+    post_target: t.Optional[c.Callable[[IntegrationTarget], None]] = None,
 ):
     """Run integration tests for the specified targets."""
     found = False
@@ -413,7 +482,7 @@ def command_integration_filtered(
     all_targets_dict = dict((target.name, target) for target in all_targets)
 
     setup_errors = []
-    setup_targets_executed = set()  # type: t.Set[str]
+    setup_targets_executed: set[str] = set()
 
     for target in all_targets:
         for setup_target in target.setup_once + target.setup_always:
@@ -453,10 +522,10 @@ def command_integration_filtered(
 
         if isinstance(target_profile, ControllerProfile):
             if host_state.controller_profile.python.path != target_profile.python.path:
-                install_requirements(args, target_python, command=True, controller=False)  # integration
+                install_requirements(args, target_profile, target_python, command=True, controller=False)  # integration
         elif isinstance(target_profile, SshTargetHostProfile):
             connection = target_profile.get_controller_target_connections()[0]
-            install_requirements(args, target_python, command=True, controller=False, connection=connection)  # integration
+            install_requirements(args, target_profile, target_python, command=True, controller=False, connection=connection)  # integration
 
     coverage_manager = CoverageManager(args, host_state, inventory_path)
     coverage_manager.setup()
@@ -530,6 +599,10 @@ def command_integration_filtered(
                         if not tries:
                             raise
 
+                        if target.retry_never:
+                            display.warning(f'Skipping retry of test target "{target.name}" since it has been excluded from retries.')
+                            raise
+
                         display.warning('Retrying test target "%s" with maximum verbosity.' % target.name)
                         display.verbosity = args.verbosity = 6
 
@@ -557,7 +630,7 @@ def command_integration_filtered(
             coverage_manager.teardown()
 
             result_name = '%s-%s.json' % (
-                args.command, re.sub(r'[^0-9]', '-', str(datetime.datetime.utcnow().replace(microsecond=0))))
+                args.command, re.sub(r'[^0-9]', '-', str(datetime.datetime.now(tz=datetime.timezone.utc).replace(microsecond=0, tzinfo=None))))
 
             data = dict(
                 targets=results,
@@ -571,15 +644,18 @@ def command_integration_filtered(
 
 
 def command_integration_script(
-        args,  # type: IntegrationConfig
-        host_state,  # type: HostState
-        target,  # type: IntegrationTarget
-        test_dir,  # type: str
-        inventory_path,  # type: str
-        coverage_manager,  # type: CoverageManager
+    args: IntegrationConfig,
+    host_state: HostState,
+    target: IntegrationTarget,
+    test_dir: str,
+    inventory_path: str,
+    coverage_manager: CoverageManager,
 ):
     """Run an integration test script."""
     display.info('Running %s integration test script' % target.name)
+
+    if not os.access(target.script_path, os.X_OK):
+        raise ApplicationError(f'Unable to run non-executable script {target.script_path!r}. Did you forget to run "chmod +x" on it?')
 
     env_config = None
 
@@ -603,13 +679,13 @@ def command_integration_script(
         if args.verbosity:
             cmd.append('-' + ('v' * args.verbosity))
 
-        env = integration_environment(args, target, test_dir, test_env.inventory_path, test_env.ansible_config, env_config, test_env)
+        env = integration_environment(args, target, test_dir, test_env.inventory_path, test_env.ansible_config, env_config, test_env, host_state)
         cwd = os.path.join(test_env.targets_dir, target.relative_path)
 
-        env.update(dict(
+        env.update(
             # support use of adhoc ansible commands in collections without specifying the fully qualified collection name
             ANSIBLE_PLAYBOOK_DIR=cwd,
-        ))
+        )
 
         if env_config and env_config.env_vars:
             env.update(env_config.env_vars)
@@ -618,18 +694,20 @@ def command_integration_script(
             if config_path:
                 cmd += ['-e', '@%s' % config_path]
 
+            test_env.update_environment(env)
             env.update(coverage_manager.get_environment(target.name, target.aliases))
+            env.update(get_powershell_injector_env(host_state.controller_profile.powershell, env))
             cover_python(args, host_state.controller_profile.python, cmd, target.name, env, cwd=cwd, capture=False)
 
 
 def command_integration_role(
-        args,  # type: IntegrationConfig
-        host_state,  # type: HostState
-        target,  # type: IntegrationTarget
-        start_at_task,  # type: t.Optional[str]
-        test_dir,  # type: str
-        inventory_path,  # type: str
-        coverage_manager,  # type: CoverageManager
+    args: IntegrationConfig,
+    host_state: HostState,
+    target: IntegrationTarget,
+    start_at_task: t.Optional[str],
+    test_dir: str,
+    inventory_path: str,
+    coverage_manager: CoverageManager,
 ):
     """Run an integration test role."""
     display.info('Running %s integration test role' % target.name)
@@ -644,9 +722,9 @@ def command_integration_role(
     if isinstance(args, WindowsIntegrationConfig):
         hosts = 'windows'
         gather_facts = False
-        variables.update(dict(
+        variables.update(
             win_output_dir=r'C:\ansible_testing',
-        ))
+        )
     elif isinstance(args, NetworkIntegrationConfig):
         hosts = target.network_platform
         gather_facts = False
@@ -691,10 +769,10 @@ def command_integration_role(
             if env_config.ansible_vars:
                 variables.update(env_config.ansible_vars)
 
-            play.update(dict(
+            play.update(
                 environment=env_config.env_vars,
                 module_defaults=env_config.module_defaults,
-            ))
+            )
 
         playbook = json.dumps([play], indent=4, sort_keys=True)
 
@@ -724,33 +802,35 @@ def command_integration_role(
             if args.verbosity:
                 cmd.append('-' + ('v' * args.verbosity))
 
-            env = integration_environment(args, target, test_dir, test_env.inventory_path, test_env.ansible_config, env_config, test_env)
+            env = integration_environment(args, target, test_dir, test_env.inventory_path, test_env.ansible_config, env_config, test_env, host_state)
             cwd = test_env.integration_dir
 
-            env.update(dict(
+            env.update(
                 # support use of adhoc ansible commands in collections without specifying the fully qualified collection name
                 ANSIBLE_PLAYBOOK_DIR=cwd,
-            ))
+            )
 
             if env_config and env_config.env_vars:
                 env.update(env_config.env_vars)
 
             env['ANSIBLE_ROLES_PATH'] = test_env.targets_dir
 
+            test_env.update_environment(env)
             env.update(coverage_manager.get_environment(target.name, target.aliases))
+            env.update(get_powershell_injector_env(host_state.controller_profile.powershell, env))
             cover_python(args, host_state.controller_profile.python, cmd, target.name, env, cwd=cwd, capture=False)
 
 
 def run_setup_targets(
-        args,  # type: IntegrationConfig
-        host_state,  # type: HostState
-        test_dir,  # type: str
-        target_names,  # type: t.Sequence[str]
-        targets_dict,  # type: t.Dict[str, IntegrationTarget]
-        targets_executed,  # type: t.Set[str]
-        inventory_path,  # type: str
-        coverage_manager,  # type: CoverageManager
-        always,  # type: bool
+    args: IntegrationConfig,
+    host_state: HostState,
+    test_dir: str,
+    target_names: c.Sequence[str],
+    targets_dict: dict[str, IntegrationTarget],
+    targets_executed: set[str],
+    inventory_path: str,
+    coverage_manager: CoverageManager,
+    always: bool,
 ):
     """Run setup targets."""
     for target_name in target_names:
@@ -773,18 +853,24 @@ def run_setup_targets(
 
 
 def integration_environment(
-        args,  # type: IntegrationConfig
-        target,  # type: IntegrationTarget
-        test_dir,  # type: str
-        inventory_path,  # type: str
-        ansible_config,  # type: t.Optional[str]
-        env_config,  # type: t.Optional[CloudEnvironmentConfig]
-        test_env,  # type: IntegrationEnvironment
-):  # type: (...) -> t.Dict[str, str]
+    args: IntegrationConfig,
+    target: IntegrationTarget,
+    test_dir: str,
+    inventory_path: str,
+    ansible_config: t.Optional[str],
+    env_config: t.Optional[CloudEnvironmentConfig],
+    test_env: IntegrationEnvironment,
+    host_state: HostState,
+) -> dict[str, str]:
     """Return a dictionary of environment variables to use when running the given integration test target."""
     env = ansible_environment(args, ansible_config=ansible_config)
 
     callback_plugins = ['junit'] + (env_config.callback_plugins or [] if env_config else [])
+
+    timeout = get_timeout()
+
+    if timeout:
+        callback_plugins.append('ansible_test._internal.timeout')
 
     integration = dict(
         JUNIT_OUTPUT_DIR=ResultType.JUNIT.path,
@@ -793,53 +879,113 @@ def integration_environment(
         ANSIBLE_CALLBACKS_ENABLED=','.join(sorted(set(callback_plugins))),
         ANSIBLE_TEST_CI=args.metadata.ci_provider or get_ci_provider().code,
         ANSIBLE_TEST_COVERAGE='check' if args.coverage_check else ('yes' if args.coverage else ''),
+        ANSIBLE_TEST_ANSIBLE_VERSION=get_ansible_version(),
         OUTPUT_DIR=test_dir,
         INVENTORY_PATH=os.path.abspath(inventory_path),
     )
 
+    if timeout:
+        collections_path = env.get('ANSIBLE_COLLECTIONS_PATH', '')
+        collections_path = f'{ANSIBLE_TEST_CONTROLLER_ROOT}:{collections_path}' if collections_path else ANSIBLE_TEST_CONTROLLER_ROOT
+
+        integration.update(
+            ANSIBLE_COLLECTIONS_PATH=collections_path,
+            ANSIBLE_TEST_TIMEOUT_DEADLINE=str(timeout.deadline.timestamp() - TIMEOUT_MARGIN_SECONDS),
+            ANSIBLE_TEST_TIMEOUT_DIR=str(test_env.timeout_dir),
+        )
+
     if args.debug_strategy:
-        env.update(dict(ANSIBLE_STRATEGY='debug'))
+        env.update(ANSIBLE_STRATEGY='debug')
+
+    if isinstance(host_state.controller_profile, DebuggableProfile):
+        env.update(host_state.controller_profile.get_ansible_cli_environment_variables())
 
     if 'non_local/' in target.aliases:
         if args.coverage:
             display.warning('Skipping coverage reporting on Ansible modules for non-local test: %s' % target.name)
 
-        env.update(dict(ANSIBLE_TEST_REMOTE_INTERPRETER=''))
+        env.update(ANSIBLE_TEST_REMOTE_INTERPRETER='')
 
     env.update(integration)
+    env.update(target.env_set)
 
     return env
 
 
+@dataclasses.dataclass(frozen=True)
 class IntegrationEnvironment:
     """Details about the integration environment."""
-    def __init__(self, test_dir, integration_dir, targets_dir, inventory_path, ansible_config, vars_file):
-        self.test_dir = test_dir
-        self.integration_dir = integration_dir
-        self.targets_dir = targets_dir
-        self.inventory_path = inventory_path
-        self.ansible_config = ansible_config
-        self.vars_file = vars_file
+
+    test_dir: str
+    integration_dir: str
+    targets_dir: str
+    inventory_path: str
+    ansible_config: str
+    vars_file: str
+    collection_roots: list[str] = dataclasses.field(default_factory=list)
+
+    @property
+    def timeout_dir(self) -> pathlib.Path:
+        """Return the path for timeout dump files."""
+        return pathlib.Path(self.test_dir) / 'timeout'
+
+    @contextlib.contextmanager
+    def run(self) -> c.Iterator[None]:
+        """Context manager that checks for timeout dumps after the test runs."""
+        try:
+            yield
+        finally:
+            self.check_timeout_dumps()
+
+    def check_timeout_dumps(self) -> None:
+        """Check for timeout dump files and raise an error if any contain tracebacks."""
+        if not (timeout := get_timeout()):
+            return
+
+        if not self.timeout_dir.is_dir():
+            return
+
+        found = False
+
+        for dump_file in sorted(self.timeout_dir.iterdir()):
+            lines = dump_file.read_text().splitlines()
+
+            if len(lines) <= 2:  # first line is the command, second is the timeout status, traceback, if any, follows
+                continue
+
+            found = True
+            display.error(f'Timeout traceback detected ({dump_file.name}):\n' + '\n'.join(lines))
+
+        if found:
+            raise ApplicationError(
+                f'Tests aborted by the timeout callback after approaching the {timeout.duration} minute time limit.'
+                ' See traceback(s) above for process state.'
+            )
+
+    def update_environment(self, env: dict[str, str]) -> None:
+        """Update the given environment dictionary with the variables necessary for this integration environment."""
+        collections_path = value.split(':') if (value := env.get('ANSIBLE_COLLECTIONS_PATH')) else []
+        collections_path.extend([os.path.join(self.test_dir, root) for root in self.collection_roots])
+
+        if collections_path:
+            env['ANSIBLE_COLLECTIONS_PATH'] = ':'.join(collections_path)
 
 
 class IntegrationCache(CommonCache):
     """Integration cache."""
+
     @property
-    def integration_targets(self):
-        """
-        :rtype: list[IntegrationTarget]
-        """
+    def integration_targets(self) -> list[IntegrationTarget]:
+        """The list of integration test targets."""
         return self.get('integration_targets', lambda: list(walk_integration_targets()))
 
     @property
-    def dependency_map(self):
-        """
-        :rtype: dict[str, set[IntegrationTarget]]
-        """
+    def dependency_map(self) -> dict[str, set[IntegrationTarget]]:
+        """The dependency map of integration test targets."""
         return self.get('dependency_map', lambda: generate_dependency_map(self.integration_targets))
 
 
-def filter_profiles_for_target(args, profiles, target):  # type: (IntegrationConfig, t.List[THostProfile], IntegrationTarget) -> t.List[THostProfile]
+def filter_profiles_for_target[T: HostProfile](args: IntegrationConfig, profiles: list[T], target: IntegrationTarget) -> list[T]:
     """Return a list of profiles after applying target filters."""
     if target.target_type == IntegrationTargetType.CONTROLLER:
         profile_filter = get_target_filter(args, [args.controller], True)
@@ -853,7 +999,7 @@ def filter_profiles_for_target(args, profiles, target):  # type: (IntegrationCon
     return profiles
 
 
-def get_integration_filter(args, targets):  # type: (IntegrationConfig, t.List[IntegrationTarget]) -> t.Set[str]
+def get_integration_filter(args: IntegrationConfig, targets: list[IntegrationTarget]) -> set[str]:
     """Return a list of test targets to skip based on the host(s) that will be used to run the specified test targets."""
     invalid_targets = sorted(target.name for target in targets if target.target_type not in (IntegrationTargetType.CONTROLLER, IntegrationTargetType.TARGET))
 
@@ -881,7 +1027,7 @@ If necessary, context can be controlled by adding entries to the "aliases" file 
         else:
             display.warning(f'Unable to determine context for the following test targets, they will be run on the target host: {", ".join(invalid_targets)}')
 
-    exclude = set()  # type: t.Set[str]
+    exclude: set[str] = set()
 
     controller_targets = [target for target in targets if target.target_type == IntegrationTargetType.CONTROLLER]
     target_targets = [target for target in targets if target.target_type == IntegrationTargetType.TARGET]
@@ -895,9 +1041,10 @@ If necessary, context can be controlled by adding entries to the "aliases" file 
     return exclude
 
 
-def command_integration_filter(args,  # type: TIntegrationConfig
-                               targets,  # type: t.Iterable[TIntegrationTarget]
-                               ):  # type: (...) -> t.Tuple[HostState, t.Tuple[TIntegrationTarget, ...]]
+def command_integration_filter[TIntegrationTarget: IntegrationTarget, TIntegrationConfig: IntegrationConfig](
+    args: TIntegrationConfig,
+    targets: c.Iterable[TIntegrationTarget],
+) -> tuple[HostState, tuple[TIntegrationTarget, ...]]:
     """Filter the given integration test targets."""
     targets = tuple(target for target in targets if 'hidden/' not in target.aliases)
     changes = get_changes_filter(args)
@@ -935,11 +1082,13 @@ def command_integration_filter(args,  # type: TIntegrationConfig
     vars_file_src = os.path.join(data_context().content.root, data_context().content.integration_vars_path)
 
     if os.path.exists(vars_file_src):
-        def integration_config_callback(files):  # type: (t.List[t.Tuple[str, str]]) -> None
+
+        def integration_config_callback(payload_config: PayloadConfig) -> None:
             """
             Add the integration config vars file to the payload file list.
             This will preserve the file during delegation even if the file is ignored by source control.
             """
+            files = payload_config.files
             files.append((vars_file_src, data_context().content.integration_vars_path))
 
         data_context().register_payload_callback(integration_config_callback)
@@ -956,13 +1105,17 @@ def command_integration_filter(args,  # type: TIntegrationConfig
     return host_state, internal_targets
 
 
-def requirements(args, host_state):  # type: (IntegrationConfig, HostState) -> None
-    """Install requirements."""
-    target_profile = host_state.target_profiles[0]
+def requirements(host_profile: HostProfile) -> None:
+    """Install requirements after bootstrapping and delegation."""
+    if isinstance(host_profile, ControllerHostProfile) and host_profile.controller:
+        configure_pypi_proxy(host_profile.args, host_profile)  # integration, windows-integration, network-integration
 
-    configure_pypi_proxy(args, host_state.controller_profile)  # integration, windows-integration, network-integration
-
-    if isinstance(target_profile, PosixProfile) and not isinstance(target_profile, ControllerProfile):
-        configure_pypi_proxy(args, target_profile)  # integration
-
-    install_requirements(args, host_state.controller_profile.python, ansible=True, command=True)  # integration, windows-integration, network-integration
+        install_requirements(  # integration, windows-integration, network-integration
+            args=host_profile.args,
+            host_profile=host_profile,
+            python=host_profile.python,
+            ansible=True,
+            command=True,
+        )
+    elif isinstance(host_profile, PosixProfile) and not isinstance(host_profile, ControllerProfile):
+        configure_pypi_proxy(host_profile.args, host_profile)  # integration

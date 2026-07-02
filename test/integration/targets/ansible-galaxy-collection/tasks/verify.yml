@@ -3,13 +3,18 @@
   args:
     chdir: '{{ galaxy_dir }}/scratch'
 
+- name: created required runtime.yml
+  copy:
+    content: 'requires_ansible: ">=1.0.0"'
+    dest: '{{ galaxy_dir }}/scratch/ansible_test/verify/meta/runtime.yml'
+
 - name: build the collection
   command: ansible-galaxy collection build scratch/ansible_test/verify
   args:
     chdir: '{{ galaxy_dir }}'
 
-- name: publish collection - {{ test_name }}
-  command: ansible-galaxy collection publish ansible_test-verify-1.0.0.tar.gz -s {{ test_name }} {{ galaxy_verbosity }}
+- name: publish to fallback server {{ test_api_fallback }}
+  command: ansible-galaxy collection publish ansible_test-verify-1.0.0.tar.gz -s {{ test_api_fallback }} {{ galaxy_verbosity }}
   args:
     chdir: '{{ galaxy_dir }}'
 
@@ -21,11 +26,10 @@
 - assert:
     that:
       - verify.rc != 0
-      - >-
-        "ERROR! 'file' type is not supported. The format namespace.name is expected." in verify.stderr
+      - verify.stderr is contains "'file' type is not supported. The format namespace.name is expected."
 
-- name: install the collection from the server
-  command: ansible-galaxy collection install ansible_test.verify:1.0.0 -s {{ test_api_fallback }} {{ galaxy_verbosity }}
+- name: install the collection from the secondary server
+  command: ansible-galaxy collection install ansible_test.verify:1.0.0 {{ galaxy_verbosity }}
 
 # This command is hardcoded with -vvvv purposefully to evaluate extra verbosity messages
 - name: verify the collection against the first valid server
@@ -35,11 +39,12 @@
 - assert:
     that:
       - verify is success
-      - >-
-        "Found API version '{{ test_api_fallback_versions }}' with Galaxy server {{ test_api_fallback }}" in verify.stdout
+      - verify.stdout is search(msg)
+  vars:
+    msg: "Found API version '{{ test_api_fallback_versions }}' with Galaxy server {{ test_api_fallback }}"
 
 - name: verify the installed collection against the server
-  command: ansible-galaxy collection verify ansible_test.verify:1.0.0 -s {{ test_name }} {{ galaxy_verbosity }}
+  command: ansible-galaxy collection verify ansible_test.verify:1.0.0 {{ galaxy_verbosity }}
   register: verify
 
 - assert:
@@ -48,10 +53,10 @@
       - "'Collection ansible_test.verify contains modified content' not in verify.stdout"
 
 - name: verify the installed collection against the server, with unspecified version in CLI
-  command: ansible-galaxy collection verify ansible_test.verify -s {{ test_name }} {{ galaxy_verbosity }}
+  command: ansible-galaxy collection verify ansible_test.verify {{ galaxy_verbosity }}
 
 - name: verify a collection that doesn't appear to be installed
-  command: ansible-galaxy collection verify ansible_test.verify:1.0.0 -s {{ test_name }} {{ galaxy_verbosity }}
+  command: ansible-galaxy collection verify ansible_test.verify:1.0.0 {{ galaxy_verbosity }}
   environment:
     ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/nonexistent_dir'
   register: verify
@@ -83,13 +88,13 @@
   args:
     chdir: '{{ galaxy_dir }}'
 
-- name: publish the new version
+- name: publish to primary server {{ test_name }}
   command: ansible-galaxy collection publish ansible_test-verify-2.0.0.tar.gz -s {{ test_name }} {{ galaxy_verbosity }}
   args:
     chdir: '{{ galaxy_dir }}'
 
 - name: verify a version of a collection that isn't installed
-  command: ansible-galaxy collection verify ansible_test.verify:2.0.0 -s {{ test_name }} {{ galaxy_verbosity }}
+  command: ansible-galaxy collection verify ansible_test.verify:2.0.0 {{ galaxy_verbosity }}
   register: verify
   failed_when: verify.rc == 0
 
@@ -99,10 +104,10 @@
       - '"ansible_test.verify has the version ''1.0.0'' but is being compared to ''2.0.0''" in verify.stdout'
 
 - name: install the new version from the server
-  command: ansible-galaxy collection install ansible_test.verify:2.0.0 --force -s {{ test_name }} {{ galaxy_verbosity }}
+  command: ansible-galaxy collection install ansible_test.verify:2.0.0 --force {{ galaxy_verbosity }}
 
 - name: verify the installed collection against the server
-  command: ansible-galaxy collection verify ansible_test.verify:2.0.0 -s {{ test_name }} {{ galaxy_verbosity }}
+  command: ansible-galaxy collection verify ansible_test.verify:2.0.0 {{ galaxy_verbosity }}
   register: verify
 
 - assert:
@@ -145,8 +150,8 @@
     that:
       - "updated_file.stat.checksum != file.stat.checksum"
 
-- name: test verifying checksumes of the modified collection
-  command: ansible-galaxy collection verify ansible_test.verify:2.0.0 -s {{ test_name }} {{ galaxy_verbosity }}
+- name: test verifying checksums of the modified collection
+  command: ansible-galaxy collection verify ansible_test.verify:2.0.0 {{ galaxy_verbosity }}
   register: verify
   failed_when: verify.rc == 0
 
@@ -164,7 +169,7 @@
   diff: true
 
 - name: ensure a modified FILES.json is validated
-  command: ansible-galaxy collection verify ansible_test.verify:2.0.0 -s {{ test_name }} {{ galaxy_verbosity }}
+  command: ansible-galaxy collection verify ansible_test.verify:2.0.0 {{ galaxy_verbosity }}
   register: verify
   failed_when: verify.rc == 0
 
@@ -186,7 +191,7 @@
     line: ' "chksum_sha256": "{{ manifest_info.stat.checksum }}",'
 
 - name: ensure the MANIFEST.json is validated against the uncorrupted file from the server
-  command: ansible-galaxy collection verify ansible_test.verify:2.0.0 -s {{ test_name }} {{ galaxy_verbosity }}
+  command: ansible-galaxy collection verify ansible_test.verify:2.0.0 {{ galaxy_verbosity }}
   register: verify
   failed_when: verify.rc == 0
 
@@ -214,7 +219,7 @@
     dest: '{{ galaxy_dir }}/ansible_collections/ansible_test/verify/galaxy.yml'
 
 - name: test we only verify collections containing a MANIFEST.json with the version on the server
-  command: ansible-galaxy collection verify ansible_test.verify:2.0.0 -s {{ test_name }} {{ galaxy_verbosity }}
+  command: ansible-galaxy collection verify ansible_test.verify:2.0.0 {{ galaxy_verbosity }}
   register: verify
   failed_when: verify.rc == 0
 
@@ -262,6 +267,16 @@
     path: '{{ galaxy_dir }}/ansible_collections/ansible_test/verify/plugins/modules/test_new_dir'
     state: directory
 
+- name: create a new ignore directory
+  file:
+    path: '{{ galaxy_dir }}/ansible_collections/ansible_test/verify/plugins/modules/__pycache__'
+    state: directory
+
+- name: create a new ignore file
+  file:
+    path: '{{ galaxy_dir }}/ansible_collections/ansible_test/verify/plugins/modules/__pycache__/test.cpython-311.pyc'
+    state: touch
+
 - name: verify modified collection locally-only (should fail)
   command: ansible-galaxy collection verify --offline ansible_test.verify
   register: verify
@@ -274,11 +289,13 @@
       - "'plugins/modules/test_module.py' in verify.stdout"
       - "'plugins/modules/test_new_file.py' in verify.stdout"
       - "'plugins/modules/test_new_dir' in verify.stdout"
+      - "'plugins/modules/__pycache__/test.cpython-311.pyc' not in verify.stdout"
 
 # TODO: add a test for offline Galaxy signature metadata
 
+# These steps use secondary (amanda) as it has no signatures provided
 - name: install a collection that was signed by setup_collections
-  command: ansible-galaxy collection install namespace1.name1:1.0.0
+  command: ansible-galaxy collection install -s secondary namespace1.name1:1.0.0
 
 - name: verify the installed collection with a detached signature
   command: ansible-galaxy collection verify namespace1.name1:1.0.0 {{ galaxy_verbosity }} {{ signature_options }}
@@ -304,6 +321,7 @@
   environment:
     ANSIBLE_NOCOLOR: True
     ANSIBLE_FORCE_COLOR: False
+    ANSIBLE_GALAXY_REQUIRED_VALID_SIGNATURE_COUNT: all
 
 - assert:
     that:
@@ -330,6 +348,7 @@
   environment:
     ANSIBLE_NOCOLOR: True
     ANSIBLE_FORCE_COLOR: False
+    ANSIBLE_GALAXY_REQUIRED_VALID_SIGNATURE_COUNT: all
 
 - assert:
     that:
@@ -434,7 +453,7 @@
     verify_stdout: "{{ verify.stdout | regex_replace('\"') | regex_replace('\\n') | regex_replace('      ', ' ') }}"
 
 - name: use lenient signature verification (default) without providing signatures
-  command: ansible-galaxy collection verify namespace1.name1:1.0.0 -vvvv --keyring {{ gpg_homedir }}/pubring.kbx
+  command: ansible-galaxy collection verify namespace1.name1:1.0.0 -s secondary -vvvv --keyring {{ gpg_homedir }}/pubring.kbx
   environment:
     ANSIBLE_GALAXY_REQUIRED_VALID_SIGNATURE_COUNT: "1"
   register: verify
@@ -465,6 +484,43 @@
       - verify is failed
       - verify.rc == 1
       - '"Signature verification failed for ''namespace1.name1'': no successful signatures" in verify.stdout'
+
+- name: check ansible-galaxy verify is using folder names not collection names
+  vars:
+    wrong_namespace: notmynamespace
+    wrong_name: notmyname
+  block:
+    - name: Give namespace1.name1 an incorrect namespace dir
+      command: mv {{ galaxy_dir }}/ansible_collections/namespace1 {{ galaxy_dir }}/ansible_collections/{{ wrong_namespace }}
+
+    - name: Give namespace1.name1 an incorrect collection name dir
+      command: mv {{ galaxy_dir }}/ansible_collections/{{ wrong_namespace }}/name1 {{ galaxy_dir }}/ansible_collections/{{ wrong_namespace }}/{{ wrong_name }}
+
+    - name: Verify namespace1.name after moving the incorrect collection name
+      command: ansible-galaxy collection verify namespace1.name1 --offline
+      register: verify_metadata_name
+      ignore_errors: true
+
+    - assert:
+        that:
+          - verify_metadata_name is failed
+          - verify_metadata_name.rc != 0
+          - error_message in verify_metadata_name.stderr
+      vars:
+        error_message: Collection namespace1.name1 is not installed in any of the collection paths
+
+    - name: Verify {{ wrong_namespace }}.{{ wrong_name }} after moving the incorrect collection name
+      command: ansible-galaxy collection verify {{ wrong_namespace }}.{{ wrong_name }} --offline
+      register: verify_folder_name
+      ignore_errors: true
+
+    - assert:
+        that:
+          - verify_metadata_name is failed
+          - verify_metadata_name.rc != 0
+          - error_message in verify_folder_name.stderr
+      vars:
+        error_message: Collection at '{{ galaxy_dir }}/ansible_collections/{{ wrong_namespace }}/{{ wrong_name }}' documents incorrect FQCN 'namespace1.name1'
 
 - name: empty installed collections
   file:

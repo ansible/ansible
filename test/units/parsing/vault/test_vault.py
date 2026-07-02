@@ -17,28 +17,35 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-import binascii
 import io
 import os
+import pathlib
 import tempfile
+import typing as t
 
 from binascii import hexlify
+
 import pytest
 
-from units.compat import unittest
+import unittest
 from unittest.mock import patch, MagicMock
 
 from ansible import errors
-from ansible.module_utils import six
-from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils.common.text.converters import to_bytes, to_text
+from ansible.module_utils._internal import _messages
+from ansible.module_utils._internal._datatag import AnsibleTagHelper
 from ansible.parsing import vault
+from ansible.parsing.vault import EncryptedString, VaultSecretsContext, AnsibleVaultError, VaultHelper
+from ansible._internal._templating._jinja_common import VaultExceptionMarker, TruncationMarker, Marker
+from ansible._internal._templating._engine import TemplateEngine, TemplateOptions
+from ansible._internal._templating._utils import TemplateContext
+from ansible._internal._datatag._tags import VaultedValue, Origin, TrustedAsTemplate
+from ansible.utils.collection_loader import _EncryptedStringProtocol
 
 from units.mock.loader import DictDataLoader
-from units.mock.vault_helper import TextVaultSecret
+from units.mock.vault_helper import TextVaultSecret, VaultTestHelper
 
 
 class TestUnhexlify(unittest.TestCase):
@@ -67,12 +74,12 @@ class TestUnhexlify(unittest.TestCase):
 
 class TestParseVaulttext(unittest.TestCase):
     def test(self):
-        vaulttext_envelope = u'''$ANSIBLE_VAULT;1.1;AES256
+        vaulttext_envelope = u"""$ANSIBLE_VAULT;1.1;AES256
 33363965326261303234626463623963633531343539616138316433353830356566396130353436
 3562643163366231316662386565383735653432386435610a306664636137376132643732393835
 63383038383730306639353234326630666539346233376330303938323639306661313032396437
 6233623062366136310a633866373936313238333730653739323461656662303864663666653563
-3138'''
+3138"""
 
         b_vaulttext_envelope = to_bytes(vaulttext_envelope, errors='strict', encoding='utf-8')
         b_vaulttext, b_version, cipher_name, vault_id = vault.parse_vaulttext_envelope(b_vaulttext_envelope)
@@ -82,12 +89,12 @@ class TestParseVaulttext(unittest.TestCase):
         self.assertIsInstance(res[2], bytes)
 
     def test_non_hex(self):
-        vaulttext_envelope = u'''$ANSIBLE_VAULT;1.1;AES256
+        vaulttext_envelope = u"""$ANSIBLE_VAULT;1.1;AES256
 3336396J326261303234626463623963633531343539616138316433353830356566396130353436
 3562643163366231316662386565383735653432386435610a306664636137376132643732393835
 63383038383730306639353234326630666539346233376330303938323639306661313032396437
 6233623062366136310a633866373936313238333730653739323461656662303864663666653563
-3138'''
+3138"""
 
         b_vaulttext_envelope = to_bytes(vaulttext_envelope, errors='strict', encoding='utf-8')
         b_vaulttext, b_version, cipher_name, vault_id = vault.parse_vaulttext_envelope(b_vaulttext_envelope)
@@ -214,13 +221,13 @@ class TestFileVaultSecret(unittest.TestCase):
         password = 'some password'
         # 'some password' encrypted with 'test-ansible-password'
 
-        password_file_content = '''$ANSIBLE_VAULT;1.1;AES256
+        password_file_content = """$ANSIBLE_VAULT;1.1;AES256
 61393863643638653437313566313632306462383837303132346434616433313438353634613762
 3334363431623364386164616163326537366333353663650a663634306232363432626162353665
 39623061353266373631636331643761306665343731376633623439313138396330346237653930
 6432643864346136640a653364386634666461306231353765636662316335613235383565306437
 3737
-'''
+"""
 
         tmp_file = tempfile.NamedTemporaryFile(delete=False)
         tmp_file.write(to_bytes(password_file_content))
@@ -454,12 +461,12 @@ class TestVaultIsEncryptedFile(unittest.TestCase):
         data = u"$ANSIBLE_VAULT;9.9;TEST\n%s" % u"ァ ア ィ イ ゥ ウ ェ エ ォ オ カ ガ キ ギ ク グ ケ "
         b_data = to_bytes(data)
         b_data_fo = io.BytesIO(b_data)
-        self.assertFalse(vault.is_encrypted_file(b_data_fo))
+        self.assertFalse(vault.is_encrypted_file(b_data_fo, count=-1))
 
     def test_text_file_handle_invalid(self):
         data = u"$ANSIBLE_VAULT;9.9;TEST\n%s" % u"ァ ア ィ イ ゥ ウ ェ エ ォ オ カ ガ キ ギ ク グ ケ "
         data_fo = io.StringIO(data)
-        self.assertFalse(vault.is_encrypted_file(data_fo))
+        self.assertFalse(vault.is_encrypted_file(data_fo, count=-1))
 
     def test_file_already_read_from_finds_header(self):
         b_data = b"$ANSIBLE_VAULT;9.9;TEST\n%s" % hexlify(b"ansible\ntesting\nfile pos")
@@ -508,7 +515,7 @@ class TestVaultCipherAes256(unittest.TestCase):
         b_password = b'hunter42'
         b_salt = os.urandom(32)
         b_key_cryptography = self.vault_cipher._create_key_cryptography(b_password, b_salt, key_length=32, iv_length=16)
-        self.assertIsInstance(b_key_cryptography, six.binary_type)
+        self.assertIsInstance(b_key_cryptography, bytes)
 
     def test_create_key_known_cryptography(self):
         b_password = b'hunter42'
@@ -516,13 +523,13 @@ class TestVaultCipherAes256(unittest.TestCase):
         # A fixed salt
         b_salt = b'q' * 32  # q is the most random letter.
         b_key_1 = self.vault_cipher._create_key_cryptography(b_password, b_salt, key_length=32, iv_length=16)
-        self.assertIsInstance(b_key_1, six.binary_type)
+        self.assertIsInstance(b_key_1, bytes)
 
         # verify we get the same answer
         # we could potentially run a few iterations of this and time it to see if it's roughly constant time
         #  and or that it exceeds some minimal time, but that would likely cause unreliable fails, esp in CI
         b_key_2 = self.vault_cipher._create_key_cryptography(b_password, b_salt, key_length=32, iv_length=16)
-        self.assertIsInstance(b_key_2, six.binary_type)
+        self.assertIsInstance(b_key_2, bytes)
         self.assertEqual(b_key_1, b_key_2)
 
     def test_is_equal_is_equal(self):
@@ -606,9 +613,6 @@ class TestVaultLib(unittest.TestCase):
                               ('test_id', text_secret)]
         self.v = vault.VaultLib(self.vault_secrets)
 
-    def _vault_secrets(self, vault_id, secret):
-        return [(vault_id, secret)]
-
     def _vault_secrets_from_password(self, vault_id, password):
         return [(vault_id, TextVaultSecret(password))]
 
@@ -616,7 +620,7 @@ class TestVaultLib(unittest.TestCase):
         plaintext = u'Some text to encrypt in a café'
         b_vaulttext = self.v.encrypt(plaintext)
 
-        self.assertIsInstance(b_vaulttext, six.binary_type)
+        self.assertIsInstance(b_vaulttext, bytes)
 
         b_header = b'$ANSIBLE_VAULT;1.1;AES256\n'
         self.assertEqual(b_vaulttext[:len(b_header)], b_header)
@@ -625,7 +629,7 @@ class TestVaultLib(unittest.TestCase):
         plaintext = u'Some text to encrypt in a café'
         b_vaulttext = self.v.encrypt(plaintext, vault_id='test_id')
 
-        self.assertIsInstance(b_vaulttext, six.binary_type)
+        self.assertIsInstance(b_vaulttext, bytes)
 
         b_header = b'$ANSIBLE_VAULT;1.2;AES256;test_id\n'
         self.assertEqual(b_vaulttext[:len(b_header)], b_header)
@@ -635,7 +639,7 @@ class TestVaultLib(unittest.TestCase):
         plaintext = to_bytes(u'Some text to encrypt in a café')
         b_vaulttext = self.v.encrypt(plaintext)
 
-        self.assertIsInstance(b_vaulttext, six.binary_type)
+        self.assertIsInstance(b_vaulttext, bytes)
 
         b_header = b'$ANSIBLE_VAULT;1.1;AES256\n'
         self.assertEqual(b_vaulttext[:len(b_header)], b_header)
@@ -740,11 +744,8 @@ class TestVaultLib(unittest.TestCase):
                          ('wrong-password', TextVaultSecret('wrong-password'))]
 
         v_multi = vault.VaultLib(vault_secrets)
-        self.assertRaisesRegex(errors.AnsibleError,
-                               '.*Decryption failed.*',
-                               v_multi.decrypt,
-                               b_vaulttext,
-                               filename='/dev/null/fake/filename')
+        with self.assertRaisesRegex(errors.AnsibleError, '.*Decryption failed.*'):
+            v_multi.decrypt(b_vaulttext)
 
     def test_encrypt_decrypt_aes256_multiple_secrets_one_valid(self):
         plaintext = u'Some text to encrypt in a café'
@@ -765,12 +766,12 @@ class TestVaultLib(unittest.TestCase):
     def test_encrypt_decrypt_aes256_existing_vault(self):
         self.v.cipher_name = u'AES256'
         b_orig_plaintext = b"Setec Astronomy"
-        vaulttext = u'''$ANSIBLE_VAULT;1.1;AES256
+        vaulttext = u"""$ANSIBLE_VAULT;1.1;AES256
 33363965326261303234626463623963633531343539616138316433353830356566396130353436
 3562643163366231316662386565383735653432386435610a306664636137376132643732393835
 63383038383730306639353234326630666539346233376330303938323639306661313032396437
 6233623062366136310a633866373936313238333730653739323461656662303864663666653563
-3138'''
+3138"""
 
         b_plaintext = self.v.decrypt(vaulttext)
         self.assertEqual(b_plaintext, b_plaintext, msg="decryption failed")
@@ -779,51 +780,14 @@ class TestVaultLib(unittest.TestCase):
         b_plaintext = self.v.decrypt(b_vaulttext)
         self.assertEqual(b_plaintext, b_orig_plaintext, msg="decryption failed")
 
-    # FIXME This test isn't working quite yet.
-    @pytest.mark.skip(reason='This test is not ready yet')
-    def test_encrypt_decrypt_aes256_bad_hmac(self):
-
-        self.v.cipher_name = 'AES256'
-        # plaintext = "Setec Astronomy"
-        enc_data = '''$ANSIBLE_VAULT;1.1;AES256
-33363965326261303234626463623963633531343539616138316433353830356566396130353436
-3562643163366231316662386565383735653432386435610a306664636137376132643732393835
-63383038383730306639353234326630666539346233376330303938323639306661313032396437
-6233623062366136310a633866373936313238333730653739323461656662303864663666653563
-3138'''
-        b_data = to_bytes(enc_data, errors='strict', encoding='utf-8')
-        b_data = self.v._split_header(b_data)
-        foo = binascii.unhexlify(b_data)
-        lines = foo.splitlines()
-        # line 0 is salt, line 1 is hmac, line 2+ is ciphertext
-        b_salt = lines[0]
-        b_hmac = lines[1]
-        b_ciphertext_data = b'\n'.join(lines[2:])
-
-        b_ciphertext = binascii.unhexlify(b_ciphertext_data)
-        # b_orig_ciphertext = b_ciphertext[:]
-
-        # now muck with the text
-        # b_munged_ciphertext = b_ciphertext[:10] + b'\x00' + b_ciphertext[11:]
-        # b_munged_ciphertext = b_ciphertext
-        # assert b_orig_ciphertext != b_munged_ciphertext
-
-        b_ciphertext_data = binascii.hexlify(b_ciphertext)
-        b_payload = b'\n'.join([b_salt, b_hmac, b_ciphertext_data])
-        # reformat
-        b_invalid_ciphertext = self.v._format_output(b_payload)
-
-        # assert we throw an error
-        self.v.decrypt(b_invalid_ciphertext)
-
     def test_decrypt_and_get_vault_id(self):
         b_expected_plaintext = to_bytes('foo bar\n')
-        vaulttext = '''$ANSIBLE_VAULT;1.2;AES256;ansible_devel
+        vaulttext = """$ANSIBLE_VAULT;1.2;AES256;ansible_devel
 65616435333934613466373335363332373764363365633035303466643439313864663837393234
 3330656363343637313962633731333237313636633534630a386264363438363362326132363239
 39363166646664346264383934393935653933316263333838386362633534326664646166663736
 6462303664383765650a356637643633366663643566353036303162386237336233393065393164
-6264'''
+6264"""
 
         vault_secrets = self._vault_secrets_from_password('ansible_devel', 'ansible')
         v = vault.VaultLib(vault_secrets)
@@ -838,12 +802,12 @@ class TestVaultLib(unittest.TestCase):
 
     def test_decrypt_non_default_1_2(self):
         b_expected_plaintext = to_bytes('foo bar\n')
-        vaulttext = '''$ANSIBLE_VAULT;1.2;AES256;ansible_devel
+        vaulttext = """$ANSIBLE_VAULT;1.2;AES256;ansible_devel
 65616435333934613466373335363332373764363365633035303466643439313864663837393234
 3330656363343637313962633731333237313636633534630a386264363438363362326132363239
 39363166646664346264383934393935653933316263333838386362633534326664646166663736
 6462303664383765650a356637643633366663643566353036303162386237336233393065393164
-6264'''
+6264"""
 
         vault_secrets = self._vault_secrets_from_password('default', 'ansible')
         v = vault.VaultLib(vault_secrets)
@@ -868,3 +832,171 @@ class TestVaultLib(unittest.TestCase):
         plaintext = u"ansible"
         self.v.encrypt(plaintext)
         self.assertEqual(self.v.cipher_name, "AES256")
+
+
+def test_verify_encrypted_string_methods():
+    """Verify all relevant methods on `str` are implemented on `EncryptedString`."""
+    str_methods_to_not_implement = {
+        '__class__',
+        '__dir__',
+        '__getattribute__',  # generated by Python, identical to the one on `str` in Python 3.13+, but different on earlier versions
+        '__getnewargs__',
+        '__getstate__',
+        '__reduce__',
+        '__reduce_ex__',
+    }
+
+    str_methods = set(dir(''))
+    encrypted_string_methods = set(name for name in dir(EncryptedString) if name in str_methods and getattr(EncryptedString, name) is not getattr(str, name))
+
+    missing_methods = str_methods - encrypted_string_methods - str_methods_to_not_implement
+
+    assert not missing_methods
+
+
+def test_vault_secrets_context_required(_zap_vault_secrets_context) -> None:
+    with pytest.raises(ReferenceError, match=f"A required {VaultSecretsContext.__name__} context is not active."):
+        VaultSecretsContext.current()
+
+
+def test_vault_secrets_context_optional(_zap_vault_secrets_context) -> None:
+    assert VaultSecretsContext.current(optional=True) is None
+
+
+def test_vault_secrets_context_current(_zap_vault_secrets_context) -> None:
+    ctx = VaultSecretsContext([])
+
+    VaultSecretsContext.initialize(ctx)
+
+    assert VaultSecretsContext.current() is ctx
+
+
+def test_vault_secrets_context_already_initialized(_zap_vault_secrets_context) -> None:
+    VaultSecretsContext.initialize(VaultSecretsContext([]))
+
+    with pytest.raises(RuntimeError, match=f"The {VaultSecretsContext.__name__} context is already initialized."):
+        VaultSecretsContext.initialize(VaultSecretsContext([]))
+
+
+def test_encrypted_string_unmanaged_access(_vault_secrets_context: VaultTestHelper) -> None:
+    """
+    Validates that unmanaged access to an `EncryptedString`:
+    * properly decrypts and caches the value when secrets are available
+    * propagates Origin and VaultedValue tags
+    """
+    plaintext = 'i am plaintext'
+    encrypted_string = _vault_secrets_context.make_encrypted_string(plaintext)
+
+    origin = Origin.get_required_tag(encrypted_string)
+    vaulted_value_tag = VaultedValue(ciphertext=VaultHelper.get_ciphertext(encrypted_string, with_tags=False))
+
+    res1 = str(encrypted_string)
+    res2 = str(encrypted_string)
+
+    assert res1 == res2 == plaintext
+    assert res1 is res2  # ensure the result is cached
+
+    assert Origin.get_required_tag(res1) is origin
+    assert VaultedValue.get_required_tag(res1).ciphertext == vaulted_value_tag.ciphertext
+
+
+def test_encrypted_string_unmanaged_access_fail(_vault_secrets_context: VaultTestHelper) -> None:
+    """Validates that unmanaged access to an `EncryptedString` fails with AnsibleVaultError when secrets are not available."""
+    encrypted_string = _vault_secrets_context.make_encrypted_string("i am plaintext")
+    VaultSecretsContext.current().secrets = []
+
+    with pytest.raises(AnsibleVaultError):
+        str(encrypted_string)
+
+
+@pytest.mark.parametrize(
+    "value, conversion_func", (
+        ("fourty-two", str),
+        (42, int),
+        (42.42, float),
+    ))
+def test_encrypted_string_conversion_methods(value: t.Any, conversion_func: t.Callable, _vault_secrets_context: VaultTestHelper):
+    """Ensure that `EncryptedString` dunder conversion methods decrypt and pass through correctly."""
+    encrypted_string = _vault_secrets_context.make_encrypted_string(str(value))
+
+    converted = conversion_func(encrypted_string)
+
+    assert converted == value
+
+
+def test_radd(_vault_secrets_context: VaultTestHelper) -> None:
+    """Ensure that the __radd__ dunder method decrypts and passes through."""
+    assert "plain string " + _vault_secrets_context.make_encrypted_string("secret string") == "plain string secret string"
+
+
+def make_marker(marker_type: type[Marker], *args, **kwargs):
+    """Utility function to create marker values under a TemplateContext."""
+    with TemplateContext(template_value="blah", templar=TemplateEngine(), options=TemplateOptions.DEFAULT):
+        return marker_type(*args, **kwargs)
+
+
+origin = Origin(path="/test")
+
+
+@pytest.mark.parametrize("value, expected_ciphertext", (
+    (origin.tag(EncryptedString(ciphertext="ciphertext")), "ciphertext"),
+    (origin.tag(VaultedValue(ciphertext="ciphertext").tag("something")), "ciphertext"),
+    (make_marker(VaultExceptionMarker, ciphertext=origin.tag("ciphertext"), event=_messages.Event(msg="")), "ciphertext"),
+    (make_marker(TruncationMarker), None),
+    ("not vaulted", None),
+))
+def test_vaulthelper_get_ciphertext(value: t.Any, expected_ciphertext: str | None) -> None:
+    """Validate `get_ciphertext` helper responses and tag preservation behavior."""
+    expected_tags = {origin} if expected_ciphertext is not None else set()
+
+    tagged_ciphertext = VaultHelper.get_ciphertext(value, with_tags=True)
+    untagged_ciphertext = VaultHelper.get_ciphertext(value, with_tags=False)
+
+    assert untagged_ciphertext == expected_ciphertext
+    assert tagged_ciphertext == expected_ciphertext
+    assert AnsibleTagHelper.tags(tagged_ciphertext) == expected_tags
+    assert not AnsibleTagHelper.tags(untagged_ciphertext)
+
+
+@pytest.mark.parametrize("expression, expected_expression", (
+    ("os.path.join(ed, efn)", "str(temp_file)"),
+    ("os.path.exists(ef)", "True"),
+    ("os.path.dirname(ef)", "str(temp_dir)"),
+    ("os.path.isdir(ed)", "True"),
+    ("os.path.basename(ef)", "temp_file.name"),
+    ("os.listdir(ed)", "[temp_file.name]"),
+    ("open(ef).read()", "'Ansible'"),
+))
+def test_encrypted_string_path_fspath(_vault_secrets_context: VaultTestHelper, expression: str, expected_expression: str) -> None:
+    """Ensure that `EncryptedString` works with `PathLike` duck-typing consumers."""
+    with tempfile.TemporaryDirectory() as temp_dir_path:
+        temp_dir = pathlib.Path(temp_dir_path)
+        temp_file = (pathlib.Path(temp_dir) / 'temp_file')
+        temp_file.write_text('Ansible')
+
+        expression_locals = dict(
+            temp_file=temp_file,
+            temp_dir=temp_dir,
+            ed=_vault_secrets_context.make_encrypted_string(str(temp_dir)),
+            edn=_vault_secrets_context.make_encrypted_string(temp_dir.name),
+            ef=_vault_secrets_context.make_encrypted_string(str(temp_file)),
+            efn=_vault_secrets_context.make_encrypted_string(temp_file.name),
+        )
+
+        expected = eval(expected_expression, globals(), expression_locals)
+        result = eval(expression, globals(), expression_locals)
+
+    assert result == expected
+
+
+def test_protocol_conformance(_vault_secrets_context: VaultTestHelper) -> None:
+    """Verify that the `_EncryptedStringProtocol` defined by the collection loader is implemented."""
+    assert isinstance(_vault_secrets_context.make_encrypted_string("hey"), _EncryptedStringProtocol)
+
+
+def test_encrypted_string_cannot_be_trusted() -> None:
+    """Verify that `EncryptedString` cannot be trusted for templating."""
+    es = EncryptedString(ciphertext='x')
+    still_not_trusted = TrustedAsTemplate().tag(es)
+
+    assert not TrustedAsTemplate.is_tagged_on(still_not_trusted)

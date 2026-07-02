@@ -4,18 +4,12 @@
 # CAUTION: This implementation of the collection loader is used by ansible-test.
 #          Because of this, it must be compatible with all Python versions supported on the controller or remote.
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-try:
-    from collections.abc import Mapping
-except ImportError:
-    from collections import Mapping  # type: ignore[no-redef,attr-defined]  # pylint: disable=ansible-bad-import-from
-
-from ansible.module_utils.common.yaml import yaml_load
+from collections.abc import Mapping
 
 
-def _meta_yml_to_dict(yaml_string_data, content_id):
+def _meta_yml_to_dict(yaml_string_data: bytes | str, content_id):
     """
     Converts string YAML dictionary to a Python dictionary. This function may be monkeypatched to another implementation
     by some tools (eg the import sanity test).
@@ -24,7 +18,19 @@ def _meta_yml_to_dict(yaml_string_data, content_id):
     :return: a Python dictionary representing the YAML dictionary content
     """
     # NB: content_id is passed in, but not used by this implementation
-    routing_dict = yaml_load(yaml_string_data)
+
+    # Import the `yaml` module only when needed, as it is not available for the module/module_utils import sanity tests.
+    # This also avoids use of shared YAML infrastructure to eliminate any Ansible dependencies outside the collection loader itself.
+    import yaml
+
+    try:
+        from yaml import CBaseLoader as BaseLoader
+    except (ImportError, AttributeError):
+        from yaml import BaseLoader  # type: ignore[assignment]
+
+    # Using BaseLoader ensures that all scalars are strings.
+    # Doing so avoids parsing unquoted versions as floats, dates as datetime.date, etc.
+    routing_dict = yaml.load(yaml_string_data, Loader=BaseLoader)
     if not routing_dict:
         routing_dict = {}
     if not isinstance(routing_dict, Mapping):

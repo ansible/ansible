@@ -2,12 +2,14 @@
 # Copyright (c) 2021 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
+
+import pytest
 
 from ansible.module_utils.common import warnings
-
 from ansible.module_utils.common.arg_spec import ModuleArgumentSpecValidator, ValidationResult
+
+pytestmark = pytest.mark.usefixtures("module_env_mocker")
 
 
 def test_module_validate():
@@ -25,9 +27,7 @@ def test_module_validate():
     assert result.validated_parameters == expected
 
 
-def test_module_alias_deprecations_warnings(monkeypatch):
-    monkeypatch.setattr(warnings, '_global_deprecations', [])
-
+def test_module_alias_deprecations_warnings():
     arg_spec = {
         'path': {
             'aliases': ['source', 'src', 'flamethrower'],
@@ -49,10 +49,10 @@ def test_module_alias_deprecations_warnings(monkeypatch):
         {
             'collection_name': None,
             'date': '2020-03-04',
-            'name': 'flamethrower',
+            'msg': "Alias 'flamethrower' is deprecated. See the module docs for more information",
             'version': None,
         }
     ]
-    assert "Alias 'flamethrower' is deprecated" in warnings._global_deprecations[0]['msg']
+    assert "Alias 'flamethrower' is deprecated" in warnings.get_deprecation_messages()[0]['msg']
     assert result._warnings == [{'alias': 'flamethrower', 'option': 'path'}]
-    assert "Both option path and its alias flamethrower are set" in warnings._global_warnings[0]
+    assert "Both option path and its alias flamethrower are set" in warnings.get_warning_messages()[0]

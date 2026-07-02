@@ -2,7 +2,7 @@ DOCUMENTATION:
   name: uri
   author: Ansible Core
   version_added: "2.14"
-  short_description: check if string is a valid URI
+  short_description: is the string a valid URI
   description:
     - Validates that the input string conforms to the URI standard, optionally that is also in the list of schemas provided.
   options:
@@ -26,5 +26,5 @@ EXAMPLES: |
   {{ 'http://nobody:secret@example.com' is uri(['ftp', 'ftps', 'http', 'https', 'ws', 'wss']) }}
 RETURN:
   _value:
-    description: Returns C(false) if the string is not a URI or the schema extracted does not match the supplied list.
+    description: Returns V(false) if the string is not a URI or the schema extracted does not match the supplied list.
     type: boolean

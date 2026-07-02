@@ -2,7 +2,6 @@ using Microsoft.Win32.SafeHandles;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.ConstrainedExecution;
 using System.Runtime.InteropServices;
 using System.Security.Principal;
 using System.Text;
@@ -274,7 +273,6 @@ namespace Ansible.Service
             base.SetHandle(handle);
         }
 
-        [ReliabilityContract(Consistency.WillNotCorruptState, Cer.MayFail)]
         protected override bool ReleaseHandle()
         {
             Marshal.FreeHGlobal(handle);
@@ -287,7 +285,6 @@ namespace Ansible.Service
         public SafeServiceHandle() : base(true) { }
         public SafeServiceHandle(IntPtr handle) : base(true) { this.handle = handle; }
 
-        [ReliabilityContract(Consistency.WillNotCorruptState, Cer.MayFail)]
         protected override bool ReleaseHandle()
         {
             return NativeMethods.CloseServiceHandle(handle);

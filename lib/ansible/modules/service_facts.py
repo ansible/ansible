@@ -3,11 +3,10 @@
 # originally copied from AWX's scan_services module to bring this functionality
 # into Core
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: service_facts
 short_description: Return service state information as fact data
@@ -28,7 +27,7 @@ attributes:
     platform:
         platforms: posix
 notes:
-  - When accessing the C(ansible_facts.services) facts collected by this module,
+  - When accessing the RV(ansible_facts.services) facts collected by this module,
     it is recommended to not use "dot notation" because services can have a C(-)
     character in their name which would result in invalid "dot notation", such as
     C(ansible_facts.services.zuul-gateway). It is instead recommended to
@@ -37,18 +36,31 @@ notes:
   - AIX SRC was added in version 2.11.
 author:
   - Adam Miller (@maxamillion)
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: Populate service facts
   ansible.builtin.service_facts:
 
 - name: Print service facts
   ansible.builtin.debug:
     var: ansible_facts.services
-'''
 
-RETURN = r'''
+- name: show names of existing systemd services, sometimes systemd knows about services that were never installed
+  debug: msg={{ existing_systemd_services | map(attribute='name') }}
+  vars:
+     known_systemd_services: "{{ ansible_facts['services'].values() | selectattr('source', 'equalto', 'systemd') }}"
+     existing_systemd_services: "{{ known_systemd_services | rejectattr('status', 'equalto', 'not-found') }}"
+
+- name: restart systemd service if it exists
+  service:
+    state: restarted
+    name: ntpd.service
+  when: ansible_facts['services']['ntpd.service']['status'] | default('not-found') != 'not-found'
+
+"""
+
+RETURN = r"""
 ansible_facts:
   description: Facts to add to ansible_facts about the services on the system
   returned: always
@@ -57,19 +69,20 @@ ansible_facts:
     services:
       description: States of the services with service name as key.
       returned: always
-      type: complex
+      type: list
+      elements: dict
       contains:
         source:
           description:
           - Init system of the service.
-          - One of C(rcctl), C(systemd), C(sysv), C(upstart), C(src).
+          - One of V(rcctl), V(systemd), V(sysv), V(upstart), V(src).
           returned: always
           type: str
           sample: sysv
         state:
           description:
           - State of the service.
-          - 'This commonly includes (but is not limited to) the following: C(failed), C(running), C(stopped) or C(unknown).'
+          - 'This commonly includes (but is not limited to) the following: V(failed), V(running), V(stopped) or V(unknown).'
           - Depending on the used init system additional states might be returned.
           returned: always
           type: str
@@ -77,7 +90,7 @@ ansible_facts:
         status:
           description:
           - State of the service.
-          - Either C(enabled), C(disabled), C(static), C(indirect) or C(unknown).
+          - Either V(enabled), V(disabled), V(static), V(indirect) or V(unknown).
           returned: systemd systems or RedHat/SUSE flavored sysvinit/upstart or OpenBSD
           type: str
           sample: enabled
@@ -86,13 +99,17 @@ ansible_facts:
           returned: always
           type: str
           sample: arp-ethers.service
-'''
+"""
 
 
+import os
 import platform
 import re
+import sys
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.locale import get_best_parsable_locale
+from ansible.module_utils.service import is_systemd_managed
 
 
 class BaseService(object):
@@ -104,16 +121,19 @@ class BaseService(object):
 class ServiceScanService(BaseService):
 
     def _list_sysvinit(self, services):
-
-        rc, stdout, stderr = self.module.run_command("%s --status-all 2>&1 | grep -E \"\\[ (\\+|\\-) \\]\"" % self.service_path, use_unsafe_shell=True)
+        rc, stdout, stderr = self.module.run_command("%s --status-all" % self.service_path)
+        if rc == 4 and not os.path.exists('/etc/init.d'):
+            # This function is not intended to run on Red Hat but it could happen
+            # if `chkconfig` is not installed. `service` on RHEL9 returns rc 4
+            # when /etc/init.d is missing, add the extra guard of checking /etc/init.d
+            # instead of solely relying on rc == 4
+            return
         if rc != 0:
             self.module.warn("Unable to query 'service' tool (%s): %s" % (rc, stderr))
-        for line in stdout.split("\n"):
-            line_data = line.split()
-            if len(line_data) < 4:
-                continue  # Skipping because we expected more data
-            service_name = " ".join(line_data[3:])
-            if line_data[1] == "+":
+        p = re.compile(r'^\s*\[ (?P<state>\+|\-) \]\s+(?P<name>.+)$', flags=re.M)
+        for match in p.finditer(stdout):
+            service_name = match.group('name')
+            if match.group('state') == "+":
                 service_state = "running"
             else:
                 service_state = "stopped"
@@ -142,7 +162,6 @@ class ServiceScanService(BaseService):
 
     def _list_rh(self, services):
 
-        # print '%s --status-all | grep -E "is (running|stopped)"' % service_path
         p = re.compile(
             r'(?P<service>.*?)\s+[0-9]:(?P<rl0>on|off)\s+[0-9]:(?P<rl1>on|off)\s+[0-9]:(?P<rl2>on|off)\s+'
             r'[0-9]:(?P<rl3>on|off)\s+[0-9]:(?P<rl4>on|off)\s+[0-9]:(?P<rl5>on|off)\s+[0-9]:(?P<rl6>on|off)')
@@ -192,8 +211,8 @@ class ServiceScanService(BaseService):
 
     def _list_openrc(self, services):
         all_services_runlevels = {}
-        rc, stdout, stderr = self.module.run_command("%s -a -s -m 2>&1 | grep '^ ' | tr -d '[]'" % self.rc_status_path, use_unsafe_shell=True)
-        rc_u, stdout_u, stderr_u = self.module.run_command("%s show -v 2>&1 | grep '|'" % self.rc_update_path, use_unsafe_shell=True)
+        dummy, stdout, dummy = self.module.run_command("%s -a -s -m 2>&1 | grep '^ ' | tr -d '[]'" % self.rc_status_path, use_unsafe_shell=True)
+        dummy, stdout_u, dummy = self.module.run_command("%s show -v 2>&1 | grep '|'" % self.rc_update_path, use_unsafe_shell=True)
         for line in stdout_u.split('\n'):
             line_data = line.split('|')
             if len(line_data) < 2:
@@ -209,8 +228,15 @@ class ServiceScanService(BaseService):
             if len(line_data) < 2:
                 continue
             service_name = line_data[0]
+            # Skip lines which are not service names
+            if service_name == "*":
+                continue
             service_state = line_data[1]
-            service_runlevels = all_services_runlevels[service_name]
+            try:
+                service_runlevels = all_services_runlevels[service_name]
+            except KeyError:
+                self.module.warn(f"Service {service_name} not found in the service list")
+                continue
             service_data = {"name": service_name, "runlevels": service_runlevels, "state": service_state, "source": "openrc"}
             services[service_name] = service_data
 
@@ -224,15 +250,17 @@ class ServiceScanService(BaseService):
         self.rc_status_path = self.module.get_bin_path("rc-status")
         self.rc_update_path = self.module.get_bin_path("rc-update")
 
-        # TODO: review conditionals ... they should not be this 'exclusive'
         if self.service_path and self.chkconfig_path is None and self.rc_status_path is None:
             self._list_sysvinit(services)
+
+        # TODO: review conditionals ... they should not be this 'exclusive'
         if self.initctl_path and self.chkconfig_path is None:
             self._list_upstart(services)
         elif self.chkconfig_path:
             self._list_rh(services)
         elif self.rc_status_path is not None and self.rc_update_path is not None:
             self._list_openrc(services)
+
         return services
 
 
@@ -241,21 +269,12 @@ class SystemctlScanService(BaseService):
     BAD_STATES = frozenset(['not-found', 'masked', 'failed'])
 
     def systemd_enabled(self):
-        # Check if init is the systemd command, using comm as cmdline could be symlink
-        try:
-            f = open('/proc/1/comm', 'r')
-        except IOError:
-            # If comm doesn't exist, old kernel, no systemd
-            return False
-        for line in f:
-            if 'systemd' in line:
-                return True
-        return False
+        return is_systemd_managed(self.module)
 
     def _list_from_units(self, systemctl_path, services):
 
         # list units as systemd sees them
-        rc, stdout, stderr = self.module.run_command("%s list-units --no-pager --type service --all" % systemctl_path, use_unsafe_shell=True)
+        rc, stdout, stderr = self.module.run_command("%s list-units --no-pager --type service --all --plain" % systemctl_path, use_unsafe_shell=True)
         if rc != 0:
             self.module.warn("Could not list units from systemd: %s" % stderr)
         else:
@@ -264,16 +283,18 @@ class SystemctlScanService(BaseService):
                 state_val = "stopped"
                 status_val = "unknown"
                 fields = line.split()
+
+                # systemd sometimes gives misleading status
+                # check all fields for bad states
                 for bad in self.BAD_STATES:
-                    if bad in fields:  # dot is 0
+                    # except description
+                    if bad in fields[:-1]:
                         status_val = bad
-                        fields = fields[1:]
                         break
                 else:
                     # active/inactive
                     status_val = fields[2]
 
-                # array is normalize so predictable now
                 service_name = fields[0]
                 if fields[3] == "running":
                     state_val = "running"
@@ -358,14 +379,31 @@ class OpenBSDScanService(BaseService):
                     svcs.append(svc)
         return svcs
 
+    def get_info(self, name):
+        info = {}
+        rc, stdout, stderr = self.module.run_command("%s get %s" % (self.rcctl_path, name))
+        if 'needs root privileges' in stderr.lower():
+            self.module.warn('rcctl requires root privileges')
+        else:
+            undy = '%s_' % name
+            for variable in stdout.split('\n'):
+                if variable == '' or '=' not in variable:
+                    continue
+                else:
+                    k, v = variable.replace(undy, '', 1).split('=', 1)
+                    info[k] = v
+        return info
+
     def gather_services(self):
 
         services = {}
         self.rcctl_path = self.module.get_bin_path("rcctl")
         if self.rcctl_path:
 
+            # populate services will all possible
             for svc in self.query_rcctl('all'):
-                services[svc] = {'name': svc, 'source': 'rcctl'}
+                services[svc] = {'name': svc, 'source': 'rcctl', 'rogue': False}
+                services[svc].update(self.get_info(svc))
 
             for svc in self.query_rcctl('on'):
                 services[svc].update({'status': 'enabled'})
@@ -373,16 +411,86 @@ class OpenBSDScanService(BaseService):
             for svc in self.query_rcctl('started'):
                 services[svc].update({'state': 'running'})
 
-            # Based on the list of services that are enabled, determine which are disabled
-            [services[svc].update({'status': 'disabled'}) for svc in services if services[svc].get('status') is None]
-
-            # and do the same for those are aren't running
-            [services[svc].update({'state': 'stopped'}) for svc in services if services[svc].get('state') is None]
-
             # Override the state for services which are marked as 'failed'
             for svc in self.query_rcctl('failed'):
                 services[svc].update({'state': 'failed'})
 
+            for svc in services.keys():
+                # Based on the list of services that are enabled/failed, determine which are disabled
+                if services[svc].get('status') is None:
+                    services[svc].update({'status': 'disabled'})
+
+                # and do the same for those are aren't running
+                if services[svc].get('state') is None:
+                    services[svc].update({'state': 'stopped'})
+
+            for svc in self.query_rcctl('rogue'):
+                services[svc]['rogue'] = True
+
+        return services
+
+
+class FreeBSDScanService(BaseService):
+
+    _pid_regex = r'.+ is running as pid (\d+)\.'
+
+    def get_info(self, service):
+
+        service_info = {'status': 'unknown'}
+        rc, stdout, stderr = self.module.run_command("%s %s describe" % (self.service, service))
+        if rc == 0:
+            service_info['description'] = stdout
+            rc, stdout, stderr = self.module.run_command("%s %s status" % (self.service, service))
+            if rc == 0:
+                service_info['status'] = 'running'
+                p = re.compile(r'^\s?%s is running as pid (\d+).' % service)
+                matches = p.match(stdout[0])
+                if matches:
+                    # does not always get pid output
+                    service_info['pid'] = matches[0]
+                else:
+                    service_info['pid'] = 'N/A'
+            elif rc == 1:
+                if stdout and 'is not running' in stdout.splitlines()[0]:
+                    service_info['status'] = 'stopped'
+                elif stderr and 'unknown directive' in stderr.splitlines()[0]:
+                    service_info['status'] = 'unknown'
+                    self.module.warn('Status query not supported for %s' % service)
+                else:
+                    service_info['status'] = 'unknown'
+                    out = stderr if stderr else stdout
+                    self.module.warn('Could not retrieve status for %s: %s' % (service, out))
+        else:
+            out = stderr if stderr else stdout
+            self.module.warn("Failed to get info for %s, no system message (rc=%s): %s" % (service, rc, out))
+
+        return service_info
+
+    def get_enabled(self):
+
+        services = []
+        rc, stdout, stderr = self.module.run_command("%s -e" % (self.service))
+        if rc == 0:
+            for line in stdout.splitlines():
+                if line.startswith('/'):
+                    services.append(os.path.basename(line))
+        elif stderr:
+            self.module.warn("Failed to get services: %s" % stderr)
+        elif stdout:
+            self.module.warn("Failed to get services: %s" % stdout)
+        else:
+            self.module.warn("Failed to get services, no system message: rc=%s" % rc)
+
+        return services
+
+    def gather_services(self):
+
+        services = {}
+        if sys.platform.startswith('freebsd'):
+            self.service = self.module.get_bin_path("service")
+            if self.service:
+                for svc in self.get_enabled():
+                    services[svc] = self.get_info(svc)
         return services
 
 
@@ -390,7 +498,13 @@ def main():
     module = AnsibleModule(argument_spec=dict(), supports_check_mode=True)
     locale = get_best_parsable_locale(module)
     module.run_command_environ_update = dict(LANG=locale, LC_ALL=locale)
-    service_modules = (ServiceScanService, SystemctlScanService, AIXScanService, OpenBSDScanService)
+
+    if sys.platform.startswith('freebsd'):
+        # frebsd is not compatible but will match other classes
+        service_modules = (FreeBSDScanService,)
+    else:
+        service_modules = (ServiceScanService, SystemctlScanService, AIXScanService, OpenBSDScanService)
+
     all_services = {}
     for svc_module in service_modules:
         svcmod = svc_module(module)

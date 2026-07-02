@@ -2,30 +2,29 @@
 # Copyright: (c) 2022, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 """Signature verification helpers."""
+from __future__ import annotations
 
 from ansible.errors import AnsibleError
 from ansible.galaxy.user_agent import user_agent
 from ansible.module_utils.urls import open_url
 
 import contextlib
+import inspect
 import os
 import subprocess
-import sys
 import typing as t
 
 from dataclasses import dataclass, fields as dc_fields
-from functools import partial
 from urllib.error import HTTPError, URLError
 
 if t.TYPE_CHECKING:
     from ansible.utils.display import Display
 
-IS_PY310_PLUS = sys.version_info[:2] >= (3, 10)
 
-frozen_dataclass = partial(dataclass, frozen=True, **({'slots': True} if IS_PY310_PLUS else {}))
-
-
-def get_signature_from_source(source, display=None):  # type: (str, t.Optional[Display]) -> str
+def get_signature_from_source(
+    source: str,
+    display: Display | None = None,
+) -> str:
     if display is not None:
         display.vvvv(f"Using signature at {source}")
     try:
@@ -45,11 +44,11 @@ def get_signature_from_source(source, display=None):  # type: (str, t.Optional[D
 
 
 def run_gpg_verify(
-    manifest_file,  # type: str
-    signature,  # type: str
-    keyring,  # type: str
-    display,  # type: Display
-):  # type: (...) -> tuple[str, int]
+    manifest_file: str,
+    signature: str,
+    keyring: str,
+    display: Display,
+) -> tuple[str, int]:
     status_fd_read, status_fd_write = os.pipe()
 
     # running the gpg command will create the keyring if it does not exist
@@ -99,7 +98,7 @@ def run_gpg_verify(
         return stdout, p.returncode
 
 
-def parse_gpg_errors(status_out):  # type: (str) -> t.Iterator[GpgBaseError]
+def parse_gpg_errors(status_out: str) -> t.Iterator[GpgBaseError]:
     for line in status_out.splitlines():
         if not line:
             continue
@@ -126,49 +125,54 @@ def parse_gpg_errors(status_out):  # type: (str) -> t.Iterator[GpgBaseError]
         yield cls(*fields)
 
 
-@frozen_dataclass
+@dataclass(frozen=True, slots=True)
 class GpgBaseError(Exception):
     status: str
 
     @classmethod
     def get_gpg_error_description(cls) -> str:
         """Return the current class description."""
+        if cls.__doc__ is None:
+            raise RuntimeError(
+                f'{cls!r} was expected to have a docstring but it does not.',
+            )
+
         return ' '.join(cls.__doc__.split())
 
-    def __post_init__(self):
-        for field in dc_fields(self):
-            super(GpgBaseError, self).__setattr__(field.name, field.type(getattr(self, field.name)))
+    def __post_init__(self) -> None:
+        for field_name, field_type in inspect.get_annotations(type(self), eval_str=True).items():
+            super(GpgBaseError, self).__setattr__(field_name, field_type(getattr(self, field_name)))
 
 
-@frozen_dataclass
+@dataclass(frozen=True, slots=True)
 class GpgExpSig(GpgBaseError):
     """The signature with the keyid is good, but the signature is expired."""
     keyid: str
     username: str
 
 
-@frozen_dataclass
+@dataclass(frozen=True, slots=True)
 class GpgExpKeySig(GpgBaseError):
     """The signature with the keyid is good, but the signature was made by an expired key."""
     keyid: str
     username: str
 
 
-@frozen_dataclass
+@dataclass(frozen=True, slots=True)
 class GpgRevKeySig(GpgBaseError):
     """The signature with the keyid is good, but the signature was made by a revoked key."""
     keyid: str
     username: str
 
 
-@frozen_dataclass
+@dataclass(frozen=True, slots=True)
 class GpgBadSig(GpgBaseError):
     """The signature with the keyid has not been verified okay."""
     keyid: str
     username: str
 
 
-@frozen_dataclass
+@dataclass(frozen=True, slots=True)
 class GpgErrSig(GpgBaseError):
     """"It was not possible to check the signature.  This may be caused by
     a missing public key or an unsupported algorithm.  A RC of 4
@@ -184,24 +188,24 @@ class GpgErrSig(GpgBaseError):
     fpr: str
 
 
-@frozen_dataclass
+@dataclass(frozen=True, slots=True)
 class GpgNoPubkey(GpgBaseError):
     """The public key is not available."""
     keyid: str
 
 
-@frozen_dataclass
+@dataclass(frozen=True, slots=True)
 class GpgMissingPassPhrase(GpgBaseError):
     """No passphrase was supplied."""
 
 
-@frozen_dataclass
+@dataclass(frozen=True, slots=True)
 class GpgBadPassphrase(GpgBaseError):
     """The supplied passphrase was wrong or not given."""
     keyid: str
 
 
-@frozen_dataclass
+@dataclass(frozen=True, slots=True)
 class GpgNoData(GpgBaseError):
     """No data has been found.  Codes for WHAT are:
     - 1 :: No armored data.
@@ -213,7 +217,7 @@ class GpgNoData(GpgBaseError):
     what: str
 
 
-@frozen_dataclass
+@dataclass(frozen=True, slots=True)
 class GpgUnexpected(GpgBaseError):
     """No data has been found.  Codes for WHAT are:
     - 1 :: No armored data.
@@ -225,7 +229,7 @@ class GpgUnexpected(GpgBaseError):
     what: str
 
 
-@frozen_dataclass
+@dataclass(frozen=True, slots=True)
 class GpgError(GpgBaseError):
     """This is a generic error status message, it might be followed by error location specific data."""
     location: str
@@ -233,30 +237,30 @@ class GpgError(GpgBaseError):
     more: str = ""
 
 
-@frozen_dataclass
+@dataclass(frozen=True, slots=True)
 class GpgFailure(GpgBaseError):
     """This is the counterpart to SUCCESS and used to indicate a program failure."""
     location: str
     code: int
 
 
-@frozen_dataclass
+@dataclass(frozen=True, slots=True)
 class GpgBadArmor(GpgBaseError):
     """The ASCII armor is corrupted."""
 
 
-@frozen_dataclass
+@dataclass(frozen=True, slots=True)
 class GpgKeyExpired(GpgBaseError):
     """The key has expired."""
     timestamp: int
 
 
-@frozen_dataclass
+@dataclass(frozen=True, slots=True)
 class GpgKeyRevoked(GpgBaseError):
     """The used key has been revoked by its owner."""
 
 
-@frozen_dataclass
+@dataclass(frozen=True, slots=True)
 class GpgNoSecKey(GpgBaseError):
     """The secret key is not available."""
     keyid: str

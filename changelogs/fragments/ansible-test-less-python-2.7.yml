@@ -1,3 +1,0 @@
-minor_changes:
-  - ansible-test - Remove support for Python 2.7 on provisioned FreeBSD instances.
-  - ansible-test - Remove the ``opensuse15py2`` container.

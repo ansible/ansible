@@ -1,2 +1,0 @@
-breaking_changes:
-  - Allow for lazy evaluation of Jinja2 expressions (https://github.com/ansible/ansible/issues/56017)

@@ -1,0 +1,52 @@
+- vars:
+    invalid_git_opts: '-ccore.sshCommand=sh -c "id > {{ remote_tmp_dir }}/role_exe"'
+    # use SSH protocol to test core.sshCommand is not configured
+    dummy_repo: git@github.com:ansible/nosuchrepo.git
+  block:
+    - name: Ensure git is installed
+      package:
+        name: git
+      when: ansible_distribution not in ["MacOSX", "Alpine"]
+      register: git_install
+
+    - name: Create invalid requirements file
+      copy:
+        dest: "{{ remote_tmp_dir }}/invalid-requirements.yml"
+        content: |
+          - src: {{ invalid_git_opts }}
+            scm: git
+            name: {{ dummy_repo }}
+          - src: {{ dummy_repo }}
+            scm: git
+            name: {{ invalid_git_opts }}
+
+    - name: Attempt to install invalid role requirements
+      command: ansible-galaxy install -r {{ remote_tmp_dir }}/invalid-requirements.yml --ignore-errors
+      register: result
+      environment:
+        ANSIBLE_NOCOLOR: True
+        ANSIBLE_FORCE_COLOR: False
+
+    - name: Validate git core.sshCommand did not run
+      stat:
+        path: "{{ remote_tmp_dir }}/role_exe"
+      register: stat_result
+      failed_when: stat_result.stat.exists
+
+    - name: Verify the invalid field is treated as a single positional argument (repo or dest)
+      assert:
+        that:
+          - stderr is search(error1)
+          - stderr is search(error2)
+          - (stderr | regex_findall("git clone") | length) == (stderr | regex_findall("git clone --") | length) == 2
+      vars:
+        stderr: "{{ result.stderr | regex_replace('\\n', ' ') }}"
+        error1: "repository '{{ invalid_git_opts }}' does not exist"
+        error2: "Cloning into '{{ invalid_git_opts }}'"
+
+  always:
+    - name: Uninstall git if it was installed
+      package:
+        name: git
+        state: absent
+      when: git_install is changed | default(false)

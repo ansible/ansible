@@ -5,7 +5,7 @@ Function Add-CSharpType {
     <#
     .SYNOPSIS
     Compiles one or more C# scripts similar to Add-Type. This exposes
-    more configuration options that are useable within Ansible and it
+    more configuration options that are usable within Ansible and it
     also allows multiple C# sources to be compiled together.
 
     .PARAMETER References
@@ -37,7 +37,7 @@ Function Add-CSharpType {
     .PARAMETER CompileSymbols
     [String[]] A list of symbols to be defined during compile time. These are
     added to the existing symbols, 'CORECLR', 'WINDOWS', 'UNIX' that are set
-    conditionalls in this cmdlet.
+    conditionals in this cmdlet.
 
     .NOTES
     The following features were added to control the compiling options from the
@@ -65,13 +65,17 @@ Function Add-CSharpType {
     * Create automatic type accelerators to simplify long namespace names (Ansible 2.9+)
 
         //TypeAccelerator -Name <AcceleratorName> -TypeName <Name of compiled type>
+
+    * Compile with unsafe support (Ansible 2.15+)
+
+        //AllowUnsafe
     #>
     param(
         [Parameter(Mandatory = $true)][AllowEmptyCollection()][String[]]$References,
         [Switch]$IgnoreWarnings,
         [Switch]$PassThru,
         [Parameter(Mandatory = $true, ParameterSetName = "Module")][Object]$AnsibleModule,
-        [Parameter(ParameterSetName = "Manual")][String]$TempPath = $env:TMP,
+        [Parameter(ParameterSetName = "Manual")][String]$TempPath,
         [Parameter(ParameterSetName = "Manual")][Switch]$IncludeDebugInfo,
         [String[]]$CompileSymbols = @()
     )
@@ -117,6 +121,7 @@ Function Add-CSharpType {
     $assembly_pattern = [Regex]"//\s*AssemblyReference\s+-(?<Parameter>(Name)|(Type))\s+(?<Name>[\w.]*)(\s+-CLR\s+(?<CLR>Core|Framework))?"
     $no_warn_pattern = [Regex]"//\s*NoWarn\s+-Name\s+(?<Name>[\w\d]*)(\s+-CLR\s+(?<CLR>Core|Framework))?"
     $type_pattern = [Regex]"//\s*TypeAccelerator\s+-Name\s+(?<Name>[\w.]*)\s+-TypeName\s+(?<TypeName>[\w.]*)"
+    $allow_unsafe_pattern = [Regex]"//\s*AllowUnsafe?"
 
     # PSCore vs PSDesktop use different methods to compile the code,
     # PSCore uses Roslyn and can compile the code purely in memory
@@ -142,11 +147,13 @@ Function Add-CSharpType {
         $ignore_warnings = New-Object -TypeName 'System.Collections.Generic.Dictionary`2[[String], [Microsoft.CodeAnalysis.ReportDiagnostic]]'
         $parse_options = ([Microsoft.CodeAnalysis.CSharp.CSharpParseOptions]::Default).WithPreprocessorSymbols($defined_symbols)
         $syntax_trees = [System.Collections.Generic.List`1[Microsoft.CodeAnalysis.SyntaxTree]]@()
+        $allow_unsafe = $false
         foreach ($reference in $References) {
             # scan through code and add any assemblies that match
             # //AssemblyReference -Name ... [-CLR Core]
             # //NoWarn -Name ... [-CLR Core]
             # //TypeAccelerator -Name ... -TypeName ...
+            # //AllowUnsafe
             $assembly_matches = $assembly_pattern.Matches($reference)
             foreach ($match in $assembly_matches) {
                 $clr = $match.Groups["CLR"].Value
@@ -180,6 +187,10 @@ Function Add-CSharpType {
             foreach ($match in $type_matches) {
                 $type_accelerators.Add(@{Name = $match.Groups["Name"].Value; TypeName = $match.Groups["TypeName"].Value })
             }
+
+            if ($allow_unsafe_pattern.Matches($reference).Count) {
+                $allow_unsafe = $true
+            }
         }
 
         # Release seems to contain the correct line numbers compared to
@@ -194,6 +205,10 @@ Function Add-CSharpType {
             $compiler_options = $compiler_options.WithSpecificDiagnosticOptions($ignore_warnings)
         }
 
+        if ($allow_unsafe) {
+            $compiler_options = $compiler_options.WithAllowUnsafe($true)
+        }
+
         # create compilation object
         $compilation = [Microsoft.CodeAnalysis.CSharp.CSharpCompilation]::Create(
             [System.Guid]::NewGuid().ToString(),
@@ -202,12 +217,22 @@ Function Add-CSharpType {
             $compiler_options
         )
 
+        $emit_options = [Microsoft.CodeAnalysis.Emit.EmitOptions]::new()
+        if ($PSCmdlet.ParameterSetName -eq "Module") {
+            $include_debug = $AnsibleModule.TracebacksFor -contains "error" -or $AnsibleModule.TracebacksFor -contains "always"
+        }
+        else {
+            $include_debug = $IncludeDebugInfo.IsPresent
+        }
+        if ($include_debug) {
+            $emit_options = $emit_options.WithDebugInformationFormat([Microsoft.CodeAnalysis.Emit.DebugInformationFormat]::Embedded)
+        }
+
         # Load the compiled code and pdb info, we do this so we can
         # include line number in a stracktrace
         $code_ms = New-Object -TypeName System.IO.MemoryStream
-        $pdb_ms = New-Object -TypeName System.IO.MemoryStream
         try {
-            $emit_result = $compilation.Emit($code_ms, $pdb_ms)
+            $emit_result = $compilation.Emit($code_ms, $null, $null, $null, $null, $emit_options)
             if (-not $emit_result.Success) {
                 $errors = [System.Collections.ArrayList]@()
 
@@ -248,12 +273,10 @@ Function Add-CSharpType {
             }
 
             $code_ms.Seek(0, [System.IO.SeekOrigin]::Begin) > $null
-            $pdb_ms.Seek(0, [System.IO.SeekOrigin]::Begin) > $null
-            $compiled_assembly = [System.Runtime.Loader.AssemblyLoadContext]::Default.LoadFromStream($code_ms, $pdb_ms)
+            $compiled_assembly = [System.Runtime.Loader.AssemblyLoadContext]::Default.LoadFromStream($code_ms)
         }
         finally {
             $code_ms.Close()
-            $pdb_ms.Close()
         }
     }
     else {
@@ -262,12 +285,20 @@ Function Add-CSharpType {
         # configure compile options based on input
         if ($PSCmdlet.ParameterSetName -eq "Module") {
             $temp_path = $AnsibleModule.Tmpdir
-            $include_debug = $AnsibleModule.Verbosity -ge 3
+            $include_debug = $AnsibleModule.TracebacksFor -contains "error" -or $AnsibleModule.TracebacksFor -contains "always"
+
+            # AnsibleModule will handle the cleanup after module execution
+            # which should be enough time for AVs or other processes to release
+            # any locks on the temp files.
+            $tmpdir_clean_is_error = $false
         }
         else {
-            $temp_path = $TempPath
+            $temp_path = [System.IO.Path]::GetTempPath()
             $include_debug = $IncludeDebugInfo.IsPresent
+            $tmpdir_clean_is_error = $true
         }
+        $temp_path = Join-Path -Path $temp_path -ChildPath ([Guid]::NewGuid().Guid)
+
         $compiler_options = [System.Collections.ArrayList]@("/optimize")
         if ($defined_symbols.Count -gt 0) {
             $compiler_options.Add("/define:" + ([String]::Join(";", $defined_symbols.ToArray()))) > $null
@@ -289,14 +320,19 @@ Function Add-CSharpType {
         )
 
         # create a code snippet for each reference and check if we need
-        # to reference any extra assemblies
-        $ignore_warnings = [System.Collections.ArrayList]@()
-        $compile_units = [System.Collections.Generic.List`1[System.CodeDom.CodeSnippetCompileUnit]]@()
+        # to reference any extra assemblies.
+        # CS1610 is a warning when csc.exe failed to delete temporary files.
+        # We use our own temp dir deletion mechanism so this doesn't become a
+        # fatal error.
+        # https://github.com/ansible-collections/ansible.windows/issues/598
+        $ignore_warnings = [System.Collections.ArrayList]@('1610')
+        $compile_units = [System.Collections.Generic.List`1[string]]@()
         foreach ($reference in $References) {
             # scan through code and add any assemblies that match
             # //AssemblyReference -Name ... [-CLR Framework]
             # //NoWarn -Name ... [-CLR Framework]
             # //TypeAccelerator -Name ... -TypeName ...
+            # //AllowUnsafe
             $assembly_matches = $assembly_pattern.Matches($reference)
             foreach ($match in $assembly_matches) {
                 $clr = $match.Groups["CLR"].Value
@@ -324,11 +360,15 @@ Function Add-CSharpType {
                 }
                 $ignore_warnings.Add($warning_id) > $null
             }
-            $compile_units.Add((New-Object -TypeName System.CodeDom.CodeSnippetCompileUnit -ArgumentList $reference)) > $null
+            $compile_units.Add($reference) > $null
 
             $type_matches = $type_pattern.Matches($reference)
             foreach ($match in $type_matches) {
                 $type_accelerators.Add(@{Name = $match.Groups["Name"].Value; TypeName = $match.Groups["TypeName"].Value })
+            }
+
+            if ($allow_unsafe_pattern.Matches($reference).Count) {
+                $compiler_options.Add("/unsafe") > $null
             }
         }
         if ($ignore_warnings.Count -gt 0) {
@@ -346,14 +386,32 @@ Function Add-CSharpType {
         $originalEnv = @{}
         try {
             'LIB' | ForEach-Object -Process {
-                $value = Get-Item -LiteralPath "Env:\$_" -ErrorAction SilentlyContinue
+                $value = (Get-Item -LiteralPath "Env:\$_" -ErrorAction SilentlyContinue).Value
                 if ($value) {
                     $originalEnv[$_] = $value
                     Remove-Item -LiteralPath "Env:\$_"
                 }
             }
 
-            $compile = $provider.CompileAssemblyFromDom($compile_parameters, $compile_units)
+            $null = New-Item -Path $temp_path -ItemType Directory -Force
+            try {
+                # FromSource is important, it will create the .cs files with
+                # the required extended attribute for the source to be trusted
+                # when using WDAC.
+                $compile = $provider.CompileAssemblyFromSource($compile_parameters, $compile_units)
+            }
+            finally {
+                # Try to delete the temp path, if this fails and we are running
+                # with a module object, ignore and let it cleanup later.
+                try {
+                    [System.IO.Directory]::Delete($temp_path, $true)
+                }
+                catch {
+                    if ($tmpdir_clean_is_error) {
+                        throw "Failed to cleanup temporary directory '$temp_path' used for compiling C# code. Error: $_"
+                    }
+                }
+            }
         }
         finally {
             foreach ($kvp in $originalEnv.GetEnumerator()) {

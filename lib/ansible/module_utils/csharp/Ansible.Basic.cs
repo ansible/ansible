@@ -1,6 +1,8 @@
+using Microsoft.Win32.SafeHandles;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -11,7 +13,7 @@ using System.Runtime.InteropServices;
 using System.Security.AccessControl;
 using System.Security.Principal;
 #if CORECLR
-using Newtonsoft.Json;
+using System.Text.Json;
 #else
 using System.Web.Script.Serialization;
 #endif
@@ -20,7 +22,6 @@ using System.Web.Script.Serialization;
 // loaded in PSCore, ignore CS1702 so the code will ignore this warning
 //NoWarn -Name CS1702 -CLR Core
 
-//AssemblyReference -Type Newtonsoft.Json.JsonConvert -CLR Core
 //AssemblyReference -Type System.Diagnostics.EventLog -CLR Core
 //AssemblyReference -Type System.Security.AccessControl.NativeObjectSecurity -CLR Core
 //AssemblyReference -Type System.Security.AccessControl.DirectorySecurity -CLR Core
@@ -40,9 +41,14 @@ namespace Ansible.Basic
 
         public static bool _DebugArgSpec = false;
 
+        // Used by the executor scripts to store warnings from the wrapper functions.
+        // This is public to avoid reflection but should not be used by modules.
+        public static List<string> _WrapperWarnings;
+
         private static List<string> BOOLEANS_TRUE = new List<string>() { "y", "yes", "on", "1", "true", "t", "1.0" };
         private static List<string> BOOLEANS_FALSE = new List<string>() { "n", "no", "off", "0", "false", "f", "0.0" };
 
+        private bool ignoreUnknownOpts = false;
         private string remoteTmp = Path.GetTempPath();
         private string tmpdir = null;
         private HashSet<string> noLogValues = new HashSet<string>();
@@ -50,28 +56,35 @@ namespace Ansible.Basic
         private List<string> warnings = new List<string>();
         private List<Dictionary<string, string>> deprecations = new List<Dictionary<string, string>>();
         private List<string> cleanupFiles = new List<string>();
+        private string[] _tracebacksFor = new string[0];
+        private bool injectInvocation = false;
 
         private Dictionary<string, string> passVars = new Dictionary<string, string>()
         {
             // null values means no mapping, not used in Ansible.Basic.AnsibleModule
+            // keep in sync with python counterpart in lib/ansible/module_utils/common/parameters.py
             { "check_mode", "CheckMode" },
             { "debug", "DebugMode" },
             { "diff", "DiffMode" },
             { "keep_remote_files", "KeepRemoteFiles" },
+            { "ignore_unknown_opts", "ignoreUnknownOpts" },
+            { "inject_invocation", "injectInvocation" },
             { "module_name", "ModuleName" },
             { "no_log", "NoLog" },
             { "remote_tmp", "remoteTmp" },
             { "selinux_special_fs", null },
             { "shell_executable", null },
             { "socket", null },
-            { "string_conversion_action", null },
             { "syslog_facility", null },
+            { "target_log_info", "TargetLogInfo" },
+            { "tracebacks_for", "_tracebacksFor" },
             { "tmpdir", "tmpdir" },
             { "verbosity", "Verbosity" },
             { "version", "AnsibleVersion" },
         };
-        private List<string> passBools = new List<string>() { "check_mode", "debug", "diff", "keep_remote_files", "no_log" };
+        private List<string> passBools = new List<string>() { "check_mode", "debug", "diff", "keep_remote_files", "ignore_unknown_opts", "inject_invocation", "no_log" };
         private List<string> passInts = new List<string>() { "verbosity" };
+        private string[] passStringArrays = new string[] { "tracebacks_for" };
         private Dictionary<string, List<object>> specDefaults = new Dictionary<string, List<object>>()
         {
             // key - (default, type) - null is freeform
@@ -119,8 +132,10 @@ namespace Ansible.Basic
         public bool KeepRemoteFiles { get; private set; }
         public string ModuleName { get; private set; }
         public bool NoLog { get; private set; }
+        public string TargetLogInfo { get; private set; }
         public int Verbosity { get; private set; }
         public string AnsibleVersion { get; private set; }
+        public string[] TracebacksFor { get { return _tracebacksFor; } }
 
         public string Tmpdir
         {
@@ -137,6 +152,9 @@ namespace Ansible.Basic
                         InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit,
                         PropagationFlags.None, AccessControlType.Allow);
                     dirSecurity.AddAccessRule(ace);
+#else
+                    UnixFileMode userMode = UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute;
+#endif
 
                     string baseDir = Path.GetFullPath(Environment.ExpandEnvironmentVariables(remoteTmp));
                     if (!Directory.Exists(baseDir))
@@ -144,11 +162,14 @@ namespace Ansible.Basic
                         string failedMsg = null;
                         try
                         {
+#if WINDOWS
 #if CORECLR
-                            DirectoryInfo createdDir = Directory.CreateDirectory(baseDir);
-                            FileSystemAclExtensions.SetAccessControl(createdDir, dirSecurity);
+                            FileSystemAclExtensions.CreateDirectory(dirSecurity, baseDir);
 #else
                             Directory.CreateDirectory(baseDir, dirSecurity);
+#endif
+#else
+                            Directory.CreateDirectory(baseDir, userMode);
 #endif
                         }
                         catch (Exception e)
@@ -164,29 +185,30 @@ namespace Ansible.Basic
                         }
                         else
                         {
-                            NTAccount currentUser = (NTAccount)user.Translate(typeof(NTAccount));
-                            string warnMsg = String.Format("Module remote_tmp {0} did not exist and was created with FullControl to {1}, ", baseDir, currentUser.ToString());
+                            string currentUser = Environment.UserName;
+                            string warnMsg = String.Format("Module remote_tmp {0} did not exist and was created with FullControl to {1}, ", baseDir, currentUser);
                             warnMsg += "this may cause issues when running as another user. To avoid this, create the remote_tmp dir with the correct permissions manually";
                             Warn(warnMsg);
                         }
                     }
 
                     string dateTime = DateTime.Now.ToFileTime().ToString();
-                    string dirName = String.Format("ansible-moduletmp-{0}-{1}", dateTime, new Random().Next(0, int.MaxValue));
+                    string dirName = String.Format("ansible-moduletmp-{0}-{1}-{2}", dateTime, System.Diagnostics.Process.GetCurrentProcess().Id,
+                        new Random().Next(0, int.MaxValue));
                     string newTmpdir = Path.Combine(baseDir, dirName);
+#if WINDOWS
 #if CORECLR
-                    DirectoryInfo tmpdirInfo = Directory.CreateDirectory(newTmpdir);
-                    FileSystemAclExtensions.SetAccessControl(tmpdirInfo, dirSecurity);
+                    FileSystemAclExtensions.CreateDirectory(dirSecurity, newTmpdir);
 #else
                     Directory.CreateDirectory(newTmpdir, dirSecurity);
+#endif
+#else
+                    Directory.CreateDirectory(newTmpdir, userMode);
 #endif
                     tmpdir = newTmpdir;
 
                     if (!KeepRemoteFiles)
                         cleanupFiles.Add(tmpdir);
-#else
-                    throw new NotImplementedException("Tmpdir is only supported on Windows");
-#endif
                 }
                 return tmpdir;
             }
@@ -250,6 +272,7 @@ namespace Ansible.Basic
             DiffMode = false;
             KeepRemoteFiles = false;
             ModuleName = "undefined win module";
+            TargetLogInfo = "";
             NoLog = (bool)argumentSpec["no_log"];
             Verbosity = 0;
             AppDomain.CurrentDomain.ProcessExit += CleanupFiles;
@@ -260,8 +283,10 @@ namespace Ansible.Basic
             CheckArguments(argumentSpec, Params, legalInputs);
 
             // Set a Ansible friendly invocation value in the result object
-            Dictionary<string, object> invocation = new Dictionary<string, object>() { { "module_args", Params } };
-            Result["invocation"] = RemoveNoLogValues(invocation, noLogValues);
+            if (injectInvocation) {
+                Dictionary<string, object> invocation = new Dictionary<string, object>() { { "module_args", Params } };
+                Result["invocation"] = RemoveNoLogValues(invocation, noLogValues);
+            }
 
             if (!NoLog)
                 LogEvent(String.Format("Invoked with:\r\n  {0}", FormatLogData(Params, 2)), sanitise: false);
@@ -305,8 +330,8 @@ namespace Ansible.Basic
 
         public void ExitJson()
         {
-            WriteLine(GetFormattedResults(Result));
             CleanupFiles(null, null);
+            WriteLine(GetFormattedResults(Result));
             Exit(0);
         }
 
@@ -333,8 +358,8 @@ namespace Ansible.Basic
                     Result["exception"] = exception.ToString();
             }
 
-            WriteLine(GetFormattedResults(Result));
             CleanupFiles(null, null);
+            WriteLine(GetFormattedResults(Result));
             Exit(1);
         }
 
@@ -365,9 +390,20 @@ namespace Ansible.Basic
                     logSource = "Application";
                 }
             }
+
+            if (String.IsNullOrWhiteSpace(TargetLogInfo))
+            {
+                message = String.Format("{0} - {1}", ModuleName, message);
+            }
+            else
+            {
+                message = String.Format("{0} {1} - {2}", ModuleName, TargetLogInfo, message);
+            }
+
             if (sanitise)
+            {
                 message = (string)RemoveNoLogValues(message, noLogValues);
-            message = String.Format("{0} - {1}", ModuleName, message);
+            }
 
             using (EventLog eventLog = new EventLog("Application"))
             {
@@ -399,7 +435,23 @@ namespace Ansible.Basic
         public static T FromJson<T>(string json)
         {
 #if CORECLR
-            return JsonConvert.DeserializeObject<T>(json);
+            try
+            {
+                if (typeof(T) == typeof(object) || typeof(T) == typeof(Dictionary<string, object>))
+                {
+                    using (JsonDocument doc = JsonDocument.Parse(json))
+                    {
+                        return (T)(object)ConvertJsonElement(doc.RootElement);
+                    }
+                }
+                return JsonSerializer.Deserialize<T>(json);
+            }
+            catch (JsonException e)
+            {
+                // For backwards compatibility with JavaScriptSerializer, we
+                // use ArgumentException instead.
+                throw new ArgumentException(String.Format("Failed to parse JSON: {0}", e.Message), e);
+            }
 #else
             JavaScriptSerializer jss = new JavaScriptSerializer();
             jss.MaxJsonLength = int.MaxValue;
@@ -407,6 +459,46 @@ namespace Ansible.Basic
             return jss.Deserialize<T>(json);
 #endif
         }
+
+#if CORECLR
+        private static object ConvertJsonElement(JsonElement element)
+        {
+            switch (element.ValueKind)
+            {
+                case JsonValueKind.Object:
+                    var dict = new Dictionary<string, object>();
+                    foreach (JsonProperty prop in element.EnumerateObject())
+                    {
+                        dict[prop.Name] = ConvertJsonElement(prop.Value);
+                    }
+                    return dict;
+                case JsonValueKind.Array:
+                    // We use ArrayList to copy JavaScriptSerializer behavior
+                    var list = new ArrayList();
+                    foreach (JsonElement item in element.EnumerateArray())
+                    {
+                        list.Add(ConvertJsonElement(item));
+                    }
+                    return list;
+                case JsonValueKind.String:
+                    return element.GetString();
+                case JsonValueKind.Number:
+                    if (element.TryGetInt32(out int i))
+                        return i;
+                    else if (element.TryGetInt64(out long l))
+                        return l;
+                    return element.GetDecimal();
+                case JsonValueKind.True:
+                    return true;
+                case JsonValueKind.False:
+                    return false;
+                case JsonValueKind.Null:
+                    return null;
+                default:
+                    throw new ArgumentException($"Unsupported JsonElement type: {element.ValueKind}");
+            }
+        }
+#endif
 
         public static string ToJson(object obj)
         {
@@ -421,7 +513,7 @@ namespace Ansible.Basic
             else
             {
 #if CORECLR
-                return JsonConvert.SerializeObject(obj);
+                return JsonSerializer.Serialize(obj);
 #else
                 JavaScriptSerializer jss = new JavaScriptSerializer();
                 jss.MaxJsonLength = int.MaxValue;
@@ -571,7 +663,7 @@ namespace Ansible.Basic
                 return ((object[])value).ToList();
             else if (valueType == typeof(string))
                 return ((string)value).Split(',').Select(s => s.Trim()).ToList<object>();
-            else if (valueType == typeof(int))
+            else if (valueType == typeof(int) || valueType == typeof(long))
                 return new List<object>() { value };
             else
                 throw new ArgumentException(String.Format("{0} cannot be converted to a list", valueType.FullName));
@@ -1021,6 +1113,10 @@ namespace Ansible.Basic
                         value = ParseBool(value);
                     else if (passInts.Contains(key))
                         value = ParseInt(value);
+                    else if (passStringArrays.Contains(key))
+                    {
+                        value = Array.ConvertAll((object[])value, ParseStr);
+                    }
 
                     string propertyName = passVars[key];
                     PropertyInfo property = typeof(AnsibleModule).GetProperty(propertyName);
@@ -1036,11 +1132,13 @@ namespace Ansible.Basic
             foreach (string parameter in removedParameters)
                 param.Remove(parameter);
 
-            if (unsupportedParameters.Count > 0)
+            if (unsupportedParameters.Count > 0 && !ignoreUnknownOpts)
             {
                 legalInputs.RemoveAll(x => passVars.Keys.Contains(x.Replace("_ansible_", "")));
-                string msg = String.Format("Unsupported parameters for ({0}) module: {1}", ModuleName, String.Join(", ", unsupportedParameters));
-                msg = String.Format("{0}. Supported parameters include: {1}", FormatOptionsContext(msg), String.Join(", ", legalInputs));
+                IEnumerable<string> unsupportedSorted = unsupportedParameters.OrderBy(s => s, StringComparer.Ordinal);
+                IEnumerable<string> legalInputsSorted = legalInputs.OrderBy(s => s, StringComparer.Ordinal);
+                string msg = String.Format("Unsupported parameters for ({0}) module: {1}", ModuleName, String.Join(", ", unsupportedSorted));
+                msg = String.Format("{0}. Supported parameters include: {1}", FormatOptionsContext(msg), String.Join(", ", legalInputsSorted));
                 FailJson(msg);
             }
 
@@ -1177,7 +1275,7 @@ namespace Ansible.Basic
                 object val = requiredCheck[1];
                 IList requirements = (IList)requiredCheck[2];
 
-                if (ParseStr(param[key]) != ParseStr(val))
+                if (param[key] == null || ParseStr(param[key]) != ParseStr(val))
                     continue;
 
                 string term = "all";
@@ -1307,8 +1405,16 @@ namespace Ansible.Basic
 
         private string GetFormattedResults(Dictionary<string, object> result)
         {
-            if (!result.ContainsKey("invocation"))
+            if (injectInvocation && !result.ContainsKey("invocation"))
                 result["invocation"] = new Dictionary<string, object>() { { "module_args", RemoveNoLogValues(Params, noLogValues) } };
+
+            if (_WrapperWarnings != null)
+            {
+                foreach (string warning in _WrapperWarnings)
+                {
+                    warnings.Add(warning);
+                }
+            }
 
             if (warnings.Count > 0)
                 result["warnings"] = warnings;
@@ -1440,10 +1546,22 @@ namespace Ansible.Basic
         {
             foreach (string path in cleanupFiles)
             {
-                if (File.Exists(path))
-                    File.Delete(path);
-                else if (Directory.Exists(path))
-                    Directory.Delete(path, true);
+                try
+                {
+#if WINDOWS
+                    FileCleaner.Delete(path);
+#else
+                    if (File.Exists(path))
+                        File.Delete(path);
+                    else if (Directory.Exists(path))
+                        Directory.Delete(path, true);
+#endif
+                }
+                catch (Exception e)
+                {
+                    Warn(string.Format("Failure cleaning temp path '{0}': {1} {2}",
+                        path, e.GetType().Name, e.Message));
+                }
             }
             cleanupFiles = new List<string>();
         }
@@ -1482,4 +1600,254 @@ namespace Ansible.Basic
             Console.WriteLine(line);
         }
     }
+
+#if WINDOWS
+    // Windows is tricky as AVs and other software might still
+    // have an open handle to files causing a failure. Use a
+    // custom deletion mechanism to remove the files/dirs.
+    // https://github.com/ansible/ansible/pull/80247
+    internal static class FileCleaner
+    {
+        private const int FileDispositionInformation = 13;
+        private const int FileDispositionInformationEx = 64;
+
+        private const int ERROR_INVALID_PARAMETER = 0x00000057;
+        private const int ERROR_DIR_NOT_EMPTY = 0x00000091;
+
+        private static bool? _supportsPosixDelete = null;
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct IO_STATUS_BLOCK
+        {
+            public int Status;
+            public IntPtr Information;
+        }
+
+        [Flags()]
+        public enum DispositionFlags : uint
+        {
+            FILE_DISPOSITION_DO_NOT_DELETE = 0x00000000,
+            FILE_DISPOSITION_DELETE = 0x00000001,
+            FILE_DISPOSITION_POSIX_SEMANTICS = 0x00000002,
+            FILE_DISPOSITION_FORCE_IMAGE_SECTION_CHECK = 0x00000004,
+            FILE_DISPOSITION_ON_CLOSE = 0x00000008,
+            FILE_DISPOSITION_IGNORE_READONLY_ATTRIBUTE = 0x00000010,
+        }
+
+        [Flags()]
+        public enum FileFlags : uint
+        {
+            FILE_FLAG_OPEN_NO_RECALL = 0x00100000,
+            FILE_FLAG_OPEN_REPARSE_POINT = 0x00200000,
+            FILE_FLAG_SESSION_AWARE = 0x00800000,
+            FILE_FLAG_POSIX_SEMANTICS = 0x01000000,
+            FILE_FLAG_BACKUP_SEMANTICS = 0x02000000,
+            FILE_FLAG_DELETE_ON_CLOSE = 0x04000000,
+            FILE_FLAG_SEQUENTIAL_SCAN = 0x08000000,
+            FILE_FLAG_RANDOM_ACCESS = 0x10000000,
+            FILE_FLAG_NO_BUFFERING = 0x20000000,
+            FILE_FLAG_OVERLAPPED = 0x40000000,
+            FILE_FLAG_WRITE_THROUGH = 0x80000000,
+        }
+
+        [DllImport("Kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+        private static extern SafeFileHandle CreateFileW(
+            [MarshalAs(UnmanagedType.LPWStr)] string lpFileName,
+            FileSystemRights dwDesiredAccess,
+            FileShare dwShareMode,
+            IntPtr lpSecurityAttributes,
+            FileMode dwCreationDisposition,
+            uint dwFlagsAndAttributes,
+            IntPtr hTemplateFile);
+
+        private static SafeFileHandle CreateFile(string path, FileSystemRights access, FileShare share, FileMode mode,
+            FileAttributes attributes, FileFlags flags)
+        {
+            uint flagsAndAttributes = (uint)attributes | (uint)flags;
+            SafeFileHandle handle = CreateFileW(path, access, share, IntPtr.Zero, mode, flagsAndAttributes,
+                IntPtr.Zero);
+            if (handle.IsInvalid)
+            {
+                int errCode = Marshal.GetLastWin32Error();
+                string msg = string.Format("CreateFileW({0}) failed 0x{1:X8}: {2}",
+                    path, errCode, new Win32Exception(errCode).Message);
+                throw new Win32Exception(errCode, msg);
+            }
+
+            return handle;
+        }
+
+        [DllImport("Ntdll.dll")]
+        private static extern int NtSetInformationFile(
+            SafeFileHandle FileHandle,
+            ref IO_STATUS_BLOCK IoStatusBlock,
+            ref int FileInformation,
+            int Length,
+            int FileInformationClass);
+
+        [DllImport("Ntdll.dll")]
+        private static extern int RtlNtStatusToDosError(
+            int Status);
+
+        public static void Delete(string path)
+        {
+            if (File.Exists(path))
+            {
+                DeleteEntry(path, FileAttributes.ReadOnly);
+            }
+            else if (Directory.Exists(path))
+            {
+                Queue<DirectoryInfo> dirQueue = new Queue<DirectoryInfo>();
+                dirQueue.Enqueue(new DirectoryInfo(path));
+                bool nonEmptyDirs = false;
+                HashSet<string> processedDirs = new HashSet<string>();
+
+                while (dirQueue.Count > 0)
+                {
+                    DirectoryInfo currentDir = dirQueue.Dequeue();
+
+                    bool deleteDir = true;
+                    if (processedDirs.Add(currentDir.FullName))
+                    {
+                        foreach (FileSystemInfo entry in currentDir.EnumerateFileSystemInfos())
+                        {
+                            // Tries to delete each entry. Failures are ignored
+                            // as they will be picked up when the dir is
+                            // deleted and not empty.
+                            if (entry is DirectoryInfo)
+                            {
+                                if ((entry.Attributes & FileAttributes.ReparsePoint) != 0)
+                                {
+                                    // If it's a reparse point, just delete it directly.
+                                    DeleteEntry(entry.FullName, entry.Attributes, ignoreFailure: true);
+                                }
+                                else
+                                {
+                                    // Add the dir to the queue to delete and it will be processed next round.
+                                    dirQueue.Enqueue((DirectoryInfo)entry);
+                                    deleteDir = false;
+                                }
+                            }
+                            else
+                            {
+                                DeleteEntry(entry.FullName, entry.Attributes, ignoreFailure: true);
+                            }
+                        }
+                    }
+
+                    if (deleteDir)
+                    {
+                        try
+                        {
+                            DeleteEntry(currentDir.FullName, FileAttributes.Directory);
+                        }
+                        catch (Win32Exception e)
+                        {
+                            if (e.NativeErrorCode == ERROR_DIR_NOT_EMPTY)
+                            {
+                                nonEmptyDirs = true;
+                            }
+                            else
+                            {
+                                throw;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        dirQueue.Enqueue(currentDir);
+                    }
+                }
+
+                if (nonEmptyDirs)
+                {
+                    throw new IOException("Directory contains files still open by other processes");
+                }
+            }
+        }
+
+        private static void DeleteEntry(string path, FileAttributes attr, bool ignoreFailure = false)
+        {
+            try
+            {
+                if ((attr & FileAttributes.ReadOnly) != 0)
+                {
+                    // Windows does not allow files set with ReadOnly to be
+                    // deleted. Preemptively unset the attribute.
+                    // FILE_DISPOSITION_IGNORE_READONLY_ATTRIBUTE is quite new,
+                    // look at using that flag with POSIX delete once Server 2019
+                    // is the baseline.
+                    File.SetAttributes(path, FileAttributes.Normal);
+                }
+
+                // REPARSE - Only touch the symlink itself and not the target
+                // BACKUP - Needed for dir handles, bypasses access checks for admins
+                // DELETE_ON_CLOSE is not used as it interferes with the POSIX delete
+                FileFlags flags = FileFlags.FILE_FLAG_OPEN_REPARSE_POINT |
+                    FileFlags.FILE_FLAG_BACKUP_SEMANTICS;
+
+                using (SafeFileHandle fileHandle = CreateFile(path, FileSystemRights.Delete,
+                    FileShare.ReadWrite | FileShare.Delete, FileMode.Open, FileAttributes.Normal, flags))
+                {
+                    if (_supportsPosixDelete == null || _supportsPosixDelete == true)
+                    {
+                        // A POSIX delete will delete the filesystem entry even if
+                        // it's still opened by another process so favour that if
+                        // available.
+                        DispositionFlags deleteFlags = DispositionFlags.FILE_DISPOSITION_DELETE |
+                            DispositionFlags.FILE_DISPOSITION_POSIX_SEMANTICS;
+
+                        SetInformationFile(fileHandle, FileDispositionInformationEx, (int)deleteFlags);
+                        if (_supportsPosixDelete == true)
+                        {
+                            return;
+                        }
+                    }
+
+                    // FileDispositionInformation takes in a struct with only a BOOLEAN value.
+                    // Using an int will also do the same thing to set that flag to true.
+                    SetInformationFile(fileHandle, FileDispositionInformation, Int32.MaxValue);
+                }
+            }
+            catch
+            {
+                if (!ignoreFailure)
+                {
+                    throw;
+                }
+            }
+        }
+
+        private static void SetInformationFile(SafeFileHandle handle, int infoClass, int value)
+        {
+            IO_STATUS_BLOCK ioStatusBlock = new IO_STATUS_BLOCK();
+
+            int ntStatus = NtSetInformationFile(handle, ref ioStatusBlock, ref value,
+                Marshal.SizeOf(typeof(int)), infoClass);
+
+            if (ntStatus != 0)
+            {
+                int errCode = RtlNtStatusToDosError(ntStatus);
+
+                // The POSIX delete was added in Server 2016 (Win 10 14393/Redstone 1)
+                // Mark this flag so we don't try again.
+                if (infoClass == FileDispositionInformationEx && _supportsPosixDelete == null &&
+                    errCode == ERROR_INVALID_PARAMETER)
+                {
+                    _supportsPosixDelete = false;
+                    return;
+                }
+
+                string msg = string.Format("NtSetInformationFile() failed 0x{0:X8}: {1}",
+                    errCode, new Win32Exception(errCode).Message);
+                throw new Win32Exception(errCode, msg);
+            }
+
+            if (infoClass == FileDispositionInformationEx)
+            {
+                _supportsPosixDelete = true;
+            }
+        }
+    }
+#endif
 }

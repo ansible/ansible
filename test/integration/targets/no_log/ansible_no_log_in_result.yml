@@ -1,0 +1,13 @@
+- hosts: localhost
+  gather_facts: no
+  tasks:
+    - action_sets_no_log:
+      register: res_action
+
+    - assert:
+        that:
+        - res_action.msg == "action result should be masked"
+
+    - action_sets_no_log:
+      loop: [1, 2, 3]
+      register: res_action

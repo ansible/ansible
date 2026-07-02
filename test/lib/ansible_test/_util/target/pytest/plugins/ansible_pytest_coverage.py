@@ -1,6 +1,6 @@
 """Monkey patch os._exit when running under coverage so we don't lose coverage data in forks, such as with `pytest --boxed`. PYTEST_DONT_REWRITE"""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+
+from __future__ import annotations
 
 
 def pytest_configure():
@@ -54,6 +54,12 @@ def pytest_configure():
 
     def coverage_exit(*args, **kwargs):
         for instance in coverage_instances:
+            # skip coverage instances which have no collector, or the collector is not the active collector
+            # this avoids issues with coverage 7.4.0+ when tests create subprocesses which inherit our overridden os._exit method
+            # pylint: disable=protected-access
+            if not instance._collector or not instance._collector._collectors or instance._collector != instance._collector._collectors[-1]:
+                continue
+
             instance.stop()
             instance.save()
 

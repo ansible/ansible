@@ -1,4 +1,5 @@
 """Argument parsing epilog generation."""
+
 from __future__ import annotations
 
 from .argparsing import (

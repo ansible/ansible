@@ -1,19 +1,25 @@
 from __future__ import annotations
 
-import re
+import ast
+import pathlib
 import sys
 
 
-def main():
+class CallVisitor(ast.NodeVisitor):
+    def __init__(self, path: str) -> None:
+        self.path = path
+
+    def visit_Call(self, node: ast.Call) -> None:
+        if isinstance(node.func, ast.Name) and node.func.id.endswith("FieldAttribute"):
+            if len([kw for kw in node.keywords if kw.arg in ("default", "required")]) > 1:
+                print(f"{self.path}:{node.lineno}:{node.col_offset}: use only one of `default` or `required` with `{node.func.id}`")
+
+
+def main() -> None:
     for path in sys.argv[1:] or sys.stdin.read().splitlines():
-        with open(path, 'r') as path_fd:
-            for line, text in enumerate(path_fd.readlines()):
-                match = re.search(r'(FieldAttribute.*(default|required).*(default|required))', text)
-
-                if match:
-                    print('%s:%d:%d: use only one of `default` or `required` with `FieldAttribute`' % (
-                        path, line + 1, match.start(1) + 1))
+        tree = ast.parse(pathlib.Path(path).read_text(), path)
+        CallVisitor(path).visit(tree)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

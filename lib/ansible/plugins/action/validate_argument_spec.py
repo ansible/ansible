@@ -1,24 +1,22 @@
 # Copyright 2021 Red Hat
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 from ansible.errors import AnsibleError
 from ansible.plugins.action import ActionBase
-from ansible.module_utils.six import string_types
 from ansible.module_utils.common.arg_spec import ArgumentSpecValidator
-from ansible.module_utils.errors import AnsibleValidationErrorMultiple
 from ansible.utils.vars import combine_vars
 
 
 class ActionModule(ActionBase):
-    ''' Validate an arg spec'''
+    """ Validate an arg spec"""
 
     TRANSFERS_FILES = False
+    _requires_connection = False
 
     def get_args_from_task_vars(self, argument_spec, task_vars):
-        '''
+        """
         Get any arguments that may come from `task_vars`.
 
         Expand templated variables so we can validate the actual values.
@@ -27,7 +25,7 @@ class ActionModule(ActionBase):
         :param task_vars: A dict of task variables.
 
         :returns: A dict of values that can be validated against the arg spec.
-        '''
+        """
         args = {}
 
         for argument_name, argument_attrs in argument_spec.items():
@@ -37,7 +35,7 @@ class ActionModule(ActionBase):
         return args
 
     def run(self, tmp=None, task_vars=None):
-        '''
+        """
         Validate an argument specification against a provided set of data.
 
         The `validate_argument_spec` module expects to receive the arguments:
@@ -50,7 +48,7 @@ class ActionModule(ActionBase):
         :param task_vars: A dict of task variables.
         :return: An action result dict, including a 'argument_errors' key with a
             list of validation errors found.
-        '''
+        """
         if task_vars is None:
             task_vars = dict()
 
@@ -79,7 +77,7 @@ class ActionModule(ActionBase):
 
         args_from_vars = self.get_args_from_task_vars(argument_spec_data, task_vars)
         validator = ArgumentSpecValidator(argument_spec_data)
-        validation_result = validator.validate(combine_vars(args_from_vars, provided_arguments))
+        validation_result = validator.validate(combine_vars(args_from_vars, provided_arguments), validate_role_argument_spec=True)
 
         if validation_result.error_messages:
             result['failed'] = True

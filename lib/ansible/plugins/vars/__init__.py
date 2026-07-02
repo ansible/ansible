@@ -15,8 +15,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 from ansible.plugins import AnsiblePlugin
 from ansible.utils.path import basedir
@@ -30,6 +29,7 @@ class BaseVarsPlugin(AnsiblePlugin):
     """
     Loads variables for groups and/or hosts
     """
+    is_stateless = False
 
     def __init__(self):
         """ constructor """

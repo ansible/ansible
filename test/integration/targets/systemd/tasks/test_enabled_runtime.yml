@@ -1,0 +1,50 @@
+- name: Copy enabled-runtime service file
+  template:
+    src: baz.service
+    dest: /etc/systemd/system/baz.service
+    owner: root
+    group: root
+    mode: '0644'
+  notify: remove unit file
+
+- name: Reload systemd
+  systemd:
+    daemon_reload: true
+
+- name: Enable the enabled-runtime service using shell command
+  shell: systemctl enable --runtime baz
+
+- name: Enable enabled-runtime service
+  systemd:
+    name: baz.service
+    enabled: true
+  register: baz_test_1
+
+- name: Enable enabled-runtime service again
+  systemd:
+    name: baz.service
+    enabled: true
+  register: baz_test_2
+
+- name: Disable enabled-runtime service
+  systemd:
+    name: baz.service
+    state: stopped
+    enabled: false
+  register: baz_test_3
+
+- name: Disable enabled-runtime service again
+  systemd:
+    name: baz.service
+    enabled: false
+  register: baz_test_4
+
+- name:
+  assert:
+    that:
+      - baz_test_1 is changed
+      - baz_test_1 is success
+      - baz_test_2 is not changed
+      - baz_test_2 is success
+      - baz_test_3 is changed
+      - baz_test_4 is not changed

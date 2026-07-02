@@ -15,12 +15,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 from ansible.errors import AnsibleError
-from ansible.module_utils.six import string_types
 from ansible.playbook.role.definition import RoleDefinition
 from ansible.utils.display import Display
 from ansible.utils.galaxy import scm_archive_resource
@@ -67,7 +64,7 @@ class RoleRequirement(RoleDefinition):
     @staticmethod
     def role_yaml_parse(role):
 
-        if isinstance(role, string_types):
+        if isinstance(role, str):
             name = None
             scm = None
             src = None

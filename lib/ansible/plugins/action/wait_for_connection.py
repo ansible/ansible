@@ -16,13 +16,12 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 # CI-required python3 boilerplate
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
-from ansible.module_utils._text import to_text
+from ansible.module_utils.common.text.converters import to_text
 from ansible.plugins.action import ActionBase
 from ansible.utils.display import Display
 
@@ -43,10 +42,10 @@ class ActionModule(ActionBase):
     DEFAULT_TIMEOUT = 600
 
     def do_until_success_or_timeout(self, what, timeout, connect_timeout, what_desc, sleep=1):
-        max_end_time = datetime.utcnow() + timedelta(seconds=timeout)
+        max_end_time = datetime.now(timezone.utc) + timedelta(seconds=timeout)
 
         e = None
-        while datetime.utcnow() < max_end_time:
+        while datetime.now(timezone.utc) < max_end_time:
             try:
                 what(connect_timeout)
                 if what_desc:
@@ -69,7 +68,7 @@ class ActionModule(ActionBase):
         sleep = int(self._task.args.get('sleep', self.DEFAULT_SLEEP))
         timeout = int(self._task.args.get('timeout', self.DEFAULT_TIMEOUT))
 
-        if self._play_context.check_mode:
+        if self._task.check_mode:
             display.vvv("wait_for_connection: skipping for check_mode")
             return dict(skipped=True)
 
@@ -77,7 +76,7 @@ class ActionModule(ActionBase):
         del tmp  # tmp no longer has any effect
 
         def ping_module_test(connect_timeout):
-            ''' Test ping module, if available '''
+            """ Test ping module, if available """
             display.vvv("wait_for_connection: attempting ping module test")
             # re-run interpreter discovery if we ran it in the first iteration
             if self._discovered_interpreter_key:

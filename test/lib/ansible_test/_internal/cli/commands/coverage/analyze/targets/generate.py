@@ -1,4 +1,5 @@
 """Command line parsing for the `coverage analyze targets generate` command."""
+
 from __future__ import annotations
 
 import argparse
@@ -17,16 +18,16 @@ from .....environments import (
 
 
 def do_generate(
-        subparsers,
-        parent,  # type: argparse.ArgumentParser
-        completer,  # type: CompositeActionCompletionFinder
+    subparsers,
+    parent: argparse.ArgumentParser,
+    completer: CompositeActionCompletionFinder,
 ):
     """Command line parsing for the `coverage analyze targets generate` command."""
-    parser = subparsers.add_parser(
+    parser: argparse.ArgumentParser = subparsers.add_parser(
         'generate',
         parents=[parent],
         help='aggregate coverage by integration test target',
-    )  # type: argparse.ArgumentParser
+    )
 
     parser.set_defaults(
         func=command_coverage_analyze_targets_generate,

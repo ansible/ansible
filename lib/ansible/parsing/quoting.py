@@ -15,9 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 
 def is_quoted(data):
@@ -25,7 +23,7 @@ def is_quoted(data):
 
 
 def unquote(data):
-    ''' removes first and last quotes from a string, if the string starts and ends with the same quotes '''
+    """ removes first and last quotes from a string, if the string starts and ends with the same quotes """
     if is_quoted(data):
         return data[1:-1]
     return data

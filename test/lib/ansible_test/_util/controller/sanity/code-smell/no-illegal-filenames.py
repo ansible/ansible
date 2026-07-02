@@ -3,6 +3,7 @@ Check for illegal filenames on various operating systems.
 The main rules are derived from restrictions on Windows:
 https://docs.microsoft.com/en-us/windows/win32/fileio/naming-a-file#naming-conventions
 """
+
 from __future__ import annotations
 
 import os

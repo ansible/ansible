@@ -15,10 +15,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #############################################
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
     name: host_group_vars
     version_added: "2.4"
     short_description: In charge of loading group_vars and host_vars
@@ -51,65 +50,98 @@ DOCUMENTATION = '''
         elements: string
     extends_documentation_fragment:
       - vars_plugin_staging
-'''
+"""
 
 import os
-from ansible import constants as C
-from ansible.errors import AnsibleParserError
-from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.errors import AnsibleError, AnsibleParserError
+from ansible.module_utils.common.text.converters import to_native
 from ansible.plugins.vars import BaseVarsPlugin
-from ansible.inventory.host import Host
-from ansible.inventory.group import Group
+from ansible.utils.path import basedir
+from ansible.inventory.group import InventoryObjectType
 from ansible.utils.vars import combine_vars
 
+CANONICAL_PATHS = {}  # type: dict[str, str]
 FOUND = {}  # type: dict[str, list[str]]
+NAK = set()  # type: set[str]
 
 
 class VarsModule(BaseVarsPlugin):
 
-    REQUIRES_WHITELIST = True
+    REQUIRES_ENABLED = True
+    is_stateless = True
+
+    def load_found_files(self, loader, data, found_files):
+        for found in found_files:
+            new_data = loader.load_from_file(found, cache='all', unsafe=True, trusted_as_template=True)
+            if new_data:  # ignore empty files
+                try:
+                    data = combine_vars(data, new_data)
+                except AnsibleError as e:
+                    raise AnsibleParserError(f"Could not process {found!r}.") from e
+        return data
 
     def get_vars(self, loader, path, entities, cache=True):
-        ''' parses the inventory file '''
+        """ parses the inventory file """
 
         if not isinstance(entities, list):
             entities = [entities]
 
-        super(VarsModule, self).get_vars(loader, path, entities)
+        # realpath is expensive
+        try:
+            realpath_basedir = CANONICAL_PATHS[path]
+        except KeyError:
+            CANONICAL_PATHS[path] = realpath_basedir = os.path.realpath(basedir(path))
 
         data = {}
         for entity in entities:
-            if isinstance(entity, Host):
-                subdir = 'host_vars'
-            elif isinstance(entity, Group):
-                subdir = 'group_vars'
-            else:
+            try:
+                entity_name = entity.name
+            except AttributeError:
+                raise AnsibleParserError("Supplied entity must be Host or Group, got %s instead" % (type(entity)))
+
+            try:
+                first_char = entity_name[0]
+            except (TypeError, IndexError, KeyError):
                 raise AnsibleParserError("Supplied entity must be Host or Group, got %s instead" % (type(entity)))
 
             # avoid 'chroot' type inventory hostnames /path/to/chroot
-            if not entity.name.startswith(os.path.sep):
+            if first_char != os.path.sep:
                 try:
                     found_files = []
                     # load vars
-                    b_opath = os.path.realpath(to_bytes(os.path.join(self._basedir, subdir)))
-                    opath = to_text(b_opath)
-                    key = '%s.%s' % (entity.name, opath)
-                    if cache and key in FOUND:
-                        found_files = FOUND[key]
-                    else:
-                        # no need to do much if path does not exist for basedir
-                        if os.path.exists(b_opath):
-                            if os.path.isdir(b_opath):
-                                self._display.debug("\tprocessing dir %s" % opath)
-                                found_files = loader.find_vars_files(opath, entity.name)
-                                FOUND[key] = found_files
-                            else:
-                                self._display.warning("Found %s that is not a directory, skipping: %s" % (subdir, opath))
+                    try:
+                        entity_type = entity.base_type
+                    except AttributeError:
+                        raise AnsibleParserError("Supplied entity must be Host or Group, got %s instead" % (type(entity)))
 
-                    for found in found_files:
-                        new_data = loader.load_from_file(found, cache=True, unsafe=True)
-                        if new_data:  # ignore empty files
-                            data = combine_vars(data, new_data)
+                    if entity_type is InventoryObjectType.HOST:
+                        subdir = 'host_vars'
+                    elif entity_type is InventoryObjectType.GROUP:
+                        subdir = 'group_vars'
+                    else:
+                        raise AnsibleParserError("Supplied entity must be Host or Group, got %s instead" % (type(entity)))
+
+                    opath = os.path.join(realpath_basedir, subdir)
+                    key = '%s.%s' % (entity_name, opath)
+
+                    if cache:
+                        if opath in NAK:
+                            continue
+                        if key in FOUND:
+                            data = self.load_found_files(loader, data, FOUND[key])
+                            continue
+                    if os.path.isdir(opath):
+                        self._display.debug("\tprocessing dir %s" % opath)
+                        FOUND[key] = found_files = loader.find_vars_files(opath, entity_name)
+                    elif not os.path.exists(opath):
+                        # cache missing dirs so we don't have to keep looking for things beneath the
+                        NAK.add(opath)
+                    else:
+                        self._display.warning("Found %s that is not a directory, skipping: %s" % (subdir, opath))
+                        # cache non-directory matches
+                        NAK.add(opath)
+
+                    data = self.load_found_files(loader, data, found_files)
 
                 except Exception as e:
                     raise AnsibleParserError(to_native(e))

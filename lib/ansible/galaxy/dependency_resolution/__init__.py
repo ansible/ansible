@@ -3,9 +3,9 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 """Dependency resolution machinery."""
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
+import collections.abc as _c
 import typing as t
 
 if t.TYPE_CHECKING:
@@ -13,10 +13,7 @@ if t.TYPE_CHECKING:
     from ansible.galaxy.collection.concrete_artifact_manager import (
         ConcreteArtifactsManager,
     )
-    from ansible.galaxy.dependency_resolution.dataclasses import (
-        Candidate,
-        Requirement,
-    )
+    from ansible.galaxy.dependency_resolution.dataclasses import Candidate
 
 from ansible.galaxy.collection.galaxy_api_proxy import MultiGalaxyAPIProxy
 from ansible.galaxy.dependency_resolution.providers import CollectionDependencyProvider
@@ -25,15 +22,15 @@ from ansible.galaxy.dependency_resolution.resolvers import CollectionDependencyR
 
 
 def build_collection_dependency_resolver(
-        galaxy_apis,  # type: t.Iterable[GalaxyAPI]
-        concrete_artifacts_manager,  # type: ConcreteArtifactsManager
-        user_requirements,  # type: t.Iterable[Requirement]
-        preferred_candidates=None,  # type: t.Iterable[Candidate]
-        with_deps=True,  # type: bool
-        with_pre_releases=False,  # type: bool
-        upgrade=False,  # type: bool
-        include_signatures=True,  # type: bool
-):  # type: (...) -> CollectionDependencyResolver
+        galaxy_apis: _c.Iterable[GalaxyAPI],
+        concrete_artifacts_manager: ConcreteArtifactsManager,
+        preferred_candidates: _c.Iterable[Candidate] | None = None,
+        with_deps: bool = True,
+        with_pre_releases: bool = False,
+        upgrade: bool = False,
+        include_signatures: bool = True,
+        offline: bool = False,
+) -> CollectionDependencyResolver:
     """Return a collection dependency resolver.
 
     The returned instance will have a ``resolve()`` method for
@@ -41,9 +38,8 @@ def build_collection_dependency_resolver(
     """
     return CollectionDependencyResolver(
         CollectionDependencyProvider(
-            apis=MultiGalaxyAPIProxy(galaxy_apis, concrete_artifacts_manager),
+            apis=MultiGalaxyAPIProxy(galaxy_apis, concrete_artifacts_manager, offline=offline),
             concrete_artifacts_manager=concrete_artifacts_manager,
-            user_requirements=user_requirements,
             preferred_candidates=preferred_candidates,
             with_deps=with_deps,
             with_pre_releases=with_pre_releases,

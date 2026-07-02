@@ -2,5 +2,5 @@
 # passed to the script.
 
 foreach ($i in $args) {
-    Write-Host $i;
+    Write-Host $i
 }

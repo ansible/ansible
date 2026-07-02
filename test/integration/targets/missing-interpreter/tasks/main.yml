@@ -1,0 +1,25 @@
+- name: Run a module with a full path to a non-existent interpreter
+  ping:
+  vars:
+    ansible_python_interpreter: /bogus/path
+  ignore_errors: yes
+  register: result
+
+- name: Verify the action failed as expected
+  assert:
+    that:
+      - result is failed
+      - result.msg == "The module interpreter '/bogus/path' was not found."
+
+- name: Run a module with an unqualified path to a non-existent interpreter
+  ping:
+  vars:
+    ansible_python_interpreter: bogus_interpreter
+  ignore_errors: yes
+  register: result
+
+- name: Verify the action failed as expected
+  assert:
+    that:
+      - result is failed
+      - result.msg == "The module interpreter 'bogus_interpreter' was not found."

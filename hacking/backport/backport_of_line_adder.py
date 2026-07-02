@@ -16,9 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 from github.PullRequest import PullRequest
 from github import Github
@@ -34,14 +32,14 @@ TICKET_NUMBER = re.compile(r'(?:^|\s)#(\d+)')
 
 
 def normalize_pr_url(pr, allow_non_ansible_ansible=False, only_number=False):
-    '''
+    """
     Given a PullRequest, or a string containing a PR number, PR URL,
     or internal PR URL (e.g. ansible-collections/community.general#1234),
     return either a full github URL to the PR (if only_number is False),
     or an int containing the PR number (if only_number is True).
 
     Throws if it can't parse the input.
-    '''
+    """
     if isinstance(pr, PullRequest):
         return pr.html_url
 
@@ -73,10 +71,10 @@ def normalize_pr_url(pr, allow_non_ansible_ansible=False, only_number=False):
 
 
 def url_to_org_repo(url):
-    '''
+    """
     Given a full Github PR URL, extract the user/org and repo name.
     Return them in the form: "user/repo"
-    '''
+    """
     match = PULL_HTTP_URL_RE.match(url)
     if not match:
         return ''
@@ -84,7 +82,7 @@ def url_to_org_repo(url):
 
 
 def generate_new_body(pr, source_pr):
-    '''
+    """
     Given the new PR (the backport) and the originating (source) PR,
     construct the new body for the backport PR.
 
@@ -95,7 +93,7 @@ def generate_new_body(pr, source_pr):
 
     This function does not side-effect, it simply returns the new body as a
     string.
-    '''
+    """
     backport_text = '\nBackport of {0}\n'.format(source_pr)
     body_lines = pr.body.split('\n')
     new_body_lines = []
@@ -117,10 +115,10 @@ def generate_new_body(pr, source_pr):
 
 
 def get_prs_for_commit(g, commit):
-    '''
+    """
     Given a commit hash, attempt to find the hash in any repo in the
     ansible orgs, and then use it to determine what, if any, PR it appeared in.
-    '''
+    """
 
     commits = g.search_commits(
         'hash:{0} org:ansible org:ansible-collections is:public'.format(commit)
@@ -134,7 +132,7 @@ def get_prs_for_commit(g, commit):
 
 
 def search_backport(pr, g, ansible_ansible):
-    '''
+    """
     Do magic. This is basically the "brain" of 'auto'.
     It will search the PR (the newest PR - the backport) and try to find where
     it originated.
@@ -150,7 +148,7 @@ def search_backport(pr, g, ansible_ansible):
 
     It will take all of the above, and return a list of "possibilities",
     which is a list of PullRequest objects.
-    '''
+    """
 
     possibilities = []
 
@@ -200,20 +198,20 @@ def search_backport(pr, g, ansible_ansible):
 
 
 def prompt_add():
-    '''
+    """
     Prompt the user and return whether or not they agree.
-    '''
+    """
     res = input('Shall I add the reference? [Y/n]: ')
     return res.lower() in ('', 'y', 'yes')
 
 
 def commit_edit(new_pr, pr):
-    '''
+    """
     Given the new PR (the backport), and the "possibility" that we have decided
     on, prompt the user and then add the reference to the body of the new PR.
 
     This method does the actual "destructive" work of editing the PR body.
-    '''
+    """
     print('I think this PR might have come from:')
     print(pr.title)
     print('-' * 50)

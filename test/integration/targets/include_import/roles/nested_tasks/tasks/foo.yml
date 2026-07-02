@@ -1,0 +1,1 @@
+- include_tasks: bar.yml

@@ -1,4 +1,5 @@
 """Check changelog fragment naming, syntax, etc."""
+
 from __future__ import annotations
 
 import os

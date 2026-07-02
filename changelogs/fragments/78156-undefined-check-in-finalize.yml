@@ -1,2 +1,0 @@
-bugfixes:
-  - Move undefined check from concat to finalize (https://github.com/ansible/ansible/issues/78156)

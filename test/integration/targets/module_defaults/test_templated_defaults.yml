@@ -1,0 +1,25 @@
+- hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: ensure that individual module defaults expand correctly from a template
+      module_defaults:
+        ansible.builtin.ping: "{{ ping_defaults }}"
+      vars:
+        ping_defaults:
+          data: individual
+      ansible.builtin.ping:
+      register: individual_result
+
+    - name: ensure that group module defaults expand correctly from a template
+      module_defaults:
+        group/testgroup: "{{ testgroup_defaults }}"
+      vars:
+        testgroup_defaults:
+          data: group
+      ansible.builtin.ping:
+      register: group_result
+
+    - assert:
+        that:
+          - individual_result.ping == "individual"
+          - group_result.ping == "group"

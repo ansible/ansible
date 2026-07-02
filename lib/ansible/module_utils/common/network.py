@@ -3,14 +3,15 @@
 
 # General networking tools that may be used by all modules
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import re
+
+# backward compat
+from builtins import zip  # pylint: disable=unused-import
+
 from struct import pack
 from socket import inet_ntoa
-
-from ansible.module_utils.six.moves import zip
 
 
 VALID_MASKS = [2**8 - 2**i for i in range(0, 9)]
@@ -62,7 +63,7 @@ def to_masklen(val):
 
 
 def to_subnet(addr, mask, dotted_notation=False):
-    """ coverts an addr / mask pair to a subnet in cidr notation """
+    """ converts an addr / mask pair to a subnet in cidr notation """
     try:
         if not is_masklen(mask):
             raise ValueError

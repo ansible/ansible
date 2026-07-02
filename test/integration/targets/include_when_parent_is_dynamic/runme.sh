@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -eu
+set -eux
 
 ansible-playbook playbook.yml "$@" > output.log 2>&1 || true
 

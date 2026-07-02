@@ -1,8 +1,7 @@
 # (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
 # (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 DOCUMENTATION = """
     name: items
@@ -15,6 +14,7 @@ DOCUMENTATION = """
       - this is the standard lookup used for loops in most examples
       - check out the 'flattened' lookup for recursive flattening
       - if you do not want flattening nor any other transformation look at the 'list' lookup.
+    positional: _terms
     options:
       _terms:
         description: list of items
@@ -68,6 +68,6 @@ from ansible.plugins.lookup import LookupBase
 
 class LookupModule(LookupBase):
 
-    def run(self, terms, **kwargs):
+    def run(self, terms, variables=None, **kwargs):
 
         return self._flatten(terms)

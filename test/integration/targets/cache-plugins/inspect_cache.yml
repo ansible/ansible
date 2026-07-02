@@ -1,0 +1,30 @@
+- hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: test that the cache only contains the set_fact var
+      assert:
+        that:
+          - ansible_facts | length == 1
+          - ansible_facts.foo == 'bar'
+          - ansible_facts.foo is ansible._protomatter.tagged_with "Origin"
+      tags:
+        - set_fact
+
+    - name: test that the cache contains gathered facts and the var
+      assert:
+        that:
+          - ansible_facts | length  > 1
+          - ansible_facts.foo == 'bar'
+          - ansible_facts.distribution is defined
+          - ansible_facts.foo is ansible._protomatter.tagged_with "Origin"
+      tags:
+        - additive_gather_facts
+
+    - name: test that the cache contains only gathered facts
+      assert:
+        that:
+          - ansible_facts | length > 1
+          - ansible_facts.foo is undefined
+          - ansible_facts.distribution is defined
+      tags:
+        - gather_facts

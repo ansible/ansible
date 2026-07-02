@@ -5,6 +5,7 @@ PLAY [testhost] ****************************************************************
 TASK [Changed task] ************************************************************
 changed: [testhost] => 
     changed: true
+    changed_when_result: true
     cmd:
     - echo
     - foo
@@ -22,6 +23,7 @@ changed: [testhost] =>
 TASK [Ok task] *****************************************************************
 ok: [testhost] => 
     changed: false
+    changed_when_result: false
     cmd:
     - echo
     - foo
@@ -37,6 +39,14 @@ ok: [testhost] =>
     - foo
 
 TASK [Failed task] *************************************************************
+[ERROR]: Task failed: Action failed: no reason
+Origin: TEST_PATH/test.yml:16:7
+
+14       changed_when: false
+15
+16     - name: Failed task
+         ^ column 7
+
 fatal: [testhost]: FAILED! => 
     changed: false
     msg: no reason
@@ -45,6 +55,7 @@ fatal: [testhost]: FAILED! =>
 TASK [Skipped task] ************************************************************
 skipping: [testhost] => 
     changed: false
+    false_condition: false
     skip_reason: Conditional result was False
 
 TASK [Task with var in name (foo bar)] *****************************************
@@ -120,18 +131,34 @@ changed: [testhost] => (item=foo-3) =>
 TASK [debug loop] **************************************************************
 changed: [testhost] => (item=debug-1) => 
     msg: debug-1
+[ERROR]: Task failed: Action failed: A 'failed_when' expression evaluated to 'True'.
+Origin: TEST_PATH/test.yml:38:7
+
+36
+37     # detect "changed" debug tasks being hidden with display_ok_tasks=false
+38     - name: debug loop
+         ^ column 7
+
 failed: [testhost] (item=debug-2) => 
     msg: debug-2
 ok: [testhost] => (item=debug-3) => 
     msg: debug-3
 skipping: [testhost] => (item=debug-4)  => 
-    ansible_loop_var: item
+    false_condition: item != 4
     item: 4
 fatal: [testhost]: FAILED! => 
     msg: One or more items failed
 ...ignoring
 
 TASK [EXPECTED FAILURE Failed task to be rescued] ******************************
+[ERROR]: Task failed: Action failed: Failed as requested from task
+Origin: TEST_PATH/test.yml:54:11
+
+52
+53     - block:
+54         - name: EXPECTED FAILURE Failed task to be rescued
+             ^ column 11
+
 fatal: [testhost]: FAILED! => 
     changed: false
     msg: Failed as requested from task
@@ -165,15 +192,15 @@ changed: [testhost] =>
     changed: true
     checksum: 0beec7b5ea3f0fdbc95d0dd47f3c5bc275da8a33
     dest: .../test_diff.txt
-    gid: 0
-    group: root
+    gid: <<GID>>
+    group: <<GROUP>>
     md5sum: acbd18db4cc2f85cedef654fccc4a4d8
     mode: '0644'
-    owner: root
+    owner: <<OWNER>>
     size: 3
-    src: .../source
+    src: .../.source.txt
     state: file
-    uid: 0
+    uid: <<UID>>
 
 TASK [replace] *****************************************************************
 --- before: .../test_diff.txt
@@ -192,6 +219,7 @@ changed: [testhost] =>
 TASK [replace] *****************************************************************
 ok: [testhost] => 
     changed: false
+    changed_when_result: false
     msg: 1 replacements made
     rc: 0
 
@@ -205,13 +233,17 @@ skipping: [testhost] =>
 
 TASK [debug] *******************************************************************
 skipping: [testhost] => (item=1)  => 
-    ansible_loop_var: item
+    false_condition: false
     item: 1
 skipping: [testhost] => (item=2)  => 
-    ansible_loop_var: item
+    false_condition: false
     item: 2
 skipping: [testhost] => 
     msg: All items skipped
+
+TASK [debug] *******************************************************************
+ok: [testhost] => (item=a) => 
+    msg: a
 
 RUNNING HANDLER [Test handler 1] ***********************************************
 changed: [testhost] => 
@@ -233,6 +265,7 @@ changed: [testhost] =>
 RUNNING HANDLER [Test handler 2] ***********************************************
 ok: [testhost] => 
     changed: false
+    changed_when_result: false
     cmd:
     - echo
     - foo
@@ -308,5 +341,5 @@ ok: [testhost] =>
     item: 1
 
 PLAY RECAP *********************************************************************
-testhost                   : ok=19   changed=11   unreachable=0    failed=0    skipped=4    rescued=1    ignored=2   
+testhost                   : ok=20   changed=11   unreachable=0    failed=0    skipped=4    rescued=1    ignored=2   
 

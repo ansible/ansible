@@ -1,9 +1,11 @@
 """Command line parsing for the `sanity` command."""
+
 from __future__ import annotations
 
 import argparse
 
 from ...config import (
+    data_context,
     SanityConfig,
 )
 
@@ -16,10 +18,6 @@ from ...target import (
     walk_sanity_targets,
 )
 
-from ...data import (
-    data_context,
-)
-
 from ..environments import (
     CompositeActionCompletionFinder,
     ControllerMode,
@@ -29,21 +27,22 @@ from ..environments import (
 
 
 def do_sanity(
-        subparsers,
-        parent,  # type: argparse.ArgumentParser
-        completer,  # type: CompositeActionCompletionFinder
+    subparsers,
+    parent: argparse.ArgumentParser,
+    completer: CompositeActionCompletionFinder,
 ):
     """Command line parsing for the `sanity` command."""
-    parser = subparsers.add_parser(
+    parser: argparse.ArgumentParser = subparsers.add_parser(
         'sanity',
         parents=[parent],
         help='sanity tests',
-    )  # type: argparse.ArgumentParser
+    )
 
     parser.set_defaults(
         func=command_sanity,
         targets_func=walk_sanity_targets,
-        config=SanityConfig)
+        config=SanityConfig,
+    )
 
     sanity = parser.add_argument_group(title='sanity test arguments')
 
@@ -81,17 +80,6 @@ def do_sanity(
         help='enable optional errors',
     )
 
-    if data_context().content.is_ansible:
-        sanity.add_argument(
-            '--keep-git',
-            action='store_true',
-            help='transfer git related files to the remote host/container',
-        )
-    else:
-        sanity.set_defaults(
-            keep_git=False,
-        )
-
     sanity.add_argument(
         '--lint',
         action='store_true',
@@ -113,7 +101,14 @@ def do_sanity(
     sanity.add_argument(
         '--prime-venvs',
         action='store_true',
-        help='prepare virtual environments without running tests'
+        help='prepare virtual environments without running tests',
     )
+
+    if data_context().content.is_ansible:
+        sanity.add_argument(
+            '--fix',
+            action='store_true',
+            help='fix issues when possible instead of reporting them',
+        )
 
     add_environments(parser, completer, ControllerMode.DELEGATED, TargetMode.SANITY)  # sanity

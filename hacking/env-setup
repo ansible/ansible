@@ -57,22 +57,6 @@ expr "$PYTHONPATH" : "${ANSIBLE_TEST_PREFIX_PYTHONPATH}.*" > /dev/null || prepen
 expr "$PATH" : "${PREFIX_PATH}.*" > /dev/null || prepend_path PATH "$PREFIX_PATH"
 expr "$MANPATH" : "${PREFIX_MANPATH}.*" > /dev/null || prepend_path MANPATH "$PREFIX_MANPATH"
 
-#
-# Generate egg_info so that pkg_resources works
-#
-
-# Do the work in a function so we don't repeat ourselves later
-gen_egg_info()
-{
-    # check for current and past egg-info directory names
-    if ls "$PREFIX_PYTHONPATH"/ansible*.egg-info >/dev/null 2>&1; then
-        # bypass shell aliases with leading backslash
-        # see https://github.com/ansible/ansible/pull/11967
-        \rm -rf "$PREFIX_PYTHONPATH"/ansible*.egg-info
-    fi
-    "$PYTHON_BIN" setup.py egg_info
-}
-
 if [ "$ANSIBLE_DEV_HOME" != "$PWD" ] ; then
     current_dir="$PWD"
 else
@@ -81,10 +65,8 @@ fi
 (
 	cd "$ANSIBLE_DEV_HOME"
 	if [ "$verbosity" = silent ] ; then
-	    gen_egg_info > /dev/null 2>&1 &
             find . -type f -name "*.pyc" -exec rm -f {} \; > /dev/null 2>&1
 	else
-	    gen_egg_info
             find . -type f -name "*.pyc" -exec rm -f {} \;
 	fi
 	cd "$current_dir"

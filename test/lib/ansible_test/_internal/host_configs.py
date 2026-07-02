@@ -1,4 +1,5 @@
 """Configuration for the test hosts requested by the user."""
+
 from __future__ import annotations
 
 import abc
@@ -18,6 +19,8 @@ from .io import (
 )
 
 from .completion import (
+    AuditMode,
+    CGroupVersion,
     CompletionConfig,
     docker_completion,
     DockerCompletionConfig,
@@ -40,30 +43,42 @@ from .util import (
     str_to_version,
     version_to_str,
     Architecture,
+    find_executable,
+    get_supported_powershell_versions,
 )
 
 
 @dataclasses.dataclass(frozen=True)
 class OriginCompletionConfig(PosixCompletionConfig):
     """Pseudo completion config for the origin."""
-    def __init__(self):
+
+    def __init__(self) -> None:
         super().__init__(name='origin')
 
     @property
-    def supported_pythons(self):  # type: () -> t.List[str]
+    def supported_pythons(self) -> list[str]:
         """Return a list of the supported Python versions."""
         current_version = version_to_str(sys.version_info[:2])
         versions = [version for version in SUPPORTED_PYTHON_VERSIONS if version == current_version] + \
                    [version for version in SUPPORTED_PYTHON_VERSIONS if version != current_version]
         return versions
 
-    def get_python_path(self, version):  # type: (str) -> str
+    def get_python_path(self, version: str) -> str:
         """Return the path of the requested Python version."""
         version = find_python(version)
         return version
 
     @property
-    def is_default(self):
+    def supported_powershells(self) -> list[str]:
+        """Return a list of the supported PowerShell versions."""
+        return get_supported_powershell_versions()
+
+    def get_powershell_path(self, version: str | None) -> str | None:
+        """Return the path of the requested PowerShell version, or None if PowerShell is not available."""
+        return find_executable(f'pwsh{version or ""}', required=bool(version))
+
+    @property
+    def is_default(self) -> bool:
         """True if the completion entry is only used for defaults, otherwise False."""
         return False
 
@@ -71,10 +86,11 @@ class OriginCompletionConfig(PosixCompletionConfig):
 @dataclasses.dataclass(frozen=True)
 class HostContext:
     """Context used when getting and applying defaults for host configurations."""
+
     controller_config: t.Optional['PosixConfig']
 
     @property
-    def controller(self):  # type: () -> bool
+    def controller(self) -> bool:
         """True if the context is for the controller, otherwise False."""
         return not self.controller_config
 
@@ -82,16 +98,17 @@ class HostContext:
 @dataclasses.dataclass
 class HostConfig(metaclass=abc.ABCMeta):
     """Base class for host configuration."""
+
     @abc.abstractmethod
-    def get_defaults(self, context):  # type: (HostContext) -> CompletionConfig
+    def get_defaults(self, context: HostContext) -> CompletionConfig:
         """Return the default settings."""
 
     @abc.abstractmethod
-    def apply_defaults(self, context, defaults):  # type: (HostContext, CompletionConfig) -> None
+    def apply_defaults(self, context: HostContext, defaults: CompletionConfig) -> None:
         """Apply default settings."""
 
     @property
-    def is_managed(self):  # type: () -> bool
+    def is_managed(self) -> bool:
         """
         True if the host is a managed instance, otherwise False.
         Managed instances are used exclusively by ansible-test and can safely have destructive operations performed without explicit permission from the user.
@@ -102,20 +119,21 @@ class HostConfig(metaclass=abc.ABCMeta):
 @dataclasses.dataclass
 class PythonConfig(metaclass=abc.ABCMeta):
     """Configuration for Python."""
+
     version: t.Optional[str] = None
     path: t.Optional[str] = None
 
     @property
-    def tuple(self):  # type: () -> t.Tuple[int, ...]
+    def tuple(self) -> tuple[int, ...]:
         """Return the Python version as a tuple."""
         return str_to_version(self.version)
 
     @property
-    def major_version(self):  # type: () -> int
+    def major_version(self) -> int:
         """Return the Python major version."""
         return self.tuple[0]
 
-    def apply_defaults(self, context, defaults):  # type: (HostContext, PosixCompletionConfig) -> None
+    def apply_defaults(self, context: HostContext, defaults: PosixCompletionConfig) -> None:
         """Apply default settings."""
         if self.version in (None, 'default'):
             self.version = defaults.get_default_python(context.controller)
@@ -130,7 +148,7 @@ class PythonConfig(metaclass=abc.ABCMeta):
 
     @property
     @abc.abstractmethod
-    def is_managed(self):  # type: () -> bool
+    def is_managed(self) -> bool:
         """
         True if this Python is a managed instance, otherwise False.
         Managed instances are used exclusively by ansible-test and can safely have requirements installed without explicit permission from the user.
@@ -140,8 +158,9 @@ class PythonConfig(metaclass=abc.ABCMeta):
 @dataclasses.dataclass
 class NativePythonConfig(PythonConfig):
     """Configuration for native Python."""
+
     @property
-    def is_managed(self):  # type: () -> bool
+    def is_managed(self) -> bool:
         """
         True if this Python is a managed instance, otherwise False.
         Managed instances are used exclusively by ansible-test and can safely have requirements installed without explicit permission from the user.
@@ -152,9 +171,10 @@ class NativePythonConfig(PythonConfig):
 @dataclasses.dataclass
 class VirtualPythonConfig(PythonConfig):
     """Configuration for Python in a virtual environment."""
+
     system_site_packages: t.Optional[bool] = None
 
-    def apply_defaults(self, context, defaults):  # type: (HostContext, PosixCompletionConfig) -> None
+    def apply_defaults(self, context: HostContext, defaults: PosixCompletionConfig) -> None:
         """Apply default settings."""
         super().apply_defaults(context, defaults)
 
@@ -162,7 +182,7 @@ class VirtualPythonConfig(PythonConfig):
             self.system_site_packages = False
 
     @property
-    def is_managed(self):  # type: () -> bool
+    def is_managed(self) -> bool:
         """
         True if this Python is a managed instance, otherwise False.
         Managed instances are used exclusively by ansible-test and can safely have requirements installed without explicit permission from the user.
@@ -171,20 +191,43 @@ class VirtualPythonConfig(PythonConfig):
 
 
 @dataclasses.dataclass
+class PowerShellConfig:
+    """Configuration for PowerShell."""
+
+    version: str | None = None
+    path: str | None = None
+
+    def apply_defaults(self, defaults: PosixCompletionConfig) -> None:
+        """Apply default settings."""
+        if self.version in (None, 'default'):
+            self.version = defaults.get_default_powershell()
+
+        if self.path:
+            if self.path.endswith('/'):
+                self.path = os.path.join(self.path, f'pwsh{self.version or ""}')
+
+            # FUTURE: If the host is origin, the pwsh path could be validated here.
+        else:
+            self.path = defaults.get_powershell_path(self.version)
+
+
+@dataclasses.dataclass
 class PosixConfig(HostConfig, metaclass=abc.ABCMeta):
     """Base class for POSIX host configuration."""
+
     python: t.Optional[PythonConfig] = None
+    powershell: PowerShellConfig | None = None
 
     @property
     @abc.abstractmethod
-    def have_root(self):  # type: () -> bool
+    def have_root(self) -> bool:
         """True if root is available, otherwise False."""
 
     @abc.abstractmethod
-    def get_defaults(self, context):  # type: (HostContext) -> PosixCompletionConfig
+    def get_defaults(self, context: HostContext) -> PosixCompletionConfig:
         """Return the default settings."""
 
-    def apply_defaults(self, context, defaults):  # type: (HostContext, CompletionConfig) -> None
+    def apply_defaults(self, context: HostContext, defaults: CompletionConfig) -> None:
         """Apply default settings."""
         assert isinstance(defaults, PosixCompletionConfig)
 
@@ -193,33 +236,38 @@ class PosixConfig(HostConfig, metaclass=abc.ABCMeta):
         self.python = self.python or NativePythonConfig()
         self.python.apply_defaults(context, defaults)
 
+        self.powershell = self.powershell or PowerShellConfig()
+        self.powershell.apply_defaults(defaults)
+
 
 @dataclasses.dataclass
 class ControllerHostConfig(PosixConfig, metaclass=abc.ABCMeta):
     """Base class for host configurations which support the controller."""
+
     @abc.abstractmethod
-    def get_default_targets(self, context):  # type: (HostContext) -> t.List[ControllerConfig]
+    def get_default_targets(self, context: HostContext) -> list[ControllerConfig]:
         """Return the default targets for this host config."""
 
 
 @dataclasses.dataclass
 class RemoteConfig(HostConfig, metaclass=abc.ABCMeta):
     """Base class for remote host configuration."""
+
     name: t.Optional[str] = None
     provider: t.Optional[str] = None
     arch: t.Optional[str] = None
 
     @property
-    def platform(self):  # type: () -> str
+    def platform(self) -> str:
         """The name of the platform."""
         return self.name.partition('/')[0]
 
     @property
-    def version(self):  # type: () -> str
+    def version(self) -> str:
         """The version of the platform."""
         return self.name.partition('/')[2]
 
-    def apply_defaults(self, context, defaults):  # type: (HostContext, CompletionConfig) -> None
+    def apply_defaults(self, context: HostContext, defaults: CompletionConfig) -> None:
         """Apply default settings."""
         assert isinstance(defaults, RemoteCompletionConfig)
 
@@ -232,7 +280,7 @@ class RemoteConfig(HostConfig, metaclass=abc.ABCMeta):
         self.arch = self.arch or defaults.arch or Architecture.X86_64
 
     @property
-    def is_managed(self):  # type: () -> bool
+    def is_managed(self) -> bool:
         """
         True if this host is a managed instance, otherwise False.
         Managed instances are used exclusively by ansible-test and can safely have destructive operations performed without explicit permission from the user.
@@ -243,11 +291,12 @@ class RemoteConfig(HostConfig, metaclass=abc.ABCMeta):
 @dataclasses.dataclass
 class PosixSshConfig(PosixConfig):
     """Configuration for a POSIX SSH host."""
+
     user: t.Optional[str] = None
     host: t.Optional[str] = None
     port: t.Optional[int] = None
 
-    def get_defaults(self, context):  # type: (HostContext) -> PosixSshCompletionConfig
+    def get_defaults(self, context: HostContext) -> PosixSshCompletionConfig:
         """Return the default settings."""
         return PosixSshCompletionConfig(
             user=self.user,
@@ -255,7 +304,7 @@ class PosixSshConfig(PosixConfig):
         )
 
     @property
-    def have_root(self):  # type: () -> bool
+    def have_root(self) -> bool:
         """True if root is available, otherwise False."""
         return self.user == 'root'
 
@@ -263,13 +312,14 @@ class PosixSshConfig(PosixConfig):
 @dataclasses.dataclass
 class InventoryConfig(HostConfig):
     """Configuration using inventory."""
+
     path: t.Optional[str] = None
 
-    def get_defaults(self, context):  # type: (HostContext) -> InventoryCompletionConfig
+    def get_defaults(self, context: HostContext) -> InventoryCompletionConfig:
         """Return the default settings."""
         return InventoryCompletionConfig()
 
-    def apply_defaults(self, context, defaults):  # type: (HostContext, CompletionConfig) -> None
+    def apply_defaults(self, context: HostContext, defaults: CompletionConfig) -> None:
         """Apply default settings."""
         assert isinstance(defaults, InventoryCompletionConfig)
 
@@ -277,13 +327,16 @@ class InventoryConfig(HostConfig):
 @dataclasses.dataclass
 class DockerConfig(ControllerHostConfig, PosixConfig):
     """Configuration for a docker host."""
+
     name: t.Optional[str] = None
     image: t.Optional[str] = None
     memory: t.Optional[int] = None
     privileged: t.Optional[bool] = None
     seccomp: t.Optional[str] = None
+    cgroup: t.Optional[CGroupVersion] = None
+    audit: t.Optional[AuditMode] = None
 
-    def get_defaults(self, context):  # type: (HostContext) -> DockerCompletionConfig
+    def get_defaults(self, context: HostContext) -> DockerCompletionConfig:
         """Return the default settings."""
         return filter_completion(docker_completion()).get(self.name) or DockerCompletionConfig(
             name=self.name,
@@ -291,7 +344,7 @@ class DockerConfig(ControllerHostConfig, PosixConfig):
             placeholder=True,
         )
 
-    def get_default_targets(self, context):  # type: (HostContext) -> t.List[ControllerConfig]
+    def get_default_targets(self, context: HostContext) -> list[ControllerConfig]:
         """Return the default targets for this host config."""
         if self.name in filter_completion(docker_completion()):
             defaults = self.get_defaults(context)
@@ -301,7 +354,7 @@ class DockerConfig(ControllerHostConfig, PosixConfig):
 
         return [ControllerConfig(python=NativePythonConfig(version=version, path=path)) for version, path in pythons.items()]
 
-    def apply_defaults(self, context, defaults):  # type: (HostContext, CompletionConfig) -> None
+    def apply_defaults(self, context: HostContext, defaults: CompletionConfig) -> None:
         """Apply default settings."""
         assert isinstance(defaults, DockerCompletionConfig)
 
@@ -313,11 +366,17 @@ class DockerConfig(ControllerHostConfig, PosixConfig):
         if self.seccomp is None:
             self.seccomp = defaults.seccomp
 
+        if self.cgroup is None:
+            self.cgroup = defaults.cgroup_enum
+
+        if self.audit is None:
+            self.audit = defaults.audit_enum
+
         if self.privileged is None:
             self.privileged = False
 
     @property
-    def is_managed(self):  # type: () -> bool
+    def is_managed(self) -> bool:
         """
         True if this host is a managed instance, otherwise False.
         Managed instances are used exclusively by ansible-test and can safely have destructive operations performed without explicit permission from the user.
@@ -325,7 +384,7 @@ class DockerConfig(ControllerHostConfig, PosixConfig):
         return True
 
     @property
-    def have_root(self):  # type: () -> bool
+    def have_root(self) -> bool:
         """True if root is available, otherwise False."""
         return True
 
@@ -333,16 +392,18 @@ class DockerConfig(ControllerHostConfig, PosixConfig):
 @dataclasses.dataclass
 class PosixRemoteConfig(RemoteConfig, ControllerHostConfig, PosixConfig):
     """Configuration for a POSIX remote host."""
+
     become: t.Optional[str] = None
 
-    def get_defaults(self, context):  # type: (HostContext) -> PosixRemoteCompletionConfig
+    def get_defaults(self, context: HostContext) -> PosixRemoteCompletionConfig:
         """Return the default settings."""
+        # pylint: disable=unexpected-keyword-arg  # see: https://github.com/PyCQA/pylint/issues/7434
         return filter_completion(remote_completion()).get(self.name) or remote_completion().get(self.platform) or PosixRemoteCompletionConfig(
             name=self.name,
             placeholder=True,
         )
 
-    def get_default_targets(self, context):  # type: (HostContext) -> t.List[ControllerConfig]
+    def get_default_targets(self, context: HostContext) -> list[ControllerConfig]:
         """Return the default targets for this host config."""
         if self.name in filter_completion(remote_completion()):
             defaults = self.get_defaults(context)
@@ -352,16 +413,17 @@ class PosixRemoteConfig(RemoteConfig, ControllerHostConfig, PosixConfig):
 
         return [ControllerConfig(python=NativePythonConfig(version=version, path=path)) for version, path in pythons.items()]
 
-    def apply_defaults(self, context, defaults):  # type: (HostContext, CompletionConfig) -> None
+    def apply_defaults(self, context: HostContext, defaults: CompletionConfig) -> None:
         """Apply default settings."""
         assert isinstance(defaults, PosixRemoteCompletionConfig)
 
         super().apply_defaults(context, defaults)
 
         self.become = self.become or defaults.become
+        self.name = defaults.name
 
     @property
-    def have_root(self):  # type: () -> bool
+    def have_root(self) -> bool:
         """True if root is available, otherwise False."""
         return True
 
@@ -374,9 +436,22 @@ class WindowsConfig(HostConfig, metaclass=abc.ABCMeta):
 @dataclasses.dataclass
 class WindowsRemoteConfig(RemoteConfig, WindowsConfig):
     """Configuration for a remote Windows host."""
-    def get_defaults(self, context):  # type: (HostContext) -> WindowsRemoteCompletionConfig
+
+    connection: t.Optional[str] = None
+    powershell: PowerShellConfig | None = None
+
+    def get_defaults(self, context: HostContext) -> WindowsRemoteCompletionConfig:
         """Return the default settings."""
         return filter_completion(windows_completion()).get(self.name) or windows_completion().get(self.platform)
+
+    def apply_defaults(self, context: HostContext, defaults: CompletionConfig) -> None:
+        """Apply default settings."""
+        assert isinstance(defaults, WindowsRemoteCompletionConfig)
+
+        super().apply_defaults(context, defaults)
+
+        self.connection = self.connection or defaults.connection
+        self.name = defaults.name
 
 
 @dataclasses.dataclass
@@ -392,17 +467,18 @@ class NetworkConfig(HostConfig, metaclass=abc.ABCMeta):
 @dataclasses.dataclass
 class NetworkRemoteConfig(RemoteConfig, NetworkConfig):
     """Configuration for a remote network host."""
+
     collection: t.Optional[str] = None
     connection: t.Optional[str] = None
 
-    def get_defaults(self, context):  # type: (HostContext) -> NetworkRemoteCompletionConfig
+    def get_defaults(self, context: HostContext) -> NetworkRemoteCompletionConfig:
         """Return the default settings."""
         return filter_completion(network_completion()).get(self.name) or NetworkRemoteCompletionConfig(
             name=self.name,
             placeholder=True,
         )
 
-    def apply_defaults(self, context, defaults):  # type: (HostContext, CompletionConfig) -> None
+    def apply_defaults(self, context: HostContext, defaults: CompletionConfig) -> None:
         """Apply default settings."""
         assert isinstance(defaults, NetworkRemoteCompletionConfig)
 
@@ -420,16 +496,17 @@ class NetworkInventoryConfig(InventoryConfig, NetworkConfig):
 @dataclasses.dataclass
 class OriginConfig(ControllerHostConfig, PosixConfig):
     """Configuration for the origin host."""
-    def get_defaults(self, context):  # type: (HostContext) -> OriginCompletionConfig
+
+    def get_defaults(self, context: HostContext) -> OriginCompletionConfig:
         """Return the default settings."""
         return OriginCompletionConfig()
 
-    def get_default_targets(self, context):  # type: (HostContext) -> t.List[ControllerConfig]
+    def get_default_targets(self, context: HostContext) -> list[ControllerConfig]:
         """Return the default targets for this host config."""
         return [ControllerConfig(python=NativePythonConfig(version=version, path=path)) for version, path in get_available_python_versions().items()]
 
     @property
-    def have_root(self):  # type: () -> bool
+    def have_root(self) -> bool:
         """True if root is available, otherwise False."""
         return os.getuid() == 0
 
@@ -437,13 +514,14 @@ class OriginConfig(ControllerHostConfig, PosixConfig):
 @dataclasses.dataclass
 class ControllerConfig(PosixConfig):
     """Configuration for the controller host."""
+
     controller: t.Optional[PosixConfig] = None
 
-    def get_defaults(self, context):  # type: (HostContext) -> PosixCompletionConfig
+    def get_defaults(self, context: HostContext) -> PosixCompletionConfig:
         """Return the default settings."""
         return context.controller_config.get_defaults(context)
 
-    def apply_defaults(self, context, defaults):  # type: (HostContext, CompletionConfig) -> None
+    def apply_defaults(self, context: HostContext, defaults: CompletionConfig) -> None:
         """Apply default settings."""
         assert isinstance(defaults, PosixCompletionConfig)
 
@@ -453,10 +531,14 @@ class ControllerConfig(PosixConfig):
             # The user did not specify a target Python and supported Pythons are unknown, so use the controller Python specified by the user instead.
             self.python = context.controller_config.python
 
+        if not self.powershell and not defaults.supported_powershells:
+            # The user did not specify a target PowerShell and supported versions are unknown, so use the controller version specified by the user instead.
+            self.powershell = context.controller_config.powershell
+
         super().apply_defaults(context, defaults)
 
     @property
-    def is_managed(self):  # type: () -> bool
+    def is_managed(self) -> bool:
         """
         True if the host is a managed instance, otherwise False.
         Managed instances are used exclusively by ansible-test and can safely have destructive operations performed without explicit permission from the user.
@@ -464,13 +546,14 @@ class ControllerConfig(PosixConfig):
         return self.controller.is_managed
 
     @property
-    def have_root(self):  # type: () -> bool
+    def have_root(self) -> bool:
         """True if root is available, otherwise False."""
         return self.controller.have_root
 
 
 class FallbackReason(enum.Enum):
     """Reason fallback was performed."""
+
     ENVIRONMENT = enum.auto()
     PYTHON = enum.auto()
 
@@ -478,6 +561,7 @@ class FallbackReason(enum.Enum):
 @dataclasses.dataclass(frozen=True)
 class FallbackDetail:
     """Details about controller fallback behavior."""
+
     reason: FallbackReason
     message: str
 
@@ -485,24 +569,25 @@ class FallbackDetail:
 @dataclasses.dataclass(frozen=True)
 class HostSettings:
     """Host settings for the controller and targets."""
+
     controller: ControllerHostConfig
-    targets: t.List[HostConfig]
-    skipped_python_versions: t.List[str]
-    filtered_args: t.List[str]
+    targets: list[HostConfig]
+    skipped_python_versions: list[str]
+    filtered_args: list[str]
     controller_fallback: t.Optional[FallbackDetail]
 
-    def serialize(self, path):  # type: (str) -> None
+    def serialize(self, path: str) -> None:
         """Serialize the host settings to the given path."""
         with open_binary_file(path, 'wb') as settings_file:
             pickle.dump(self, settings_file)
 
     @staticmethod
-    def deserialize(path):  # type: (str) -> HostSettings
+    def deserialize(path: str) -> HostSettings:
         """Deserialize host settings from the path."""
         with open_binary_file(path) as settings_file:
             return pickle.load(settings_file)
 
-    def apply_defaults(self):
+    def apply_defaults(self) -> None:
         """Apply defaults to the host settings."""
         context = HostContext(controller_config=None)
         self.controller.apply_defaults(context, self.controller.get_defaults(context))

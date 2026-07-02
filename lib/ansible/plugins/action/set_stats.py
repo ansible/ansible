@@ -15,19 +15,18 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-from ansible.module_utils.six import string_types
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
-from ansible.utils.vars import isidentifier
+from ansible.utils.vars import validate_variable_name
 
 
 class ActionModule(ActionBase):
 
     TRANSFERS_FILES = False
     _VALID_ARGS = frozenset(('aggregate', 'data', 'per_host'))
+    _requires_connection = False
 
     # TODO: document this in non-empty set_stats.py module
     def run(self, tmp=None, task_vars=None):
@@ -43,7 +42,7 @@ class ActionModule(ActionBase):
             data = self._task.args.get('data', {})
 
             if not isinstance(data, dict):
-                data = self._templar.template(data, convert_bare=False, fail_on_undefined=True)
+                data = self._templar.template(data)
 
             if not isinstance(data, dict):
                 result['failed'] = True
@@ -60,14 +59,9 @@ class ActionModule(ActionBase):
                         stats[opt] = val
 
             for (k, v) in data.items():
-
                 k = self._templar.template(k)
 
-                if not isidentifier(k):
-                    result['failed'] = True
-                    result['msg'] = ("The variable name '%s' is not valid. Variables must start with a letter or underscore character, and contain only "
-                                     "letters, numbers and underscores." % k)
-                    return result
+                validate_variable_name(k)
 
                 stats['data'][k] = self._templar.template(v)
 

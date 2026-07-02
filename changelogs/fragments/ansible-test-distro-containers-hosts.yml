@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-test - Distribution specific test containers no longer contain a ``/etc/ansible/hosts`` file.

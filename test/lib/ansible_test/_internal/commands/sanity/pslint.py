@@ -1,4 +1,5 @@
 """Sanity test using PSScriptAnalyzer."""
+
 from __future__ import annotations
 
 import json
@@ -28,10 +29,12 @@ from ...util import (
     SubprocessError,
     find_executable,
     ANSIBLE_TEST_DATA_ROOT,
+    common_environment,
 )
 
 from ...util_common import (
     run_command,
+    get_powershell_injector_env,
 )
 
 from ...config import (
@@ -45,21 +48,25 @@ from ...data import (
 
 class PslintTest(SanityVersionNeutral):
     """Sanity test using PSScriptAnalyzer."""
+
     @property
-    def error_code(self):  # type: () -> t.Optional[str]
+    def error_code(self) -> t.Optional[str]:
         """Error code for ansible-test matching the format used by the underlying test program, or None if the program does not use error codes."""
         return 'AnsibleTest'
 
-    def filter_targets(self, targets):  # type: (t.List[TestTarget]) -> t.List[TestTarget]
+    def filter_targets(self, targets: list[TestTarget]) -> list[TestTarget]:
         """Return the given list of test targets, filtered to include only those relevant for the test."""
         return [target for target in targets if os.path.splitext(target.path)[1] in ('.ps1', '.psm1', '.psd1')]
 
-    def test(self, args, targets):  # type: (SanityConfig, SanityTargets) -> TestResult
+    def test(self, args: SanityConfig, targets: SanityTargets) -> TestResult:
+        env = common_environment()
+        env.update(get_powershell_injector_env(args.controller_powershell, env))
+
         settings = self.load_processor(args)
 
         paths = [target.path for target in targets.include]
 
-        if not find_executable('pwsh', required='warning'):
+        if not find_executable('pwsh', required='warning', path=env.get('PATH')):
             return SanitySkipped(self.name)
 
         cmds = []
@@ -73,7 +80,7 @@ class PslintTest(SanityVersionNeutral):
 
         for cmd in cmds:
             try:
-                stdout, stderr = run_command(args, cmd, capture=True)
+                stdout, stderr = run_command(args, cmd, env=env, capture=True)
                 status = 0
             except SubprocessError as ex:
                 stdout = ex.stdout

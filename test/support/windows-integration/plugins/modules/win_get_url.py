@@ -11,7 +11,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: win_get_url
 version_added: "1.7"
@@ -125,9 +125,9 @@ seealso:
 author:
 - Paul Durivage (@angstwad)
 - Takeshi Kuramochi (@tksarah)
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: Download earthrise.jpg to specified path
   win_get_url:
     url: http://www.example.com/earthrise.jpg
@@ -169,9 +169,9 @@ EXAMPLES = r'''
     checksum: a97e6837f60cec6da4491bab387296bbcd72bdba
     checksum_algorithm: sha1
     force: True
-'''
+"""
 
-RETURN = r'''
+RETURN = r"""
 dest:
     description: destination file/path
     returned: always
@@ -212,4 +212,4 @@ status_code:
     returned: always
     type: int
     sample: 200
-'''
+"""

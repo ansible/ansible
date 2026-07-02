@@ -16,14 +16,11 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 from io import StringIO
-import pytest
 
-from units.compat import unittest
+import unittest
 from ansible.plugins.connection import local
 from ansible.playbook.play_context import PlayContext
 

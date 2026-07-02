@@ -9,15 +9,15 @@ as such this is not considered a bug unless it causes an issue with Ansible comm
 (`ansible`, `ansible-playbook`, `ansible-doc`, etc).
 
 We do support the provided API for use in developing plugins (modules, dynamic inventories, callbacks, strategies, etc),
-but this does not seem to match that case.
+but this does not match that case.
 
-If you really need a stable API target to use Ansible, consider using ansible-runner:
+If you need a stable API target to use Ansible, consider using ansible-runner:
 
-   * https://github.com/ansible/ansible-runner
+* <https://github.com/ansible/ansible-runner>
 
 Because this project is very active, we're unlikely to see comments made on closed tickets and we lock them after some time.
-If you or anyone else has any further questions, please let us know by using any of the communication methods listed in the page below:
+If you or anyone else has any further questions, please let us know by using any of the methods listed on the communication page:
 
-   * https://docs.ansible.com/ansible/latest/community/communication.html
+* <https://docs.ansible.com/ansible/latest/community/communication.html>
 
 Thank you once again for this and your interest in Ansible!

@@ -2,22 +2,10 @@
 # Copyright (c) 2019 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
-import pytest
 
 from ansible.module_utils.common.parameters import _list_deprecations
-
-
-@pytest.fixture
-def params():
-    return {
-        'name': 'bob',
-        'dest': '/etc/hosts',
-        'state': 'present',
-        'value': 5,
-    }
 
 
 def test_list_deprecations():

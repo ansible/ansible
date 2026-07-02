@@ -1,0 +1,2 @@
++ ansible-playbook -i inventory test_include_role_fails.yml
+++ set +x

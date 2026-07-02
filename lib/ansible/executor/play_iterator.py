@@ -15,9 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import fnmatch
 
@@ -42,7 +40,9 @@ class IteratingStates(IntEnum):
     TASKS = 1
     RESCUE = 2
     ALWAYS = 3
-    COMPLETE = 4
+    HANDLERS = 4
+    COMPLETE = 5
+    VALIDATE = 6
 
 
 class FailedStates(IntFlag):
@@ -51,19 +51,26 @@ class FailedStates(IntFlag):
     TASKS = 2
     RESCUE = 4
     ALWAYS = 8
+    HANDLERS = 16  # NOTE not in use anymore
+    VALIDATE = 32
 
 
 class HostState:
     def __init__(self, blocks):
         self._blocks = blocks[:]
+        self.handlers = []
+
+        self.handler_notifications = []
 
         self.cur_block = 0
         self.cur_regular_task = 0
         self.cur_rescue_task = 0
         self.cur_always_task = 0
+        self.cur_handlers_task = 0
         self.run_state = IteratingStates.SETUP
         self.fail_state = FailedStates.NONE
-        self.pending_setup = False
+        self.pre_flushing_run_state = None
+        self.update_handlers = True
         self.tasks_child_state = None
         self.rescue_child_state = None
         self.always_child_state = None
@@ -74,15 +81,19 @@ class HostState:
         return "HostState(%r)" % self._blocks
 
     def __str__(self):
-        return ("HOST STATE: block=%d, task=%d, rescue=%d, always=%d, run_state=%s, fail_state=%s, pending_setup=%s, tasks child state? (%s), "
-                "rescue child state? (%s), always child state? (%s), did rescue? %s, did start at task? %s" % (
+        return ("HOST STATE: block=%d, task=%d, rescue=%d, always=%d, handlers=%d, run_state=%s, fail_state=%s, "
+                "pre_flushing_run_state=%s, update_handlers=%s, "
+                "tasks child state? (%s), rescue child state? (%s), always child state? (%s), "
+                "did rescue? %s, did start at task? %s" % (
                     self.cur_block,
                     self.cur_regular_task,
                     self.cur_rescue_task,
                     self.cur_always_task,
+                    self.cur_handlers_task,
                     self.run_state,
                     self.fail_state,
-                    self.pending_setup,
+                    self.pre_flushing_run_state,
+                    self.update_handlers,
                     self.tasks_child_state,
                     self.rescue_child_state,
                     self.always_child_state,
@@ -94,8 +105,9 @@ class HostState:
         if not isinstance(other, HostState):
             return False
 
-        for attr in ('_blocks', 'cur_block', 'cur_regular_task', 'cur_rescue_task', 'cur_always_task',
-                     'run_state', 'fail_state', 'pending_setup',
+        for attr in ('_blocks',
+                     'cur_block', 'cur_regular_task', 'cur_rescue_task', 'cur_always_task', 'cur_handlers_task',
+                     'run_state', 'fail_state', 'pre_flushing_run_state', 'update_handlers',
                      'tasks_child_state', 'rescue_child_state', 'always_child_state'):
             if getattr(self, attr) != getattr(other, attr):
                 return False
@@ -107,13 +119,17 @@ class HostState:
 
     def copy(self):
         new_state = HostState(self._blocks)
+        new_state.handlers = self.handlers[:]
+        new_state.handler_notifications = self.handler_notifications[:]
         new_state.cur_block = self.cur_block
         new_state.cur_regular_task = self.cur_regular_task
         new_state.cur_rescue_task = self.cur_rescue_task
         new_state.cur_always_task = self.cur_always_task
+        new_state.cur_handlers_task = self.cur_handlers_task
         new_state.run_state = self.run_state
         new_state.fail_state = self.fail_state
-        new_state.pending_setup = self.pending_setup
+        new_state.pre_flushing_run_state = self.pre_flushing_run_state
+        new_state.update_handlers = self.update_handlers
         new_state.did_rescue = self.did_rescue
         new_state.did_start_at_task = self.did_start_at_task
         if self.tasks_child_state is not None:
@@ -138,9 +154,6 @@ class PlayIterator:
         setup_block.run_once = False
         setup_task = Task(block=setup_block)
         setup_task.action = 'gather_facts'
-        # TODO: hardcoded resolution here, but should use actual resolution code in the end,
-        #       in case of 'legacy' mismatch
-        setup_task.resolved_action = 'ansible.builtin.gather_facts'
         setup_task.name = 'Gathering Facts'
         setup_task.args = {}
 
@@ -160,13 +173,46 @@ class PlayIterator:
             setup_task.when = self._play._included_conditional[:]
         setup_block.block = [setup_task]
 
+        validation_task = Task.load({
+            'name': f'Validating arguments against arg spec {self._play.validate_argspec}',
+            'action': 'ansible.builtin.validate_argument_spec',
+            'args': {
+                # 'provided_arguments': {},  # allow configuration via module_defaults
+                'argument_spec': self._play.argument_spec,
+                'validate_args_context': {
+                    'type': 'play',
+                    'name': self._play.validate_argspec,
+                    'argument_spec_name': self._play.validate_argspec,
+                    'path': self._play._metadata_path,
+                },
+            },
+            'tags': ['always'] if not self._play.tags else [],
+        }, block=setup_block)
+
+        validation_task.set_loader(self._play._loader)
+        if self._play._included_conditional is not None:
+            validation_task.when = self._play._included_conditional[:]
+        setup_block.block.append(validation_task)
+
         setup_block = setup_block.filter_tagged_tasks(all_vars)
         self._blocks.append(setup_block)
+
+        # keep flatten (no blocks) list of all tasks from the play
+        # used for the lockstep mechanism in the linear strategy
+        self.all_tasks = setup_block.get_tasks()
 
         for block in self._play.compile():
             new_block = block.filter_tagged_tasks(all_vars)
             if new_block.has_tasks():
                 self._blocks.append(new_block)
+                self.all_tasks.extend(new_block.get_tasks())
+
+        # keep list of all handlers, it is copied into each HostState
+        # at the beginning of IteratingStates.HANDLERS
+        # the copy happens at each flush in order to restore the original
+        # list and remove any included handlers that might not be notified
+        # at the particular flush
+        self.handlers = [h for b in self._play.handlers for h in b.block]
 
         self._host_states = {}
         start_at_matched = False
@@ -199,6 +245,7 @@ class PlayIterator:
             play_context.start_at_task = None
 
         self.end_play = False
+        self.cur_task = 0
 
     def get_host_state(self, host):
         # Since we're using the PlayIterator to carry forward failed hosts,
@@ -208,12 +255,6 @@ class PlayIterator:
             self.set_state_for_host(host.name, HostState(blocks=[]))
 
         return self._host_states[host.name].copy()
-
-    def cache_block_tasks(self, block):
-        # now a noop, we've changed the way we do caching and finding of
-        # original task entries, but just in case any 3rd party strategies
-        # are using this we're leaving it here for now
-        return
 
     def get_next_task_for_host(self, host, peek=False):
 
@@ -231,7 +272,6 @@ class PlayIterator:
             self.set_state_for_host(host.name, s)
 
         display.debug("done getting next task for host %s" % host.name)
-        display.debug(" ^ task is: %s" % task)
         display.debug(" ^ state is: %s" % s)
         return (s, task)
 
@@ -251,50 +291,37 @@ class PlayIterator:
                 return (state, None)
 
             if state.run_state == IteratingStates.SETUP:
-                # First, we check to see if we were pending setup. If not, this is
-                # the first trip through IteratingStates.SETUP, so we set the pending_setup
-                # flag and try to determine if we do in fact want to gather facts for
-                # the specified host.
-                if not state.pending_setup:
-                    state.pending_setup = True
+                # Gather facts if the default is 'smart' and we have not yet
+                # done it for this host; or if 'explicit' and the play sets
+                # gather_facts to True; or if 'implicit' and the play does
+                # NOT explicitly set gather_facts to False.
+                gather_facts = len(self._blocks[0].block) >= 1
+                gathering = C.DEFAULT_GATHERING
+                implied = self._play.gather_facts is None or boolean(self._play.gather_facts, strict=False)
+                if gather_facts and (
+                    (gathering == 'implicit' and implied) or
+                    (gathering == 'explicit' and boolean(self._play.gather_facts, strict=False)) or
+                    (gathering == 'smart' and implied and not self._variable_manager._facts_gathered_for_host(host.name))
+                ):
+                    task = self._blocks[0].block[0]
 
-                    # Gather facts if the default is 'smart' and we have not yet
-                    # done it for this host; or if 'explicit' and the play sets
-                    # gather_facts to True; or if 'implicit' and the play does
-                    # NOT explicitly set gather_facts to False.
+                state.run_state = IteratingStates.VALIDATE
 
-                    gathering = C.DEFAULT_GATHERING
-                    implied = self._play.gather_facts is None or boolean(self._play.gather_facts, strict=False)
+            elif state.run_state == IteratingStates.VALIDATE:
+                if len(self._blocks[0].block) >= 2 and self._play.validate_argspec:
+                    task = self._blocks[0].block[1]
 
-                    if (gathering == 'implicit' and implied) or \
-                       (gathering == 'explicit' and boolean(self._play.gather_facts, strict=False)) or \
-                       (gathering == 'smart' and implied and not (self._variable_manager._fact_cache.get(host.name, {}).get('_ansible_facts_gathered', False))):
-                        # The setup block is always self._blocks[0], as we inject it
-                        # during the play compilation in __init__ above.
-                        setup_block = self._blocks[0]
-                        if setup_block.has_tasks() and len(setup_block.block) > 0:
-                            task = setup_block.block[0]
-                else:
-                    # This is the second trip through IteratingStates.SETUP, so we clear
-                    # the flag and move onto the next block in the list while setting
-                    # the run state to IteratingStates.TASKS
-                    state.pending_setup = False
-
-                    state.run_state = IteratingStates.TASKS
-                    if not state.did_start_at_task:
-                        state.cur_block += 1
-                        state.cur_regular_task = 0
-                        state.cur_rescue_task = 0
-                        state.cur_always_task = 0
-                        state.tasks_child_state = None
-                        state.rescue_child_state = None
-                        state.always_child_state = None
+                state.run_state = IteratingStates.TASKS
+                if not state.did_start_at_task:
+                    state.cur_block += 1
+                    state.cur_regular_task = 0
+                    state.cur_rescue_task = 0
+                    state.cur_always_task = 0
+                    state.tasks_child_state = None
+                    state.rescue_child_state = None
+                    state.always_child_state = None
 
             elif state.run_state == IteratingStates.TASKS:
-                # clear the pending setup flag, since we're past that and it didn't fail
-                if state.pending_setup:
-                    state.pending_setup = False
-
                 # First, we check for a child task state that is not failed, and if we
                 # have one recurse into it for the next task. If we're done with the child
                 # state, we clear it and drop back to getting the next task from the list.
@@ -336,9 +363,6 @@ class PlayIterator:
             elif state.run_state == IteratingStates.RESCUE:
                 # The process here is identical to IteratingStates.TASKS, except instead
                 # we move into the always portion of the block.
-                if host.name in self._play._removed_hosts:
-                    self._play._removed_hosts.remove(host.name)
-
                 if state.rescue_child_state:
                     (state.rescue_child_state, task) = self._get_next_task_from_state(state.rescue_child_state, host=host)
                     if self._check_failed_state(state.rescue_child_state):
@@ -400,18 +424,65 @@ class PlayIterator:
                             task = None
                         state.cur_always_task += 1
 
+            elif state.run_state == IteratingStates.HANDLERS:
+                if state.update_handlers:
+                    # reset handlers for HostState since handlers from include_tasks
+                    # might be there from previous flush
+                    state.handlers = self.handlers[:]
+                    state.update_handlers = False
+
+                while True:
+                    try:
+                        task = state.handlers[state.cur_handlers_task]
+                    except IndexError:
+                        task = None
+                        state.cur_handlers_task = 0
+                        state.run_state = state.pre_flushing_run_state
+                        state.update_handlers = True
+                        break
+                    else:
+                        state.cur_handlers_task += 1
+                        if task.is_host_notified(host):
+                            return state, task
+
             elif state.run_state == IteratingStates.COMPLETE:
                 return (state, None)
 
             # if something above set the task, break out of the loop now
             if task:
-                break
+                # skip implicit flush_handlers if there are no handlers notified
+                if (
+                    task.implicit
+                    and task._get_meta() == 'flush_handlers'
+                    and (
+                        # the state store in the `state` variable could be a nested state,
+                        # notifications are always stored in the top level state, get it here
+                        not self.get_state_for_host(host.name).handler_notifications
+                        # in case handlers notifying other handlers, the notifications are not
+                        # saved in `handler_notifications` and handlers are notified directly
+                        # to prevent duplicate handler runs, so check whether any handler
+                        # is notified
+                        and all(not h.notified_hosts for h in self.handlers)
+                    )
+                ):
+                    display.debug("No handler notifications for %s, skipping." % host.name)
+                elif (
+                    (role := task._role)
+                    and role._metadata.allow_duplicates is False
+                    and host.name in self._play._get_cached_role(role)._completed
+                ):
+                    display.debug("'%s' skipped because role has already run" % task)
+                else:
+                    break
 
         return (state, task)
 
     def _set_failed_state(self, state):
         if state.run_state == IteratingStates.SETUP:
             state.fail_state |= FailedStates.SETUP
+            state.run_state = IteratingStates.COMPLETE
+        elif state.run_state == IteratingStates.VALIDATE:
+            state.fail_state |= FailedStates.VALIDATE
             state.run_state = IteratingStates.COMPLETE
         elif state.run_state == IteratingStates.TASKS:
             if state.tasks_child_state is not None:
@@ -444,6 +515,11 @@ class PlayIterator:
     def mark_host_failed(self, host):
         s = self.get_host_state(host)
         display.debug("marking host %s failed, current state: %s" % (host, s))
+        if s.run_state == IteratingStates.HANDLERS:
+            # we are failing `meta: flush_handlers`, so just reset the state to whatever
+            # it was before and let `_set_failed_state` figure out the next state
+            s.run_state = s.pre_flushing_run_state
+            s.update_handlers = True
         s = self._set_failed_state(s)
         display.debug("^ failed state is now: %s" % s)
         self.set_state_for_host(host.name, s)
@@ -478,10 +554,23 @@ class PlayIterator:
         s = self.get_host_state(host)
         return self._check_failed_state(s)
 
+    def clear_host_errors(self, host):
+        self._clear_state_errors(self.get_state_for_host(host.name))
+
+    def _clear_state_errors(self, state: HostState) -> None:
+        state.fail_state = FailedStates.NONE
+
+        if state.tasks_child_state is not None:
+            self._clear_state_errors(state.tasks_child_state)
+        elif state.rescue_child_state is not None:
+            self._clear_state_errors(state.rescue_child_state)
+        elif state.always_child_state is not None:
+            self._clear_state_errors(state.always_child_state)
+
     def get_active_state(self, state):
-        '''
+        """
         Finds the active state, recursively if necessary when there are child states.
-        '''
+        """
         if state.run_state == IteratingStates.TASKS and state.tasks_child_state is not None:
             return self.get_active_state(state.tasks_child_state)
         elif state.run_state == IteratingStates.RESCUE and state.rescue_child_state is not None:
@@ -491,56 +580,60 @@ class PlayIterator:
         return state
 
     def is_any_block_rescuing(self, state):
-        '''
+        """
         Given the current HostState state, determines if the current block, or any child blocks,
         are in rescue mode.
-        '''
-        if state.run_state == IteratingStates.RESCUE:
+        """
+        if state.run_state in (IteratingStates.TASKS, IteratingStates.HANDLERS) and state.get_current_block().rescue:
             return True
         if state.tasks_child_state is not None:
             return self.is_any_block_rescuing(state.tasks_child_state)
+        if state.rescue_child_state is not None:
+            return self.is_any_block_rescuing(state.rescue_child_state)
+        if state.always_child_state is not None:
+            return self.is_any_block_rescuing(state.always_child_state)
         return False
-
-    def get_original_task(self, host, task):
-        # now a noop because we've changed the way we do caching
-        return (None, None)
 
     def _insert_tasks_into_state(self, state, task_list):
         # if we've failed at all, or if the task list is empty, just return the current state
-        if state.fail_state != FailedStates.NONE and state.run_state not in (IteratingStates.RESCUE, IteratingStates.ALWAYS) or not task_list:
+        if (state.fail_state != FailedStates.NONE and state.run_state == IteratingStates.TASKS) or not task_list:
             return state
 
         if state.run_state == IteratingStates.TASKS:
             if state.tasks_child_state:
                 state.tasks_child_state = self._insert_tasks_into_state(state.tasks_child_state, task_list)
             else:
-                target_block = state._blocks[state.cur_block].copy()
-                before = target_block.block[:state.cur_regular_task]
-                after = target_block.block[state.cur_regular_task:]
-                target_block.block = before + task_list + after
+                target_block = state._blocks[state.cur_block].copy(exclude_tasks=True)
+                target_block.block[state.cur_regular_task:state.cur_regular_task] = task_list
                 state._blocks[state.cur_block] = target_block
         elif state.run_state == IteratingStates.RESCUE:
             if state.rescue_child_state:
                 state.rescue_child_state = self._insert_tasks_into_state(state.rescue_child_state, task_list)
             else:
-                target_block = state._blocks[state.cur_block].copy()
-                before = target_block.rescue[:state.cur_rescue_task]
-                after = target_block.rescue[state.cur_rescue_task:]
-                target_block.rescue = before + task_list + after
+                target_block = state._blocks[state.cur_block].copy(exclude_tasks=True)
+                target_block.rescue[state.cur_rescue_task:state.cur_rescue_task] = task_list
                 state._blocks[state.cur_block] = target_block
         elif state.run_state == IteratingStates.ALWAYS:
             if state.always_child_state:
                 state.always_child_state = self._insert_tasks_into_state(state.always_child_state, task_list)
             else:
-                target_block = state._blocks[state.cur_block].copy()
-                before = target_block.always[:state.cur_always_task]
-                after = target_block.always[state.cur_always_task:]
-                target_block.always = before + task_list + after
+                target_block = state._blocks[state.cur_block].copy(exclude_tasks=True)
+                target_block.always[state.cur_always_task:state.cur_always_task] = task_list
                 state._blocks[state.cur_block] = target_block
+        elif state.run_state == IteratingStates.HANDLERS:
+            state.handlers[state.cur_handlers_task:state.cur_handlers_task] = [h for b in task_list for h in b.block]
+
         return state
 
     def add_tasks(self, host, task_list):
         self.set_state_for_host(host.name, self._insert_tasks_into_state(self.get_host_state(host), task_list))
+
+    @property
+    def host_states(self):
+        return self._host_states
+
+    def get_state_for_host(self, hostname: str) -> HostState:
+        return self._host_states[hostname]
 
     def set_state_for_host(self, hostname: str, state: HostState) -> None:
         if not isinstance(state, HostState):
@@ -556,3 +649,28 @@ class PlayIterator:
         if not isinstance(fail_state, FailedStates):
             raise AnsibleAssertionError('Expected fail_state to be a FailedStates but was %s' % (type(fail_state)))
         self._host_states[hostname].fail_state = fail_state
+
+    def add_notification(self, hostname: str, notification: str) -> None:
+        # preserve order
+        host_state = self._host_states[hostname]
+        if notification not in host_state.handler_notifications:
+            host_state.handler_notifications.append(notification)
+
+    def clear_notification(self, hostname: str, notification: str) -> None:
+        self._host_states[hostname].handler_notifications.remove(notification)
+
+    def end_host(self, hostname: str) -> None:
+        """Used by ``end_host``, ``end_batch`` and ``end_play`` meta tasks to end executing given host."""
+        state = self.get_active_state(self.get_state_for_host(hostname))
+        if state.run_state == IteratingStates.RESCUE:
+            # This is a special case for when ending a host occurs in rescue.
+            # By definition the meta task responsible for ending the host
+            # is the last task, so we need to clear the fail state to mark
+            # the host as rescued.
+            # The reason we need to do that is because this operation is
+            # normally done when PlayIterator transitions from rescue to
+            # always when only then we can say that rescue didn't fail
+            # but with ending a host via meta task, we don't get to that transition.
+            self.set_fail_state_for_host(hostname, FailedStates.NONE)
+        self.set_run_state_for_host(hostname, IteratingStates.COMPLETE)
+        self._play._removed_hosts.append(hostname)

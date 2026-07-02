@@ -4,8 +4,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 # PYTHON_ARGCOMPLETE_OK
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 # ansible.cli needs to be imported first, to ensure the source bin/* scripts run that code first
 from ansible.cli import CLI
@@ -18,7 +17,7 @@ from ansible import context
 from ansible.cli.arguments import option_helpers as opt_help
 from ansible.errors import AnsibleError
 from ansible.executor.playbook_executor import PlaybookExecutor
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils.common.text.converters import to_bytes
 from ansible.playbook.block import Block
 from ansible.plugins.loader import add_all_plugin_dirs
 from ansible.utils.collection_loader import AnsibleCollectionConfig
@@ -30,16 +29,17 @@ display = Display()
 
 
 class PlaybookCLI(CLI):
-    ''' the tool to run *Ansible playbooks*, which are a configuration and multinode deployment system.
-        See the project home page (https://docs.ansible.com) for more information. '''
+    """ the tool to run *Ansible playbooks*, which are a configuration and multinode deployment system.
+        See the project home page (https://docs.ansible.com) for more information. """
 
     name = 'ansible-playbook'
+
+    USES_CONNECTION = True
 
     def init_parser(self):
 
         # create parser for CLI options
         super(PlaybookCLI, self).init_parser(
-            usage="%prog [options] playbook.yml [playbook2 ...]",
             desc="Runs Ansible playbooks, executing the defined tasks on the targeted hosts.")
 
         opt_help.add_connect_options(self.parser)
@@ -54,6 +54,8 @@ class PlaybookCLI(CLI):
         opt_help.add_module_options(self.parser)
 
         # ansible playbook specific opts
+        self.parser.add_argument('--syntax-check', dest='syntax', action='store_true',
+                                 help="perform a syntax check on the playbook, but do not execute it")
         self.parser.add_argument('--list-tasks', dest='listtasks', action='store_true',
                                  help="list all tasks that would be executed")
         self.parser.add_argument('--list-tags', dest='listtags', action='store_true',
@@ -65,7 +67,18 @@ class PlaybookCLI(CLI):
         self.parser.add_argument('args', help='Playbook(s)', metavar='playbook', nargs='+')
 
     def post_process_args(self, options):
+
+        # for listing, we need to know if user had tag input
+        # capture here as parent function sets defaults for tags
+        havetags = bool(options.tags or options.skip_tags)
+
         options = super(PlaybookCLI, self).post_process_args(options)
+
+        if options.listtags:
+            # default to all tags (including never), when listing tags
+            # unless user specified tags
+            if not havetags:
+                options.tags = ['never', 'all']
 
         display.verbosity = options.verbosity
         self.validate_conflicts(options, runas_opts=True, fork_opts=True)
@@ -130,10 +143,6 @@ class PlaybookCLI(CLI):
         #
         # Fix this when we rewrite inventory by making localhost a real host (and thus show up in list_hosts())
         CLI.get_host_list(inventory, context.CLIARGS['subset'])
-
-        # flush fact cache if requested
-        if context.CLIARGS['flush_cache']:
-            self._flush_cache(inventory, variable_manager)
 
         # create the playbook executor, which manages running the plays via a task queue manager
         pbex = PlaybookExecutor(playbooks=context.CLIARGS['args'], inventory=inventory,
@@ -215,12 +224,6 @@ class PlaybookCLI(CLI):
             return 0
         else:
             return results
-
-    @staticmethod
-    def _flush_cache(inventory, variable_manager):
-        for host in inventory.list_hosts():
-            hostname = host.get_name()
-            variable_manager.clear_facts(hostname)
 
 
 def main(args=None):

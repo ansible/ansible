@@ -13,8 +13,7 @@
         lazy_eval: true
 
     - name: EXPECTED FAILURE actually using deep_undefined fails
-      debug:
-        msg: "{{ deep_undefined }}"
+      raw: "{{ deep_undefined }}"
       ignore_errors: true
       register: res
 

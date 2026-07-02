@@ -1,10 +1,8 @@
 # (c) 2012-17 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
+from __future__ import annotations
 
-__metaclass__ = type
 
 DOCUMENTATION = """
     name: list
@@ -39,7 +37,7 @@ from ansible.errors import AnsibleError
 
 class LookupModule(LookupBase):
 
-    def run(self, terms, **kwargs):
+    def run(self, terms, variables=None, **kwargs):
         if not isinstance(terms, Sequence):
             raise AnsibleError("with_list expects a list")
         return terms

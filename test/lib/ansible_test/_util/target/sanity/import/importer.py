@@ -1,6 +1,6 @@
 """Import the given python module(s) and report error(s) encountered."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+
+from __future__ import annotations
 
 
 def main():
@@ -44,15 +44,13 @@ def main():
         # noinspection PyCompatibility
         from importlib import import_module
     except ImportError:
-        def import_module(name):
+
+        def import_module(name, package=None):  # type: (str, str | None) -> types.ModuleType
+            assert package is None
             __import__(name)
             return sys.modules[name]
 
-    try:
-        # noinspection PyCompatibility
-        from StringIO import StringIO
-    except ImportError:
-        from io import StringIO
+    from io import BytesIO, TextIOWrapper
 
     try:
         from importlib.util import spec_from_loader, module_from_spec
@@ -64,11 +62,10 @@ def main():
 
     if collection_full_name:
         # allow importing code from collections when testing a collection
-        from ansible.module_utils.common.text.converters import to_bytes, to_text, to_native, text_type
 
         # noinspection PyProtectedMember
         from ansible.utils.collection_loader._collection_finder import _AnsibleCollectionFinder
-        from ansible.utils.collection_loader import _collection_finder
+        from ansible.utils.collection_loader import _collection_finder, _to_text
 
         yaml_to_dict_cache = {}
 
@@ -78,7 +75,7 @@ def main():
 
         def parse_value(value):
             """Custom value parser for JSON deserialization that recognizes our internal ISO date format."""
-            if isinstance(value, text_type):
+            if isinstance(value, str):
                 match = iso_date_re.search(value)
 
                 if match:
@@ -90,7 +87,7 @@ def main():
             """Object hook for custom ISO date deserialization from JSON."""
             return dict((key, parse_value(value)) for key, value in data.items())
 
-        def yaml_to_dict(yaml, content_id):
+        def yaml_to_dict(yaml: str | bytes, content_id):
             """
             Return a Python dict version of the provided YAML.
             Conversion is done in a subprocess since the current Python interpreter does not have access to PyYAML.
@@ -100,18 +97,18 @@ def main():
 
             try:
                 cmd = [external_python, yaml_to_json_path]
-                proc = subprocess.Popen([to_bytes(c) for c in cmd],  # pylint: disable=consider-using-with
-                                        stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                stdout_bytes, stderr_bytes = proc.communicate(to_bytes(yaml))
+                proc = subprocess.Popen(cmd,  # pylint: disable=consider-using-with
+                                        stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+                stdout, stderr = proc.communicate(_to_text(yaml))
 
                 if proc.returncode != 0:
-                    raise Exception('command %s failed with return code %d: %s' % ([to_native(c) for c in cmd], proc.returncode, to_native(stderr_bytes)))
+                    raise Exception('command %s failed with return code %d: %s' % (cmd, proc.returncode, stderr))
 
-                data = yaml_to_dict_cache[content_id] = json.loads(to_text(stdout_bytes), object_hook=object_hook)
+                data = yaml_to_dict_cache[content_id] = json.loads(stdout, object_hook=object_hook)
 
                 return data
             except Exception as ex:
-                raise Exception('internal importer error - failed to parse yaml: %s' % to_native(ex))
+                raise Exception(f'internal importer error - failed to parse yaml: {ex}')
 
         _collection_finder._meta_yml_to_dict = yaml_to_dict  # pylint: disable=protected-access
 
@@ -146,11 +143,13 @@ def main():
 
     class ImporterAnsibleModule:
         """Replacement for AnsibleModule to support import testing."""
+
         def __init__(self, *args, **kwargs):
             raise ImporterAnsibleModuleException()
 
     class RestrictedModuleLoader:
         """Python module loader that restricts inappropriate imports."""
+
         def __init__(self, path, name, restrict_to_module_paths):
             self.path = path
             self.name = name
@@ -163,7 +162,7 @@ def main():
             loader = self._get_loader(fullname, path=path)
             if loader is not None:
                 if has_py3_loader:
-                    # loader is expected to be Optional[importlib.abc.Loader], but RestrictedModuleLoader does not inherit from importlib.abc.Loder
+                    # loader is expected to be Optional[importlib.abc.Loader], but RestrictedModuleLoader does not inherit from importlib.abc.Loader
                     return spec_from_loader(fullname, loader)  # type: ignore[arg-type]
                 raise ImportError("Failed to import '%s' due to a bug in ansible-test. Check importlib imports for typos." % fullname)
             return None
@@ -435,9 +434,11 @@ def main():
 
     class Capture:
         """Captured output and/or exception."""
+
         def __init__(self):
-            self.stdout = StringIO()
-            self.stderr = StringIO()
+            # use buffered IO to simulate StringIO; allows Ansible's stream patching to behave without warnings
+            self.stdout = TextIOWrapper(BytesIO())
+            self.stderr = TextIOWrapper(BytesIO())
 
     def capture_report(path, capture, messages):
         """Report on captured output.
@@ -445,12 +446,17 @@ def main():
         :type capture: Capture
         :type messages: set[str]
         """
-        if capture.stdout.getvalue():
-            first = capture.stdout.getvalue().strip().splitlines()[0].strip()
+        # since we're using buffered IO, flush before checking for data
+        capture.stdout.flush()
+        capture.stderr.flush()
+        stdout_value = capture.stdout.buffer.getvalue()
+        if stdout_value:
+            first = stdout_value.decode().strip().splitlines()[0].strip()
             report_message(path, 0, 0, 'stdout', first, messages)
 
-        if capture.stderr.getvalue():
-            first = capture.stderr.getvalue().strip().splitlines()[0].strip()
+        stderr_value = capture.stderr.buffer.getvalue()
+        if stderr_value:
+            first = stderr_value.decode().strip().splitlines()[0].strip()
             report_message(path, 0, 0, 'stderr', first, messages)
 
     def report_message(path, line, column, code, message, messages):
@@ -487,6 +493,7 @@ def main():
         finally:
             if import_type == 'plugin' and not collection_loader:
                 from ansible.utils.collection_loader._collection_finder import _AnsibleCollectionFinder
+
                 _AnsibleCollectionFinder._remove()  # pylint: disable=protected-access
 
             if sys.meta_path[0] != restricted_loader:
@@ -538,24 +545,6 @@ def main():
                 warnings.filterwarnings(
                     "ignore",
                     "AnsibleCollectionFinder has already been configured")
-
-            if sys.version_info[0] == 2:
-                warnings.filterwarnings(
-                    "ignore",
-                    "Python 2 is no longer supported by the Python core team. Support for it is now deprecated in cryptography,"
-                    " and will be removed in a future release.")
-                warnings.filterwarnings(
-                    "ignore",
-                    "Python 2 is no longer supported by the Python core team. Support for it is now deprecated in cryptography,"
-                    " and will be removed in the next release.")
-
-            if sys.version_info[:2] == (3, 5):
-                warnings.filterwarnings(
-                    "ignore",
-                    "Python 3.5 support will be dropped in the next release ofcryptography. Please upgrade your Python.")
-                warnings.filterwarnings(
-                    "ignore",
-                    "Python 3.5 support will be dropped in the next release of cryptography. Please upgrade your Python.")
 
             try:
                 yield

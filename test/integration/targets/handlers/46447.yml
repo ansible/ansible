@@ -1,0 +1,16 @@
+- hosts: A,B
+  gather_facts: no
+  any_errors_fatal: True
+  tasks:
+    - command: /bin/true
+      notify: test_handler
+
+    - meta: flush_handlers
+
+    - name: Should not get here
+      debug:
+        msg: "SHOULD NOT GET HERE"
+
+  handlers:
+    - name: test_handler
+      command: /usr/bin/{{ (inventory_hostname == 'A') | ternary('true', 'false') }}

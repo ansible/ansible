@@ -13,8 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import re
 
@@ -33,20 +32,21 @@ class AIXNetwork(GenericBsdIfconfigNetwork):
         interface = dict(v4={}, v6={})
 
         netstat_path = self.module.get_bin_path('netstat')
+        if netstat_path is None:
+            return interface['v4'], interface['v6']
 
-        if netstat_path:
-            rc, out, err = self.module.run_command([netstat_path, '-nr'])
+        rc, out, err = self.module.run_command([netstat_path, '-nr'])
 
-            lines = out.splitlines()
-            for line in lines:
-                words = line.split()
-                if len(words) > 1 and words[0] == 'default':
-                    if '.' in words[1]:
-                        interface['v4']['gateway'] = words[1]
-                        interface['v4']['interface'] = words[5]
-                    elif ':' in words[1]:
-                        interface['v6']['gateway'] = words[1]
-                        interface['v6']['interface'] = words[5]
+        lines = out.splitlines()
+        for line in lines:
+            words = line.split()
+            if len(words) > 1 and words[0] == 'default':
+                if '.' in words[1]:
+                    interface['v4']['gateway'] = words[1]
+                    interface['v4']['interface'] = words[5]
+                elif ':' in words[1]:
+                    interface['v6']['gateway'] = words[1]
+                    interface['v6']['interface'] = words[5]
 
         return interface['v4'], interface['v6']
 
@@ -59,9 +59,7 @@ class AIXNetwork(GenericBsdIfconfigNetwork):
             all_ipv6_addresses=[],
         )
 
-        uname_rc = None
-        uname_out = None
-        uname_err = None
+        uname_rc = uname_out = uname_err = None
         uname_path = self.module.get_bin_path('uname')
         if uname_path:
             uname_rc, uname_out, uname_err = self.module.run_command([uname_path, '-W'])

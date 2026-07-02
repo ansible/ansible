@@ -1,0 +1,8 @@
+plugin: ansible.builtin.generator
+hosts:
+    name: "host_with_unnamed_parent"
+    parents:
+      - {}
+layers:
+    operation:
+      - something

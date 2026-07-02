@@ -1,4 +1,5 @@
 """Bootstrapping for test hosts."""
+
 from __future__ import annotations
 
 import dataclasses
@@ -23,30 +24,33 @@ from .core_ci import (
 )
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(kw_only=True)
 class Bootstrap:
     """Base class for bootstrapping systems."""
+
     controller: bool
-    python_versions: t.List[str]
+    python_interpreters: dict[str, str]
     ssh_key: SshKey
+    powershell_versions: list[str]
 
     @property
-    def bootstrap_type(self):  # type: () -> str
+    def bootstrap_type(self) -> str:
         """The bootstrap type to pass to the bootstrapping script."""
         return self.__class__.__name__.replace('Bootstrap', '').lower()
 
-    def get_variables(self):  # type: () -> t.Dict[str, t.Union[str, t.List[str]]]
+    def get_variables(self) -> dict[str, t.Union[str, list[str]]]:
         """The variables to template in the bootstrapping script."""
         return dict(
             bootstrap_type=self.bootstrap_type,
             controller='yes' if self.controller else '',
-            python_versions=self.python_versions,
+            python_interpreters=[f'{key}:{value}' for key, value in self.python_interpreters.items()],
             ssh_key_type=self.ssh_key.KEY_TYPE,
             ssh_private_key=self.ssh_key.key_contents,
             ssh_public_key=self.ssh_key.pub_contents,
+            powershell_versions=self.powershell_versions,
         )
 
-    def get_script(self):  # type: () -> str
+    def get_script(self) -> str:
         """Return a shell script to bootstrap the specified host."""
         path = os.path.join(ANSIBLE_TEST_TARGET_ROOT, 'setup', 'bootstrap.sh')
 
@@ -62,10 +66,11 @@ class Bootstrap:
         return script
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(kw_only=True)
 class BootstrapDocker(Bootstrap):
     """Bootstrap docker instances."""
-    def get_variables(self):  # type: () -> t.Dict[str, t.Union[str, t.List[str]]]
+
+    def get_variables(self) -> dict[str, t.Union[str, list[str]]]:
         """The variables to template in the bootstrapping script."""
         variables = super().get_variables()
 
@@ -77,13 +82,14 @@ class BootstrapDocker(Bootstrap):
         return variables
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(kw_only=True)
 class BootstrapRemote(Bootstrap):
     """Bootstrap remote instances."""
+
     platform: str
     platform_version: str
 
-    def get_variables(self):  # type: () -> t.Dict[str, t.Union[str, t.List[str]]]
+    def get_variables(self) -> dict[str, t.Union[str, list[str]]]:
         """The variables to template in the bootstrapping script."""
         variables = super().get_variables()
 

@@ -1,2 +1,0 @@
-minor_changes:
-  - new tests url, uri and urn will verify string as such, but they don't check existance of the resource

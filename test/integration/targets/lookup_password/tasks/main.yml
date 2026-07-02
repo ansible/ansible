@@ -116,7 +116,7 @@
     loop: "{{ l }}"
     register: passwords_noseed
 
-  - name: verify they are all different, this is not guaranteed, but statisically almost impossible
+  - name: verify they are all different, this is not guaranteed, but statistically almost impossible
     assert:
       that:
         - pns[0]['msg'] != pns[1]['msg']

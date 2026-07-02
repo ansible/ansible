@@ -3,3 +3,7 @@ keyed_groups:
   - key: tags
     prefix: tag
     default_value: "running"
+
+  - key: tags
+    prefix: without_trailing
+    trailing_separator: false

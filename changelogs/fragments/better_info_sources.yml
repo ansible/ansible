@@ -1,2 +1,0 @@
-bugfixes:
-  - action plugins now pass cannonical info to modules instead of 'temporary' info from play_context

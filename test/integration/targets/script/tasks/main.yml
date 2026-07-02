@@ -37,6 +37,17 @@
 ## script
 ##
 
+- name: Required one of free-form and cmd
+  script:
+  ignore_errors: yes
+  register: script_required
+
+- name: assert that the script fails if neither free-form nor cmd is given
+  assert:
+    that:
+      - script_required.failed
+      - "'one of the following' in script_required.msg"
+
 - name: execute the test.sh script via command
   script: test.sh
   register: script_result0
@@ -46,6 +57,29 @@
     that:
       - "script_result0.rc == 0"
       - "script_result0.stdout == 'win'"
+
+- name: Basic non-zero RC
+  script: exit_1.sh
+  ignore_errors: true
+  register: non_zero_rc
+
+- name: Ensure non-zero RC result
+  assert:
+    that:
+      - non_zero_rc is failed
+      - non_zero_rc.rc == 1
+
+- name: Exercise failed_when on non-zero RC
+  script: exit_1.sh
+  register: non_zero_rc_failed_when
+  failed_when: false
+
+- name: Ensure failed_when executed
+  assert:
+    that:
+      - non_zero_rc_failed_when is success
+      - non_zero_rc_failed_when.rc == 1
+      - non_zero_rc_failed_when.failed_when_result is false
 
 - name: Execute a script with a space in the path
   script: "'space path/test.sh'"
@@ -151,7 +185,7 @@
   assert:
     that:
       - script_result3 is failed
-      - script_result3.msg == "async is not supported for this task."
+      - script_result3.msg == "This action (script) does not support async."
 
 
 # check mode
@@ -194,11 +228,11 @@
     var: _check_mode_test2
     verbosity: 2
 
-- name: Assert that task was skipped and mesage was returned
+- name: Assert that task was skipped and message was returned
   assert:
     that:
       - _check_mode_test2 is skipped
-      - '_check_mode_test2.msg == "{{ remote_tmp_dir_test | expanduser }}/afile2.txt exists, matching creates option"'
+      - '_check_mode_test2.msg == (remote_tmp_dir_test | expanduser) + "/afile2.txt exists, matching creates option"'
 
 - name: Remove afile2.txt
   file:
@@ -220,7 +254,7 @@
   assert:
     that:
       - _check_mode_test3 is skipped
-      - '_check_mode_test3.msg == "{{ remote_tmp_dir_test | expanduser }}/afile2.txt does not exist, matching removes option"'
+      - '_check_mode_test3.msg == (remote_tmp_dir_test | expanduser) + "/afile2.txt does not exist, matching removes option"'
 
 # executable
 

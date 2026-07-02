@@ -2,9 +2,8 @@
 # Copyright: (c) 2021, Abhijeet Kasurde <akasurde@redhat.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
+from __future__ import annotations
 
-__metaclass__ = type
 
 import json
 import platform
@@ -12,8 +11,6 @@ import platform
 import pytest
 from ansible.modules import service
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.six import PY2
-from units.modules.utils import set_module_args
 
 
 def mocker_sunos_service(mocker):
@@ -29,7 +26,7 @@ def mocker_sunos_service(mocker):
     # Read a mocked /etc/release file
     mocked_etc_release_data = mocker.mock_open(
         read_data=" Oracle Solaris 12.0")
-    builtin_open = "__builtin__.open" if PY2 else "builtins.open"
+    builtin_open = "builtins.open"
     mocker.patch(builtin_open, mocked_etc_release_data)
 
     service_status = mocker.patch.object(
@@ -51,7 +48,7 @@ def mocked_sunos_service(mocker):
     mocker_sunos_service(mocker)
 
 
-def test_sunos_service_start(mocked_sunos_service, capfd):
+def test_sunos_service_start(mocked_sunos_service, capfd, set_module_args):
     """
     test SunOS Service Start
     """

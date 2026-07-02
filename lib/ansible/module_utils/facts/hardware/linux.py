@@ -13,8 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import collections
 import errno
@@ -25,16 +24,13 @@ import re
 import sys
 import time
 
-from multiprocessing import cpu_count
-from multiprocessing.pool import ThreadPool
-
-from ansible.module_utils._text import to_text
+from ansible.module_utils._internal import _no_six
+from ansible.module_utils._internal._concurrent import _futures
 from ansible.module_utils.common.locale import get_best_parsable_locale
-from ansible.module_utils.common.process import get_bin_path
+from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.common.text.formatters import bytes_to_human
 from ansible.module_utils.facts.hardware.base import Hardware, HardwareCollector
 from ansible.module_utils.facts.utils import get_file_content, get_file_lines, get_mount_size
-from ansible.module_utils.six import iteritems
 
 # import this as a module to ensure we get the same module instance
 from ansible.module_utils.facts import timeout
@@ -92,6 +88,7 @@ class LinuxHardware(Hardware):
         cpu_facts = self.get_cpu_facts(collected_facts=collected_facts)
         memory_facts = self.get_memory_facts()
         dmi_facts = self.get_dmi_facts()
+        sysinfo_facts = self.get_sysinfo_facts()
         device_facts = self.get_device_facts()
         uptime_facts = self.get_uptime_facts()
         lvm_facts = self.get_lvm_facts()
@@ -105,6 +102,7 @@ class LinuxHardware(Hardware):
         hardware_facts.update(cpu_facts)
         hardware_facts.update(memory_facts)
         hardware_facts.update(dmi_facts)
+        hardware_facts.update(sysinfo_facts)
         hardware_facts.update(device_facts)
         hardware_facts.update(uptime_facts)
         hardware_facts.update(lvm_facts)
@@ -170,6 +168,8 @@ class LinuxHardware(Hardware):
         coreid = 0
         sockets = {}
         cores = {}
+        zp = 0
+        zmt = 0
 
         xen = False
         xen_paravirt = False
@@ -182,7 +182,7 @@ class LinuxHardware(Hardware):
                         xen = True
                     # Only interested in the first line
                     break
-        except IOError:
+        except OSError:
             pass
 
         if not os.access("/proc/cpuinfo", os.R_OK):
@@ -207,9 +207,11 @@ class LinuxHardware(Hardware):
                     if 'vme' not in val:
                         xen_paravirt = True
 
+            if key == "flags":
+                cpu_facts['flags'] = val.split()
+
             # model name is for Intel arch, Processor (mind the uppercase P)
             # works for some ARM devices, like the Sheevaplug.
-            # 'ncpus active' is SPARC attribute
             if key in ['model name', 'Processor', 'vendor_id', 'cpu', 'Vendor', 'processor']:
                 if 'processor' not in cpu_facts:
                     cpu_facts['processor'] = []
@@ -233,8 +235,12 @@ class LinuxHardware(Hardware):
                 sockets[physid] = int(val)
             elif key == 'siblings':
                 cores[coreid] = int(val)
+            # S390x classic cpuinfo
             elif key == '# processors':
-                cpu_facts['processor_cores'] = int(val)
+                zp = int(val)
+            elif key == 'max thread id':
+                zmt = int(val) + 1
+            # SPARC
             elif key == 'ncpus active':
                 i = int(val)
 
@@ -250,13 +256,20 @@ class LinuxHardware(Hardware):
         if collected_facts.get('ansible_architecture', '').startswith(('armv', 'aarch', 'ppc')):
             i = processor_occurrence
 
-        # FIXME
-        if collected_facts.get('ansible_architecture') != 's390x':
+        if collected_facts.get('ansible_architecture') == 's390x':
+            # getting sockets would require 5.7+ with CONFIG_SCHED_TOPOLOGY
+            cpu_facts['processor_count'] = 1
+            cpu_facts['processor_cores'] = round(zp / zmt)
+            cpu_facts['processor_threads_per_core'] = zmt
+            cpu_facts['processor_vcpus'] = zp
+            cpu_facts['processor_nproc'] = zp
+        else:
             if xen_paravirt:
                 cpu_facts['processor_count'] = i
                 cpu_facts['processor_cores'] = i
                 cpu_facts['processor_threads_per_core'] = 1
                 cpu_facts['processor_vcpus'] = i
+                cpu_facts['processor_nproc'] = i
             else:
                 if sockets:
                     cpu_facts['processor_count'] = len(sockets)
@@ -271,40 +284,37 @@ class LinuxHardware(Hardware):
 
                 core_values = list(cores.values())
                 if core_values:
-                    cpu_facts['processor_threads_per_core'] = core_values[0] // cpu_facts['processor_cores']
+                    cpu_facts['processor_threads_per_core'] = round(core_values[0] / cpu_facts['processor_cores'])
                 else:
-                    cpu_facts['processor_threads_per_core'] = 1 // cpu_facts['processor_cores']
+                    cpu_facts['processor_threads_per_core'] = round(1 / cpu_facts['processor_cores'])
 
                 cpu_facts['processor_vcpus'] = (cpu_facts['processor_threads_per_core'] *
                                                 cpu_facts['processor_count'] * cpu_facts['processor_cores'])
 
-                # if the number of processors available to the module's
-                # thread cannot be determined, the processor count
-                # reported by /proc will be the default:
                 cpu_facts['processor_nproc'] = processor_occurrence
 
-                try:
-                    cpu_facts['processor_nproc'] = len(
-                        os.sched_getaffinity(0)
-                    )
-                except AttributeError:
-                    # In Python < 3.3, os.sched_getaffinity() is not available
-                    try:
-                        cmd = get_bin_path('nproc')
-                    except ValueError:
-                        pass
-                    else:
-                        rc, out, _err = self.module.run_command(cmd)
-                        if rc == 0:
-                            cpu_facts['processor_nproc'] = int(out)
+        # if the number of processors available to the module's
+        # thread cannot be determined, the processor count
+        # reported by /proc will be the default (as previously defined)
+        try:
+            cpu_facts['processor_nproc'] = len(
+                os.sched_getaffinity(0)
+            )
+        except AttributeError:
+            # In Python < 3.3, os.sched_getaffinity() is not available
+            nproc_cmd = self.module.get_bin_path('nproc')
+            if nproc_cmd is not None:
+                rc, out, _err = self.module.run_command(nproc_cmd)
+                if rc == 0:
+                    cpu_facts['processor_nproc'] = int(out)
 
         return cpu_facts
 
     def get_dmi_facts(self):
-        ''' learn dmi facts from system
+        """ learn dmi facts from system
 
         Try /sys first for dmi related facts.
-        If that is not available, fall back to dmidecode executable '''
+        If that is not available, fall back to dmidecode executable """
 
         dmi_facts = {}
 
@@ -359,7 +369,6 @@ class LinuxHardware(Hardware):
 
         else:
             # Fall back to using dmidecode, if available
-            dmi_bin = self.module.get_bin_path('dmidecode')
             DMI_DICT = {
                 'bios_date': 'bios-release-date',
                 'bios_vendor': 'bios-vendor',
@@ -380,24 +389,53 @@ class LinuxHardware(Hardware):
                 'product_version': 'system-version',
                 'system_vendor': 'system-manufacturer',
             }
-            for (k, v) in DMI_DICT.items():
-                if dmi_bin is not None:
-                    (rc, out, err) = self.module.run_command('%s -s %s' % (dmi_bin, v))
-                    if rc == 0:
-                        # Strip out commented lines (specific dmidecode output)
-                        thisvalue = ''.join([line for line in out.splitlines() if not line.startswith('#')])
-                        try:
-                            json.dumps(thisvalue)
-                        except UnicodeDecodeError:
-                            thisvalue = "NA"
+            dmi_bin = self.module.get_bin_path('dmidecode')
+            if dmi_bin is None:
+                dmi_facts = dict.fromkeys(
+                    DMI_DICT.keys(),
+                    'NA'
+                )
+                return dmi_facts
 
-                        dmi_facts[k] = thisvalue
-                    else:
-                        dmi_facts[k] = 'NA'
+            for (k, v) in DMI_DICT.items():
+                (rc, out, err) = self.module.run_command('%s -s %s' % (dmi_bin, v))
+                if rc == 0:
+                    # Strip out commented lines (specific dmidecode output)
+                    thisvalue = ''.join([line for line in out.splitlines() if not line.startswith('#')])
+                    try:
+                        json.dumps(thisvalue)
+                    except UnicodeDecodeError:
+                        thisvalue = "NA"
+
+                    dmi_facts[k] = thisvalue
                 else:
                     dmi_facts[k] = 'NA'
 
         return dmi_facts
+
+    def get_sysinfo_facts(self):
+        """Fetch /proc/sysinfo facts from s390 Linux on IBM Z"""
+        if not os.path.exists('/proc/sysinfo'):
+            return {}
+
+        sysinfo_facts = dict.fromkeys(
+            ('system_vendor', 'product_version', 'product_serial', 'product_name', 'product_uuid'),
+            'NA'
+        )
+        sysinfo_re = re.compile(
+            r"""
+                ^
+                    (?:Manufacturer:\s+(?P<system_vendor>.+))|
+                    (?:Type:\s+(?P<product_name>.+))|
+                    (?:Sequence\ Code:\s+0+(?P<product_serial>.+))
+                $
+            """,
+            re.VERBOSE | re.MULTILINE
+        )
+        data = get_file_content('/proc/sysinfo')
+        for match in sysinfo_re.finditer(data):
+            sysinfo_facts.update({k: v for k, v in match.groupdict().items() if v is not None})
+        return sysinfo_facts
 
     def _run_lsblk(self, lsblk_path):
         # call lsblk and collect all uuids
@@ -537,13 +575,14 @@ class LinuxHardware(Hardware):
 
         # start threads to query each mount
         results = {}
-        pool = ThreadPool(processes=min(len(mtab_entries), cpu_count()))
-        maxtime = globals().get('GATHER_TIMEOUT') or timeout.DEFAULT_GATHER_TIMEOUT
+        executor = _futures.DaemonThreadPoolExecutor()
+        maxtime = timeout.GATHER_TIMEOUT or timeout.DEFAULT_GATHER_TIMEOUT
         for fields in mtab_entries:
             # Transform octal escape sequences
             fields = [self._replace_octal_escapes(field) for field in fields]
 
             device, mount, fstype, options = fields[0], fields[1], fields[2], fields[3]
+            dump, passno = int(fields[4]), int(fields[5])
 
             if not device.startswith(('/', '\\')) and ':/' not in device or fstype == 'none':
                 continue
@@ -551,37 +590,38 @@ class LinuxHardware(Hardware):
             mount_info = {'mount': mount,
                           'device': device,
                           'fstype': fstype,
-                          'options': options}
+                          'options': options,
+                          'dump': dump,
+                          'passno': passno}
 
             if mount in bind_mounts:
                 # only add if not already there, we might have a plain /etc/mtab
                 if not self.MTAB_BIND_MOUNT_RE.match(options):
                     mount_info['options'] += ",bind"
 
-            results[mount] = {'info': mount_info,
-                              'extra': pool.apply_async(self.get_mount_info, (mount, device, uuids)),
-                              'timelimit': time.time() + maxtime}
+            results[mount] = {'info': mount_info, 'timelimit': time.monotonic() + maxtime}
+            results[mount]['extra'] = executor.submit(self.get_mount_info, mount, device, uuids)
 
-        pool.close()  # done with new workers, start gc
+        # done with spawning new workers, start gc
+        executor.shutdown()
 
-        # wait for workers and get results
-        while results:
+        while results:  # wait for workers and get results
             for mount in list(results):
                 done = False
                 res = results[mount]['extra']
                 try:
-                    if res.ready():
+                    if res.done():
                         done = True
-                        if res.successful():
-                            mount_size, uuid = res.get()
+                        if res.exception() is None:
+                            mount_size, uuid = res.result()
                             if mount_size:
                                 results[mount]['info'].update(mount_size)
                             results[mount]['info']['uuid'] = uuid or 'N/A'
                         else:
                             # failed, try to find out why, if 'res.successful' we know there are no exceptions
-                            results[mount]['info']['note'] = 'Could not get extra information: %s.' % (to_text(res.get()))
+                            results[mount]['info']['note'] = f'Could not get extra information: {res.exception()}'
 
-                    elif time.time() > results[mount]['timelimit']:
+                    elif time.monotonic() > results[mount]['timelimit']:
                         done = True
                         self.module.warn("Timeout exceeded when getting mount info for %s" % mount)
                         results[mount]['info']['note'] = 'Could not get extra information due to timeout'
@@ -613,7 +653,7 @@ class LinuxHardware(Hardware):
                     retval[target].add(entry)
                 except OSError:
                     continue
-            return dict((k, list(sorted(v))) for (k, v) in iteritems(retval))
+            return dict((k, list(sorted(v))) for (k, v) in retval.items())
         except OSError:
             return {}
 
@@ -625,7 +665,7 @@ class LinuxHardware(Hardware):
                 device = elements[3]
                 target = elements[5]
                 retval[target].add(device)
-            return dict((k, list(sorted(v))) for (k, v) in iteritems(retval))
+            return dict((k, list(sorted(v))) for (k, v) in retval.items())
         except OSError:
             return {}
 
@@ -710,7 +750,7 @@ class LinuxHardware(Hardware):
             d = {}
             d['virtual'] = virtual
             d['links'] = {}
-            for (link_type, link_values) in iteritems(links):
+            for (link_type, link_values) in links.items():
                 d['links'][link_type] = link_values.get(block, [])
             diskname = os.path.basename(sysdir)
             for key in ['vendor', 'model', 'sas_address', 'sas_device_handle']:
@@ -730,10 +770,24 @@ class LinuxHardware(Hardware):
                 if serial:
                     d['serial'] = serial
 
-            for key, test in [('removable', '/removable'),
-                              ('support_discard', '/queue/discard_granularity'),
-                              ]:
-                d[key] = get_file_content(sysdir + test)
+            d['removable'] = get_file_content(sysdir + '/removable')
+
+            # Historically, `support_discard` simply returned the value of
+            # `/sys/block/{device}/queue/discard_granularity`. When its value
+            # is `0`, then the block device doesn't support discards;
+            # _however_, it being greater than zero doesn't necessarily mean
+            # that the block device _does_ support discards.
+            #
+            # Another indication that a block device doesn't support discards
+            # is `/sys/block/{device}/queue/discard_max_hw_bytes` being equal
+            # to `0` (with the same caveat as above). So if either of those are
+            # `0`, set `support_discard` to zero, otherwise set it to the value
+            # of `discard_granularity` for backwards compatibility.
+            d['support_discard'] = (
+                '0'
+                if get_file_content(sysdir + '/queue/discard_max_hw_bytes') == '0'
+                else get_file_content(sysdir + '/queue/discard_granularity')
+            )
 
             if diskname in devs_wwn:
                 d['wwn'] = devs_wwn[diskname]
@@ -747,16 +801,16 @@ class LinuxHardware(Hardware):
                     part_sysdir = sysdir + "/" + partname
 
                     part['links'] = {}
-                    for (link_type, link_values) in iteritems(links):
+                    for (link_type, link_values) in links.items():
                         part['links'][link_type] = link_values.get(partname, [])
 
                     part['start'] = get_file_content(part_sysdir + "/start", 0)
-                    part['sectors'] = get_file_content(part_sysdir + "/size", 0)
-
                     part['sectorsize'] = get_file_content(part_sysdir + "/queue/logical_block_size")
                     if not part['sectorsize']:
                         part['sectorsize'] = get_file_content(part_sysdir + "/queue/hw_sector_size", 512)
-                    part['size'] = bytes_to_human((float(part['sectors']) * 512.0))
+                    # sysfs sectorcount assumes 512 blocksize. Convert using the correct sectorsize
+                    part['sectors'] = int(get_file_content(part_sysdir + "/size", 0)) * 512 // int(part['sectorsize'])
+                    part['size'] = bytes_to_human(float(part['sectors']) * float(part['sectorsize']))
                     part['uuid'] = get_partition_uuid(partname)
                     self.get_holders(part, part_sysdir)
 
@@ -770,13 +824,14 @@ class LinuxHardware(Hardware):
                 if m:
                     d['scheduler_mode'] = m.group(2)
 
-            d['sectors'] = get_file_content(sysdir + "/size")
-            if not d['sectors']:
-                d['sectors'] = 0
             d['sectorsize'] = get_file_content(sysdir + "/queue/logical_block_size")
             if not d['sectorsize']:
                 d['sectorsize'] = get_file_content(sysdir + "/queue/hw_sector_size", 512)
-            d['size'] = bytes_to_human(float(d['sectors']) * 512.0)
+            # sysfs sectorcount assumes 512 blocksize. Convert using the correct sectorsize
+            d['sectors'] = int(get_file_content(sysdir + "/size")) * 512 // int(d['sectorsize'])
+            if not d['sectors']:
+                d['sectors'] = 0
+            d['size'] = bytes_to_human(float(d['sectors']) * float(d['sectorsize']))
 
             d['host'] = ""
 
@@ -818,22 +873,26 @@ class LinuxHardware(Hardware):
     def get_lvm_facts(self):
         """ Get LVM Facts if running as root and lvm utils are available """
 
-        lvm_facts = {}
+        lvm_facts = {'lvm': 'N/A'}
+        vgs_cmd = self.module.get_bin_path('vgs')
+        if vgs_cmd is None:
+            return lvm_facts
 
-        if os.getuid() == 0 and self.module.get_bin_path('vgs'):
+        if os.getuid() == 0:
             lvm_util_options = '--noheadings --nosuffix --units g --separator ,'
 
-            vgs_path = self.module.get_bin_path('vgs')
             # vgs fields: VG #PV #LV #SN Attr VSize VFree
             vgs = {}
-            if vgs_path:
-                rc, vg_lines, err = self.module.run_command('%s %s' % (vgs_path, lvm_util_options))
-                for vg_line in vg_lines.splitlines():
-                    items = vg_line.strip().split(',')
-                    vgs[items[0]] = {'size_g': items[-2],
-                                     'free_g': items[-1],
-                                     'num_lvs': items[2],
-                                     'num_pvs': items[1]}
+            rc, vg_lines, err = self.module.run_command('%s %s' % (vgs_cmd, lvm_util_options))
+            for vg_line in vg_lines.splitlines():
+                items = vg_line.strip().split(',')
+                vgs[items[0]] = {
+                    'size_g': items[-2],
+                    'free_g': items[-1],
+                    'num_lvs': items[2],
+                    'num_pvs': items[1],
+                    'lvs': {},
+                }
 
             lvs_path = self.module.get_bin_path('lvs')
             # lvs fields:
@@ -843,7 +902,18 @@ class LinuxHardware(Hardware):
                 rc, lv_lines, err = self.module.run_command('%s %s' % (lvs_path, lvm_util_options))
                 for lv_line in lv_lines.splitlines():
                     items = lv_line.strip().split(',')
-                    lvs[items[0]] = {'size_g': items[3], 'vg': items[1]}
+                    vg_name = items[1]
+                    lv_name = items[0]
+                    # The LV name is only unique per VG, so the top level fact lvs can be misleading.
+                    # TODO: deprecate lvs in favor of vgs
+                    lvs[lv_name] = {'size_g': items[3], 'vg': vg_name}
+                    try:
+                        vgs[vg_name]['lvs'][lv_name] = {'size_g': items[3]}
+                    except KeyError:
+                        self.module.warn(
+                            "An LVM volume group was created while gathering LVM facts, "
+                            "and is not included in ansible_facts['vgs']."
+                        )
 
             pvs_path = self.module.get_bin_path('pvs')
             # pvs fields: PV VG #Fmt #Attr PSize PFree
@@ -867,3 +937,7 @@ class LinuxHardwareCollector(HardwareCollector):
     _fact_class = LinuxHardware
 
     required_facts = set(['platform'])
+
+
+def __getattr__(importable_name):
+    return _no_six.deprecate(importable_name, __name__, "iteritems")

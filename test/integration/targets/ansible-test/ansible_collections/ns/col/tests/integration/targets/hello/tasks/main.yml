@@ -1,7 +1,0 @@
-- hello:
-    name: Ansibull
-  register: hello
-
-- assert:
-    that:
-      - hello.message == 'Hello Ansibull'

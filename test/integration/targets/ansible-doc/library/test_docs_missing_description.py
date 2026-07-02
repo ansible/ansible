@@ -1,9 +1,8 @@
 #!/usr/bin/python
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: test_docs_returns
 short_description: Test module
@@ -14,13 +13,13 @@ author:
 options:
     test:
         type: str
-'''
+"""
 
-EXAMPLES = '''
-'''
+EXAMPLES = """
+"""
 
-RETURN = '''
-'''
+RETURN = """
+"""
 
 
 from ansible.module_utils.basic import AnsibleModule

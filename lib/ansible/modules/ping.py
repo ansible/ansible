@@ -4,17 +4,16 @@
 # (c) 2016, Toshio Kuratomi <tkuratomi@ansible.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: ping
 version_added: historical
-short_description: Try to connect to host, verify a usable python and return C(pong) on success
+short_description: Try to connect to host, verify a usable python and return V(pong) on success
 description:
-  - A trivial test module, this module always returns C(pong) on successful
+  - A trivial test module, this module always returns V(pong) on successful
     contact. It does not make sense in playbooks, but it is useful from
     C(/usr/bin/ansible) to verify the ability to login and that a usable Python is configured.
   - This is NOT ICMP ping, this is just a trivial test module that requires Python on the remote-node.
@@ -23,8 +22,8 @@ description:
 options:
   data:
     description:
-      - Data to return for the C(ping) return value.
-      - If this parameter is set to C(crash), the module will cause an exception.
+      - Data to return for the RV(ping) return value.
+      - If this parameter is set to V(crash), the module will cause an exception.
     type: str
     default: pong
 extends_documentation_fragment:
@@ -42,9 +41,9 @@ seealso:
 author:
   - Ansible Core Team
   - Michael DeHaan
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
 # Test we can logon to 'webservers' and execute python with json lib.
 # ansible webservers -m ansible.builtin.ping
 
@@ -54,15 +53,15 @@ EXAMPLES = '''
 - name: Induce an exception to see what happens
   ansible.builtin.ping:
     data: crash
-'''
+"""
 
-RETURN = '''
+RETURN = """
 ping:
-    description: Value provided with the data parameter.
+    description: Value provided with the O(data) parameter.
     returned: success
     type: str
     sample: pong
-'''
+"""
 
 from ansible.module_utils.basic import AnsibleModule
 

@@ -24,7 +24,7 @@
     content: 'Hello World'
 
 #
-# Error condtion: specify a directory with state={link,file}, force=False
+# Error condition: specify a directory with state={link,file}, force=False
 #
 
 # file raises an error

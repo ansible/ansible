@@ -15,16 +15,12 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 
 from ansible.errors import AnsibleParserError, AnsibleError
-from ansible.module_utils._text import to_native
-from ansible.module_utils.six import string_types
-from ansible.playbook.attribute import FieldAttribute
+from ansible.playbook.attribute import NonInheritableFieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.collectionsearch import CollectionSearch
 from ansible.playbook.helpers import load_list_of_roles
@@ -34,15 +30,15 @@ __all__ = ['RoleMetadata']
 
 
 class RoleMetadata(Base, CollectionSearch):
-    '''
+    """
     This class wraps the parsing and validation of the optional metadata
     within each Role (meta/main.yml).
-    '''
+    """
 
-    allow_duplicates = FieldAttribute(isa='bool', default=False)
-    dependencies = FieldAttribute(isa='list', default=list)
-    galaxy_info = FieldAttribute(isa='GalaxyInfo')
-    argument_specs = FieldAttribute(isa='dict', default=dict)
+    allow_duplicates = NonInheritableFieldAttribute(isa='bool', default=False)
+    dependencies = NonInheritableFieldAttribute(isa='list', default=list)
+    galaxy_info = NonInheritableFieldAttribute(isa='dict')
+    argument_specs = NonInheritableFieldAttribute(isa='dict', default=dict)
 
     def __init__(self, owner=None):
         self._owner = owner
@@ -50,9 +46,9 @@ class RoleMetadata(Base, CollectionSearch):
 
     @staticmethod
     def load(data, owner, variable_manager=None, loader=None):
-        '''
+        """
         Returns a new RoleMetadata object based on the datastructure passed in.
-        '''
+        """
 
         if not isinstance(data, dict):
             raise AnsibleParserError("the 'meta/main.yml' for role %s is not a dictionary" % owner.get_name())
@@ -61,10 +57,10 @@ class RoleMetadata(Base, CollectionSearch):
         return m
 
     def _load_dependencies(self, attr, ds):
-        '''
+        """
         This is a helper loading function for the dependencies list,
         which returns a list of RoleInclude objects
-        '''
+        """
 
         roles = []
         if ds:
@@ -73,7 +69,7 @@ class RoleMetadata(Base, CollectionSearch):
 
             for role_def in ds:
                 # FIXME: consolidate with ansible-galaxy to keep this in sync
-                if isinstance(role_def, string_types) or 'role' in role_def or 'name' in role_def:
+                if isinstance(role_def, str) or 'role' in role_def or 'name' in role_def:
                     roles.append(role_def)
                     continue
                 try:
@@ -82,8 +78,8 @@ class RoleMetadata(Base, CollectionSearch):
                     if def_parsed.get('name'):
                         role_def['name'] = def_parsed['name']
                     roles.append(role_def)
-                except AnsibleError as exc:
-                    raise AnsibleParserError(to_native(exc), obj=role_def, orig_exc=exc)
+                except AnsibleError as ex:
+                    raise AnsibleParserError("Error parsing role dependencies.", obj=role_def) from ex
 
         current_role_path = None
         collection_search_list = None
@@ -107,24 +103,5 @@ class RoleMetadata(Base, CollectionSearch):
             return load_list_of_roles(roles, play=self._owner._play, current_role_path=current_role_path,
                                       variable_manager=self._variable_manager, loader=self._loader,
                                       collection_search_list=collection_search_list)
-        except AssertionError as e:
-            raise AnsibleParserError("A malformed list of role dependencies was encountered.", obj=self._ds, orig_exc=e)
-
-    def _load_galaxy_info(self, attr, ds):
-        '''
-        This is a helper loading function for the galaxy info entry
-        in the metadata, which returns a GalaxyInfo object rather than
-        a simple dictionary.
-        '''
-
-        return ds
-
-    def serialize(self):
-        return dict(
-            allow_duplicates=self._allow_duplicates,
-            dependencies=self._dependencies
-        )
-
-    def deserialize(self, data):
-        setattr(self, 'allow_duplicates', data.get('allow_duplicates', False))
-        setattr(self, 'dependencies', data.get('dependencies', []))
+        except AssertionError as ex:
+            raise AnsibleParserError("A malformed list of role dependencies was encountered.", obj=self._ds) from ex

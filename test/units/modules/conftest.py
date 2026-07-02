@@ -1,31 +1,34 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-import json
+import typing as t
 
 import pytest
 
-from ansible.module_utils.six import string_types
-from ansible.module_utils._text import to_bytes
-from ansible.module_utils.common._collections_compat import MutableMapping
+from ansible.module_utils.testing import patch_module_args
+
+from ..mock.module import module_env_mocker  # expose shared fixture in this part of the unit test tree
+
+assert module_env_mocker is not None  # avoid unused imports
 
 
 @pytest.fixture
-def patch_ansible_module(request, mocker):
-    if isinstance(request.param, string_types):
-        args = request.param
-    elif isinstance(request.param, MutableMapping):
-        if 'ANSIBLE_MODULE_ARGS' not in request.param:
-            request.param = {'ANSIBLE_MODULE_ARGS': request.param}
-        if '_ansible_remote_tmp' not in request.param['ANSIBLE_MODULE_ARGS']:
-            request.param['ANSIBLE_MODULE_ARGS']['_ansible_remote_tmp'] = '/tmp'
-        if '_ansible_keep_remote_files' not in request.param['ANSIBLE_MODULE_ARGS']:
-            request.param['ANSIBLE_MODULE_ARGS']['_ansible_keep_remote_files'] = False
-        args = json.dumps(request.param)
-    else:
-        raise Exception('Malformed data to the patch_ansible_module pytest fixture')
+def set_module_args() -> t.Iterator[t.Callable[[dict[str, t.Any] | None], None]]:
+    ctx: t.ContextManager | None = None
 
-    mocker.patch('ansible.module_utils.basic._ANSIBLE_ARGS', to_bytes(args))
+    def set_module_args(args: dict[str, t.Any] | None = None) -> None:
+        nonlocal ctx
+
+        args['_ansible_remote_tmp'] = '/tmp'
+        args['_ansible_keep_remote_files'] = False
+
+        ctx = t.cast(t.ContextManager, patch_module_args(args))
+        ctx.__enter__()
+
+    try:
+        yield set_module_args
+    finally:
+        if ctx:
+            ctx.__exit__(None, None, None)

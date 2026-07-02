@@ -24,22 +24,21 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-import json
+import json  # pylint: disable=unused-import
 
 
 # NB: a copy of this function exists in ../../modules/core/async_wrapper.py. Ensure any
 # changes are propagated there.
 def _filter_non_json_lines(data, objects_only=False):
-    '''
+    """
     Used to filter unrelated output around module JSON output, like messages from
     tcagetattr, or where dropbear spews MOTD on every single command (which is nuts).
 
     Filters leading lines before first line-starting occurrence of '{' or '[', and filter all
     trailing lines after matching close character (working from the bottom of output).
-    '''
+    """
     warnings = []
 
     # Filter initial junk

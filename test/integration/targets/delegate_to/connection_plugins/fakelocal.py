@@ -1,15 +1,14 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
     connection: fakelocal
     short_description: dont execute anything
     description:
         - This connection plugin just verifies parameters passed in
     author: ansible (@core)
-    version_added: histerical
+    version_added: hysterical
     options:
       password:
           description: Authentication password for the C(remote_user). Can be supplied as CLI option.
@@ -23,7 +22,7 @@ DOCUMENTATION = '''
               key: remote_user
           vars:
               - name: ansible_user
-'''
+"""
 
 from ansible.errors import AnsibleConnectionFailure
 from ansible.plugins.connection import ConnectionBase
@@ -33,7 +32,7 @@ display = Display()
 
 
 class Connection(ConnectionBase):
-    ''' Local based connections '''
+    """ Local based connections """
 
     transport = 'fakelocal'
     has_pipelining = True
@@ -44,7 +43,7 @@ class Connection(ConnectionBase):
         self.cwd = None
 
     def _connect(self):
-        ''' verify '''
+        """ verify """
 
         if self.get_option('remote_user') == 'invaliduser' and self.get_option('password') == 'badpassword':
             raise AnsibleConnectionFailure('Got invaliduser and badpassword')
@@ -55,22 +54,22 @@ class Connection(ConnectionBase):
         return self
 
     def exec_command(self, cmd, in_data=None, sudoable=True):
-        ''' run a command on the local host '''
+        """ run a command on the local host """
 
         super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
 
         return 0, '{"msg": "ALL IS GOOD"}', ''
 
     def put_file(self, in_path, out_path):
-        ''' transfer a file from local to local '''
+        """ transfer a file from local to local """
 
         super(Connection, self).put_file(in_path, out_path)
 
     def fetch_file(self, in_path, out_path):
-        ''' fetch a file from local to local -- for compatibility '''
+        """ fetch a file from local to local -- for compatibility """
 
         super(Connection, self).fetch_file(in_path, out_path)
 
     def close(self):
-        ''' terminate the connection; nothing to do here '''
+        """ terminate the connection; nothing to do here """
         self._connected = False

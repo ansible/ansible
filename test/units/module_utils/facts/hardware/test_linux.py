@@ -13,13 +13,12 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 
-from units.compat import unittest
-from units.compat.mock import Mock, patch
+import unittest
+from unittest.mock import Mock, patch
 
 from ansible.module_utils.facts import timeout
 
@@ -29,8 +28,6 @@ from . linux_data import LSBLK_OUTPUT, LSBLK_OUTPUT_2, LSBLK_UUIDS, MTAB, MTAB_E
 
 with open(os.path.join(os.path.dirname(__file__), '../fixtures/findmount_output.txt')) as f:
     FINDMNT_OUTPUT = f.read()
-
-GET_MOUNT_SIZE = {}
 
 
 def mock_get_mount_size(mountpoint):
@@ -73,12 +70,14 @@ class TestFactsLinuxHardwareGetMountFacts(unittest.TestCase):
                          'block_total': 105871006,
                          'block_used': 5713133,
                          'device': '/dev/mapper/fedora_dhcp129--186-home',
+                         'dump': 0,
                          'fstype': 'ext4',
                          'inode_available': 26860880,
                          'inode_total': 26902528,
                          'inode_used': 41648,
                          'mount': '/home',
                          'options': 'rw,seclabel,relatime,data=ordered',
+                         'passno': 0,
                          'size_available': 410246647808,
                          'size_total': 433647640576,
                          'uuid': 'N/A'}

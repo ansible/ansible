@@ -1,9 +1,8 @@
 """PyPI proxy management."""
+
 from __future__ import annotations
 
-import atexit
 import os
-import typing as t
 import urllib.parse
 
 from .io import (
@@ -24,6 +23,7 @@ from .util import (
 )
 
 from .util_common import (
+    ExitHandler,
     process_scoped_temporary_file,
 )
 
@@ -50,12 +50,12 @@ from .inventory import (
 )
 
 
-def run_pypi_proxy(args, targets_use_pypi):  # type: (EnvironmentConfig, bool) -> None
+def run_pypi_proxy(args: EnvironmentConfig, targets_use_pypi: bool) -> None:
     """Run a PyPI proxy support container."""
     if args.pypi_endpoint:
         return  # user has overridden the proxy endpoint, there is nothing to provision
 
-    versions_needing_proxy = tuple()  # type: t.Tuple[str, ...]  # preserved for future use, no versions currently require this
+    versions_needing_proxy: tuple[str, ...] = tuple()  # preserved for future use, no versions currently require this
     posix_targets = [target for target in args.targets if isinstance(target, PosixConfig)]
     need_proxy = targets_use_pypi and any(target.python.version in versions_needing_proxy for target in posix_targets)
     use_proxy = args.pypi_proxy or need_proxy
@@ -70,19 +70,19 @@ def run_pypi_proxy(args, targets_use_pypi):  # type: (EnvironmentConfig, bool) -
         display.warning('Unable to use the PyPI proxy because Docker is not available. Installation of packages using `pip` may fail.')
         return
 
-    image = 'quay.io/ansible/pypi-test-container:2.0.0'
+    image = 'quay.io/ansible/pypi-test-container:3.6.0'
     port = 3141
 
     run_support_container(
         args=args,
         context='__pypi_proxy__',
         image=image,
-        name=f'pypi-test-container-{args.session_name}',
+        name='pypi-test-container',
         ports=[port],
     )
 
 
-def configure_pypi_proxy(args, profile):  # type: (EnvironmentConfig, HostProfile) -> None
+def configure_pypi_proxy(args: EnvironmentConfig, profile: HostProfile) -> None:
     """Configure the environment to use a PyPI proxy, if present."""
     if args.pypi_endpoint:
         pypi_endpoint = args.pypi_endpoint
@@ -108,19 +108,19 @@ def configure_pypi_proxy(args, profile):  # type: (EnvironmentConfig, HostProfil
         configure_target_pypi_proxy(args, profile, pypi_endpoint, pypi_hostname)
 
 
-def configure_controller_pypi_proxy(args, profile, pypi_endpoint, pypi_hostname):  # type: (EnvironmentConfig, HostProfile, str, str) -> None
+def configure_controller_pypi_proxy(args: EnvironmentConfig, profile: HostProfile, pypi_endpoint: str, pypi_hostname: str) -> None:
     """Configure the controller environment to use a PyPI proxy."""
     configure_pypi_proxy_pip(args, profile, pypi_endpoint, pypi_hostname)
     configure_pypi_proxy_easy_install(args, profile, pypi_endpoint)
 
 
-def configure_target_pypi_proxy(args, profile, pypi_endpoint, pypi_hostname):  # type: (EnvironmentConfig, HostProfile, str, str) -> None
+def configure_target_pypi_proxy(args: EnvironmentConfig, profile: HostProfile, pypi_endpoint: str, pypi_hostname: str) -> None:
     """Configure the target environment to use a PyPI proxy."""
     inventory_path = process_scoped_temporary_file(args)
 
     create_posix_inventory(args, inventory_path, [profile])
 
-    def cleanup_pypi_proxy():
+    def cleanup_pypi_proxy() -> None:
         """Undo changes made to configure the PyPI proxy."""
         run_playbook(args, inventory_path, 'pypi_proxy_restore.yml', capture=True)
 
@@ -129,19 +129,19 @@ def configure_target_pypi_proxy(args, profile, pypi_endpoint, pypi_hostname):  #
     run_playbook(args, inventory_path, 'pypi_proxy_prepare.yml', capture=True, variables=dict(
         pypi_endpoint=pypi_endpoint, pypi_hostname=pypi_hostname, force=force))
 
-    atexit.register(cleanup_pypi_proxy)
+    ExitHandler.register(cleanup_pypi_proxy)
 
 
-def configure_pypi_proxy_pip(args, profile, pypi_endpoint, pypi_hostname):  # type: (EnvironmentConfig, HostProfile, str, str) -> None
+def configure_pypi_proxy_pip(args: EnvironmentConfig, profile: HostProfile, pypi_endpoint: str, pypi_hostname: str) -> None:
     """Configure a custom index for pip based installs."""
     pip_conf_path = os.path.expanduser('~/.pip/pip.conf')
-    pip_conf = '''
+    pip_conf = """
 [global]
 index-url = {0}
 trusted-host = {1}
-'''.format(pypi_endpoint, pypi_hostname).strip()
+""".format(pypi_endpoint, pypi_hostname).strip()
 
-    def pip_conf_cleanup():  # type: () -> None
+    def pip_conf_cleanup() -> None:
         """Remove custom pip PyPI config."""
         display.info('Removing custom PyPI config: %s' % pip_conf_path, verbosity=1)
         os.remove(pip_conf_path)
@@ -154,21 +154,21 @@ trusted-host = {1}
 
     if not args.explain:
         write_text_file(pip_conf_path, pip_conf, True)
-        atexit.register(pip_conf_cleanup)
+        ExitHandler.register(pip_conf_cleanup)
 
 
-def configure_pypi_proxy_easy_install(args, profile, pypi_endpoint):  # type: (EnvironmentConfig, HostProfile, str) -> None
+def configure_pypi_proxy_easy_install(args: EnvironmentConfig, profile: HostProfile, pypi_endpoint: str) -> None:
     """Configure a custom index for easy_install based installs."""
     pydistutils_cfg_path = os.path.expanduser('~/.pydistutils.cfg')
-    pydistutils_cfg = '''
+    pydistutils_cfg = """
 [easy_install]
 index_url = {0}
-'''.format(pypi_endpoint).strip()
+""".format(pypi_endpoint).strip()
 
     if os.path.exists(pydistutils_cfg_path) and not profile.config.is_managed:
         raise ApplicationError('Refusing to overwrite existing file: %s' % pydistutils_cfg_path)
 
-    def pydistutils_cfg_cleanup():  # type: () -> None
+    def pydistutils_cfg_cleanup() -> None:
         """Remove custom PyPI config."""
         display.info('Removing custom PyPI config: %s' % pydistutils_cfg_path, verbosity=1)
         os.remove(pydistutils_cfg_path)
@@ -178,4 +178,4 @@ index_url = {0}
 
     if not args.explain:
         write_text_file(pydistutils_cfg_path, pydistutils_cfg, True)
-        atexit.register(pydistutils_cfg_cleanup)
+        ExitHandler.register(pydistutils_cfg_cleanup)

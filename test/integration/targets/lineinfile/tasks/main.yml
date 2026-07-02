@@ -258,6 +258,27 @@
     that:
       - "result.stat.checksum == 'd4eeb07bdebab2d1cdb3ec4a3635afa2618ad4ea'"
 
+- name: try to remove the middle line again
+  lineinfile:
+    dest: "{{ remote_tmp_dir }}/test.txt"
+    state: absent
+    regexp: "^This is line 3$"
+  register: result
+
+- name: assert no change was made
+  assert:
+    that: result is not changed
+
+- name: use stat to verify no change was made
+  stat:
+    path: "{{ remote_tmp_dir }}/test.txt"
+  register: result
+
+- name: assert test checksum matches after the middle line was removed
+  assert:
+    that:
+      - "result.stat.checksum == 'd4eeb07bdebab2d1cdb3ec4a3635afa2618ad4ea'"
+
 - name: run a validation script that succeeds
   lineinfile:
     dest: "{{ remote_tmp_dir }}/test.txt"
@@ -854,7 +875,7 @@
     path:  "{{ remote_tmp_dir }}/testempty.txt"
   register: oneline_insbefore_file
 
-- name: Assert that insertebefore worked properly with a one line file
+- name: Assert that insertbefore worked properly with a one line file
   assert:
     that:
       - oneline_insbefore_test1 is changed
@@ -943,9 +964,6 @@
     warning_message: >-
       The search string is an empty string, which will match every line in the file.
       This may have unintended consequences, such as replacing the last line in the file rather than appending.
-
-- name: meta
-  meta: end_play
 
 ###################################################################
 ## Issue #58923
@@ -1397,3 +1415,162 @@
       - testend1 is changed
       - testend2 is changed
       - testend_file.stat.checksum == 'ef36116966836ce04f6b249fd1837706acae4e19'
+
+# Test lineinfile operations in a non-UTF8 encoding
+
+- name: encoding - create a file
+  lineinfile:
+    path: "{{ remote_tmp_dir }}/test-encoding-file.txt"
+    create: True
+    line: "Test line encoded in cp273"
+    state: present
+    encoding: cp273
+  register: result1
+
+- name: assert that the file was created
+  assert:
+    that:
+      - result1 is changed
+
+- name: stat the new file
+  stat:
+    path: "{{ remote_tmp_dir }}/test-encoding-file.txt"
+  register: result2
+
+- name: assert the file content is as expected.
+  assert:
+    that:
+      - result2.stat.exists
+      - result2.stat.checksum == 'e0bf2bdca94727d03483a9adab66543bcec4b99a'
+
+
+- name: encoding - write a line
+  lineinfile:
+    line: "Another test line."
+    state: present
+    path: "{{ remote_tmp_dir }}/test-encoding-file.txt"
+    encoding: cp273
+  register: result1
+
+- name: assert that the file was changed.
+  assert:
+    that:
+      - result1 is changed
+
+- name: stat the file.
+  stat:
+    path: "{{ remote_tmp_dir }}/test-encoding-file.txt"
+  register: result2
+
+- name: assert the file content is as expected.
+  assert:
+    that:
+      - result2.stat.exists
+      - result2.stat.checksum == '1ac77f83a69c53b54fc16111694abe07e5a6703b'
+
+
+- name: encoding - attempt to write the same line again.
+  lineinfile:
+    line: "Another test line."
+    state: present
+    path: "{{ remote_tmp_dir }}/test-encoding-file.txt"
+    encoding: cp273
+  register: result1
+
+- name: assert that the file was not changed.
+  assert:
+    that:
+      - result1 is not changed
+
+- name: stat the file.
+  stat:
+    path: "{{ remote_tmp_dir }}/test-encoding-file.txt"
+  register: result2
+
+- name: assert the file content is as expected.
+  assert:
+    that:
+      - result2.stat.exists
+      - result2.stat.checksum == '1ac77f83a69c53b54fc16111694abe07e5a6703b'
+
+
+- name: encoding - write a line before regex match
+  lineinfile:
+    line: "In between test line."
+    state: present
+    insertbefore: "^Another test line.$"
+    path: "{{ remote_tmp_dir }}/test-encoding-file.txt"
+    encoding: cp273
+  register: result1
+
+- name: assert that the file was changed.
+  assert:
+    that:
+      - result1 is changed
+
+- name: stat the file.
+  stat:
+    path: "{{ remote_tmp_dir }}/test-encoding-file.txt"
+  register: result2
+
+- name: assert the file content is as expected.
+  assert:
+    that:
+      - result2.stat.exists
+      - result2.stat.checksum == 'e48e3177e79d16871dcfc25a92333fa92d4f40bd'
+
+- name: encoding - remove a line
+  lineinfile:
+    regexp: "^Another test line.$"
+    state: absent
+    path: "{{ remote_tmp_dir }}/test-encoding-file.txt"
+    encoding: cp273
+  register: result1
+
+- name: assert that the file was changed.
+  assert:
+    that:
+      - result1 is changed
+
+- name: stat the file.
+  stat:
+    path: "{{ remote_tmp_dir }}/test-encoding-file.txt"
+  register: result2
+
+- name: assert the file content is as expected.
+  assert:
+    that:
+      - result2.stat.exists
+      - result2.stat.checksum == 'fd917ecb76b768a9e87d1a5c65f7fae4f0f2b4ea'
+
+
+- name: Integration test for issue 76727
+  block:
+  - name: Create a symbolic link for the test file
+    file:
+      src: "{{ remote_tmp_dir }}/test.txt"
+      dest: "{{ remote_tmp_dir }}/test-76727.txt"
+      state: link
+
+  - name: Insert a line and back it up
+    lineinfile:
+      dest: "{{ remote_tmp_dir }}/test-76727.txt"
+      state: present
+      line: "#Line for issue 76727"
+      backup: yes
+    register: result1
+
+  - name: Stat the backup file
+    stat:
+      path: "{{ result1.backup }}"
+    register: result2
+
+  - name: Assert that the line was inserted and backup is created
+    assert:
+      that:
+        - result1 is changed
+        - result2.stat.exists
+
+- name: Integration test for issue 72929
+  import_tasks: acls.yml
+  when: ansible_system == 'Linux'

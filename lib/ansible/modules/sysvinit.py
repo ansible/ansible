@@ -4,11 +4,10 @@
 # (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 module: sysvinit
 author:
     - "Ansible Core Team"
@@ -26,24 +25,24 @@ options:
     state:
         choices: [ 'started', 'stopped', 'restarted', 'reloaded' ]
         description:
-            - C(started)/C(stopped) are idempotent actions that will not run commands unless necessary.
-              Not all init scripts support C(restarted) nor C(reloaded) natively, so these will both trigger a stop and start as needed.
+            - V(started)/V(stopped) are idempotent actions that will not run commands unless necessary.
+              Not all init scripts support V(restarted) nor V(reloaded) natively, so these will both trigger a stop and start as needed.
         type: str
     enabled:
         type: bool
         description:
-            - Whether the service should start on boot. B(At least one of state and enabled are required.)
+            - Whether the service should start on boot. At least one of O(state) and O(enabled) are required.
     sleep:
         default: 1
         description:
-            - If the service is being C(restarted) or C(reloaded) then sleep this many seconds between the stop and start command.
+            - If the service is being V(restarted) or V(reloaded) then sleep this many seconds between the stop and start command.
               This helps to workaround badly behaving services.
         type: int
     pattern:
         description:
             - A substring to look for as would be found in the output of the I(ps) command as a stand-in for a status result.
             - If the string is found, the service will be assumed to be running.
-            - "This option is mainly for use with init scripts that don't support the 'status' option."
+            - "This option is mainly for use with init scripts that don't support the C(status) option."
         type: str
     runlevels:
         description:
@@ -75,17 +74,23 @@ attributes:
         platforms: posix
 notes:
     - One option other than name is required.
-    - The service names might vary by specific OS/distribution
+    - The service names might vary by specific OS/distribution.
 requirements:
     - That the service managed has a corresponding init script.
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
 - name: Make sure apache2 is started
   ansible.builtin.sysvinit:
       name: apache2
       state: started
       enabled: yes
+
+- name: Sleep for 5 seconds between stop and start command of badly behaving service
+  ansible.builtin.sysvinit:
+      name: apache2
+      state: restarted
+      sleep: 5
 
 - name: Make sure apache2 is started on runlevels 3 and 5
   ansible.builtin.sysvinit:
@@ -95,33 +100,38 @@ EXAMPLES = '''
       runlevels:
         - 3
         - 5
-'''
+"""
 
-RETURN = r'''
+RETURN = r"""
 results:
     description: results from actions taken
     returned: always
     type: complex
-    sample: {
-            "attempts": 1,
-            "changed": true,
-            "name": "apache2",
-            "status": {
-                "enabled": {
-                    "changed": true,
-                    "rc": 0,
-                    "stderr": "",
-                    "stdout": ""
-                },
-                "stopped": {
-                    "changed": true,
-                    "rc": 0,
-                    "stderr": "",
-                    "stdout": "Stopping web server: apache2.\n"
-                }
-            }
+    contains:
+      name:
+        description: Name of the service
+        type: str
+        returned: always
+        sample: "apache2"
+      status:
+        description: Status of the service
+        type: dict
+        returned: changed
+        sample: {
+          "enabled": {
+             "changed": true,
+             "rc": 0,
+             "stderr": "",
+             "stdout": ""
+          },
+          "stopped": {
+             "changed": true,
+             "rc": 0,
+             "stderr": "",
+             "stdout": "Stopping web server: apache2.\n"
+          }
         }
-'''
+"""
 
 import re
 from time import sleep
@@ -193,7 +203,7 @@ def main():
         worked = is_started = get_ps(module, pattern)
     else:
         if location.get('service'):
-            # standard tool that has been 'destandarized' by reimplementation in other OS/distros
+            # standard tool that has been 'destandardized' by reimplementation in other OS/distros
             cmd = '%s %s status' % (location['service'], name)
         elif script:
             # maybe script implements status (not LSB)

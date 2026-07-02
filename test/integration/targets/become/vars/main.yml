@@ -1,0 +1,14 @@
+become_test: >-
+  {{ become_test_config.method }} from {{ connection_user.stdout }} to {{ become_test_config.user }}
+  {{ 'with' if become_test_config.password else 'without' }} password
+
+become_methods:
+  - method: sudo
+    user: "{{ test_user_name }}"
+    password: "{{ test_user_plaintext_password if connection_user.stdout != 'root' else None }}"
+    # Some systems are not configured to allow sudo for non-root users.
+    # The tests could be updated in the future to temporarily enable sudo for the connection user.
+    skip: "{{ connection_user.stdout != 'root' and ansible_distribution == 'FreeBSD' }}"
+  - method: su
+    user: "{{ test_user_name }}"
+    password: "{{ test_user_plaintext_password if connection_user.stdout != 'root' else None }}"

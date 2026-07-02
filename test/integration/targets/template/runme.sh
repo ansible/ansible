@@ -2,13 +2,17 @@
 
 set -eux
 
-ANSIBLE_ROLES_PATH=../ ansible-playbook template.yml -i ../../inventory -v "$@"
+ANSIBLE_CALLBACK_RESULT_FORMAT=yaml ANSIBLE_ROLES_PATH=../ ansible-playbook template.yml -i ../../inventory -v "$@"
 
 # Test for https://github.com/ansible/ansible/pull/35571
-ansible testhost -i testhost, -m debug -a 'msg={{ hostvars["localhost"] }}' -e "vars1={{ undef() }}" -e "vars2={{ vars1 }}"
+echo "presence of an undefined var in a template should not break things that don't access it"
+ansible testhost -i testhost, -m assert -a 'that=var3=="accessme"' -e "vars1={{ bogus_var }}" -e "var2={{ var1 }}" -e var3=accessme
 
-# Test for https://github.com/ansible/ansible/issues/27262
-ansible-playbook ansible_managed.yml -c  ansible_managed.cfg -i ../../inventory -v "$@"
+# ansible_managed tests
+ANSIBLE_CONFIG=ansible_managed.cfg ansible-playbook ansible_managed.yml -i ../../inventory -v "$@"
+
+# same as above but with ansible_managed j2 template
+ANSIBLE_CONFIG=ansible_managed_templated.cfg ansible-playbook ansible_managed.yml -i ../../inventory -v "$@"
 
 # Test for #42585
 ANSIBLE_ROLES_PATH=../ ansible-playbook custom_template.yml -i ../../inventory -v "$@"
@@ -39,8 +43,18 @@ ansible-playbook 72262.yml -v "$@"
 ansible-playbook unsafe.yml -v "$@"
 
 # ensure Jinja2 overrides from a template are used
-ansible-playbook in_template_overrides.yml -v "$@"
+ansible-playbook template_overrides.yml -v "$@"
 
 ansible-playbook lazy_eval.yml -i ../../inventory -v "$@"
 
 ansible-playbook undefined_in_import.yml -i ../../inventory -v "$@"
+
+# ensure diff null configs work #76493
+for badcfg in "badnull1" "badnull2" "badnull3"
+do
+	[ -f "./${badcfg}.cfg" ]
+	ANSIBLE_CONFIG="./${badcfg}.cfg" ansible-config dump --only-changed
+done
+
+# ensure we picle hostvarscorrectly with native https://github.com/ansible/ansible/issues/83503
+ANSIBLE_JINJA2_NATIVE=1 ansible -m debug -a "msg={{ groups.all | map('extract', hostvars) }}" -i testhost, all -c local -v "$@"

@@ -5,14 +5,19 @@ Multiple coverage files from multiple languages are accepted and aggregated afte
 Python coverage, as well as PowerShell and Python stubs can all be uploaded.
 """
 
+from __future__ import annotations
+
 import argparse
 import dataclasses
 import pathlib
-import shutil
+import shlex
 import subprocess
 import tempfile
 import typing as t
-import urllib.request
+import venv
+
+SCRIPTS_DIR = pathlib.Path(__file__).parent.resolve()
+DEPS_DIR = SCRIPTS_DIR / 'dependencies'
 
 
 @dataclasses.dataclass(frozen=True)
@@ -42,6 +47,49 @@ def parse_args() -> Args:
     return Args(**kwargs)
 
 
+def run(
+    *args: str | pathlib.Path,
+    dry_run: bool = False,
+) -> None:
+    """
+    Log and run given command.
+
+    The command is not actually executed if ``dry_run`` is truthy.
+    """
+    cmd = [str(arg) for arg in args]
+
+    dry_prefix = '[would run] ' if dry_run else ''
+    print(f'==> {dry_prefix}{shlex.join(cmd)}', flush=True)
+
+    if not dry_run:
+        subprocess.run(cmd, check=True)
+
+
+def install_codecov(dest: pathlib.Path, dry_run: bool = False) -> pathlib.Path:
+    """Populate a transitively pinned venv with ``codecov-cli``."""
+    requirement_file = DEPS_DIR / 'codecov.in'
+    constraint_file = requirement_file.with_suffix('.txt')
+
+    venv_dir = dest / 'venv'
+    python_bin = venv_dir / 'bin' / 'python'
+    codecov_bin = venv_dir / 'bin' / 'codecovcli'
+
+    venv.create(venv_dir, with_pip=True)
+
+    run(
+        python_bin,
+        '-m',
+        'pip',
+        'install',
+        f'--constraint={constraint_file!s}',
+        f'--requirement={requirement_file!s}',
+        '--disable-pip-version-check',
+        dry_run=dry_run,
+    )
+
+    return codecov_bin
+
+
 def process_files(directory: pathlib.Path) -> t.Tuple[CoverageFile, ...]:
     processed = []
     for file in directory.joinpath('reports').glob('coverage*.xml'):
@@ -56,45 +104,67 @@ def process_files(directory: pathlib.Path) -> t.Tuple[CoverageFile, ...]:
     return tuple(processed)
 
 
-def upload_files(codecov_bin: pathlib.Path, files: t.Tuple[CoverageFile, ...], dry_run: bool = False) -> None:
+def upload_files(codecov_bin: pathlib.Path, config_file: pathlib.Path, files: t.Tuple[CoverageFile, ...], dry_run: bool = False) -> None:
     for file in files:
         cmd = [
-            str(codecov_bin),
-            '--name', file.name,
-            '--file', str(file.path),
+            codecov_bin,
+            '--disable-telem',
+            '--codecov-yml-path',
+            config_file,
+            'upload-process',
+            '--disable-search',
+            '--disable-file-fixes',
+            '--plugin',
+            'noop',
+            '--name',
+            file.name,
+            '--file',
+            file.path,
         ]
+
         for flag in file.flags:
-            cmd.extend(['--flags', flag])
+            cmd.extend(['--flag', flag])
 
         if dry_run:
-            print(f'DRY-RUN: Would run command: {cmd}')
-            continue
+            cmd.append('--dry-run')
 
-        subprocess.run(cmd, check=True)
-
-
-def download_file(url: str, dest: pathlib.Path, flags: int, dry_run: bool = False) -> None:
-    if dry_run:
-        print(f'DRY-RUN: Would download {url} to {dest} and set mode to {flags:o}')
-        return
-
-    with urllib.request.urlopen(url) as resp:
-        with dest.open('w+b') as f:
-            # Read data in chunks rather than all at once
-            shutil.copyfileobj(resp, f, 64 * 1024)
-
-    dest.chmod(flags)
+        run(*cmd)
 
 
-def main():
+def report_upload_completion(
+    codecov_bin: pathlib.Path,
+    config_file: pathlib.Path,
+    dry_run: bool = False,
+) -> None:
+    """Notify Codecov backend that all reports we wanted are in."""
+    cmd = [
+        codecov_bin,
+        '--disable-telem',
+        f'--codecov-yml-path={config_file}',
+        'send-notifications',
+    ]
+
+    run(*cmd, dry_run=dry_run)
+
+
+def main() -> None:
     args = parse_args()
-    url = 'https://ci-files.testing.ansible.com/codecov/linux/codecov'
-    with tempfile.TemporaryDirectory(prefix='codecov-') as tmpdir:
-        codecov_bin = pathlib.Path(tmpdir) / 'codecov'
-        download_file(url, codecov_bin, 0o755, args.dry_run)
 
+    with tempfile.TemporaryDirectory(prefix='codecov-') as tmpdir:
+        config_file = pathlib.Path(tmpdir) / 'config.yml'
+        # Refs:
+        # * https://docs.codecov.com/docs/codecovyml-reference#codecovnotifymanual_trigger
+        # * https://docs.codecov.com/docs/notifications#preventing-notifications-until-youre-ready-to-send-notifications
+        config_file.write_text('codecov:\n  notify:\n    manual_trigger: true')
+
+        codecov_bin = install_codecov(
+            pathlib.Path(tmpdir),
+            dry_run=args.dry_run,
+        )
         files = process_files(args.path)
-        upload_files(codecov_bin, files, args.dry_run)
+        upload_files(codecov_bin, config_file, files, args.dry_run)
+        # Ref: https://docs.codecov.com/docs/cli-options#send-notifications
+        report_upload_completion(codecov_bin, config_file, args.dry_run)
 
 
 if __name__ == '__main__':

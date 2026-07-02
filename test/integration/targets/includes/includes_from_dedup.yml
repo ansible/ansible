@@ -1,0 +1,18 @@
+- hosts: testhost,localhost
+  tasks:
+    - include_role:
+        name: role_from_args
+        vars_from: "{{ inventory_hostname }}.yml"
+        tasks_from: "{{ inventory_hostname }}.yml"
+
+    - assert:
+        that:
+          - f1 is defined
+          - f1 == inventory_hostname
+      when: inventory_hostname == "testhost"
+
+    - assert:
+        that:
+          - f2 is defined
+          - f2 == inventory_hostname
+      when: inventory_hostname == "localhost"

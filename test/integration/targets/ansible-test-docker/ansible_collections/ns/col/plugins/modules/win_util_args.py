@@ -9,7 +9,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: win_util_args
 short_description: Short description
@@ -26,14 +26,14 @@ extends_documentation_fragment:
 
 author:
 - Ansible Test (@ansible)
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - win_util_args:
     option1: test
     my_opt: test
-'''
+"""
 
-RETURN = r'''
+RETURN = r"""
 #
-'''
+"""

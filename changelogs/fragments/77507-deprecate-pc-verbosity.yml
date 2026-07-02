@@ -1,2 +1,0 @@
-deprecated_features:
-  - PlayContext.verbosity is deprecated and will be removed in 2.18. Use ansible.utils.display.Display().verbosity as the single source of truth.

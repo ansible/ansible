@@ -28,8 +28,10 @@ Function Install-PSModule {
     }
 }
 
+# Versions changes should be made first in ansible-test which is then synced to
+# the default-test-container over time
 Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
-Install-PSModule -Name PSScriptAnalyzer -RequiredVersion 1.20.0
+Install-PSModule -Name PSScriptAnalyzer -RequiredVersion 1.21.0
 
 if ($IsContainer) {
     # PSScriptAnalyzer contain lots of json files for the UseCompatibleCommands check. We don't use this rule so by

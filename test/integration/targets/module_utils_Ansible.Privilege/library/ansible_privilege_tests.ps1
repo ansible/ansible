@@ -179,7 +179,7 @@ $tests = @{
         $actual.SeIncreaseWorkingSetPrivilege -band [Ansible.Privilege.PrivilegeAttributes]::Enabled | Assert-Equal -Expected 0
         $actual.ContainsKey("SeTcbPrivilege") | Assert-Equal -Expected $false
 
-        # Now verify a no-op enabler will not rever back to disabled
+        # Now verify a no-op enabler will not revert back to disabled
         $enabler2 = New-Object -TypeName Ansible.Privilege.PrivilegeEnabler -ArgumentList $false, "SeTimeZonePrivilege", "SeShutdownPrivilege", "SeTcbPrivilege"
         $enabler2.Dispose()
         $actual = [Ansible.Privilege.PrivilegeUtil]::GetAllPrivilegeInfo($process)
@@ -217,7 +217,7 @@ $tests = @{
             Assert-Equal -Expected ([Ansible.Privilege.PrivilegeAttributes]::Enabled)
         $actual.SeIncreaseWorkingSetPrivilege -band [Ansible.Privilege.PrivilegeAttributes]::Enabled | Assert-Equal -Expected 0
 
-        # Now verify a no-op enabler will not rever back to disabled
+        # Now verify a no-op enabler will not revert back to disabled
         $enabler2 = New-Object -TypeName Ansible.Privilege.PrivilegeEnabler -ArgumentList $true, "SeTimeZonePrivilege", "SeShutdownPrivilege"
         $enabler2.Dispose()
         $actual = [Ansible.Privilege.PrivilegeUtil]::GetAllPrivilegeInfo($process)
@@ -240,7 +240,8 @@ $tests = @{
         }
         catch {
             $failed = $true
-            $expected = "Failed to enable privilege(s) SeTimeZonePrivilege, SeFake (A specified privilege does not exist, Win32ErrorCode 1313)"
+            $expected_msg = [System.ComponentModel.Win32Exception]::new(1313).Message
+            $expected = "Failed to enable privilege(s) SeTimeZonePrivilege, SeFake ($expected_msg, Win32ErrorCode 1313)"
             $_.Exception.InnerException.Message | Assert-Equal -Expected $expected
         }
         $failed | Assert-Equal -Expected $true
@@ -258,9 +259,10 @@ $tests = @{
         }
         catch {
             $failed = $true
+            $expected_msg = [System.ComponentModel.Win32Exception]::new(1300).Message
             $expected = -join @(
                 "Failed to enable privilege(s) SeTimeZonePrivilege, SeTcbPrivilege "
-                "(Not all privileges or groups referenced are assigned to the caller, Win32ErrorCode 1300)"
+                "($expected_msg, Win32ErrorCode 1300)"
             )
             $_.Exception.InnerException.Message | Assert-Equal -Expected $expected
         }

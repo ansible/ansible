@@ -92,6 +92,18 @@
       - "stat_results.stat.issock == false"
       - "stat_results.stat.checksum == ('foo.txt\n'|hash('sha1'))"
 
+- name: Test copying content with force=false when the dest already exists
+  copy:
+    content: other_data
+    dest: "{{ remote_file }}"
+    mode: 0444
+    force: False
+  register: repeat_copy_result
+
+- name: Assert no changes are made
+  assert:
+    that: repeat_copy_result is not changed
+
 - name: Overwrite the file via same means
   copy:
     src: foo.txt
@@ -418,6 +430,80 @@
        - "copy_results2.mode == '0547'"
        - "stat_results2.stat.checksum == ('foo.txt\n'|hash('sha1'))"
        - "stat_results2.stat.mode == '0547'"
+
+#
+# test copying an empty dir to a dest dir with remote_src=True
+#
+
+- name: create empty test dir
+  file:
+    path: '{{ remote_dir }}/testcase_empty_dir'
+    state: directory
+
+- name: test copying an empty dir to a dir that does not exist (dest ends with slash)
+  copy:
+    src: '{{ remote_dir }}/testcase_empty_dir/'
+    remote_src: yes
+    dest: '{{ remote_dir }}/testcase_empty_dir_dest/'
+  register: copy_result
+
+- name: get stat of newly created dir
+  stat:
+    path: '{{ remote_dir }}/testcase_empty_dir_dest'
+  register: stat_result
+
+- assert:
+    that:
+      - copy_result.changed
+      - stat_result.stat.exists
+      - stat_result.stat.isdir
+
+- name: test no change is made running the task twice
+  copy:
+    src: '{{ remote_dir }}/testcase_empty_dir/'
+    remote_src: yes
+    dest: '{{ remote_dir }}/testcase_empty_dir_dest/'
+  register: copy_result
+  failed_when: copy_result is changed
+
+- name: remove to test dest with no trailing slash
+  file:
+    path: '{{ remote_dir }}/testcase_empty_dir_dest/'
+    state: absent
+
+- name: test copying an empty dir to a dir that does not exist (both src/dest have no trailing slash)
+  copy:
+    src: '{{ remote_dir }}/testcase_empty_dir'
+    remote_src: yes
+    dest: '{{ remote_dir }}/testcase_empty_dir_dest'
+  register: copy_result
+
+- name: get stat of newly created dir
+  stat:
+    path: '{{ remote_dir }}/testcase_empty_dir_dest'
+  register: stat_result
+
+- assert:
+    that:
+      - copy_result.changed
+      - stat_result.stat.exists
+      - stat_result.stat.isdir
+
+- name: test no change is made running the task twice
+  copy:
+    src: '{{ remote_dir }}/testcase_empty_dir/'
+    remote_src: yes
+    dest: '{{ remote_dir }}/testcase_empty_dir_dest/'
+  register: copy_result
+  failed_when: copy_result is changed
+
+- name: clean up src and dest
+  file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - '{{ remote_dir }}/testcase_empty_dir'
+    - '{{ remote_dir }}/testcase_empty_dir_dest'
 
 #
 # test recursive copy local_follow=False, no trailing slash
@@ -855,7 +941,6 @@
       - "stat_dir_in_copy_link.stat.exists"
       - "not stat_dir_in_copy_link.stat.islnk"
       - "stat_dir_in_copy_link.stat.isdir"
-      -
       - "stat_dir_outside_copy_link.stat.exists"
       - "not stat_dir_outside_copy_link.stat.islnk"
       - "stat_dir_outside_copy_link.stat.isdir"
@@ -913,13 +998,13 @@
 
   - name: Create a directory outside of the tree
     file:
-      path: '{{ local_temp_dir }}/source2'
+      path: '{{ local_temp_dir }}/source2'
       state: directory
 
   - name: Create a symlink to a directory outside of the tree
     file:
       path: '{{ local_temp_dir }}/source1/link'
-      src: '{{ local_temp_dir }}/source2'
+      src: '{{ local_temp_dir }}/source2'
       state: link
 
   - name: Create a circular link back to the tree
@@ -978,7 +1063,7 @@
 - name: Test that remote_dir is appropriate for this test (absolute path)
   assert:
     that:
-      - '{{ remote_dir_expanded[0] == "/" }}'
+      - 'remote_dir_expanded[0] == "/"'
 
 - block:
   - name: Create a directory to copy
@@ -989,7 +1074,7 @@
   - name: Create a file inside of the directory
     copy:
       content: "testing"
-      dest: '{{ local_temp_dir }}/source_recursive/file'
+      dest: '{{ local_temp_dir }}/source_recursive/file'
 
   - name: Create a directory to place the test output in
     file:
@@ -1176,7 +1261,7 @@
   assert:
     that:
       - "copy_result6.changed"
-      - "copy_result6.dest == '{{remote_dir_expanded}}/multiline.txt'"
+      - "copy_result6.dest == remote_dir_expanded + '/multiline.txt'"
       - "copy_result6.checksum == '9cd0697c6a9ff6689f0afb9136fa62e0b3fee903'"
 
 # test overwriting a file as an unprivileged user (pull request #8624)
@@ -1370,7 +1455,7 @@
   block:
   - name: Create a test dir to copy
     file:
-      path: '{{ local_temp_dir }}/top_dir'
+      path: '{{ local_temp_dir }}/top_dir'
       state: directory
 
   - name: Create a test dir to symlink to
@@ -1380,7 +1465,7 @@
 
   - name: Create a file in the test dir
     copy:
-      dest: '{{ local_temp_dir }}/linked_dir/file1'
+      dest: '{{ local_temp_dir }}/linked_dir/file1'
       content: 'hello world'
 
   - name: Create a link to the test dir
@@ -1403,7 +1488,7 @@
 
 - name: Copy the directory's link
   copy:
-    src: '{{ local_temp_dir }}/top_dir'
+    src: '{{ local_temp_dir }}/top_dir'
     dest: '{{ remote_dir }}/new_dir'
     local_follow: True
 
@@ -1519,6 +1604,10 @@
     - 'new_sub_dir1/foo.txt'
   loop_control:
     loop_var: 'dest'
+
+# Test that directory_mode is respected when copying a directory with remote_src
+- include_tasks: file=dest_remote_src_directory_mode.yml
+
 #
 # Recursive copying on remote host
 #
@@ -1970,7 +2059,7 @@
       dest: '{{ remote_dir }}/testcase5_remote_src_subdirs_src'
   - name: Create a 2nd level subdirectory
     file:
-      path: '{{ remote_dir }}/testcase5_remote_src_subdirs_src/subdir/subdir2/'
+      path: '{{ remote_dir }}/testcase5_remote_src_subdirs_src/subdir/subdir2/'
       state: directory
   - name: execute - Copy the directory on remote
     copy:
@@ -2019,12 +2108,11 @@
 
 
 ## test copying the directory on remote with chown
-
+- name: setting 'ansible_copy_test_user_name' outside block since 'always' section depends on this also
+  set_fact:
+    ansible_copy_test_user_name: 'ansible_copy_test_{{ 100000 | random }}'
 
 - block:
-
-  - set_fact:
-      ansible_copy_test_user_name: 'ansible_copy_test_{{ 100000 | random }}'
 
   - name: execute - create a user for test
     user:
@@ -2080,26 +2168,26 @@
     assert:
       that:
       - testcase5 is changed
-      - "stat_new_dir_with_chown.stat.uid == {{ ansible_copy_test_user.uid }}"
-      - "stat_new_dir_with_chown.stat.gid == {{ ansible_copy_test_group.gid }}"
-      - "stat_new_dir_with_chown.stat.pw_name == '{{ ansible_copy_test_user_name }}'"
-      - "stat_new_dir_with_chown.stat.gr_name == '{{ ansible_copy_test_user_name }}'"
-      - "stat_new_dir_with_chown_file1.stat.uid == {{ ansible_copy_test_user.uid }}"
-      - "stat_new_dir_with_chown_file1.stat.gid == {{ ansible_copy_test_group.gid }}"
-      - "stat_new_dir_with_chown_file1.stat.pw_name == '{{ ansible_copy_test_user_name }}'"
-      - "stat_new_dir_with_chown_file1.stat.gr_name == '{{ ansible_copy_test_user_name }}'"
-      - "stat_new_dir_with_chown_subdir.stat.uid == {{ ansible_copy_test_user.uid }}"
-      - "stat_new_dir_with_chown_subdir.stat.gid == {{ ansible_copy_test_group.gid }}"
-      - "stat_new_dir_with_chown_subdir.stat.pw_name == '{{ ansible_copy_test_user_name }}'"
-      - "stat_new_dir_with_chown_subdir.stat.gr_name == '{{ ansible_copy_test_user_name }}'"
-      - "stat_new_dir_with_chown_subdir_file12.stat.uid == {{ ansible_copy_test_user.uid }}"
-      - "stat_new_dir_with_chown_subdir_file12.stat.gid == {{ ansible_copy_test_group.gid }}"
-      - "stat_new_dir_with_chown_subdir_file12.stat.pw_name == '{{ ansible_copy_test_user_name }}'"
-      - "stat_new_dir_with_chown_subdir_file12.stat.gr_name == '{{ ansible_copy_test_user_name }}'"
-      - "stat_new_dir_with_chown_link_file12.stat.uid == {{ ansible_copy_test_user.uid }}"
-      - "stat_new_dir_with_chown_link_file12.stat.gid == {{ ansible_copy_test_group.gid }}"
-      - "stat_new_dir_with_chown_link_file12.stat.pw_name == '{{ ansible_copy_test_user_name }}'"
-      - "stat_new_dir_with_chown_link_file12.stat.gr_name == '{{ ansible_copy_test_user_name }}'"
+      - stat_new_dir_with_chown.stat.uid == ansible_copy_test_user.uid
+      - stat_new_dir_with_chown.stat.gid == ansible_copy_test_group.gid
+      - stat_new_dir_with_chown.stat.pw_name == ansible_copy_test_user_name
+      - stat_new_dir_with_chown.stat.gr_name == ansible_copy_test_user_name
+      - stat_new_dir_with_chown_file1.stat.uid == ansible_copy_test_user.uid
+      - stat_new_dir_with_chown_file1.stat.gid == ansible_copy_test_group.gid
+      - stat_new_dir_with_chown_file1.stat.pw_name == ansible_copy_test_user_name
+      - stat_new_dir_with_chown_file1.stat.gr_name == ansible_copy_test_user_name
+      - stat_new_dir_with_chown_subdir.stat.uid == ansible_copy_test_user.uid
+      - stat_new_dir_with_chown_subdir.stat.gid == ansible_copy_test_group.gid
+      - stat_new_dir_with_chown_subdir.stat.pw_name == ansible_copy_test_user_name
+      - stat_new_dir_with_chown_subdir.stat.gr_name == ansible_copy_test_user_name
+      - stat_new_dir_with_chown_subdir_file12.stat.uid == ansible_copy_test_user.uid
+      - stat_new_dir_with_chown_subdir_file12.stat.gid == ansible_copy_test_group.gid
+      - stat_new_dir_with_chown_subdir_file12.stat.pw_name == ansible_copy_test_user_name
+      - stat_new_dir_with_chown_subdir_file12.stat.gr_name == ansible_copy_test_user_name
+      - stat_new_dir_with_chown_link_file12.stat.uid == ansible_copy_test_user.uid
+      - stat_new_dir_with_chown_link_file12.stat.gid == ansible_copy_test_group.gid
+      - stat_new_dir_with_chown_link_file12.stat.pw_name == ansible_copy_test_user_name
+      - stat_new_dir_with_chown_link_file12.stat.gr_name == ansible_copy_test_user_name
 
   always:
     - name: execute - remove the user for test
@@ -2271,7 +2359,7 @@
   assert:
     that:
     - fail_copy_encrypted_file is failed
-    - fail_copy_encrypted_file.msg == 'A vault password or secret must be specified to decrypt {{role_path}}/files-different/vault/vault-file'
+    - fail_copy_encrypted_file.msg.endswith('A vault password or secret must be specified to decrypt ' + role_path + '/files-different/vault/vault-file')
 
 - name: fail to copy a directory with an encrypted file without the password
   copy:
@@ -2284,4 +2372,168 @@
   assert:
     that:
     - fail_copy_directory_with_enc_file is failed
-    - fail_copy_directory_with_enc_file.msg == 'A vault password or secret must be specified to decrypt {{role_path}}/files-different/vault/vault-file'
+    - fail_copy_directory_with_enc_file.msg.endswith('A vault password or secret must be specified to decrypt ' + role_path + '/files-different/vault/vault-file')
+
+#
+# Test for issue 74536: recursively copy all nested directories with remote_src=yes and src='dir/' when dest exists
+#
+- vars:
+    src: '{{ remote_dir }}/testcase_74536'
+  block:
+    - name: create source dir with 3 nested subdirs
+      file:
+        path: '{{ src }}/a/b1/c1'
+        state: directory
+
+    - name: copy the source dir with a trailing slash
+      copy:
+        src: '{{ src }}/'
+        remote_src: yes
+        dest: '{{ src }}_dest/'
+      register: copy_result
+      failed_when: copy_result is not changed
+
+    - name: remove the source dir to recreate with different subdirs
+      file:
+        path: '{{ src }}'
+        state: absent
+
+    - name: recreate source dir
+      file:
+        path: "{{ item }}"
+        state: directory
+      loop:
+        - '{{ src }}/a/b1/c2'
+        - '{{ src }}/a/b2/c3'
+
+    - name: copy the source dir containing new subdirs into the existing dest dir
+      copy:
+        src: '{{ src }}/'
+        remote_src: yes
+        dest: '{{ src }}_dest/'
+      register: copy_result
+
+    - name: stat each directory that should exist
+      stat:
+        path: '{{ item }}'
+      register: stat_result
+      loop:
+        - '{{ src }}_dest'
+        - '{{ src }}_dest/a'
+        - '{{ src }}_dest/a/b1'
+        - '{{ src }}_dest/a/b2'
+        - '{{ src }}_dest/a/b1/c1'
+        - '{{ src }}_dest/a/b1/c2'
+        - '{{ src }}_dest/a/b2/c3'
+
+    - debug: msg="{{ stat_result }}"
+
+    - assert:
+        that:
+          - copy_result is changed
+          # all paths exist
+          - stat_result.results | map(attribute='stat') | map(attribute='exists') | unique == [true]
+          # all paths are dirs
+          - stat_result.results | map(attribute='stat') | map(attribute='isdir') | unique == [true]
+
+    - name: copy the src again to verify no changes will be made
+      copy:
+        src: '{{ src }}/'
+        remote_src: yes
+        dest: '{{ src }}_dest/'
+      register: copy_result
+      failed_when: copy_result is changed
+
+    - name: clean up src and dest
+      file:
+        path: '{{ item }}'
+        state: absent
+      loop:
+        - '{{ src }}'
+        - '{{ src }}_dest'
+
+- name: Verify atime and mtime update on content change (same partition)
+  vars:
+    remote_file: "/tmp/foo.txt"
+    ansible_remote_tmp: "/tmp"
+  block:
+    - name: Create a dest file
+      shell: "echo Test content > {{ remote_file }}"
+      register: create_dest_result
+
+    - name: Check the stat results of the file before copying
+      stat:
+        path: "{{ remote_file }}"
+      register: stat_results_before_copy
+
+    - name: Overwrite the file using the content system
+      copy:
+        content: "modified"
+        dest: "{{ remote_file }}"
+        decrypt: no
+      register: copy_result
+
+    - name: Check the stat results of the file after copying
+      stat:
+        path: "{{ remote_file }}"
+      register: stat_results_after_copy
+
+    - name: Assert that the file has changed
+      assert:
+         that:
+           - "create_dest_result is changed"
+           - "copy_result is changed"
+           - "'content' not in copy_result"
+           - "stat_results_before_copy.stat.atime < stat_results_after_copy.stat.atime"
+           - "stat_results_before_copy.stat.mtime < stat_results_after_copy.stat.mtime"
+  always:
+    - name: clean up dest file
+      file:
+        path: '{{ item }}'
+        state: absent
+      loop:
+        - '{{ remote_file }}'
+
+- name: Verify atime and mtime update on content change (diff partition)
+  vars:
+    remote_file: "/var/tmp/foo.txt"
+    ansible_remote_tmp: "/tmp"
+  block:
+    - name: Create a dest file
+      shell: "echo Test content > {{ remote_file }}"
+      register: create_dest_result
+
+    - name: Check the stat results of the file before copying
+      stat:
+        path: "{{ remote_file }}"
+      register: stat_results_before_copy
+
+    - name: Overwrite the file using the content system
+      copy:
+        content: "modified"
+        dest: "{{ remote_file }}"
+        decrypt: no
+      register: copy_result
+
+    - name: Check the stat results of the file after copying
+      stat:
+        path: "{{ remote_file }}"
+      register: stat_results_after_copy
+
+    - name: Assert that the file has changed
+      assert:
+         that:
+           - "create_dest_result is changed"
+           - "copy_result is changed"
+           - "'content' not in copy_result"
+           - "stat_results_before_copy.stat.atime < stat_results_after_copy.stat.atime"
+           - "stat_results_before_copy.stat.mtime < stat_results_after_copy.stat.mtime"
+  always:
+    - name: clean up dest file
+      file:
+        path: '{{ item }}'
+        state: absent
+      loop:
+        - '{{ remote_file }}'
+
+- include_tasks: src_directory_contaning_one_single_file.yml

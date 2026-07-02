@@ -4,18 +4,14 @@
 # (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
-from units.mock.procenv import ModuleTestCase
+import unittest
 
-from units.compat.mock import patch
-from ansible.module_utils.six.moves import builtins
-
-realimport = builtins.__import__
+from unittest.mock import patch
 
 
-class TestGetModulePath(ModuleTestCase):
+class TestGetModulePath(unittest.TestCase):
     def test_module_utils_basic_get_module_path(self):
         from ansible.module_utils.basic import get_module_path
         with patch('os.path.realpath', return_value='/path/to/foo/'):

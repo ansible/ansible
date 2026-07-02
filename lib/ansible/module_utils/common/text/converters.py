@@ -3,20 +3,13 @@
 # (c) 2016 Toshio Kuratomi <tkuratomi@ansible.com>
 # Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 import codecs
-import datetime
 import json
 
-from ansible.module_utils.common._collections_compat import Set
-from ansible.module_utils.six import (
-    PY3,
-    binary_type,
-    iteritems,
-    text_type,
-)
+from ansible.module_utils.compat import typing as _t
+from ansible.module_utils._internal import _no_six
 
 try:
     codecs.lookup_error('surrogateescape')
@@ -29,8 +22,54 @@ _COMPOSED_ERROR_HANDLERS = frozenset((None, 'surrogate_or_replace',
                                       'surrogate_or_strict',
                                       'surrogate_then_replace'))
 
+_T = _t.TypeVar('_T')
 
-def to_bytes(obj, encoding='utf-8', errors=None, nonstring='simplerepr'):
+_NonStringPassthru: _t.TypeAlias = _t.Literal['passthru']
+_NonStringOther: _t.TypeAlias = _t.Literal['simplerepr', 'empty', 'strict']
+_NonStringAll: _t.TypeAlias = _t.Union[_NonStringPassthru, _NonStringOther]
+
+
+@_t.overload
+def to_bytes(
+    obj: object,
+    encoding: str = 'utf-8',
+    errors: str | None = None,
+) -> bytes: ...
+
+
+@_t.overload
+def to_bytes(
+    obj: bytes | str,
+    encoding: str = 'utf-8',
+    errors: str | None = None,
+    nonstring: _NonStringPassthru = 'passthru',
+) -> bytes: ...
+
+
+@_t.overload
+def to_bytes(
+    obj: _T,
+    encoding: str = 'utf-8',
+    errors: str | None = None,
+    nonstring: _NonStringPassthru = 'passthru',
+) -> _T: ...
+
+
+@_t.overload
+def to_bytes(
+    obj: object,
+    encoding: str = 'utf-8',
+    errors: str | None = None,
+    nonstring: _NonStringOther = 'simplerepr',
+) -> bytes: ...
+
+
+def to_bytes(
+    obj: _T,
+    encoding: str = 'utf-8',
+    errors: str | None = None,
+    nonstring: _NonStringAll = 'simplerepr'
+) -> _T | bytes:
     """Make sure that a string is a byte string
 
     :arg obj: An object to make sure is a byte string.  In most cases this
@@ -88,13 +127,13 @@ def to_bytes(obj, encoding='utf-8', errors=None, nonstring='simplerepr'):
         string is valid in the specified encoding.  If it's important that the
         byte string is in the specified encoding do::
 
-            encoded_string = to_bytes(to_text(input_string, 'latin-1'), 'utf-8')
+            encoded_string = to_bytes(to_text(input_string, encoding='latin-1'), encoding='utf-8')
 
     .. version_changed:: 2.3
 
         Added the ``surrogate_then_replace`` error handler and made it the default error handler.
     """
-    if isinstance(obj, binary_type):
+    if isinstance(obj, bytes):
         return obj
 
     # We're given a text string
@@ -108,7 +147,7 @@ def to_bytes(obj, encoding='utf-8', errors=None, nonstring='simplerepr'):
         else:
             errors = 'replace'
 
-    if isinstance(obj, text_type):
+    if isinstance(obj, str):
         try:
             # Try this first as it's the fastest
             return obj.encode(encoding, errors)
@@ -133,21 +172,60 @@ def to_bytes(obj, encoding='utf-8', errors=None, nonstring='simplerepr'):
                 value = repr(obj)
             except UnicodeError:
                 # Giving up
-                return to_bytes('')
+                return b''
     elif nonstring == 'passthru':
         return obj
     elif nonstring == 'empty':
-        # python2.4 doesn't have b''
-        return to_bytes('')
+        return b''
     elif nonstring == 'strict':
         raise TypeError('obj must be a string type')
     else:
         raise TypeError('Invalid value %s for to_bytes\' nonstring parameter' % nonstring)
 
-    return to_bytes(value, encoding, errors)
+    return to_bytes(value, encoding=encoding, errors=errors)
 
 
-def to_text(obj, encoding='utf-8', errors=None, nonstring='simplerepr'):
+@_t.overload
+def to_text(
+    obj: object,
+    encoding: str = 'utf-8',
+    errors: str | None = None,
+) -> str: ...
+
+
+@_t.overload
+def to_text(
+    obj: str | bytes,
+    encoding: str = 'utf-8',
+    errors: str | None = None,
+    nonstring: _NonStringPassthru = 'passthru',
+) -> str: ...
+
+
+@_t.overload
+def to_text(
+    obj: _T,
+    encoding: str = 'utf-8',
+    errors: str | None = None,
+    nonstring: _NonStringPassthru = 'passthru',
+) -> _T: ...
+
+
+@_t.overload
+def to_text(
+    obj: object,
+    encoding: str = 'utf-8',
+    errors: str | None = None,
+    nonstring: _NonStringOther = 'simplerepr',
+) -> str: ...
+
+
+def to_text(
+    obj: _T,
+    encoding: str = 'utf-8',
+    errors: str | None = None,
+    nonstring: _NonStringAll = 'simplerepr'
+) -> _T | str:
     """Make sure that a string is a text string
 
     :arg obj: An object to make sure is a text string.  In most cases this
@@ -168,7 +246,7 @@ def to_text(obj, encoding='utf-8', errors=None, nonstring='simplerepr'):
                 handler, otherwise it will use replace.
             :surrogate_then_replace: Does the same as surrogate_or_replace but
                 `was added for symmetry with the error handlers in
-                :func:`ansible.module_utils._text.to_bytes` (Added in Ansible 2.3)
+                :func:`ansible.module_utils.common.text.converters.to_bytes` (Added in Ansible 2.3)
 
         Because surrogateescape was added in Python3 this usually means that
         Python3 will use `surrogateescape` and Python2 will use the fallback
@@ -179,7 +257,7 @@ def to_text(obj, encoding='utf-8', errors=None, nonstring='simplerepr'):
 
         The default until Ansible-2.2 was `surrogate_or_replace`
         In Ansible-2.3 this defaults to `surrogate_then_replace` for symmetry
-        with :func:`ansible.module_utils._text.to_bytes` .
+        with :func:`ansible.module_utils.common.text.converters.to_bytes` .
     :kwarg nonstring: The strategy to use if a nonstring is specified in
         ``obj``.  Default is 'simplerepr'.  Valid values are:
 
@@ -198,7 +276,7 @@ def to_text(obj, encoding='utf-8', errors=None, nonstring='simplerepr'):
 
         Added the surrogate_then_replace error handler and made it the default error handler.
     """
-    if isinstance(obj, text_type):
+    if isinstance(obj, str):
         return obj
 
     if errors in _COMPOSED_ERROR_HANDLERS:
@@ -209,7 +287,7 @@ def to_text(obj, encoding='utf-8', errors=None, nonstring='simplerepr'):
         else:
             errors = 'replace'
 
-    if isinstance(obj, binary_type):
+    if isinstance(obj, bytes):
         # Note: We don't need special handling for surrogate_then_replace
         # because all bytes will either be made into surrogates or are valid
         # to decode.
@@ -225,75 +303,48 @@ def to_text(obj, encoding='utf-8', errors=None, nonstring='simplerepr'):
                 value = repr(obj)
             except UnicodeError:
                 # Giving up
-                return u''
+                return ''
     elif nonstring == 'passthru':
         return obj
     elif nonstring == 'empty':
-        return u''
+        return ''
     elif nonstring == 'strict':
         raise TypeError('obj must be a string type')
     else:
         raise TypeError('Invalid value %s for to_text\'s nonstring parameter' % nonstring)
 
-    return to_text(value, encoding, errors)
+    return to_text(value, encoding=encoding, errors=errors)
 
 
-#: :py:func:`to_native`
-#:      Transform a variable into the native str type for the python version
-#:
-#:      On Python2, this is an alias for
-#:      :func:`~ansible.module_utils.to_bytes`.  On Python3 it is an alias for
-#:      :func:`~ansible.module_utils.to_text`.  It makes it easier to
-#:      transform a variable into the native str type for the python version
-#:      the code is running on.  Use this when constructing the message to
-#:      send to exceptions or when dealing with an API that needs to take
-#:      a native string.  Example::
-#:
-#:          try:
-#:              1//0
-#:          except ZeroDivisionError as e:
-#:              raise MyException('Encountered and error: %s' % to_native(e))
-if PY3:
-    to_native = to_text
-else:
-    to_native = to_bytes
-
-
-def _json_encode_fallback(obj):
-    if isinstance(obj, Set):
-        return list(obj)
-    elif isinstance(obj, datetime.datetime):
-        return obj.isoformat()
-    raise TypeError("Cannot json serialize %s" % to_native(obj))
+to_native = to_text
 
 
 def jsonify(data, **kwargs):
-    for encoding in ("utf-8", "latin-1"):
-        try:
-            return json.dumps(data, encoding=encoding, default=_json_encode_fallback, **kwargs)
-        # Old systems using old simplejson module does not support encoding keyword.
-        except TypeError:
-            try:
-                new_data = container_to_text(data, encoding=encoding)
-            except UnicodeDecodeError:
-                continue
-            return json.dumps(new_data, default=_json_encode_fallback, **kwargs)
-        except UnicodeDecodeError:
-            continue
-    raise UnicodeError('Invalid unicode encoding encountered')
+    from ansible.module_utils.common import json as _common_json
+    # from ansible.module_utils.common.warnings import deprecate
+
+    # deprecated: description='deprecate jsonify()' core_version='2.23'
+    # deprecate(
+    #     msg="The `jsonify` function is deprecated.",
+    #     version="2.27",
+    #     # help_text="",  # DTFIX-FUTURE: fill in this help text
+    # )
+
+    return json.dumps(data, cls=_common_json._get_legacy_encoder(), _decode_bytes=True, **kwargs)
 
 
 def container_to_bytes(d, encoding='utf-8', errors='surrogate_or_strict'):
-    ''' Recursively convert dict keys and values to byte str
+    """ Recursively convert dict keys and values to byte str
 
         Specialized for json return because this only handles, lists, tuples,
         and dict container types (the containers that the json module returns)
-    '''
+    """
+    # DTFIX-FUTURE: deprecate
 
-    if isinstance(d, text_type):
+    if isinstance(d, str):
         return to_bytes(d, encoding=encoding, errors=errors)
     elif isinstance(d, dict):
-        return dict(container_to_bytes(o, encoding, errors) for o in iteritems(d))
+        return dict(container_to_bytes(o, encoding, errors) for o in d.items())
     elif isinstance(d, list):
         return [container_to_bytes(o, encoding, errors) for o in d]
     elif isinstance(d, tuple):
@@ -308,15 +359,20 @@ def container_to_text(d, encoding='utf-8', errors='surrogate_or_strict'):
     Specialized for json return because this only handles, lists, tuples,
     and dict container types (the containers that the json module returns)
     """
+    # DTFIX-FUTURE: deprecate
 
-    if isinstance(d, binary_type):
+    if isinstance(d, bytes):
         # Warning, can traceback
         return to_text(d, encoding=encoding, errors=errors)
     elif isinstance(d, dict):
-        return dict(container_to_text(o, encoding, errors) for o in iteritems(d))
+        return dict(container_to_text(o, encoding, errors) for o in d.items())
     elif isinstance(d, list):
         return [container_to_text(o, encoding, errors) for o in d]
     elif isinstance(d, tuple):
         return tuple(container_to_text(o, encoding, errors) for o in d)
     else:
         return d
+
+
+def __getattr__(importable_name):
+    return _no_six.deprecate(importable_name, __name__, "binary_type", "text_type", "iteritems")

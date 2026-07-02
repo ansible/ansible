@@ -1,8 +1,7 @@
 # (c) 2013, Serge van Ginderachter <serge@vanginderachter.be>
 # (c) 2012-17 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 DOCUMENTATION = """
     name: subelements
@@ -11,6 +10,7 @@ DOCUMENTATION = """
     short_description: traverse nested key from a list of dictionaries
     description:
       - Subelements walks a list of hashes (aka dictionaries) and then traverses a list with a given (nested sub-)key inside of those records.
+    positional: _terms
     options:
       _terms:
          description: tuple of list of dictionaries and dictionary key to extract
@@ -19,8 +19,8 @@ DOCUMENTATION = """
         default: False
         description:
           - Lookup accepts this flag from a dictionary as optional. See Example section for more information.
-          - If set to C(True), the lookup plugin will skip the lists items that do not contain the given subkey.
-          - If set to C(False), the plugin will yield an error and complain about the missing subkey.
+          - If set to V(True), the lookup plugin will skip the lists items that do not contain the given subkey.
+          - If set to V(False), the plugin will yield an error and complain about the missing subkey.
 """
 
 EXAMPLES = """
@@ -84,10 +84,8 @@ _list:
 """
 
 from ansible.errors import AnsibleError
-from ansible.module_utils.six import string_types
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.lookup import LookupBase
-from ansible.utils.listify import listify_lookup_plugin_terms
 
 
 FLAGS = ('skip_missing',)
@@ -95,20 +93,18 @@ FLAGS = ('skip_missing',)
 
 class LookupModule(LookupBase):
 
-    def run(self, terms, variables, **kwargs):
+    def run(self, terms, variables=None, **kwargs):
 
         def _raise_terms_error(msg=""):
             raise AnsibleError(
                 "subelements lookup expects a list of two or three items, " + msg)
-
-        terms[0] = listify_lookup_plugin_terms(terms[0], templar=self._templar, loader=self._loader)
 
         # check lookup terms - check number of terms
         if not isinstance(terms, list) or not 2 <= len(terms) <= 3:
             _raise_terms_error()
 
         # first term should be a list (or dict), second a string holding the subkey
-        if not isinstance(terms[0], (list, dict)) or not isinstance(terms[1], string_types):
+        if not isinstance(terms[0], (list, dict)) or not isinstance(terms[1], str):
             _raise_terms_error("first a dict or a list, second a string pointing to the subkey")
         subelements = terms[1].split(".")
 
@@ -126,7 +122,7 @@ class LookupModule(LookupBase):
         flags = {}
         if len(terms) == 3:
             flags = terms[2]
-        if not isinstance(flags, dict) and not all(isinstance(key, string_types) and key in FLAGS for key in flags):
+        if not isinstance(flags, dict) and not all(isinstance(key, str) and key in FLAGS for key in flags):
             _raise_terms_error("the optional third item must be a dict with flags %s" % FLAGS)
 
         # build_items

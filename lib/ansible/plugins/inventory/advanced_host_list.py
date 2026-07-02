@@ -1,36 +1,37 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
     name: advanced_host_list
     version_added: "2.4"
     short_description: Parses a 'host list' with ranges
     description:
         - Parses a host list string as a comma separated values of hosts and supports host ranges.
         - This plugin only applies to inventory sources that are not paths and contain at least one comma.
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
     # simple range
     # ansible -i 'host[1:10],' -m ping
 
     # still supports w/o ranges also
     # ansible-playbook -i 'localhost,' play.yml
-'''
+"""
 
 import os
 
 from ansible.errors import AnsibleError, AnsibleParserError
-from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.plugins.inventory import BaseInventoryPlugin
 
 
 class InventoryModule(BaseInventoryPlugin):
 
     NAME = 'advanced_host_list'
+
+    # advanced_host_list does not set vars, so needs no special trust assistance from the inventory API
 
     def verify_file(self, host_list):
 
@@ -41,7 +42,7 @@ class InventoryModule(BaseInventoryPlugin):
         return valid
 
     def parse(self, inventory, loader, host_list, cache=True):
-        ''' parses the inventory file '''
+        """ parses the inventory file """
 
         super(InventoryModule, self).parse(inventory, loader, host_list)
 

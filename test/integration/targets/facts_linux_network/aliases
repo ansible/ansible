@@ -1,7 +1,7 @@
 needs/privileged
-shippable/posix/group2
+needs/root
+shippable/posix/group1
 skip/freebsd
-skip/osx
 skip/macos
 context/target
 destructive

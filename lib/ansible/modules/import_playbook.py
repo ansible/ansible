@@ -3,11 +3,10 @@
 # Copyright:  Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 author: Ansible Core Team (@ansible)
 module: import_playbook
@@ -41,11 +40,11 @@ seealso:
 - module: ansible.builtin.import_tasks
 - module: ansible.builtin.include_role
 - module: ansible.builtin.include_tasks
-- ref: playbooks_reuse_includes
+- ref: playbooks_reuse
   description: More information related to including and importing playbooks, roles and tasks.
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - hosts: localhost
   tasks:
     - ansible.builtin.debug:
@@ -59,6 +58,9 @@ EXAMPLES = r'''
   vars:
     service: httpd
 
+- name: Include a playbook from a collection
+  ansible.builtin.import_playbook: my_namespace.my_collection.my_playbook
+
 - name: This DOES NOT WORK
   hosts: all
   tasks:
@@ -67,8 +69,8 @@ EXAMPLES = r'''
 
     - name: This fails because I'm inside a play already
       ansible.builtin.import_playbook: stuff.yaml
-'''
+"""
 
-RETURN = r'''
+RETURN = r"""
 # This module does not return anything except plays to execute.
-'''
+"""

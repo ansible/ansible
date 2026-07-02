@@ -1,9 +1,8 @@
 #!/usr/bin/python
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: test_docs_yaml_anchors
 short_description: Test module with YAML anchors in docs
@@ -38,13 +37,13 @@ options:
     type: list
     elements: dict
     suboptions: *sub_anchor
-'''
+"""
 
-EXAMPLES = '''
-'''
+EXAMPLES = """
+"""
 
-RETURN = '''
-'''
+RETURN = """
+"""
 
 
 from ansible.module_utils.basic import AnsibleModule

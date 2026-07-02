@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 # Copyright: (c) 2018, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 DOCUMENTATION = """
     name: sudo
@@ -73,12 +72,25 @@ DOCUMENTATION = """
             ini:
               - section: sudo_become_plugin
                 key: password
+        sudo_chdir:
+            description: Directory to change to before invoking sudo; can avoid permission errors when dropping privileges.
+            type: string
+            required: False
+            version_added: '2.19'
+            vars:
+              - name: ansible_sudo_chdir
+            env:
+              - name: ANSIBLE_SUDO_CHDIR
+            ini:
+              - section: sudo_become_plugin
+                key: chdir
 """
 
 import re
 import shlex
 
 from ansible.plugins.become import BecomeBase
+from ansible.errors import AnsibleError
 
 
 class BecomeModule(BecomeBase):
@@ -88,6 +100,17 @@ class BecomeModule(BecomeBase):
     # messages for detecting prompted password issues
     fail = ('Sorry, try again.',)
     missing = ('Sorry, a password is required to run sudo', 'sudo: a password is required')
+
+    def check_password_prompt(self, b_output):
+        matched = super().check_password_prompt(b_output)
+        if not matched:
+            # might be using sudo-rs, which is not backwards compatible
+            prompt = self.prompt
+            self.prompt = f"[sudo: {prompt}] Password:"  # handle extra text from sudo-rs
+            matched = super().check_password_prompt(b_output)
+            self.prompt = prompt
+
+        return matched
 
     def build_become_command(self, cmd, shell):
         super(BecomeModule, self).build_become_command(cmd, shell)
@@ -100,7 +123,7 @@ class BecomeModule(BecomeBase):
         flags = self.get_option('become_flags') or ''
         prompt = ''
         if self.get_option('become_pass'):
-            self.prompt = '[sudo via ansible, key=%s] password:' % self._id
+            self.prompt = f'[sudo via ansible, key={self._id}] password:'
             if flags:  # this could be simplified, but kept as is for now for backwards string matching
                 reflag = []
                 for flag in shlex.split(flags):
@@ -112,10 +135,16 @@ class BecomeModule(BecomeBase):
                     reflag.append(flag)
                 flags = shlex.join(reflag)
 
-            prompt = '-p "%s"' % (self.prompt)
+            prompt = f'-p "{self.prompt}"'
 
         user = self.get_option('become_user') or ''
         if user:
-            user = '-u %s' % (user)
+            user = f'-u {user}'
+
+        if chdir := self.get_option('sudo_chdir'):
+            try:
+                becomecmd = f'{shell.CD} {shlex.quote(chdir)} {shell._SHELL_AND} {becomecmd}'
+            except AttributeError as ex:
+                raise AnsibleError(f'The {shell._load_name!r} shell plugin does not support sudo chdir. It is missing the {ex.name!r} attribute.')
 
         return ' '.join([becomecmd, flags, prompt, user, self._build_success_command(cmd, shell)])

@@ -1,5 +1,5 @@
 - name: Test missing binaries
-  when: ansible_pkg_mgr in ('yum', 'dnf', 'apt', 'pkgng')
+  when: ansible_pkg_mgr in ('dnf', 'apt', 'pkgng')
   block:
     - name: Remove zip binaries
       package:
@@ -39,8 +39,8 @@
       environment:
         PATH: "{{ ENV_PATH }}"
       vars:
-        ENV_PATH: "{{ lookup('env', 'PATH') | regex_replace(re, '') }}"
-        re: "[^A-Za-z](\/usr\/bin:?)"
+        ENV_PATH: "{{ ansible_env['PATH']| regex_replace(re, '') }}"
+        re: '[^A-Za-z](\/usr\/bin:?)'
 
     - name: Ensure tasks worked as expected
       assert:
@@ -66,7 +66,7 @@
           - zip_success.changed
           # Verify that file list is generated
           - "'files' in zip_success"
-          - "{{zip_success['files']| length}} == 3"
+          - zip_success['files'] | length == 3
           - "'foo-unarchive.txt' in zip_success['files']"
           - "'foo-unarchive-777.txt' in zip_success['files']"
           - "'FOO-UNAR.TXT' in zip_success['files']"
@@ -80,7 +80,7 @@
         - zip
         - tar
 
-    - name: Reinsntall zip binaries
+    - name: Reinstall zip binaries
       package:
         name:
           - zip

@@ -1,5 +1,4 @@
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 
 def test_name_ok(value):

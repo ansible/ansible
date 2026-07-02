@@ -1,15 +1,13 @@
 # (c) 2021 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
+from __future__ import annotations
 
-__metaclass__ = type
 
 DOCUMENTATION = """
     name: bogus
     author: Ansible Core Team
-    version_added: histerical
+    version_added: hysterical
     short_description: returns what you gave it
     description:
       - this is mostly a noop
@@ -17,7 +15,7 @@ DOCUMENTATION = """
         _terms:
             description: stuff to pass through
         test_list:
-            description: does nothihng, just for testing values
+            description: does nothing, just for testing values
             type: list
             choices:
                 - Dan

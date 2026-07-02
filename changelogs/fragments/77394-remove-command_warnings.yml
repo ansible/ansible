@@ -1,3 +1,0 @@
-removed_features:
-  - Remove deprecated ``COMMAND_WARNINGS`` configuration option (https://github.com/ansible/ansible/issues/77394)
-  - command/shell - remove deprecated ``warn`` module param

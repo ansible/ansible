@@ -13,10 +13,15 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
+
+
+def read_lines(path):
+    with open(path) as file:
+        return file.readlines()
+
 
 LSBLK_OUTPUT = b"""
 /dev/sda
@@ -368,7 +373,7 @@ CPU_INFO_TEST_SCENARIOS = [
         'architecture': 'armv61',
         'nproc_out': 1,
         'sched_getaffinity': set([0]),
-        'cpuinfo': open(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/armv6-rev7-1cpu-cpuinfo')).readlines(),
+        'cpuinfo': read_lines(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/armv6-rev7-1cpu-cpuinfo')),
         'expected_result': {
             'processor': ['0', 'ARMv6-compatible processor rev 7 (v6l)'],
             'processor_cores': 1,
@@ -381,7 +386,7 @@ CPU_INFO_TEST_SCENARIOS = [
         'architecture': 'armv71',
         'nproc_out': 4,
         'sched_getaffinity': set([0, 1, 2, 3]),
-        'cpuinfo': open(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/armv7-rev4-4cpu-cpuinfo')).readlines(),
+        'cpuinfo': read_lines(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/armv7-rev4-4cpu-cpuinfo')),
         'expected_result': {
             'processor': [
                 '0', 'ARMv7 Processor rev 4 (v7l)',
@@ -399,7 +404,7 @@ CPU_INFO_TEST_SCENARIOS = [
         'architecture': 'aarch64',
         'nproc_out': 4,
         'sched_getaffinity': set([0, 1, 2, 3]),
-        'cpuinfo': open(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/aarch64-4cpu-cpuinfo')).readlines(),
+        'cpuinfo': read_lines(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/aarch64-4cpu-cpuinfo')),
         'expected_result': {
             'processor': [
                 '0', 'AArch64 Processor rev 4 (aarch64)',
@@ -417,7 +422,7 @@ CPU_INFO_TEST_SCENARIOS = [
         'architecture': 'x86_64',
         'nproc_out': 4,
         'sched_getaffinity': set([0, 1, 2, 3]),
-        'cpuinfo': open(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/x86_64-4cpu-cpuinfo')).readlines(),
+        'cpuinfo': read_lines(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/x86_64-4cpu-cpuinfo')),
         'expected_result': {
             'processor': [
                 '0', 'AuthenticAMD', 'Dual-Core AMD Opteron(tm) Processor 2216',
@@ -429,13 +434,22 @@ CPU_INFO_TEST_SCENARIOS = [
             'processor_count': 2,
             'processor_nproc': 4,
             'processor_threads_per_core': 1,
+            'flags': [
+                'fpu', 'vme', 'de', 'pse', 'tsc', 'msr', 'pae', 'mce',
+                'cx8', 'apic', 'sep', 'mtrr', 'pge', 'mca', 'cmov', 'pat',
+                'pse36', 'clflush', 'mmx', 'fxsr', 'sse', 'sse2', 'ht',
+                'syscall', 'nx', 'mmxext', 'fxsr_opt', 'rdtscp', 'lm',
+                '3dnowext', '3dnow', 'art', 'rep_good', 'nopl', 'extd_apicid',
+                'pni', 'cx16', 'lahf_lm', 'cmp_legacy', 'svm', 'extapic',
+                'cr8_legacy', 'retpoline_amd', 'vmmcall'
+            ],
             'processor_vcpus': 4},
     },
     {
         'architecture': 'x86_64',
         'nproc_out': 4,
         'sched_getaffinity': set([0, 1, 2, 3]),
-        'cpuinfo': open(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/x86_64-8cpu-cpuinfo')).readlines(),
+        'cpuinfo': read_lines(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/x86_64-8cpu-cpuinfo')),
         'expected_result': {
             'processor': [
                 '0', 'GenuineIntel', 'Intel(R) Core(TM) i7-4800MQ CPU @ 2.70GHz',
@@ -451,13 +465,28 @@ CPU_INFO_TEST_SCENARIOS = [
             'processor_count': 1,
             'processor_nproc': 4,
             'processor_threads_per_core': 2,
+            'flags': [
+                'fpu', 'vme', 'de', 'pse', 'tsc', 'msr', 'pae', 'mce',
+                'cx8', 'apic', 'sep', 'mtrr', 'pge', 'mca', 'cmov',
+                'pat', 'pse36', 'clflush', 'dts', 'acpi', 'mmx', 'fxsr',
+                'sse', 'sse2', 'ss', 'ht', 'tm', 'pbe', 'syscall', 'nx',
+                'pdpe1gb', 'rdtscp', 'lm', 'constant_tsc', 'arch_perfmon',
+                'pebs', 'bts', 'rep_good', 'nopl', 'xtopology', 'nonstop_tsc',
+                'aperfmperf', 'eagerfpu', 'pni', 'pclmulqdq', 'dtes64', 'monitor',
+                'ds_cpl', 'vmx', 'smx', 'est', 'tm2', 'ssse3', 'sdbg', 'fma', 'cx16',
+                'xtpr', 'pdcm', 'pcid', 'sse4_1', 'sse4_2', 'x2apic', 'movbe',
+                'popcnt', 'tsc_deadline_timer', 'aes', 'xsave', 'avx', 'f16c',
+                'rdrand', 'lahf_lm', 'abm', 'epb', 'tpr_shadow', 'vnmi', 'flexpriority',
+                'ept', 'vpid', 'fsgsbase', 'tsc_adjust', 'bmi1', 'avx2', 'smep', 'bmi2',
+                'erms', 'invpcid', 'xsaveopt', 'dtherm', 'ida', 'arat', 'pln', 'pts'
+            ],
             'processor_vcpus': 8},
     },
     {
         'architecture': 'arm64',
         'nproc_out': 4,
         'sched_getaffinity': set([0, 1, 2, 3]),
-        'cpuinfo': open(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/arm64-4cpu-cpuinfo')).readlines(),
+        'cpuinfo': read_lines(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/arm64-4cpu-cpuinfo')),
         'expected_result': {
             'processor': ['0', '1', '2', '3'],
             'processor_cores': 1,
@@ -470,7 +499,7 @@ CPU_INFO_TEST_SCENARIOS = [
         'architecture': 'armv71',
         'nproc_out': 8,
         'sched_getaffinity': set([0, 1, 2, 3, 4, 5, 6, 7]),
-        'cpuinfo': open(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/armv7-rev3-8cpu-cpuinfo')).readlines(),
+        'cpuinfo': read_lines(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/armv7-rev3-8cpu-cpuinfo')),
         'expected_result': {
             'processor': [
                 '0', 'ARMv7 Processor rev 3 (v7l)',
@@ -492,7 +521,7 @@ CPU_INFO_TEST_SCENARIOS = [
         'architecture': 'x86_64',
         'nproc_out': 2,
         'sched_getaffinity': set([0, 1]),
-        'cpuinfo': open(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/x86_64-2cpu-cpuinfo')).readlines(),
+        'cpuinfo': read_lines(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/x86_64-2cpu-cpuinfo')),
         'expected_result': {
             'processor': [
                 '0', 'GenuineIntel', 'Intel(R) Xeon(R) CPU E5-2680 v2 @ 2.80GHz',
@@ -502,10 +531,20 @@ CPU_INFO_TEST_SCENARIOS = [
             'processor_count': 2,
             'processor_nproc': 2,
             'processor_threads_per_core': 1,
+            'flags': [
+                'fpu', 'vme', 'de', 'pse', 'tsc', 'msr', 'pae', 'mce', 'cx8', 'apic',
+                'sep', 'mtrr', 'pge', 'mca', 'cmov', 'pat', 'pse36', 'clflush', 'mmx',
+                'fxsr', 'sse', 'sse2', 'ss', 'syscall', 'nx', 'pdpe1gb', 'rdtscp', 'lm',
+                'constant_tsc', 'arch_perfmon', 'rep_good', 'nopl', 'xtopology',
+                'cpuid', 'tsc_known_freq', 'pni', 'pclmulqdq', 'ssse3', 'cx16',
+                'pcid', 'sse4_1', 'sse4_2', 'x2apic', 'popcnt', 'tsc_deadline_timer',
+                'aes', 'xsave', 'avx', 'f16c', 'rdrand', 'hypervisor', 'lahf_lm',
+                'pti', 'fsgsbase', 'tsc_adjust', 'smep', 'erms', 'xsaveopt', 'arat'
+            ],
             'processor_vcpus': 2},
     },
     {
-        'cpuinfo': open(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/ppc64-power7-rhel7-8cpu-cpuinfo')).readlines(),
+        'cpuinfo': read_lines(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/ppc64-power7-rhel7-8cpu-cpuinfo')),
         'architecture': 'ppc64',
         'nproc_out': 8,
         'sched_getaffinity': set([0, 1, 2, 3, 4, 5, 6, 7]),
@@ -528,7 +567,7 @@ CPU_INFO_TEST_SCENARIOS = [
         },
     },
     {
-        'cpuinfo': open(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/ppc64le-power8-24cpu-cpuinfo')).readlines(),
+        'cpuinfo': read_lines(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/ppc64le-power8-24cpu-cpuinfo')),
         'architecture': 'ppc64le',
         'nproc_out': 24,
         'sched_getaffinity': set([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]),
@@ -567,7 +606,41 @@ CPU_INFO_TEST_SCENARIOS = [
         },
     },
     {
-        'cpuinfo': open(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/sparc-t5-debian-ldom-24vcpu')).readlines(),
+        'cpuinfo': read_lines(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/s390x-z13-2cpu-cpuinfo')),
+        'architecture': 's390x',
+        'nproc_out': 2,
+        'sched_getaffinity': set([0, 1]),
+        'expected_result': {
+            'processor': [
+                'IBM/S390',
+            ],
+            'processor_cores': 2,
+            'processor_count': 1,
+            'processor_nproc': 2,
+            'processor_threads_per_core': 1,
+            'processor_vcpus': 2
+        },
+    },
+    {
+        'cpuinfo': read_lines(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/s390x-z14-64cpu-cpuinfo')),
+        'architecture': 's390x',
+        'nproc_out': 64,
+        'sched_getaffinity': set([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23,
+                                  24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47,
+                                  48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63]),
+        'expected_result': {
+            'processor': [
+                'IBM/S390',
+            ],
+            'processor_cores': 32,
+            'processor_count': 1,
+            'processor_nproc': 64,
+            'processor_threads_per_core': 2,
+            'processor_vcpus': 64
+        },
+    },
+    {
+        'cpuinfo': read_lines(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/sparc-t5-debian-ldom-24vcpu')),
         'architecture': 'sparc64',
         'nproc_out': 24,
         'sched_getaffinity': set([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]),

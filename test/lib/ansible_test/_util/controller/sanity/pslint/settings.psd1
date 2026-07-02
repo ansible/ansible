@@ -4,6 +4,9 @@
             Enable = $true
             MaximumLineLength = 160
         }
+        PSAvoidSemicolonsAsLineTerminators = @{
+            Enable = $true
+        }
         PSPlaceOpenBrace = @{
             Enable = $true
             OnSameLine = $true

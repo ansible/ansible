@@ -33,14 +33,20 @@
       shell: |
         import re
         import os
+        umask = os.umask(0)
+        mode = oct(0o777 & ~umask)
         try:
             for line in open('/etc/login.defs').readlines():
+                m = re.match(r'^HOME_MODE\s+(\d+)$', line)
+                if m:
+                    mode = oct(int(m.group(1), 8))
+                    break
                 m = re.match(r'^UMASK\s+(\d+)$', line)
                 if m:
                     umask = int(m.group(1), 8)
+                    mode = oct(0o777 & ~umask)
         except:
-            umask = os.umask(0)
-        mode = oct(0o777 & ~umask)
+            pass
         print(str(mode).replace('o', ''))
       args:
         executable: "{{ ansible_python_interpreter }}"
@@ -54,6 +60,14 @@
           - user_create_home_fallback_dir.stat.isdir
           - user_create_home_fallback_dir.stat.pw_name == 'ansibulluser'
           - user_create_home_fallback_dir.stat.mode == user_login_defs_umask.stdout
+
+  always:
+    - name: Clean up ansibulluser
+      user:
+        name: ansibulluser
+        state: absent
+        force: true
+        remove: true
 
 - name: Create non-system user
   when: ansible_facts.distribution == "MacOSX"

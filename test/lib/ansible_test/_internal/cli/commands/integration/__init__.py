@@ -1,4 +1,5 @@
 """Command line parsing for all integration commands."""
+
 from __future__ import annotations
 
 import argparse
@@ -26,15 +27,15 @@ from .windows import (
 
 
 def do_integration(
-        subparsers,
-        parent,  # type: argparse.ArgumentParser
-        completer,  # type: CompositeActionCompletionFinder
+    subparsers,
+    parent: argparse.ArgumentParser,
+    completer: CompositeActionCompletionFinder,
 ):
     """Command line parsing for all integration commands."""
     parser = argparse.ArgumentParser(
         add_help=False,
         parents=[parent],
-    )  # type: argparse.ArgumentParser
+    )
 
     do_posix_integration(subparsers, parser, add_integration_common, completer)
     do_network_integration(subparsers, parser, add_integration_common, completer)
@@ -42,7 +43,7 @@ def do_integration(
 
 
 def add_integration_common(
-        parser,  # type: argparse.ArgumentParser
+    parser: argparse.ArgumentParser,
 ):
     """Add common integration arguments."""
     register_completer(parser.add_argument(

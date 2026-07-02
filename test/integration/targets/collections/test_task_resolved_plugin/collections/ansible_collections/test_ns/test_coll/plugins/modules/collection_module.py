@@ -3,10 +3,9 @@
 
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: collection_module
 short_description: A module to test a task's resolved action name.
@@ -15,7 +14,7 @@ options: {}
 author: Ansible Core Team
 notes:
   - Supports C(check_mode).
-'''
+"""
 
 from ansible.module_utils.basic import AnsibleModule
 

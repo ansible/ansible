@@ -13,8 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 import re
@@ -41,6 +40,9 @@ class HPUXHardware(Hardware):
     def populate(self, collected_facts=None):
         hardware_facts = {}
 
+        # TODO: very inefficient calls to machinfo,
+        # should just make one and then deal with finding the data (see facts/sysctl)
+        # but not going to change unless there is hp/ux for testing
         cpu_facts = self.get_cpu_facts(collected_facts=collected_facts)
         memory_facts = self.get_memory_facts()
         hw_facts = self.get_hw_facts()

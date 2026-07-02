@@ -4,8 +4,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 # PYTHON_ARGCOMPLETE_OK
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 # ansible.cli needs to be imported first, to ensure the source bin/* scripts run that code first
 from ansible.cli import CLI
@@ -17,7 +16,7 @@ from ansible import constants as C
 from ansible import context
 from ansible.cli.arguments import option_helpers as opt_help
 from ansible.errors import AnsibleOptionsError
-from ansible.module_utils._text import to_text, to_bytes
+from ansible.module_utils.common.text.converters import to_text, to_bytes
 from ansible.parsing.dataloader import DataLoader
 from ansible.parsing.vault import VaultEditor, VaultLib, match_encrypt_secret
 from ansible.utils.display import Display
@@ -26,7 +25,7 @@ display = Display()
 
 
 class VaultCLI(CLI):
-    ''' can encrypt any structured data file used by Ansible.
+    """ can encrypt any structured data file used by Ansible.
     This can include *group_vars/* or *host_vars/* inventory variables,
     variables loaded by *include_vars* or *vars_files*, or variable files
     passed on the ansible-playbook command line with *-e @file.yml* or *-e @file.json*.
@@ -34,7 +33,7 @@ class VaultCLI(CLI):
 
     Because Ansible tasks, handlers, and other objects are data, these can also be encrypted with vault.
     If you'd like to not expose what variables you are using, you can keep an individual task file entirely encrypted.
-    '''
+    """
 
     name = 'ansible-vault'
 
@@ -61,20 +60,20 @@ class VaultCLI(CLI):
             epilog="\nSee '%s <command> --help' for more information on a specific command.\n\n" % os.path.basename(sys.argv[0])
         )
 
-        common = opt_help.argparse.ArgumentParser(add_help=False)
+        common = opt_help.ArgumentParser(add_help=False)
         opt_help.add_vault_options(common)
         opt_help.add_verbosity_options(common)
 
         subparsers = self.parser.add_subparsers(dest='action')
         subparsers.required = True
 
-        output = opt_help.argparse.ArgumentParser(add_help=False)
+        output = opt_help.ArgumentParser(add_help=False)
         output.add_argument('--output', default=None, dest='output_file',
                             help='output file name for encrypt or decrypt; use - for stdout',
                             type=opt_help.unfrack_path())
 
         # For encrypting actions, we can also specify which of multiple vault ids should be used for encrypting
-        vault_id = opt_help.argparse.ArgumentParser(add_help=False)
+        vault_id = opt_help.ArgumentParser(add_help=False)
         vault_id.add_argument('--encrypt-vault-id', default=[], dest='encrypt_vault_id',
                               action='store', type=str,
                               help='the vault id used to encrypt (required if more than one vault-id is provided)')
@@ -82,8 +81,10 @@ class VaultCLI(CLI):
         create_parser = subparsers.add_parser('create', help='Create new vault encrypted file', parents=[vault_id, common])
         create_parser.set_defaults(func=self.execute_create)
         create_parser.add_argument('args', help='Filename', metavar='file_name', nargs='*')
+        create_parser.add_argument('--skip-tty-check', default=False, help='allows editor to be opened when no tty attached',
+                                   dest='skip_tty_check', action='store_true')
 
-        decrypt_parser = subparsers.add_parser('decrypt', help='Decrypt vault encrypted file', parents=[output, common])
+        decrypt_parser = subparsers.add_parser('decrypt', help='Decrypt vault encrypted file or string', parents=[output, common])
         decrypt_parser.set_defaults(func=self.execute_decrypt)
         decrypt_parser.add_argument('args', help='Filename', metavar='file_name', nargs='*')
 
@@ -137,11 +138,12 @@ class VaultCLI(CLI):
             raise AnsibleOptionsError("At most one input file may be used with the --output option")
 
         if options.action == 'encrypt_string':
-            if '-' in options.args or not options.args or options.encrypt_string_stdin_name:
+            if '-' in options.args or options.encrypt_string_stdin_name or (not options.args and not options.encrypt_string_prompt):
+                # prompting from stdin and reading from stdin are mutually exclusive, if stdin is still provided, it is ignored
                 self.encrypt_string_read_stdin = True
 
-            # TODO: prompting from stdin and reading from stdin seem mutually exclusive, but verify that.
             if options.encrypt_string_prompt and self.encrypt_string_read_stdin:
+                # should only trigger if prompt + either - or encrypt string stdin name were provided
                 raise AnsibleOptionsError('The --prompt option is not supported if also reading input from stdin')
 
         return options
@@ -226,6 +228,7 @@ class VaultCLI(CLI):
                                          vault_ids=new_vault_ids,
                                          vault_password_files=new_vault_password_files,
                                          ask_vault_pass=context.CLIARGS['ask_vault_pass'],
+                                         initialize_context=False,
                                          create_new_password=True)
 
             if not new_vault_secrets:
@@ -251,13 +254,13 @@ class VaultCLI(CLI):
         os.umask(old_umask)
 
     def execute_encrypt(self):
-        ''' encrypt the supplied file using the provided vault secret '''
+        """ encrypt the supplied file using the provided vault secret """
 
         if not context.CLIARGS['args'] and sys.stdin.isatty():
             display.display("Reading plaintext input from stdin", stderr=True)
 
         for f in context.CLIARGS['args'] or ['-']:
-            # Fixme: use the correct vau
+            # FIXME: use the correct vau
             self.editor.encrypt_file(f, self.encrypt_secret,
                                      vault_id=self.encrypt_vault_id,
                                      output_file=context.CLIARGS['output_file'])
@@ -285,7 +288,7 @@ class VaultCLI(CLI):
         return yaml_ciphertext
 
     def execute_encrypt_string(self):
-        ''' encrypt the supplied string using the provided vault secret '''
+        """ encrypt the supplied string using the provided vault secret """
         b_plaintext = None
 
         # Holds tuples (the_text, the_source_of_the_string, the variable name if its provided).
@@ -384,6 +387,11 @@ class VaultCLI(CLI):
                 sys.stderr.write(err)
             b_outs.append(to_bytes(out))
 
+        # The output must end with a newline to play nice with terminal representation.
+        # Refs:
+        # * https://stackoverflow.com/a/729795/595220
+        # * https://github.com/ansible/ansible/issues/78932
+        b_outs.append(b'')
         self.editor.write_data(b'\n'.join(b_outs), context.CLIARGS['output_file'] or '-')
 
         if sys.stdout.isatty():
@@ -408,8 +416,7 @@ class VaultCLI(CLI):
             # (the text itself, which input it came from, its name)
             b_plaintext, src, name = b_plaintext_info
 
-            b_ciphertext = self.editor.encrypt_bytes(b_plaintext, self.encrypt_secret,
-                                                     vault_id=vault_id)
+            b_ciphertext = self.editor.encrypt_bytes(b_plaintext, self.encrypt_secret, vault_id=vault_id)
 
             # block formatting
             yaml_text = self.format_ciphertext_yaml(b_ciphertext, name=name)
@@ -426,7 +433,7 @@ class VaultCLI(CLI):
         return output
 
     def execute_decrypt(self):
-        ''' decrypt the supplied file using the provided vault secret '''
+        """ decrypt the supplied file using the provided vault secret """
 
         if not context.CLIARGS['args'] and sys.stdin.isatty():
             display.display("Reading ciphertext input from stdin", stderr=True)
@@ -438,21 +445,24 @@ class VaultCLI(CLI):
             display.display("Decryption successful", stderr=True)
 
     def execute_create(self):
-        ''' create and open a file in an editor that will be encrypted with the provided vault secret when closed'''
+        """ create and open a file in an editor that will be encrypted with the provided vault secret when closed"""
 
         if len(context.CLIARGS['args']) != 1:
             raise AnsibleOptionsError("ansible-vault create can take only one filename argument")
 
-        self.editor.create_file(context.CLIARGS['args'][0], self.encrypt_secret,
-                                vault_id=self.encrypt_vault_id)
+        if sys.stdout.isatty() or context.CLIARGS['skip_tty_check']:
+            self.editor.create_file(context.CLIARGS['args'][0], self.encrypt_secret,
+                                    vault_id=self.encrypt_vault_id)
+        else:
+            raise AnsibleOptionsError("not a tty, editor cannot be opened")
 
     def execute_edit(self):
-        ''' open and decrypt an existing vaulted file in an editor, that will be encrypted again when closed'''
+        """ open and decrypt an existing vaulted file in an editor, that will be encrypted again when closed"""
         for f in context.CLIARGS['args']:
             self.editor.edit_file(f)
 
     def execute_view(self):
-        ''' open, decrypt and view an existing vaulted file using a pager using the supplied vault secret '''
+        """ open, decrypt and view an existing vaulted file using a pager using the supplied vault secret """
 
         for f in context.CLIARGS['args']:
             # Note: vault should return byte strings because it could encrypt
@@ -464,7 +474,7 @@ class VaultCLI(CLI):
             self.pager(to_text(plaintext))
 
     def execute_rekey(self):
-        ''' re-encrypt a vaulted file with a new secret, the previous secret is required '''
+        """ re-encrypt a vaulted file with a new secret, the previous secret is required """
         for f in context.CLIARGS['args']:
             # FIXME: plumb in vault_id, use the default new_vault_secret for now
             self.editor.rekey_file(f, self.new_encrypt_secret,

@@ -1,21 +1,4 @@
-# UNINSTALL 'python2-dnf'
-#  The `dnf` module has the smarts to auto-install the relevant python
-#  bindings.  To test, we will first uninstall python2-dnf (so that the tests
-#  on python2 will require python2-dnf)
-- name: check python2-dnf with rpm
-  shell: rpm -q python2-dnf
-  register: rpm_result
-  ignore_errors: true
-
-# Don't uninstall python2-dnf with the `dnf` module in case it needs to load
-# some dnf python files after the package is uninstalled.
-- name: uninstall python2-dnf with shell
-  shell: dnf -y remove python2-dnf
-  when: rpm_result is successful
-
 # UNINSTALL
-#   With 'python2-dnf' uninstalled, the first call to 'dnf' should install
-#   python2-dnf.
 - name: uninstall sos
   dnf:
     name: sos
@@ -32,6 +15,17 @@
     that:
         - "not dnf_result.failed | default(False)"
         - "rpm_result.rc == 1"
+
+# NOTE Now that the dnf module executed, libdnf is installed even for the case
+#      when testing 'auto_install_module_deps: false' for dnf5
+#      and we can print libdnf version we test against for debugging purposes.
+- name: get libdnf version being tested
+  command: "rpm -q {{ 'python3-libdnf5' if dnf5 else 'python3-libdnf' }}"
+  register: libdnf_ver
+
+- name: libdnf version being tested
+  debug:
+    msg: "{{ libdnf_ver.stdout }}"
 
 # UNINSTALL AGAIN
 - name: uninstall sos
@@ -66,6 +60,17 @@
     state: present
     update_cache: True
   register: dnf_result
+
+- find:
+    paths: /var/cache/dnf
+    patterns: "*.rpm"
+    recurse: true
+  register: r
+
+- name: verify that RPM cache is cleared after installation as keepcache is off by default
+  assert:
+    that:
+      - r.matched == 0
 
 - name: check sos with rpm
   shell: rpm -q sos
@@ -108,6 +113,19 @@
   assert:
     that:
         - "not dnf_result.changed"
+
+- name: install sos again with empty string enablerepo
+  dnf:
+    name: sos
+    state: present
+    enablerepo: ""
+  register: dnf_result
+
+- name: verify no change on third install with empty string enablerepo
+  assert:
+    that:
+        - "dnf_result is success"
+        - "not dnf_result is changed"
 
 # Multiple packages
 - name: uninstall sos and dos2unix
@@ -224,7 +242,7 @@
 - assert:
     that:
       - dnf_result is success
-      - dnf_result.results|length == 2
+      - dnf_result.results|length >= 2
       - "dnf_result.results[0].startswith('Removed: ')"
       - "dnf_result.results[1].startswith('Removed: ')"
 
@@ -423,9 +441,9 @@
     name: landsidescalping
     state: absent
 
-# cleanup until https://github.com/ansible/ansible/issues/27377 is resolved
-- shell: 'dnf -y group install "Custom Group" && dnf -y group remove "Custom Group"'
-  register: shell_dnf_result
+- dnf:
+    name: "@Custom Group"
+    state: absent
 
 # GROUP UPGRADE - this will go to the same method as group install
 # but through group_update - it is its invocation we're testing here
@@ -443,8 +461,9 @@
     - dnf_result is changed
     - "'results' in dnf_result"
 
-# cleanup until https://github.com/ansible/ansible/issues/27377 is resolved
-- shell: dnf -y group install "Custom Group" && dnf -y group remove "Custom Group"
+- dnf:
+    name: "@Custom Group"
+    state: absent
 
 - name: try to install non existing group
   dnf:
@@ -496,6 +515,7 @@
     that:
         - "dnf_result is failed"
         - "not dnf_result.changed"
+        - "'Failure downloading' in dnf_result.msg or 'Failed to download' in dnf_result.msg"
 
 - name: verify dnf module outputs
   assert:
@@ -523,17 +543,22 @@
     - "'results' in dnf_result"
     - landsidescalping_result.rc == 0
 
-# Fedora 28 (DNF 2) does not support this, just remove the package itself
-- name: remove landsidescalping package on Fedora 28
+- name: uninstall Custom Environment Group
   dnf:
-    name: landsidescalping
+    name: "@Custom Environment Group"
     state: absent
-  when: ansible_distribution == 'Fedora' and ansible_distribution_major_version|int <= 28
+  register: dnf_result
 
-# cleanup until https://github.com/ansible/ansible/issues/27377 is resolved
-- name: remove Custom Environment Group
-  shell: dnf -y group install "Custom Environment Group" && dnf -y group remove "Custom Environment Group"
-  when: not (ansible_distribution == 'Fedora' and ansible_distribution_major_version|int <= 28)
+- name: check landsidescalping with rpm
+  command: rpm -q landsidescalping
+  register: landsidescalping_result
+  ignore_errors: yes
+
+- name: verify removal of the environment
+  assert:
+    that:
+      - dnf_result is changed
+      - landsidescalping_result.rc != 0
 
 # https://github.com/ansible/ansible/issues/39704
 - name: install non-existent rpm, state=latest
@@ -551,30 +576,35 @@
         - "'No package non-existent-rpm available' in dnf_result['failures'][0]"
         - "'Failed to install some of the specified packages' in dnf_result['msg']"
 
-- name: use latest to install httpd
+- name: ensure sos isn't installed
   dnf:
-    name: httpd
+    name: sos
+    state: absent
+
+- name: use latest to install sos
+  dnf:
+    name: sos
     state: latest
   register: dnf_result
 
-- name: verify httpd was installed
+- name: verify sos was installed
   assert:
     that:
-      - "'changed' in dnf_result"
+      - dnf_result is changed
 
-- name: uninstall httpd
+- name: uninstall sos
   dnf:
-    name: httpd
+    name: sos
     state: removed
 
-- name: update httpd only if it exists
+- name: update sos only if it exists
   dnf:
-    name: httpd
+    name: sos
     state: latest
     update_only: yes
   register: dnf_result
 
-- name: verify httpd not installed
+- name: verify sos not installed
   assert:
     that:
       - "not dnf_result is changed"
@@ -591,6 +621,22 @@
     that:
         - "not dnf_result is changed"
         - "dnf_result is failed"
+
+- name: try to install an RPM with error in scriptlet
+  dnf:
+    name: broken-scriptlet
+    state: present
+    disable_gpg_check: true
+  register: dnf_result
+  ignore_errors: True
+
+- name: verify that dnf failed
+  assert:
+    that:
+        - "not dnf_result is changed"
+        - "dnf_result is failed"
+        - dnf_result.failures | length > 0
+        - '"scriptlet failed, exit status 1" in dnf_result.failures[0]'
 
 # setup for testing installing an RPM from local file
 
@@ -647,6 +693,28 @@
     that:
         - "dnf_result is success"
         - "dnf_result is changed"
+        - "dnf_result is not failed"
+
+- name: verify dnf module outputs
+  assert:
+    that:
+        - "'changed' in dnf_result"
+        - "'results' in dnf_result"
+
+# Install RPM from url with update_only
+- name: install from url with update_only
+  dnf:
+    name: "file://{{ pkg_path }}"
+    state: latest
+    update_only: true
+    disable_gpg_check: true
+  register: dnf_result
+
+- name: verify installation
+  assert:
+    that:
+        - "dnf_result is success"
+        - "not dnf_result is changed"
         - "dnf_result is not failed"
 
 - name: verify dnf module outputs
@@ -832,3 +900,27 @@
     - dnf:
         name: langpacks-ja
         state: absent
+
+- name: test passing non existing plugins, should fail
+  block:
+    - dnf:
+        name: sos
+        enable_plugin: nonexisting
+      ignore_errors: true
+      register: enable_plugin_result
+
+    - dnf:
+        name: sos
+        disable_plugin: nonexisting
+      ignore_errors: true
+      register: disable_plugin_result
+
+    - assert:
+        that:
+          - enable_plugin_result is failed
+          - disable_plugin_result is failed
+          - '"No matches were found for the following plugin name patterns while enabling libdnf5 plugins: " in enable_plugin_result.msg'
+          - '"No matches were found for the following plugin name patterns while disabling libdnf5 plugins: " in disable_plugin_result.msg'
+          - '"nonexisting" in enable_plugin_result.msg'
+          - '"nonexisting" in disable_plugin_result.msg'
+  when: dnf5

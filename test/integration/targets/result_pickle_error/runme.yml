@@ -1,0 +1,7 @@
+- hosts: all
+  gather_facts: false
+  tasks:
+    - include_role:
+        name: result_pickle_error
+      # Just for caution loop 3 times to ensure no issues
+      loop: '{{ range(3) | list }}'

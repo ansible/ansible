@@ -1,2 +1,0 @@
-bugfixes:
-- prevent lusermod from using group name instead of group id (https://github.com/ansible/ansible/pull/77914)

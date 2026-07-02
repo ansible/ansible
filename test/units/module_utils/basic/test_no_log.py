@@ -3,17 +3,17 @@
 # (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
-from units.compat import unittest
+import typing as t
+import pytest
 
 from ansible.module_utils.basic import remove_values
 from ansible.module_utils.common.parameters import _return_datastructure_name
 
 
-class TestReturnValues(unittest.TestCase):
-    dataset = (
+class TestReturnValues:
+    dataset: tuple[tuple[t.Any, frozenset[str]], ...] = (
         ('string', frozenset(['string'])),
         ('', frozenset()),
         (1, frozenset(['1'])),
@@ -43,13 +43,14 @@ class TestReturnValues(unittest.TestCase):
 
     def test_return_datastructure_name(self):
         for data, expected in self.dataset:
-            self.assertEqual(frozenset(_return_datastructure_name(data)), expected)
+            assert frozenset(_return_datastructure_name(data)) == expected
 
     def test_unknown_type(self):
-        self.assertRaises(TypeError, frozenset, _return_datastructure_name(object()))
+        with pytest.raises(Exception):
+            frozenset(_return_datastructure_name(object()))
 
 
-class TestRemoveValues(unittest.TestCase):
+class TestRemoveValues:
     OMIT = 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER'
     dataset_no_remove = (
         ('string', frozenset(['nope'])),
@@ -123,14 +124,15 @@ class TestRemoveValues(unittest.TestCase):
 
     def test_no_removal(self):
         for value, no_log_strings in self.dataset_no_remove:
-            self.assertEqual(remove_values(value, no_log_strings), value)
+            assert remove_values(value, no_log_strings) == value
 
     def test_strings_to_remove(self):
         for value, no_log_strings, expected in self.dataset_remove:
-            self.assertEqual(remove_values(value, no_log_strings), expected)
+            assert remove_values(value, no_log_strings) == expected
 
     def test_unknown_type(self):
-        self.assertRaises(TypeError, remove_values, object(), frozenset())
+        with pytest.raises(TypeError):
+            remove_values(object(), frozenset())
 
     def test_hit_recursion_limit(self):
         """ Check that we do not hit a recursion limit"""
@@ -147,14 +149,14 @@ class TestRemoveValues(unittest.TestCase):
 
         levels = 0
         inner_list = actual_data_list
-        while inner_list:
+        while True:
             if isinstance(inner_list, list):
-                self.assertEqual(len(inner_list), 1)
+                assert len(inner_list) == 1
             else:
                 levels -= 1
                 break
             inner_list = inner_list[0]
             levels += 1
 
-        self.assertEqual(inner_list, self.OMIT)
-        self.assertEqual(levels, 10000)
+        assert inner_list == self.OMIT
+        assert levels == 10000

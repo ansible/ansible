@@ -121,7 +121,10 @@
        - result.cmd == "echo foo --arg=a --arg=b"
 
 - name: test includes with params
-  include: test_include.yml fact_name=include_params param="{{ test_input }}"
+  include_tasks: test_include.yml
+  vars:
+    fact_name: include_params
+    param: "{{ test_input }}"
 
 - name: assert the include set the correct fact for the param
   assert:
@@ -129,7 +132,10 @@
       - include_params == test_input
 
 - name: test includes with quoted params
-  include: test_include.yml fact_name=double_quoted_param param="this is a param with double quotes"
+  include_tasks: test_include.yml
+  vars:
+    fact_name: double_quoted_param
+    param: "this is a param with double quotes"
 
 - name: assert the include set the correct fact for the double quoted param
   assert:
@@ -137,7 +143,10 @@
       - double_quoted_param == "this is a param with double quotes"
 
 - name: test includes with single quoted params
-  include: test_include.yml fact_name=single_quoted_param param='this is a param with single quotes'
+  include_tasks: test_include.yml
+  vars:
+    fact_name: single_quoted_param
+    param: 'this is a param with single quotes'
 
 - name: assert the include set the correct fact for the single quoted param
   assert:
@@ -145,7 +154,7 @@
       - single_quoted_param == "this is a param with single quotes"
 
 - name: test includes with quoted params in complex args
-  include: test_include.yml
+  include_tasks: test_include.yml
   vars:
     fact_name: complex_param
     param: "this is a param in a complex arg with double quotes"
@@ -165,7 +174,7 @@
       - result.msg == "this should be debugged"
 
 - name: test conditional includes
-  include: test_include_conditional.yml
+  include_tasks: test_include_conditional.yml
   when: false
 
 - name: assert the nested include from test_include_conditional was not set

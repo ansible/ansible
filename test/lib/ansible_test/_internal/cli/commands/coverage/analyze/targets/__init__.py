@@ -1,4 +1,5 @@
 """Command line parsing for all `coverage analyze targets` commands."""
+
 from __future__ import annotations
 
 import argparse
@@ -29,10 +30,10 @@ from .missing import (
 
 
 def do_targets(
-        subparsers,
-        parent,  # type: argparse.ArgumentParser
-        completer,  # type: CompositeActionCompletionFinder
-):  # type: (...) -> None
+    subparsers,
+    parent: argparse.ArgumentParser,
+    completer: CompositeActionCompletionFinder,
+) -> None:
     """Command line parsing for all `coverage analyze targets` commands."""
     targets = subparsers.add_parser(
         'targets',

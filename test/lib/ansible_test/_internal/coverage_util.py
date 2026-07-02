@@ -1,16 +1,15 @@
 """Utility code for facilitating collection of code coverage when running tests."""
+
 from __future__ import annotations
 
-import atexit
 import dataclasses
 import os
 import sqlite3
 import tempfile
+import textwrap
 import typing as t
 
 from .config import (
-    IntegrationConfig,
-    SanityConfig,
     TestConfig,
 )
 
@@ -34,6 +33,7 @@ from .data import (
 )
 
 from .util_common import (
+    ExitHandler,
     intercept_python,
     ResultType,
 )
@@ -52,10 +52,15 @@ from .constants import (
     CONTROLLER_PYTHON_VERSIONS,
 )
 
+from .thread import (
+    mutex,
+)
+
 
 @dataclasses.dataclass(frozen=True)
 class CoverageVersion:
     """Details about a coverage version and its supported Python versions."""
+
     coverage_version: str
     schema_version: int
     min_python: tuple[int, int]
@@ -64,8 +69,8 @@ class CoverageVersion:
 
 COVERAGE_VERSIONS = (
     # IMPORTANT: Keep this in sync with the ansible-test.txt requirements file.
-    CoverageVersion('6.3.3', 7, (3, 7), (3, 11)),
-    CoverageVersion('4.5.4', 0, (2, 6), (3, 6)),
+    CoverageVersion('7.13.5', 7, (3, 10), (3, 15)),
+    CoverageVersion('7.10.7', 7, (3, 9), (3, 9)),
 )
 """
 This tuple specifies the coverage version to use for Python version ranges.
@@ -77,6 +82,7 @@ CONTROLLER_COVERAGE_VERSION = COVERAGE_VERSIONS[0]
 
 class CoverageError(ApplicationError):
     """Exception caused while attempting to read a coverage file."""
+
     def __init__(self, path: str, message: str) -> None:
         self.path = path
         self.message = message
@@ -139,15 +145,15 @@ def get_sqlite_schema_version(path: str) -> int:
 
 
 def cover_python(
-        args,  # type: TestConfig
-        python,  # type: PythonConfig
-        cmd,  # type: t.List[str]
-        target_name,  # type: str
-        env,  # type: t.Dict[str, str]
-        capture,  # type: bool
-        data=None,  # type: t.Optional[str]
-        cwd=None,  # type: t.Optional[str]
-):  # type: (...) -> t.Tuple[t.Optional[str], t.Optional[str]]
+    args: TestConfig,
+    python: PythonConfig,
+    cmd: list[str],
+    target_name: str,
+    env: dict[str, str],
+    capture: bool,
+    data: t.Optional[str] = None,
+    cwd: t.Optional[str] = None,
+) -> tuple[t.Optional[str], t.Optional[str]]:
     """Run a command while collecting Python code coverage."""
     if args.coverage:
         env.update(get_coverage_environment(args, target_name, python.version))
@@ -155,7 +161,7 @@ def cover_python(
     return intercept_python(args, python, cmd, env, capture, data, cwd)
 
 
-def get_coverage_platform(config):  # type: (HostConfig) -> str
+def get_coverage_platform(config: HostConfig) -> str:
     """Return the platform label for the given host config."""
     if isinstance(config, PosixRemoteConfig):
         platform = f'remote-{sanitize_host_name(config.name)}'
@@ -172,10 +178,10 @@ def get_coverage_platform(config):  # type: (HostConfig) -> str
 
 
 def get_coverage_environment(
-        args,  # type: TestConfig
-        target_name,  # type: str
-        version,  # type: str
-):  # type: (...) -> t.Dict[str, str]
+    args: TestConfig,
+    target_name: str,
+    version: str,
+) -> dict[str, str]:
     """Return environment variables needed to collect code coverage."""
     # unit tests, sanity tests and other special cases (localhost only)
     # config is in a temporary directory
@@ -203,20 +209,21 @@ def get_coverage_environment(
     return env
 
 
-def get_coverage_config(args):  # type: (TestConfig) -> str
+@mutex
+def get_coverage_config(args: TestConfig) -> str:
     """Return the path to the coverage config, creating the config if it does not already exist."""
     try:
         return get_coverage_config.path  # type: ignore[attr-defined]
     except AttributeError:
         pass
 
-    coverage_config = generate_coverage_config(args)
+    coverage_config = generate_coverage_config()
 
     if args.explain:
         temp_dir = '/tmp/coverage-temp-dir'
     else:
         temp_dir = tempfile.mkdtemp()
-        atexit.register(lambda: remove_tree(temp_dir))
+        ExitHandler.register(lambda: remove_tree(temp_dir))
 
     path = os.path.join(temp_dir, COVERAGE_CONFIG_NAME)
 
@@ -228,22 +235,25 @@ def get_coverage_config(args):  # type: (TestConfig) -> str
     return path
 
 
-def generate_coverage_config(args):  # type: (TestConfig) -> str
+def generate_coverage_config() -> str:
     """Generate code coverage configuration for tests."""
     if data_context().content.collection:
-        coverage_config = generate_collection_coverage_config(args)
+        coverage_config = generate_collection_coverage_config()
     else:
         coverage_config = generate_ansible_coverage_config()
 
     return coverage_config
 
 
-def generate_ansible_coverage_config():  # type: () -> str
+def generate_ansible_coverage_config() -> str:
     """Generate code coverage configuration for Ansible tests."""
-    coverage_config = '''
+    coverage_config = """
 [run]
+core = ctrace
 branch = True
-concurrency = multiprocessing
+concurrency =
+    multiprocessing
+    thread
 parallel = True
 
 omit =
@@ -253,43 +263,50 @@ omit =
     */pyshared/*
     */pytest
     */AnsiballZ_*.py
-    */test/results/*
-'''
+    */test/results/.tmp/delegation/*
+"""
+
+    coverage_config = coverage_config.lstrip()
 
     return coverage_config
 
 
-def generate_collection_coverage_config(args):  # type: (TestConfig) -> str
+def generate_collection_coverage_config() -> str:
     """Generate code coverage configuration for Ansible Collection tests."""
-    coverage_config = '''
+    include_patterns = [
+        # {base}/ansible_collections/{ns}/{col}/*
+        os.path.join(data_context().content.root, '*'),
+        # */ansible_collections/{ns}/{col}/* (required to pick up AnsiballZ coverage)
+        os.path.join('*', data_context().content.collection.directory, '*'),
+    ]
+
+    omit_patterns = [
+        # {base}/ansible_collections/{ns}/{col}/tests/output/.tmp/delegation/*
+        os.path.join(data_context().content.root, data_context().content.results_path, '.tmp/delegation/*'),
+    ]
+
+    include = textwrap.indent('\n'.join(include_patterns), ' ' * 4)
+    omit = textwrap.indent('\n'.join(omit_patterns), ' ' * 4)
+
+    coverage_config = f"""
 [run]
+core = ctrace
 branch = True
-concurrency = multiprocessing
+concurrency =
+    multiprocessing
+    thread
 parallel = True
 disable_warnings =
     no-data-collected
-'''
 
-    if isinstance(args, IntegrationConfig):
-        coverage_config += '''
 include =
-    %s/*
-    */%s/*
-''' % (data_context().content.root, data_context().content.collection.directory)
-    elif isinstance(args, SanityConfig):
-        # temporary work-around for import sanity test
-        coverage_config += '''
-include =
-    %s/*
+{include}
 
 omit =
-    %s/*
-''' % (data_context().content.root, os.path.join(data_context().content.root, data_context().content.results_path))
-    else:
-        coverage_config += '''
-include =
-     %s/*
-''' % data_context().content.root
+{omit}
+"""
+
+    coverage_config = coverage_config.lstrip()
 
     return coverage_config
 

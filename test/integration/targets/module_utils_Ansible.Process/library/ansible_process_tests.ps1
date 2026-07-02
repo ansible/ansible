@@ -45,6 +45,13 @@ Function Assert-Equal {
 $tests = @{
     "ParseCommandLine empty string" = {
         $expected = @((Get-Process -Id $pid).Path)
+        if ($expected -match "\s") {
+            # If the path has spaces CommandLineToArgvW will split it into
+            # multiple arguments. This is just how the API works so we skip
+            # this test in that case.
+            return
+        }
+
         $actual = [Ansible.Process.ProcessUtil]::ParseCommandLine("")
         Assert-Equal -Actual $actual -Expected $expected
     }
@@ -117,8 +124,9 @@ $tests = @{
         catch {
             $failed = $true
             $_.Exception.InnerException.GetType().FullName | Assert-Equal -Expected "Ansible.Process.Win32Exception"
-            $expected = 'Exception calling "CreateProcess" with "1" argument(s): "CreateProcessW() failed '
-            $expected += '(The system cannot find the file specified, Win32ErrorCode 2)"'
+            $expected = 'Exception calling "CreateProcess" with "1" argument(s): "CreateProcessW() failed ('
+            $expected += [System.ComponentModel.Win32Exception]::new(2).Message
+            $expected += ', Win32ErrorCode 2)"'
             $_.Exception.Message | Assert-Equal -Expected $expected
         }
         $failed | Assert-Equal -Expected $true

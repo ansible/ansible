@@ -6,17 +6,20 @@
 
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: apt_repository
 short_description: Add and remove APT repositories
 description:
     - Add or remove an APT repositories in Ubuntu and Debian.
 extends_documentation_fragment: action_common_attributes
+deprecated:
+    alternative: ansible.builtin.deb822_repository
+    why: The M(ansible.builtin.apt_repository) module is deprecated in favor of the M(ansible.builtin.deb822_repository) module.
+    removed_in: "2.25"
 attributes:
     check_mode:
         support: full
@@ -26,6 +29,8 @@ attributes:
         platforms: debian
 notes:
     - This module supports Debian Squeeze (version 6) as well as its successors and derivatives.
+seealso:
+  - module: ansible.builtin.deb822_repository
 options:
     repo:
         description:
@@ -40,40 +45,40 @@ options:
         default: "present"
     mode:
         description:
-            - The octal mode for newly created files in sources.list.d.
+            - The octal mode for newly created files in C(sources.list.d).
             - Default is what system uses (probably 0644).
         type: raw
         version_added: "1.6"
     update_cache:
         description:
-            - Run the equivalent of C(apt-get update) when a change occurs.  Cache updates are run after making changes.
+            - Run the equivalent of C(apt-get update) when a change occurs. Cache updates are run after making changes.
         type: bool
         default: "yes"
         aliases: [ update-cache ]
     update_cache_retries:
         description:
-        - Amount of retries if the cache update fails. Also see I(update_cache_retry_max_delay).
+        - Amount of retries if the cache update fails. Also see O(update_cache_retry_max_delay).
         type: int
         default: 5
         version_added: '2.10'
     update_cache_retry_max_delay:
         description:
-        - Use an exponential backoff delay for each retry (see I(update_cache_retries)) up to this max delay in seconds.
+        - Use an exponential backoff delay for each retry (see O(update_cache_retries)) up to this max delay in seconds.
         type: int
         default: 12
         version_added: '2.10'
     validate_certs:
         description:
-            - If C(no), SSL certificates for the target repo will not be validated. This should only be used
+            - If V(false), SSL certificates for the target repo will not be validated. This should only be used
               on personally controlled sites using self-signed certificates.
         type: bool
         default: 'yes'
         version_added: '1.8'
     filename:
         description:
-            - Sets the name of the source list file in sources.list.d.
+            - Sets the name of the source list file in C(sources.list.d).
               Defaults to a file name based on the repository source url.
-              The .list extension will be automatically added.
+              The C(.list) extension will be automatically added.
         type: str
         version_added: '2.1'
     codename:
@@ -87,21 +92,21 @@ options:
         description:
             - Whether to automatically try to install the Python apt library or not, if it is not already installed.
               Without this library, the module does not work.
-            - Runs C(apt-get install python-apt) for Python 2, and C(apt-get install python3-apt) for Python 3.
-            - Only works with the system Python 2 or Python 3. If you are using a Python on the remote that is not
-               the system Python, set I(install_python_apt=false) and ensure that the Python apt library
-               for your Python version is installed some other way.
+            - Runs C(apt-get install python3-apt).
+            - Only works with the system Python. If you are using a Python on the remote that is not
+              the system Python, set O(install_python_apt=false) and ensure that the Python apt library
+              for your Python version is installed some other way.
         type: bool
         default: true
 author:
 - Alexander Saltanov (@sashka)
 version_added: "0.7"
 requirements:
-   - python-apt (python 2)
-   - python3-apt (python 3)
-'''
+   - python3-apt
+   - apt-key or gpg
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
 - name: Add specified repository into sources list
   ansible.builtin.apt_repository:
     repo: deb http://archive.canonical.com/ubuntu hardy partner
@@ -131,25 +136,59 @@ EXAMPLES = '''
   ansible.builtin.apt_repository:
     repo: 'ppa:nginx/stable'
     codename: trusty
-'''
 
-RETURN = '''#'''
+- name: One way to avoid apt_key once it is removed from your distro
+  block:
+    - name: somerepo |no apt key
+      ansible.builtin.get_url:
+        url: https://download.example.com/linux/ubuntu/gpg
+        dest: /etc/apt/keyrings/somerepo.asc
+
+    - name: somerepo | apt source
+      ansible.builtin.apt_repository:
+        repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/somerepo.asc] https://download.example.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+        state: present
+"""
+
+RETURN = """
+repo:
+  description: A source string for the repository
+  returned: always
+  type: str
+  sample: "deb https://artifacts.elastic.co/packages/6.x/apt stable main"
+
+sources_added:
+  description: List of sources added
+  returned: success, sources were added
+  type: list
+  sample: ["/etc/apt/sources.list.d/artifacts_elastic_co_packages_6_x_apt.list"]
+  version_added: "2.15"
+
+sources_removed:
+  description: List of sources removed
+  returned: success, sources were removed
+  type: list
+  sample: ["/etc/apt/sources.list.d/artifacts_elastic_co_packages_6_x_apt.list"]
+  version_added: "2.15"
+"""
 
 import copy
 import glob
 import json
 import os
 import re
+import secrets
 import sys
 import tempfile
-import random
 import time
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.file import S_IRWU_RG_RO as DEFAULT_SOURCES_PERM
 from ansible.module_utils.common.respawn import has_respawned, probe_interpreters_for_module, respawn_module
-from ansible.module_utils._text import to_native
-from ansible.module_utils.six import PY3
-from ansible.module_utils.urls import fetch_url
+from ansible.module_utils.common.text.converters import to_native
+from ansible.module_utils.urls import fetch_url, is_fetch_success
+
+from ansible.module_utils.common.locale import get_best_parsable_locale
 
 try:
     import apt
@@ -164,8 +203,7 @@ except ImportError:
 
     HAVE_PYTHON_APT = False
 
-DEFAULT_SOURCES_PERM = 0o0644
-
+APT_KEY_DIRS = ['/etc/apt/keyrings', '/etc/apt/trusted.gpg.d', '/usr/share/keyrings']
 VALID_SOURCE_TYPES = ('deb', 'deb-src')
 
 
@@ -194,20 +232,24 @@ class SourcesList(object):
     def __init__(self, module):
         self.module = module
         self.files = {}  # group sources by file
+        self.files_mapping = {}  # internal DS for tracking symlinks
         # Repositories that we're adding -- used to implement mode param
         self.new_repos = set()
-        self.default_file = self._apt_cfg_file('Dir::Etc::sourcelist')
+        self.default_file = apt_pkg.config.find_file('Dir::Etc::sourcelist')
 
         # read sources.list if it exists
         if os.path.isfile(self.default_file):
             self.load(self.default_file)
 
         # read sources.list.d
-        for file in glob.iglob('%s/*.list' % self._apt_cfg_dir('Dir::Etc::sourceparts')):
+        self.sources_dir = apt_pkg.config.find_dir('Dir::Etc::sourceparts')
+        for file in glob.iglob(f'{self.sources_dir}/*.list'):
+            if os.path.islink(file):
+                self.files_mapping[file] = os.readlink(file)
             self.load(file)
 
     def __iter__(self):
-        '''Simple iterator to go over all sources. Empty, non-source, and other not valid lines will be skipped.'''
+        """Simple iterator to go over all sources. Empty, non-source, and other not valid lines will be skipped."""
         for file, sources in self.files.items():
             for n, valid, enabled, source, comment in sources:
                 if valid:
@@ -217,7 +259,7 @@ class SourcesList(object):
         if '/' in filename:
             return filename
         else:
-            return os.path.abspath(os.path.join(self._apt_cfg_dir('Dir::Etc::sourceparts'), filename))
+            return os.path.abspath(os.path.join(self.sources_dir, filename))
 
     def _suggest_filename(self, line):
         def _cleanup_filename(s):
@@ -244,6 +286,58 @@ class SourcesList(object):
 
         return '%s.list' % _cleanup_filename(' '.join(parts[:1]))
 
+    @staticmethod
+    def _validate_source(source: str) -> bool:
+        """
+        Validate a source string according to the SOURCES.LIST(5).
+        See: https://manpages.debian.org/trixie/apt/sources.list.5.en.html#ONE-LINE-STYLE_FORMAT
+        """
+        parts = source.split()
+
+        if not parts:
+            return False
+
+        # Extract the type and handle options
+        if parts[0] not in VALID_SOURCE_TYPES:
+            return False
+
+        # Check for options enclosed in square brackets
+        # The first element after the type might be the start of options
+        if len(parts) > 1 and parts[1].startswith('['):
+            if parts[1].endswith(']'):
+                # For single-word options
+                remaining_parts = parts[2:]
+            else:
+                # For multi-word options
+                end_bracket_index = -1
+                for i, part in enumerate(parts[2:], start=2):
+                    if part.endswith(']'):
+                        end_bracket_index = i
+                        break
+
+                if end_bracket_index != -1:
+                    remaining_parts = parts[end_bracket_index + 1:]
+                else:
+                    # Malformed options, treat the whole thing as a single part for now.
+                    remaining_parts = parts[1:]
+                    return False
+        else:
+            remaining_parts = parts[1:]
+
+        # According to `sources.list(5)` man pages, only four fields are mandatory:
+        # * `Types` either `deb` or/and `deb-src`
+        # * `URIs` to repositories holding valid APT structure (unclear if multiple are allowed)
+        # * `Suites` usually being distribution codenames
+        # * `Component` most of the time `main`, but it's a section of the repository
+        if remaining_parts[1].endswith('/') and len(remaining_parts) > 2:
+            # Suites with trailing slash makes component optional
+            return False
+        if not remaining_parts[1].endswith('/') and len(remaining_parts) < 3:
+            # Invalid line format
+            return False
+
+        return True
+
     def _parse(self, line, raise_if_invalid_or_disabled=False):
         valid = False
         enabled = True
@@ -265,44 +359,19 @@ class SourcesList(object):
         # Duplicated whitespaces in a valid source spec will be removed.
         source = line.strip()
         if source:
-            chunks = source.split()
-            if chunks[0] in VALID_SOURCE_TYPES:
-                valid = True
-                source = ' '.join(chunks)
+            valid = self._validate_source(source)
 
         if raise_if_invalid_or_disabled and (not valid or not enabled):
             raise InvalidSource(line)
 
         return valid, enabled, source, comment
 
-    @staticmethod
-    def _apt_cfg_file(filespec):
-        '''
-        Wrapper for `apt_pkg` module for running with Python 2.5
-        '''
-        try:
-            result = apt_pkg.config.find_file(filespec)
-        except AttributeError:
-            result = apt_pkg.Config.FindFile(filespec)
-        return result
-
-    @staticmethod
-    def _apt_cfg_dir(dirspec):
-        '''
-        Wrapper for `apt_pkg` module for running with Python 2.5
-        '''
-        try:
-            result = apt_pkg.config.find_dir(dirspec)
-        except AttributeError:
-            result = apt_pkg.Config.FindDir(dirspec)
-        return result
-
     def load(self, file):
         group = []
-        f = open(file, 'r')
-        for n, line in enumerate(f):
-            valid, enabled, source, comment = self._parse(line)
-            group.append((n, valid, enabled, source, comment))
+        with open(file, 'r') as f:
+            for n, line in enumerate(f):
+                valid, enabled, source, comment = self._parse(line)
+                group.append((n, valid, enabled, source, comment))
         self.files[file] = group
 
     def save(self):
@@ -317,8 +386,8 @@ class SourcesList(object):
 
                 try:
                     fd, tmp_path = tempfile.mkstemp(prefix=".%s-" % fn, dir=d)
-                except (OSError, IOError) as e:
-                    self.module.fail_json(msg='Unable to create temp file at "%s" for apt source: %s' % (d, to_native(e)))
+                except OSError as ex:
+                    raise Exception(f'Unable to create temp file at {d!r} for apt source.') from ex
 
                 f = os.fdopen(fd, 'w')
                 for n, valid, enabled, source, comment in sources:
@@ -334,9 +403,13 @@ class SourcesList(object):
 
                     try:
                         f.write(line)
-                    except IOError as ex:
-                        self.module.fail_json(msg="Failed to write to file %s: %s" % (tmp_path, to_native(ex)))
-                self.module.atomic_move(tmp_path, filename)
+                    except OSError as ex:
+                        raise Exception(f"Failed to write to file {tmp_path!r}.") from ex
+                if filename in self.files_mapping:
+                    # Write to symlink target instead of replacing symlink as a normal file
+                    self.module.atomic_move(tmp_path, self.files_mapping[filename])
+                else:
+                    self.module.atomic_move(tmp_path, filename)
 
                 # allow the user to override the default mode
                 if filename in self.new_repos:
@@ -371,17 +444,17 @@ class SourcesList(object):
         return new
 
     def modify(self, file, n, enabled=None, source=None, comment=None):
-        '''
+        """
         This function to be used with iterator, so we don't care of invalid sources.
         If source, enabled, or comment is None, original value from line ``n`` will be preserved.
-        '''
+        """
         valid, enabled_old, source_old, comment_old = self.files[file][n][1:]
         self.files[file][n] = (n, valid, self._choice(enabled, enabled_old), self._choice(source, source_old), self._choice(comment, comment_old))
 
     def _add_valid_source(self, source_new, comment_new, file):
         # We'll try to reuse disabled source if we have it.
         # If we have more than one entry, we will enable them all - no advanced logic, remember.
-        self.module.log('ading source file: %s | %s | %s' % (source_new, comment_new, file))
+        self.module.log('adding source file: %s | %s | %s' % (source_new, comment_new, file))
         found = False
         for filename, n, enabled, source, comment in self:
             if source == source_new:
@@ -420,7 +493,10 @@ class SourcesList(object):
 
 class UbuntuSourcesList(SourcesList):
 
-    LP_API = 'https://launchpad.net/api/1.0/~%s/+archive/%s'
+    # prefer api.launchpad.net over launchpad.net/api
+    # see: https://github.com/ansible/ansible/pull/81978#issuecomment-1767062178
+    LP_API = 'https://api.launchpad.net/1.0/~%s/+archive/%s'
+    PPA_URI = 'https://ppa.launchpadcontent.net'
 
     def __init__(self, module):
         self.module = module
@@ -430,7 +506,10 @@ class UbuntuSourcesList(SourcesList):
         self.apt_key_bin = self.module.get_bin_path('apt-key', required=False)
         self.gpg_bin = self.module.get_bin_path('gpg', required=False)
         if not self.apt_key_bin and not self.gpg_bin:
-            self.module.fail_json(msg='Either apt-key or gpg binary is required, but neither could be found')
+            msg = 'Either apt-key or gpg binary is required, but neither could be found.' \
+                  'The apt-key CLI has been deprecated and removed in modern Debian and derivatives, ' \
+                  'you might want to use "deb822_repository" instead.'
+            self.module.fail_json(msg)
 
     def __deepcopy__(self, memo=None):
         return UbuntuSourcesList(self.module)
@@ -440,7 +519,7 @@ class UbuntuSourcesList(SourcesList):
 
         headers = dict(Accept='application/json')
         response, info = fetch_url(self.module, lp_api, headers=headers)
-        if info['status'] != 200:
+        if not is_fetch_success(info):
             self.module.fail_json(msg="failed to fetch PPA information, error was: %s" % info['msg'])
         return json.loads(to_native(response.read()))
 
@@ -452,14 +531,17 @@ class UbuntuSourcesList(SourcesList):
         except IndexError:
             ppa_name = 'ppa'
 
-        line = 'deb http://ppa.launchpad.net/%s/%s/ubuntu %s main' % (ppa_owner, ppa_name, self.codename)
+        line = 'deb %s/%s/%s/ubuntu %s main' % (self.PPA_URI, ppa_owner, ppa_name, self.codename)
         return line, ppa_owner, ppa_name
 
     def _key_already_exists(self, key_fingerprint):
 
         if self.apt_key_bin:
+            locale = get_best_parsable_locale(self.module)
+            APT_ENV = dict(LANG=locale, LC_ALL=locale, LC_MESSAGES=locale, LC_CTYPE=locale, LANGUAGE=locale)
+            self.module.run_command_environ_update = APT_ENV
             rc, out, err = self.module.run_command([self.apt_key_bin, 'export', key_fingerprint], check_rc=True)
-            found = len(err) == 0
+            found = bool(not err or 'nothing exported' not in err)
         else:
             found = self._gpg_key_exists(key_fingerprint)
 
@@ -469,7 +551,7 @@ class UbuntuSourcesList(SourcesList):
 
         found = False
         keyfiles = ['/etc/apt/trusted.gpg']  # main gpg repo for apt
-        for other_dir in ('/etc/apt/trusted.gpg.d', '/usr/share/keyrings'):
+        for other_dir in APT_KEY_DIRS:
             # add other known sources of gpg sigs for apt, skip hidden files
             keyfiles.extend([os.path.join(other_dir, x) for x in os.listdir(other_dir) if not x.startswith('.')])
 
@@ -478,8 +560,8 @@ class UbuntuSourcesList(SourcesList):
             if os.path.exists(key_file):
                 try:
                     rc, out, err = self.module.run_command([self.gpg_bin, '--list-packets', key_file])
-                except (IOError, OSError) as e:
-                    self.debug("Could check key against file %s: %s" % (key_file, to_native(e)))
+                except OSError as ex:
+                    self.module.debug(f"Could check key against file {key_file!r}: {ex}")
                     continue
 
                 if key_fingerprint in out:
@@ -509,7 +591,14 @@ class UbuntuSourcesList(SourcesList):
                         command = [self.apt_key_bin, 'adv', '--recv-keys', '--no-tty', '--keyserver', 'hkp://keyserver.ubuntu.com:80',
                                    info['signing_key_fingerprint']]
                     else:
-                        keyfile = '/usr/share/keyrings/%s-%s-%s.gpg' % (os.path.basename(source).replace(' ', '-'), ppa_owner, ppa_name)
+                        # use first available key dir, in order of preference
+                        for keydir in APT_KEY_DIRS:
+                            if os.path.exists(keydir):
+                                break
+                        else:
+                            self.module.fail_json("Unable to find any existing apt gpgp repo directories, tried the following: %s" % ', '.join(APT_KEY_DIRS))
+
+                        keyfile = '%s/%s-%s-%s.gpg' % (keydir, os.path.basename(source).replace(' ', '-'), ppa_owner, ppa_name)
                         command = [self.gpg_bin, '--no-tty', '--keyserver', 'hkp://keyserver.ubuntu.com:80', '--export', info['signing_key_fingerprint']]
 
                     rc, stdout, stderr = self.module.run_command(command, check_rc=True, encoding=None)
@@ -521,8 +610,8 @@ class UbuntuSourcesList(SourcesList):
                             with open(keyfile, 'wb') as f:
                                 f.write(stdout)
                             self.module.log('Added repo key "%s" for apt to file "%s"' % (info['signing_key_fingerprint'], keyfile))
-                        except (OSError, IOError) as e:
-                            self.module.fail_json(msg='Unable to add required signing key for%s ', rc=rc, stderr=stderr, error=to_native(e))
+                        except OSError as ex:
+                            self.module.fail_json(msg='Unable to add required signing key.', rc=rc, stderr=stderr, error=str(ex), exception=ex)
 
             # apt source file
             file = file or self._suggest_filename('%s_%s' % (line, self.codename))
@@ -561,7 +650,7 @@ class UbuntuSourcesList(SourcesList):
 
 
 def revert_sources_list(sources_before, sources_after, sourceslist_before):
-    '''Revert the sourcelist files to their previous state.'''
+    """Revert the sourcelist files to their previous state."""
 
     # First remove any new files that were created:
     for filename in set(sources_after.keys()).difference(sources_before.keys()):
@@ -609,13 +698,13 @@ def main():
         #    made any more complex than it already is to try and cover more, eg, custom interpreters taking over
         #    system locations)
 
-        apt_pkg_name = 'python3-apt' if PY3 else 'python-apt'
+        apt_pkg_name = 'python3-apt'
 
         if has_respawned():
             # this shouldn't be possible; short-circuit early if it happens...
             module.fail_json(msg="{0} must be installed and visible from {1}.".format(apt_pkg_name, sys.executable))
 
-        interpreters = ['/usr/bin/python3', '/usr/bin/python2', '/usr/bin/python']
+        interpreters = ['/usr/bin/python3', '/usr/bin/python']
 
         interpreter = probe_interpreters_for_module(interpreters, 'apt')
 
@@ -668,47 +757,59 @@ def main():
     sources_after = sourceslist.dump()
     changed = sources_before != sources_after
 
-    if changed and module._diff:
-        diff = []
-        for filename in set(sources_before.keys()).union(sources_after.keys()):
-            diff.append({'before': sources_before.get(filename, ''),
-                         'after': sources_after.get(filename, ''),
-                         'before_header': (filename, '/dev/null')[filename not in sources_before],
-                         'after_header': (filename, '/dev/null')[filename not in sources_after]})
-    else:
-        diff = {}
+    diff = []
+    sources_added = set()
+    sources_removed = set()
+    if changed:
+        sources_added = set(sources_after.keys()).difference(sources_before.keys())
+        sources_removed = set(sources_before.keys()).difference(sources_after.keys())
+        if module._diff:
+            for filename in set(sources_added.union(sources_removed)):
+                diff.append({'before': sources_before.get(filename, ''),
+                             'after': sources_after.get(filename, ''),
+                             'before_header': (filename, '/dev/null')[filename not in sources_before],
+                             'after_header': (filename, '/dev/null')[filename not in sources_after]})
 
     if changed and not module.check_mode:
         try:
+            err = ''
             sourceslist.save()
             if update_cache:
-                err = ''
                 update_cache_retries = module.params.get('update_cache_retries')
                 update_cache_retry_max_delay = module.params.get('update_cache_retry_max_delay')
-                randomize = random.randint(0, 1000) / 1000.0
+                randomize = secrets.randbelow(1000) / 1000.0
 
+                cache = apt.Cache()
                 for retry in range(update_cache_retries):
                     try:
-                        cache = apt.Cache()
                         cache.update()
                         break
-                    except apt.cache.FetchFailedException as e:
-                        err = to_native(e)
+                    except apt.cache.FetchFailedException as fetch_failed_exc:
+                        err = fetch_failed_exc
+                        module.warn(
+                            f"Failed to update cache after {retry + 1} due "
+                            f"to {to_native(fetch_failed_exc)} retry, retrying"
+                        )
 
                     # Use exponential backoff with a max fail count, plus a little bit of randomness
                     delay = 2 ** retry + randomize
                     if delay > update_cache_retry_max_delay:
                         delay = update_cache_retry_max_delay + randomize
                     time.sleep(delay)
+                    module.warn(f"Sleeping for {int(round(delay))} seconds, before attempting to update the cache again")
                 else:
                     revert_sources_list(sources_before, sources_after, sourceslist_before)
-                    module.fail_json(msg='Failed to update apt cache: %s' % (err if err else 'unknown reason'))
+                    msg = (
+                        f"Failed to update apt cache after {update_cache_retries} retries: "
+                        f"{err if err else 'unknown reason'}"
+                    )
+                    module.fail_json(msg=msg)
 
-        except (OSError, IOError) as ex:
+        except OSError as ex:
             revert_sources_list(sources_before, sources_after, sourceslist_before)
-            module.fail_json(msg=to_native(ex))
+            raise
 
-    module.exit_json(changed=changed, repo=repo, state=state, diff=diff)
+    module.exit_json(changed=changed, repo=repo, sources_added=sources_added, sources_removed=sources_removed, state=state, diff=diff)
 
 
 if __name__ == '__main__':

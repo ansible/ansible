@@ -3,17 +3,16 @@
 # (c) 2015, Matt Martz <matt@sivel.net>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: expect
 version_added: '2.0'
 short_description: Executes a command and responds to prompts
 description:
-     - The C(expect) module executes a command and responds to prompts.
+     - The M(ansible.builtin.expect) module executes a command and responds to prompts.
      - The given command will be executed on all selected nodes. It will not be
        processed through the shell, so variables like C($HOME) and operations
        like C("<"), C(">"), C("|"), and C("&") will not work.
@@ -38,15 +37,17 @@ options:
   responses:
     type: dict
     description:
-      - Mapping of expected string/regex and string to respond with. If the
-        response is a list, successive matches return successive
-        responses. List functionality is new in 2.1.
+      - Mapping of prompt regular expressions and corresponding answer(s).
+      - Each key in O(responses) is a Python regex U(https://docs.python.org/3/library/re.html#regular-expression-syntax).
+      - The value of each key is a string or list of strings.
+        If the value is a string and the prompt is encountered multiple times, the answer will be repeated.
+        Provide the value as a list to give different answers for successive matches.
     required: true
   timeout:
-    type: int
+    type: raw
     description:
       - Amount of time in seconds to wait for the expected strings. Use
-        C(null) to disable timeout.
+        V(null) to disable timeout.
     default: 30
   echo:
     description:
@@ -69,57 +70,68 @@ notes:
   - If you want to run a command through the shell (say you are using C(<),
     C(>), C(|), and so on), you must specify a shell in the command such as
     C(/bin/bash -c "/path/to/something | grep else").
-  - The question, or key, under I(responses) is a python regex match. Case
-    insensitive searches are indicated with a prefix of C(?i).
+  - Case insensitive searches are indicated with a prefix of C((?i)).
   - The C(pexpect) library used by this module operates with a search window
     of 2000 bytes, and does not use a multiline regex match. To perform a
-    start of line bound match, use a pattern like ``(?m)^pattern``
-  - By default, if a question is encountered multiple times, its string
-    response will be repeated. If you need different responses for successive
-    question matches, instead of a string response, use a list of strings as
-    the response. The list functionality is new in 2.1.
+    start of line bound match, use a pattern like C((?m)^pattern).
   - The M(ansible.builtin.expect) module is designed for simple scenarios.
     For more complex needs, consider the use of expect code with the M(ansible.builtin.shell)
     or M(ansible.builtin.script) modules. (An example is part of the M(ansible.builtin.shell) module documentation).
+  - If the command returns non UTF-8 data, it must be encoded to avoid issues. One option is to pipe
+    the output through C(base64).
 seealso:
 - module: ansible.builtin.script
 - module: ansible.builtin.shell
 author: "Matt Martz (@sivel)"
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: Case insensitive password string match
   ansible.builtin.expect:
-    ansible.builtin.command: passwd username
+    command: passwd username
     responses:
       (?i)password: "MySekretPa$$word"
   # you don't want to show passwords in your logs
   no_log: true
 
-- name: Generic question with multiple different responses
+- name: Match multiple regular expressions and demonstrate individual and repeated responses
   ansible.builtin.expect:
-    ansible.builtin.command: /path/to/custom/command
+    command: /path/to/custom/command
     responses:
       Question:
+        # give a unique response for each of the 3 hypothetical prompts matched
         - response1
         - response2
         - response3
-'''
+      # give the same response for every matching prompt
+      "^Match another prompt$": "response"
+
+- name: Multiple questions with responses
+  ansible.builtin.expect:
+    command: /path/to/custom/command
+    responses:
+        "Please provide your name":
+            - "Anna"
+        "Database user":
+            - "{{ db_username }}"
+        "Database password":
+            - "{{ db_password }}"
+"""
 
 import datetime
 import os
-import traceback
 
 PEXPECT_IMP_ERR = None
 try:
     import pexpect
     HAS_PEXPECT = True
-except ImportError:
-    PEXPECT_IMP_ERR = traceback.format_exc()
+except ImportError as ex:
+    PEXPECT_IMP_ERR = ex
     HAS_PEXPECT = False
 
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
-from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.common.text.converters import to_bytes, to_native
+from ansible.module_utils.common.validation import check_type_int
 
 
 def response_closure(module, question, responses):
@@ -145,14 +157,13 @@ def main():
             creates=dict(type='path'),
             removes=dict(type='path'),
             responses=dict(type='dict', required=True),
-            timeout=dict(type='int', default=30),
+            timeout=dict(type='raw', default=30),
             echo=dict(type='bool', default=False),
         )
     )
 
     if not HAS_PEXPECT:
-        module.fail_json(msg=missing_required_lib("pexpect"),
-                         exception=PEXPECT_IMP_ERR)
+        module.fail_json(msg=missing_required_lib("pexpect"), exception=PEXPECT_IMP_ERR)
 
     chdir = module.params['chdir']
     args = module.params['command']
@@ -160,6 +171,11 @@ def main():
     removes = module.params['removes']
     responses = module.params['responses']
     timeout = module.params['timeout']
+    if timeout is not None:
+        try:
+            timeout = check_type_int(timeout)
+        except TypeError as te:
+            module.fail_json(msg=f"argument 'timeout' is of type {type(timeout)} and we were unable to convert to int: {te}")
     echo = module.params['echo']
 
     events = dict()
@@ -202,7 +218,7 @@ def main():
                 rc=0
             )
 
-    startd = datetime.datetime.now()
+    start_date = datetime.datetime.now()
 
     try:
         try:
@@ -228,20 +244,17 @@ def main():
                              '(%s), this module requires pexpect>=3.3. '
                              'Error was %s' % (pexpect.__version__, to_native(e)))
     except pexpect.ExceptionPexpect as e:
-        module.fail_json(msg='%s' % to_native(e), exception=traceback.format_exc())
+        module.fail_json(msg='%s' % to_native(e))
 
-    endd = datetime.datetime.now()
-    delta = endd - startd
-
-    if b_out is None:
-        b_out = b''
+    end_date = datetime.datetime.now()
+    delta = end_date - start_date
 
     result = dict(
         cmd=args,
         stdout=to_native(b_out).rstrip('\r\n'),
         rc=rc,
-        start=str(startd),
-        end=str(endd),
+        start=str(start_date),
+        end=str(end_date),
         delta=str(delta),
         changed=True,
     )

@@ -4,11 +4,10 @@
 # (c) 2016, Toshio Kuratomi <tkuratomi@ansible.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: ping
 version_added: historical
@@ -33,9 +32,9 @@ seealso:
 author:
     - Ansible Core Team
     - Michael DeHaan
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
 # Test we can logon to 'webservers' and execute python with json lib.
 # ansible webservers -m ping
 
@@ -45,15 +44,15 @@ EXAMPLES = '''
 - name: Induce an exception to see what happens
   ping:
     data: crash
-'''
+"""
 
-RETURN = '''
+RETURN = """
 ping:
     description: value provided with the data parameter
     returned: success
     type: str
     sample: pong
-'''
+"""
 
 from ansible.module_utils.basic import AnsibleModule
 

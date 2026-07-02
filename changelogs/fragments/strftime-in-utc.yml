@@ -1,2 +1,0 @@
-minor_changes:
-  - Provide a `utc` option for strftime to show time in UTC rather than local time

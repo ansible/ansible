@@ -15,19 +15,15 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-from units.compat import unittest
+import unittest
 
-from ansible.errors import AnsibleParserError
-from ansible.module_utils.six import string_types
+from ansible.errors import AnsibleParserError, AnsibleFieldAttributeError
+from ansible._internal._datatag._tags import TrustedAsTemplate
 from ansible.playbook.attribute import FieldAttribute, NonInheritableFieldAttribute
-from ansible.template import Templar
+from ansible._internal._templating._engine import TemplateEngine
 from ansible.playbook import base
-from ansible.utils.unsafe_proxy import AnsibleUnsafeBytes, AnsibleUnsafeText
-from ansible.utils.sentinel import Sentinel
 
 from units.mock.loader import DictDataLoader
 
@@ -40,7 +36,6 @@ class TestBase(unittest.TestCase):
                               'var_1_key': 'var_1_value',
                               'a_list': ['a_list_1', 'a_list_2'],
                               'a_dict': {'a_dict_key': 'a_dict_value'},
-                              'a_set': set(['set_1', 'set_2']),
                               'a_int': 42,
                               'a_float': 37.371,
                               'a_bool': True,
@@ -56,7 +51,7 @@ class TestBase(unittest.TestCase):
         parent._dep_chain = None
         bsc.load_data(ds)
         fake_loader = DictDataLoader({})
-        templar = Templar(loader=fake_loader)
+        templar = TemplateEngine(loader=fake_loader)
         bsc.post_validate(templar)
         return bsc
 
@@ -64,7 +59,7 @@ class TestBase(unittest.TestCase):
         self.assertIsInstance(self.b, base.Base)
         self.assertIsInstance(self.b, self.ClassUnderTest)
 
-    # dump me doesnt return anything or change anything so not much to assert
+    # dump me doesn't return anything or change anything so not much to assert
     def test_dump_me_empty(self):
         self.b.dump_me()
 
@@ -94,56 +89,9 @@ class TestBase(unittest.TestCase):
         copy = b.copy()
         self._assert_copy(b, copy)
 
-    def test_serialize(self):
-        ds = {}
-        ds = {'environment': [],
-              'vars': self.assorted_vars
-              }
-        b = self._base_validate(ds)
-        ret = b.serialize()
-        self.assertIsInstance(ret, dict)
-
-    def test_deserialize(self):
-        data = {}
-
-        d = self.ClassUnderTest()
-        d.deserialize(data)
-        self.assertIn('_run_once', d.__dict__)
-        self.assertIn('_check_mode', d.__dict__)
-
-        data = {'no_log': False,
-                'remote_user': None,
-                'vars': self.assorted_vars,
-                'environment': [],
-                'run_once': False,
-                'connection': None,
-                'ignore_errors': False,
-                'port': 22,
-                'a_sentinel_with_an_unlikely_name': ['sure, a list']}
-
-        d = self.ClassUnderTest()
-        d.deserialize(data)
-        self.assertNotIn('_a_sentinel_with_an_unlikely_name', d.__dict__)
-        self.assertIn('_run_once', d.__dict__)
-        self.assertIn('_check_mode', d.__dict__)
-
-    def test_serialize_then_deserialize(self):
-        ds = {'environment': [],
-              'vars': self.assorted_vars}
-        b = self._base_validate(ds)
-        copy = b.copy()
-        ret = b.serialize()
-        b.deserialize(ret)
-        c = self.ClassUnderTest()
-        c.deserialize(ret)
-        # TODO: not a great test, but coverage...
-        self.maxDiff = None
-        self.assertDictEqual(b.serialize(), copy.serialize())
-        self.assertDictEqual(c.serialize(), copy.serialize())
-
     def test_post_validate_empty(self):
         fake_loader = DictDataLoader({})
-        templar = Templar(loader=fake_loader)
+        templar = TemplateEngine(loader=fake_loader)
         ret = self.b.post_validate(templar)
         self.assertIsNone(ret)
 
@@ -181,14 +129,6 @@ class TestBase(unittest.TestCase):
         b = self._base_validate(ds)
         self.assertEqual(b.port, 'some_port')
 
-    def test_squash(self):
-        data = self.b.serialize()
-        self.b.squash()
-        squashed_data = self.b.serialize()
-        # TODO: assert something
-        self.assertFalse(data['squashed'])
-        self.assertTrue(squashed_data['squashed'])
-
     def test_vars(self):
         # vars as a dict.
         ds = {'environment': [],
@@ -202,8 +142,7 @@ class TestBase(unittest.TestCase):
               'vars': [{'var_2_key': 'var_2_value'},
                        {'var_1_key': 'var_1_value'}]
               }
-        b = self._base_validate(ds)
-        self.assertEqual(b.vars['var_1_key'], 'var_1_value')
+        self.assertRaises(AnsibleParserError, self.b.load_data, ds)
 
     def test_vars_not_dict_or_list(self):
         ds = {'environment': [],
@@ -213,7 +152,7 @@ class TestBase(unittest.TestCase):
     def test_vars_not_valid_identifier(self):
         ds = {'environment': [],
               'vars': [{'var_2_key': 'var_2_value'},
-                       {'1an-invalid identifer': 'var_1_value'}]
+                       {'1an-invalid identifier': 'var_1_value'}]
               }
         self.assertRaises(AnsibleParserError, self.b.load_data, ds)
 
@@ -331,27 +270,21 @@ class ExampleSubClass(base.Base):
     def __init__(self):
         super(ExampleSubClass, self).__init__()
 
-    def get_dep_chain(self):
-        if self._parent:
-            return self._parent.get_dep_chain()
-        else:
-            return None
-
 
 class BaseSubClass(base.Base):
     name = FieldAttribute(isa='string', default='', always_post_validate=True)
     test_attr_bool = FieldAttribute(isa='bool', always_post_validate=True)
     test_attr_int = FieldAttribute(isa='int', always_post_validate=True)
     test_attr_float = FieldAttribute(isa='float', default=3.14159, always_post_validate=True)
-    test_attr_list = FieldAttribute(isa='list', listof=string_types, always_post_validate=True)
+    test_attr_list = FieldAttribute(isa='list', listof=(str,), always_post_validate=True)
+    test_attr_mixed_list = FieldAttribute(isa='list', listof=(str, int), always_post_validate=True)
     test_attr_list_no_listof = FieldAttribute(isa='list', always_post_validate=True)
-    test_attr_list_required = FieldAttribute(isa='list', listof=string_types, required=True,
+    test_attr_list_required = FieldAttribute(isa='list', listof=(str,), required=True,
                                              default=list, always_post_validate=True)
     test_attr_string = FieldAttribute(isa='string', default='the_test_attr_string_default_value')
     test_attr_string_required = FieldAttribute(isa='string', required=True,
                                                default='the_test_attr_string_default_value')
     test_attr_percent = FieldAttribute(isa='percent', always_post_validate=True)
-    test_attr_set = FieldAttribute(isa='set', default=set, always_post_validate=True)
     test_attr_dict = FieldAttribute(isa='dict', default=lambda: {'a_key': 'a_value'}, always_post_validate=True)
     test_attr_class = FieldAttribute(isa='class', class_type=ExampleSubClass)
     test_attr_class_post_validate = FieldAttribute(isa='class', class_type=ExampleSubClass,
@@ -437,25 +370,6 @@ class TestBaseSubClass(TestBase):
         bsc = self._base_validate(ds)
         self.assertEqual(bsc.test_attr_percent, percentage_float)
 
-    def test_attr_set(self):
-        test_set = set(['first_string_in_set', 'second_string_in_set'])
-        ds = {'test_attr_set': test_set}
-        bsc = self._base_validate(ds)
-        self.assertEqual(bsc.test_attr_set, test_set)
-
-    def test_attr_set_string(self):
-        test_data = ['something', 'other']
-        test_value = ','.join(test_data)
-        ds = {'test_attr_set': test_value}
-        bsc = self._base_validate(ds)
-        self.assertEqual(bsc.test_attr_set, set(test_data))
-
-    def test_attr_set_not_string_or_list(self):
-        test_value = 37.1
-        ds = {'test_attr_set': test_value}
-        bsc = self._base_validate(ds)
-        self.assertEqual(bsc.test_attr_set, set([test_value]))
-
     def test_attr_dict(self):
         test_dict = {'a_different_key': 'a_different_value'}
         ds = {'test_attr_dict': test_dict}
@@ -488,31 +402,25 @@ class TestBaseSubClass(TestBase):
     def test_attr_class_post_validate_class_not_instance(self):
         not_a_esc = ExampleSubClass
         ds = {'test_attr_class_post_validate': not_a_esc}
-        self.assertRaisesRegex(AnsibleParserError, 'is not a valid.*got a.*Meta.*instead',
+        self.assertRaisesRegex(AnsibleParserError, "Error processing keyword 'test_attr_class_post_validate': The value .* could not be converted to 'class'.",
                                self._base_validate, ds)
 
     def test_attr_class_post_validate_wrong_class(self):
         not_a_esc = 37
         ds = {'test_attr_class_post_validate': not_a_esc}
-        self.assertRaisesRegex(AnsibleParserError, 'is not a valid.*got a.*int.*instead',
+        self.assertRaisesRegex(AnsibleParserError, "Error processing keyword 'test_attr_class_post_validate': The value 37 could not be converted to 'class'",
                                self._base_validate, ds)
 
     def test_attr_remote_user(self):
         ds = {'remote_user': 'testuser'}
         bsc = self._base_validate(ds)
-        # TODO: attemp to verify we called parent gettters etc
+        # TODO: attempt to verify we called parent getters etc
         self.assertEqual(bsc.remote_user, 'testuser')
 
     def test_attr_example_undefined(self):
         ds = {'test_attr_example': '{{ some_var_that_shouldnt_exist_to_test_omit }}'}
         exc_regex_str = 'test_attr_example.*has an invalid value, which includes an undefined variable.*some_var_that_shouldnt*'
         self.assertRaises(AnsibleParserError)
-
-    def test_attr_name_undefined(self):
-        ds = {'name': '{{ some_var_that_shouldnt_exist_to_test_omit }}'}
-        bsc = self._base_validate(ds)
-        # the attribute 'name' is special cases in post_validate
-        self.assertEqual(bsc.name, '{{ some_var_that_shouldnt_exist_to_test_omit }}')
 
     def test_subclass_validate_method(self):
         ds = {'test_attr_list': ['string_list_item_1', 'string_list_item_2'],
@@ -556,6 +464,16 @@ class TestBaseSubClass(TestBase):
         bsc = self._base_validate(ds)
         self.assertEqual(string_list, bsc._test_attr_list)
 
+    def test_attr_mixed_list(self):
+        mixed_list = ['foo', 1]
+        ds = {'test_attr_mixed_list': mixed_list}
+        bsc = self._base_validate(ds)
+        self.assertEqual(mixed_list, bsc._test_attr_mixed_list)
+
+    def test_attr_mixed_list_invalid(self):
+        ds = {'test_attr_mixed_list': [['foo'], 1]}
+        self.assertRaises(AnsibleParserError, self._base_validate, ds)
+
     def test_attr_list_none(self):
         ds = {'test_attr_list': None}
         bsc = self._base_validate(ds)
@@ -573,7 +491,7 @@ class TestBaseSubClass(TestBase):
         bsc = self.ClassUnderTest()
         bsc.load_data(ds)
         fake_loader = DictDataLoader({})
-        templar = Templar(loader=fake_loader)
+        templar = TemplateEngine(loader=fake_loader)
         bsc.post_validate(templar)
         self.assertEqual(string_list, bsc._test_attr_list_required)
 
@@ -583,15 +501,16 @@ class TestBaseSubClass(TestBase):
         bsc = self.ClassUnderTest()
         bsc.load_data(ds)
         fake_loader = DictDataLoader({})
-        templar = Templar(loader=fake_loader)
+        templar = TemplateEngine(loader=fake_loader)
         self.assertRaisesRegex(AnsibleParserError, 'cannot have empty values',
                                bsc.post_validate, templar)
 
     def test_attr_unknown(self):
-        a_list = ['some string']
-        ds = {'test_attr_unknown_isa': a_list}
-        bsc = self._base_validate(ds)
-        self.assertEqual(bsc.test_attr_unknown_isa, a_list)
+        self.assertRaises(
+            AnsibleFieldAttributeError,
+            self._base_validate,
+            {'test_attr_unknown_isa': True}
+        )
 
     def test_attr_method(self):
         ds = {'test_attr_method': 'value from the ds'}
@@ -605,11 +524,11 @@ class TestBaseSubClass(TestBase):
         bsc = self._base_validate(ds)
         self.assertEqual(bsc.test_attr_method_missing, a_string)
 
-    def test_get_validated_value_string_rewrap_unsafe(self):
+    def test_get_validated_value_string_preserve_tags(self):
         attribute = FieldAttribute(isa='string')
-        value = AnsibleUnsafeText(u'bar')
-        templar = Templar(None)
+        value = TrustedAsTemplate().tag('bar')
+        templar = TemplateEngine(None)
         bsc = self.ClassUnderTest()
         result = bsc.get_validated_value('foo', attribute, value, templar)
-        self.assertIsInstance(result, AnsibleUnsafeText)
-        self.assertEqual(result, AnsibleUnsafeText(u'bar'))
+        assert TrustedAsTemplate.is_tagged_on(result)
+        assert result == 'bar'

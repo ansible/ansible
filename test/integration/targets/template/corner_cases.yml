@@ -1,4 +1,4 @@
-- name: test tempating corner cases
+- name: test templating corner cases
   hosts: localhost
   gather_facts: false
   vars:
@@ -6,7 +6,7 @@
     dont: I SHOULD NOT BE TEMPLATED
     other: I WORK
   tasks:
-    - name: 'ensure we are not interpolating data from outside of j2 delmiters'
+    - name: 'ensure we are not interpolating data from outside of j2 delimiters'
       assert:
         that:
             - '"I SHOULD NOT BE TEMPLATED" not in adjacent'

@@ -1,6 +1,9 @@
 """Python threading tools."""
+
 from __future__ import annotations
 
+import collections.abc as c
+import contextlib
 import functools
 import sys
 import threading
@@ -8,18 +11,17 @@ import queue
 import typing as t
 
 
-TCallable = t.TypeVar('TCallable', bound=t.Callable[..., t.Any])
-
-
 class WrappedThread(threading.Thread):
     """Wrapper around Thread which captures results and exceptions."""
-    def __init__(self, action):  # type: (t.Callable[[], t.Any]) -> None
+
+    def __init__(self, action: c.Callable[[], t.Any], name: str) -> None:
         super().__init__()
-        self._result = queue.Queue()  # type: queue.Queue[t.Any]
+        self._result: queue.Queue[t.Any] = queue.Queue()
         self.action = action
         self.result = None
+        self.name = name
 
-    def run(self):
+    def run(self) -> None:
         """
         Run action and capture results or exception.
         Do not override. Do not call directly. Executed by the start() method.
@@ -33,11 +35,8 @@ class WrappedThread(threading.Thread):
         except:  # noqa
             self._result.put((None, sys.exc_info()))
 
-    def wait_for_result(self):
-        """
-        Wait for thread to exit and return the result or raise an exception.
-        :rtype: any
-        """
+    def wait_for_result(self) -> t.Any:
+        """Wait for thread to exit and return the result or raise an exception."""
         result, exception = self._result.get()
 
         if exception:
@@ -48,7 +47,7 @@ class WrappedThread(threading.Thread):
         return result
 
 
-def mutex(func):  # type: (TCallable) -> TCallable
+def mutex[TCallable: t.Callable[..., t.Any]](func: TCallable) -> TCallable:
     """Enforce exclusive access on a decorated function."""
     lock = threading.Lock()
 
@@ -59,3 +58,25 @@ def mutex(func):  # type: (TCallable) -> TCallable
             return func(*args, **kwargs)
 
     return wrapper  # type: ignore[return-value]  # requires https://www.python.org/dev/peps/pep-0612/ support
+
+
+__named_lock = threading.Lock()
+__named_locks: dict[str, threading.Lock] = {}
+
+
+@contextlib.contextmanager
+def named_lock(name: str) -> c.Iterator[bool]:
+    """
+    Context manager that provides named locks using threading.Lock instances.
+    Once named lock instances are created they are not deleted.
+    Returns True if this is the first instance of the named lock, otherwise False.
+    """
+    with __named_lock:
+        if lock_instance := __named_locks.get(name):
+            first = False
+        else:
+            first = True
+            lock_instance = __named_locks[name] = threading.Lock()
+
+    with lock_instance:
+        yield first

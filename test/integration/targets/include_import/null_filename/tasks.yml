@@ -1,0 +1,5 @@
+- name: ping task
+  ansible.builtin.ping:
+
+- name: invalid include_task definition
+  ansible.builtin.include_tasks:

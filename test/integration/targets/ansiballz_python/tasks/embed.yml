@@ -1,0 +1,62 @@
+- collections: ansible_test.ansiballz_python
+  block:
+  - embed:
+    register: happy_embed
+
+  - embed_from_mu:
+    register: happy_mu_embed
+
+  - embed_from_core:
+    register: happy_core_embed
+
+  - embed_module_import:
+    register: happy_core_embed_module_import
+
+  - embed_module_alias:
+    register: happy_core_embed_module_alias
+
+  - embed_manager_alias:
+    register: happy_core_embed_manager_alias
+
+  - broken_embed_type:
+    ignore_errors: true
+    register: broken_embed_type
+
+  - broken_embed_non_literal:
+    ignore_errors: true
+    register: broken_embed_non_literal
+
+  - broken_embed_nonexistent_resource:
+    ignore_errors: true
+    register: broken_embed_nonexistent_resource
+
+  - broken_embed_nonexistent_anchor:
+    ignore_errors: true
+    register: broken_embed_nonexistent_anchor
+
+  - broken_embed_non_ansible:
+    ignore_errors: true
+    register: broken_embed_non_ansible
+
+  - broken_embed_import_no_embed:
+    ignore_errors: true
+    register: broken_embed_import_no_embed
+
+- assert:
+    that:
+    - happy_embed.warnings is undefined
+    - happy_mu_embed.warnings is undefined
+    - happy_core_embed.warnings is undefined
+    - happy_core_embed_module_import.warnings is undefined
+    - happy_core_embed_module_alias.warnings is undefined
+    - happy_core_embed_manager_alias.warnings is undefined
+    - broken_embed_type is failed
+    - broken_embed_type.msg is search "Invalid EmbedManager request. Embed requires exactly two inline literal strings"
+    - broken_embed_nonexistent_resource is failed
+    - broken_embed_nonexistent_resource.msg is search "Embed resource 'embed_nonexistent.py' not found while packaging module"
+    - broken_embed_nonexistent_anchor is failed
+    - broken_embed_nonexistent_anchor.msg is search "Embed package not found while packaging module"
+    - broken_embed_non_ansible is failed
+    - broken_embed_non_ansible.msg is search "Embed must be an ansible/ansible_collections resource"
+    - broken_embed_import_no_embed is failed
+    - broken_embed_import_no_embed.msg is search "Module embedding support was imported, but no EmbedManager.embed calls were found"

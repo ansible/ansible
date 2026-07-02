@@ -15,16 +15,36 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 from io import StringIO
 
-from units.compat import unittest
+import unittest
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.connection import ConnectionBase
 from ansible.plugins.loader import become_loader
+
+
+class NoOpConnection(ConnectionBase):
+
+    @property
+    def transport(self):
+        """This method is never called by unit tests."""
+
+    def _connect(self):
+        """This method is never called by unit tests."""
+
+    def exec_command(self):
+        """This method is never called by unit tests."""
+
+    def put_file(self):
+        """This method is never called by unit tests."""
+
+    def fetch_file(self):
+        """This method is never called by unit tests."""
+
+    def close(self):
+        """This method is never called by unit tests."""
 
 
 class TestConnectionBaseClass(unittest.TestCase):
@@ -45,36 +65,8 @@ class TestConnectionBaseClass(unittest.TestCase):
         with self.assertRaises(TypeError):
             ConnectionModule1()  # pylint: disable=abstract-class-instantiated
 
-        class ConnectionModule2(ConnectionBase):
-            def get(self, key):
-                super(ConnectionModule2, self).get(key)
-
-        with self.assertRaises(TypeError):
-            ConnectionModule2()  # pylint: disable=abstract-class-instantiated
-
     def test_subclass_success(self):
-        class ConnectionModule3(ConnectionBase):
-
-            @property
-            def transport(self):
-                pass
-
-            def _connect(self):
-                pass
-
-            def exec_command(self):
-                pass
-
-            def put_file(self):
-                pass
-
-            def fetch_file(self):
-                pass
-
-            def close(self):
-                pass
-
-        self.assertIsInstance(ConnectionModule3(self.play_context, self.in_stream), ConnectionModule3)
+        self.assertIsInstance(NoOpConnection(self.play_context, self.in_stream), NoOpConnection)
 
     def test_check_password_prompt(self):
         local = (
@@ -82,7 +74,7 @@ class TestConnectionBaseClass(unittest.TestCase):
             b'BECOME-SUCCESS-ouzmdnewuhucvuaabtjmweasarviygqq\n'
         )
 
-        ssh_pipelining_vvvv = b'''
+        ssh_pipelining_vvvv = b"""
 debug3: mux_master_read_cb: channel 1 packet type 0x10000002 len 251
 debug2: process_mux_new_session: channel 1: request tty 0, X 1, agent 1, subsys 0, term "xterm-256color", cmd "/bin/sh -c 'sudo -H -S  -p "[sudo via ansible, key=ouzmdnewuhucvuaabtjmweasarviygqq] password: " -u root /bin/sh -c '"'"'echo BECOME-SUCCESS-ouzmdnewuhucvuaabtjmweasarviygqq; /bin/true'"'"' && sleep 0'", env 0
 debug3: process_mux_new_session: got fds stdin 9, stdout 10, stderr 11
@@ -93,9 +85,9 @@ debug2: channel 2: rcvd ext data 67
 [sudo via ansible, key=ouzmdnewuhucvuaabtjmweasarviygqq] password: debug2: channel 2: written 67 to efd 11
 BECOME-SUCCESS-ouzmdnewuhucvuaabtjmweasarviygqq
 debug3: receive packet: type 98
-'''  # noqa
+"""  # noqa
 
-        ssh_nopipelining_vvvv = b'''
+        ssh_nopipelining_vvvv = b"""
 debug3: mux_master_read_cb: channel 1 packet type 0x10000002 len 251
 debug2: process_mux_new_session: channel 1: request tty 1, X 1, agent 1, subsys 0, term "xterm-256color", cmd "/bin/sh -c 'sudo -H -S  -p "[sudo via ansible, key=ouzmdnewuhucvuaabtjmweasarviygqq] password: " -u root /bin/sh -c '"'"'echo BECOME-SUCCESS-ouzmdnewuhucvuaabtjmweasarviygqq; /bin/true'"'"' && sleep 0'", env 0
 debug3: mux_client_request_session: session request sent
@@ -109,7 +101,7 @@ debug3: Received SSH2_MSG_IGNORE
 
 BECOME-SUCCESS-ouzmdnewuhucvuaabtjmweasarviygqq
 debug3: receive packet: type 98
-'''  # noqa
+"""  # noqa
 
         ssh_novvvv = (
             b'[sudo via ansible, key=ouzmdnewuhucvuaabtjmweasarviygqq] password: \n'
@@ -125,32 +117,11 @@ debug3: receive packet: type 98
 
         nothing = b''
 
-        in_front = b'''
+        in_front = b"""
 debug1: Sending command: /bin/sh -c 'sudo -H -S  -p "[sudo via ansible, key=ouzmdnewuhucvuaabtjmweasarviygqq] password: " -u root /bin/sh -c '"'"'echo
-'''
+"""
 
-        class ConnectionFoo(ConnectionBase):
-
-            @property
-            def transport(self):
-                pass
-
-            def _connect(self):
-                pass
-
-            def exec_command(self):
-                pass
-
-            def put_file(self):
-                pass
-
-            def fetch_file(self):
-                pass
-
-            def close(self):
-                pass
-
-        c = ConnectionFoo(self.play_context, self.in_stream)
+        c = NoOpConnection(self.play_context, self.in_stream)
         c.set_become_plugin(become_loader.get('sudo'))
         c.become.prompt = '[sudo via ansible, key=ouzmdnewuhucvuaabtjmweasarviygqq] password: '
 

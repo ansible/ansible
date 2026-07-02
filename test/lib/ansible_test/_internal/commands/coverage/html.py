@@ -1,4 +1,5 @@
 """Generate HTML code coverage reports."""
+
 from __future__ import annotations
 
 import os
@@ -29,7 +30,7 @@ from . import (
 )
 
 
-def command_coverage_html(args):  # type: (CoverageHtmlConfig) -> None
+def command_coverage_html(args: CoverageHtmlConfig) -> None:
     """Generate an HTML coverage report."""
     host_state = prepare_profiles(args)  # coverage html
     output_files = combine_coverage_files(args, host_state)

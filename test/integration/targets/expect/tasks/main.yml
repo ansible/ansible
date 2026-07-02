@@ -19,14 +19,39 @@
   import_role:
     name: setup_pexpect
 
-- name: record the test_command file
-  set_fact: test_command_file={{remote_tmp_dir | expanduser}}/test_command.py
+- name: record the test command files
+  set_fact:
+    test_command_file: "{{ remote_tmp_dir | expanduser }}/test_command.py"
+    test_non_utf8_command_file: "{{ remote_tmp_dir | expanduser }}/test_non_utf8_command.py"
 
 - name: copy script into output directory
-  copy: src=test_command.py dest={{test_command_file}} mode=0444
+  copy:
+    src: test_command.py
+    dest: "{{ test_command_file }}"
+    mode: "0444"
+
+- name: copy non-UTF8 script into output directory
+  copy:
+    src: test_non_utf8_command.py
+    dest: "{{ test_non_utf8_command_file }}"
+    mode: "0444"
 
 - name: record the output file
   set_fact: output_file={{remote_tmp_dir}}/foo.txt
+
+- name: use expect with non-UTF8 output which should fail
+  expect:
+    command: "{{ ansible_python_interpreter }} {{ test_non_utf8_command_file }}"
+    responses:
+      foo: bar
+  register: expect_result
+  ignore_errors: yes
+
+- name: verify expect with non-UTF8 output failed as expected
+  assert:
+    that:
+      - expect_result is failed
+      - expect_result.msg is contains 'Refusing to deserialize an invalid UTF8 string value'  # controller-side failure, not module-side
 
 - copy:
    content: "foo"
@@ -109,10 +134,15 @@
       foo: bar
   register: chdir_result
 
+- name: get remote_tmp_dir real path
+  raw: >
+    {{ ansible_python_interpreter }} -c 'import os; os.chdir("{{remote_tmp_dir}}"); print(os.getcwd())'
+  register: remote_tmp_dir_real_path
+
 - name: assert chdir works
   assert:
     that:
-    - "'{{chdir_result.stdout |expanduser | realpath }}' == '{{remote_tmp_dir | expanduser | realpath}}'"
+    - chdir_result.stdout | trim == remote_tmp_dir_real_path.stdout | trim
 
 - name: test timeout option
   expect:
@@ -142,6 +172,15 @@
     - "echo_result.stdout_lines|length == 7"
     - "echo_result.stdout_lines[-2] == 'foobar'"
     - "echo_result.stdout_lines[-1] == 'bar'"
+
+- name: test timeout is valid as null
+  expect:
+    command: "{{ansible_python_interpreter}} {{test_command_file}}"
+    responses:
+      foo: bar
+    echo: true
+    timeout: null  # wait indefinitely
+  timeout: 2  # but shouldn't be waiting long
 
 - name: test response list
   expect:
@@ -202,3 +241,95 @@
     that:
     - "non_zero_result.failed"
     - "non_zero_result.msg == 'non-zero return code'"
+
+- name: run tests in venv
+  vars:
+    venv_dir:  "{{ output_dir }}/pexpected_venv"
+    venv_python: "{{ venv_dir }}/bin/python"
+  block:
+    - name: ensure venv exists
+      pip:
+        name: coverage
+        virtualenv: "{{ venv_dir }}"
+        virtualenv_command: "{{ ansible_python_interpreter }} -m venv"
+
+    - name: trigger pexpect dependency absence
+      expect:
+        command: "echo expectThePexpected"
+        responses:
+          foo: bar
+      vars:
+        ansible_python_interpreter: "{{ venv_python }}"
+      register: pexpect_dependency_absence
+      ignore_errors: true
+
+    - name: assert pexpect dependency absence
+      assert:
+        that:
+          - pexpect_dependency_absence is failed
+          - pexpect_dependency_absence.msg is contains 'pexpect'
+
+    - name: Install pexpect3.3
+      pip:
+        name: pexpect
+        version: 3.3
+        virtualenv: "{{ venv_dir }}"
+
+    - name: trigger fallback to pexpect3.3 methods
+      expect:
+        command: "echo pexpectIsABitOutOfDate"
+        responses:
+          foo: bar
+      vars:
+        ansible_python_interpreter: "{{ venv_python }}"
+      register: pexpect_version_three_dot_three
+
+    - name: install pexpect3.0
+      pip:
+        name: pexpect
+        version: 3.0
+        virtualenv: "{{ venv_dir }}"
+
+    - name: trigger failure with out of date pexpect version
+      expect:
+        command: "echo pexpectIsTooOutOfDate"
+        responses:
+          foo: bar
+      vars:
+        ansible_python_interpreter: "{{ venv_python }}"
+      register: pexpect_version_out_of_date
+      ignore_errors: true
+
+    - name: assert failure with out of date pexpect
+      assert:
+        that:
+        - pexpect_version_out_of_date is failed
+        - pexpect_version_out_of_date.msg is contains 'Insufficient version of pexpect installed'
+
+- name: trigger TypeError on timeout value
+  expect:
+    command: "echo piIsNotAnInt"
+    responses:
+      foo: bar
+    timeout: pi
+  register: pexpect_timeout_typeerror
+  ignore_errors: true
+
+- name: assert timeout triggers TypeError when not an int
+  assert:
+    that:
+    - pexpect_timeout_typeerror is failed
+    - pexpect_timeout_typeerror.msg is contains 'cannot be converted to an int'
+
+- name: trigger pexpect.ExceptionPexpect
+  expect:
+    command: commandthatdoesntexist
+    responses:
+      foo: bar
+  register: pexpect_exception_pexpect
+  ignore_errors: true
+
+- name: assert failure for a nonexistent command
+  assert:
+    that:
+      - pexpect_exception_pexpect is failed

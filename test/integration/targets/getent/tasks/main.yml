@@ -1,20 +1,7 @@
 # Test code for the getent module.
 # (c) 2017, James Tanner <tanner.jc@gmail.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 - name: check for getent command
   shell: which getent
   failed_when: False
@@ -30,17 +17,34 @@
           service: files
       register: getent_test0
       when: ansible_system != 'FreeBSD' and ansible_distribution != 'Alpine'
+
     - name: run getent w/o specified service (FreeBSD)
       getent:
           database: passwd
           key: root
       register: getent_test0
       when: ansible_system == 'FreeBSD' or ansible_distribution == 'Alpine'
+
     - debug: var=getent_test0
+
     - name: validate results
       assert:
           that:
               - 'getent_passwd is defined'
               - 'getent_passwd.root is defined'
               - 'getent_passwd.root|length == 6'
+
+    - name: run getent with invalid split value
+      getent:
+        database: group
+        split: ""
+      register: getent_test1
+      ignore_errors: True
+
+    - name: validate results
+      assert:
+        that:
+          - 'getent_test1 is failed'
+          - 'getent_test1.msg is contains "Invalid split value. The value must be a non-empty string"'
+
   when: getent_check.rc == 0

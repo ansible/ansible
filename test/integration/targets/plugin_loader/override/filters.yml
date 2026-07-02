@@ -1,7 +1,7 @@
 - hosts: testhost
   gather_facts: false
   tasks:
-    - name: ensure local 'flag' filter works, 'flatten' is overriden and 'ternary' is still from core
+    - name: ensure local 'flag' filter works, 'flatten' is overridden and 'ternary' is still from core
       assert:
          that:
              - a|flag == 'flagged'

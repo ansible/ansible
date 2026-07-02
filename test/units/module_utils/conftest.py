@@ -1,58 +1,43 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-import json
 import sys
-from io import BytesIO
 
 import pytest
 
 import ansible.module_utils.basic
-from ansible.module_utils.six import PY3, string_types
-from ansible.module_utils._text import to_bytes
-from ansible.module_utils.common._collections_compat import MutableMapping
+
+from ansible.module_utils.testing import patch_module_args
+from ..mock.module import module_env_mocker  # expose shared fixture in this part of the unit test tree
+
+assert module_env_mocker is not None  # avoid unused imports
 
 
 @pytest.fixture
-def stdin(mocker, request):
-    old_args = ansible.module_utils.basic._ANSIBLE_ARGS
-    ansible.module_utils.basic._ANSIBLE_ARGS = None
+def stdin(request):
     old_argv = sys.argv
     sys.argv = ['ansible_unittest']
 
-    if isinstance(request.param, string_types):
-        args = request.param
-    elif isinstance(request.param, MutableMapping):
-        if 'ANSIBLE_MODULE_ARGS' not in request.param:
-            request.param = {'ANSIBLE_MODULE_ARGS': request.param}
-        if '_ansible_remote_tmp' not in request.param['ANSIBLE_MODULE_ARGS']:
-            request.param['ANSIBLE_MODULE_ARGS']['_ansible_remote_tmp'] = '/tmp'
-        if '_ansible_keep_remote_files' not in request.param['ANSIBLE_MODULE_ARGS']:
-            request.param['ANSIBLE_MODULE_ARGS']['_ansible_keep_remote_files'] = False
-        args = json.dumps(request.param)
-    else:
-        raise Exception('Malformed data to the stdin pytest fixture')
+    try:
+        args = request.param.copy()
+    except AttributeError:
+        args = {}
 
-    fake_stdin = BytesIO(to_bytes(args, errors='surrogate_or_strict'))
-    if PY3:
-        mocker.patch('ansible.module_utils.basic.sys.stdin', mocker.MagicMock())
-        mocker.patch('ansible.module_utils.basic.sys.stdin.buffer', fake_stdin)
-    else:
-        mocker.patch('ansible.module_utils.basic.sys.stdin', fake_stdin)
+    args.setdefault('_ansible_remote_tmp', '/tmp')
+    args.setdefault('_ansible_keep_remote_files', False)
+    args.setdefault('_ansible_tracebacks_for', [])
+    args.setdefault('_ansible_inject_invocation', True)
 
-    yield fake_stdin
+    with patch_module_args(args):
+        yield
 
-    ansible.module_utils.basic._ANSIBLE_ARGS = old_args
     sys.argv = old_argv
 
 
 @pytest.fixture
 def am(stdin, request):
-    old_args = ansible.module_utils.basic._ANSIBLE_ARGS
-    ansible.module_utils.basic._ANSIBLE_ARGS = None
     old_argv = sys.argv
     sys.argv = ['ansible_unittest']
 
@@ -68,5 +53,4 @@ def am(stdin, request):
 
     yield am
 
-    ansible.module_utils.basic._ANSIBLE_ARGS = old_args
     sys.argv = old_argv

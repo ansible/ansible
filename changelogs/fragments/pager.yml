@@ -1,0 +1,3 @@
+---
+bugfixes:
+    - cli - handle empty value for PAGER (https://github.com/ansible/ansible/issues/86898).

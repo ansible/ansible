@@ -1,0 +1,40 @@
+- hosts: testhost
+  gather_facts: no
+  tasks:
+    - name: ensure a lookup expression with an embedded template resolving to a marker-containing list exposes the marker to the lookup
+      assert:
+        that: lookup('accept_no_markers', [a_dict.a_key, 42])[1] == 42
+      vars:
+        a_dict:
+          a_key: "{{ not_defined }}"
+
+    - name: ensure the above expression also works with an embedded template (deprecated)
+      assert:
+        that: lookup('accept_no_markers', '{{ [a_dict.a_key, 42] }}')[1] == 42
+      vars:
+        a_dict:
+          a_key: "{{ not_defined }}"
+
+    - name: ensure that lookups accepting no args markers return undefined when passed one
+      debug:
+        msg: "{{ lookup('accept_no_markers', not_defined) is undefined }}"
+      register: result
+
+    - assert:
+        that: result.msg is true
+
+    - name: ensure the above expression also works with an embedded template (deprecated)
+      debug:
+        msg: "{{ lookup('accept_no_markers', '{{ not_defined }}') is undefined }}"
+      register: result
+
+    - assert:
+        that: result.msg is true
+
+    - name: ensure that lookups accepting args markers see them
+      assert:
+        that: lookup('accept_args_markers', not_defined) is true
+
+    - name: ensure the above expression also works with an embedded template (deprecated)
+      assert:
+        that: lookup('accept_args_markers', '{{ not_defined }}') is true

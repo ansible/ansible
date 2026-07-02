@@ -2,8 +2,7 @@
 
 # Copyright: (c) 2014, Matt Martz <matt@sivel.net>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 
 class ModuleDocFragment(object):
@@ -12,54 +11,64 @@ class ModuleDocFragment(object):
 
     # Note: mode is overridden by the copy and template modules so if you change the description
     # here, you should also change it there.
-    DOCUMENTATION = r'''
+    DOCUMENTATION = r"""
 options:
   mode:
     description:
     - The permissions the resulting filesystem object should have.
-    - For those used to I(/usr/bin/chmod) remember that modes are actually octal numbers.
-      You must either add a leading zero so that Ansible's YAML parser knows it is an octal number
-      (like C(0644) or C(01777)) or quote it (like C('644') or C('1777')) so Ansible receives
+    - For those used to C(/usr/bin/chmod) remember that modes are actually octal numbers.
+      You must give Ansible enough information to parse them correctly.
+      For consistent results, quote octal numbers (for example, V('644') or V('1777')) so Ansible receives
       a string and can do its own conversion from string into number.
-    - Giving Ansible a number without following one of these rules will end up with a decimal
+      Adding a leading zero (for example, V(0755)) works sometimes, but can fail in loops and some other circumstances.
+    - Giving Ansible a number without following either of these rules will end up with a decimal
       number which will have unexpected results.
-    - As of Ansible 1.8, the mode may be specified as a symbolic mode (for example, C(u+rwx) or
-      C(u=rw,g=r,o=r)).
-    - If C(mode) is not specified and the destination filesystem object B(does not) exist, the default C(umask) on the system will be used
+    - As of Ansible 1.8, the mode may be specified as a symbolic mode (for example, V(u+rwx) or
+      V(u=rw,g=r,o=r)).
+    - If O(mode) is not specified and the destination filesystem object B(does not) exist, the default C(umask) on the system will be used
       when setting the mode for the newly created filesystem object.
-    - If C(mode) is not specified and the destination filesystem object B(does) exist, the mode of the existing filesystem object will be used.
-    - Specifying C(mode) is the best way to ensure filesystem objects are created with the correct permissions.
+    - If O(mode) is not specified and the destination filesystem object B(does) exist, the mode of the existing filesystem object will be used.
+    - Specifying O(mode) is the best way to ensure filesystem objects are created with the correct permissions.
       See CVE-2020-1736 for further details.
     type: raw
   owner:
     description:
-    - Name of the user that should own the filesystem object, as would be fed to I(chown).
+    - Name of the user that should own the filesystem object, as would be fed to C(chown).
+    - When left unspecified, it uses the current user unless you are root, in which
+      case it can preserve the previous ownership.
+    - Specifying a numeric username (for example, "1000") will be assumed to be a user ID (UID) and not a username.
+      To prevent confusion, avoid using purely numeric usernames.
+
     type: str
   group:
     description:
-    - Name of the group that should own the filesystem object, as would be fed to I(chown).
+    - Name of the group that should own the filesystem object, as would be fed to C(chown).
+    - When left unspecified, it uses the current group of the current user unless you are root,
+      in which case it can preserve the previous ownership.
+    - Specifying a numeric group name (for example, "1000") will be assumed to be a group ID (GID) and not a group name.
+      To prevent confusion, avoid using purely numeric group names.
     type: str
   seuser:
     description:
     - The user part of the SELinux filesystem object context.
-    - By default it uses the C(system) policy, where applicable.
-    - When set to C(_default), it will use the C(user) portion of the policy if available.
+    - By default it uses the V(system) policy, where applicable.
+    - When set to V(_default), it will use the C(user) portion of the policy if available.
     type: str
   serole:
     description:
     - The role part of the SELinux filesystem object context.
-    - When set to C(_default), it will use the C(role) portion of the policy if available.
+    - When set to V(_default), it will use the C(role) portion of the policy if available.
     type: str
   setype:
     description:
     - The type part of the SELinux filesystem object context.
-    - When set to C(_default), it will use the C(type) portion of the policy if available.
+    - When set to V(_default), it will use the C(type) portion of the policy if available.
     type: str
   selevel:
     description:
     - The level part of the SELinux filesystem object context.
     - This is the MLS/MCS attribute, sometimes known as the C(range).
-    - When set to C(_default), it will use the C(level) portion of the policy if available.
+    - When set to V(_default), it will use the C(level) portion of the policy if available.
     type: str
   unsafe_writes:
     description:
@@ -76,10 +85,10 @@ options:
   attributes:
     description:
     - The attributes the resulting filesystem object should have.
-    - To get supported flags look at the man page for I(chattr) on the target system.
-    - This string should contain the attributes in the same order as the one displayed by I(lsattr).
+    - To get supported flags look at the man page for C(chattr) on the target system.
+    - This string should contain the attributes in the same order as the one displayed by C(lsattr).
     - The C(=) operator is assumed as default, otherwise C(+) or C(-) operators need to be included in the string.
     type: str
     aliases: [ attr ]
     version_added: '2.3'
-'''
+"""

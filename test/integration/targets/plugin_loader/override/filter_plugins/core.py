@@ -1,6 +1,4 @@
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 
 def do_flag(myval):
@@ -8,7 +6,7 @@ def do_flag(myval):
 
 
 class FilterModule(object):
-    ''' Ansible core jinja2 filters '''
+    """ Ansible core jinja2 filters """
 
     def filters(self):
         return {

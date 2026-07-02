@@ -15,26 +15,23 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import ansible.constants as C
 from ansible.errors import AnsibleParserError, AnsibleError, AnsibleAssertionError
-from ansible.module_utils.six import string_types
-from ansible.module_utils._text import to_text
+from ansible.module_utils._internal._datatag import AnsibleTagHelper
+from ansible.module_utils.common.sentinel import Sentinel
+from ansible.module_utils.common.text.converters import to_text
 from ansible.parsing.splitter import parse_kv, split_args
+from ansible.parsing.vault import EncryptedString
 from ansible.plugins.loader import module_loader, action_loader
-from ansible.template import Templar
+from ansible._internal._templating import _jinja_bits
+from ansible.utils.display import Display
 from ansible.utils.fqcn import add_internal_fqcns
-from ansible.utils.sentinel import Sentinel
 
 
-# For filtering out modules correctly below
-FREEFORM_ACTIONS = frozenset(C.MODULE_REQUIRE_ARGS)
-
-RAW_PARAM_MODULES = FREEFORM_ACTIONS.union(add_internal_fqcns((
-    'include',
+# modules formatted for user msg
+_BUILTIN_RAW_PARAM_MODULES_SIMPLE = set([
     'include_vars',
     'include_tasks',
     'include_role',
@@ -44,16 +41,30 @@ RAW_PARAM_MODULES = FREEFORM_ACTIONS.union(add_internal_fqcns((
     'group_by',
     'set_fact',
     'meta',
-)))
-
+])
+FREEFORM_ACTIONS_SIMPLE = set(C.MODULE_REQUIRE_ARGS_SIMPLE)
+FREEFORM_ACTIONS = frozenset(C.MODULE_REQUIRE_ARGS)
+RAW_PARAM_MODULES_SIMPLE = _BUILTIN_RAW_PARAM_MODULES_SIMPLE.union(FREEFORM_ACTIONS_SIMPLE)
+# For filtering out modules correctly below, use all permutations
+RAW_PARAM_MODULES = frozenset(add_internal_fqcns(RAW_PARAM_MODULES_SIMPLE)).union(FREEFORM_ACTIONS)
 BUILTIN_TASKS = frozenset(add_internal_fqcns((
     'meta',
-    'include',
     'include_tasks',
     'include_role',
     'import_tasks',
     'import_role'
 )))
+
+
+def _get_action_context(action_or_module, collection_list):
+    module_context = module_loader.find_plugin_with_context(action_or_module, collection_list=collection_list)
+    if module_context and module_context.resolved and module_context.action_plugin:
+        action_or_module = module_context.action_plugin
+
+    context = action_loader.find_plugin_with_context(action_or_module, collection_list=collection_list)
+    if not context or not context.resolved:
+        context = module_context
+    return context
 
 
 class ModuleArgsParser:
@@ -119,60 +130,66 @@ class ModuleArgsParser:
         # HACK: why are these not FieldAttributes on task with a post-validate to check usage?
         self._task_attrs.update(['local_action', 'static'])
         self._task_attrs = frozenset(self._task_attrs)
+        self._resolved_action = None
 
-        self.resolved_action = None
-
-    def _split_module_string(self, module_string):
-        '''
+    def _split_module_string(self, module_string: str) -> tuple[str, str]:
+        """
         when module names are expressed like:
         action: copy src=a dest=b
         the first part of the string is the name of the module
         and the rest are strings pertaining to the arguments.
-        '''
+        """
 
         tokens = split_args(module_string)
         if len(tokens) > 1:
-            return (tokens[0].strip(), " ".join(tokens[1:]))
+            result = (tokens[0].strip(), " ".join(tokens[1:]))
         else:
-            return (tokens[0].strip(), "")
+            result = (tokens[0].strip(), "")
+
+        return AnsibleTagHelper.tag_copy(module_string, result[0]), AnsibleTagHelper.tag_copy(module_string, result[1])
 
     def _normalize_parameters(self, thing, action=None, additional_args=None):
-        '''
+        """
         arguments can be fuzzy.  Deal with all the forms.
-        '''
-
-        additional_args = {} if additional_args is None else additional_args
+        """
 
         # final args are the ones we'll eventually return, so first update
         # them with any additional args specified, which have lower priority
         # than those which may be parsed/normalized next
         final_args = dict()
-        if additional_args:
-            if isinstance(additional_args, string_types):
-                templar = Templar(loader=None)
-                if templar.is_template(additional_args):
-                    final_args['_variable_params'] = additional_args
-                else:
-                    raise AnsibleParserError("Complex args containing variables cannot use bare variables (without Jinja2 delimiters), "
-                                             "and must use the full variable style ('{{var_name}}')")
+
+        if additional_args is not Sentinel:
+            if isinstance(additional_args, str) and _jinja_bits.is_possibly_all_template(additional_args):
+                final_args['_variable_params'] = additional_args
             elif isinstance(additional_args, dict):
                 final_args.update(additional_args)
+            elif additional_args is None:
+                Display().deprecated(
+                    msg="Ignoring empty task `args` keyword.",
+                    version="2.23",
+                    help_text='A mapping or template which resolves to a mapping is required.',
+                    obj=self._task_ds,
+                )
             else:
-                raise AnsibleParserError('Complex args must be a dictionary or variable string ("{{var}}").')
+                raise AnsibleParserError(
+                    message='The value of the task `args` keyword is invalid.',
+                    help_text='A mapping or template which resolves to a mapping is required.',
+                    obj=additional_args,
+                )
 
         # how we normalize depends if we figured out what the module name is
         # yet.  If we have already figured it out, it's a 'new style' invocation.
         # otherwise, it's not
 
         if action is not None:
-            args = self._normalize_new_style_args(thing, action)
+            args = self._normalize_new_style_args(thing, action, additional_args)
         else:
             (action, args) = self._normalize_old_style_args(thing)
 
             # this can occasionally happen, simplify
             if args and 'args' in args:
                 tmp_args = args.pop('args')
-                if isinstance(tmp_args, string_types):
+                if isinstance(tmp_args, str):
                     tmp_args = parse_kv(tmp_args)
                 args.update(tmp_args)
 
@@ -182,7 +199,11 @@ class ModuleArgsParser:
             for arg in args:
                 arg = to_text(arg)
                 if arg.startswith('_ansible_'):
-                    raise AnsibleError("invalid parameter specified for action '%s': '%s'" % (action, arg))
+                    err_msg = (
+                        f"Invalid parameter specified beginning with keyword '_ansible_' for action '{action !s}': '{arg !s}'. "
+                        "The prefix '_ansible_' is reserved for internal use only."
+                    )
+                    raise AnsibleError(err_msg)
 
         # finally, update the args we're going to return with the ones
         # which were normalized above
@@ -191,8 +212,8 @@ class ModuleArgsParser:
 
         return (action, final_args)
 
-    def _normalize_new_style_args(self, thing, action):
-        '''
+    def _normalize_new_style_args(self, thing, action, additional_args):
+        """
         deals with fuzziness in new style module invocations
         accepting key=value pairs and dictionaries, and returns
         a dictionary of arguments
@@ -202,15 +223,29 @@ class ModuleArgsParser:
             {'region': 'xyz'}, 'ec2'
         standardized outputs like:
             { _raw_params: 'echo hi', _uses_shell: True }
-        '''
+        """
 
         if isinstance(thing, dict):
             # form is like: { xyz: { x: 2, y: 3 } }
             args = thing
-        elif isinstance(thing, string_types):
+        elif isinstance(thing, str):
             # form is like: copy: src=a dest=b
             check_raw = action in FREEFORM_ACTIONS
             args = parse_kv(thing, check_raw=check_raw)
+            args_keys = set(args) - {'_raw_params'}
+
+            if args_keys and additional_args is not Sentinel:
+                kv_args = ', '.join(repr(arg) for arg in sorted(args_keys))
+
+                Display().deprecated(
+                    msg=f"Merging legacy k=v args ({kv_args}) into task args.",
+                    help_text="Include all task args in the task `args` mapping.",
+                    version="2.23",
+                    obj=thing,
+                )
+        elif isinstance(thing, EncryptedString):
+            # k=v parsing intentionally omitted
+            args = dict(_raw_params=thing)
         elif thing is None:
             # this can happen with modules which take no params, like ping:
             args = None
@@ -219,7 +254,7 @@ class ModuleArgsParser:
         return args
 
     def _normalize_old_style_args(self, thing):
-        '''
+        """
         deals with fuzziness in old-style (action/local_action) module invocations
         returns tuple of (module_name, dictionary_args)
 
@@ -229,13 +264,14 @@ class ModuleArgsParser:
            {'module': 'ec2', 'x': 1 }
         standardized outputs like:
            ('ec2', { 'x': 1} )
-        '''
+        """
 
         action = None
         args = None
 
         if isinstance(thing, dict):
             # form is like:  action: { module: 'copy', src: 'a', dest: 'b' }
+            Display().deprecated("Using a mapping for `action` is deprecated.", version='2.23', help_text='Use a string value for `action`.', obj=thing)
             thing = thing.copy()
             if 'module' in thing:
                 action, module_args = self._split_module_string(thing['module'])
@@ -244,7 +280,7 @@ class ModuleArgsParser:
                 args.update(parse_kv(module_args, check_raw=check_raw))
                 del args['module']
 
-        elif isinstance(thing, string_types):
+        elif isinstance(thing, str):
             # form is like:  action: copy src=a dest=b
             (action, args) = self._split_module_string(thing)
             check_raw = action in FREEFORM_ACTIONS
@@ -257,13 +293,11 @@ class ModuleArgsParser:
         return (action, args)
 
     def parse(self, skip_action_validation=False):
-        '''
+        """
         Given a task in one of the supported forms, parses and returns
         returns the action, arguments, and delegate_to values for the
         task, dealing with all sorts of levels of fuzziness.
-        '''
-
-        thing = None
+        """
 
         action = None
         delegate_to = self._task_ds.get('delegate_to', Sentinel)
@@ -272,14 +306,14 @@ class ModuleArgsParser:
         # This is the standard YAML form for command-type modules. We grab
         # the args and pass them in as additional arguments, which can/will
         # be overwritten via dict updates from the other arg sources below
-        additional_args = self._task_ds.get('args', dict())
+        additional_args = self._task_ds.get('args', Sentinel)
 
         # We can have one of action, local_action, or module specified
         # action
         if 'action' in self._task_ds:
             # an old school 'action' statement
             thing = self._task_ds['action']
-            action, args = self._normalize_parameters(thing, action=action, additional_args=additional_args)
+            action, args = self._normalize_parameters(thing, additional_args=additional_args)
 
         # local_action
         if 'local_action' in self._task_ds:
@@ -288,7 +322,7 @@ class ModuleArgsParser:
                 raise AnsibleParserError("action and local_action are mutually exclusive", obj=self._task_ds)
             thing = self._task_ds.get('local_action', '')
             delegate_to = 'localhost'
-            action, args = self._normalize_parameters(thing, action=action, additional_args=additional_args)
+            action, args = self._normalize_parameters(thing, additional_args=additional_args)
 
         # module: <stuff> is the more new-style invocation
 
@@ -297,26 +331,27 @@ class ModuleArgsParser:
 
         # walk the filtered input dictionary to see if we recognize a module name
         for item, value in non_task_ds.items():
-            context = None
-            is_action_candidate = False
             if item in BUILTIN_TASKS:
                 is_action_candidate = True
             elif skip_action_validation:
                 is_action_candidate = True
             else:
-                context = action_loader.find_plugin_with_context(item, collection_list=self._collection_list)
-                if not context.resolved:
-                    context = module_loader.find_plugin_with_context(item, collection_list=self._collection_list)
+                try:
+                    # DTFIX-FUTURE: extract to a helper method, shared with Task.post_validate_args
+                    context = _get_action_context(item, self._collection_list)
+                except AnsibleError as e:
+                    if e.obj is None:
+                        e.obj = self._task_ds
+                    raise e
 
                 is_action_candidate = context.resolved and bool(context.redirect_list)
+                if is_action_candidate:
+                    self._resolved_action = context.resolved_fqcn
 
             if is_action_candidate:
                 # finding more than one module name is a problem
                 if action is not None:
                     raise AnsibleParserError("conflicting action statements: %s, %s" % (action, item), obj=self._task_ds)
-
-                if context is not None and context.resolved:
-                    self.resolved_action = context.resolved_fqcn
 
                 action = item
                 thing = value
@@ -332,14 +367,5 @@ class ModuleArgsParser:
             else:
                 raise AnsibleParserError("no module/action detected in task.",
                                          obj=self._task_ds)
-        elif args.get('_raw_params', '') != '' and action not in RAW_PARAM_MODULES:
-            templar = Templar(loader=None)
-            raw_params = args.pop('_raw_params')
-            if templar.is_template(raw_params):
-                args['_variable_params'] = raw_params
-            else:
-                raise AnsibleParserError("this task '%s' has extra params, which is only allowed in the following modules: %s" % (action,
-                                                                                                                                  ", ".join(RAW_PARAM_MODULES)),
-                                         obj=self._task_ds)
 
-        return (action, args, delegate_to)
+        return action, args, delegate_to

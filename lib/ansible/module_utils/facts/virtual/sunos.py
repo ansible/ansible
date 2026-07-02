@@ -1,20 +1,7 @@
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Contributors to the Ansible project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 
@@ -78,7 +65,7 @@ class SunOSVirtual(Virtual):
         if virtinfo:
             # The output of virtinfo is different whether we are on a machine with logical
             # domains ('LDoms') on a T-series or domains ('Domains') on a M-series. Try LDoms first.
-            rc, out, err = self.module.run_command("/usr/sbin/virtinfo -p")
+            rc, out, err = self.module.run_command([virtinfo, '-p'])
             # The output contains multiple lines with different keys like this:
             #   DOMAINROLE|impl=LDoms|control=false|io=false|service=false|root=false
             # The output may also be not formatted and the returncode is set to 0 regardless of the error condition:
@@ -127,6 +114,10 @@ class SunOSVirtual(Virtual):
                     elif 'KVM' in line:
                         guest_tech.add('kvm')
                         virtual_facts['virtualization_type'] = 'kvm'
+                        virtual_facts['virtualization_role'] = 'guest'
+                    elif 'BHYVE' in line:
+                        guest_tech.add('bhyve')
+                        virtual_facts['virtualization_type'] = 'bhyve'
                         virtual_facts['virtualization_role'] = 'guest'
 
         virtual_facts['virtualization_tech_guest'] = guest_tech

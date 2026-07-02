@@ -15,21 +15,19 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 from ansible.errors import AnsibleActionFail
-from ansible.module_utils.six import string_types
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
-from ansible.utils.vars import isidentifier
-
-import ansible.constants as C
+from ansible.utils.vars import validate_variable_name
+from . import VariableLayer
 
 
 class ActionModule(ActionBase):
 
     TRANSFERS_FILES = False
+    _requires_connection = False
 
     def run(self, tmp=None, task_vars=None):
         if task_vars is None:
@@ -43,24 +41,24 @@ class ActionModule(ActionBase):
 
         if self._task.args:
             for (k, v) in self._task.args.items():
-                k = self._templar.template(k)
+                k = self._templar.template(k)  # a rare case where key templating is allowed; backward-compatibility for dynamic storage
 
-                if not isidentifier(k):
-                    raise AnsibleActionFail("The variable name '%s' is not valid. Variables must start with a letter or underscore character, "
-                                            "and contain only letters, numbers and underscores." % k)
+                validate_variable_name(k)
 
-                # NOTE: this should really use BOOLEANS from convert_bool, but only in the k=v case,
-                # right now it converts matching explicit YAML strings also when 'jinja2_native' is disabled.
-                if not C.DEFAULT_JINJA2_NATIVE and isinstance(v, string_types) and v.lower() in ('true', 'false', 'yes', 'no'):
-                    v = boolean(v, strict=False)
                 facts[k] = v
         else:
             raise AnsibleActionFail('No key/value pairs provided, at least one is required for this action to succeed')
 
         if facts:
             # just as _facts actions, we don't set changed=true as we are not modifying the actual host
+            if cacheable:
+                self.register_host_variables(facts, VariableLayer.CACHEABLE_FACT)
+            else:
+                self.register_host_variables({}, VariableLayer.CACHEABLE_FACT)  # disable legacy behavior of registering 'ansible_facts' from result dict
+
+            self.register_host_variables(facts, VariableLayer.EPHEMERAL_FACT)
+
             result['ansible_facts'] = facts
-            result['_ansible_facts_cacheable'] = cacheable
         else:
             # this should not happen, but JIC we get here
             raise AnsibleActionFail('Unable to create any variables with provided arguments')

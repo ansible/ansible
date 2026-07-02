@@ -2,8 +2,7 @@
 # Copyright: (c) 2017, Will Thames <will.thames@xvt.com.au>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import pytest
 
@@ -116,12 +115,12 @@ class TestCaseDictMerge:
 class TestCaseAzureIncidental:
 
     def test_dict_merge_invalid_dict(self):
-        ''' if b is not a dict, return b '''
+        """ if b is not a dict, return b """
         res = dict_merge({}, None)
         assert res is None
 
     def test_merge_sub_dicts(self):
-        '''merge sub dicts '''
+        """merge sub dicts """
         a = {'a': {'a1': 1}}
         b = {'a': {'b1': 2}}
         c = {'a': {'a1': 1, 'b1': 2}}

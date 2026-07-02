@@ -9,8 +9,7 @@
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -18,7 +17,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: pkgng
 short_description: Package manager for FreeBSD >= 9.0
@@ -89,9 +88,9 @@ notes:
   - When using pkgsite, be careful that already in cache packages won't be downloaded again.
   - When used with a `loop:` each package will be processed individually,
     it is much more efficient to pass the list directly to the `name` option.
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
 - name: Install package foo
   pkgng:
     name: foo
@@ -112,7 +111,7 @@ EXAMPLES = '''
   pkgng:
     name: baz
     state: latest
-'''
+"""
 
 
 import re

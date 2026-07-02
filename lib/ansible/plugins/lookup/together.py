@@ -1,8 +1,7 @@
 # (c) 2013, Bradley Young <young.bradley@gmail.com>
 # (c) 2012-17 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 DOCUMENTATION = """
     name: together
@@ -14,6 +13,7 @@ DOCUMENTATION = """
       - "To clarify with an example, [ 'a', 'b' ] and [ 1, 2 ] turn into [ ('a',1), ('b', 2) ]"
       - This is basically the same as the 'zip_longest' filter and Python function
       - Any 'unbalanced' elements will be substituted with 'None'
+    positional: _terms
     options:
       _terms:
         description: list of lists to merge
@@ -39,7 +39,6 @@ import itertools
 
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
-from ansible.utils.listify import listify_lookup_plugin_terms
 
 
 class LookupModule(LookupBase):
@@ -49,18 +48,7 @@ class LookupModule(LookupBase):
     Replace any empty spots in 2nd array with None:
     [1, 2], [3] -> [1, 3], [2, None]
     """
-
-    def _lookup_variables(self, terms):
-        results = []
-        for x in terms:
-            intermediate = listify_lookup_plugin_terms(x, templar=self._templar, loader=self._loader)
-            results.append(intermediate)
-        return results
-
     def run(self, terms, variables=None, **kwargs):
-
-        terms = self._lookup_variables(terms)
-
         my_list = terms[:]
         if len(my_list) == 0:
             raise AnsibleError("with_together requires at least one element in each list")

@@ -1,0 +1,6 @@
+- include_tasks: handlers_lockstep_83019-include-nested.yml
+  when: inventory_hostname == "A"
+
+- name: handler2
+  debug:
+    msg: handler2

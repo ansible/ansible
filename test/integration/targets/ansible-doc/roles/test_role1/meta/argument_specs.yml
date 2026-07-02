@@ -11,7 +11,15 @@ argument_specs:
         author:
           - John Doe (@john)
           - Jane Doe (@jane)
-
+        version_added: 1.2.0
+        notes:
+          - This is a role.
+          - More text.
+        seealso:
+          - module: ansible.builtin.file
+          - plugin: ansible.builtin.file
+            plugin_type: lookup
+            description: Reads a file from the controller.
         options:
             myopt1:
                 description:

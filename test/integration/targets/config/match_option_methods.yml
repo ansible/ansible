@@ -1,0 +1,37 @@
+- hosts: localhost
+  gather_facts: false
+  vars:
+      direct: "{{ query('broken', some_option='foo') }}"
+      default: "{{ query('broken') }}"
+  tasks:
+    - name: Set directly but also have  vars
+      set_fact:
+        direct_with_vars: "{{ query('broken', some_option='foo') }}"
+      vars:
+        playground_test_1: var 1
+        playground_test_2: var 2
+    - name:  Set via vars only
+      set_fact:
+        vars_only: "{{ query('broken') }}"
+      vars:
+        playground_test_1: var 1
+        playground_test_2: var 2
+
+    - debug: msg={{q('vars', item)}}
+      loop:
+        - direct
+        - default
+        - direct_with_vars
+        - vars_only
+
+    - name: now ensure it all worked as expected (simple value, origin value, origin)
+      assert:
+        that:
+          - direct[0] == direct[1]
+          - direct[2] == 'Direct'
+          - default[0] == default[1]
+          - default[2] == 'default'
+          - direct_with_vars[0] == direct_with_vars[1]
+          - direct_with_vars[2] == 'Direct'
+          - vars_only[0] == vars_only[1]
+          - vars_only[2].startswith('var:')

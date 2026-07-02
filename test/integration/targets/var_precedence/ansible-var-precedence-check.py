@@ -3,8 +3,7 @@
 # A tool to check the order of precedence for ansible variables
 # https://github.com/ansible/ansible/blob/devel/test/integration/test_var_precedence.yml
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import json
 import os
@@ -14,7 +13,6 @@ import stat
 import subprocess
 import tempfile
 import yaml
-from pprint import pprint
 from optparse import OptionParser
 from jinja2 import Environment
 
@@ -364,9 +362,9 @@ class VarTestMaker(object):
             block_wrapper = [debug_task, test_task]
 
         if 'include_params' in self.features:
-            self.tasks.append(dict(name='including tasks', include='included_tasks.yml', vars=dict(findme='include_params')))
+            self.tasks.append(dict(name='including tasks', include_tasks='included_tasks.yml', vars=dict(findme='include_params')))
         else:
-            self.tasks.append(dict(include='included_tasks.yml'))
+            self.tasks.append(dict(include_tasks='included_tasks.yml'))
 
         fname = os.path.join(TESTDIR, 'included_tasks.yml')
         with open(fname, 'w') as f:
@@ -375,12 +373,12 @@ class VarTestMaker(object):
         self.write_playbook()
 
     def run(self):
-        '''
+        """
         if self.dynamic_inventory:
             cmd = 'ansible-playbook -c local -i inventory/hosts site.yml'
         else:
             cmd = 'ansible-playbook -c local -i inventory site.yml'
-        '''
+        """
         cmd = 'ansible-playbook -c local -i inventory site.yml'
         if 'extra_vars' in self.features:
             cmd += ' --extra-vars="findme=extra_vars"'
@@ -432,7 +430,7 @@ def main():
         'ini_host_vars_file',
         'ini_host',
         'pb_group_vars_file_child',
-        # 'ini_group_vars_file_child', #FIXME: this contradicts documented precedence pb group vars files should override inventory ones
+        # 'ini_group_vars_file_child', # FIXME: this contradicts documented precedence pb group vars files should override inventory ones
         'pb_group_vars_file_parent',
         'ini_group_vars_file_parent',
         'pb_group_vars_file_all',

@@ -4,6 +4,10 @@
 
 $module = [Ansible.Basic.AnsibleModule]::Create($args, @{})
 
+if (-not (Get-Variable -Name IsWindows -ErrorAction Ignore)) {
+    Set-Variable -Name IsWindows -Value $true
+}
+
 Function Assert-Equal {
     param(
         [Parameter(Mandatory = $true, ValueFromPipeline = $true)][AllowNull()]$Actual,
@@ -87,7 +91,7 @@ Function Assert-DictionaryEqual {
 }
 
 Function Exit-Module {
-    # Make sure Exit actually calls exit and not our overriden test behaviour
+    # Make sure Exit actually calls exit and not our overridden test behaviour
     [Ansible.Basic.AnsibleModule]::Exit = { param([Int32]$rc) exit $rc }
     Write-Output -InputObject (ConvertTo-Json -InputObject $module.Result -Compress -Depth 99)
     $module.ExitJson()
@@ -107,7 +111,7 @@ $tmpdir = $module.Tmpdir
     Set-Variable -Name _test_out -Scope Global -Value $line
 }
 
-$tests = @{
+$tests = [Ordered]@{
     "Empty spec and no options - args file" = {
         $args_file = Join-Path -Path $tmpdir -ChildPath "args-$(Get-Random).json"
         [System.IO.File]::WriteAllText($args_file, '{ "ANSIBLE_MODULE_ARGS": {} }')
@@ -155,6 +159,7 @@ $tests = @{
         "_ansible_shell_executable": "ignored",
         "_ansible_socket": "ignored",
         "_ansible_syslog_facility": "ignored",
+        "_ansible_target_log_info": "ignored",
         "_ansible_tmpdir": "$($m_tmpdir -replace "\\", "\\")",
         "_ansible_verbosity": 3,
         "_ansible_version": "2.8.0"
@@ -208,6 +213,14 @@ $tests = @{
     }
 
     "Parse complex module options" = {
+        if ($IsWindows) {
+            $envName = 'SystemRoot'
+            $envValue = $env:SystemRoot
+        }
+        else {
+            $envName = 'HOME'
+            $envValue = $env:HOME
+        }
         $spec = @{
             options = @{
                 option_default = @{}
@@ -253,6 +266,7 @@ $tests = @{
                 list_type = @{type = "list" }
                 list_type_str = @{type = "list" }
                 list_with_int = @{type = "list"; elements = "int" }
+                list_with_single_long = @{type = "list"; elements = "int" }
                 list_type_single = @{type = "list" }
                 list_with_dict = @{
                     type = "list"
@@ -267,8 +281,6 @@ $tests = @{
                 path_type_missing = @{type = "path" }
                 raw_type_str = @{type = "raw" }
                 raw_type_int = @{type = "raw" }
-                sid_type = @{type = "sid" }
-                sid_from_name = @{type = "sid" }
                 str_type = @{type = "str" }
                 delegate_type = @{type = [Func[[Object], [UInt64]]] { [System.UInt64]::Parse($args[0]) } }
             }
@@ -299,6 +311,7 @@ $tests = @{
             list_type = @("a", "b", 1, 2)
             list_type_str = "a, b,1,2 "
             list_with_int = @("1", 2)
+            list_with_single_long = ([long]-1)
             list_type_single = "single"
             list_with_dict = @(
                 @{
@@ -308,13 +321,11 @@ $tests = @{
                 @{ int_type = 1 },
                 @{}
             )
-            path_type = "%SystemRoot%\System32"
-            path_type_nt = "\\?\%SystemRoot%\System32"
+            path_type = "%$envName%\System32"
+            path_type_nt = "\\?\%$envName%\System32"
             path_type_missing = "T:\missing\path"
             raw_type_str = "str"
             raw_type_int = 1
-            sid_type = "S-1-5-18"
-            sid_from_name = "SYSTEM"
             str_type = "str"
             delegate_type = "1234"
         }
@@ -399,6 +410,10 @@ $tests = @{
         $m.Params.list_with_int[0].GetType().FullName | Assert-Equal -Expected "System.Int32"
         $m.Params.list_with_int[1] | Assert-Equal -Expected 2
         $m.Params.list_with_int[1].GetType().FullName | Assert-Equal -Expected "System.Int32"
+        $m.Params.list_with_single_long.GetType().ToString() | Assert-Equal -Expected "System.Collections.Generic.List``1[System.Object]"
+        $m.Params.list_with_single_long.Count | Assert-Equal -Expected 1
+        $m.Params.list_with_single_long[0] | Assert-Equal -Expected -1
+        $m.Params.list_with_single_long[0].GetType().ToString() | Assert-Equal -Expected "System.Int32"
         $m.Params.list_type_single.GetType().ToString() | Assert-Equal -Expected "System.Collections.Generic.List``1[System.Object]"
         $m.Params.list_type_single.Count | Assert-Equal -Expected 1
         $m.Params.list_type_single[0] | Assert-Equal -Expected "single"
@@ -416,9 +431,9 @@ $tests = @{
         $m.Params.list_with_dict[2].GetType().FullName.StartsWith("System.Collections.Generic.Dictionary``2[[System.String") | Assert-Equal -Expected $true
         $m.Params.list_with_dict[2] | Assert-DictionaryEqual -Expected @{int_type = $null; str_type = "str_sub_type" }
         $m.Params.list_with_dict[2].str_type.GetType().FullName.ToString() | Assert-Equal -Expected "System.String"
-        $m.Params.path_type | Assert-Equal -Expected "$($env:SystemRoot)\System32"
+        $m.Params.path_type | Assert-Equal -Expected "$envValue\System32"
         $m.Params.path_type.GetType().ToString() | Assert-Equal -Expected "System.String"
-        $m.Params.path_type_nt | Assert-Equal -Expected "\\?\%SystemRoot%\System32"
+        $m.Params.path_type_nt | Assert-Equal -Expected "\\?\%$envName%\System32"
         $m.Params.path_type_nt.GetType().ToString() | Assert-Equal -Expected "System.String"
         $m.Params.path_type_missing | Assert-Equal -Expected "T:\missing\path"
         $m.Params.path_type_missing.GetType().ToString() | Assert-Equal -Expected "System.String"
@@ -426,10 +441,6 @@ $tests = @{
         $m.Params.raw_type_str.GetType().FullName | Assert-Equal -Expected "System.String"
         $m.Params.raw_type_int | Assert-Equal -Expected 1
         $m.Params.raw_type_int.GetType().FullName | Assert-Equal -Expected "System.Int32"
-        $m.Params.sid_type | Assert-Equal -Expected (New-Object -TypeName System.Security.Principal.SecurityIdentifier -ArgumentList "S-1-5-18")
-        $m.Params.sid_type.GetType().ToString() | Assert-Equal -Expected "System.Security.Principal.SecurityIdentifier"
-        $m.Params.sid_from_name | Assert-Equal -Expected (New-Object -TypeName System.Security.Principal.SecurityIdentifier -ArgumentList "S-1-5-18")
-        $m.Params.sid_from_name.GetType().ToString() | Assert-Equal -Expected "System.Security.Principal.SecurityIdentifier"
         $m.Params.str_type | Assert-Equal -Expected "str"
         $m.Params.str_type.GetType().ToString() | Assert-Equal -Expected "System.String"
         $m.Params.delegate_type | Assert-Equal -Expected 1234
@@ -446,74 +457,46 @@ $tests = @{
         }
         $failed | Assert-Equal -Expected $true
 
-        $expected_module_args = @{
-            option_default = "1"
-            missing_option_default = $null
-            string_option = "1"
-            required_option = "required"
-            missing_choices = $null
-            choices = "a"
-            one_choice = "b"
-            choice_with_default = "b"
-            alias_direct = "a"
-            alias_as_alias = "a"
-            alias_as_alias2 = "a"
-            bool_type = $true
-            bool_from_str = $false
-            dict_type = @{
-                int_type = 10
-                str_type = "str_sub_type"
-            }
-            dict_type_missing = $null
-            dict_type_defaults = @{
-                int_type = $null
-                str_type = "str_sub_type"
-            }
-            dict_type_json = @{
-                a = "a"
-                b = 1
-                c = @("a", "b")
-            }
-            dict_type_str = @{
-                a = "a"
-                b = "b 2"
-                c = "c"
-            }
-            float_type = 3.14159
-            int_type = 0
-            json_type = $m.Params.json_type.ToString()
-            json_type_dict = $m.Params.json_type_dict.ToString()
-            list_type = @("a", "b", 1, 2)
-            list_type_str = @("a", "b", "1", "2")
-            list_with_int = @(1, 2)
-            list_type_single = @("single")
-            list_with_dict = @(
-                @{
-                    int_type = 2
-                    str_type = "dict entry"
-                },
-                @{
-                    int_type = 1
-                    str_type = "str_sub_type"
-                },
-                @{
-                    int_type = $null
-                    str_type = "str_sub_type"
-                }
-            )
-            path_type = "$($env:SystemRoot)\System32"
-            path_type_nt = "\\?\%SystemRoot%\System32"
-            path_type_missing = "T:\missing\path"
-            raw_type_str = "str"
-            raw_type_int = 1
-            sid_type = "S-1-5-18"
-            sid_from_name = "S-1-5-18"
-            str_type = "str"
-            delegate_type = 1234
-        }
-        $actual.Keys.Count | Assert-Equal -Expected 2
+        $actual.Keys.Count | Assert-Equal -Expected 1
         $actual.changed | Assert-Equal -Expected $false
-        $actual.invocation | Assert-DictionaryEqual -Expected @{module_args = $expected_module_args }
+    }
+
+    "Parse sid type module options" = {
+        # sid is only supported on Windows.
+        if (-not $IsWindows) {
+            return
+        }
+
+        $spec = @{
+            options = @{
+                sid_type = @{type = "sid" }
+                sid_from_name = @{type = "sid" }
+            }
+        }
+        Set-Variable -Name complex_args -Scope Global -Value @{
+            sid_type = "S-1-5-18"
+            sid_from_name = "SYSTEM"
+        }
+        $m = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
+
+        $m.Params.sid_type | Assert-Equal -Expected (New-Object -TypeName System.Security.Principal.SecurityIdentifier -ArgumentList "S-1-5-18")
+        $m.Params.sid_type.GetType().ToString() | Assert-Equal -Expected "System.Security.Principal.SecurityIdentifier"
+        $m.Params.sid_from_name | Assert-Equal -Expected (New-Object -TypeName System.Security.Principal.SecurityIdentifier -ArgumentList "S-1-5-18")
+        $m.Params.sid_from_name.GetType().ToString() | Assert-Equal -Expected "System.Security.Principal.SecurityIdentifier"
+
+        $failed = $false
+        try {
+            $m.ExitJson()
+        }
+        catch [System.Management.Automation.RuntimeException] {
+            $failed = $true
+            $_.Exception.Message | Assert-Equal -Expected "exit: 0"
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
+        }
+        $failed | Assert-Equal -Expected $true
+
+        $actual.Keys.Count | Assert-Equal -Expected 1
+        $actual.changed | Assert-Equal -Expected $false
     }
 
     "Parse module args with list elements and delegate type" = {
@@ -547,15 +530,8 @@ $tests = @{
         }
         $failed | Assert-Equal -Expected $true
 
-        $expected_module_args = @{
-            list_delegate_type = @(
-                1234,
-                4321
-            )
-        }
-        $actual.Keys.Count | Assert-Equal -Expected 2
+        $actual.Keys.Count | Assert-Equal -Expected 1
         $actual.changed | Assert-Equal -Expected $false
-        $actual.invocation | Assert-DictionaryEqual -Expected @{module_args = $expected_module_args }
     }
 
     "Parse module args with case insensitive input" = {
@@ -594,11 +570,6 @@ $tests = @{
 
         $expected = @{
             changed = $false
-            invocation = @{
-                module_args = @{
-                    option1 = 1
-                }
-            }
             # We have disabled the warning for now
             #warnings = @($expected_warnings)
         }
@@ -619,6 +590,7 @@ $tests = @{
             username = "user - pass - name"
             password = "pass"
             password2 = 1234
+            _ansible_inject_invocation = $true
             dict = @{
                 data = "Oops this is secret: pass"
                 dict = @{
@@ -699,7 +671,9 @@ $tests = @{
         }
         $actual | Assert-DictionaryEqual -Expected $expected
 
-        $expected_event = @'
+        if ($IsWindows) {
+
+            $expected_event = @'
 test_no_log - Invoked with:
   username: user - ******** - name
   dict: dict: sub_hide: ****word
@@ -720,8 +694,9 @@ test_no_log - Invoked with:
   password2: VALUE_SPECIFIED_IN_NO_LOG_PARAMETER
   password: VALUE_SPECIFIED_IN_NO_LOG_PARAMETER
 '@
-        $actual_event = (Get-EventLog -LogName Application -Source Ansible -Newest 1).Message
-        $actual_event | Assert-DictionaryEqual -Expected $expected_event
+            $actual_event = (Get-EventLog -LogName Application -Source Ansible -Newest 1).Message
+            $actual_event | Assert-DictionaryEqual -Expected $expected_event
+        }
     }
 
     "No log value with an empty string" = {
@@ -733,6 +708,7 @@ test_no_log - Invoked with:
         }
         Set-Variable -Name complex_args -Scope Global -Value @{
             _ansible_module_name = "test_no_log"
+            _ansible_inject_invocation = $true
             password1 = ""
         }
 
@@ -793,29 +769,23 @@ test_no_log - Invoked with:
         }
         $failed | Assert-Equal -Expected $true
 
-        $expected = @{
-            changed = $false
-            invocation = @{
-                module_args = @{
-                    removed1 = "value"
-                    removed2 = $null
-                    removed3 = "value"
-                }
-            }
-            deprecations = @(
-                @{
-                    msg = "Param 'removed3' is deprecated. See the module docs for more information"
-                    version = "2.3"
-                    collection_name = "ansible.builtin"
-                },
-                @{
-                    msg = "Param 'removed1' is deprecated. See the module docs for more information"
-                    version = "2.1"
-                    collection_name = $null
-                }
-            )
+        $actual.Keys.Count | Assert-Equal -Expected 2
+        , @($actual.Keys | Sort-Object) | Assert-Equal -Expected @("changed", "deprecations")
+        $actual.changed | Assert-Equal -Expected $false
+
+        $actual.deprecations.Count | Assert-Equal -Expected 2
+        $deps = $actual.deprecations | Sort-Object -Property @{ Expression = { $_.msg } }
+        $deps[0] | Assert-DictionaryEqual -Expected @{
+            msg = "Param 'removed1' is deprecated. See the module docs for more information"
+            version = "2.1"
+            collection_name = $null
         }
-        $actual | Assert-DictionaryEqual -Expected $expected
+
+        $deps[1] | Assert-DictionaryEqual -Expected @{
+            msg = "Param 'removed3' is deprecated. See the module docs for more information"
+            version = "2.3"
+            collection_name = "ansible.builtin"
+        }
     }
 
     "Removed at date" = {
@@ -844,29 +814,23 @@ test_no_log - Invoked with:
         }
         $failed | Assert-Equal -Expected $true
 
-        $expected = @{
-            changed = $false
-            invocation = @{
-                module_args = @{
-                    removed1 = "value"
-                    removed2 = $null
-                    removed3 = "value"
-                }
-            }
-            deprecations = @(
-                @{
-                    msg = "Param 'removed3' is deprecated. See the module docs for more information"
-                    date = "2020-06-07"
-                    collection_name = "ansible.builtin"
-                },
-                @{
-                    msg = "Param 'removed1' is deprecated. See the module docs for more information"
-                    date = "2020-03-10"
-                    collection_name = $null
-                }
-            )
+        $actual.Keys.Count | Assert-Equal -Expected 2
+        , @($actual.Keys | Sort-Object) | Assert-Equal -Expected @("changed", "deprecations")
+        $actual.changed | Assert-Equal -Expected $false
+
+        $actual.deprecations.Count | Assert-Equal -Expected 2
+        $deps = $actual.deprecations | Sort-Object -Property @{ Expression = { $_.msg } }
+        $deps[0] | Assert-DictionaryEqual -Expected @{
+            msg = "Param 'removed1' is deprecated. See the module docs for more information"
+            date = "2020-03-10"
+            collection_name = $null
         }
-        $actual | Assert-DictionaryEqual -Expected $expected
+
+        $deps[1] | Assert-DictionaryEqual -Expected @{
+            msg = "Param 'removed3' is deprecated. See the module docs for more information"
+            date = "2020-06-07"
+            collection_name = "ansible.builtin"
+        }
     }
 
     "Deprecated aliases" = {
@@ -945,78 +909,60 @@ test_no_log - Invoked with:
         }
         $failed | Assert-Equal -Expected $true
 
-        $expected = @{
-            changed = $false
-            invocation = @{
-                module_args = @{
-                    alias1 = "alias1"
-                    option1 = "alias1"
-                    option2 = "option2"
-                    option3 = @{
-                        option1 = "option1"
-                        option2 = "alias2"
-                        alias2 = "alias2"
-                        option3 = "alias3"
-                        alias3 = "alias3"
-                        option4 = "option4"
-                        option5 = "alias5"
-                        alias5 = "alias5"
-                        option6 = "alias6"
-                        alias6 = "alias6"
-                    }
-                    option4 = "option4"
-                    option5 = "alias5"
-                    alias5 = "alias5"
-                    option6 = "alias6"
-                    alias6 = "alias6"
-                    option7 = "alias7"
-                    alias7 = "alias7"
-                }
-            }
-            deprecations = @(
-                @{
-                    msg = "Alias 'alias7' is deprecated. See the module docs for more information"
-                    date = "2020-06-07"
-                    collection_name = "ansible.builtin"
-                },
-                @{
-                    msg = "Alias 'alias1' is deprecated. See the module docs for more information"
-                    version = "2.10"
-                    collection_name = $null
-                },
-                @{
-                    msg = "Alias 'alias5' is deprecated. See the module docs for more information"
-                    date = "2020-03-12"
-                    collection_name = $null
-                },
-                @{
-                    msg = "Alias 'alias6' is deprecated. See the module docs for more information"
-                    version = "2.12"
-                    collection_name = "ansible.builtin"
-                },
-                @{
-                    msg = "Alias 'alias2' is deprecated. See the module docs for more information - found in option3"
-                    version = "2.11"
-                    collection_name = $null
-                },
-                @{
-                    msg = "Alias 'alias5' is deprecated. See the module docs for more information - found in option3"
-                    date = "2020-03-09"
-                    collection_name = $null
-                },
-                @{
-                    msg = "Alias 'alias3' is deprecated. See the module docs for more information - found in option3"
-                    version = "2.12"
-                    collection_name = "ansible.builtin"
-                },
-                @{
-                    msg = "Alias 'alias6' is deprecated. See the module docs for more information - found in option3"
-                    date = "2020-06-01"
-                    collection_name = "ansible.builtin"
-                }
-            )
+        $actual.Keys.Count | Assert-Equal -Expected 2
+        , @($actual.Keys | Sort-Object) | Assert-Equal -Expected @("changed", "deprecations")
+        $actual.changed | Assert-Equal -Expected $false
+
+        $actual.deprecations.Count | Assert-Equal -Expected 8
+
+        $deps = $actual.deprecations | Sort-Object -Property @{ Expression = { $_.msg } }
+        $deps[0] | Assert-DictionaryEqual -Expected @{
+            msg = "Alias 'alias1' is deprecated. See the module docs for more information"
+            version = "2.10"
+            collection_name = $null
         }
-        $actual | Assert-DictionaryEqual -Expected $expected
+
+        $deps[1] | Assert-DictionaryEqual -Expected @{
+            msg = "Alias 'alias2' is deprecated. See the module docs for more information - found in option3"
+            version = "2.11"
+            collection_name = $null
+        }
+
+        $deps[2] | Assert-DictionaryEqual -Expected @{
+            msg = "Alias 'alias3' is deprecated. See the module docs for more information - found in option3"
+            version = "2.12"
+            collection_name = "ansible.builtin"
+        }
+
+        $deps[3] | Assert-DictionaryEqual -Expected @{
+            msg = "Alias 'alias5' is deprecated. See the module docs for more information"
+            date = "2020-03-12"
+            collection_name = $null
+        }
+
+        $deps[4] | Assert-DictionaryEqual -Expected @{
+            msg = "Alias 'alias5' is deprecated. See the module docs for more information - found in option3"
+            date = "2020-03-09"
+            collection_name = $null
+        }
+
+        $deps[5] | Assert-DictionaryEqual -Expected @{
+            msg = "Alias 'alias6' is deprecated. See the module docs for more information"
+            version = "2.12"
+            collection_name = "ansible.builtin"
+        }
+
+        $deps[6] | Assert-DictionaryEqual -Expected @{
+            msg = "Alias 'alias6' is deprecated. See the module docs for more information - found in option3"
+            date = "2020-06-01"
+            collection_name = "ansible.builtin"
+        }
+
+        $deps[7] | Assert-DictionaryEqual -Expected @{
+            msg = "Alias 'alias7' is deprecated. See the module docs for more information"
+            date = "2020-06-07"
+            collection_name = "ansible.builtin"
+        }
     }
 
     "Required by - single value" = {
@@ -1050,13 +996,6 @@ test_no_log - Invoked with:
 
         $expected = @{
             changed = $false
-            invocation = @{
-                module_args = @{
-                    option1 = "option1"
-                    option2 = "option2"
-                    option3 = $null
-                }
-            }
         }
         $actual | Assert-DictionaryEqual -Expected $expected
     }
@@ -1093,13 +1032,6 @@ test_no_log - Invoked with:
 
         $expected = @{
             changed = $false
-            invocation = @{
-                module_args = @{
-                    option1 = "option1"
-                    option2 = "option2"
-                    option3 = "option3"
-                }
-            }
         }
         $actual | Assert-DictionaryEqual -Expected $expected
     }
@@ -1135,13 +1067,6 @@ test_no_log - Invoked with:
 
         $expected = @{
             changed = $false
-            invocation = @{
-                module_args = @{
-                    option1 = "option1"
-                    option2 = $null
-                    option3 = $null
-                }
-            }
         }
         $actual | Assert-DictionaryEqual -Expected $expected
     }
@@ -1175,11 +1100,6 @@ test_no_log - Invoked with:
         $expected = @{
             changed = $false
             failed = $true
-            invocation = @{
-                module_args = @{
-                    option1 = "option1"
-                }
-            }
             msg = "missing parameter(s) required by 'option1': option2"
         }
         $actual | Assert-DictionaryEqual -Expected $expected
@@ -1214,17 +1134,16 @@ test_no_log - Invoked with:
         $expected = @{
             changed = $false
             failed = $true
-            invocation = @{
-                module_args = @{
-                    option1 = "option1"
-                }
-            }
             msg = "missing parameter(s) required by 'option1': option2, option3"
         }
         $actual | Assert-DictionaryEqual -Expected $expected
     }
 
     "Debug without debug set" = {
+        if (-not $IsWindows) {
+            return
+        }
+
         Set-Variable -Name complex_args -Scope Global -Value @{
             _ansible_debug = $false
         }
@@ -1235,6 +1154,10 @@ test_no_log - Invoked with:
     }
 
     "Debug with debug set" = {
+        if (-not $IsWindows) {
+            return
+        }
+
         Set-Variable -Name complex_args -Scope Global -Value @{
             _ansible_debug = $true
         }
@@ -1246,17 +1169,26 @@ test_no_log - Invoked with:
 
     "Deprecate and warn with version" = {
         $m = [Ansible.Basic.AnsibleModule]::Create(@(), @{})
-        $m.Deprecate("message", "2.7")
-        $actual_deprecate_event_1 = Get-EventLog -LogName Application -Source Ansible -Newest 1
-        $m.Deprecate("message w collection", "2.8", "ansible.builtin")
-        $actual_deprecate_event_2 = Get-EventLog -LogName Application -Source Ansible -Newest 1
-        $m.Warn("warning")
-        $actual_warn_event = Get-EventLog -LogName Application -Source Ansible -Newest 1
 
-        $actual_deprecate_event_1.Message | Assert-Equal -Expected "undefined win module - [DEPRECATION WARNING] message 2.7"
-        $actual_deprecate_event_2.Message | Assert-Equal -Expected "undefined win module - [DEPRECATION WARNING] message w collection 2.8"
-        $actual_warn_event.EntryType | Assert-Equal -Expected "Warning"
-        $actual_warn_event.Message | Assert-Equal -Expected "undefined win module - [WARNING] warning"
+        $m.Deprecate("message", "2.7")
+        if ($IsWindows) {
+            $actual_deprecate_event_1 = Get-EventLog -LogName Application -Source Ansible -Newest 1
+        }
+
+        $m.Deprecate("message w collection", "2.8", "ansible.builtin")
+        if ($IsWindows) {
+            $actual_deprecate_event_2 = Get-EventLog -LogName Application -Source Ansible -Newest 1
+        }
+        $m.Warn("warning")
+
+        if ($IsWindows) {
+            $actual_warn_event = Get-EventLog -LogName Application -Source Ansible -Newest 1
+
+            $actual_deprecate_event_1.Message | Assert-Equal -Expected "undefined win module - [DEPRECATION WARNING] message 2.7"
+            $actual_deprecate_event_2.Message | Assert-Equal -Expected "undefined win module - [DEPRECATION WARNING] message w collection 2.8"
+            $actual_warn_event.EntryType | Assert-Equal -Expected "Warning"
+            $actual_warn_event.Message | Assert-Equal -Expected "undefined win module - [WARNING] warning"
+        }
 
         $failed = $false
         try {
@@ -1271,9 +1203,6 @@ test_no_log - Invoked with:
 
         $expected = @{
             changed = $false
-            invocation = @{
-                module_args = @{}
-            }
             warnings = @("warning")
             deprecations = @(
                 @{msg = "message"; version = "2.7"; collection_name = $null },
@@ -1285,17 +1214,26 @@ test_no_log - Invoked with:
 
     "Deprecate and warn with date" = {
         $m = [Ansible.Basic.AnsibleModule]::Create(@(), @{})
-        $m.Deprecate("message", [DateTime]"2020-01-01")
-        $actual_deprecate_event_1 = Get-EventLog -LogName Application -Source Ansible -Newest 1
-        $m.Deprecate("message w collection", [DateTime]"2020-01-02", "ansible.builtin")
-        $actual_deprecate_event_2 = Get-EventLog -LogName Application -Source Ansible -Newest 1
-        $m.Warn("warning")
-        $actual_warn_event = Get-EventLog -LogName Application -Source Ansible -Newest 1
 
-        $actual_deprecate_event_1.Message | Assert-Equal -Expected "undefined win module - [DEPRECATION WARNING] message 2020-01-01"
-        $actual_deprecate_event_2.Message | Assert-Equal -Expected "undefined win module - [DEPRECATION WARNING] message w collection 2020-01-02"
-        $actual_warn_event.EntryType | Assert-Equal -Expected "Warning"
-        $actual_warn_event.Message | Assert-Equal -Expected "undefined win module - [WARNING] warning"
+        $m.Deprecate("message", [DateTime]"2020-01-01")
+        if ($IsWindows) {
+            $actual_deprecate_event_1 = Get-EventLog -LogName Application -Source Ansible -Newest 1
+        }
+
+        $m.Deprecate("message w collection", [DateTime]"2020-01-02", "ansible.builtin")
+        if ($IsWindows) {
+            $actual_deprecate_event_2 = Get-EventLog -LogName Application -Source Ansible -Newest 1
+        }
+
+        $m.Warn("warning")
+        if ($IsWindows) {
+            $actual_warn_event = Get-EventLog -LogName Application -Source Ansible -Newest 1
+
+            $actual_deprecate_event_1.Message | Assert-Equal -Expected "undefined win module - [DEPRECATION WARNING] message 2020-01-01"
+            $actual_deprecate_event_2.Message | Assert-Equal -Expected "undefined win module - [DEPRECATION WARNING] message w collection 2020-01-02"
+            $actual_warn_event.EntryType | Assert-Equal -Expected "Warning"
+            $actual_warn_event.Message | Assert-Equal -Expected "undefined win module - [WARNING] warning"
+        }
 
         $failed = $false
         try {
@@ -1310,14 +1248,39 @@ test_no_log - Invoked with:
 
         $expected = @{
             changed = $false
-            invocation = @{
-                module_args = @{}
-            }
             warnings = @("warning")
             deprecations = @(
                 @{msg = "message"; date = "2020-01-01"; collection_name = $null },
                 @{msg = "message w collection"; date = "2020-01-02"; collection_name = "ansible.builtin" }
             )
+        }
+        $actual | Assert-DictionaryEqual -Expected $expected
+    }
+
+    "Run with exec wrapper warnings" = {
+        [Ansible.Basic.AnsibleModule]::_WrapperWarnings = [System.Collections.Generic.List[string]]@('Warning 1', 'Warning 2')
+        try {
+            $m = [Ansible.Basic.AnsibleModule]::Create(@(), @{})
+            $m.Warn("Warning 3")
+
+            $failed = $false
+            try {
+                $m.ExitJson()
+            }
+            catch [System.Management.Automation.RuntimeException] {
+                $failed = $true
+                $_.Exception.Message | Assert-Equal -Expected "exit: 0"
+                $actual = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
+            }
+            $failed | Assert-Equal -Expected $true
+        }
+        finally {
+            [Ansible.Basic.AnsibleModule]::_WrapperWarnings = $null
+        }
+
+        $expected = @{
+            changed = $false
+            warnings = @("Warning 3", "Warning 1", "Warning 2")
         }
         $actual | Assert-DictionaryEqual -Expected $expected
     }
@@ -1338,9 +1301,6 @@ test_no_log - Invoked with:
 
         $expected = @{
             changed = $false
-            invocation = @{
-                module_args = @{}
-            }
             failed = $true
             msg = "fail message"
         }
@@ -1370,9 +1330,6 @@ test_no_log - Invoked with:
 
         $expected = @{
             changed = $false
-            invocation = @{
-                module_args = @{}
-            }
             failed = $true
             msg = "fail message"
         }
@@ -1402,9 +1359,6 @@ test_no_log - Invoked with:
 
         $expected = @{
             changed = $false
-            invocation = @{
-                module_args = @{}
-            }
             failed = $true
             msg = "fail message"
         }
@@ -1414,6 +1368,7 @@ test_no_log - Invoked with:
     "FailJson with Exception and verbosity 3" = {
         Set-Variable -Name complex_args -Scope Global -Value @{
             _ansible_verbosity = 3
+            _ansible_inject_invocation = $true
         }
         $m = [Ansible.Basic.AnsibleModule]::Create(@(), @{})
 
@@ -1446,6 +1401,7 @@ test_no_log - Invoked with:
     "FailJson with ErrorRecord and verbosity 3" = {
         Set-Variable -Name complex_args -Scope Global -Value @{
             _ansible_verbosity = 3
+            _ansible_inject_invocation = $true
         }
         $m = [Ansible.Basic.AnsibleModule]::Create(@(), @{})
 
@@ -1494,9 +1450,6 @@ test_no_log - Invoked with:
 
         $expected = @{
             changed = $false
-            invocation = @{
-                module_args = @{}
-            }
         }
         $actual | Assert-DictionaryEqual -Expected $expected
     }
@@ -1522,9 +1475,6 @@ test_no_log - Invoked with:
 
         $expected = @{
             changed = $false
-            invocation = @{
-                module_args = @{}
-            }
             diff = @{
                 before = @{a = "a" }
                 after = @{b = "b" }
@@ -1606,11 +1556,6 @@ test_no_log - Invoked with:
             $_.Exception.Message | Assert-Equal -Expected "exit: 1"
 
             $expected = @{
-                invocation = @{
-                    module_args = @{
-                        _ansible_invalid = "invalid"
-                    }
-                }
                 changed = $false
                 failed = $true
                 msg = "Unsupported parameters for (undefined win module) module: _ansible_invalid. Supported parameters include: "
@@ -1622,17 +1567,22 @@ test_no_log - Invoked with:
     }
 
     "Module tmpdir with present remote tmp" = {
-        $current_user = [System.Security.Principal.WindowsIdentity]::GetCurrent().User
-        $dir_security = New-Object -TypeName System.Security.AccessControl.DirectorySecurity
-        $dir_security.SetOwner($current_user)
-        $dir_security.SetAccessRuleProtection($true, $false)
-        $ace = New-Object -TypeName System.Security.AccessControl.FileSystemAccessRule -ArgumentList @(
-            $current_user, [System.Security.AccessControl.FileSystemRights]::FullControl,
-            [System.Security.AccessControl.InheritanceFlags]"ContainerInherit, ObjectInherit",
-            [System.Security.AccessControl.PropagationFlags]::None, [System.Security.AccessControl.AccessControlType]::Allow
-        )
-        $dir_security.AddAccessRule($ace)
-        $expected_sd = $dir_security.GetSecurityDescriptorSddlForm("Access, Owner")
+        if ($IsWindows) {
+            $current_user = [System.Security.Principal.WindowsIdentity]::GetCurrent().User
+            $dir_security = New-Object -TypeName System.Security.AccessControl.DirectorySecurity
+            $dir_security.SetOwner($current_user)
+            $dir_security.SetAccessRuleProtection($true, $false)
+            $ace = New-Object -TypeName System.Security.AccessControl.FileSystemAccessRule -ArgumentList @(
+                $current_user, [System.Security.AccessControl.FileSystemRights]::FullControl,
+                [System.Security.AccessControl.InheritanceFlags]"ContainerInherit, ObjectInherit",
+                [System.Security.AccessControl.PropagationFlags]::None, [System.Security.AccessControl.AccessControlType]::Allow
+            )
+            $dir_security.AddAccessRule($ace)
+            $expected_sd = $dir_security.GetSecurityDescriptorSddlForm("Access, Owner")
+        }
+        else {
+            $expected_mode = [IO.UnixFileMode]'UserExecute, UserWrite, UserRead'
+        }
 
         $remote_tmp = Join-Path -Path $tmpdir -ChildPath "moduletmpdir-$(Get-Random)"
         New-Item -Path $remote_tmp -ItemType Directory > $null
@@ -1652,8 +1602,15 @@ test_no_log - Invoked with:
         (Test-Path -LiteralPath $remote_tmp -PathType Container) | Assert-Equal -Expected $true
         $children = [System.IO.Directory]::EnumerateDirectories($remote_tmp)
         $children.Count | Assert-Equal -Expected 1
-        $actual_tmpdir_sd = (Get-Acl -Path $actual_tmpdir).GetSecurityDescriptorSddlForm("Access, Owner")
-        $actual_tmpdir_sd | Assert-Equal -Expected $expected_sd
+
+        if ($IsWindows) {
+            $actual_tmpdir_sd = (Get-Acl -Path $actual_tmpdir).GetSecurityDescriptorSddlForm("Access, Owner")
+            $actual_tmpdir_sd | Assert-Equal -Expected $expected_sd
+        }
+        else {
+            $actual_tmpdir_mode = [IO.File]::GetUnixFileMode($actual_tmpdir)
+            $actual_tmpdir_mode | Assert-Equal -Expected $expected_mode
+        }
 
         try {
             $m.ExitJson()
@@ -1667,17 +1624,22 @@ test_no_log - Invoked with:
     }
 
     "Module tmpdir with missing remote_tmp" = {
-        $current_user = [System.Security.Principal.WindowsIdentity]::GetCurrent().User
-        $dir_security = New-Object -TypeName System.Security.AccessControl.DirectorySecurity
-        $dir_security.SetOwner($current_user)
-        $dir_security.SetAccessRuleProtection($true, $false)
-        $ace = New-Object -TypeName System.Security.AccessControl.FileSystemAccessRule -ArgumentList @(
-            $current_user, [System.Security.AccessControl.FileSystemRights]::FullControl,
-            [System.Security.AccessControl.InheritanceFlags]"ContainerInherit, ObjectInherit",
-            [System.Security.AccessControl.PropagationFlags]::None, [System.Security.AccessControl.AccessControlType]::Allow
-        )
-        $dir_security.AddAccessRule($ace)
-        $expected_sd = $dir_security.GetSecurityDescriptorSddlForm("Access, Owner")
+        if ($IsWindows) {
+            $current_user = [System.Security.Principal.WindowsIdentity]::GetCurrent().User
+            $dir_security = New-Object -TypeName System.Security.AccessControl.DirectorySecurity
+            $dir_security.SetOwner($current_user)
+            $dir_security.SetAccessRuleProtection($true, $false)
+            $ace = New-Object -TypeName System.Security.AccessControl.FileSystemAccessRule -ArgumentList @(
+                $current_user, [System.Security.AccessControl.FileSystemRights]::FullControl,
+                [System.Security.AccessControl.InheritanceFlags]"ContainerInherit, ObjectInherit",
+                [System.Security.AccessControl.PropagationFlags]::None, [System.Security.AccessControl.AccessControlType]::Allow
+            )
+            $dir_security.AddAccessRule($ace)
+            $expected_sd = $dir_security.GetSecurityDescriptorSddlForm("Access, Owner")
+        }
+        else {
+            $expected_mode = [IO.UnixFileMode]'UserExecute, UserWrite, UserRead'
+        }
 
         $remote_tmp = Join-Path -Path $tmpdir -ChildPath "moduletmpdir-$(Get-Random)"
         Set-Variable -Name complex_args -Scope Global -Value @{
@@ -1696,10 +1658,19 @@ test_no_log - Invoked with:
         (Test-Path -LiteralPath $remote_tmp -PathType Container) | Assert-Equal -Expected $true
         $children = [System.IO.Directory]::EnumerateDirectories($remote_tmp)
         $children.Count | Assert-Equal -Expected 1
-        $actual_remote_sd = (Get-Acl -Path $remote_tmp).GetSecurityDescriptorSddlForm("Access, Owner")
-        $actual_tmpdir_sd = (Get-Acl -Path $actual_tmpdir).GetSecurityDescriptorSddlForm("Access, Owner")
-        $actual_remote_sd | Assert-Equal -Expected $expected_sd
-        $actual_tmpdir_sd | Assert-Equal -Expected $expected_sd
+
+        if ($IsWindows) {
+            $actual_remote_sd = (Get-Acl -Path $remote_tmp).GetSecurityDescriptorSddlForm("Access, Owner")
+            $actual_tmpdir_sd = (Get-Acl -Path $actual_tmpdir).GetSecurityDescriptorSddlForm("Access, Owner")
+            $actual_remote_sd | Assert-Equal -Expected $expected_sd
+            $actual_tmpdir_sd | Assert-Equal -Expected $expected_sd
+        }
+        else {
+            $actual_remote_mode = [IO.File]::GetUnixFileMode($remote_tmp)
+            $actual_tmpdir_mode = [IO.File]::GetUnixFileMode($actual_tmpdir)
+            $actual_remote_mode | Assert-Equal -Expected $expected_mode
+            $actual_tmpdir_mode | Assert-Equal -Expected $expected_mode
+        }
 
         try {
             $m.ExitJson()
@@ -1710,8 +1681,8 @@ test_no_log - Invoked with:
         (Test-Path -LiteralPath $actual_tmpdir -PathType Container) | Assert-Equal -Expected $false
         (Test-Path -LiteralPath $remote_tmp -PathType Container) | Assert-Equal -Expected $true
         $output.warnings.Count | Assert-Equal -Expected 1
-        $nt_account = $current_user.Translate([System.Security.Principal.NTAccount])
-        $actual_warning = "Module remote_tmp $remote_tmp did not exist and was created with FullControl to $nt_account, "
+        $current_user = [Environment]::UserName
+        $actual_warning = "Module remote_tmp $remote_tmp did not exist and was created with FullControl to $current_user, "
         $actual_warning += "this may cause issues when running as another user. To avoid this, "
         $actual_warning += "create the remote_tmp dir with the correct permissions manually"
         $actual_warning | Assert-Equal -Expected $output.warnings[0]
@@ -1745,6 +1716,163 @@ test_no_log - Invoked with:
         (Test-Path -LiteralPath $remote_tmp -PathType Container) | Assert-Equal -Expected $true
         $output.warnings.Count | Assert-Equal -Expected 0
         Remove-Item -LiteralPath $actual_tmpdir -Force -Recurse
+    }
+
+    "Module tmpdir with symlinks" = {
+        $remote_tmp = Join-Path -Path $tmpdir -ChildPath "moduletmpdir-$(Get-Random)"
+        New-Item -Path $remote_tmp -ItemType Directory > $null
+        Set-Variable -Name complex_args -Scope Global -Value @{
+            _ansible_remote_tmp = $remote_tmp.ToString()
+        }
+        $m = [Ansible.Basic.AnsibleModule]::Create(@(), @{})
+
+        $actual_tmpdir = $m.Tmpdir
+
+        $dir1 = Join-Path $actual_tmpdir Dir1
+        $dir2 = Join-Path $actual_tmpdir Dir2
+        $dir1, $dir2 | New-Item -Path { $_ } -ItemType Directory > $null
+
+        $file1 = Join-Path $dir1 test.txt
+        $file2 = Join-Path $dir2 test.txt
+        $file3 = Join-Path $actual_tmpdir test.txt
+        Set-Content -LiteralPath $file1 ''
+        Set-Content -LiteralPath $file2 ''
+        Set-Content -LiteralPath $file3 ''
+
+        $outside_target = Join-Path -Path $tmpdir -ChildPath "moduleoutsidedir-$(Get-Random)"
+        $outside_file = Join-Path -Path $outside_target -ChildPath "file"
+        New-Item -Path $outside_target -ItemType Directory > $null
+        Set-Content -LiteralPath $outside_file ''
+
+        # Missing targets need their initial target so that pwsh can derive the
+        # link type. They are deleted after creating the link.
+        New-Item -Path "$actual_tmpdir\fake" -ItemType Directory
+        New-Item -Path "$dir1\missing-dir-link" -ItemType SymbolicLink -Target "$actual_tmpdir\fake"
+        Remove-Item -LiteralPath "$actual_tmpdir\fake" -Recurse -Force
+
+        New-Item -Path "$actual_tmpdir\fake" -ItemType File -Value ""
+        New-Item -Path "$dir1\missing-file-link" -ItemType SymbolicLink -Target "$actual_tmpdir\fake"
+        Remove-Item -LiteralPath "$actual_tmpdir\fake" -Force
+
+        New-Item -Path "$dir1\good-dir-link" -ItemType SymbolicLink -Target "$dir2"
+        New-Item -Path "$dir1\recursive-target-link" -ItemType SymbolicLink -Target "$dir1"
+        New-Item -Path "$dir1\good-file-link" -ItemType SymbolicLink -Target "$dir2\test.txt"
+        New-Item -Path "$actual_tmpdir\outside-dir" -ItemType SymbolicLink -Target $outside_target
+        New-Item -Path "$actual_tmpdir\outside-file" -ItemType SymbolicLink -Target $outside_file
+
+        try {
+            $m.ExitJson()
+        }
+        catch [System.Management.Automation.RuntimeException] {
+            $output = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
+        }
+
+        $output.warnings.Count | Assert-Equal -Expected 0
+        (Test-Path -LiteralPath $actual_tmpdir -PathType Container) | Assert-Equal -Expected $false
+        (Test-Path -LiteralPath $outside_target -PathType Container) | Assert-Equal -Expected $true
+        (Test-Path -LiteralPath $outside_file -PathType Leaf) | Assert-Equal -Expected $true
+
+        Remove-Item -LiteralPath $remote_tmp -Force -Recurse
+    }
+
+    "Module tmpdir with undeletable file" = {
+        # POSIX doesn't have the same Windows concept as a lock file through FileShare.
+        if (-not $IsWindows) {
+            return
+        }
+
+        $remote_tmp = Join-Path -Path $tmpdir -ChildPath "moduletmpdir-$(Get-Random)"
+        New-Item -Path $remote_tmp -ItemType Directory > $null
+        Set-Variable -Name complex_args -Scope Global -Value @{
+            _ansible_remote_tmp = $remote_tmp.ToString()
+        }
+        $m = [Ansible.Basic.AnsibleModule]::Create(@(), @{})
+
+        $actual_tmpdir = $m.Tmpdir
+
+        $dir1 = Join-Path $actual_tmpdir Dir1
+        $dir2 = Join-Path $actual_tmpdir Dir2
+        $dir1, $dir2 | New-Item -Path { $_ } -ItemType Directory > $null
+
+        $file1 = Join-Path $dir1 test.txt
+        $file2 = Join-Path $dir2 test.txt
+        $file3 = Join-Path $actual_tmpdir test.txt
+        Set-Content -LiteralPath $file1 ''
+        Set-Content -LiteralPath $file2 ''
+        Set-Content -LiteralPath $file3 ''
+
+        $fs = [System.IO.File]::Open($file1, "Open", "Read", "None")
+        try {
+            $m.ExitJson()
+        }
+        catch [System.Management.Automation.RuntimeException] {
+            $output = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
+        }
+
+        $expected_msg = "Failure cleaning temp path '$actual_tmpdir': IOException Directory contains files still open by other processes"
+        $output.warnings.Count | Assert-Equal -Expected 1
+        $output.warnings[0] | Assert-Equal -Expected $expected_msg
+
+        (Test-Path -LiteralPath $actual_tmpdir -PathType Container) | Assert-Equal -Expected $true
+        (Test-Path -LiteralPath $dir1 -PathType Container) | Assert-Equal -Expected $true
+        # Test-Path tries to open the file in a way that fails if it's marked as deleted
+        (Get-ChildItem -LiteralPath $dir1 -File).Count | Assert-Equal -Expected 1
+        (Test-Path -LiteralPath $dir2 -PathType Container) | Assert-Equal -Expected $false
+        (Test-Path -LiteralPath $file3 -PathType Leaf) | Assert-Equal -Expected $false
+
+        # Releasing the file handle releases the lock on the file but as the
+        # cleanup couldn't access the file to mark as delete on close it is
+        # still going to be present.
+        $fs.Dispose()
+        (Test-Path -LiteralPath $dir1 -PathType Container) | Assert-Equal -Expected $true
+        (Test-Path -LiteralPath $file1 -PathType Leaf) | Assert-Equal -Expected $true
+
+        Remove-Item -LiteralPath $remote_tmp -Force -Recurse
+    }
+
+    "Module tmpdir delete with locked handle" = {
+        # POSIX doesn't have the same Windows concept as a lock file through FileShare.
+        if (-not $IsWindows) {
+            return
+        }
+
+        $remote_tmp = Join-Path -Path $tmpdir -ChildPath "moduletmpdir-$(Get-Random)"
+        New-Item -Path $remote_tmp -ItemType Directory > $null
+        Set-Variable -Name complex_args -Scope Global -Value @{
+            _ansible_remote_tmp = $remote_tmp.ToString()
+        }
+        $m = [Ansible.Basic.AnsibleModule]::Create(@(), @{})
+
+        $actual_tmpdir = $m.Tmpdir
+
+        $dir1 = Join-Path $actual_tmpdir Dir1
+        $dir2 = Join-Path $actual_tmpdir Dir2
+        $dir1, $dir2 | New-Item -Path { $_ } -ItemType Directory > $null
+
+        $file1 = Join-Path $dir1 test.txt
+        $file2 = Join-Path $dir2 test.txt
+        $file3 = Join-Path $actual_tmpdir test.txt
+        Set-Content -LiteralPath $file1 ''
+        Set-Content -LiteralPath $file2 ''
+        Set-Content -LiteralPath $file3 ''
+
+        [System.IO.File]::SetAttributes($file1, "ReadOnly")
+        [System.IO.File]::SetAttributes($file2, "ReadOnly")
+        [System.IO.File]::SetAttributes($file3, "ReadOnly")
+        $fs = [System.IO.File]::Open($file1, "Open", "Read", "Delete")
+        try {
+            $m.ExitJson()
+        }
+        catch [System.Management.Automation.RuntimeException] {
+            $output = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
+        }
+
+        (Test-Path -LiteralPath $actual_tmpdir -PathType Container) | Assert-Equal -Expected $false
+        $output.warnings.Count | Assert-Equal -Expected 0
+
+        $fs.Dispose()
+
+        Remove-Item -LiteralPath $remote_tmp -Force -Recurse
     }
 
     "Invalid argument spec key" = {
@@ -2084,11 +2212,37 @@ test_no_log - Invoked with:
         $expected_msg = "Unsupported parameters for (undefined win module) module: another_key, invalid_key. "
         $expected_msg += "Supported parameters include: option_key"
 
-        $actual.Keys.Count | Assert-Equal -Expected 4
+        $actual.Keys.Count | Assert-Equal -Expected 3
         $actual.changed | Assert-Equal -Expected $false
         $actual.failed | Assert-Equal -Expected $true
         $actual.msg | Assert-Equal -Expected $expected_msg
-        $actual.invocation | Assert-DictionaryEqual -Expected @{module_args = $complex_args }
+    }
+
+    "Unsupported options with ignore" = {
+        $spec = @{
+            options = @{
+                option_key = @{
+                    type = "str"
+                }
+            }
+        }
+        Set-Variable -Name complex_args -Scope Global -Value @{
+            option_key = "abc"
+            invalid_key = "def"
+            another_key = "ghi"
+            _ansible_ignore_unknown_opts = $true
+        }
+
+        $m = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
+        $m.Params | Assert-DictionaryEqual -Expected @{ option_key = "abc"; invalid_key = "def"; another_key = "ghi" }
+        try {
+            $m.ExitJson()
+        }
+        catch [System.Management.Automation.RuntimeException] {
+            $output = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
+        }
+        $output.Keys.Count | Assert-Equal -Expected 1
+        $output.changed | Assert-Equal -Expected $false
     }
 
     "Check mode and module doesn't support check mode" = {
@@ -2117,11 +2271,10 @@ test_no_log - Invoked with:
 
         $expected_msg = "remote module (undefined win module) does not support check mode"
 
-        $actual.Keys.Count | Assert-Equal -Expected 4
+        $actual.Keys.Count | Assert-Equal -Expected 3
         $actual.changed | Assert-Equal -Expected $false
         $actual.skipped | Assert-Equal -Expected $true
         $actual.msg | Assert-Equal -Expected $expected_msg
-        $actual.invocation | Assert-DictionaryEqual -Expected @{module_args = @{option_key = "abc" } }
     }
 
     "Check mode with suboption without supports_check_mode" = {
@@ -2170,13 +2323,17 @@ test_no_log - Invoked with:
         $failed | Assert-Equal -Expected $true
 
         $expected_msg = "argument for option_key is of type System.String and we were unable to convert to int: "
-        $expected_msg += "Input string was not in a correct format."
+        if ($PSVersionTable.PSVersion -lt '6.0') {
+            $expected_msg += "Input string was not in a correct format."
+        }
+        else {
+            $expected_msg += "The input string 'a' was not in a correct format."
+        }
 
-        $actual.Keys.Count | Assert-Equal -Expected 4
+        $actual.Keys.Count | Assert-Equal -Expected 3
         $actual.changed | Assert-Equal -Expected $false
         $actual.failed | Assert-Equal -Expected $true
         $actual.msg | Assert-Equal -Expected $expected_msg
-        $actual.invocation | Assert-DictionaryEqual -Expected @{module_args = $complex_args }
     }
 
     "Type conversion error - delegate" = {
@@ -2210,14 +2367,19 @@ test_no_log - Invoked with:
         $failed | Assert-Equal -Expected $true
 
         $expected_msg = "argument for sub_option_key is of type System.String and we were unable to convert to delegate: "
-        $expected_msg += "Exception calling `"Parse`" with `"1`" argument(s): `"Input string was not in a correct format.`" "
-        $expected_msg += "found in option_key"
+        $expected_msg += "Exception calling `"Parse`" with `"1`" argument(s): `""
+        if ($PSVersionTable.PSVersion -lt '6.0') {
+            $expected_msg += "Input string was not in a correct format."
+        }
+        else {
+            $expected_msg += "The input string 'a' was not in a correct format."
+        }
+        $expected_msg += "`" found in option_key"
 
-        $actual.Keys.Count | Assert-Equal -Expected 4
+        $actual.Keys.Count | Assert-Equal -Expected 3
         $actual.changed | Assert-Equal -Expected $false
         $actual.failed | Assert-Equal -Expected $true
         $actual.msg | Assert-Equal -Expected $expected_msg
-        $actual.invocation | Assert-DictionaryEqual -Expected @{module_args = $complex_args }
     }
 
     "Numeric choices" = {
@@ -2240,69 +2402,68 @@ test_no_log - Invoked with:
         catch [System.Management.Automation.RuntimeException] {
             $output = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
         }
-        $output.Keys.Count | Assert-Equal -Expected 2
+        $output.Keys.Count | Assert-Equal -Expected 1
         $output.changed | Assert-Equal -Expected $false
-        $output.invocation | Assert-DictionaryEqual -Expected @{module_args = @{option_key = 2 } }
     }
 
-    "Case insensitive choice" = {
-        $spec = @{
-            options = @{
-                option_key = @{
-                    choices = "abc", "def"
-                }
-            }
-        }
-        Set-Variable -Name complex_args -Scope Global -Value @{
-            option_key = "ABC"
-        }
-
-        $m = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
-        try {
-            $m.ExitJson()
-        }
-        catch [System.Management.Automation.RuntimeException] {
-            $output = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
-        }
-        $expected_warning = "value of option_key was a case insensitive match of one of: abc, def. "
-        $expected_warning += "Checking of choices will be case sensitive in a future Ansible release. "
-        $expected_warning += "Case insensitive matches were: ABC"
-
-        $output.invocation | Assert-DictionaryEqual -Expected @{module_args = @{option_key = "ABC" } }
-        # We have disabled the warnings for now
-        #$output.warnings.Count | Assert-Equal -Expected 1
-        #$output.warnings[0] | Assert-Equal -Expected $expected_warning
-    }
-
-    "Case insensitive choice no_log" = {
-        $spec = @{
-            options = @{
-                option_key = @{
-                    choices = "abc", "def"
-                    no_log = $true
-                }
-            }
-        }
-        Set-Variable -Name complex_args -Scope Global -Value @{
-            option_key = "ABC"
-        }
-
-        $m = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
-        try {
-            $m.ExitJson()
-        }
-        catch [System.Management.Automation.RuntimeException] {
-            $output = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
-        }
-        $expected_warning = "value of option_key was a case insensitive match of one of: abc, def. "
-        $expected_warning += "Checking of choices will be case sensitive in a future Ansible release. "
-        $expected_warning += "Case insensitive matches were: VALUE_SPECIFIED_IN_NO_LOG_PARAMETER"
-
-        $output.invocation | Assert-DictionaryEqual -Expected @{module_args = @{option_key = "VALUE_SPECIFIED_IN_NO_LOG_PARAMETER" } }
-        # We have disabled the warnings for now
-        #$output.warnings.Count | Assert-Equal -Expected 1
-        #$output.warnings[0] | Assert-Equal -Expected $expected_warning
-    }
+    #     "Case insensitive choice" = {
+    #         $spec = @{
+    #             options = @{
+    #                 option_key = @{
+    #                     choices = "abc", "def"
+    #                 }
+    #             }
+    #         }
+    #         Set-Variable -Name complex_args -Scope Global -Value @{
+    #             option_key = "ABC"
+    #         }
+    #
+    #         $m = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
+    #         try {
+    #             $m.ExitJson()
+    #         }
+    #         catch [System.Management.Automation.RuntimeException] {
+    #             $null = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
+    #         }
+    #         $expected_warning = "value of option_key was a case insensitive match of one of: abc, def. "
+    #         $expected_warning += "Checking of choices will be case sensitive in a future Ansible release. "
+    #         $expected_warning += "Case insensitive matches were: ABC"
+    #
+    #         # We have disabled the warnings for now
+    #         #$output.warnings.Count | Assert-Equal -Expected 1
+    #         #$output.warnings[0] | Assert-Equal -Expected $expected_warning
+    #     }
+    #
+    #     "Case insensitive choice no_log" = {
+    #         $spec = @{
+    #             options = @{
+    #                 option_key = @{
+    #                     choices = "abc", "def"
+    #                     no_log = $true
+    #                 }
+    #             }
+    #         }
+    #         Set-Variable -Name complex_args -Scope Global -Value @{
+    #             option_key = "ABC"
+    #             _ansible_inject_invocation = $true
+    #         }
+    #
+    #         $m = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
+    #         try {
+    #             $m.ExitJson()
+    #         }
+    #         catch [System.Management.Automation.RuntimeException] {
+    #             $output = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
+    #         }
+    #         $expected_warning = "value of option_key was a case insensitive match of one of: abc, def. "
+    #         $expected_warning += "Checking of choices will be case sensitive in a future Ansible release. "
+    #         $expected_warning += "Case insensitive matches were: VALUE_SPECIFIED_IN_NO_LOG_PARAMETER"
+    #
+    #         $output.invocation | Assert-DictionaryEqual -Expected @{module_args = @{option_key = "VALUE_SPECIFIED_IN_NO_LOG_PARAMETER" } }
+    #         # We have disabled the warnings for now
+    #         #$output.warnings.Count | Assert-Equal -Expected 1
+    #         #$output.warnings[0] | Assert-Equal -Expected $expected_warning
+    #     }
 
     "Case insentitive choice as list" = {
         $spec = @{
@@ -2323,13 +2484,12 @@ test_no_log - Invoked with:
             $m.ExitJson()
         }
         catch [System.Management.Automation.RuntimeException] {
-            $output = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
+            $null = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
         }
         $expected_warning = "value of option_key was a case insensitive match of one or more of: abc, def, ghi, JKL. "
         $expected_warning += "Checking of choices will be case sensitive in a future Ansible release. "
         $expected_warning += "Case insensitive matches were: AbC, jkl"
 
-        $output.invocation | Assert-DictionaryEqual -Expected @{module_args = $complex_args }
         # We have disabled the warnings for now
         #$output.warnings.Count | Assert-Equal -Expected 1
         #$output.warnings[0] | Assert-Equal -Expected $expected_warning
@@ -2360,11 +2520,10 @@ test_no_log - Invoked with:
 
         $expected_msg = "value of option_key must be one of: a, b. Got no match for: c"
 
-        $actual.Keys.Count | Assert-Equal -Expected 4
+        $actual.Keys.Count | Assert-Equal -Expected 3
         $actual.changed | Assert-Equal -Expected $false
         $actual.failed | Assert-Equal -Expected $true
         $actual.msg | Assert-Equal -Expected $expected_msg
-        $actual.invocation | Assert-DictionaryEqual -Expected @{module_args = $complex_args }
     }
 
     "Invalid choice with no_log" = {
@@ -2378,6 +2537,7 @@ test_no_log - Invoked with:
         }
         Set-Variable -Name complex_args -Scope Global -Value @{
             option_key = "abc"
+            _ansible_inject_invocation = $true
         }
 
         $failed = $false
@@ -2426,11 +2586,10 @@ test_no_log - Invoked with:
 
         $expected_msg = "value of option_key must be one or more of: a, b. Got no match for: c"
 
-        $actual.Keys.Count | Assert-Equal -Expected 4
+        $actual.Keys.Count | Assert-Equal -Expected 3
         $actual.changed | Assert-Equal -Expected $false
         $actual.failed | Assert-Equal -Expected $true
         $actual.msg | Assert-Equal -Expected $expected_msg
-        $actual.invocation | Assert-DictionaryEqual -Expected @{module_args = $complex_args }
     }
 
     "Mutually exclusive options" = {
@@ -2459,11 +2618,10 @@ test_no_log - Invoked with:
 
         $expected_msg = "parameters are mutually exclusive: option1, option2"
 
-        $actual.Keys.Count | Assert-Equal -Expected 4
+        $actual.Keys.Count | Assert-Equal -Expected 3
         $actual.changed | Assert-Equal -Expected $false
         $actual.failed | Assert-Equal -Expected $true
         $actual.msg | Assert-Equal -Expected $expected_msg
-        $actual.invocation | Assert-DictionaryEqual -Expected @{module_args = $complex_args }
     }
 
     "Missing required argument" = {
@@ -2490,11 +2648,10 @@ test_no_log - Invoked with:
 
         $expected_msg = "missing required arguments: option2"
 
-        $actual.Keys.Count | Assert-Equal -Expected 4
+        $actual.Keys.Count | Assert-Equal -Expected 3
         $actual.changed | Assert-Equal -Expected $false
         $actual.failed | Assert-Equal -Expected $true
         $actual.msg | Assert-Equal -Expected $expected_msg
-        $actual.invocation | Assert-DictionaryEqual -Expected @{module_args = $complex_args }
     }
 
     "Missing required argument subspec - no value defined" = {
@@ -2523,9 +2680,8 @@ test_no_log - Invoked with:
         }
         $failed | Assert-Equal -Expected $true
 
-        $actual.Keys.Count | Assert-Equal -Expected 2
+        $actual.Keys.Count | Assert-Equal -Expected 1
         $actual.changed | Assert-Equal -Expected $false
-        $actual.invocation | Assert-DictionaryEqual -Expected @{module_args = $complex_args }
     }
 
     "Missing required argument subspec" = {
@@ -2561,11 +2717,10 @@ test_no_log - Invoked with:
 
         $expected_msg = "missing required arguments: sub_option_key found in option_key"
 
-        $actual.Keys.Count | Assert-Equal -Expected 4
+        $actual.Keys.Count | Assert-Equal -Expected 3
         $actual.changed | Assert-Equal -Expected $false
         $actual.failed | Assert-Equal -Expected $true
         $actual.msg | Assert-Equal -Expected $expected_msg
-        $actual.invocation | Assert-DictionaryEqual -Expected @{module_args = $complex_args }
     }
 
     "Required together not set" = {
@@ -2593,11 +2748,10 @@ test_no_log - Invoked with:
 
         $expected_msg = "parameters are required together: option1, option2"
 
-        $actual.Keys.Count | Assert-Equal -Expected 4
+        $actual.Keys.Count | Assert-Equal -Expected 3
         $actual.changed | Assert-Equal -Expected $false
         $actual.failed | Assert-Equal -Expected $true
         $actual.msg | Assert-Equal -Expected $expected_msg
-        $actual.invocation | Assert-DictionaryEqual -Expected @{module_args = $complex_args }
     }
 
     "Required together not set - subspec" = {
@@ -2635,11 +2789,10 @@ test_no_log - Invoked with:
 
         $expected_msg = "parameters are required together: option1, option2 found in option_key"
 
-        $actual.Keys.Count | Assert-Equal -Expected 4
+        $actual.Keys.Count | Assert-Equal -Expected 3
         $actual.changed | Assert-Equal -Expected $false
         $actual.failed | Assert-Equal -Expected $true
         $actual.msg | Assert-Equal -Expected $expected_msg
-        $actual.invocation | Assert-DictionaryEqual -Expected @{module_args = $complex_args }
     }
 
     "Required one of not set" = {
@@ -2668,11 +2821,10 @@ test_no_log - Invoked with:
 
         $expected_msg = "one of the following is required: option2, option3"
 
-        $actual.Keys.Count | Assert-Equal -Expected 4
+        $actual.Keys.Count | Assert-Equal -Expected 3
         $actual.changed | Assert-Equal -Expected $false
         $actual.failed | Assert-Equal -Expected $true
         $actual.msg | Assert-Equal -Expected $expected_msg
-        $actual.invocation | Assert-DictionaryEqual -Expected @{module_args = $complex_args }
     }
 
     "Required if invalid entries" = {
@@ -2697,11 +2849,10 @@ test_no_log - Invoked with:
 
         $expected_msg = "internal error: invalid required_if value count of 2, expecting 3 or 4 entries"
 
-        $actual.Keys.Count | Assert-Equal -Expected 4
+        $actual.Keys.Count | Assert-Equal -Expected 3
         $actual.changed | Assert-Equal -Expected $false
         $actual.failed | Assert-Equal -Expected $true
         $actual.msg | Assert-Equal -Expected $expected_msg
-        $actual.invocation | Assert-DictionaryEqual -Expected @{module_args = $complex_args }
     }
 
     "Required if no missing option" = {
@@ -2729,9 +2880,8 @@ test_no_log - Invoked with:
         }
         $failed | Assert-Equal -Expected $true
 
-        $actual.Keys.Count | Assert-Equal -Expected 2
+        $actual.Keys.Count | Assert-Equal -Expected 1
         $actual.changed | Assert-Equal -Expected $false
-        $actual.invocation | Assert-DictionaryEqual -Expected @{module_args = $complex_args }
     }
 
     "Required if missing option" = {
@@ -2761,11 +2911,10 @@ test_no_log - Invoked with:
 
         $expected_msg = "state is absent but all of the following are missing: path"
 
-        $actual.Keys.Count | Assert-Equal -Expected 4
+        $actual.Keys.Count | Assert-Equal -Expected 3
         $actual.changed | Assert-Equal -Expected $false
         $actual.failed | Assert-Equal -Expected $true
         $actual.msg | Assert-Equal -Expected $expected_msg
-        $actual.invocation | Assert-DictionaryEqual -Expected @{module_args = $complex_args }
     }
 
     "Required if missing option and required one is set" = {
@@ -2794,11 +2943,10 @@ test_no_log - Invoked with:
 
         $expected_msg = "state is absent but any of the following are missing: name, path"
 
-        $actual.Keys.Count | Assert-Equal -Expected 4
+        $actual.Keys.Count | Assert-Equal -Expected 3
         $actual.changed | Assert-Equal -Expected $false
         $actual.failed | Assert-Equal -Expected $true
         $actual.msg | Assert-Equal -Expected $expected_msg
-        $actual.invocation | Assert-DictionaryEqual -Expected @{module_args = $complex_args }
     }
 
     "Required if missing option but one required set" = {
@@ -2827,9 +2975,35 @@ test_no_log - Invoked with:
         }
         $failed | Assert-Equal -Expected $true
 
-        $actual.Keys.Count | Assert-Equal -Expected 2
+        $actual.Keys.Count | Assert-Equal -Expected 1
         $actual.changed | Assert-Equal -Expected $false
-        $actual.invocation | Assert-DictionaryEqual -Expected @{module_args = $complex_args }
+    }
+
+    "Required if for unset option" = {
+        $spec = @{
+            options = @{
+                state = @{ choices = "absent", "present" }
+                name = @{}
+                path = @{}
+            }
+            required_if = @(, @("state", "absent", @("name", "path")))
+        }
+        Set-Variable -Name complex_args -Scope Global -Value @{}
+        $m = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
+
+        $failed = $false
+        try {
+            $m.ExitJson()
+        }
+        catch [System.Management.Automation.RuntimeException] {
+            $failed = $true
+            $_.Exception.Message | Assert-Equal -Expected "exit: 0"
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
+        }
+        $failed | Assert-Equal -Expected $true
+
+        $actual.Keys.Count | Assert-Equal -Expected 1
+        $actual.changed | Assert-Equal -Expected $false
     }
 
     "PS Object in return result" = {
@@ -2849,17 +3023,16 @@ test_no_log - Invoked with:
         }
         $failed | Assert-Equal -Expected $true
 
-        $actual.Keys.Count | Assert-Equal -Expected 3
+        $actual.Keys.Count | Assert-Equal -Expected 2
         $actual.changed | Assert-Equal -Expected $false
-        $actual.invocation | Assert-DictionaryEqual -Expected @{module_args = @{} }
         $actual.output | Assert-DictionaryEqual -Expected @{a = "a"; b = "b" }
     }
 
     "String json array to object" = {
         $input_json = '["abc", "def"]'
         $actual = [Ansible.Basic.AnsibleModule]::FromJson($input_json)
-        $actual -is [Array] | Assert-Equal -Expected $true
-        $actual.Length | Assert-Equal -Expected 2
+        $actual -is [System.Collections.IList] | Assert-Equal -Expected $true
+        $actual.Count | Assert-Equal -Expected 2
         $actual[0] | Assert-Equal -Expected "abc"
         $actual[1] | Assert-Equal -Expected "def"
     }
@@ -2867,9 +3040,21 @@ test_no_log - Invoked with:
     "String json array of dictionaries to object" = {
         $input_json = '[{"abc":"def"}]'
         $actual = [Ansible.Basic.AnsibleModule]::FromJson($input_json)
-        $actual -is [Array] | Assert-Equal -Expected $true
-        $actual.Length | Assert-Equal -Expected 1
+        $actual -is [System.Collections.IList] | Assert-Equal -Expected $true
+        $actual.Count | Assert-Equal -Expected 1
         $actual[0] | Assert-DictionaryEqual -Expected @{"abc" = "def" }
+    }
+
+    "Invalid json is ArgumentException" = {
+        $input_json = '<invalid>'
+        $thrown = $false
+        try {
+            $null = [Ansible.Basic.AnsibleModule]::FromJson($input_json)
+        }
+        catch [System.ArgumentException] {
+            $thrown = $true
+        }
+        $thrown | Assert-Equal -Expected $true
     }
 
     "Spec with fragments" = {
@@ -2902,7 +3087,6 @@ test_no_log - Invoked with:
         $failed | Assert-Equal -Expected $true
 
         $actual.changed | Assert-Equal -Expected $false
-        $actual.invocation | Assert-DictionaryEqual -Expected @{module_args = $complex_args }
     }
 
     "Fragment spec that with a deprecated alias" = {
@@ -2957,21 +3141,15 @@ test_no_log - Invoked with:
         $failed | Assert-Equal -Expected $true
 
         $actual.deprecations.Count | Assert-Equal -Expected 2
-        $actual.deprecations[0] | Assert-DictionaryEqual -Expected @{
+
+        $deps = $actual.deprecations | Sort-Object -Property @{ Expression = { $_.msg } }
+        $deps[0] | Assert-DictionaryEqual -Expected @{
             msg = "Alias 'alias1_spec' is deprecated. See the module docs for more information"; version = "2.0"; collection_name = $null
         }
-        $actual.deprecations[1] | Assert-DictionaryEqual -Expected @{
+        $deps[1] | Assert-DictionaryEqual -Expected @{
             msg = "Alias 'alias2' is deprecated. See the module docs for more information"; version = "2.0"; collection_name = "foo.bar"
         }
         $actual.changed | Assert-Equal -Expected $false
-        $actual.invocation | Assert-DictionaryEqual -Expected @{
-            module_args = @{
-                option1 = "option1"
-                alias1_spec = "option1"
-                option2 = "option2"
-                alias2 = "option2"
-            }
-        }
     }
 
     "Fragment spec with mutual args" = {
@@ -3020,7 +3198,6 @@ test_no_log - Invoked with:
         $actual.changed | Assert-Equal -Expected $false
         $actual.failed | Assert-Equal -Expected $true
         $actual.msg | Assert-Equal -Expected "parameters are mutually exclusive: fragment1_1, fragment1_2"
-        $actual.invocation | Assert-DictionaryEqual -Expected @{ module_args = $complex_args }
     }
 
     "Fragment spec with no_log" = {
@@ -3057,12 +3234,6 @@ test_no_log - Invoked with:
         $failed | Assert-Equal -Expected $true
 
         $actual.changed | Assert-Equal -Expected $false
-        $actual.invocation | Assert-DictionaryEqual -Expected @{
-            module_args = @{
-                option1 = "VALUE_SPECIFIED_IN_NO_LOG_PARAMETER"
-                alias = "VALUE_SPECIFIED_IN_NO_LOG_PARAMETER"
-            }
-        }
     }
 
     "Catch invalid fragment spec format" = {
@@ -3157,20 +3328,6 @@ test_no_log - Invoked with:
             $dep.msg -like "Alias 'alias?' is deprecated. See the module docs for more information" | Assert-Equal -Expected $true
             $dep.version | Assert-Equal -Expected '2.0'
             $dep.collection_name | Assert-Equal -Expected 'foo.bar'
-        }
-        $actual.invocation | Assert-DictionaryEqual -Expected @{
-            module_args = @{
-                alias1 = "option1"
-                option1 = "option1"
-                alias2 = "option2"
-                option2 = "option2"
-                alias3 = "option3"
-                option3 = "option3"
-                alias4 = "option4"
-                option4 = "option4"
-                alias5 = "option5"
-                option5 = "option5"
-            }
         }
     }
 }

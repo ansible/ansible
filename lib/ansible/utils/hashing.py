@@ -15,9 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 
@@ -30,11 +28,11 @@ except ImportError:
     _md5 = None
 
 from ansible.errors import AnsibleError
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils.common.text.converters import to_bytes
 
 
 def secure_hash_s(data, hash_func=sha1):
-    ''' Return a secure hash hex digest of data. '''
+    """ Return a secure hash hex digest of data. """
 
     digest = hash_func()
     data = to_bytes(data, errors='surrogate_or_strict')
@@ -43,25 +41,23 @@ def secure_hash_s(data, hash_func=sha1):
 
 
 def secure_hash(filename, hash_func=sha1):
-    ''' Return a secure hash hex digest of local file, None if file is not present or a directory. '''
+    """ Return a secure hash hex digest of local file, None if file is not present or a directory. """
 
     if not os.path.exists(to_bytes(filename, errors='surrogate_or_strict')) or os.path.isdir(to_bytes(filename, errors='strict')):
         return None
     digest = hash_func()
     blocksize = 64 * 1024
     try:
-        infile = open(to_bytes(filename, errors='surrogate_or_strict'), 'rb')
-        block = infile.read(blocksize)
-        while block:
-            digest.update(block)
+        with open(filename, 'rb') as infile:
             block = infile.read(blocksize)
-        infile.close()
-    except IOError as e:
-        raise AnsibleError("error while accessing the file %s, error was: %s" % (filename, e))
+            while block:
+                digest.update(block)
+                block = infile.read(blocksize)
+    except OSError as ex:
+        raise AnsibleError(f"Error while accessing the file {filename!r}.") from ex
     return digest.hexdigest()
 
 
-# The checksum algorithm must match with the algorithm in ShellModule.checksum() method
 checksum = secure_hash
 checksum_s = secure_hash_s
 

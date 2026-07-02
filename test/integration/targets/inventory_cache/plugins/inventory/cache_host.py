@@ -1,10 +1,9 @@
 # Copyright (c) 2021 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
     inventory: cache_host
     short_description: add a host to inventory and cache it
     description: add a host to inventory and cache it
@@ -14,7 +13,7 @@ DOCUMENTATION = '''
       plugin:
         required: true
         description: name of the plugin (cache_host)
-'''
+"""
 
 from ansible.plugins.inventory import BaseInventoryPlugin, Cacheable
 import random

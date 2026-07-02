@@ -1,4 +1,5 @@
 """Constants used by ansible-test. Imports should not be used in this file (other than to import the target common constants)."""
+
 from __future__ import annotations
 
 from .._util.target.common.constants import (
@@ -6,21 +7,33 @@ from .._util.target.common.constants import (
     REMOTE_ONLY_PYTHON_VERSIONS,
 )
 
+STATUS_HOST_CONNECTION_ERROR = 4
+
 # Setting a low soft RLIMIT_NOFILE value will improve the performance of subprocess.Popen on Python 2.x when close_fds=True.
 # This will affect all Python subprocesses. It will also affect the current Python process if set before subprocess is imported for the first time.
 SOFT_RLIMIT_NOFILE = 1024
 
 # File used to track the ansible-test test execution timeout.
 TIMEOUT_PATH = '.ansible-test-timeout.json'
+TIMEOUT_MARGIN_SECONDS = 10
 
 CONTROLLER_MIN_PYTHON_VERSION = CONTROLLER_PYTHON_VERSIONS[0]
 SUPPORTED_PYTHON_VERSIONS = REMOTE_ONLY_PYTHON_VERSIONS + CONTROLLER_PYTHON_VERSIONS
+
+SUPPORTED_POWERSHELL_VERSIONS = [
+    '7.6.0',
+]
+"""
+PowerShell versions supported by ansible-test.
+Full versions must be specified since they are used to install specific releases.
+Only one entry for each {major}.{minor} version is supported.
+"""
 
 REMOTE_PROVIDERS = [
     'default',
     'aws',
     'azure',
-    'parallels',
+    'mac',
 ]
 
 SECCOMP_CHOICES = [
@@ -31,10 +44,10 @@ SECCOMP_CHOICES = [
 # This bin symlink map must exactly match the contents of the bin directory.
 # It is necessary for payload creation to reconstruct the bin directory when running ansible-test from an installed version of ansible.
 # It is also used to construct the injector directory at runtime.
+# It is also used to construct entry points when not running ansible-test from source.
 ANSIBLE_BIN_SYMLINK_MAP = {
     'ansible': '../lib/ansible/cli/adhoc.py',
     'ansible-config': '../lib/ansible/cli/config.py',
-    'ansible-connection': '../lib/ansible/cli/scripts/ansible_connection_cli_stub.py',
     'ansible-console': '../lib/ansible/cli/console.py',
     'ansible-doc': '../lib/ansible/cli/doc.py',
     'ansible-galaxy': '../lib/ansible/cli/galaxy.py',

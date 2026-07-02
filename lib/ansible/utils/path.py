@@ -14,26 +14,27 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 import shutil
 
-from errno import EEXIST
 from ansible.errors import AnsibleError
-from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.common.text.converters import to_bytes, to_text
 
 
 __all__ = ['unfrackpath', 'makedirs_safe']
 
 
-def unfrackpath(path, follow=True, basedir=None):
-    '''
+def unfrackpath(path: str, follow: bool = True, basedir: str | None = None) -> str:
+    """
     Returns a path that is free of symlinks (if follow=True), environment variables, relative path traversals and symbols (~)
 
     :arg path: A byte or text string representing a path to be canonicalized
     :arg follow: A boolean to indicate of symlinks should be resolved or not
+    :arg basedir: A byte string, text string, PathLike object, or `None`
+        representing where a relative path should be resolved from.
+        `None` will be substituted for the current working directory.
     :raises UnicodeDecodeError: If the canonicalized version of the path
         contains non-utf8 byte sequences.
     :rtype: A text string (unicode on pyyhon2, str on python3).
@@ -42,28 +43,26 @@ def unfrackpath(path, follow=True, basedir=None):
 
     example::
         '$HOME/../../var/mail' becomes '/var/spool/mail'
-    '''
+    """
 
-    b_basedir = to_bytes(basedir, errors='surrogate_or_strict', nonstring='passthru')
+    if basedir is None:
+        basedir = os.getcwd()
+    elif os.path.isfile(basedir):
+        basedir = os.path.dirname(basedir)
 
-    if b_basedir is None:
-        b_basedir = to_bytes(os.getcwd(), errors='surrogate_or_strict')
-    elif os.path.isfile(b_basedir):
-        b_basedir = os.path.dirname(b_basedir)
+    final_path = os.path.expanduser(os.path.expandvars(path))
 
-    b_final_path = os.path.expanduser(os.path.expandvars(to_bytes(path, errors='surrogate_or_strict')))
-
-    if not os.path.isabs(b_final_path):
-        b_final_path = os.path.join(b_basedir, b_final_path)
+    if not os.path.isabs(final_path):
+        final_path = os.path.join(basedir, final_path)
 
     if follow:
-        b_final_path = os.path.realpath(b_final_path)
+        final_path = os.path.realpath(final_path)
 
-    return to_text(os.path.normpath(b_final_path), errors='surrogate_or_strict')
+    return os.path.normpath(final_path)
 
 
 def makedirs_safe(path, mode=None):
-    '''
+    """
     A *potentially insecure* way to ensure the existence of a directory chain. The "safe" in this function's name
     refers only to its ability to ignore `EEXIST` in the case of multiple callers operating on the same part of
     the directory chain. This function is not safe to use under world-writable locations when the first level of the
@@ -75,19 +74,18 @@ def makedirs_safe(path, mode=None):
     :kwarg mode: If given, the mode to set the directory to
     :raises AnsibleError: If the directory cannot be created and does not already exist.
     :raises UnicodeDecodeError: if the path is not decodable in the utf-8 encoding.
-    '''
+    """
 
     rpath = unfrackpath(path)
     b_rpath = to_bytes(rpath)
     if not os.path.exists(b_rpath):
         try:
             if mode:
-                os.makedirs(b_rpath, mode)
+                os.makedirs(b_rpath, mode, exist_ok=True)
             else:
-                os.makedirs(b_rpath)
-        except OSError as e:
-            if e.errno != EEXIST:
-                raise AnsibleError("Unable to create local directories(%s): %s" % (to_native(rpath), to_native(e)))
+                os.makedirs(b_rpath, exist_ok=True)
+        except OSError as ex:
+            raise AnsibleError(f"Unable to create local directories {rpath!r}.") from ex
 
 
 def basedir(source):
@@ -102,7 +100,7 @@ def basedir(source):
         dname = os.path.dirname(source)
 
     if dname:
-        # don't follow symlinks for basedir, enables source re-use
+        # don't follow symlinks for basedir, enables source reuse
         dname = os.path.abspath(dname)
 
     return to_text(dname, errors='surrogate_or_strict')

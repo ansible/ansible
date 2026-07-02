@@ -1,9 +1,9 @@
 """High level functions for working with containers."""
+
 from __future__ import annotations
 
-import atexit
+import collections.abc as c
 import contextlib
-import enum
 import json
 import random
 import time
@@ -19,6 +19,7 @@ from .util import (
 )
 
 from .util_common import (
+    ExitHandler,
     named_temporary_file,
 )
 
@@ -34,8 +35,10 @@ from .config import (
 from .docker_util import (
     ContainerNotFoundError,
     DockerInspect,
+    docker_create,
     docker_exec,
     docker_inspect,
+    docker_network_inspect,
     docker_pull,
     docker_rm,
     docker_run,
@@ -43,7 +46,9 @@ from .docker_util import (
     get_docker_container_id,
     get_docker_host_ip,
     get_podman_host_ip,
+    get_session_container_name,
     require_docker,
+    detect_host_properties,
 )
 
 from .ansible_util import (
@@ -80,44 +85,44 @@ from .connections import (
     SshConnection,
 )
 
+from .thread import (
+    mutex,
+)
+
 # information about support containers provisioned by the current ansible-test instance
-support_containers = {}  # type: t.Dict[str, ContainerDescriptor]
+support_containers: dict[str, ContainerDescriptor] = {}
 support_containers_mutex = threading.Lock()
 
 
 class HostType:
     """Enum representing the types of hosts involved in running tests."""
+
     origin = 'origin'
     control = 'control'
     managed = 'managed'
 
 
-class CleanupMode(enum.Enum):
-    """How container cleanup should be handled."""
-    YES = enum.auto()
-    NO = enum.auto()
-    INFO = enum.auto()
-
-
 def run_support_container(
-        args,  # type: EnvironmentConfig
-        context,  # type: str
-        image,  # type: str
-        name,  # type: str
-        ports,  # type: t.List[int]
-        aliases=None,  # type: t.Optional[t.List[str]]
-        start=True,  # type: bool
-        allow_existing=False,  # type: bool
-        cleanup=None,  # type: t.Optional[CleanupMode]
-        cmd=None,  # type: t.Optional[t.List[str]]
-        env=None,  # type: t.Optional[t.Dict[str, str]]
-        options=None,  # type: t.Optional[t.List[str]]
-        publish_ports=True,  # type: bool
-):  # type: (...) -> t.Optional[ContainerDescriptor]
+    args: EnvironmentConfig,
+    context: str,
+    image: str,
+    name: str,
+    ports: list[int],
+    aliases: t.Optional[list[str]] = None,
+    start: bool = True,
+    cleanup: bool = True,
+    cmd: t.Optional[list[str]] = None,
+    env: t.Optional[dict[str, str]] = None,
+    options: t.Optional[list[str]] = None,
+    publish_ports: bool = True,
+    data_container: bool = False,
+) -> t.Optional[ContainerDescriptor]:
     """
     Start a container used to support tests, but not run them.
     Containers created this way will be accessible from tests.
     """
+    name = get_session_container_name(args, name)
+
     if args.prime_containers:
         docker_pull(args, image)
         return None
@@ -138,10 +143,10 @@ def run_support_container(
         if current_container_id:
             publish_ports = False  # publishing ports is pointless if already running in a docker container
 
-    options = (options or []) + ['--name', name]
+    options = options or []
 
     if start:
-        options.append('-d')
+        options.append('-dt')  # the -t option is required to cause systemd in the container to log output to the console
 
     if publish_ports:
         for port in ports:
@@ -151,43 +156,17 @@ def run_support_container(
         for key, value in env.items():
             options.extend(['--env', '%s=%s' % (key, value)])
 
-    support_container_id = None
+    max_open_files = detect_host_properties(args).max_open_files
 
-    if allow_existing:
-        try:
-            container = docker_inspect(args, name)
-        except ContainerNotFoundError:
-            container = None
+    options.extend(['--ulimit', 'nofile=%s' % max_open_files])
 
-        if container:
-            support_container_id = container.id
+    if args.dev_systemd_debug:
+        options.extend(('--env', 'SYSTEMD_LOG_LEVEL=debug'))
 
-            if not container.running:
-                display.info('Ignoring existing "%s" container which is not running.' % name, verbosity=1)
-                support_container_id = None
-            elif not container.image:
-                display.info('Ignoring existing "%s" container which has the wrong image.' % name, verbosity=1)
-                support_container_id = None
-            elif publish_ports and not all(port and len(port) == 1 for port in [container.get_tcp_port(port) for port in ports]):
-                display.info('Ignoring existing "%s" container which does not have the required published ports.' % name, verbosity=1)
-                support_container_id = None
-
-            if not support_container_id:
-                docker_rm(args, name)
-
-    if support_container_id:
-        display.info('Using existing "%s" container.' % name)
-        running = True
-        existing = True
-    else:
-        display.info('Starting new "%s" container.' % name)
-        docker_pull(args, image)
-        support_container_id = docker_run(args, image, options, create_only=not start, cmd=cmd)
-        running = start
-        existing = False
-
-    if cleanup is None:
-        cleanup = CleanupMode.INFO if existing else CleanupMode.YES
+    display.info('Starting new "%s" container.' % name)
+    docker_pull(args, image)
+    support_container_id = run_container(args, image, name, options, create_only=not start, cmd=cmd)
+    running = start
 
     descriptor = ContainerDescriptor(
         image,
@@ -198,9 +177,9 @@ def run_support_container(
         aliases,
         publish_ports,
         running,
-        existing,
         cleanup,
         env,
+        data_container,
     )
 
     with support_containers_mutex:
@@ -208,7 +187,7 @@ def run_support_container(
             raise Exception(f'Container already defined: {name}')
 
         if not support_containers:
-            atexit.register(cleanup_containers, args)
+            ExitHandler.register(cleanup_containers, args)
 
         support_containers[name] = descriptor
 
@@ -220,7 +199,130 @@ def run_support_container(
     return descriptor
 
 
-def get_container_database(args):  # type: (EnvironmentConfig) -> ContainerDatabase
+def run_container(
+    args: EnvironmentConfig,
+    image: str,
+    name: str,
+    options: t.Optional[list[str]],
+    cmd: t.Optional[list[str]] = None,
+    create_only: bool = False,
+) -> str:
+    """Run a container using the given docker image."""
+    options = list(options or [])
+    cmd = list(cmd or [])
+
+    options.extend(['--name', name])
+
+    network = get_docker_preferred_network_name(args)
+
+    if is_docker_user_defined_network(network):
+        # Only when the network is not the default bridge network.
+        options.extend(['--network', network])
+
+    for _iteration in range(1, 3):
+        try:
+            if create_only:
+                stdout = docker_create(args, image, options, cmd)[0]
+            else:
+                stdout = docker_run(args, image, options, cmd)[0]
+        except SubprocessError as ex:
+            display.error(ex.message)
+            display.warning(f'Failed to run docker image "{image}". Waiting a few seconds before trying again.')
+            docker_rm(args, name)  # podman doesn't remove containers after create if run fails
+            time.sleep(3)
+        else:
+            if args.explain:
+                stdout = ''.join(random.choice('0123456789abcdef') for _iteration in range(64))
+
+            return stdout.strip()
+
+    raise ApplicationError(f'Failed to run docker image "{image}".')
+
+
+def start_container(args: EnvironmentConfig, container_id: str) -> tuple[t.Optional[str], t.Optional[str]]:
+    """Start a docker container by name or ID."""
+    options: list[str] = []
+
+    for _iteration in range(1, 3):
+        try:
+            return docker_start(args, container_id, options)
+        except SubprocessError as ex:
+            display.error(ex.message)
+            display.warning(f'Failed to start docker container "{container_id}". Waiting a few seconds before trying again.')
+            time.sleep(3)
+
+    raise ApplicationError(f'Failed to start docker container "{container_id}".')
+
+
+def get_container_ip_address(args: EnvironmentConfig, container: DockerInspect) -> t.Optional[str]:
+    """Return the IP address of the container for the preferred docker network."""
+    if container.networks:
+        network_name = get_docker_preferred_network_name(args)
+
+        if not network_name:
+            # Sort networks and use the first available.
+            # This assumes all containers will have access to the same networks.
+            network_name = sorted(container.networks.keys()).pop(0)
+
+        ipaddress = container.networks[network_name]['IPAddress']
+    else:
+        ipaddress = container.network_settings['IPAddress']
+
+    if not ipaddress:
+        return None
+
+    return ipaddress
+
+
+@mutex
+def get_docker_preferred_network_name(args: EnvironmentConfig) -> t.Optional[str]:
+    """
+    Return the preferred network name for use with Docker. The selection logic is:
+    - the network selected by the user with `--docker-network`
+    - the network of the currently running docker container (if any)
+    - the default docker network (returns None)
+    """
+    try:
+        return get_docker_preferred_network_name.network  # type: ignore[attr-defined]
+    except AttributeError:
+        pass
+
+    network = None
+
+    if args.docker_network:
+        network = args.docker_network
+    else:
+        current_container_id = get_docker_container_id()
+
+        if current_container_id:
+            try:
+                # Make sure any additional containers we launch use the same network as the current container we're running in.
+                # This is needed when ansible-test is running in a container that is not connected to Docker's default network.
+                container = docker_inspect(args, current_container_id, always=True)
+                network = container.get_network_name()
+            except ContainerNotFoundError:
+                display.warning('Unable to detect the network for the current container. Use the `--docker-network` option if containers are unreachable.')
+
+    # The default docker behavior puts containers on the same network.
+    # The default podman behavior puts containers on isolated networks which don't allow communication between containers or network disconnect.
+    # Starting with podman version 2.1.0 rootless containers are able to join networks.
+    # Starting with podman version 2.2.0 containers can be disconnected from networks.
+    # To maintain feature parity with docker, detect and use the default "podman" network when running under podman.
+    if network is None and require_docker().command == 'podman' and docker_network_inspect(args, 'podman', always=True):
+        network = 'podman'
+
+    get_docker_preferred_network_name.network = network  # type: ignore[attr-defined]
+
+    return network
+
+
+def is_docker_user_defined_network(network: str) -> bool:
+    """Return True if the network being used is a user-defined network."""
+    return bool(network) and network != 'bridge'
+
+
+@mutex
+def get_container_database(args: EnvironmentConfig) -> ContainerDatabase:
     """Return the current container database, creating it as needed, or returning the one provided on the command line through delegation."""
     try:
         return get_container_database.database  # type: ignore[attr-defined]
@@ -243,7 +345,8 @@ def get_container_database(args):  # type: (EnvironmentConfig) -> ContainerDatab
 
 class ContainerAccess:
     """Information needed for one test host to access a single container supporting tests."""
-    def __init__(self, host_ip, names, ports, forwards):  # type: (str, t.List[str], t.Optional[t.List[int]], t.Optional[t.Dict[int, int]]) -> None
+
+    def __init__(self, host_ip: str, names: list[str], ports: t.Optional[list[int]], forwards: t.Optional[dict[int, int]]) -> None:
         # if forwards is set
         #   this is where forwards are sent (it is the host that provides an indirect connection to the containers on alternate ports)
         #   /etc/hosts uses 127.0.0.1 (since port redirection will be used)
@@ -260,17 +363,17 @@ class ContainerAccess:
         # port redirections to create through host_ip -- if not set, no port redirections will be used
         self.forwards = forwards
 
-    def port_map(self):  # type: () -> t.List[t.Tuple[int, int]]
+    def port_map(self) -> list[tuple[int, int]]:
         """Return a port map for accessing this container."""
         if self.forwards:
             ports = list(self.forwards.items())
         else:
-            ports = [(port, port) for port in self.ports]
+            ports = [(port, port) for port in self.ports or []]
 
         return ports
 
     @staticmethod
-    def from_dict(data):  # type: (t.Dict[str, t.Any]) -> ContainerAccess
+    def from_dict(data: dict[str, t.Any]) -> ContainerAccess:
         """Return a ContainerAccess instance from the given dict."""
         forwards = data.get('forwards')
 
@@ -284,9 +387,9 @@ class ContainerAccess:
             forwards=forwards,
         )
 
-    def to_dict(self):  # type: () -> t.Dict[str, t.Any]
+    def to_dict(self) -> dict[str, t.Any]:
         """Return a dict of the current instance."""
-        value: t.Dict[str, t.Any] = dict(
+        value: dict[str, t.Any] = dict(
             host_ip=self.host_ip,
             names=self.names,
         )
@@ -302,11 +405,12 @@ class ContainerAccess:
 
 class ContainerDatabase:
     """Database of running containers used to support tests."""
-    def __init__(self, data):  # type: (t.Dict[str, t.Dict[str, t.Dict[str, ContainerAccess]]]) -> None
+
+    def __init__(self, data: dict[str, dict[str, dict[str, ContainerAccess]]]) -> None:
         self.data = data
 
     @staticmethod
-    def from_dict(data):  # type: (t.Dict[str, t.Any]) -> ContainerDatabase
+    def from_dict(data: dict[str, t.Any]) -> ContainerDatabase:
         """Return a ContainerDatabase instance from the given dict."""
         return ContainerDatabase(dict((access_name,
                                        dict((context_name,
@@ -315,7 +419,7 @@ class ContainerDatabase:
                                             for context_name, containers in contexts.items()))
                                       for access_name, contexts in data.items()))
 
-    def to_dict(self):  # type: () -> t.Dict[str, t.Any]
+    def to_dict(self) -> dict[str, t.Any]:
         """Return a dict of the current instance."""
         return dict((access_name,
                      dict((context_name,
@@ -325,12 +429,12 @@ class ContainerDatabase:
                     for access_name, contexts in self.data.items())
 
 
-def local_ssh(args, python):  # type: (EnvironmentConfig, PythonConfig) -> SshConnectionDetail
+def local_ssh(args: EnvironmentConfig, python: PythonConfig) -> SshConnectionDetail:
     """Return SSH connection details for localhost, connecting as root to the default SSH port."""
     return SshConnectionDetail('localhost', 'localhost', None, 'root', SshKey(args).key, python.path)
 
 
-def root_ssh(ssh):  # type: (SshConnection) -> SshConnectionDetail
+def root_ssh(ssh: SshConnection) -> SshConnectionDetail:
     """Return the SSH connection details from the given SSH connection. If become was specified, the user will be changed to `root`."""
     settings = ssh.settings.__dict__.copy()
 
@@ -342,13 +446,16 @@ def root_ssh(ssh):  # type: (SshConnection) -> SshConnectionDetail
     return SshConnectionDetail(**settings)
 
 
-def create_container_database(args):  # type: (EnvironmentConfig) -> ContainerDatabase
+def create_container_database(args: EnvironmentConfig) -> ContainerDatabase:
     """Create and return a container database with information necessary for all test hosts to make use of relevant support containers."""
-    origin = {}  # type: t.Dict[str, t.Dict[str, ContainerAccess]]
-    control = {}  # type: t.Dict[str, t.Dict[str, ContainerAccess]]
-    managed = {}  # type: t.Dict[str, t.Dict[str, ContainerAccess]]
+    origin: dict[str, dict[str, ContainerAccess]] = {}
+    control: dict[str, dict[str, ContainerAccess]] = {}
+    managed: dict[str, dict[str, ContainerAccess]] = {}
 
     for name, container in support_containers.items():
+        if container.data_container:
+            # data containers will not be started, and will be missing details
+            continue
         if container.details.published_ports:
             if require_docker().command == 'podman':
                 host_ip_func = get_podman_host_ip
@@ -441,11 +548,12 @@ def create_container_database(args):  # type: (EnvironmentConfig) -> ContainerDa
 
 class SupportContainerContext:
     """Context object for tracking information relating to access of support containers."""
-    def __init__(self, containers, process):  # type: (ContainerDatabase, t.Optional[SshProcess]) -> None
+
+    def __init__(self, containers: ContainerDatabase, process: t.Optional[SshProcess]) -> None:
         self.containers = containers
         self.process = process
 
-    def close(self):  # type: () -> None
+    def close(self) -> None:
         """Close the process maintaining the port forwards."""
         if not self.process:
             return  # forwarding not in use
@@ -459,9 +567,9 @@ class SupportContainerContext:
 
 @contextlib.contextmanager
 def support_container_context(
-        args,  # type: EnvironmentConfig
-        ssh,  # type: t.Optional[SshConnectionDetail]
-):  # type: (...) -> t.Iterator[t.Optional[ContainerDatabase]]
+    args: EnvironmentConfig,
+    ssh: t.Optional[SshConnectionDetail],
+) -> c.Iterator[t.Optional[ContainerDatabase]]:
     """Create a context manager for integration tests that use support containers."""
     if not isinstance(args, (IntegrationConfig, UnitsConfig, SanityConfig, ShellConfig)):
         yield None  # containers are only needed for commands that have targets (hosts or pythons)
@@ -482,17 +590,17 @@ def support_container_context(
 
 
 def create_support_container_context(
-        args,  # type: EnvironmentConfig
-        ssh,  # type: t.Optional[SshConnectionDetail]
-        containers,  # type: ContainerDatabase
-):  # type: (...) -> SupportContainerContext
+    args: EnvironmentConfig,
+    ssh: t.Optional[SshConnectionDetail],
+    containers: ContainerDatabase,
+) -> SupportContainerContext:
     """Context manager that provides SSH port forwards. Returns updated container metadata."""
     host_type = HostType.control
 
     revised = ContainerDatabase(containers.data.copy())
     source = revised.data.pop(HostType.origin, None)
 
-    container_map = {}  # type: t.Dict[t.Tuple[str, int], t.Tuple[str, str, int]]
+    container_map: dict[tuple[str, int], tuple[str, str, int]] = {}
 
     if host_type not in revised.data:
         if not source:
@@ -518,7 +626,7 @@ def create_support_container_context(
 
     try:
         port_forwards = process.collect_port_forwards()
-        contexts = {}  # type: t.Dict[str, t.Dict[str, ContainerAccess]]
+        contexts: dict[str, dict[str, ContainerAccess]] = {}
 
         for forward, forwarded_port in port_forwards.items():
             access_host, access_port = forward
@@ -543,19 +651,21 @@ def create_support_container_context(
 
 class ContainerDescriptor:
     """Information about a support container."""
-    def __init__(self,
-                 image,  # type: str
-                 context,  # type: str
-                 name,  # type: str
-                 container_id,  # type: str
-                 ports,  # type: t.List[int]
-                 aliases,  # type: t.List[str]
-                 publish_ports,  # type: bool
-                 running,  # type: bool
-                 existing,  # type: bool
-                 cleanup,  # type: CleanupMode
-                 env,  # type: t.Optional[t.Dict[str, str]]
-                 ):  # type: (...) -> None
+
+    def __init__(
+        self,
+        image: str,
+        context: str,
+        name: str,
+        container_id: str,
+        ports: list[int],
+        aliases: list[str],
+        publish_ports: bool,
+        running: bool,
+        cleanup: bool,
+        env: t.Optional[dict[str, str]],
+        data_container: bool,
+    ) -> None:
         self.image = image
         self.context = context
         self.name = name
@@ -564,24 +674,24 @@ class ContainerDescriptor:
         self.aliases = aliases
         self.publish_ports = publish_ports
         self.running = running
-        self.existing = existing
         self.cleanup = cleanup
         self.env = env
-        self.details = None  # type: t.Optional[SupportContainer]
+        self.details: t.Optional[SupportContainer] = None
+        self.data_container = data_container
 
-    def start(self, args):  # type: (EnvironmentConfig) -> None
+    def start(self, args: EnvironmentConfig) -> None:
         """Start the container. Used for containers which are created, but not started."""
-        docker_start(args, self.name)
+        start_container(args, self.name)
 
         self.register(args)
 
-    def register(self, args):  # type: (EnvironmentConfig) -> SupportContainer
+    def register(self, args: EnvironmentConfig) -> SupportContainer:
         """Record the container's runtime details. Must be used after the container has been started."""
         if self.details:
             raise Exception('Container already registered: %s' % self.name)
 
         try:
-            container = docker_inspect(args, self.container_id)
+            container = docker_inspect(args, self.name)
         except ContainerNotFoundError:
             if not args.explain:
                 raise
@@ -598,7 +708,7 @@ class ContainerDescriptor:
                 ),
             ))
 
-        support_container_ip = container.get_ip_address()
+        support_container_ip = get_container_ip_address(args, container)
 
         if self.publish_ports:
             # inspect the support container to locate the published ports
@@ -622,23 +732,26 @@ class ContainerDescriptor:
 
 class SupportContainer:
     """Information about a running support container available for use by tests."""
-    def __init__(self,
-                 container,  # type: DockerInspect
-                 container_ip,  # type: str
-                 published_ports,  # type: t.Dict[int, int]
-                 ):  # type: (...) -> None
+
+    def __init__(
+        self,
+        container: DockerInspect,
+        container_ip: str,
+        published_ports: dict[int, int],
+    ) -> None:
         self.container = container
         self.container_ip = container_ip
         self.published_ports = published_ports
 
 
-def wait_for_file(args,  # type: EnvironmentConfig
-                  container_name,  # type: str
-                  path,  # type: str
-                  sleep,  # type: int
-                  tries,  # type: int
-                  check=None,  # type: t.Optional[t.Callable[[str], bool]]
-                  ):  # type: (...) -> str
+def wait_for_file(
+    args: EnvironmentConfig,
+    container_name: str,
+    path: str,
+    sleep: int,
+    tries: int,
+    check: t.Optional[c.Callable[[str], bool]] = None,
+) -> str:
     """Wait for the specified file to become available in the requested container and return its contents."""
     display.info('Waiting for container "%s" to provide file: %s' % (container_name, path))
 
@@ -657,16 +770,14 @@ def wait_for_file(args,  # type: EnvironmentConfig
     raise ApplicationError('Timeout waiting for container "%s" to provide file: %s' % (container_name, path))
 
 
-def cleanup_containers(args):  # type: (EnvironmentConfig) -> None
+def cleanup_containers(args: EnvironmentConfig) -> None:
     """Clean up containers."""
     for container in support_containers.values():
-        if container.cleanup == CleanupMode.YES:
-            docker_rm(args, container.container_id)
-        elif container.cleanup == CleanupMode.INFO:
-            display.notice('Remember to run `docker rm -f %s` when finished testing.' % container.name)
+        if container.cleanup:
+            docker_rm(args, container.name)
 
 
-def create_hosts_entries(context):  # type: (t.Dict[str, ContainerAccess]) -> t.List[str]
+def create_hosts_entries(context: dict[str, ContainerAccess]) -> list[str]:
     """Return hosts entries for the specified context."""
     entries = []
     unique_id = uuid.uuid4()
@@ -684,10 +795,10 @@ def create_hosts_entries(context):  # type: (t.Dict[str, ContainerAccess]) -> t.
 
 
 def create_container_hooks(
-        args,  # type: IntegrationConfig
-        control_connections,  # type: t.List[SshConnectionDetail]
-        managed_connections,  # type: t.Optional[t.List[SshConnectionDetail]]
-):  # type: (...) -> t.Tuple[t.Optional[t.Callable[[IntegrationTarget], None]], t.Optional[t.Callable[[IntegrationTarget], None]]]
+    args: IntegrationConfig,
+    control_connections: list[SshConnectionDetail],
+    managed_connections: t.Optional[list[SshConnectionDetail]],
+) -> tuple[t.Optional[c.Callable[[IntegrationTarget], None]], t.Optional[c.Callable[[IntegrationTarget], None]]]:
     """Return pre and post target callbacks for enabling and disabling container access for each test target."""
     containers = get_container_database(args)
 
@@ -706,27 +817,28 @@ def create_container_hooks(
         else:
             managed_type = 'posix'
 
-        control_state = {}  # type: t.Dict[str, t.Tuple[t.List[str], t.List[SshProcess]]]
-        managed_state = {}  # type: t.Dict[str, t.Tuple[t.List[str], t.List[SshProcess]]]
+        control_state: dict[str, tuple[list[str], list[SshProcess]]] = {}
+        managed_state: dict[str, tuple[list[str], list[SshProcess]]] = {}
 
-        def pre_target(target):
+        def pre_target(target: IntegrationTarget) -> None:
             """Configure hosts for SSH port forwarding required by the specified target."""
             forward_ssh_ports(args, control_connections, '%s_hosts_prepare.yml' % control_type, control_state, target, HostType.control, control_contexts)
             forward_ssh_ports(args, managed_connections, '%s_hosts_prepare.yml' % managed_type, managed_state, target, HostType.managed, managed_contexts)
 
-        def post_target(target):
+        def post_target(target: IntegrationTarget) -> None:
             """Clean up previously configured SSH port forwarding which was required by the specified target."""
             cleanup_ssh_ports(args, control_connections, '%s_hosts_restore.yml' % control_type, control_state, target, HostType.control)
             cleanup_ssh_ports(args, managed_connections, '%s_hosts_restore.yml' % managed_type, managed_state, target, HostType.managed)
+
     else:
         pre_target, post_target = None, None
 
     return pre_target, post_target
 
 
-def create_managed_contexts(control_contexts):  # type: (t.Dict[str, t.Dict[str, ContainerAccess]]) -> t.Dict[str, t.Dict[str, ContainerAccess]]
+def create_managed_contexts(control_contexts: dict[str, dict[str, ContainerAccess]]) -> dict[str, dict[str, ContainerAccess]]:
     """Create managed contexts from the given control contexts."""
-    managed_contexts = {}  # type: t.Dict[str, t.Dict[str, ContainerAccess]]
+    managed_contexts: dict[str, dict[str, ContainerAccess]] = {}
 
     for context_name, control_context in control_contexts.items():
         managed_context = managed_contexts[context_name] = {}
@@ -738,14 +850,14 @@ def create_managed_contexts(control_contexts):  # type: (t.Dict[str, t.Dict[str,
 
 
 def forward_ssh_ports(
-        args,  # type: IntegrationConfig
-        ssh_connections,  # type: t.Optional[t.List[SshConnectionDetail]]
-        playbook,  # type: str
-        target_state,  # type: t.Dict[str, t.Tuple[t.List[str], t.List[SshProcess]]]
-        target,  # type: IntegrationTarget
-        host_type,  # type: str
-        contexts,  # type: t.Dict[str, t.Dict[str, ContainerAccess]]
-):  # type: (...) -> None
+    args: IntegrationConfig,
+    ssh_connections: t.Optional[list[SshConnectionDetail]],
+    playbook: str,
+    target_state: dict[str, tuple[list[str], list[SshProcess]]],
+    target: IntegrationTarget,
+    host_type: str,
+    contexts: dict[str, dict[str, ContainerAccess]],
+) -> None:
     """Configure port forwarding using SSH and write hosts file entries."""
     if ssh_connections is None:
         return
@@ -768,7 +880,7 @@ def forward_ssh_ports(
 
         raise Exception('The %s host was not pre-configured for container access and SSH forwarding is not available.' % host_type)
 
-    redirects = []  # type: t.List[t.Tuple[int, str, int]]
+    redirects: list[tuple[int, str, int]] = []
     messages = []
 
     for container_name, container in test_context.items():
@@ -796,7 +908,7 @@ def forward_ssh_ports(
     with named_temporary_file(args, 'ssh-inventory-', '.json', None, inventory) as inventory_path:  # type: str
         run_playbook(args, inventory_path, playbook, capture=False, variables=dict(hosts_entries=hosts_entries))
 
-    ssh_processes = []  # type: t.List[SshProcess]
+    ssh_processes: list[SshProcess] = []
 
     if redirects:
         for ssh in ssh_connections:
@@ -809,13 +921,13 @@ def forward_ssh_ports(
 
 
 def cleanup_ssh_ports(
-        args,  # type: IntegrationConfig
-        ssh_connections,  # type: t.List[SshConnectionDetail]
-        playbook,  # type: str
-        target_state,  # type: t.Dict[str, t.Tuple[t.List[str], t.List[SshProcess]]]
-        target,  # type: IntegrationTarget
-        host_type,  # type: str
-):  # type: (...) -> None
+    args: IntegrationConfig,
+    ssh_connections: list[SshConnectionDetail],
+    playbook: str,
+    target_state: dict[str, tuple[list[str], list[SshProcess]]],
+    target: IntegrationTarget,
+    host_type: str,
+) -> None:
     """Stop previously configured SSH port forwarding and remove previously written hosts file entries."""
     state = target_state.pop(target.name, None)
 

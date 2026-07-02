@@ -3,19 +3,19 @@
 # Copyright: (c) 2017, Dag Wieers (@dagwieers) <dag@wieers.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: wait_for_connection
 short_description: Waits until remote system is reachable/usable
 description:
-- Waits for a total of C(timeout) seconds.
-- Retries the transport connection after a timeout of C(connect_timeout).
-- Tests the transport connection every C(sleep) seconds.
-- This module makes use of internal ansible transport (and configuration) and the ping/win_ping module to guarantee correct end-to-end functioning.
+- Waits for a total of O(timeout) seconds.
+- Retries the transport connection after a timeout of O(connect_timeout).
+- Tests the transport connection every O(sleep) seconds.
+- This module makes use of internal ansible transport (and configuration) and the M(ansible.builtin.ping)/M(ansible.windows.win_ping)
+  modules to guarantee correct end-to-end functioning.
 - This module is also supported for Windows targets.
 version_added: '2.3'
 options:
@@ -62,9 +62,9 @@ seealso:
 - module: community.windows.win_wait_for_process
 author:
 - Dag Wieers (@dagwieers)
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: Wait 600 seconds for target connection to become reachable/usable
   ansible.builtin.wait_for_connection:
 
@@ -101,21 +101,22 @@ EXAMPLES = r'''
       customization:
         hostname: '{{ vm_shortname }}'
         runonce:
-        - powershell.exe -ExecutionPolicy Unrestricted -File C:\Windows\Temp\ConfigureRemotingForAnsible.ps1 -ForceNewSSLCert -EnableCredSSP
+        - cmd.exe /c winrm.cmd quickconfig -quiet -force
     delegate_to: localhost
 
-  - name: Wait for system to become reachable over WinRM
+  - name: Wait for system to become reachable over WinRM, polling every 10 seconds
     ansible.builtin.wait_for_connection:
       timeout: 900
+      sleep: 10
 
   - name: Gather facts for first time
     ansible.builtin.setup:
-'''
+"""
 
-RETURN = r'''
+RETURN = r"""
 elapsed:
   description: The number of seconds that elapsed waiting for the connection to appear.
   returned: always
   type: float
   sample: 23.1
-'''
+"""

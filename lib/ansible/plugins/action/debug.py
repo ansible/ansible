@@ -15,66 +15,80 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-from ansible.errors import AnsibleUndefinedVariable
-from ansible.module_utils.six import string_types
-from ansible.module_utils._text import to_text
-from ansible.plugins.action import ActionBase
+from ansible.errors import AnsibleValueOmittedError, AnsibleError
+from ansible.module_utils.common.validation import _check_type_str_no_conversion
+from ansible.plugins.action import ActionBase, VariableLayer
+from ansible._internal._templating._jinja_common import UndefinedMarker, TruncationMarker
+from ansible._internal._templating._utils import Omit
+from ansible._internal._templating._marker_behaviors import ReplacingMarkerBehavior, RoutingMarkerBehavior
+from ansible.utils.display import Display
+
+display = Display()
 
 
 class ActionModule(ActionBase):
-    ''' Print statements during execution '''
+    """
+    Emits informational messages, with special diagnostic handling of some templating failures.
+    """
 
     TRANSFERS_FILES = False
-    _VALID_ARGS = frozenset(('msg', 'var', 'verbosity'))
+    _requires_connection = False
 
     def run(self, tmp=None, task_vars=None):
-        if task_vars is None:
-            task_vars = dict()
-
-        if 'msg' in self._task.args and 'var' in self._task.args:
-            return {"failed": True, "msg": "'msg' and 'var' are incompatible options"}
+        validation_result, new_module_args = self.validate_argument_spec(
+            argument_spec=dict(
+                msg=dict(type='raw', default='Hello world!'),
+                var=dict(type=_check_type_str_no_conversion),
+                verbosity=dict(type='int', default=0),
+            ),
+            mutually_exclusive=(
+                ('msg', 'var'),
+            ),
+        )
 
         result = super(ActionModule, self).run(tmp, task_vars)
         del tmp  # tmp no longer has any effect
 
         # get task verbosity
-        verbosity = int(self._task.args.get('verbosity', 0))
+        verbosity = new_module_args['verbosity']
+
+        replacing_behavior = ReplacingMarkerBehavior()
+
+        var_behavior = RoutingMarkerBehavior({
+            UndefinedMarker: replacing_behavior,
+            TruncationMarker: replacing_behavior,
+        })
 
         if verbosity <= self._display.verbosity:
-            if 'msg' in self._task.args:
-                result['msg'] = self._task.args['msg']
-
-            elif 'var' in self._task.args:
+            if raw_var_arg := new_module_args['var']:
+                # If var name is same as result, try to template it
                 try:
-                    results = self._templar.template(self._task.args['var'], convert_bare=True, fail_on_undefined=True)
-                    if results == self._task.args['var']:
-                        # if results is not str/unicode type, raise an exception
-                        if not isinstance(results, string_types):
-                            raise AnsibleUndefinedVariable
-                        # If var name is same as result, try to template it
-                        results = self._templar.template("{{" + results + "}}", convert_bare=True, fail_on_undefined=True)
-                except AnsibleUndefinedVariable as e:
-                    results = u"VARIABLE IS NOT DEFINED!"
-                    if self._display.verbosity > 0:
-                        results += u": %s" % to_text(e)
+                    results = self._templar._engine.extend(marker_behavior=var_behavior).evaluate_expression(raw_var_arg)
+                except AnsibleValueOmittedError as ex:
+                    results = repr(Omit)
+                    display.warning("The result of the `var` expression could not be omitted; a placeholder was used instead.", obj=ex.obj)
+                except Exception as ex:
+                    raise AnsibleError('Error while resolving `var` expression.', obj=raw_var_arg) from ex
 
-                if isinstance(self._task.args['var'], (list, dict)):
-                    # If var is a list or dict, use the type as key to display
-                    result[to_text(type(self._task.args['var']))] = results
-                else:
-                    result[self._task.args['var']] = results
+                result[raw_var_arg] = results
             else:
-                result['msg'] = 'Hello world!'
+                result['msg'] = new_module_args['msg']
 
             # force flag to make debug output module always verbose
             result['_ansible_verbose_always'] = True
+
+            # propagate any warnings in the task result unless we're skipping the task
+            replacing_behavior.emit_warnings()
+
         else:
             result['skipped_reason'] = "Verbosity threshold not met."
             result['skipped'] = True
 
         result['failed'] = False
+
+        # RPFIX-5: DEPRECATION: add deferred deprecation to remove this when INJECT_FACTS_AS_VARS is gone
+        self.register_host_variables({}, VariableLayer.CACHEABLE_FACT)  # ensure that legacy ansible_facts behavior is not triggered
 
         return result

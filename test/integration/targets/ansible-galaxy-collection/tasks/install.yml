@@ -4,8 +4,18 @@
     path: '{{ galaxy_dir }}/ansible_collections'
     state: directory
 
+- name: install simple collection from specific server
+  command: ansible-galaxy collection install namespace1.name1 -s galaxy_ng_token -vvvv
+  environment:
+    ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
+
+- name: remove collection
+  file:
+    path: '{{ galaxy_dir }}/ansible_collections/namespace1/name1'
+    state: absent
+
 - name: install simple collection from first accessible server
-  command: ansible-galaxy collection install namespace1.name1 {{ galaxy_verbosity }}
+  command: ansible-galaxy collection install namespace1.name1 -vvvv
   environment:
     ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
   register: from_first_good_server
@@ -30,6 +40,9 @@
     - install_normal_files.files[1].path | basename in ['MANIFEST.json', 'FILES.json', 'README.md']
     - install_normal_files.files[2].path | basename in ['MANIFEST.json', 'FILES.json', 'README.md']
     - (install_normal_manifest.content | b64decode | from_json).collection_info.version == '1.0.9'
+    - "info_dir is is_dir"
+  vars:
+    info_dir: "{{ galaxy_dir }}/ansible_collections/namespace1.name1-1.0.9.info"
 
 - name: Remove the collection
   file:
@@ -104,6 +117,10 @@
     that:
     - '"Installing ''namespace1.name1:1.1.0-beta.1'' to" in install_prerelease.stdout'
     - (install_prerelease_actual.content | b64decode | from_json).collection_info.version == '1.1.0-beta.1'
+    - not ([info_dir, "namespace1.name1-1.0.9.info"] | path_join) is is_dir
+    - ([info_dir, "namespace1.name1-1.1.0-beta.1.info"] | path_join) is is_dir
+  vars:
+    info_dir: "{{ galaxy_dir }}/ansible_collections"
 
 - name: Remove beta
   file:
@@ -164,12 +181,15 @@
   failed_when:
   - '"Could not satisfy the following requirements" not in fail_dep_mismatch.stderr'
   - '" fail_dep2.name:<0.0.5 (dependency of fail_namespace.fail_collection:2.1.2)" not in fail_dep_mismatch.stderr'
+  - 'pre_release_hint not in fail_dep_mismatch.stderr'
+  vars:
+    pre_release_hint: 'Hint: Pre-releases are not installed by default unless the specific version is given. To enable pre-releases, use --pre.'
 
 - name: Find artifact url for namespace3.name
   uri:
-    url: '{{ test_server }}{{ vX }}collections/namespace3/name/versions/1.0.0/'
-    user: '{{ pulp_user }}'
-    password: '{{ pulp_password }}'
+    url: '{{ test_api_server }}/v3/plugin/ansible/content/published/collections/index/namespace3/name/versions/1.0.0/'
+    user: '{{ galaxy_user }}'
+    password: '{{ galaxy_password }}'
     force_basic_auth: true
   register: artifact_url_response
 
@@ -177,6 +197,9 @@
   get_url:
     url: '{{ artifact_url_response.json.download_url }}'
     dest: '{{ galaxy_dir }}/namespace3.tar.gz'
+    url_username: '{{ galaxy_user }}'
+    url_password: '{{ galaxy_password }}'
+    force_basic_auth: true
 
 - name: install a collection from a tarball - {{ test_id }}
   command: ansible-galaxy collection install '{{ galaxy_dir }}/namespace3.tar.gz' {{ galaxy_verbosity }}
@@ -217,11 +240,11 @@
     state: absent
 
 - assert:
-    that: error == expected_error
+    that: expected_error in error
   vars:
     error: "{{ result.stderr | regex_replace('\\n', ' ') }}"
     expected_error: >-
-            ERROR! Failed to resolve the requested dependencies map.
+            Failed to resolve the requested dependencies map.
             Got the candidate namespace3.name:1.0.0 (direct request)
             which didn't satisfy all of the following requirements:
             * namespace3.name:1.2.0
@@ -230,7 +253,7 @@
   vars:
     error: "{{ result.stderr | regex_replace('\\n', ' ') }}"
     expected_error: >-
-            ERROR! Failed to resolve the requested dependencies map.
+            Failed to resolve the requested dependencies map.
             Got the candidate namespace3.name:1.0.0 (dependency of tmp_parent.name:1.0.0)
             which didn't satisfy all of the following requirements:
             * namespace3.name:1.2.0
@@ -257,12 +280,14 @@
       ignore_errors: yes
       register: result
 
-    - debug: msg="Actual - {{ error }}"
+    - debug:
+        msg: "Actual - {{ error }}"
 
-    - debug: msg="Expected - {{ expected_error }}"
+    - debug:
+        msg: "Expected - {{ expected_error }}"
 
     - assert:
-        that: error == expected_error
+        that: expected_error in error
   always:
     - name: clean up collection skeleton and artifact
       file:
@@ -292,16 +317,8 @@
     that:
     - not fail_bad_tar_actual.stat.exists
 
-- name: Find artifact url for namespace4.name
-  uri:
-    url: '{{ test_server }}{{ vX }}collections/namespace4/name/versions/1.0.0/'
-    user: '{{ pulp_user }}'
-    password: '{{ pulp_password }}'
-    force_basic_auth: true
-  register: artifact_url_response
-
 - name: install a collection from a URI - {{ test_id }}
-  command: ansible-galaxy collection install {{ artifact_url_response.json.download_url}} {{ galaxy_verbosity }}
+  command: ansible-galaxy collection install {{ amanda }}/artifacts/namespace4-name-1.0.0.tar.gz {{ galaxy_verbosity }}
   register: install_uri
   environment:
     ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
@@ -317,32 +334,12 @@
     - '"Installing ''namespace4.name:1.0.0'' to" in install_uri.stdout'
     - (install_uri_actual.content | b64decode | from_json).collection_info.version == '1.0.0'
 
-- name: fail to install a collection with an undefined URL - {{ test_id }}
+- name: fail to install a collection with missing URL - {{ test_id }}
   command: ansible-galaxy collection install namespace5.name {{ galaxy_verbosity }}
   register: fail_undefined_server
-  failed_when: '"No setting was provided for required configuration plugin_type: galaxy_server plugin: undefined" not in fail_undefined_server.stderr'
+  failed_when: fail_undefined_server.stderr is not contains "config 'url' for 'bogus' galaxy_server plugin not provided"
   environment:
-    ANSIBLE_GALAXY_SERVER_LIST: undefined
-
-- when: not requires_auth
-  block:
-    - name: install a collection with an empty server list - {{ test_id }}
-      command: ansible-galaxy collection install namespace5.name -s '{{ test_server }}' {{ galaxy_verbosity }}
-      register: install_empty_server_list
-      environment:
-        ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
-        ANSIBLE_GALAXY_SERVER_LIST: ''
-
-    - name: get result of a collection with an empty server list - {{ test_id }}
-      slurp:
-        path: '{{ galaxy_dir }}/ansible_collections/namespace5/name/MANIFEST.json'
-      register: install_empty_server_list_actual
-
-    - name: assert install a collection with an empty server list - {{ test_id }}
-      assert:
-        that:
-        - '"Installing ''namespace5.name:1.0.0'' to" in install_empty_server_list.stdout'
-        - (install_empty_server_list_actual.content | b64decode | from_json).collection_info.version == '1.0.0'
+    ANSIBLE_GALAXY_SERVER_LIST: bogus
 
 - name: create test requirements file with both roles and collections - {{ test_id }}
   copy:
@@ -425,6 +422,15 @@
     - (install_req_actual.results[0].content | b64decode | from_json).collection_info.version == '1.0.0'
     - (install_req_actual.results[1].content | b64decode | from_json).collection_info.version == '1.0.0'
 
+- name: Test deviations on -r and --role-file without collection or role sub command
+  command: '{{ cmd }}'
+  loop:
+    - ansible-galaxy install -vr '{{ galaxy_dir }}/ansible_collections/requirements.yaml' -s '{{ test_name }}' -vv
+    - ansible-galaxy install --role-file '{{ galaxy_dir }}/ansible_collections/requirements.yaml' -s '{{ test_name }}' -vvv
+    - ansible-galaxy install --role-file='{{ galaxy_dir }}/ansible_collections/requirements.yaml' -s '{{ test_name }}' -vvv
+  loop_control:
+    loop_var: cmd
+
 - name: uninstall collections for next requirements file test
   file:
     path: '{{ galaxy_dir }}/ansible_collections/{{ collection }}/name'
@@ -435,6 +441,30 @@
     - namespace7
     - namespace8
     - namespace9
+
+- name: store signatures
+  copy:
+    dest: "{{ gpg_homedir }}/{{ item.namespace }}-{{ item.name }}-{{ item.version }}-MANIFEST.json.asc"
+    content: "{{ version_data.signatures.0.signature }}"
+  loop:
+    - namespace: namespace1
+      name: name1
+      version: "1.0.0"
+    - namespace: namespace1
+      name: name1
+      version: "1.0.9"
+    - namespace: namespace2
+      name: name
+      version: "1.0.0"
+    - namespace: namespace7
+      name: name
+      version: "1.0.0"
+    - namespace: namespace9
+      name: name
+      version: "1.0.0"
+  vars:
+    version_url: '{{ galaxy_ng_server }}/v3/collections/{{ item.namespace }}/{{ item.name }}/versions/{{ item.version }}/'
+    version_data: "{{ lookup('url', version_url, username=galaxy_user, password=galaxy_password, force_basic_auth=true)|from_json }}"
 
 - name: rewrite requirements file with collections and signatures
   copy:
@@ -512,7 +542,7 @@
 - assert:
     that:
       - required_together is failed
-      - '"ERROR! Signatures were provided to verify namespace1.name1 but no keyring was configured." in required_together.stderr'
+      - required_together.stderr is contains("Signatures were provided to verify namespace1.name1 but no keyring was configured.")
 
 - name: install collections with ansible-galaxy install -r with invalid signatures - {{ test_id }}
   # Note that --keyring is a valid option for 'ansible-galaxy install -r ...', not just 'ansible-galaxy collection ...'
@@ -561,7 +591,6 @@
   - namespace8
   - namespace9
 
-# SIVEL
 - name: assert invalid signature is not fatal with ansible-galaxy install --ignore-errors - {{ test_id }}
   assert:
     that:
@@ -636,6 +665,7 @@
     - namespace8
     - namespace9
 
+# test --ignore-signature-status-code extends ANSIBLE_GALAXY_IGNORE_SIGNATURE_STATUS_CODES env var
 - name: install collections with only one valid signature by ignoring the other errors
   command: ansible-galaxy install -r {{ req_file }} {{ cli_opts }} {{ galaxy_verbosity }} --ignore-signature-status-code FAILURE
   register: install_req
@@ -676,6 +706,60 @@
   vars:
     install_stderr: "{{ install_req.stderr | regex_replace('\\n', ' ') }}"
 
+# test --ignore-signature-status-code passed multiple times
+- name: reinstall collections with only one valid signature by ignoring the other errors
+  command: ansible-galaxy install -r {{ req_file }} {{ cli_opts }} {{ galaxy_verbosity }} {{ ignore_flags }}
+  register: install_req
+  vars:
+    req_file: "{{ galaxy_dir }}/ansible_collections/requirements.yaml"
+    cli_opts: "-s {{ test_name }} --keyring {{ keyring }} --force"
+    keyring: "{{ gpg_homedir }}/pubring.kbx"
+    ignore_flags: "--ignore-signature-status-code BADSIG --ignore-signature-status-code FAILURE"
+  environment:
+    ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
+    ANSIBLE_GALAXY_REQUIRED_VALID_SIGNATURE_COUNT: all
+    ANSIBLE_NOCOLOR: True
+    ANSIBLE_FORCE_COLOR: False
+
+- name: assert invalid signature is not fatal with ansible-galaxy install - {{ test_name }}
+  assert:
+    that:
+    - install_req is success
+    - '"Installing ''namespace7.name:1.0.0'' to" in install_req.stdout'
+    - '"Signature verification failed for ''namespace7.name'' (return code 1)" not in install_req.stdout'
+    - '"Not installing namespace7.name because GnuPG signature verification failed." not in install_stderr'
+    - '"Installing ''namespace8.name:1.0.0'' to" in install_req.stdout'
+    - '"Installing ''namespace9.name:1.0.0'' to" in install_req.stdout'
+  vars:
+    install_stderr: "{{ install_req.stderr | regex_replace('\\n', ' ') }}"
+
+# test --ignore-signature-status-code passed once with a list
+- name: reinstall collections with only one valid signature by ignoring the other errors
+  command: ansible-galaxy install -r {{ req_file }} {{ cli_opts }} {{ galaxy_verbosity }} {{ ignore_flags }}
+  register: install_req
+  vars:
+    req_file: "{{ galaxy_dir }}/ansible_collections/requirements.yaml"
+    cli_opts: "-s {{ test_name }} --keyring {{ keyring }} --force"
+    keyring: "{{ gpg_homedir }}/pubring.kbx"
+    ignore_flags: "--ignore-signature-status-codes BADSIG FAILURE"
+  environment:
+    ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
+    ANSIBLE_GALAXY_REQUIRED_VALID_SIGNATURE_COUNT: all
+    ANSIBLE_NOCOLOR: True
+    ANSIBLE_FORCE_COLOR: False
+
+- name: assert invalid signature is not fatal with ansible-galaxy install - {{ test_name }}
+  assert:
+    that:
+    - install_req is success
+    - '"Installing ''namespace7.name:1.0.0'' to" in install_req.stdout'
+    - '"Signature verification failed for ''namespace7.name'' (return code 1)" not in install_req.stdout'
+    - '"Not installing namespace7.name because GnuPG signature verification failed." not in install_stderr'
+    - '"Installing ''namespace8.name:1.0.0'' to" in install_req.stdout'
+    - '"Installing ''namespace9.name:1.0.0'' to" in install_req.stdout'
+  vars:
+    install_stderr: "{{ install_req.stderr | regex_replace('\\n', ' ') }}"
+
 - name: clean up collections from last test
   file:
     path: '{{ galaxy_dir }}/ansible_collections/{{ collection }}/name'
@@ -687,44 +771,66 @@
     - namespace8
     - namespace9
 
-# Uncomment once pulp container is at pulp>=0.5.0
-#- name: install cache.cache at the current latest version
-#  command: ansible-galaxy collection install cache.cache -s '{{ test_name }}' -vvv
-#  environment:
-#    ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
-#
-#- set_fact:
-#    cache_version_build: '{{ (cache_version_build | int) + 1 }}'
-#
-#- name: publish update for cache.cache test
-#  setup_collections:
-#    server: galaxy_ng
-#    collections:
-#    - namespace: cache
-#      name: cache
-#      version: 1.0.{{ cache_version_build }}
-#
-#- name: make sure the cache version list is ignored on a collection version change - {{ test_id }}
-#  command: ansible-galaxy collection install cache.cache -s '{{ test_name }}' --force -vvv
-#  register: install_cached_update
-#  environment:
-#    ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
-#
-#- name: get result of cache version list is ignored on a collection version change - {{ test_id }}
-#  slurp:
-#    path: '{{ galaxy_dir }}/ansible_collections/cache/cache/MANIFEST.json'
-#  register: install_cached_update_actual
-#
-#- name: assert cache version list is ignored on a collection version change - {{ test_id }}
-#  assert:
-#    that:
-#    - '"Installing ''cache.cache:1.0.{{ cache_version_build }}'' to" in install_cached_update.stdout'
-#    - (install_cached_update_actual.content | b64decode | from_json).collection_info.version == '1.0.' ~ cache_version_build
+- name: install cache.cache at the current latest version
+  command: ansible-galaxy collection install cache.cache -s '{{ test_name }}' -vvv
+  environment:
+    ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
+
+- set_fact:
+    cache_version_build: '{{ (cache_version_build | int) + 1 }}'
+
+- name: copy cache collection to tmpdir
+  copy:
+    src: '{{ galaxy_dir }}/ansible_collections/cache/cache/'
+    dest: '{{ galaxy_dir }}/cache-src'
+    remote_src: true
+
+- name: write galaxy.yml file
+  copy:
+    dest: '{{ galaxy_dir }}/cache-src/galaxy.yml'
+    content: |
+      {{ (lookup('file', manifest)|from_json).collection_info|to_nice_yaml }}
+  vars:
+    manifest: '{{ galaxy_dir }}/cache-src/MANIFEST.json'
+
+- name: update cache.cache src version
+  replace:
+    path: '{{ galaxy_dir }}/cache-src/galaxy.yml'
+    regexp: '^version:.*$'
+    replace: 'version: 1.0.{{ cache_version_build }}'
+
+- name: build updated cache.cache
+  command:
+    cmd: ansible-galaxy collection build
+    chdir: '{{ galaxy_dir }}/cache-src'
+  register: cache_cache_build
+
+- name: publish updated cache.cache
+  command:
+    cmd: ansible-galaxy collection publish -s galaxy_ng "{{ cache_cache_build.stdout_lines|last|split|last }}"
+    chdir: '{{ galaxy_dir }}/cache-src'
+
+- name: make sure the cache version list is ignored on a collection version change - {{ test_id }}
+  command: ansible-galaxy collection install cache.cache -s '{{ test_name }}' --force -vvv
+  register: install_cached_update
+  environment:
+    ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
+
+- name: get result of cache version list is ignored on a collection version change - {{ test_id }}
+  slurp:
+    path: '{{ galaxy_dir }}/ansible_collections/cache/cache/MANIFEST.json'
+  register: install_cached_update_actual
+
+- name: assert cache version list is ignored on a collection version change - {{ test_id }}
+  assert:
+    that:
+    - '"Installing ''cache.cache:1.0." ~ cache_version_build ~ "'' to" in install_cached_update.stdout'
+    - (install_cached_update_actual.content | b64decode | from_json).collection_info.version == '1.0.' ~ cache_version_build
 
 - name: install collection with symlink - {{ test_id }}
   command: ansible-galaxy collection install symlink.symlink -s '{{ test_name }}' {{ galaxy_verbosity }}
   environment:
-    ANSIBLE_COLLECTIONS_PATHS: '{{ galaxy_dir }}/ansible_collections'
+    ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
   register: install_symlink
 
 - find:
@@ -762,6 +868,56 @@
     - install_symlink_actual.results[5].stat.islnk
     - install_symlink_actual.results[5].stat.lnk_target == '../REÅDMÈ.md'
 
+
+# Testing an install from source to check that symlinks to directories
+# are preserved (see issue https://github.com/ansible/ansible/issues/78442)
+- name: symlink_dirs collection install from source test
+  block:
+
+    - name: create symlink_dirs collection
+      command: ansible-galaxy collection init symlink_dirs.symlink_dirs --init-path "{{ galaxy_dir }}/scratch"
+
+    - name: create directory in collection
+      file:
+        path: "{{ galaxy_dir }}/scratch/symlink_dirs/symlink_dirs/folderA"
+        state: directory
+
+    - name: create symlink to folderA
+      file:
+        dest: "{{ galaxy_dir }}/scratch/symlink_dirs/symlink_dirs/folderB"
+        src: ./folderA
+        state: link
+        force: yes
+
+    - name: install symlink_dirs collection from source
+      command: ansible-galaxy collection install {{ galaxy_dir }}/scratch/symlink_dirs/symlink_dirs/
+      environment:
+        ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
+      register: install_symlink_dirs
+
+    - name: get result of install collection with symlink_dirs - {{ test_id }}
+      stat:
+        path: '{{ galaxy_dir }}/ansible_collections/symlink_dirs/symlink_dirs/{{ path }}'
+      register: install_symlink_dirs_actual
+      loop_control:
+        loop_var: path
+      loop:
+      - folderA
+      - folderB
+
+    - name: assert install collection with symlink_dirs - {{ test_id }}
+      assert:
+        that:
+        - '"Installing ''symlink_dirs.symlink_dirs:1.0.0'' to" in install_symlink_dirs.stdout'
+        - install_symlink_dirs_actual.results[0].stat.isdir
+        - install_symlink_dirs_actual.results[1].stat.islnk
+        - install_symlink_dirs_actual.results[1].stat.lnk_target == './folderA'
+  always:
+    - name: clean up symlink_dirs collection directory
+      file:
+        path: "{{ galaxy_dir }}/scratch/symlink_dirs"
+        state: absent
+
 - name: remove install directory for the next test because parent_dep.parent_collection was installed - {{ test_id }}
   file:
     path: '{{ galaxy_dir }}/ansible_collections'
@@ -770,7 +926,7 @@
 - name: install collection and dep compatible with multiple requirements - {{ test_id }}
   command: ansible-galaxy collection install parent_dep.parent_collection parent_dep2.parent_collection
   environment:
-    ANSIBLE_COLLECTIONS_PATHS: '{{ galaxy_dir }}/ansible_collections'
+    ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
   register: install_req
 
 - name: assert install collections with ansible-galaxy install - {{ test_id }}
@@ -792,7 +948,7 @@
     - name: install a collection to the same installation directory - {{ test_id }}
       command: ansible-galaxy collection install namespace1.name1
       environment:
-        ANSIBLE_COLLECTIONS_PATHS: '{{ galaxy_dir }}/ansible_collections'
+        ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
       register: install_req
 
     - name: assert installed collections with ansible-galaxy install - {{ test_id }}
@@ -912,6 +1068,7 @@
 - name: install simple collection with invalid detached signature
   command: ansible-galaxy collection install namespace1.name1 -vvvv {{ signature_options }}
   environment:
+    ANSIBLE_GALAXY_REQUIRED_VALID_SIGNATURE_COUNT: "all"
     ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
     ANSIBLE_NOCOLOR: True
     ANSIBLE_FORCE_COLOR: False
@@ -962,6 +1119,7 @@
 - name: use lenient signature verification (default) without providing signatures
   command: ansible-galaxy collection install namespace1.name1:1.0.0 -vvvv --keyring {{ gpg_homedir }}/pubring.kbx --force
   environment:
+    ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
     ANSIBLE_GALAXY_REQUIRED_VALID_SIGNATURE_COUNT: "all"
   register: missing_signature
 
@@ -972,8 +1130,9 @@
       - '"namespace1.name1:1.0.0 was installed successfully" in missing_signature.stdout'
       - '"Signature verification failed for ''namespace1.name1'': no successful signatures" not in missing_signature.stdout'
 
+# These steps use secondary (amanda) as it has no signatures provided
 - name: use strict signature verification without providing signatures
-  command: ansible-galaxy collection install namespace1.name1:1.0.0 -vvvv --keyring {{ gpg_homedir }}/pubring.kbx --force
+  command: ansible-galaxy collection install -s secondary namespace1.name1:1.0.0 -vvvv --keyring {{ gpg_homedir }}/pubring.kbx --force
   environment:
     ANSIBLE_GALAXY_REQUIRED_VALID_SIGNATURE_COUNT: "+1"
   ignore_errors: yes
@@ -999,7 +1158,7 @@
   args:
     chdir: '{{ galaxy_dir }}/scratch'
   environment:
-    ANSIBLE_COLLECTIONS_PATHS: '{{ galaxy_dir }}/ansible_collections'
+    ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
   register: install_concrete_pre
 
 - name: get result of install collections with concrete pre-release dep - {{ test_id }}
@@ -1019,6 +1178,87 @@
     - '"Installing ''dep_with_beta.parent:1.0.0'' to" in install_concrete_pre.stdout'
     - (install_concrete_pre_actual.results[0].content | b64decode | from_json).collection_info.version == '1.1.0-beta.1'
     - (install_concrete_pre_actual.results[1].content | b64decode | from_json).collection_info.version == '1.0.0'
+
+- block:
+  - name: create skeleton collection for trailing slash test
+    command: ansible-galaxy collection init trailing_dir.name --init-path "{{ galaxy_dir }}/scratch"
+
+  - name: install collection with directory source and trailing slash - {{ test_id }}
+    command: ansible-galaxy collection install '{{ galaxy_dir }}/scratch/trailing_dir/name/' {{ galaxy_verbosity }}
+    environment:
+      ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
+    register: install_dir_slash
+
+  - name: get result of install collections with with trailing slash - {{ test_id }}
+    slurp:
+      path: '{{ galaxy_dir }}/ansible_collections/trailing_dir/name/MANIFEST.json'
+    register: install_dir_slash_actual
+
+  - name: assert install collections with with trailing slash - {{ test_id }}
+    assert:
+      that:
+      - '"Installing ''trailing_dir.name:1.0.0'' to" in install_dir_slash.stdout'
+      - (install_dir_slash_actual.content | b64decode | from_json).collection_info.version == '1.0.0'
+
+  always:
+  - name: remove trailing dir skeleton
+    file:
+      path: '{{ galaxy_dir }}/scratch/trailing_dir'
+      state: absent
+
+- name: test collection FQCN mismatch warning
+  block:
+    - name: create test collection install directory for FQCN mismatch test
+      file:
+        path: '{{ galaxy_dir }}/ansible_collections'
+        state: directory
+
+    - name: Install a collection for FQCN mismatch test
+      command: ansible-galaxy collection install namespace1.name1
+      environment:
+        ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
+
+    - name: Create wrong namespace directory
+      file:
+        path: '{{ galaxy_dir }}/ansible_collections/wrongnamespace'
+        state: directory
+
+    - name: Move the installed collection to a mismatched path
+      command: mv {{ galaxy_dir }}/ansible_collections/namespace1/name1 {{ galaxy_dir }}/ansible_collections/wrongnamespace/wrongname
+
+    - name: Re-install the same collection to trigger path scanning
+      command: ansible-galaxy collection install namespace1.name1
+      environment:
+        ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
+      register: second_install
+
+    - name: Assert second install succeeded and warning was displayed
+      assert:
+        that:
+          - second_install is success
+          - expected_warning in second_install.stderr
+          - correct_name in second_install.stdout
+          - incorrect_name not in second_install.stdout
+      vars:
+        mismatched_path: "{{ galaxy_dir }}/ansible_collections/wrongnamespace/wrongname"
+        expected_warning: "Collection at {{ mismatched_path }} documents incorrect FQCN 'namespace1.name1'"
+        correct_name: 'namespace1.name1'
+        incorrect_name: 'wrongnamespace.wrongname'
+
+    - name: Stat for collection paths
+      stat:
+        path: "{{ item }}"
+      loop:
+        - '{{ galaxy_dir }}/ansible_collections/namespace1/name1'
+        - '{{ galaxy_dir }}/ansible_collections/wrongnamespace/wrongname'
+      register: collection_paths
+
+    - name: Assert both correct and incorrect collection directories exist
+      assert:
+        that:
+          - collection_paths.results[0].stat.exists and collection_paths.results[0].stat.isdir
+          - collection_paths.results[1].stat.exists and collection_paths.results[1].stat.isdir
+
 
 - name: remove collection dir after round of testing - {{ test_id }}
   file:

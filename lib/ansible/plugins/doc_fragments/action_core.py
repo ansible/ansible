@@ -1,15 +1,14 @@
 # -*- coding: utf-8 -*-
 # Copyright: (c) , Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 
-# WARNING: this is mostly here as a convinence for documenting core behaviours, no plugin outside of ansbile-core should use this file
+# WARNING: this is mostly here as a convenience for documenting core behaviours, no plugin outside of ansible-core should use this file
 class ModuleDocFragment(object):
 
     # requires action_common
-    DOCUMENTATION = r'''
+    DOCUMENTATION = r"""
 attributes:
     async:
       support: none
@@ -29,15 +28,15 @@ attributes:
       support: full
       platforms: all
     until:
-      description: Denotes if this action objeys until/retry/poll keywords
-      support: full
+      description: Denotes if this action obeys until/retry/poll keywords
+      support: none
     tags:
       description: Allows for the 'tags' keyword to control the selection of this action for execution
       support: full
-'''
+"""
 
     # also requires core above
-    IMPORT = r'''
+    IMPORT = r"""
 attributes:
     action:
       details: While this action executes locally on the controller it is not governed by an action plugin
@@ -60,9 +59,9 @@ attributes:
       support: none
     until:
       support: none
-'''
+"""
     # also requires core above
-    INCLUDE = r'''
+    INCLUDE = r"""
 attributes:
     action:
       details: While this action executes locally on the controller it is not governed by an action plugin
@@ -77,4 +76,4 @@ attributes:
     tags:
       details: Tags are interpreted by this action but are not automatically inherited by the include tasks, see C(apply)
       support: partial
-'''
+"""

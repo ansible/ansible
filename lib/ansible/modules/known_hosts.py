@@ -2,16 +2,15 @@
 # Copyright: (c) 2014, Matthew Vernon <mcv21@cam.ac.uk>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: known_hosts
 short_description: Add or remove a host from the C(known_hosts) file
 description:
-   - The C(known_hosts) module lets you add or remove a host keys from the C(known_hosts) file.
+   - The M(ansible.builtin.known_hosts) module lets you add or remove host keys from the C(known_hosts) file.
    - Starting at Ansible 2.2, multiple entries per host are allowed, but only one for each key type supported by ssh.
      This is useful if you're going to want to use the M(ansible.builtin.git) module over ssh, for example.
    - If you have a very large number of host keys to manage, you will find the M(ansible.builtin.template) module more useful.
@@ -20,21 +19,21 @@ options:
   name:
     aliases: [ 'host' ]
     description:
-      - The host to add or remove (must match a host specified in key). It will be converted to lowercase so that ssh-keygen can find it.
+      - The host to add or remove (must match a host specified in key). It will be converted to lowercase so that C(ssh-keygen) can find it.
       - Must match with <hostname> or <ip> present in key attribute.
-      - For custom SSH port, C(name) needs to specify port as well. See example section.
+      - For custom SSH port, O(name) needs to specify port as well. See example section.
     type: str
     required: true
   key:
     description:
       - The SSH public host key, as a string.
-      - Required if C(state=present), optional when C(state=absent), in which case all keys for the host are removed.
+      - Required if O(state=present), optional when O(state=absent), in which case all keys for the host are removed.
       - The key must be in the right format for SSH (see sshd(8), section "SSH_KNOWN_HOSTS FILE FORMAT").
       - Specifically, the key should not match the format that is found in an SSH pubkey file, but should rather have the hostname prepended to a
         line that includes the pubkey, the same way that it would appear in the known_hosts file. The value prepended to the line must also match
         the value of the name parameter.
       - Should be of format C(<hostname[,IP]> ssh-rsa <pubkey>).
-      - For custom SSH port, C(key) needs to specify port as well. See example section.
+      - For custom SSH port, O(key) needs to specify port as well. See example section.
     type: str
   path:
     description:
@@ -50,8 +49,8 @@ options:
     version_added: "2.3"
   state:
     description:
-      - I(present) to add the host key.
-      - I(absent) to remove it.
+      - V(present) to add host keys.
+      - V(absent) to remove host keys.
     choices: [ "absent", "present" ]
     default: "present"
     type: str
@@ -66,9 +65,9 @@ extends_documentation_fragment:
   - action_common_attributes
 author:
 - Matthew Vernon (@mcv21)
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: Tell the host about our servers it might want to ssh to
   ansible.builtin.known_hosts:
     path: /etc/ssh/ssh_known_hosts
@@ -88,7 +87,7 @@ EXAMPLES = r'''
     key: '[host1.example.com]:2222 ssh-rsa ASDeararAIUHI324324' # some key gibberish
     path: /etc/ssh/ssh_known_hosts
     state: present
-'''
+"""
 
 # Makes sure public host keys are present or absent in the given known_hosts
 # file.
@@ -102,7 +101,7 @@ EXAMPLES = r'''
 #    state = absent|present (default: present)
 
 import base64
-import errno
+import copy
 import hashlib
 import hmac
 import os
@@ -111,7 +110,7 @@ import re
 import tempfile
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_bytes, to_native
+from ansible.module_utils.common.text.converters import to_bytes, to_native
 
 
 def enforce_state(module, params):
@@ -119,6 +118,7 @@ def enforce_state(module, params):
     Add or remove key.
     """
 
+    results = dict(changed=False)
     host = params["name"].lower()
     key = params.get("key", None)
     path = params.get("path")
@@ -141,7 +141,12 @@ def enforce_state(module, params):
 
     found, replace_or_add, found_line = search_for_host_key(module, host, key, path, sshkeygen)
 
-    params['diff'] = compute_diff(path, found_line, replace_or_add, state, key)
+    results['diff'] = compute_diff(path, found_line, replace_or_add, state, key)
+
+    # check if we are trying to remove a non matching key,
+    # in that case return with no change to the host
+    if state == 'absent' and not found_line and key:
+        return results
 
     # We will change state if found==True & state!="present"
     # or found==False & state=="present"
@@ -149,25 +154,24 @@ def enforce_state(module, params):
     # Alternatively, if replace is true (i.e. key present, and we must change
     # it)
     if module.check_mode:
-        module.exit_json(changed=replace_or_add or (state == "present") != found,
-                         diff=params['diff'])
+        results['changed'] = replace_or_add or (state == "present") != found
+        module.exit_json(**results)
 
     # Now do the work.
 
     # Only remove whole host if found and no key provided
     if found and not key and state == "absent":
         module.run_command([sshkeygen, '-R', host, '-f', path], check_rc=True)
-        params['changed'] = True
+        results['changed'] = True
 
     # Next, add a new (or replacing) entry
     if replace_or_add or found != (state == "present"):
         try:
             inf = open(path, "r")
-        except IOError as e:
-            if e.errno == errno.ENOENT:
-                inf = None
-            else:
-                module.fail_json(msg="Failed to read %s: %s" % (path, str(e)))
+        except FileNotFoundError:
+            inf = None
+        except OSError as ex:
+            raise Exception(f"Failed to read {path!r}.") from ex
         try:
             with tempfile.NamedTemporaryFile(mode='w+', dir=os.path.dirname(path), delete=False) as outf:
                 if inf is not None:
@@ -178,24 +182,24 @@ def enforce_state(module, params):
                     inf.close()
                 if state == 'present':
                     outf.write(key)
-        except (IOError, OSError) as e:
-            module.fail_json(msg="Failed to write to file %s: %s" % (path, to_native(e)))
+        except OSError as ex:
+            raise Exception(f"Failed to write to file {path!r}.") from ex
         else:
             module.atomic_move(outf.name, path)
 
-        params['changed'] = True
+        results['changed'] = True
 
-    return params
+    return results
 
 
 def sanity_check(module, host, key, sshkeygen):
-    '''Check supplied key is sensible
+    """Check supplied key is sensible
 
     host and key are parameters provided by the user; If the host
     provided is inconsistent with the key supplied, then this function
     quits, providing an error to the user.
     sshkeygen is the path to ssh-keygen, found earlier with get_bin_path
-    '''
+    """
     # If no key supplied, we're doing a removal, and have nothing to check here.
     if not key:
         return
@@ -214,19 +218,24 @@ def sanity_check(module, host, key, sshkeygen):
         try:
             outf.write(key)
             outf.flush()
-        except IOError as e:
-            module.fail_json(msg="Failed to write to temporary file %s: %s" %
-                             (outf.name, to_native(e)))
+        except OSError as ex:
+            raise Exception(f"Failed to write to temporary file {outf.name!r}.") from ex
 
         sshkeygen_command = [sshkeygen, '-F', host, '-f', outf.name]
         rc, stdout, stderr = module.run_command(sshkeygen_command)
 
     if stdout == '':  # host not found
-        module.fail_json(msg="Host parameter does not match hashed host field in supplied key")
+        results = {
+            "msg": "Host parameter does not match hashed host field in supplied key",
+            "rc": rc,
+        }
+        if stderr:
+            results["stderr"] = stderr
+        module.fail_json(**results)
 
 
 def search_for_host_key(module, host, key, path, sshkeygen):
-    '''search_for_host_key(module,host,key,path,sshkeygen) -> (found,replace_or_add,found_line)
+    """search_for_host_key(module,host,key,path,sshkeygen) -> (found,replace_or_add,found_line)
 
     Looks up host and keytype in the known_hosts file path; if it's there, looks to see
     if one of those entries matches key. Returns:
@@ -235,7 +244,7 @@ def search_for_host_key(module, host, key, path, sshkeygen):
     found_line (int or None): the line where a key of the same type was found
     if found=False, then replace is always False.
     sshkeygen is the path to ssh-keygen, found earlier with get_bin_path
-    '''
+    """
     if os.path.exists(path) is False:
         return False, False, None
 
@@ -268,12 +277,20 @@ def search_for_host_key(module, host, key, path, sshkeygen):
                 module.fail_json(msg="failed to parse output of ssh-keygen for line number: '%s'" % l)
         else:
             found_key = normalize_known_hosts_key(l)
-            if new_key['host'][:3] == '|1|' and found_key['host'][:3] == '|1|':  # do not change host hash if already hashed
-                new_key['host'] = found_key['host']
-            if new_key == found_key:  # found a match
-                return True, False, found_line  # found exactly the same key, don't replace
-            elif new_key['type'] == found_key['type']:  # found a different key for the same key type
-                return True, True, found_line
+
+            if 'options' in found_key and found_key['options'][:15] == '@cert-authority':
+                if new_key == found_key:  # found a match
+                    return True, False, found_line  # found exactly the same key, don't replace
+            elif 'options' in found_key and found_key['options'][:7] == '@revoke':
+                if new_key == found_key:  # found a match
+                    return True, False, found_line  # found exactly the same key, don't replace
+            else:
+                if new_key['host'][:3] == '|1|' and found_key['host'][:3] == '|1|':  # do not change host hash if already hashed
+                    new_key['host'] = found_key['host']
+                if new_key == found_key:  # found a match
+                    return True, False, found_line  # found exactly the same key, don't replace
+                elif new_key['type'] == found_key['type']:  # found a different key for the same key type
+                    return True, True, found_line
 
     # No match found, return found and replace, but no line
     return True, True, None
@@ -290,14 +307,14 @@ def hash_host_key(host, key):
 
 
 def normalize_known_hosts_key(key):
-    '''
+    """
     Transform a key, either taken from a known_host file or provided by the
     user, into a normalized form.
     The host part (which might include multiple hostnames or be hashed) gets
     replaced by the provided host. Also, any spurious information gets removed
     from the end (like the username@host tag usually present in hostkeys, but
     absent in known_hosts files)
-    '''
+    """
     key = key.strip()  # trim trailing newline
     k = key.split()
     d = dict()
@@ -323,9 +340,10 @@ def compute_diff(path, found_line, replace_or_add, state, key):
     }
     try:
         inf = open(path, "r")
-    except IOError as e:
-        if e.errno == errno.ENOENT:
-            diff['before_header'] = '/dev/null'
+    except FileNotFoundError:
+        diff['before_header'] = '/dev/null'
+    except OSError:
+        pass
     else:
         diff['before'] = inf.read()
         inf.close()
@@ -351,7 +369,9 @@ def main():
         supports_check_mode=True
     )
 
-    results = enforce_state(module, module.params)
+    # TODO: deprecate returning everything that was passed in
+    results = copy.copy(module.params)
+    results.update(enforce_state(module, module.params))
     module.exit_json(**results)
 
 

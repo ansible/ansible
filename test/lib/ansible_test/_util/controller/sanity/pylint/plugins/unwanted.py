@@ -1,13 +1,15 @@
 """A plugin for pylint to identify imports and functions which should not be used."""
+
 from __future__ import annotations
 
+import functools
 import os
 import typing as t
 
-import astroid
+import astroid.exceptions
+import astroid.nodes
 
 from pylint.checkers import BaseChecker
-from pylint.interfaces import IAstroidChecker
 
 ANSIBLE_TEST_MODULES_PATH = os.environ['ANSIBLE_TEST_MODULES_PATH']
 ANSIBLE_TEST_MODULE_UTILS_PATH = os.environ['ANSIBLE_TEST_MODULE_UTILS_PATH']
@@ -21,11 +23,13 @@ class UnwantedEntry:
             modules_only=False,  # type: bool
             names=None,  # type: t.Optional[t.Tuple[str, ...]]
             ignore_paths=None,  # type: t.Optional[t.Tuple[str, ...]]
+            ansible_test_only=False,  # type: bool
     ):  # type: (...) -> None
         self.alternative = alternative
         self.modules_only = modules_only
         self.names = set(names) if names else set()
         self.ignore_paths = ignore_paths
+        self.ansible_test_only = ansible_test_only
 
     def applies_to(self, path, name=None):  # type: (str, t.Optional[str]) -> bool
         """Return True if this entry applies to the given path, otherwise return False."""
@@ -37,6 +41,9 @@ class UnwantedEntry:
                 return False
 
         if self.ignore_paths and any(path.endswith(ignore_path) for ignore_path in self.ignore_paths):
+            return False
+
+        if self.ansible_test_only and '/test/lib/ansible_test/_internal/' not in path:
             return False
 
         if self.modules_only:
@@ -52,7 +59,6 @@ def is_module_path(path):  # type: (str) -> bool
 
 class AnsibleUnwantedChecker(BaseChecker):
     """Checker for unwanted imports and functions."""
-    __implements__ = (IAstroidChecker,)
 
     name = 'unwanted'
 
@@ -76,43 +82,38 @@ class AnsibleUnwantedChecker(BaseChecker):
                'Identifies imports which should not be used.'),
     )
 
-    unwanted_imports = dict(
-        # Additional imports that we may want to start checking:
-        # boto=UnwantedEntry('boto3', modules_only=True),
-        # requests=UnwantedEntry('ansible.module_utils.urls', modules_only=True),
-        # urllib=UnwantedEntry('ansible.module_utils.urls', modules_only=True),
-
-        # see https://docs.python.org/2/library/urllib2.html
-        urllib2=UnwantedEntry('ansible.module_utils.urls',
-                              ignore_paths=(
-                                  '/lib/ansible/module_utils/urls.py',
-                              )),
-
+    unwanted_imports = {
         # see https://docs.python.org/3/library/collections.abc.html
-        collections=UnwantedEntry('ansible.module_utils.common._collections_compat',
-                                  ignore_paths=(
-                                      '/lib/ansible/module_utils/common/_collections_compat.py',
-                                  ),
-                                  names=(
-                                      'MappingView',
-                                      'ItemsView',
-                                      'KeysView',
-                                      'ValuesView',
-                                      'Mapping', 'MutableMapping',
-                                      'Sequence', 'MutableSequence',
-                                      'Set', 'MutableSet',
-                                      'Container',
-                                      'Hashable',
-                                      'Sized',
-                                      'Callable',
-                                      'Iterable',
-                                      'Iterator',
-                                  )),
-    )
+        # deprecated: description='remove collections check now that Python 3.9 is no longer supported' core_version='2.23'
+        'collections': UnwantedEntry(
+            'collections.abc',
+            names=(
+                'MappingView',
+                'ItemsView',
+                'KeysView',
+                'ValuesView',
+                'Mapping', 'MutableMapping',
+                'Sequence', 'MutableSequence',
+                'Set', 'MutableSet',
+                'Container',
+                'Hashable',
+                'Sized',
+                'Callable',
+                'Iterable',
+                'Iterator',
+            )
+        ),
+
+        'ansible.module_utils.six': UnwantedEntry(
+            'the Python standard library equivalent'
+        ),
+    }
 
     unwanted_functions = {
         # see https://docs.python.org/3/library/tempfile.html#tempfile.mktemp
         'tempfile.mktemp': UnwantedEntry('tempfile.mkstemp'),
+
+        'os.chmod': UnwantedEntry('verified_chmod', ansible_test_only=True),
 
         'sys.exit': UnwantedEntry('exit_json or fail_json',
                                   ignore_paths=(
@@ -128,21 +129,53 @@ class AnsibleUnwantedChecker(BaseChecker):
                                         modules_only=True),
     }
 
-    def visit_import(self, node):  # type: (astroid.node_classes.Import) -> None
+    for method in (
+        'popen',
+        'posix_spawn',
+        'posix_spawnp',
+        'spawnl',
+        'spawnle',
+        'spawnlp',
+        'spawnlpe',
+        'spawnv',
+        'spawnve',
+        'spawnvp',
+        'spawnvpe',
+        'system',
+    ):
+        unwanted_functions[f'os.{method}'] = UnwantedEntry('run_command', modules_only=True)
+
+    for method in (
+        'Popen',
+        'call',
+        'check_call',
+        'check_output',
+        'getoutput',
+        'getstatusoutput',
+        'run',
+    ):
+        unwanted_functions[f'subprocess.{method}'] = UnwantedEntry('run_command', modules_only=True)
+
+    @functools.cached_property
+    def is_ansible_core(self) -> bool:
+        """True if ansible-core is being tested."""
+        return not self.linter.config.collection_name
+
+    def visit_import(self, node: astroid.nodes.Import) -> None:
         """Visit an import node."""
         for name in node.names:
             self._check_import(node, name[0])
 
-    def visit_importfrom(self, node):  # type: (astroid.node_classes.ImportFrom) -> None
+    def visit_importfrom(self, node: astroid.nodes.ImportFrom) -> None:
         """Visit an import from node."""
         self._check_importfrom(node, node.modname, node.names)
 
-    def visit_attribute(self, node):  # type: (astroid.node_classes.Attribute) -> None
+    def visit_attribute(self, node: astroid.nodes.Attribute) -> None:
         """Visit an attribute node."""
         last_child = node.last_child()
 
         # this is faster than using type inference and will catch the most common cases
-        if not isinstance(last_child, astroid.node_classes.Name):
+        if not isinstance(last_child, astroid.nodes.Name):
             return
 
         module = last_child.name
@@ -153,14 +186,24 @@ class AnsibleUnwantedChecker(BaseChecker):
             if entry.applies_to(self.linter.current_file, node.attrname):
                 self.add_message(self.BAD_IMPORT_FROM, args=(node.attrname, entry.alternative, module), node=node)
 
-    def visit_call(self, node):  # type: (astroid.node_classes.Call) -> None
+    def visit_call(self, node: astroid.nodes.Call) -> None:
         """Visit a call node."""
         try:
             for i in node.func.inferred():
                 func = None
 
-                if isinstance(i, astroid.scoped_nodes.FunctionDef) and isinstance(i.parent, astroid.scoped_nodes.Module):
-                    func = '%s.%s' % (i.parent.name, i.name)
+                if isinstance(i.parent, astroid.nodes.Module):
+                    parent_module = i.parent.name
+                elif isinstance(i.parent, astroid.nodes.If) and isinstance(i.parent.parent, astroid.nodes.Module):
+                    parent_module = i.parent.parent.name
+                else:
+                    parent_module = None
+
+                if parent_module == 'posix':
+                    parent_module = 'os'  # some os.* functions we're looking for show up as posix.* imports
+
+                if parent_module and isinstance(i, (astroid.nodes.FunctionDef, astroid.nodes.ClassDef)):
+                    func = f'{parent_module}.{i.name}'
 
                 if not func:
                     continue
@@ -172,7 +215,7 @@ class AnsibleUnwantedChecker(BaseChecker):
         except astroid.exceptions.InferenceError:
             pass
 
-    def _check_import(self, node, modname):  # type: (astroid.node_classes.Import, str) -> None
+    def _check_import(self, node: astroid.nodes.Import, modname: str) -> None:
         """Check the imports on the specified import node."""
         self._check_module_import(node, modname)
 
@@ -184,7 +227,7 @@ class AnsibleUnwantedChecker(BaseChecker):
         if entry.applies_to(self.linter.current_file):
             self.add_message(self.BAD_IMPORT, args=(entry.alternative, modname), node=node)
 
-    def _check_importfrom(self, node, modname, names):  # type: (astroid.node_classes.ImportFrom, str, t.List[str]) -> None
+    def _check_importfrom(self, node: astroid.nodes.ImportFrom, modname: str, names: list[tuple[str, str | None]]) -> None:
         """Check the imports on the specified import from node."""
         self._check_module_import(node, modname)
 
@@ -197,7 +240,7 @@ class AnsibleUnwantedChecker(BaseChecker):
             if entry.applies_to(self.linter.current_file, name[0]):
                 self.add_message(self.BAD_IMPORT_FROM, args=(name[0], entry.alternative, modname), node=node)
 
-    def _check_module_import(self, node, modname):  # type: (t.Union[astroid.node_classes.Import, astroid.node_classes.ImportFrom], str) -> None
+    def _check_module_import(self, node: astroid.nodes.Import | astroid.nodes.ImportFrom, modname: str) -> None:
         """Check the module import on the given import or import from node."""
         if not is_module_path(self.linter.current_file):
             return

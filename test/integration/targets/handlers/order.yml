@@ -1,0 +1,34 @@
+- name: Test handlers are executed in the order they are defined, not notified
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - set_fact:
+        foo: ''
+      changed_when: true
+      notify:
+        - handler4
+        - handler3
+        - handler1
+        - handler2
+        - handler5
+    - name: EXPECTED FAILURE
+      fail:
+      when: test_force_handlers | default(false) | bool
+  handlers:
+    - name: handler1
+      set_fact:
+        foo: "{{ foo ~ 1 }}"
+    - name: handler2
+      set_fact:
+        foo: "{{ foo ~ 2 }}"
+    - name: handler3
+      set_fact:
+        foo: "{{ foo ~ 3 }}"
+    - name: handler4
+      set_fact:
+        foo: "{{ foo ~ 4 }}"
+    - name: handler5
+      assert:
+        that:
+          - foo == '1234'
+        fail_msg: "{{ foo }}"

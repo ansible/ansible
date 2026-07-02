@@ -1,0 +1,50 @@
+# Copyright: Contributors to the Ansible project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+from __future__ import annotations
+
+import json
+import os
+import re
+import sys
+import typing as t
+
+from multiprocessing.shared_memory import SharedMemory
+
+
+def main() -> t.Never:
+    if len(sys.argv) > 1:
+        exit_code = 0 if handle_prompt(sys.argv[1]) else 1
+    else:
+        exit_code = 1
+
+    sys.exit(exit_code)
+
+
+def handle_prompt(prompt: str) -> bool:
+    if (ssh_askpass_prompt := os.environ.get('SSH_ASKPASS_PROMPT')) == 'none':
+        return True
+
+    if (
+        ssh_askpass_prompt == 'confirm' or
+        re.search(r'(The authenticity of host |differs from the key for the IP address)', prompt)
+    ):
+        sys.stdout.write('no')
+        sys.stdout.flush()
+        return True
+
+    # This SharedMemory instance is intentionally not closed or unlinked.
+    # Closing will occur naturally in the SharedMemory finalizer.
+    # Unlinking is the responsibility of the process which created it.
+    shm = SharedMemory(name=os.environ['_ANSIBLE_SSH_ASKPASS_SHM'], track=False)
+
+    cfg = json.loads(shm.buf.tobytes().rstrip(b'\x00'))
+
+    if cfg['prompt'] not in prompt:
+        return False
+
+    # Report the password provided by the SharedMemory instance.
+    # The contents are left untouched after consumption to allow subsequent attempts to succeed.
+    # This can occur when multiple password prompting methods are enabled, such as password and keyboard-interactive, which is the default on macOS.
+    sys.stdout.write(cfg['password'])
+    sys.stdout.flush()
+    return True

@@ -16,15 +16,14 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 from abc import abstractmethod
 from functools import wraps
 
 from ansible.plugins import AnsiblePlugin
 from ansible.errors import AnsibleError, AnsibleConnectionFailure
-from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils.common.text.converters import to_bytes, to_text
 
 try:
     from scp import SCPClient
@@ -264,7 +263,7 @@ class CliconfBase(AnsiblePlugin):
                     'supports_commit_comment': <bool>,     # identify if adding comment to commit is supported of not
                     'supports_onbox_diff': <bool>,          # identify if on box diff capability is supported or not
                     'supports_generate_diff': <bool>,       # identify if diff capability is supported within plugin
-                    'supports_multiline_delimiter': <bool>, # identify if multiline demiliter is supported within config
+                    'supports_multiline_delimiter': <bool>, # identify if multiline delimiter is supported within config
                     'supports_diff_match': <bool>,          # identify if match is supported
                     'supports_diff_ignore_lines': <bool>,   # identify if ignore line in diff is supported
                     'supports_config_replace': <bool>,     # identify if running config replace with candidate config is supported
@@ -276,7 +275,7 @@ class CliconfBase(AnsiblePlugin):
                 'diff_replace': [list of supported replace values],
                 'output': [list of supported command output format]
             }
-        :return: capability as json string
+        :return: capability as dict
         """
         result = {}
         result['rpc'] = self.get_base_rpc()
@@ -360,7 +359,6 @@ class CliconfBase(AnsiblePlugin):
                         remote host before triggering timeout exception
         :return: None
         """
-        """Fetch file over scp/sftp from remote device"""
         ssh = self._connection.paramiko_conn._connect_uncached()
         if proto == 'scp':
             if not HAS_SCP:

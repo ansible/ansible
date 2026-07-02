@@ -2,12 +2,9 @@
 # (c) 2020 Matt Martz <matt@sivel.net>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 import os
-
-from io import StringIO
 
 from email.message import Message
 
@@ -55,12 +52,22 @@ def test_prepare_multipart():
         'file4': {
             'filename': client_cert,
             'mime_type': 'text/plain',
+            'multipart_encoding': 'base64',
         },
         'file5': {
             'filename': client_key,
-            'mime_type': 'application/octet-stream'
+            'mime_type': 'application/octet-stream',
+            'multipart_encoding': 'base64',
         },
         'file6': {
+            'filename': client_txt,
+            'multipart_encoding': 'base64',
+        },
+        'file7': {
+            'filename': client_txt,
+            'multipart_encoding': '7or8bit',
+        },
+        'file8': {
             'filename': client_txt,
         },
     }
@@ -72,7 +79,6 @@ def test_prepare_multipart():
     assert headers.get_content_type() == 'multipart/form-data'
     boundary = headers.get_boundary()
     assert boundary is not None
-
     with open(multipart, 'rb') as f:
         b_expected = f.read().replace(fixture_boundary, boundary.encode())
 
@@ -94,6 +100,13 @@ def test_unknown_mime(mocker):
     mocker.patch('mimetypes.guess_type', return_value=(None, None))
     content_type, b_data = prepare_multipart(fields)
     assert b'Content-Type: application/octet-stream' in b_data
+
+
+def test_unknown_wrong_multipart_encoding():
+    here = os.path.dirname(__file__)
+    example_file = os.path.join(here, 'fixtures/client.pem')
+    fields = {'foo': {'filename': example_file, 'multipart_encoding': 'unknown'}}
+    pytest.raises(ValueError, prepare_multipart, fields)
 
 
 def test_bad_mime(mocker):

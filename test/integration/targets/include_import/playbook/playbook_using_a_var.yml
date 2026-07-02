@@ -1,0 +1,6 @@
+- hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: Verify an imported playbook can see a var it was given
+      assert:
+        that: pb_var == 'hello'

@@ -15,13 +15,15 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-from units.compat import unittest
+import unittest
+
+import pytest
+
 from unittest.mock import patch, MagicMock
 
+from ansible.parsing.vault import VaultSecretsContext
 from units.mock.loader import DictDataLoader
 
 from ansible.release import __version__
@@ -52,14 +54,6 @@ class TestCliBuildVaultIds(unittest.TestCase):
         res = cli.CLI.build_vault_ids(['foo@bar'])
         self.assertEqual(res, ['foo@bar'])
 
-    def test_create_new_password_no_vault_id(self):
-        res = cli.CLI.build_vault_ids([], create_new_password=True)
-        self.assertEqual(res, ['default@prompt_ask_vault_pass'])
-
-    def test_create_new_password_no_vault_id_no_auto_prompt(self):
-        res = cli.CLI.build_vault_ids([], auto_prompt=False, create_new_password=True)
-        self.assertEqual(res, [])
-
     def test_no_vault_id_no_auto_prompt(self):
         # simulate 'ansible-playbook site.yml' with out --ask-vault-pass, should not prompt
         res = cli.CLI.build_vault_ids([], auto_prompt=False)
@@ -77,23 +71,12 @@ class TestCliBuildVaultIds(unittest.TestCase):
         res = cli.CLI.build_vault_ids([], auto_prompt=True, ask_vault_pass=True)
         self.assertEqual(res, ['default@prompt_ask_vault_pass'])
 
-    def test_create_new_password_auto_prompt(self):
-        # simulate 'ansible-vault encrypt somefile.yml'
-        res = cli.CLI.build_vault_ids([], auto_prompt=True, create_new_password=True)
+    def test_no_vault_id_ask_vault_pass(self):
+        res = cli.CLI.build_vault_ids([], ask_vault_pass=True)
         self.assertEqual(res, ['default@prompt_ask_vault_pass'])
 
-    def test_create_new_password_no_vault_id_ask_vault_pass(self):
-        res = cli.CLI.build_vault_ids([], ask_vault_pass=True,
-                                      create_new_password=True)
-        self.assertEqual(res, ['default@prompt_ask_vault_pass'])
-
-    def test_create_new_password_with_vault_ids(self):
-        res = cli.CLI.build_vault_ids(['foo@bar'], create_new_password=True)
-        self.assertEqual(res, ['foo@bar'])
-
-    def test_create_new_password_no_vault_ids_password_files(self):
-        res = cli.CLI.build_vault_ids([], vault_password_files=['some-password-file'],
-                                      create_new_password=True)
+    def test_no_vault_ids_password_files(self):
+        res = cli.CLI.build_vault_ids([], vault_password_files=['some-password-file'])
         self.assertEqual(res, ['default@some-password-file'])
 
     def test_everything(self):
@@ -102,7 +85,6 @@ class TestCliBuildVaultIds(unittest.TestCase):
                                       vault_password_files=['yet-another-password-file',
                                                             'one-more-password-file'],
                                       ask_vault_pass=True,
-                                      create_new_password=True,
                                       auto_prompt=False)
 
         self.assertEqual(set(res), set(['blip@prompt', 'baz@prompt_ask_vault_pass',
@@ -112,6 +94,7 @@ class TestCliBuildVaultIds(unittest.TestCase):
                                         'default@one-more-password-file']))
 
 
+@pytest.mark.usefixtures("_zap_vault_secrets_context")
 class TestCliSetupVaultSecrets(unittest.TestCase):
     def setUp(self):
         self.fake_loader = DictDataLoader({})
@@ -268,6 +251,8 @@ class TestCliSetupVaultSecrets(unittest.TestCase):
 
         self.assertEqual(matches[0][1].bytes, b'file1_password')
         self.assertEqual(len(matches), 1)
+
+        VaultSecretsContext._current = None
 
         res = cli.CLI.setup_vault_secrets(loader=self.fake_loader,
                                           vault_ids=[],

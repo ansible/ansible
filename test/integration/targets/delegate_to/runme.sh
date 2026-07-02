@@ -45,9 +45,6 @@ trap teardown EXIT
 ANSIBLE_SSH_ARGS='-C -o ControlMaster=auto -o ControlPersist=60s -o UserKnownHostsFile=/dev/null' \
     ANSIBLE_HOST_KEY_CHECKING=false ansible-playbook test_delegate_to.yml -i inventory -v "$@"
 
-# this test is not doing what it says it does, also relies on var that should not be available
-#ansible-playbook test_loop_control.yml -v "$@"
-
 ansible-playbook test_delegate_to_loop_randomness.yml -i inventory -v "$@"
 
 ansible-playbook delegate_and_nolog.yml -i inventory -v "$@"
@@ -57,7 +54,11 @@ ansible-playbook delegate_facts_block.yml -i inventory -v "$@"
 ansible-playbook test_delegate_to_loop_caching.yml -i inventory -v "$@"
 
 # ensure we are using correct settings when delegating
-ANSIBLE_TIMEOUT=3 ansible-playbook delegate_vars_hanldling.yml -i inventory -v "$@"
+ANSIBLE_TIMEOUT=3 ansible-playbook delegate_vars_handling.yml -i inventory -i delegate_vars_inventory -v | tee out
+if grep '{{ hostip }}' out; then
+  echo 'Callback displayed the ansible_host template instead of the rendered value.'
+  exit 1
+fi
 
 ansible-playbook has_hostvars.yml -i inventory -v "$@"
 
@@ -76,3 +77,8 @@ ansible-playbook test_delegate_to_lookup_context.yml -i inventory -v "$@"
 ansible-playbook delegate_local_from_root.yml -i inventory -v "$@" -e 'ansible_user=root'
 ansible-playbook delegate_with_fact_from_delegate_host.yml "$@"
 ansible-playbook delegate_facts_loop.yml -i inventory -v "$@"
+ansible-playbook test_random_delegate_to_with_loop.yml -i inventory -v "$@"
+ansible-playbook test_delegated_async.yml -v "$@"
+
+# Run playbook multiple times to ensure there are no false-negatives
+for i in $(seq 0 10); do ansible-playbook test_random_delegate_to_without_loop.yml -i inventory -v "$@"; done;

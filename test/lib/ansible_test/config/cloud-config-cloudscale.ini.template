@@ -4,6 +4,8 @@
 #
 # 1) Running integration tests without using ansible-test.
 #
+# Fill in the value below and save this file without the .template extension,
+# into the tests/integration directory of the collection you're testing.
 
 [default]
 cloudscale_api_token = @API_TOKEN

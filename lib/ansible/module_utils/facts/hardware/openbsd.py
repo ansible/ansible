@@ -13,13 +13,12 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import re
 import time
 
-from ansible.module_utils._text import to_text
+from ansible.module_utils.common.text.converters import to_text
 
 from ansible.module_utils.facts.hardware.base import Hardware, HardwareCollector
 from ansible.module_utils.facts import timeout
@@ -55,7 +54,7 @@ class OpenBSDHardware(Hardware):
         hardware_facts.update(self.get_dmi_facts())
         hardware_facts.update(self.get_uptime_facts())
 
-        # storage devices notorioslly prone to hang/block so they are under a timeout
+        # storage devices notoriously prone to hang/block so they are under a timeout
         try:
             hardware_facts.update(self.get_mount_facts())
         except timeout.TimeoutError:
@@ -94,7 +93,7 @@ class OpenBSDHardware(Hardware):
         rc, out, err = self.module.run_command("/usr/bin/vmstat")
         if rc == 0:
             memory_facts['memfree_mb'] = int(out.splitlines()[-1].split()[4]) // 1024
-            memory_facts['memtotal_mb'] = int(self.sysctl['hw.usermem']) // 1024 // 1024
+            memory_facts['memtotal_mb'] = int(self.sysctl['hw.physmem']) // 1024 // 1024
 
         # Get swapctl info. swapctl output looks like:
         # total: 69268 1K-blocks allocated, 0 used, 69268 available
@@ -114,6 +113,9 @@ class OpenBSDHardware(Hardware):
     def get_uptime_facts(self):
         # On openbsd, we need to call it with -n to get this value as an int.
         sysctl_cmd = self.module.get_bin_path('sysctl')
+        if sysctl_cmd is None:
+            return {}
+
         cmd = [sysctl_cmd, '-n', 'kern.boottime']
 
         rc, out, err = self.module.run_command(cmd)

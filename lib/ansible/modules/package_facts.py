@@ -3,11 +3,10 @@
 
 # most of it copied from AWX's scan_packages module
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 module: package_facts
 short_description: Package information as facts
 description:
@@ -15,28 +14,43 @@ description:
 options:
   manager:
     description:
-      - The package manager used by the system so we can query the package information.
-      - Since 2.8 this is a list and can support multiple package managers per system.
-      - The 'portage' and 'pkg' options were added in version 2.8.
-      - The 'apk' option was added in version 2.11.
-      - The 'pkg_info' option was added in version 2.13.
+      - The package manager(s) used by the system so we can query the package information.
+        This is a list and can support multiple package managers per system, since version 2.8.
+      - The V(portage) and V(pkg) options were added in version 2.8.
+      - The V(apk) option was added in version 2.11.
+      - The V(pkg_info) option was added in version 2.13.
+      - Aliases were added in 2.18, to support using C(manager={{ansible_facts['pkg_mgr']}})
     default: ['auto']
-    choices: ['auto', 'rpm', 'apt', 'portage', 'pkg', 'pacman', 'apk', 'pkg_info']
+    choices:
+        auto: Depending on O(strategy), will match the first or all package managers provided, in order
+        rpm: For RPM based distros, requires RPM Python bindings, not installed by default on Suse or Fedora 41+ (python3-rpm)
+        yum: Alias to rpm
+        dnf: Alias to rpm
+        dnf5: Alias to rpm
+        zypper: Alias to rpm
+        apt: For DEB based distros, C(python-apt) package must be installed on targeted hosts
+        portage: Handles ebuild packages, it requires the C(qlist) utility, which is part of 'app-portage/portage-utils'
+        pkg: libpkg front end (FreeBSD)
+        pkg5: Alias to pkg
+        pkgng: Alias to pkg
+        pacman: Archlinux package manager/builder
+        apk: Alpine Linux package manager
+        pkg_info: OpenBSD package manager
+        openbsd_pkg: Alias to pkg_info
     type: list
     elements: str
   strategy:
     description:
       - This option controls how the module queries the package managers on the system.
-        C(first) means it will return only information for the first supported package manager available.
-        C(all) will return information for all supported and available package managers on the system.
-    choices: ['first', 'all']
+    choices:
+        first: returns only information for the first supported package manager available.
+        all: returns information for all supported and available package managers on the system.
     default: 'first'
     type: str
     version_added: "2.8"
 version_added: "2.5"
 requirements:
-    - For 'portage' support it requires the C(qlist) utility, which is part of 'app-portage/portage-utils'.
-    - For Debian-based systems C(python-apt) package must be installed on targeted hosts.
+    - See details per package manager in the O(manager) option.
 author:
   - Matthew Jones (@matburt)
   - Brian Coca (@bcoca)
@@ -53,9 +67,9 @@ attributes:
         support: full
     platform:
         platforms: posix
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
 - name: Gather the package facts
   ansible.builtin.package_facts:
     manager: auto
@@ -69,9 +83,9 @@ EXAMPLES = '''
     msg: "{{ ansible_facts.packages['foobar'] | length }} versions of foobar are installed!"
   when: "'foobar' in ansible_facts.packages"
 
-'''
+"""
 
-RETURN = '''
+RETURN = """
 ansible_facts:
   description: Facts to add to ansible_facts.
   returned: always
@@ -234,60 +248,61 @@ ansible_facts:
             ],
           }
         }
-'''
+"""
 
 import re
+import json
 
-from ansible.module_utils._text import to_native, to_text
-from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+from ansible.module_utils.common.text.converters import to_native, to_text
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.locale import get_best_parsable_locale
-from ansible.module_utils.common.process import get_bin_path
-from ansible.module_utils.common.respawn import has_respawned, probe_interpreters_for_module, respawn_module
-from ansible.module_utils.facts.packages import LibMgr, CLIMgr, get_all_pkg_managers
+from ansible.module_utils.facts.packages import CLIMgr, RespawningLibMgr, get_all_pkg_managers
 
 
-class RPM(LibMgr):
+ALIASES = {
+    'rpm': ['dnf', 'dnf5', 'yum' , 'zypper'],
+    'pkg': ['pkg5', 'pkgng'],
+    'pkg_info': ['openbsd_pkg'],
+}
 
-    LIB = 'rpm'
+
+class RPM(CLIMgr):
+
+    CLI = 'rpm'
+
+    @staticmethod
+    def _none(v):
+        # When this class used the python3-rpm language bindings,
+        # `None` was converted to `str(None)` during output.
+        # The CLI does this conversion from `None` -> `(none)`,
+        # so this function is used to maintain the previous API output
+        # behavior.
+        return 'None' if v == '(none)' else v
 
     def list_installed(self):
-        return self._lib.TransactionSet().dbMatch()
+        rc, stdout, stderr = module.run_command(
+            ['rpm', '-qa', '--qf', '%{NAME}|%{VERSION}|%{RELEASE}|%{EPOCH}|%{ARCH}\n'],
+            handle_exceptions=False,
+        )
+        if rc != 0:
+            raise Exception("Unable to list packages rc=%s : %s" % (rc, stderr))
+        return stdout.strip().split('\n')
 
     def get_package_details(self, package):
-        return dict(name=package[self._lib.RPMTAG_NAME],
-                    version=package[self._lib.RPMTAG_VERSION],
-                    release=package[self._lib.RPMTAG_RELEASE],
-                    epoch=package[self._lib.RPMTAG_EPOCH],
-                    arch=package[self._lib.RPMTAG_ARCH],)
-
-    def is_available(self):
-        ''' we expect the python bindings installed, but this gives warning if they are missing and we have rpm cli'''
-        we_have_lib = super(RPM, self).is_available()
-
-        try:
-            get_bin_path('rpm')
-
-            if not we_have_lib and not has_respawned():
-                # try to locate an interpreter with the necessary lib
-                interpreters = ['/usr/libexec/platform-python',
-                                '/usr/bin/python3',
-                                '/usr/bin/python2']
-                interpreter_path = probe_interpreters_for_module(interpreters, self.LIB)
-                if interpreter_path:
-                    respawn_module(interpreter_path)
-                    # end of the line for this process; this module will exit when the respawned copy completes
-
-            if not we_have_lib:
-                module.warn('Found "rpm" but %s' % (missing_required_lib(self.LIB)))
-        except ValueError:
-            pass
-
-        return we_have_lib
+        name, version, release, epoch, arch = package.split('|')
+        return {
+            'name': self._none(name),
+            'version': self._none(version),
+            'release': self._none(release),
+            'epoch': self._none(epoch),
+            'arch': self._none(arch),
+        }
 
 
-class APT(LibMgr):
+class APT(RespawningLibMgr):
 
     LIB = 'apt'
+    CLI_BINARIES = ['apt', 'apt-get', 'aptitude']
 
     def __init__(self):
         self._cache = None
@@ -300,30 +315,6 @@ class APT(LibMgr):
 
         self._cache = self._lib.Cache()
         return self._cache
-
-    def is_available(self):
-        ''' we expect the python bindings installed, but if there is apt/apt-get give warning about missing bindings'''
-        we_have_lib = super(APT, self).is_available()
-        if not we_have_lib:
-            for exe in ('apt', 'apt-get', 'aptitude'):
-                try:
-                    get_bin_path(exe)
-                except ValueError:
-                    continue
-                else:
-                    if not has_respawned():
-                        # try to locate an interpreter with the necessary lib
-                        interpreters = ['/usr/bin/python3',
-                                        '/usr/bin/python2']
-                        interpreter_path = probe_interpreters_for_module(interpreters, self.LIB)
-                        if interpreter_path:
-                            respawn_module(interpreter_path)
-                            # end of the line for this process; this module will exit here when respawned copy completes
-
-                    module.warn('Found "%s" but %s' % (exe, missing_required_lib('apt')))
-                    break
-
-        return we_have_lib
 
     def list_installed(self):
         # Store the cache to avoid running pkg_cache() for each item in the comprehension, which is very slow
@@ -341,7 +332,7 @@ class PACMAN(CLIMgr):
 
     def list_installed(self):
         locale = get_best_parsable_locale(module)
-        rc, out, err = module.run_command([self._cli, '-Qi'], environ_update=dict(LC_ALL=locale))
+        rc, out, err = module.run_command([self._cli, '-Qi'], environ_update=dict(LC_ALL=locale), handle_exceptions=False)
         if rc != 0 or err:
             raise Exception("Unable to list packages rc=%s : %s" % (rc, err))
         return out.split("\n\n")[:-1]
@@ -380,7 +371,7 @@ class PKG(CLIMgr):
     atoms = ['name', 'version', 'origin', 'installed', 'automatic', 'arch', 'category', 'prefix', 'vital']
 
     def list_installed(self):
-        rc, out, err = module.run_command([self._cli, 'query', "%%%s" % '\t%'.join(['n', 'v', 'R', 't', 'a', 'q', 'o', 'p', 'V'])])
+        rc, out, err = module.run_command([self._cli, 'query', "%%%s" % '\t%'.join(['n', 'v', 'R', 't', 'a', 'q', 'o', 'p', 'V'])], handle_exceptions=False)
         if rc != 0 or err:
             raise Exception("Unable to list packages rc=%s : %s" % (rc, err))
         return out.splitlines()
@@ -424,7 +415,7 @@ class PORTAGE(CLIMgr):
     atoms = ['category', 'name', 'version', 'ebuild_revision', 'slots', 'prefixes', 'sufixes']
 
     def list_installed(self):
-        rc, out, err = module.run_command(' '.join([self._cli, '-Iv', '|', 'xargs', '-n', '1024', 'qatom']), use_unsafe_shell=True)
+        rc, out, err = module.run_command(' '.join([self._cli, '-Iv', '|', 'xargs', '-n', '1024', 'qatom']), use_unsafe_shell=True, handle_exceptions=False)
         if rc != 0:
             raise RuntimeError("Unable to list packages rc=%s : %s" % (rc, to_native(err)))
         return out.splitlines()
@@ -438,22 +429,15 @@ class APK(CLIMgr):
     CLI = 'apk'
 
     def list_installed(self):
-        rc, out, err = module.run_command([self._cli, 'info', '-v'])
-        if rc != 0 or err:
-            raise Exception("Unable to list packages rc=%s : %s" % (rc, err))
-        return out.splitlines()
+        cmd = [self._cli, 'query', '--installed', '--fields', 'name,version', '--format', 'json', '*']
+        rc, out, err = module.run_command(cmd, handle_exceptions=False)
+        if rc != 0:
+            raise Exception(f"Unable to list packages rc={rc} : {err}")
+        return json.loads(out)
 
     def get_package_details(self, package):
-        raw_pkg_details = {'name': package, 'version': '', 'release': ''}
-        nvr = package.rsplit('-', 2)
-        try:
-            return {
-                'name': nvr[0],
-                'version': nvr[1],
-                'release': nvr[2],
-            }
-        except IndexError:
-            return raw_pkg_details
+        version, release = package.get('version', '').rsplit("-", 1)
+        return {'name': package.get('name', ''), 'version': version, 'release': release}
 
 
 class PKG_INFO(CLIMgr):
@@ -461,7 +445,7 @@ class PKG_INFO(CLIMgr):
     CLI = 'pkg_info'
 
     def list_installed(self):
-        rc, out, err = module.run_command([self._cli, '-a'])
+        rc, out, err = module.run_command([self._cli, '-a'], handle_exceptions=False)
         if rc != 0 or err:
             raise Exception("Unable to list packages rc=%s : %s" % (rc, err))
         return out.splitlines()
@@ -483,10 +467,14 @@ def main():
 
     # get supported pkg managers
     PKG_MANAGERS = get_all_pkg_managers()
-    PKG_MANAGER_NAMES = [x.lower() for x in PKG_MANAGERS.keys()]
+    PKG_MANAGER_NAMES = sorted([x.lower() for x in PKG_MANAGERS.keys()])
+    # add aliases
+    PKG_MANAGER_NAMES.extend([alias for alist in ALIASES.values() for alias in alist])
 
     # start work
     global module
+
+    # choices are not set for 'manager' as they are computed dynamically and validated below instead of in argspec
     module = AnsibleModule(argument_spec=dict(manager={'type': 'list', 'elements': 'str', 'default': ['auto']},
                                               strategy={'choices': ['first', 'all'], 'default': 'first'}),
                            supports_check_mode=True)
@@ -512,29 +500,44 @@ def main():
     seen = set()
     for pkgmgr in managers:
 
-        if found and strategy == 'first':
+        if strategy == 'first' and found:
             break
+
+        # substitute aliases for aliased
+        for aliased in ALIASES.keys():
+            if pkgmgr in ALIASES[aliased]:
+                pkgmgr = aliased
+                break
 
         # dedupe as per above
         if pkgmgr in seen:
             continue
-        seen.add(pkgmgr)
-        try:
-            try:
-                # manager throws exception on init (calls self.test) if not usable.
-                manager = PKG_MANAGERS[pkgmgr]()
-                if manager.is_available():
-                    found += 1
-                    packages.update(manager.get_packages())
 
-            except Exception as e:
-                if pkgmgr in module.params['manager']:
-                    module.warn('Requested package manager %s was not usable by this module: %s' % (pkgmgr, to_text(e)))
-                continue
+        seen.add(pkgmgr)
+
+        manager = PKG_MANAGERS[pkgmgr]()
+        try:
+            packages_found = {}
+            if manager.is_available(handle_exceptions=False):
+                try:
+                    packages_found = manager.get_packages()
+                except Exception as e:
+                    module.warn('Failed to retrieve packages with %s: %s' % (pkgmgr, to_text(e)))
+
+            # only consider 'found' if it results in something
+            if packages_found:
+                found += 1
+                for k in packages_found.keys():
+                    if k in packages:
+                        packages[k].extend(packages_found[k])
+                    else:
+                        packages[k] = packages_found[k]
+            else:
+                module.warn('Found "%s" but no associated packages' % (pkgmgr))
 
         except Exception as e:
             if pkgmgr in module.params['manager']:
-                module.warn('Failed to retrieve packages with %s: %s' % (pkgmgr, to_text(e)))
+                module.warn('Requested package manager %s was not usable by this module: %s' % (pkgmgr, to_text(e)))
 
     if found == 0:
         msg = ('Could not detect a supported package manager from the following list: %s, '

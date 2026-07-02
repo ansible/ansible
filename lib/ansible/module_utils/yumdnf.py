@@ -9,22 +9,16 @@
 #    - Abhijeet Kasurde (@Akasurde)
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-import os
-import time
-import glob
-import tempfile
 from abc import ABCMeta, abstractmethod
-
-from ansible.module_utils._text import to_native
-from ansible.module_utils.six import with_metaclass
 
 yumdnf_argument_spec = dict(
     argument_spec=dict(
         allow_downgrade=dict(type='bool', default=False),
+        allowerasing=dict(default=False, type="bool"),
         autoremove=dict(type='bool', default=False),
+        best=dict(type="bool"),
         bugfix=dict(required=False, type='bool', default=False),
         cacheonly=dict(type='bool', default=False),
         conf_file=dict(type='str'),
@@ -38,10 +32,10 @@ yumdnf_argument_spec = dict(
         enablerepo=dict(type='list', elements='str', default=[]),
         exclude=dict(type='list', elements='str', default=[]),
         installroot=dict(type='str', default="/"),
-        install_repoquery=dict(type='bool', default=True),
         install_weak_deps=dict(type='bool', default=True),
         list=dict(type='str'),
         name=dict(type='list', elements='str', aliases=['pkg'], default=[]),
+        nobest=dict(type="bool"),
         releasever=dict(default=None),
         security=dict(type='bool', default=False),
         skip_broken=dict(type='bool', default=False),
@@ -54,12 +48,12 @@ yumdnf_argument_spec = dict(
         lock_timeout=dict(type='int', default=30),
     ),
     required_one_of=[['name', 'list', 'update_cache']],
-    mutually_exclusive=[['name', 'list']],
+    mutually_exclusive=[['name', 'list'], ['best', 'nobest']],
     supports_check_mode=True,
 )
 
 
-class YumDnf(with_metaclass(ABCMeta, object)):  # type: ignore[misc]
+class YumDnf(metaclass=ABCMeta):
     """
     Abstract class that handles the population of instance variables that should
     be identical between both YUM and DNF modules because of the feature parity
@@ -71,7 +65,9 @@ class YumDnf(with_metaclass(ABCMeta, object)):  # type: ignore[misc]
         self.module = module
 
         self.allow_downgrade = self.module.params['allow_downgrade']
+        self.allowerasing = self.module.params['allowerasing']
         self.autoremove = self.module.params['autoremove']
+        self.best = self.module.params['best']
         self.bugfix = self.module.params['bugfix']
         self.cacheonly = self.module.params['cacheonly']
         self.conf_file = self.module.params['conf_file']
@@ -85,10 +81,10 @@ class YumDnf(with_metaclass(ABCMeta, object)):  # type: ignore[misc]
         self.enablerepo = self.module.params.get('enablerepo', [])
         self.exclude = self.module.params['exclude']
         self.installroot = self.module.params['installroot']
-        self.install_repoquery = self.module.params['install_repoquery']
         self.install_weak_deps = self.module.params['install_weak_deps']
         self.list = self.module.params['list']
         self.names = [p.strip() for p in self.module.params['name']]
+        self.nobest = self.module.params['nobest']
         self.releasever = self.module.params['releasever']
         self.security = self.module.params['security']
         self.skip_broken = self.module.params['skip_broken']
@@ -128,31 +124,6 @@ class YumDnf(with_metaclass(ABCMeta, object)):  # type: ignore[misc]
                 msg="Autoremove should be used alone or with state=absent",
                 results=[],
             )
-
-        # This should really be redefined by both the yum and dnf module but a
-        # default isn't a bad idea
-        self.lockfile = '/var/run/yum.pid'
-
-    @abstractmethod
-    def is_lockfile_pid_valid(self):
-        return
-
-    def _is_lockfile_present(self):
-        return (os.path.isfile(self.lockfile) or glob.glob(self.lockfile)) and self.is_lockfile_pid_valid()
-
-    def wait_for_lock(self):
-        '''Poll until the lock is removed if timeout is a positive number'''
-
-        if not self._is_lockfile_present():
-            return
-
-        if self.lock_timeout > 0:
-            for iteration in range(0, self.lock_timeout):
-                time.sleep(1)
-                if not self._is_lockfile_present():
-                    return
-
-        self.module.fail_json(msg='{0} lockfile is held by another process'.format(self.pkg_mgr_name))
 
     def listify_comma_sep_strings_in_list(self, some_list):
         """

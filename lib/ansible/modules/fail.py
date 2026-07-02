@@ -3,11 +3,10 @@
 # Copyright: (c) 2012, Dag Wieers <dag@wieers.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: fail
 short_description: Fail with custom message
@@ -53,11 +52,11 @@ seealso:
 - module: ansible.builtin.meta
 author:
 - Dag Wieers (@dagwieers)
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: Example using fail and when together
   ansible.builtin.fail:
     msg: The system may not be provisioned according to the CMDB status.
   when: cmdb_status != "to-be-staged"
-'''
+"""

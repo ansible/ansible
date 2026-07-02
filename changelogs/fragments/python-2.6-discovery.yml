@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible - Exclude Python 2.6 from Python interpreter discovery.

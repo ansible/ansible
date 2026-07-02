@@ -15,19 +15,18 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import json
 import re
 import textwrap
 import types
 
-from units.compat import unittest
+import unittest
 from unittest.mock import MagicMock
 
-from ansible.executor.task_result import TaskResult
+from ansible._internal._task import UnifiedTaskResult
+from ansible.executor.task_result import CallbackTaskResult
 from ansible.inventory.host import Host
 from ansible.plugins.callback import CallbackBase
 
@@ -54,16 +53,17 @@ class TestCallback(unittest.TestCase):
         self.assertIs(cb._display, display_mock)
 
     def test_host_label(self):
-        result = TaskResult(host=Host('host1'), task=mock_task, return_data={})
+        result = CallbackTaskResult(host=Host('host1'), task=mock_task, utr=UnifiedTaskResult(is_module=False))
 
         self.assertEqual(CallbackBase.host_label(result), 'host1')
 
     def test_host_label_delegated(self):
         mock_task.delegate_to = 'host2'
-        result = TaskResult(
+        utr = UnifiedTaskResult(is_module=False, delegated_host="host2", callback_delegated_vars_subset=dict(ansible_host='host2'))
+        result = CallbackTaskResult(
             host=Host('host1'),
             task=mock_task,
-            return_data={'_ansible_delegated_vars': {'ansible_host': 'host2'}},
+            utr=utr,
         )
         self.assertEqual(CallbackBase.host_label(result), 'host1 -> host2')
 
@@ -232,7 +232,7 @@ class TestCallbackDiff(unittest.TestCase):
                 'before': 'one\ntwo\nthree\n',
                 'after': 'one\nthree\nfour\n',
             })),
-            textwrap.dedent('''\
+            textwrap.dedent("""\
                 --- before: somefile.txt
                 +++ after: generated from template somefile.j2
                 @@ -1,3 +1,3 @@
@@ -241,7 +241,7 @@ class TestCallbackDiff(unittest.TestCase):
                  three
                 +four
 
-            '''))
+            """))
 
     def test_new_file(self):
         self.assertMultiLineEqual(
@@ -251,7 +251,7 @@ class TestCallbackDiff(unittest.TestCase):
                 'before': '',
                 'after': 'one\ntwo\nthree\n',
             })),
-            textwrap.dedent('''\
+            textwrap.dedent("""\
                 --- before: somefile.txt
                 +++ after: generated from template somefile.j2
                 @@ -0,0 +1,3 @@
@@ -259,7 +259,7 @@ class TestCallbackDiff(unittest.TestCase):
                 +two
                 +three
 
-            '''))
+            """))
 
     def test_clear_file(self):
         self.assertMultiLineEqual(
@@ -269,7 +269,7 @@ class TestCallbackDiff(unittest.TestCase):
                 'before': 'one\ntwo\nthree\n',
                 'after': '',
             })),
-            textwrap.dedent('''\
+            textwrap.dedent("""\
                 --- before: somefile.txt
                 +++ after: generated from template somefile.j2
                 @@ -1,3 +0,0 @@
@@ -277,7 +277,7 @@ class TestCallbackDiff(unittest.TestCase):
                 -two
                 -three
 
-            '''))
+            """))
 
     def test_no_trailing_newline_before(self):
         self.assertMultiLineEqual(
@@ -287,7 +287,7 @@ class TestCallbackDiff(unittest.TestCase):
                 'before': 'one\ntwo\nthree',
                 'after': 'one\ntwo\nthree\n',
             })),
-            textwrap.dedent('''\
+            textwrap.dedent("""\
                 --- before: somefile.txt
                 +++ after: generated from template somefile.j2
                 @@ -1,3 +1,3 @@
@@ -297,7 +297,7 @@ class TestCallbackDiff(unittest.TestCase):
                 \\ No newline at end of file
                 +three
 
-            '''))
+            """))
 
     def test_no_trailing_newline_after(self):
         self.assertMultiLineEqual(
@@ -307,7 +307,7 @@ class TestCallbackDiff(unittest.TestCase):
                 'before': 'one\ntwo\nthree\n',
                 'after': 'one\ntwo\nthree',
             })),
-            textwrap.dedent('''\
+            textwrap.dedent("""\
                 --- before: somefile.txt
                 +++ after: generated from template somefile.j2
                 @@ -1,3 +1,3 @@
@@ -317,7 +317,7 @@ class TestCallbackDiff(unittest.TestCase):
                 +three
                 \\ No newline at end of file
 
-            '''))
+            """))
 
     def test_no_trailing_newline_both(self):
         self.assertMultiLineEqual(
@@ -337,7 +337,7 @@ class TestCallbackDiff(unittest.TestCase):
                 'before': 'one\ntwo\nthree',
                 'after': 'one\nfive\nthree',
             })),
-            textwrap.dedent('''\
+            textwrap.dedent("""\
                 --- before: somefile.txt
                 +++ after: generated from template somefile.j2
                 @@ -1,3 +1,3 @@
@@ -347,7 +347,7 @@ class TestCallbackDiff(unittest.TestCase):
                  three
                 \\ No newline at end of file
 
-            '''))
+            """))
 
     def test_diff_dicts(self):
         self.assertMultiLineEqual(
@@ -355,7 +355,7 @@ class TestCallbackDiff(unittest.TestCase):
                 'before': dict(one=1, two=2, three=3),
                 'after': dict(one=1, three=3, four=4),
             })),
-            textwrap.dedent('''\
+            textwrap.dedent("""\
                 --- before
                 +++ after
                 @@ -1,5 +1,5 @@
@@ -367,7 +367,7 @@ class TestCallbackDiff(unittest.TestCase):
                 +    "three": 3
                  }
 
-            '''))
+            """))
 
     def test_diff_before_none(self):
         self.assertMultiLineEqual(
@@ -375,13 +375,13 @@ class TestCallbackDiff(unittest.TestCase):
                 'before': None,
                 'after': 'one line\n',
             })),
-            textwrap.dedent('''\
+            textwrap.dedent("""\
                 --- before
                 +++ after
                 @@ -0,0 +1 @@
                 +one line
 
-            '''))
+            """))
 
     def test_diff_after_none(self):
         self.assertMultiLineEqual(
@@ -389,13 +389,13 @@ class TestCallbackDiff(unittest.TestCase):
                 'before': 'one line\n',
                 'after': None,
             })),
-            textwrap.dedent('''\
+            textwrap.dedent("""\
                 --- before
                 +++ after
                 @@ -1 +0,0 @@
                 -one line
 
-            '''))
+            """))
 
 
 class TestCallbackOnMethods(unittest.TestCase):
@@ -414,3 +414,13 @@ class TestCallbackOnMethods(unittest.TestCase):
         cb = CallbackBase()
         cb.v2_on_any('whatever', some_keyword='blippy')
         cb.on_any('whatever', some_keyword='blippy')
+
+
+def test_v2_v1_method_map() -> None:
+    """Ensure that all v2 callback methods appear in the method map."""
+    expected_names = [name for name in dir(CallbackBase) if name.startswith('v2_')]
+    mapped_names = {method.__name__ for method in CallbackBase._v2_v1_method_map}
+
+    missing = [name for name in expected_names if name not in mapped_names]
+
+    assert not missing

@@ -1,25 +1,30 @@
 # Copyright: (c) 2018, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import copy
+import dataclasses
+import inspect
 import operator
 import argparse
 import os
 import os.path
 import sys
 import time
+import typing as t
 
-from jinja2 import __version__ as j2_version
+import yaml
 
 import ansible
 from ansible import constants as C
-from ansible.module_utils._text import to_native
+from ansible._internal import _templating
+from ansible.module_utils.common.text.converters import to_native
 from ansible.module_utils.common.yaml import HAS_LIBYAML, yaml_load
 from ansible.release import __version__
 from ansible.utils.path import unfrackpath
+
+from ansible._internal._datatag._tags import TrustedAsTemplate, Origin
 
 
 #
@@ -29,6 +34,125 @@ class SortingHelpFormatter(argparse.HelpFormatter):
     def add_arguments(self, actions):
         actions = sorted(actions, key=operator.attrgetter('option_strings'))
         super(SortingHelpFormatter, self).add_arguments(actions)
+
+
+@dataclasses.dataclass(frozen=True, kw_only=True)
+class DeprecatedArgument:
+    version: str
+    """The Ansible version that will remove the deprecated argument."""
+
+    option: str | None = None
+    """The specific option string that is deprecated; None applies to all options for this argument."""
+
+    alternatives: str | None = None
+    """The options to use instead."""
+
+    def is_deprecated(self, option: str) -> bool:
+        """Return True if the given option is deprecated, otherwise False."""
+        return self.option is None or option == self.option
+
+    def check(self, option: str) -> None:
+        """Display a deprecation warning if the given option is deprecated."""
+        if not self.is_deprecated(option):
+            return
+
+        from ansible.utils.display import Display
+
+        Display().deprecated(  # pylint: disable=ansible-invalid-deprecated-version
+            msg=f'The {option!r} argument is deprecated.',
+            version=self.version,
+            help_text=f'Use {self.alternatives} instead.' if self.alternatives else None
+        )
+
+
+class ArgumentParser(argparse.ArgumentParser):
+    def __init__(self, *args, **kwargs) -> None:
+        self.__actions: dict[str | None, type[argparse.Action]] = {}
+
+        super().__init__(*args, **kwargs)
+
+    def register(self, registry_name, value, object):
+        """Track registration of actions so that they can be resolved later by name, without depending on the internals of ArgumentParser."""
+        if registry_name == 'action':
+            self.__actions[value] = object
+
+        super().register(registry_name, value, object)
+
+    def _patch_argument(self, args: tuple[str, ...], kwargs: dict[str, t.Any]) -> None:
+        """
+        Patch `kwargs` for an `add_argument` call using the given `args` and `kwargs`.
+        This is used to apply tags to entire categories of CLI arguments.
+        """
+        name = args[0]
+        action = kwargs.get('action')
+        resolved_action = self.__actions.get(action, action)  # get the action by name, or use as-is (assume it's a subclass of argparse.Action)
+        action_signature = inspect.signature(resolved_action.__init__)
+
+        if action_signature.parameters.get('type'):
+            arg_type = kwargs.get('type', str)
+
+            if not callable(arg_type):
+                raise ValueError(f'Argument {name!r} requires a callable for the {"type"!r} parameter, not {arg_type!r}.')
+
+            wrapped_arg_type = _tagged_type_factory(name, arg_type)
+
+            kwargs.update(type=wrapped_arg_type)
+
+    def _patch_parser(self, parser):
+        """Patch and return the given parser to intercept the `add_argument` method for further patching."""
+        parser_add_argument = parser.add_argument
+
+        def add_argument(*ag_args, **ag_kwargs):
+            self._patch_argument(ag_args, ag_kwargs)
+
+            parser_add_argument(*ag_args, **ag_kwargs)
+
+        parser.add_argument = add_argument
+
+        return parser
+
+    def add_subparsers(self, *args, **kwargs):
+        sub = super().add_subparsers(*args, **kwargs)
+        sub_add_parser = sub.add_parser
+
+        def add_parser(*sub_args, **sub_kwargs):
+            return self._patch_parser(sub_add_parser(*sub_args, **sub_kwargs))
+
+        sub.add_parser = add_parser
+
+        return sub
+
+    def add_argument_group(self, *args, **kwargs):
+        return self._patch_parser(super().add_argument_group(*args, **kwargs))
+
+    def add_mutually_exclusive_group(self, *args, **kwargs):
+        return self._patch_parser(super().add_mutually_exclusive_group(*args, **kwargs))
+
+    def add_argument(self, *args, **kwargs) -> argparse.Action:
+        action = kwargs.get('action')
+        help = kwargs.get('help')
+        if help and action in {'append', 'append_const', 'count', 'extend', PrependListAction}:
+            help = f'{help.rstrip(".")}. This argument may be specified multiple times.'
+        kwargs['help'] = help
+
+        self._patch_argument(args, kwargs)
+
+        deprecated: DeprecatedArgument | None
+
+        if deprecated := kwargs.pop('deprecated', None):
+            action_type = self.__actions.get(action, action)
+
+            class DeprecatedAction(action_type):  # type: ignore[misc, valid-type]
+                """A wrapper around an action which handles deprecation warnings."""
+
+                def __call__(self, parser, namespace, values, option_string=None) -> t.Any:
+                    deprecated.check(option_string)
+
+                    return super().__call__(parser, namespace, values, option_string)
+
+            kwargs['action'] = DeprecatedAction
+
+        return super().add_argument(*args, **kwargs)
 
 
 class AnsibleVersion(argparse.Action):
@@ -87,16 +211,16 @@ def ensure_value(namespace, name, value):
 #
 # Callbacks to validate and normalize Options
 #
-def unfrack_path(pathsep=False):
+def unfrack_path(pathsep=False, follow=True):
     """Turn an Option's data into a single path in Ansible locations"""
     def inner(value):
         if pathsep:
-            return [unfrackpath(x) for x in value.split(os.pathsep) if x]
+            return [unfrackpath(x, follow=follow) for x in value.split(os.pathsep) if x]
 
         if value == '-':
             return value
 
-        return unfrackpath(value)
+        return unfrackpath(value, follow=follow)
     return inner
 
 
@@ -123,7 +247,7 @@ def _git_repo_info(repo_path):
                     repo_path = gitdir
                 else:
                     repo_path = os.path.join(repo_path[:-4], gitdir)
-            except (IOError, AttributeError):
+            except (OSError, AttributeError):
                 return ''
         with open(os.path.join(repo_path, "HEAD")) as f:
             line = f.readline().rstrip("\n")
@@ -173,13 +297,28 @@ def version(prog=None):
         cpath = "Default w/o overrides"
     else:
         cpath = C.DEFAULT_MODULE_PATH
+
+    if HAS_LIBYAML:
+        libyaml_fragment = "with libyaml"
+
+        # noinspection PyBroadException
+        try:
+            from yaml._yaml import get_version_string
+
+            libyaml_fragment += f" v{get_version_string()}"
+        except Exception:  # pylint: disable=broad-except
+            libyaml_fragment += ", version unknown"
+    else:
+        libyaml_fragment = "without libyaml"
+
     result.append("  configured module search path = %s" % cpath)
     result.append("  ansible python module location = %s" % ':'.join(ansible.__path__))
     result.append("  ansible collection location = %s" % ':'.join(C.COLLECTIONS_PATHS))
     result.append("  executable location = %s" % sys.argv[0])
     result.append("  python version = %s (%s)" % (''.join(sys.version.splitlines()), to_native(sys.executable)))
-    result.append("  jinja version = %s" % j2_version)
-    result.append("  libyaml = %s" % HAS_LIBYAML)
+    result.append(f"  jinja version = {_templating.jinja2_version}")
+    result.append(f"  pyyaml version = {yaml.__version__} ({libyaml_fragment})")
+
     return "\n".join(result)
 
 
@@ -187,12 +326,12 @@ def version(prog=None):
 # Functions to add pre-canned options to an OptionParser
 #
 
-def create_base_parser(prog, usage="", desc=None, epilog=None):
+def create_base_parser(prog, desc=None, epilog=None):
     """
     Create an options parser for all ansible scripts
     """
     # base opts
-    parser = argparse.ArgumentParser(
+    parser = ArgumentParser(
         prog=prog,
         formatter_class=SortingHelpFormatter,
         epilog=epilog,
@@ -235,8 +374,6 @@ def add_check_options(parser):
     """Add options for commands which can run with diagnostic information of tasks"""
     parser.add_argument("-C", "--check", default=False, dest='check', action='store_true',
                         help="don't make any changes; instead, try to predict some of the changes that may occur")
-    parser.add_argument('--syntax-check', dest='syntax', action='store_true',
-                        help="perform a syntax check on the playbook, but do not execute it")
     parser.add_argument("-D", "--diff", default=C.DIFF_ALWAYS, dest='diff', action='store_true',
                         help="when changing (small) files and templates, show the differences in those"
                              " files; works great with --check")
@@ -252,8 +389,8 @@ def add_connect_options(parser):
                                help='connect as this user (default=%s)' % C.DEFAULT_REMOTE_USER)
     connect_group.add_argument('-c', '--connection', dest='connection', default=C.DEFAULT_TRANSPORT,
                                help="connection type to use (default=%s)" % C.DEFAULT_TRANSPORT)
-    connect_group.add_argument('-T', '--timeout', default=C.DEFAULT_TIMEOUT, type=int, dest='timeout',
-                               help="override the connection timeout in seconds (default=%s)" % C.DEFAULT_TIMEOUT)
+    connect_group.add_argument('-T', '--timeout', default=None, type=int, dest='timeout',
+                               help="override the connection timeout in seconds (default depends on connection)")
 
     # ssh only
     connect_group.add_argument('--ssh-common-args', default=None, dest='ssh_common_args',
@@ -285,19 +422,20 @@ def add_fork_options(parser):
 def add_inventory_options(parser):
     """Add options for commands that utilize inventory"""
     parser.add_argument('-i', '--inventory', '--inventory-file', dest='inventory', action="append",
-                        help="specify inventory host path or comma separated host list. --inventory-file is deprecated")
+                        help="specify inventory host path or comma separated host list",
+                        deprecated=DeprecatedArgument(version='2.23', option='--inventory-file', alternatives="-i or --inventory"))
     parser.add_argument('--list-hosts', dest='listhosts', action='store_true',
                         help='outputs a list of matching hosts; does not execute anything else')
     parser.add_argument('-l', '--limit', default=C.DEFAULT_SUBSET, dest='subset',
                         help='further limit selected hosts to an additional pattern')
+    parser.add_argument('--flush-cache', dest='flush_cache', action='store_true',
+                        help="clear the fact cache for every host in inventory")
 
 
 def add_meta_options(parser):
     """Add options for commands which can launch meta tasks from the command line"""
     parser.add_argument('--force-handlers', default=C.DEFAULT_FORCE_HANDLERS, dest='force_handlers', action='store_true',
                         help="run handlers even if a task fails")
-    parser.add_argument('--flush-cache', dest='flush_cache', action='store_true',
-                        help="clear the fact cache for every host in inventory")
 
 
 def add_module_options(parser):
@@ -310,10 +448,10 @@ def add_module_options(parser):
 
 def add_output_options(parser):
     """Add options for commands which can change their output"""
-    parser.add_argument('-o', '--one-line', dest='one_line', action='store_true',
-                        help='condense output')
-    parser.add_argument('-t', '--tree', dest='tree', default=None,
-                        help='log output to this directory')
+    parser.add_argument('-o', '--one-line', dest='one_line', action='store_true', help='condense output',
+                        deprecated=DeprecatedArgument(version='2.23', alternatives='callback configuration to enable the oneline callback'))
+    parser.add_argument('-t', '--tree', dest='tree', default=None, help='log output to this directory',
+                        deprecated=DeprecatedArgument(version='2.23', alternatives='callback configuration to enable the tree callback'))
 
 
 def add_runas_options(parser):
@@ -385,7 +523,33 @@ def add_vault_options(parser):
     parser.add_argument('--vault-id', default=[], dest='vault_ids', action='append', type=str,
                         help='the vault identity to use')
     base_group = parser.add_mutually_exclusive_group()
-    base_group.add_argument('--ask-vault-password', '--ask-vault-pass', default=C.DEFAULT_ASK_VAULT_PASS, dest='ask_vault_pass', action='store_true',
+    base_group.add_argument('-J', '--ask-vault-password', '--ask-vault-pass', default=C.DEFAULT_ASK_VAULT_PASS, dest='ask_vault_pass', action='store_true',
                             help='ask for vault password')
     base_group.add_argument('--vault-password-file', '--vault-pass-file', default=[], dest='vault_password_files',
-                            help="vault password file", type=unfrack_path(), action='append')
+                            help="vault password file", type=unfrack_path(follow=False), action='append')
+
+
+def _tagged_type_factory(name: str, func: t.Callable[[str], object], /) -> t.Callable[[str], object]:
+    """
+    Return a callable that wraps the given function.
+    The result of the wrapped function will be tagged with Origin.
+    It will also be tagged with TrustedAsTemplate if it is equal to the original input string.
+    """
+    def tag_value(value: str) -> object:
+        result = func(value)
+
+        if result is value or func is str:
+            # Values which are not mutated are automatically trusted for templating.
+            # The `is` reference equality is critically important, as other types may only alter the tags, so object equality is
+            # not sufficient to prevent them being tagged as trusted when they should not.
+            # Explicitly include all usages using the `str` type factory since it strips tags.
+            result = TrustedAsTemplate().tag(result)
+
+        if not (origin := Origin.get_tag(value)):
+            origin = Origin(description=f'<CLI option {name!r}>')
+
+        return origin.tag(result)
+
+    tag_value._name = name  # simplify debugging by attaching the argument name to the function
+
+    return tag_value

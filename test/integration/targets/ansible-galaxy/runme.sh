@@ -61,10 +61,13 @@ f_ansible_galaxy_create_role_repo_post()
             git add .
             git commit -m "local testing ansible galaxy role"
 
+            # NOTE: `HEAD` is used because the newer Git versions create
+            # NOTE: `main` by default and the older ones differ. We
+            # NOTE: want to avoid hardcoding them.
             git archive \
                 --format=tar \
                 --prefix="${repo_name}/" \
-                master > "${repo_tar}"
+                HEAD > "${repo_tar}"
             # Configure basic (insecure) HTTPS-accessible repository
             galaxy_local_test_role_http_repo="${galaxy_webserver_root}/${galaxy_local_test_role}.git"
             if [[ ! -d "${galaxy_local_test_role_http_repo}" ]]; then
@@ -103,7 +106,11 @@ f_ansible_galaxy_status "install of local git repo"
 mkdir -p "${galaxy_testdir}"
 pushd "${galaxy_testdir}"
 
-    ansible-galaxy install git+file:///"${galaxy_local_test_role_git_repo}" "$@"
+    # minimum verbosity is hardcoded to include calls to Galaxy
+    ansible-galaxy install git+file:///"${galaxy_local_test_role_git_repo}" "$@" -vvvv 2>&1 | tee out.txt
+
+    # Test no initial call is made to Galaxy
+    grep out.txt -e "https://galaxy.ansible.com" && cat out.txt && exit 1
 
     # Test that the role was installed to the expected directory
     [[ -d "${HOME}/.ansible/roles/${galaxy_local_test_role}" ]]
@@ -350,7 +357,7 @@ pushd "${galaxy_testdir}"
 popd # ${galaxy_testdir}
 
 f_ansible_galaxy_status \
-    "role info non-existant role"
+    "role info non-existent role"
 
 mkdir -p "${role_testdir}"
 pushd "${role_testdir}"
@@ -519,14 +526,14 @@ f_ansible_galaxy_status \
 
     ansible-galaxy collection list -p ~/.ansible/collections | tee out.txt
 
-    [[ $(grep -c '# /root/.ansible/collections/ansible_collections' out.txt) -eq 1 ]]
+    [[ $(grep -c "# ${HOME}/.ansible/collections/ansible_collections" out.txt) -eq 1 ]]
 
 f_ansible_galaxy_status \
     "collection list invalid collection name"
 
     ansible-galaxy collection list -p ./install dirty.wraughten.name "$@" 2>&1 | tee out.txt || echo "expected failure"
 
-    grep 'ERROR! Invalid collection name' out.txt
+    grep '\[ERROR\]: Invalid collection name' out.txt
 
 f_ansible_galaxy_status \
     "collection list path not found"

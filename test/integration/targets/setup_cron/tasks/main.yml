@@ -3,6 +3,7 @@
   vars:
     search:
       files:
+        - '{{ ansible_distribution | lower }}-{{ ansible_distribution_major_version }}.yml'
         - '{{ ansible_distribution | lower }}.yml'
         - '{{ ansible_os_family | lower }}.yml'
         - '{{ ansible_system | lower }}.yml'
@@ -13,11 +14,11 @@
 - name: install cron package
   package:
     name: '{{ cron_pkg }}'
-  when: cron_pkg | default(false, true)
+  when: cron_pkg | default(false, true) is truthy
   register: cron_package_installed
   until: cron_package_installed is success
 
-- when: faketime_pkg | default(false, true)
+- when: faketime_pkg | default(false, true) is truthy
   block:
     - name: install faketime packages
       package:
@@ -27,13 +28,28 @@
       when: ansible_distribution != 'Alpine'
 
     - name: install faketime packages - Alpine
-      command: apk add -U {{ faketime_pkg }} --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing
+      command: apk add -U {{ faketime_pkg }}
       when: ansible_distribution == 'Alpine'
 
     - name: Find libfaketime path
       shell: '{{ list_pkg_files }} {{ faketime_pkg }} | grep -F libfaketime.so.1'
-      register: libfaketime_path
+      register: libfaketime_path_output
       when: list_pkg_files is defined
+
+    - name: Set libfaketime path to default value
+      set_fact:
+        libfaketime_path: '/usr/lib/faketime/libfaketime.so.1'
+
+    - name: Set libfaketime path - Alpine
+      set_fact:
+        libfaketime_path: '/{{ libfaketime_path_output.stdout_lines[0].strip() }}'
+      when: ansible_distribution == 'Alpine'
+
+    - name: Set libfaketime path - Other distributions
+      set_fact:
+        libfaketime_path: '{{ libfaketime_path_output.stdout_lines[0].strip() }}'
+      when: ansible_distribution != 'Alpine'
+
 
     - when: ansible_service_mgr == 'systemd'
       block:
@@ -49,7 +65,7 @@
           copy:
             content: |-
               [Service]
-              Environment=LD_PRELOAD={{ libfaketime_path.stdout_lines[0].strip() }}
+              Environment=LD_PRELOAD={{ libfaketime_path }}
               Environment="FAKETIME=+0y x10"
               Environment=RANDOM_DELAY=0
             dest: '/etc/systemd/system/{{ cron_service }}.service.d/faketime.conf'
@@ -61,7 +77,7 @@
       name: Use faketime with cron service
       copy:
         content: |-
-          cron_env='LD_PRELOAD={{ libfaketime_path.stdout_lines[0].strip() }} FAKETIME="+0y x10"'
+          cron_env='LD_PRELOAD={{ libfaketime_path }} FAKETIME="+0y x10"'
         dest: '/etc/rc.conf.d/cron'
         owner: root
         group: wheel
@@ -78,7 +94,7 @@
   command: nohup crond
   environment:
     FAKETIME: "+0y x10"
-    LD_PRELOAD: "/usr/lib/faketime/libfaketime.so.1"
+    LD_PRELOAD: "{{ libfaketime_path }}"
   when: ansible_distribution == 'Alpine'
 
 - name: See if /etc/pam.d/crond exists

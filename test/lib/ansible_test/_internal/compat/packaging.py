@@ -1,4 +1,5 @@
 """Packaging compatibility."""
+
 from __future__ import annotations
 
 import typing as t
@@ -9,10 +10,10 @@ try:
         version,
     )
 
-    SpecifierSet = specifiers.SpecifierSet  # type: t.Optional[t.Type[specifiers.SpecifierSet]]
-    Version = version.Version  # type: t.Optional[t.Type[version.Version]]
-    PACKAGING_IMPORT_ERROR = None
+    SpecifierSet: t.Optional[t.Type[specifiers.SpecifierSet]] = specifiers.SpecifierSet
+    Version: t.Optional[t.Type[version.Version]] = version.Version
+    PACKAGING_IMPORT_ERROR = None  # pylint: disable=invalid-name
 except ImportError as ex:
     SpecifierSet = None  # pylint: disable=invalid-name
     Version = None  # pylint: disable=invalid-name
-    PACKAGING_IMPORT_ERROR = ex
+    PACKAGING_IMPORT_ERROR = ex  # pylint: disable=invalid-name

@@ -4,24 +4,17 @@
 # (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 import errno
-import json
 import pytest
 
-from units.compat.mock import mock_open, patch
+from unittest.mock import mock_open, patch
 
 from ansible.module_utils import basic
-from ansible.module_utils.common.text.converters import to_bytes
-from ansible.module_utils.six.moves import builtins
+import builtins
 
-
-@pytest.fixture
-def no_args_module_exec():
-    with patch.object(basic, '_ANSIBLE_ARGS', b'{"ANSIBLE_MODULE_ARGS": {}}'):
-        yield  # we're patching the global module object, so nothing to yield
+from ansible.module_utils.testing import patch_module_args
 
 
 def no_args_module(selinux_enabled=None, selinux_mls_enabled=None):
@@ -35,7 +28,7 @@ def no_args_module(selinux_enabled=None, selinux_mls_enabled=None):
 
 
 # test AnsibleModule selinux wrapper methods
-@pytest.mark.usefixtures('no_args_module_exec')
+@pytest.mark.usefixtures('stdin')
 class TestSELinuxMU:
     def test_selinux_enabled(self):
         # test selinux unavailable
@@ -43,16 +36,21 @@ class TestSELinuxMU:
         with patch.object(basic, 'HAVE_SELINUX', False):
             assert no_args_module().selinux_enabled() is False
 
-        # test selinux present/not-enabled
-        disabled_mod = no_args_module()
-        with patch('ansible.module_utils.compat.selinux.is_selinux_enabled', return_value=0):
-            assert disabled_mod.selinux_enabled() is False
+            # test selinux present/not-enabled
+            disabled_mod = no_args_module()
+            with patch.object(basic, 'selinux', create=True) as selinux:
+                selinux.is_selinux_enabled.return_value = 0
+                assert disabled_mod.selinux_enabled() is False
+
         # ensure value is cached (same answer after unpatching)
         assert disabled_mod.selinux_enabled() is False
+
         # and present / enabled
-        enabled_mod = no_args_module()
-        with patch('ansible.module_utils.compat.selinux.is_selinux_enabled', return_value=1):
-            assert enabled_mod.selinux_enabled() is True
+        with patch.object(basic, 'HAVE_SELINUX', True):
+            enabled_mod = no_args_module()
+            with patch.object(basic, 'selinux', create=True) as selinux:
+                selinux.is_selinux_enabled.return_value = 1
+                assert enabled_mod.selinux_enabled() is True
         # ensure value is cached (same answer after unpatching)
         assert enabled_mod.selinux_enabled() is True
 
@@ -60,12 +58,16 @@ class TestSELinuxMU:
         # selinux unavailable, should return false
         with patch.object(basic, 'HAVE_SELINUX', False):
             assert no_args_module().selinux_mls_enabled() is False
-        # selinux disabled, should return false
-        with patch('ansible.module_utils.compat.selinux.is_selinux_mls_enabled', return_value=0):
-            assert no_args_module(selinux_enabled=False).selinux_mls_enabled() is False
-        # selinux enabled, should pass through the value of is_selinux_mls_enabled
-        with patch('ansible.module_utils.compat.selinux.is_selinux_mls_enabled', return_value=1):
-            assert no_args_module(selinux_enabled=True).selinux_mls_enabled() is True
+            # selinux disabled, should return false
+            with patch.object(basic, 'selinux', create=True) as selinux:
+                selinux.is_selinux_mls_enabled.return_value = 0
+                assert no_args_module(selinux_enabled=False).selinux_mls_enabled() is False
+
+        with patch.object(basic, 'HAVE_SELINUX', True):
+            # selinux enabled, should pass through the value of is_selinux_mls_enabled
+            with patch.object(basic, 'selinux', create=True) as selinux:
+                selinux.is_selinux_mls_enabled.return_value = 1
+                assert no_args_module(selinux_enabled=True).selinux_mls_enabled() is True
 
     def test_selinux_initial_context(self):
         # selinux missing/disabled/enabled sans MLS is 3-element None
@@ -80,16 +82,19 @@ class TestSELinuxMU:
             assert no_args_module().selinux_default_context(path='/foo/bar') == [None, None, None]
 
         am = no_args_module(selinux_enabled=True, selinux_mls_enabled=True)
-        # matchpathcon success
-        with patch('ansible.module_utils.compat.selinux.matchpathcon', return_value=[0, 'unconfined_u:object_r:default_t:s0']):
+        with patch.object(basic, 'selinux', create=True) as selinux:
+            # matchpathcon success
+            selinux.matchpathcon.return_value = [0, 'unconfined_u:object_r:default_t:s0']
             assert am.selinux_default_context(path='/foo/bar') == ['unconfined_u', 'object_r', 'default_t', 's0']
 
-        # matchpathcon fail (return initial context value)
-        with patch('ansible.module_utils.compat.selinux.matchpathcon', return_value=[-1, '']):
+        with patch.object(basic, 'selinux', create=True) as selinux:
+            # matchpathcon fail (return initial context value)
+            selinux.matchpathcon.return_value = [-1, '']
             assert am.selinux_default_context(path='/foo/bar') == [None, None, None, None]
 
-        # matchpathcon OSError
-        with patch('ansible.module_utils.compat.selinux.matchpathcon', side_effect=OSError):
+        with patch.object(basic, 'selinux', create=True) as selinux:
+            # matchpathcon OSError
+            selinux.matchpathcon.side_effect = OSError
             assert am.selinux_default_context(path='/foo/bar') == [None, None, None, None]
 
     def test_selinux_context(self):
@@ -99,28 +104,34 @@ class TestSELinuxMU:
 
         am = no_args_module(selinux_enabled=True, selinux_mls_enabled=True)
         # lgetfilecon_raw passthru
-        with patch('ansible.module_utils.compat.selinux.lgetfilecon_raw', return_value=[0, 'unconfined_u:object_r:default_t:s0']):
+        with patch.object(basic, 'selinux', create=True) as selinux:
+            selinux.lgetfilecon_raw.return_value = [0, 'unconfined_u:object_r:default_t:s0']
             assert am.selinux_context(path='/foo/bar') == ['unconfined_u', 'object_r', 'default_t', 's0']
 
         # lgetfilecon_raw returned a failure
-        with patch('ansible.module_utils.compat.selinux.lgetfilecon_raw', return_value=[-1, '']):
+        with patch.object(basic, 'selinux', create=True) as selinux:
+            selinux.lgetfilecon_raw.return_value = [-1, '']
             assert am.selinux_context(path='/foo/bar') == [None, None, None, None]
 
         # lgetfilecon_raw OSError (should bomb the module)
-        with patch('ansible.module_utils.compat.selinux.lgetfilecon_raw', side_effect=OSError(errno.ENOENT, 'NotFound')):
+        with patch.object(basic, 'selinux', create=True) as selinux:
+            selinux.lgetfilecon_raw.side_effect = OSError(errno.ENOENT, 'NotFound')
             with pytest.raises(SystemExit):
                 am.selinux_context(path='/foo/bar')
 
-        with patch('ansible.module_utils.compat.selinux.lgetfilecon_raw', side_effect=OSError()):
+        with patch.object(basic, 'selinux', create=True) as selinux:
+            selinux.lgetfilecon_raw.side_effect = OSError()
             with pytest.raises(SystemExit):
                 am.selinux_context(path='/foo/bar')
 
     def test_is_special_selinux_path(self):
-        args = to_bytes(json.dumps(dict(ANSIBLE_MODULE_ARGS={'_ansible_selinux_special_fs': "nfs,nfsd,foos",
-                                                             '_ansible_remote_tmp': "/tmp",
-                                                             '_ansible_keep_remote_files': False})))
+        args = dict(
+            _ansible_selinux_special_fs="nfs,nfsd,foos",
+            _ansible_remote_tmp="/tmp",
+            _ansible_keep_remote_files=False,
+        )
 
-        with patch.object(basic, '_ANSIBLE_ARGS', args):
+        with patch_module_args(args):
             am = basic.AnsibleModule(
                 argument_spec=dict(),
             )
@@ -166,25 +177,29 @@ class TestSELinuxMU:
         am.selinux_context = lambda path: ['bar_u', 'bar_r', None, None]
         am.is_special_selinux_path = lambda path: (False, None)
 
-        with patch('ansible.module_utils.compat.selinux.lsetfilecon', return_value=0) as m:
+        with patch.object(basic, 'selinux', create=True) as selinux:
+            selinux.lsetfilecon.return_value = 0
             assert am.set_context_if_different('/path/to/file', ['foo_u', 'foo_r', 'foo_t', 's0'], False) is True
-            m.assert_called_with('/path/to/file', 'foo_u:foo_r:foo_t:s0')
-            m.reset_mock()
+            selinux.lsetfilecon.assert_called_with('/path/to/file', 'foo_u:foo_r:foo_t:s0')
+            selinux.lsetfilecon.reset_mock()
             am.check_mode = True
             assert am.set_context_if_different('/path/to/file', ['foo_u', 'foo_r', 'foo_t', 's0'], False) is True
-            assert not m.called
+            assert not selinux.lsetfilecon.called
             am.check_mode = False
 
-        with patch('ansible.module_utils.compat.selinux.lsetfilecon', return_value=1):
+        with patch.object(basic, 'selinux', create=True) as selinux:
+            selinux.lsetfilecon.return_value = 1
             with pytest.raises(SystemExit):
                 am.set_context_if_different('/path/to/file', ['foo_u', 'foo_r', 'foo_t', 's0'], True)
 
-        with patch('ansible.module_utils.compat.selinux.lsetfilecon', side_effect=OSError):
+        with patch.object(basic, 'selinux', create=True) as selinux:
+            selinux.lsetfilecon.side_effect = OSError
             with pytest.raises(SystemExit):
                 am.set_context_if_different('/path/to/file', ['foo_u', 'foo_r', 'foo_t', 's0'], True)
 
         am.is_special_selinux_path = lambda path: (True, ['sp_u', 'sp_r', 'sp_t', 's0'])
 
-        with patch('ansible.module_utils.compat.selinux.lsetfilecon', return_value=0) as m:
+        with patch.object(basic, 'selinux', create=True) as selinux:
+            selinux.lsetfilecon.return_value = 0
             assert am.set_context_if_different('/path/to/file', ['foo_u', 'foo_r', 'foo_t', 's0'], False) is True
-            m.assert_called_with('/path/to/file', 'sp_u:sp_r:sp_t:s0')
+            selinux.lsetfilecon.assert_called_with('/path/to/file', 'sp_u:sp_r:sp_t:s0')

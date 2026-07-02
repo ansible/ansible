@@ -1,8 +1,8 @@
 """Fallback source provider when no other provider matches the content root."""
+
 from __future__ import annotations
 
 import os
-import typing as t
 
 from ...constants import (
     TIMEOUT_PATH,
@@ -19,14 +19,15 @@ from . import (
 
 class UnversionedSource(SourceProvider):
     """Fallback source provider when no other provider matches the content root."""
+
     sequence = 0  # disable automatic detection
 
     @staticmethod
-    def is_content_root(path):  # type: (str) -> bool
+    def is_content_root(path: str) -> bool:
         """Return True if the given path is a content root for this provider."""
         return False
 
-    def get_paths(self, path):  # type: (str) -> t.List[str]
+    def get_paths(self, path: str) -> list[str]:
         """Return the list of available content paths under the given path."""
         paths = []
 
@@ -47,9 +48,6 @@ class UnversionedSource(SourceProvider):
             ),
             'tests': (
                 'output',
-            ),
-            'docs/docsite': (
-                '_build',
             ),
         }
 

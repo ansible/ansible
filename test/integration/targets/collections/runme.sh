@@ -4,8 +4,8 @@ set -eux
 
 export ANSIBLE_COLLECTIONS_PATH=$PWD/collection_root_user:$PWD/collection_root_sys
 export ANSIBLE_GATHERING=explicit
-export ANSIBLE_GATHER_SUBSET=minimal
 export ANSIBLE_HOST_PATTERN_MISMATCH=error
+export NO_COLOR=1
 unset ANSIBLE_COLLECTIONS_ON_ANSIBLE_VERSION_MISMATCH
 
 # ensure we can call collection module
@@ -25,11 +25,14 @@ ANSIBLE_CALLBACKS_ENABLED=formerly_core_callback ansible localhost -m debug 2>&1
 ## validate missing redirected callback
 ANSIBLE_CALLBACKS_ENABLED=formerly_core_missing_callback ansible localhost -m debug 2>&1 | grep -- "Skipping callback plugin 'formerly_core_missing_callback'"
 ## validate redirected + removed callback (fatal)
-ANSIBLE_CALLBACKS_ENABLED=formerly_core_removed_callback ansible localhost -m debug 2>&1 | grep -- "testns.testcoll.removedcallback has been removed"
+ANSIBLE_CALLBACKS_ENABLED=formerly_core_removed_callback ansible localhost -m debug 2>&1 | grep -- "The 'testns.testcoll.removedcallback' callback plugin has been removed"
 # validate avoiding duplicate loading of callback, even if using diff names
 [ "$(ANSIBLE_CALLBACKS_ENABLED=testns.testcoll.usercallback,formerly_core_callback ansible localhost -m debug 2>&1 | grep -c 'usercallback says ok')" = "1" ]
 # ensure non existing callback does not crash ansible
 ANSIBLE_CALLBACKS_ENABLED=charlie.gomez.notme ansible localhost -m debug 2>&1 | grep -- "Skipping callback plugin 'charlie.gomez.notme'"
+
+# test configuring collection callback plugins with extra variables
+ANSIBLE_CALLBACKS_ENABLED=testns.testcoll.usercallback ansible-playbook noop.yml --extra-vars 'on_ok="configured msg"' | grep 'configured msg'
 
 unset ANSIBLE_LOAD_CALLBACK_PLUGINS
 # adhoc normally shouldn't load non-default plugins- let's be sure
@@ -72,8 +75,11 @@ cat out.txt
 
 test "$(grep out.txt -ce 'deprecation1' -ce 'deprecation2' -ce 'deprecation3')" == 3
 grep out.txt -e 'redirecting (type: filter) testns.testredirect.multi_redirect_filter to testns.testredirect.redirect_filter1'
+grep out.txt -e 'Filter "testns.testredirect.multi_redirect_filter"'
 grep out.txt -e 'redirecting (type: filter) testns.testredirect.redirect_filter1 to testns.testredirect.redirect_filter2'
+grep out.txt -e 'Filter "testns.testredirect.redirect_filter1"'
 grep out.txt -e 'redirecting (type: filter) testns.testredirect.redirect_filter2 to testns.testcoll.testfilter'
+grep out.txt -e 'Filter "testns.testredirect.redirect_filter2"'
 
 echo "--- validating collections support in playbooks/roles"
 # run test playbooks
@@ -148,3 +154,13 @@ fi
 ./vars_plugin_tests.sh
 
 ./test_task_resolved_plugin.sh
+
+# Test tombstoned module/action plugins include the location of the fatal task
+cat <<EOF > test_dead_ping_error.yml
+- hosts: localhost
+  gather_facts: no
+  tasks:
+  - dead_ping:
+EOF
+ansible-playbook test_dead_ping_error.yml 2>&1 >/dev/null | grep -e ':4:5'
+echo PASS

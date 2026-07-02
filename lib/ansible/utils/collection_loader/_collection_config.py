@@ -4,11 +4,9 @@
 # CAUTION: This implementation of the collection loader is used by ansible-test.
 #          Because of this, it must be compatible with all Python versions supported on the controller or remote.
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-from ansible.module_utils.common.text.converters import to_text
-from ansible.module_utils.six import add_metaclass
+from . import _to_text
 
 
 class _EventSource:
@@ -62,7 +60,12 @@ class _AnsibleCollectionConfig(type):
     @property
     def collection_paths(cls):
         cls._require_finder()
-        return [to_text(p) for p in cls._collection_finder._n_collection_paths]
+        return [_to_text(p) for p in cls._collection_finder._n_collection_paths]
+
+    @property
+    def _internal_collections(cls):
+        cls._require_finder()
+        return cls._collection_finder._internal_collections
 
     @property
     def default_collection(cls):
@@ -85,7 +88,7 @@ class _AnsibleCollectionConfig(type):
     @property
     def playbook_paths(cls):
         cls._require_finder()
-        return [to_text(p) for p in cls._collection_finder._n_playbook_paths]
+        return [_to_text(p) for p in cls._collection_finder._n_playbook_paths]
 
     @playbook_paths.setter
     def playbook_paths(cls, value):
@@ -98,6 +101,6 @@ class _AnsibleCollectionConfig(type):
 
 
 # concrete class of our metaclass type that defines the class properties we want
-@add_metaclass(_AnsibleCollectionConfig)
-class AnsibleCollectionConfig(object):
+
+class AnsibleCollectionConfig(object, metaclass=_AnsibleCollectionConfig):
     pass

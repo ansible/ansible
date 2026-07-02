@@ -3,14 +3,12 @@
 # Copyright: (c) 2018, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
 import re
+from collections.abc import MutableMapping
 from copy import deepcopy
-
-from ansible.module_utils.common._collections_compat import MutableMapping
 
 
 def camel_dict_to_snake_dict(camel_dict, reversible=False, ignore_list=()):
@@ -110,9 +108,9 @@ def _camel_to_snake(name, reversible=False):
 
 
 def dict_merge(a, b):
-    '''recursively merges dicts. not just simple a['key'] = b['key'], if
+    """recursively merges dicts. not just simple a['key'] = b['key'], if
     both a and b have a key whose value is a dict then dict_merge is called
-    on both values and the result stored in the returned dictionary.'''
+    on both values and the result stored in the returned dictionary."""
     if not isinstance(b, dict):
         return b
     result = deepcopy(a)

@@ -26,26 +26,24 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 from collections import defaultdict
 
 import platform
-
-import ansible.module_utils.compat.typing as t
+import typing as t
 
 from ansible.module_utils.facts import timeout
 
 
 class CycleFoundInFactDeps(Exception):
-    '''Indicates there is a cycle in fact collector deps
+    """Indicates there is a cycle in fact collector deps
 
     If collector-B requires collector-A, and collector-A requires
     collector-B, that is a cycle. In that case, there is no ordering
     that will satisfy B before A and A and before B. That will cause this
     error to be raised.
-    '''
+    """
     pass
 
 
@@ -65,9 +63,9 @@ class BaseFactCollector:
     required_facts = set()  # type: t.Set[str]
 
     def __init__(self, collectors=None, namespace=None):
-        '''Base class for things that collect facts.
+        """Base class for things that collect facts.
 
-        'collectors' is an optional list of other FactCollectors for composing.'''
+        'collectors' is an optional list of other FactCollectors for composing."""
         self.collectors = collectors or []
 
         # self.namespace is a object with a 'transform' method that transforms
@@ -89,8 +87,10 @@ class BaseFactCollector:
         return key_name
 
     def _transform_dict_keys(self, fact_dict):
-        '''update a dicts keys to use new names as transformed by self._transform_name'''
+        """update a dicts keys to use new names as transformed by self._transform_name"""
 
+        if fact_dict is None:
+            return {}
         for old_key in list(fact_dict.keys()):
             new_key = self._transform_name(old_key)
             # pop the item by old_key and replace it using new_key
@@ -106,7 +106,7 @@ class BaseFactCollector:
         return facts_dict
 
     def collect(self, module=None, collected_facts=None):
-        '''do the fact collection
+        """do the fact collection
 
         'collected_facts' is a object (a dict, likely) that holds all previously
           facts. This is intended to be used if a FactCollector needs to reference
@@ -114,7 +114,7 @@ class BaseFactCollector:
 
           Returns a dict of facts.
 
-          '''
+          """
         facts_dict = {}
         return facts_dict
 
@@ -124,12 +124,12 @@ def get_collector_names(valid_subsets=None,
                         gather_subset=None,
                         aliases_map=None,
                         platform_info=None):
-    '''return a set of FactCollector names based on gather_subset spec.
+    """return a set of FactCollector names based on gather_subset spec.
 
     gather_subset is a spec describing which facts to gather.
     valid_subsets is a frozenset of potential matches for gather_subset ('all', 'network') etc
     minimal_gather_subsets is a frozenset of matches to always use, even for gather_subset='!all'
-    '''
+    """
 
     # Retrieve module parameters
     gather_subset = gather_subset or ['all']
@@ -266,11 +266,11 @@ def _get_requires_by_collector_name(collector_name, all_fact_subsets):
 
 
 def find_unresolved_requires(collector_names, all_fact_subsets):
-    '''Find any collector names that have unresolved requires
+    """Find any collector names that have unresolved requires
 
     Returns a list of collector names that correspond to collector
     classes whose .requires_facts() are not in collector_names.
-    '''
+    """
     unresolved = set()
 
     for collector_name in collector_names:
@@ -350,7 +350,7 @@ def collector_classes_from_gather_subset(all_collector_classes=None,
                                          gather_subset=None,
                                          gather_timeout=None,
                                          platform_info=None):
-    '''return a list of collector classes that match the args'''
+    """return a list of collector classes that match the args"""
 
     # use gather_name etc to get the list of collectors
 

@@ -3,11 +3,10 @@
 # Copyright: (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: subversion
 short_description: Deploys a subversion repository
@@ -26,7 +25,7 @@ options:
   dest:
     description:
       - Absolute path where the repository should be deployed.
-      - The destination directory must be specified unless I(checkout=no), I(update=no), and I(export=no).
+      - The destination directory must be specified unless O(checkout=no), O(update=no), and O(export=no).
     type: path
   revision:
     description:
@@ -36,14 +35,14 @@ options:
     aliases: [ rev, version ]
   force:
     description:
-      - If C(yes), modified files will be discarded. If C(no), module will fail if it encounters modified files.
-        Prior to 1.9 the default was C(yes).
+      - If V(true), modified files will be discarded. If V(false), module will fail if it encounters modified files.
+        Prior to 1.9 the default was V(true).
     type: bool
     default: "no"
   in_place:
     description:
       - If the directory exists, then the working copy will be checked-out over-the-top using
-        svn checkout --force; if force is specified then existing files with different content are reverted.
+        C(svn checkout --force); if force is specified then existing files with different content are reverted.
     type: bool
     default: "no"
     version_added: "2.6"
@@ -65,32 +64,32 @@ options:
     version_added: "1.4"
   checkout:
     description:
-     - If C(no), do not check out the repository if it does not exist locally.
+     - If V(false), do not check out the repository if it does not exist locally.
     type: bool
     default: "yes"
     version_added: "2.3"
   update:
     description:
-     - If C(no), do not retrieve new revisions from the origin repository.
+     - If V(false), do not retrieve new revisions from the origin repository.
     type: bool
     default: "yes"
     version_added: "2.3"
   export:
     description:
-      - If C(yes), do export instead of checkout/update.
+      - If V(true), do export instead of checkout/update.
     type: bool
     default: "no"
     version_added: "1.6"
   switch:
     description:
-      - If C(no), do not call svn switch before update.
+      - If V(false), do not call svn switch before update.
     default: "yes"
     version_added: "2.0"
     type: bool
   validate_certs:
     description:
-      - If C(no), passes the C(--trust-server-cert) flag to svn.
-      - If C(yes), does not pass the flag.
+      - If V(false), passes the C(--trust-server-cert) flag to svn.
+      - If V(true), does not pass the flag.
     default: "no"
     version_added: "2.11"
     type: bool
@@ -107,9 +106,9 @@ notes:
 
 requirements:
     - subversion (the command line tool with C(svn) entrypoint)
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
 - name: Checkout subversion repository to specified folder
   ansible.builtin.subversion:
     repo: svn+ssh://an.example.org/path/to/repo
@@ -127,9 +126,9 @@ EXAMPLES = '''
     dest: /src/checkout
     checkout: no
     update: no
-'''
+"""
 
-RETURN = r'''#'''
+RETURN = r"""#"""
 
 import os
 import re
@@ -142,7 +141,7 @@ from ansible.module_utils.compat.version import LooseVersion
 class Subversion(object):
 
     # Example text matched by the regexp:
-    #  Révision : 1889134
+    #  Révision : 1889134
     #  版本: 1889134
     #  Revision: 1889134
     REVISION_RE = r'^\w+\s?:\s+\d+$'
@@ -162,7 +161,7 @@ class Subversion(object):
         return LooseVersion(version) >= LooseVersion('1.10.0')
 
     def _exec(self, args, check_rc=True):
-        '''Execute a subversion command, and return output. If check_rc is False, returns the return code instead of the output.'''
+        """Execute a subversion command, and return output. If check_rc is False, returns the return code instead of the output."""
         bits = [
             self.svn_path,
             '--non-interactive',
@@ -190,12 +189,12 @@ class Subversion(object):
             return rc
 
     def is_svn_repo(self):
-        '''Checks if path is a SVN Repo.'''
+        """Checks if path is a SVN Repo."""
         rc = self._exec(["info", self.dest], check_rc=False)
         return rc == 0
 
     def checkout(self, force=False):
-        '''Creates new svn working directory if it does not already exist.'''
+        """Creates new svn working directory if it does not already exist."""
         cmd = ["checkout"]
         if force:
             cmd.append("--force")
@@ -203,7 +202,7 @@ class Subversion(object):
         self._exec(cmd)
 
     def export(self, force=False):
-        '''Export svn repo to directory'''
+        """Export svn repo to directory"""
         cmd = ["export"]
         if force:
             cmd.append("--force")
@@ -212,7 +211,7 @@ class Subversion(object):
         self._exec(cmd)
 
     def switch(self):
-        '''Change working directory's repo.'''
+        """Change working directory's repo."""
         # switch to ensure we are pointing at correct repo.
         # it also updates!
         output = self._exec(["switch", "--revision", self.revision, self.repo, self.dest])
@@ -222,7 +221,7 @@ class Subversion(object):
         return False
 
     def update(self):
-        '''Update existing svn working directory.'''
+        """Update existing svn working directory."""
         output = self._exec(["update", "-r", self.revision, self.dest])
 
         for line in output:
@@ -231,7 +230,7 @@ class Subversion(object):
         return False
 
     def revert(self):
-        '''Revert svn working directory.'''
+        """Revert svn working directory."""
         output = self._exec(["revert", "-R", self.dest])
         for line in output:
             if re.search(r'^Reverted ', line) is None:
@@ -239,7 +238,7 @@ class Subversion(object):
         return False
 
     def get_revision(self):
-        '''Revision and URL of subversion working directory.'''
+        """Revision and URL of subversion working directory."""
         text = '\n'.join(self._exec(["info", self.dest]))
         rev = re.search(self.REVISION_RE, text, re.MULTILINE)
         if rev:
@@ -256,7 +255,7 @@ class Subversion(object):
         return rev, url
 
     def get_remote_revision(self):
-        '''Revision and URL of subversion working directory.'''
+        """Revision and URL of subversion working directory."""
         text = '\n'.join(self._exec(["info", self.repo]))
         rev = re.search(self.REVISION_RE, text, re.MULTILINE)
         if rev:
@@ -266,7 +265,7 @@ class Subversion(object):
         return rev
 
     def has_local_mods(self):
-        '''True if revisioned files have been added or modified. Unrevisioned files are ignored.'''
+        """True if revisioned files have been added or modified. Unrevisioned files are ignored."""
         lines = self._exec(["status", "--quiet", "--ignore-externals", self.dest])
         # The --quiet option will return only modified files.
         # Match only revisioned files, i.e. ignore status '?'.

@@ -1,4 +1,5 @@
 """Prevent files from being added to directories that are now obsolete."""
+
 from __future__ import annotations
 
 import os

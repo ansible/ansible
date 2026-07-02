@@ -1,4 +1,5 @@
 """HTTP Tester plugin for integration tests."""
+
 from __future__ import annotations
 
 import os
@@ -13,7 +14,6 @@ from ....config import (
 )
 
 from ....containers import (
-    CleanupMode,
     run_support_container,
 )
 
@@ -28,14 +28,15 @@ KRB5_PASSWORD_ENV = 'KRB5_PASSWORD'
 
 class HttptesterProvider(CloudProvider):
     """HTTP Tester provider plugin. Sets up resources before delegation."""
-    def __init__(self, args):  # type: (IntegrationConfig) -> None
+
+    def __init__(self, args: IntegrationConfig) -> None:
         super().__init__(args)
 
-        self.image = os.environ.get('ANSIBLE_HTTP_TEST_CONTAINER', 'quay.io/ansible/http-test-container:2.1.0')
+        self.image = os.environ.get('ANSIBLE_HTTP_TEST_CONTAINER', 'quay.io/ansible/http-test-container:3.6.0')
 
         self.uses_docker = True
 
-    def setup(self):  # type: () -> None
+    def setup(self) -> None:
         """Setup resources before delegation."""
         super().setup()
 
@@ -61,8 +62,6 @@ class HttptesterProvider(CloudProvider):
             'http-test-container',
             ports,
             aliases=aliases,
-            allow_existing=True,
-            cleanup=CleanupMode.YES,
             env={
                 KRB5_PASSWORD_ENV: generate_password(),
             },
@@ -72,7 +71,7 @@ class HttptesterProvider(CloudProvider):
             return
 
         # Read the password from the container environment.
-        # This allows the tests to work when re-using an existing container.
+        # This allows the tests to work when reusing an existing container.
         # The password is marked as sensitive, since it may differ from the one we generated.
         krb5_password = descriptor.details.container.env_dict()[KRB5_PASSWORD_ENV]
         display.sensitive.add(krb5_password)
@@ -82,7 +81,8 @@ class HttptesterProvider(CloudProvider):
 
 class HttptesterEnvironment(CloudEnvironment):
     """HTTP Tester environment plugin. Updates integration test environment after delegation."""
-    def get_environment_config(self):  # type: () -> CloudEnvironmentConfig
+
+    def get_environment_config(self) -> CloudEnvironmentConfig:
         """Return environment configuration for use in the test environment after delegation."""
         return CloudEnvironmentConfig(
             env_vars=dict(

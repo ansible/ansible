@@ -16,26 +16,22 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 from collections import defaultdict
 
 from unittest import mock
 
-from units.compat import unittest
+import unittest
+
 from ansible.errors import AnsibleError
-from ansible.utils.vars import combine_vars, merge_hash
+from ansible._internal._datatag._tags import Origin
+from ansible.parsing.vault import EncryptedString
+from ansible.utils.vars import combine_vars, merge_hash, transform_to_native_types
+from units.mock.vault_helper import VaultTestHelper
 
 
 class TestVariableUtils(unittest.TestCase):
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
-
     combine_vars_merge_data = (
         dict(
             a=dict(a=1),
@@ -282,3 +278,30 @@ class TestVariableUtils(unittest.TestCase):
             "b": high['b'] + [1, 1, 2]
         }
         self.assertEqual(merge_hash(low, high, True, 'prepend_rp'), expected)
+
+
+def test_transform_to_native_types() -> None:
+    """Verify that transform_to_native_types results in native types for both keys and values, with default redaction."""
+    value = {
+        Origin(description="blah").tag("tagged_key"): Origin(description="blah").tag("value with tagged key"),
+        # use a bogus EncryptedString instance with no VaultSecretsContext active; ensures that transform with redaction does not attempt decryption
+        "redact_this": EncryptedString(ciphertext="bogus")
+    }
+
+    result = transform_to_native_types(value)
+
+    assert result == dict(tagged_key="value with tagged key", redact_this='<redacted>')
+
+    assert all(type(key) is str for key in result.keys())  # pylint: disable=unidiomatic-typecheck
+    assert all(type(value) is str for value in result.values())  # pylint: disable=unidiomatic-typecheck
+
+
+def test_transform_to_native_types_unredacted(_vault_secrets_context: None) -> None:
+    """Verify that transform with redaction disabled returns a plain string decrypted value."""
+    plaintext = "hello"
+    value = dict(enc=VaultTestHelper.make_encrypted_string(plaintext))
+    result = transform_to_native_types(value, redact=False)
+
+    assert result == dict(enc=plaintext)
+    assert all(type(key) is str for key in result.keys())  # pylint: disable=unidiomatic-typecheck
+    assert all(type(value) is str for value in result.values())  # pylint: disable=unidiomatic-typecheck

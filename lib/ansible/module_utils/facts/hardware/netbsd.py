@@ -13,14 +13,13 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 import re
 import time
 
-from ansible.module_utils.six.moves import reduce
+from functools import reduce
 
 from ansible.module_utils.facts.hardware.base import Hardware, HardwareCollector
 from ansible.module_utils.facts.timeout import TimeoutError, timeout
@@ -163,6 +162,9 @@ class NetBSDHardware(Hardware):
     def get_uptime_facts(self):
         # On NetBSD, we need to call sysctl with -n to get this value as an int.
         sysctl_cmd = self.module.get_bin_path('sysctl')
+        if sysctl_cmd is None:
+            return {}
+
         cmd = [sysctl_cmd, '-n', 'kern.boottime']
 
         rc, out, err = self.module.run_command(cmd)

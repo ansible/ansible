@@ -5,7 +5,7 @@ source virtualenv.sh
 
 
 MYTMPDIR=$(mktemp -d 2>/dev/null || mktemp -d -t 'mytmpdir')
-trap 'rm -rf "${MYTMPDIR}"' EXIT
+trap 'chmod -R u+rwx ${MYTMPDIR}; rm -rf "${MYTMPDIR}"' EXIT
 
 # create a test file
 TEST_FILE="${MYTMPDIR}/test_file"
@@ -47,6 +47,21 @@ echo $?
 # view the vault encrypted password file
 ansible-vault view "$@" --vault-id vault-password encrypted-vault-password
 
+# check if ansible-vault fails when destination is not writable
+# skip check as root as root can always read/write
+if [ ${UID} -ne "0" ]; then
+    NOT_WRITABLE_DIR="${MYTMPDIR}/not_writable"
+    TEST_FILE_EDIT4="${NOT_WRITABLE_DIR}/testfile"
+    mkdir "${NOT_WRITABLE_DIR}"
+    touch "${TEST_FILE_EDIT4}"
+    chmod ugo-w "${NOT_WRITABLE_DIR}"
+    ansible-vault encrypt "$@" --vault-password-file vault-password "${TEST_FILE_EDIT4}" < /dev/null > log 2>&1 && :
+    grep "not writable" log && :
+    WRONG_RC=$?
+    echo "rc was $WRONG_RC (0 is expected)"
+    [ $WRONG_RC -eq 0 ]
+fi
+
 # encrypt with a password from a vault encrypted password file and multiple vault-ids
 # should fail because we dont know which vault id to use to encrypt with
 ansible-vault encrypt "$@" --vault-id vault-password --vault-id encrypted-vault-password "${TEST_FILE_ENC_PASSWORD}" && :
@@ -54,8 +69,8 @@ WRONG_RC=$?
 echo "rc was $WRONG_RC (5 is expected)"
 [ $WRONG_RC -eq 5 ]
 
-# try to view the file encrypted with the vault-password we didnt specify
-# to verify we didnt choose the wrong vault-id
+# try to view the file encrypted with the vault-password we didn't specify
+# to verify we didn't choose the wrong vault-id
 ansible-vault view "$@" --vault-id vault-password encrypted-vault-password
 
 FORMAT_1_1_HEADER="\$ANSIBLE_VAULT;1.1;AES256"
@@ -173,6 +188,12 @@ WRONG_RC=$?
 echo "rc was $WRONG_RC (1 is expected)"
 [ $WRONG_RC -eq 1 ]
 
+# test if vault password file is not a directory
+ANSIBLE_VAULT_PASSWORD_FILE='' ansible-vault view "$@" format_1_1_AES.yml && :
+WRONG_RC=$?
+echo "rc was $WRONG_RC (1 is expected)"
+[ $WRONG_RC -eq 1 ]
+
 # new 1.2 format, view, using password script with vault-id, ENFORCE_IDENTITY_MATCH=true, 'test_vault_id' provided should work
 ANSIBLE_VAULT_ID_MATCH=1 ansible-vault view "$@" --vault-id=test_vault_id@password-script.py format_1_2_AES256.yml
 
@@ -194,7 +215,7 @@ WRONG_RC=$?
 echo "rc was $WRONG_RC (1 is expected)"
 [ $WRONG_RC -eq 1 ]
 
-# try specifying a --encrypt-vault-id that doesnt exist, should exit with an error indicating
+# try specifying a --encrypt-vault-id that doesn't exist, should exit with an error indicating
 # that --encrypt-vault-id and the known vault-ids
 ansible-vault encrypt "$@" --vault-password-file vault-password --encrypt-vault-id doesnt_exist "${TEST_FILE}" && :
 WRONG_RC=$?
@@ -362,7 +383,7 @@ head -1 "${TEST_FILE_EDIT}" | grep "${FORMAT_1_1_HEADER}"
 ansible-vault encrypt "$@" --vault-id vault_password@vault-password "${TEST_FILE_EDIT2}"
 
 # verify that we aren't prompted for a new vault password on edit if we are running interactively (ie, with prompts)
-# have to use setsid nd --ask-vault-pass to force a prompt to simulate.
+# have to use setsid and --ask-vault-pass to force a prompt to simulate.
 # See https://github.com/ansible/ansible/issues/35834
 setsid sh -c 'tty; echo password |ansible-vault edit --ask-vault-pass vault_test.yml' < /dev/null > log 2>&1 && :
 grep  'New Vault password' log && :
@@ -378,6 +399,18 @@ head -1 "${TEST_FILE_EDIT2}" | grep "${FORMAT_1_2_HEADER};vault_password"
 EDITOR=./faux-editor.py ansible-vault edit "$@" --vault-password-file vault-password "${TEST_FILE_EDIT2}"
 head -1 "${TEST_FILE_EDIT2}" | grep "${FORMAT_1_2_HEADER};vault_password"
 
+# verify an aborted edit reports an error and does not corrupt the vault file
+ORIGINAL_FILE_EDIT="${TEST_FILE_EDIT}.original"
+
+cp "${TEST_FILE_EDIT}" "${ORIGINAL_FILE_EDIT}"
+
+if EDITOR=./fail-editor.py ansible-vault edit "$@" --vault-password-file vault-password "${TEST_FILE_EDIT}"; then
+    echo "ansible-vault did not fail after an edit was aborted"
+    exit 1
+fi
+
+diff "${TEST_FILE_EDIT}" "${ORIGINAL_FILE_EDIT}" >/dev/null || (echo "vault file corrupted after failed edit"; exit 1)
+
 # encrypt with a password from a vault encrypted password file and multiple vault-ids
 # should fail because we dont know which vault id to use to encrypt with
 ansible-vault encrypt "$@" --vault-id vault-password --vault-id encrypted-vault-password "${TEST_FILE_ENC_PASSWORD}" && :
@@ -390,8 +423,8 @@ echo "rc was $WRONG_RC (5 is expected)"
 # but this time specify with --encrypt-vault-id, but specifying vault-id names (instead of default)
 # ansible-vault encrypt "$@" --vault-id from_vault_password@vault-password --vault-id from_encrypted_vault_password@encrypted-vault-password --encrypt-vault-id from_encrypted_vault_password "${TEST_FILE(_ENC_PASSWORD}"
 
-# try to view the file encrypted with the vault-password we didnt specify
-# to verify we didnt choose the wrong vault-id
+# try to view the file encrypted with the vault-password we didn't specify
+# to verify we didn't choose the wrong vault-id
 # ansible-vault view "$@" --vault-id vault-password "${TEST_FILE_ENC_PASSWORD}" && :
 # WRONG_RC=$?
 # echo "rc was $WRONG_RC (1 is expected)"
@@ -425,7 +458,7 @@ ansible-playbook test_vault.yml          -i ../../inventory -v "$@" --vault-pass
 
 # install TOML for parse toml inventory
 # test playbooks using vaulted files(toml)
-pip install toml
+pip install tomli
 ansible-vault encrypt  ./inventory.toml -v "$@" --vault-password-file=./vault-password
 ansible-playbook test_vaulted_inventory_toml.yml -i ./inventory.toml -v "$@" --vault-password-file vault-password
 ansible-vault decrypt  ./inventory.toml -v "$@" --vault-password-file=./vault-password
@@ -534,18 +567,64 @@ sudo chmod 000 "${MYTMPDIR}/unreadable"
 ansible-vault encrypt_string content
 ansible-vault encrypt_string content --encrypt-vault-id id3
 
-set +e
-
 # Try to use a missing vault password file
-ansible-vault encrypt_string content --encrypt-vault-id id1 2>&1 | tee out.txt
-test $? -ne 0
-grep out.txt -e '[WARNING]: Error getting vault password file (id1)'
-grep out.txt -e "ERROR! Did not find a match for --encrypt-vault-id=id2 in the known vault-ids ['id3']"
+if ansible-vault encrypt_string content --encrypt-vault-id id1 > out.txt 2>&1; then
+  echo "command did not fail"
+  exit 1
+fi
+grep out.txt -e '\[WARNING\]: Error getting vault password file (id1)'
+grep out.txt -e "\[ERROR\]: Did not find a match for --encrypt-vault-id=id1 in the known vault-ids \['id3'\]"
 
 # Try to use an inaccessible vault password file
-ansible-vault encrypt_string content --encrypt-vault-id id2 2>&1 | tee out.txt
-test $? -ne 0
-grep out.txt -e "[WARNING]: Error in vault password file loading (id2)"
-grep out.txt -e "ERROR! Did not find a match for --encrypt-vault-id=id2 in the known vault-ids ['id3']"
+if ansible-vault encrypt_string content --encrypt-vault-id id2 > out.txt 2>&1; then
+  echo "command did not fail"
+  exit 1
+fi
+grep out.txt -e "\[WARNING\]: Error in vault password file loading (id2)"
+grep out.txt -e "\[ERROR\]: Did not find a match for --encrypt-vault-id=id2 in the known vault-ids \['id3'\]"
 
-set -e
+unset ANSIBLE_VAULT_IDENTITY_LIST
+
+# 'real script'
+ansible-playbook realpath.yml "$@" --vault-password-file script/vault-secret.sh
+
+# using symlink
+ansible-playbook symlink.yml "$@" --vault-password-file symlink/get-password-symlink
+
+### NEGATIVE TESTS
+
+ER='Attempting to decrypt but no vault secrets found'
+#### no secrets
+# 'real script'
+ansible-playbook realpath.yml "$@" 2>&1 |grep "${ER}"
+
+# using symlink
+ansible-playbook symlink.yml "$@" 2>&1 |grep "${ER}"
+
+ER='no vault secrets were found that could decrypt'
+### wrong secrets
+# 'real script'
+ansible-playbook realpath.yml "$@" --vault-password-file symlink/get-password-symlink 2>&1 |grep "${ER}"
+
+# using symlink
+ansible-playbook symlink.yml "$@" --vault-password-file script/vault-secret.sh 2>&1 |grep "${ER}"
+
+### SALT TESTING ###
+# prep files for encryption
+for salted in test1 test2 test3
+do
+    echo 'this is salty' > "salted_${salted}"
+done
+
+# encrypt files
+ANSIBLE_VAULT_ENCRYPT_SALT=salty ansible-vault encrypt salted_test1 --vault-password-file example1_password "$@"
+ANSIBLE_VAULT_ENCRYPT_SALT=salty ansible-vault encrypt salted_test2 --vault-password-file example1_password "$@"
+ansible-vault encrypt salted_test3 --vault-password-file example1_password "$@"
+
+# should be the same
+out=$(diff salted_test1 salted_test2)
+[ "${out}" == "" ]
+
+# should be diff
+out=$(diff salted_test1 salted_test3 || true)
+[ "${out}" != "" ]

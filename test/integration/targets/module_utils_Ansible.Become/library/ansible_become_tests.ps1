@@ -48,7 +48,6 @@ $test_whoami = {
     Add-Type -TypeDefinition @'
 using Microsoft.Win32.SafeHandles;
 using System;
-using System.Runtime.ConstrainedExecution;
 using System.Runtime.InteropServices;
 using System.Security.Principal;
 using System.Text;
@@ -128,7 +127,7 @@ namespace Ansible
 
         public enum SECURITY_LOGON_TYPE
         {
-            System = 0, // Used only by the Sytem account
+            System = 0, // Used only by the System account
             Interactive = 2,
             Network,
             Batch,
@@ -212,7 +211,6 @@ namespace Ansible
     {
         public SafeLsaMemoryBuffer() : base(true) { }
 
-        [ReliabilityContract(Consistency.WillNotCorruptState, Cer.MayFail)]
         protected override bool ReleaseHandle()
         {
             UInt32 res = NativeMethods.LsaFreeReturnBuffer(handle);
@@ -232,7 +230,6 @@ namespace Ansible
             base.SetHandle(handle);
         }
 
-        [ReliabilityContract(Consistency.WillNotCorruptState, Cer.MayFail)]
         protected override bool ReleaseHandle()
         {
             Marshal.FreeHGlobal(handle);
@@ -245,7 +242,6 @@ namespace Ansible
         public SafeNativeHandle() : base(true) { }
         public SafeNativeHandle(IntPtr handle) : base(true) { this.handle = handle; }
 
-        [ReliabilityContract(Consistency.WillNotCorruptState, Cer.MayFail)]
         protected override bool ReleaseHandle()
         {
             return NativeMethods.CloseHandle(handle);
@@ -586,8 +582,9 @@ $tests = @{
         catch {
             $failed = $true
             $_.Exception.InnerException.GetType().FullName | Assert-Equal -Expected "Ansible.Process.Win32Exception"
+            $expected_msg = [System.ComponentModel.Win32Exception]::new(2).Message
             $expected = 'Exception calling "CreateProcessAsUser" with "3" argument(s): "CreateProcessWithTokenW() failed '
-            $expected += '(The system cannot find the file specified, Win32ErrorCode 2)"'
+            $expected += "($expected_msg, Win32ErrorCode 2)`""
             $_.Exception.Message | Assert-Equal -Expected $expected
         }
         $failed | Assert-Equal -Expected $true

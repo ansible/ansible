@@ -1,10 +1,8 @@
 # Copyright: (c) 2018, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-from ansible.errors import AnsibleActionFail
 from ansible.plugins.action import ActionBase
 from ansible.utils.vars import merge_hash
 
@@ -30,7 +28,7 @@ class ActionModule(ActionBase):
         )
 
         # initialize response
-        results['started'] = results['finished'] = 0
+        results['started'] = results['finished'] = False
         results['stdout'] = results['stderr'] = ''
         results['stdout_lines'] = results['stderr_lines'] = []
 
@@ -45,9 +43,14 @@ class ActionModule(ActionBase):
             results['erased'] = log_path
         else:
             results['results_file'] = log_path
-            results['started'] = 1
+            results['started'] = True
 
         new_module_args['_async_dir'] = async_dir
         results = merge_hash(results, self._execute_module(module_name='ansible.legacy.async_status', task_vars=task_vars, module_args=new_module_args))
+
+        # Backwards compat shim for when started/finished were ints,
+        # mostly to work with ansible.windows.async_status
+        for convert in ('started', 'finished'):
+            results[convert] = bool(results[convert])
 
         return results

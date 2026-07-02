@@ -10,13 +10,15 @@ import datetime
 import decimal
 
 from xml.dom import minidom
+
 # noinspection PyPep8Naming
 from xml.etree import ElementTree as ET
 
 
-@dataclasses.dataclass  # type: ignore[misc]  # https://github.com/python/mypy/issues/5374
+@dataclasses.dataclass
 class TestResult(metaclass=abc.ABCMeta):
     """Base class for the result of a test case."""
+
     output: str | None = None
     message: str | None = None
     type: str | None = None
@@ -48,6 +50,7 @@ class TestResult(metaclass=abc.ABCMeta):
 @dataclasses.dataclass
 class TestFailure(TestResult):
     """Failure info for a test case."""
+
     @property
     def tag(self) -> str:
         """Tag name for the XML element created by this result type."""
@@ -57,6 +60,7 @@ class TestFailure(TestResult):
 @dataclasses.dataclass
 class TestError(TestResult):
     """Error info for a test case."""
+
     @property
     def tag(self) -> str:
         """Tag name for the XML element created by this result type."""
@@ -66,6 +70,7 @@ class TestError(TestResult):
 @dataclasses.dataclass
 class TestCase:
     """An individual test case."""
+
     name: str
     assertions: int | None = None
     classname: str | None = None
@@ -127,6 +132,7 @@ class TestCase:
 @dataclasses.dataclass
 class TestSuite:
     """A collection of test cases."""
+
     name: str
     hostname: str | None = None
     id: str | None = None
@@ -137,6 +143,10 @@ class TestSuite:
     cases: list[TestCase] = dataclasses.field(default_factory=list)
     system_out: str | None = None
     system_err: str | None = None
+
+    def __post_init__(self):
+        if self.timestamp and self.timestamp.tzinfo != datetime.timezone.utc:
+            raise ValueError(f'timestamp.tzinfo must be {datetime.timezone.utc!r}')
 
     @property
     def disabled(self) -> int:
@@ -181,7 +191,7 @@ class TestSuite:
             skipped=self.skipped,
             tests=self.tests,
             time=self.time,
-            timestamp=self.timestamp.isoformat(timespec='seconds') if self.timestamp else None,
+            timestamp=self.timestamp.replace(tzinfo=None).isoformat(timespec='seconds') if self.timestamp else None,
         )
 
     def get_xml_element(self) -> ET.Element:
@@ -205,6 +215,7 @@ class TestSuite:
 @dataclasses.dataclass
 class TestSuites:
     """A collection of test suites."""
+
     name: str | None = None
 
     suites: list[TestSuite] = dataclasses.field(default_factory=list)

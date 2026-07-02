@@ -15,15 +15,16 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-from units.compat import unittest
+import pytest
+import unittest
+
 from ansible.playbook.block import Block
 from ansible.playbook.task import Task
 
 
+@pytest.mark.usefixtures('collection_loader')
 class TestBlock(unittest.TestCase):
 
     def test_construct_empty_block(self):
@@ -69,14 +70,3 @@ class TestBlock(unittest.TestCase):
         b = Block.load(ds)
         self.assertEqual(len(b.block), 1)
         self.assertIsInstance(b.block[0], Task)
-
-    def test_deserialize(self):
-        ds = dict(
-            block=[dict(action='block')],
-            rescue=[dict(action='rescue')],
-            always=[dict(action='always')],
-        )
-        b = Block.load(ds)
-        data = dict(parent=ds, parent_type='Block')
-        b.deserialize(data)
-        self.assertIsInstance(b._parent, Block)

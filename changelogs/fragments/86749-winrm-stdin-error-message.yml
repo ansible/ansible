@@ -1,0 +1,2 @@
+minor_changes:
+  - winrm connection plugin - improved error message to include target host when stdin transfer fails (https://github.com/ansible/ansible/issues/86749)

@@ -4,8 +4,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 # PYTHON_ARGCOMPLETE_OK
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 # ansible.cli needs to be imported first, to ensure the source bin/* scripts run that code first
 from ansible.cli import CLI
@@ -13,7 +12,7 @@ from ansible.cli import CLI
 import datetime
 import os
 import platform
-import random
+import secrets
 import shlex
 import shutil
 import socket
@@ -24,25 +23,57 @@ from ansible import constants as C
 from ansible import context
 from ansible.cli.arguments import option_helpers as opt_help
 from ansible.errors import AnsibleOptionsError
-from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils.common.text.converters import to_native, to_text
 from ansible.plugins.loader import module_loader
 from ansible.utils.cmd_functions import run_cmd
 from ansible.utils.display import Display
 
+
 display = Display()
+
+SAFE_OUTPUT_ENV = {
+    'ANSIBLE_CALLBACK_RESULT_FORMAT': 'json',
+    'ANSIBLE_LOAD_CALLBACK_PLUGINS': '0',
+}
+
+
+def safe_output_env(f):
+
+    def wrapper(*args, **kwargs):
+
+        orig = {}
+
+        for k, v in SAFE_OUTPUT_ENV.items():
+            orig[k] = os.environ.get(k, None)
+            os.environ[k] = v
+
+        result = f(*args, **kwargs)
+
+        for key in orig.keys():
+            if orig[key] is None:
+                del os.environ[key]
+            else:
+                os.environ[key] = orig[key]
+
+        return result
+
+    return wrapper
 
 
 class PullCLI(CLI):
-    ''' Used to pull a remote copy of ansible on each managed node,
+    """ Used to pull a remote copy of ansible on each managed node,
         each set to run via cron and update playbook source via a source repository.
         This inverts the default *push* architecture of ansible into a *pull* architecture,
         which has near-limitless scaling potential.
 
+        None of the CLI tools are designed to run concurrently with themselves,
+        you should use an external scheduler and/or locking to ensure there are no clashing operations.
+
         The setup playbook can be tuned to change the cron frequency, logging locations, and parameters to ansible-pull.
-        This is useful both for extreme scale-out as well as periodic remediation.
+        This is useful both for extreme scale-out and periodic remediation.
         Usage of the 'fetch' module to retrieve logs from ansible-pull runs would be an
         excellent way to gather and analyze remote logs from ansible-pull.
-    '''
+    """
 
     name = 'ansible-pull'
 
@@ -53,9 +84,9 @@ class PullCLI(CLI):
         1: 'File does not exist',
         2: 'File is not readable',
     }
-    ARGUMENTS = {'playbook.yml': 'The name of one the YAML format files to run as an Ansible playbook.'
-                                 'This can be a relative path within the checkout. By default, Ansible will'
-                                 "look for a playbook based on the host's fully-qualified domain name,"
+    ARGUMENTS = {'playbook.yml': 'The name of one the YAML format files to run as an Ansible playbook. '
+                                 'This can be a relative path within the checkout. By default, Ansible will '
+                                 "look for a playbook based on the host's fully-qualified domain name, "
                                  'on the host hostname and finally a playbook named *local.yml*.', }
 
     SKIP_INVENTORY_DEFAULTS = True
@@ -73,11 +104,11 @@ class PullCLI(CLI):
         return inv_opts
 
     def init_parser(self):
-        ''' create an options parser for bin/ansible '''
+        """ Specific args/option parser for pull """
 
+        # signature is different from parent as caller should not need to add usage/desc
         super(PullCLI, self).init_parser(
-            usage='%prog -U <repository> [options] [<playbook.yml>]',
-            desc="pulls playbooks from a VCS repo and executes them for the local host")
+            desc="pulls playbooks from a VCS repo and executes them on target host")
 
         # Do not add check_options as there's a conflict with --checkout/-C
         opt_help.add_connect_options(self.parser)
@@ -99,14 +130,16 @@ class PullCLI(CLI):
                                       'This is a useful way to disperse git requests')
         self.parser.add_argument('-f', '--force', dest='force', default=False, action='store_true',
                                  help='run the playbook even if the repository could not be updated')
-        self.parser.add_argument('-d', '--directory', dest='dest', default=None,
-                                 help='absolute path of repository checkout directory (relative paths are not supported)')
+        self.parser.add_argument('-d', '--directory', dest='dest', default=None, type=opt_help.unfrack_path(),
+                                 help='path to the directory to which Ansible will checkout the repository.')
         self.parser.add_argument('-U', '--url', dest='url', default=None, help='URL of the playbook repository')
         self.parser.add_argument('--full', dest='fullclone', action='store_true', help='Do a full clone, instead of a shallow one.')
+        # TODO: resolve conflict with check mode, added manually below
         self.parser.add_argument('-C', '--checkout', dest='checkout',
                                  help='branch/tag/commit to checkout. Defaults to behavior of repository module.')
         self.parser.add_argument('--accept-host-key', default=False, dest='accept_host_key', action='store_true',
                                  help='adds the hostkey for the repo url if not already added')
+        # Overloaded with adhoc ... but really passthrough to adhoc
         self.parser.add_argument('-m', '--module-name', dest='module_name', default=self.DEFAULT_REPO_TYPE,
                                  help='Repository module name, which ansible will use to check out the repo. Choices are %s. Default is %s.'
                                       % (self.REPO_CHOICES, self.DEFAULT_REPO_TYPE))
@@ -118,7 +151,7 @@ class PullCLI(CLI):
         self.parser.add_argument('--track-subs', dest='tracksubs', default=False, action='store_true',
                                  help='submodules will track the latest changes. This is equivalent to specifying the --remote flag to git submodule update')
         # add a subset of the check_opts flag group manually, as the full set's
-        # shortcodes conflict with above --checkout/-C
+        # shortcodes conflict with above --checkout/-C, see to-do above
         self.parser.add_argument("--check", default=False, dest='check', action='store_true',
                                  help="don't make any changes; instead, try to predict some of the changes that may occur")
         self.parser.add_argument("--diff", default=C.DIFF_ALWAYS, dest='diff', action='store_true',
@@ -131,14 +164,13 @@ class PullCLI(CLI):
             hostname = socket.getfqdn()
             # use a hostname dependent directory, in case of $HOME on nfs
             options.dest = os.path.join(C.ANSIBLE_HOME, 'pull', hostname)
-        options.dest = os.path.expandvars(os.path.expanduser(options.dest))
 
         if os.path.exists(options.dest) and not os.path.isdir(options.dest):
             raise AnsibleOptionsError("%s is not a valid or accessible directory." % options.dest)
 
         if options.sleep:
             try:
-                secs = random.randint(0, int(options.sleep))
+                secs = secrets.randbelow(int(options.sleep))
                 options.sleep = secs
             except ValueError:
                 raise AnsibleOptionsError("%s is not a number." % options.sleep)
@@ -155,7 +187,7 @@ class PullCLI(CLI):
         return options
 
     def run(self):
-        ''' use Runner lib to do SSH things '''
+        """ use Runner lib to do SSH things """
 
         super(PullCLI, self).run()
 
@@ -175,7 +207,7 @@ class PullCLI(CLI):
             limit_opts = 'localhost,127.0.0.1'
         base_opts = '-c local '
         if context.CLIARGS['verbosity'] > 0:
-            base_opts += ' -%s' % ''.join(["v" for x in range(0, context.CLIARGS['verbosity'])])
+            base_opts += ' -%s' % ''.join(["v" for dummy in range(0, context.CLIARGS['verbosity'])])
 
         # Attempt to use the inventory passed in as an argument
         # It might not yet have been downloaded so use localhost as default
@@ -248,16 +280,22 @@ class PullCLI(CLI):
         # RUN the Checkout command
         display.debug("running ansible with VCS module to checkout repo")
         display.vvvv('EXEC: %s' % cmd)
-        rc, b_out, b_err = run_cmd(cmd, live=True)
+        rc, b_out, b_err = safe_output_env(run_cmd)(cmd, live=True)
 
         if rc != 0:
             if context.CLIARGS['force']:
                 display.warning("Unable to update repository. Continuing with (forced) run of playbook.")
             else:
                 return rc
-        elif context.CLIARGS['ifchanged'] and b'"changed": true' not in b_out:
-            display.display("Repository has not changed, quitting.")
-            return 0
+        elif context.CLIARGS['ifchanged']:
+            # detect json/yaml/header, any count as 'changed'
+            for detect in (b'"changed": true', b"changed: True", b"| CHANGED =>"):
+                if detect in b_out:
+                    break
+            else:
+                # no change, we bail
+                display.display(f"Repository has not changed, quitting: {b_out!r}")
+                return 0
 
         playbook = self.select_playbook(context.CLIARGS['dest'])
         if playbook is None:
@@ -272,8 +310,15 @@ class PullCLI(CLI):
             for vault_id in context.CLIARGS['vault_ids']:
                 cmd += " --vault-id=%s" % vault_id
 
+        if context.CLIARGS['become_password_file']:
+            cmd += " --become-password-file=%s" % context.CLIARGS['become_password_file']
+
+        if context.CLIARGS['connection_password_file']:
+            cmd += " --connection-password-file=%s" % context.CLIARGS['connection_password_file']
+
         for ev in context.CLIARGS['extra_vars']:
             cmd += ' -e %s' % shlex.quote(ev)
+
         if context.CLIARGS['become_ask_pass']:
             cmd += ' --ask-become-pass'
         if context.CLIARGS['skip_tags']:
@@ -288,6 +333,9 @@ class PullCLI(CLI):
             cmd += ' -C'
         if context.CLIARGS['diff']:
             cmd += ' -D'
+
+        if context.CLIARGS['flush_cache']:
+            cmd += ' --flush-cache'
 
         os.chdir(context.CLIARGS['dest'])
 
@@ -304,6 +352,7 @@ class PullCLI(CLI):
         if context.CLIARGS['purge']:
             os.chdir('/')
             try:
+                display.debug("removing: %s" % context.CLIARGS['dest'])
                 shutil.rmtree(context.CLIARGS['dest'])
             except Exception as e:
                 display.error(u"Failed to remove %s: %s" % (context.CLIARGS['dest'], to_text(e)))

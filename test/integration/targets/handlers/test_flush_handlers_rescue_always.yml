@@ -1,0 +1,22 @@
+- hosts: A,B
+  gather_facts: false
+  tasks:
+    - block:
+        - command: echo
+          notify: sometimes_fail
+
+        - meta: flush_handlers
+      rescue:
+        - debug:
+            msg: 'rescue ran'
+      always:
+        - debug:
+            msg: 'always ran'
+
+    - debug:
+        msg: 'should run for both hosts'
+
+  handlers:
+    - name: sometimes_fail
+      fail:
+      when: inventory_hostname == 'A'

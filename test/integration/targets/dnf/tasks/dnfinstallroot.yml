@@ -33,3 +33,33 @@
   file:
     path: "/{{ dnfroot.stdout }}/"
     state: absent
+
+- block:
+    - name: Clean setup
+      file:
+        path: "{{ remote_tmp_dir }}/file_root"
+        state: absent
+
+    - name: Setup - create invalid installroot file (not a dir)
+      copy:
+        content: ''
+        dest: "{{ remote_tmp_dir }}/file_root"
+
+    - name: Try with invalid installroot
+      dnf:
+        name: bash
+        state: present
+        installroot: "{{ remote_tmp_dir }}/file_root"
+      ignore_errors: yes
+      register: invalid_install_root
+
+    - name: Check if invalid installroot failed
+      assert:
+        that:
+            - invalid_install_root.failed
+            - "'Installroot ' ~ remote_tmp_dir ~ '/file_root must be a directory' in invalid_install_root.msg"
+  always:
+    - name: Cleanup invalid installroot
+      file:
+        path: "{{ remote_tmp_dir }}/file_root"
+        state: absent

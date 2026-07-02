@@ -142,7 +142,7 @@
     - directory
 
 - name: install a collection
-  command: ansible-galaxy collection install namespace1.name1:0.0.1 {{ galaxy_verbosity }}
+  command: ansible-galaxy collection install namespace1.name1==0.0.1 {{ galaxy_verbosity }}
   register: result
   failed_when:
     - '"namespace1.name1:0.0.1 was installed successfully" not in result.stdout_lines'

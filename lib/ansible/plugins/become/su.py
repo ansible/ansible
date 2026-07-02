@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 # Copyright: (c) 2018, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 DOCUMENTATION = """
     name: su
@@ -94,7 +93,7 @@ DOCUMENTATION = """
 import re
 import shlex
 
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils.common.text.converters import to_text
 from ansible.plugins.become import BecomeBase
 
 
@@ -102,8 +101,13 @@ class BecomeModule(BecomeBase):
 
     name = 'su'
 
+    pipelining = False
+
     # messages for detecting prompted password issues
-    fail = ('Authentication failure',)
+    fail = (
+        'Authentication failure',
+        'incorrect password',  # BusyBox
+    )
 
     SU_PROMPT_LOCALIZATIONS = [
         'Password',
@@ -140,15 +144,18 @@ class BecomeModule(BecomeBase):
         '口令',
     ]
 
-    def check_password_prompt(self, b_output):
-        ''' checks if the expected password prompt exists in b_output '''
-
+    def check_password_prompt(self, b_output: bytes) -> bool:
+        """ checks if the expected password prompt exists in b_output """
         prompts = self.get_option('prompt_l10n') or self.SU_PROMPT_LOCALIZATIONS
-        b_password_string = b"|".join((br'(\w+\'s )?' + to_bytes(p)) for p in prompts)
+        password_prompt_strings = "|".join(re.escape(p) for p in prompts)
         # Colon or unicode fullwidth colon
-        b_password_string = b_password_string + to_bytes(u' ?(:|：) ?')
-        b_su_prompt_localizations_re = re.compile(b_password_string, flags=re.IGNORECASE)
-        return bool(b_su_prompt_localizations_re.match(b_output))
+        prompt_pattern = rf"(?:{password_prompt_strings})\s*[:：]"
+        match = re.search(prompt_pattern, to_text(b_output), flags=re.IGNORECASE)
+
+        if match:
+            self.prompt = match.group(0)  # preserve the actual matched string so we can scrub the output
+
+        return bool(match)
 
     def build_become_command(self, cmd, shell):
         super(BecomeModule, self).build_become_command(cmd, shell)

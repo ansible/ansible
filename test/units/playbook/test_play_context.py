@@ -3,19 +3,15 @@
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import pytest
 
 from ansible import constants as C
 from ansible import context
 from ansible.cli.arguments import option_helpers as opt_help
-from ansible.errors import AnsibleError
 from ansible.playbook.play_context import PlayContext
 from ansible.playbook.play import Play
-from ansible.plugins.loader import become_loader
 from ansible.utils import context_objects as co
 
 
@@ -54,7 +50,7 @@ def test_play_context(mocker, parser, reset_cli_args):
     assert play_context.password == ''
     assert play_context.private_key_file == C.DEFAULT_PRIVATE_KEY_FILE
     assert play_context.timeout == C.DEFAULT_TIMEOUT
-    assert play_context.verbosity == 2
+    assert getattr(play_context, 'verbosity', None) is None
     assert play_context.check_mode is True
 
     mock_play = mocker.MagicMock()

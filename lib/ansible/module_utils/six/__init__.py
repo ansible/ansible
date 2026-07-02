@@ -3,7 +3,7 @@
 # upstream vendored file that we're not going to modify on our own
 # pylint: disable=undefined-variable
 #
-# Copyright (c) 2010-2020 Benjamin Peterson
+# Copyright (c) 2010-2024 Benjamin Peterson
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -25,7 +25,7 @@
 
 """Utilities for writing code that runs on Python 2 and 3"""
 
-from __future__ import absolute_import
+from __future__ import annotations
 
 import functools
 import itertools
@@ -33,12 +33,22 @@ import operator
 import sys
 import types
 
+from ansible.module_utils.common.warnings import deprecate as _deprecate
+
+
+_deprecate(
+    msg="The `ansible.module_utils.six` module is deprecated.",
+    help_text="Use the Python standard library equivalent instead.",
+    version="2.24",
+)
+
+
 # The following makes it easier for us to script updates of the bundled code. It is not part of
 # upstream six
-_BUNDLED_METADATA = {"pypi_name": "six", "version": "1.16.0"}
+_BUNDLED_METADATA = {"pypi_name": "six", "version": "1.17.0"}
 
 __author__ = "Benjamin Peterson <benjamin@python.org>"
-__version__ = "1.16.0"
+__version__ = "1.17.0"
 
 
 # Useful for very coarse version differentiation.
@@ -273,7 +283,7 @@ _moved_attributes = [
     MovedAttribute("reduce", "__builtin__", "functools"),
     MovedAttribute("shlex_quote", "pipes", "shlex", "quote"),
     MovedAttribute("StringIO", "StringIO", "io"),
-    MovedAttribute("UserDict", "UserDict", "collections"),
+    MovedAttribute("UserDict", "UserDict", "collections", "IterableUserDict", "UserDict"),
     MovedAttribute("UserList", "UserList", "collections"),
     MovedAttribute("UserString", "UserString", "collections"),
     MovedAttribute("xrange", "__builtin__", "builtins", "xrange", "range"),
@@ -445,12 +455,17 @@ _urllib_request_moved_attributes = [
     MovedAttribute("HTTPErrorProcessor", "urllib2", "urllib.request"),
     MovedAttribute("urlretrieve", "urllib", "urllib.request"),
     MovedAttribute("urlcleanup", "urllib", "urllib.request"),
-    MovedAttribute("URLopener", "urllib", "urllib.request"),
-    MovedAttribute("FancyURLopener", "urllib", "urllib.request"),
     MovedAttribute("proxy_bypass", "urllib", "urllib.request"),
     MovedAttribute("parse_http_list", "urllib2", "urllib.request"),
     MovedAttribute("parse_keqv_list", "urllib2", "urllib.request"),
 ]
+if sys.version_info[:2] < (3, 14):
+    _urllib_request_moved_attributes.extend(
+        [
+            MovedAttribute("URLopener", "urllib", "urllib.request"),
+            MovedAttribute("FancyURLopener", "urllib", "urllib.request"),
+        ]
+    )
 for attr in _urllib_request_moved_attributes:
     setattr(Module_six_moves_urllib_request, attr.name, attr)
 del attr

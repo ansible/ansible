@@ -15,7 +15,7 @@ This directory contains the following scripts:
 
 Incidental testing and code coverage occurs when a test covers one or more portions of code as an unintentional side-effect of testing another portion of code.
 
-For example, the ``yum`` integration test intentionally tests the ``yum`` Ansible module.
+For example, the ``dnf`` integration test intentionally tests the ``dnf`` Ansible module.
 However, in doing so it also uses, and unintentionally tests the ``file`` module as well.
 
 As part of the process of migrating modules and plugins into collections, integration tests were identified that provided exclusive incidental code coverage.
@@ -34,25 +34,31 @@ Reducing incidental test coverage, and eventually removing incidental tests invo
 1. Run the entire test suite with code coverage enabled.
    This is done automatically each day on Azure Pipelines.
    The URLs and statuses of the most recent such test runs can be found with:
+
    ```shell
    hacking/azp/get_recent_coverage_runs.py <optional branch name>
    ```
+
    The branch name defaults to `devel`.
 2. Download code coverage data from Azure Pipelines for local analysis.
    Example:
+
    ```shell
    # download results to ansible/ansible directory under cwd
    # substitute the correct run number for the Azure Pipelines coverage run you want to download
    hacking/azp/download.py 14075 --artifacts --run-metadata -v
    ```
+
 3. Analyze code coverage data to see which portions of the code are covered by each test.
    Example:
-   ```shell script
+
+   ```shell
    # make sure ansible-test is in $PATH
    source hacking/env-setup
    # run the script using whichever directory results were downloaded into
    hacking/azp/incidental.py 14075/
    ```
+
 4. Create new intentional tests, or extend existing ones, to cover code that is currently covered by incidental tests.
    Reports are created by default in a ``test/results/.tmp/incidental/{hash}/reports/`` directory.
    The ``{hash}`` value is based on the input files used to generate the report.
@@ -90,7 +96,7 @@ If the coverage is for Python code a comment on the right side will indicate the
 
 Below is an example of a report:
 
-```
+```text
 Target: incidental_win_psexec
 GitHub: https://github.com/ansible/ansible/blob/6994ef0b554a816f02e0771cb14341a421f7cead/test/integration/targets/incidental_win_psexec
 

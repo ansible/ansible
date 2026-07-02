@@ -3,8 +3,7 @@
 # this is mostly based off of the code found here:
 # http://code.activestate.com/recipes/278731-creating-a-daemon-the-python-way/
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 import resource
@@ -39,9 +38,8 @@ def createDaemon():
             os.chdir(WORKDIR)
             os.umask(UMASK)
         else:
-            f = open('/var/run/ansible_test_service.pid', 'w')
-            f.write("%d\n" % pid)
-            f.close()
+            with open('/var/run/ansible_test_service.pid', 'w') as f:
+                f.write("%d\n" % pid)
             os._exit(0)
     else:
         os._exit(0)

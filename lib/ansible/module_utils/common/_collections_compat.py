@@ -2,45 +2,35 @@
 # Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
 """Collections ABC import shim.
 
-This module is intended only for internal use.
-It will go away once the bundled copy of six includes equivalent functionality.
-Third parties should not use this.
+Use `collections.abc` instead.
+This module exists only for backwards compatibility.
 """
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
-try:
-    """Python 3.3+ branch."""
-    from collections.abc import (
-        MappingView,
-        ItemsView,
-        KeysView,
-        ValuesView,
-        Mapping, MutableMapping,
-        Sequence, MutableSequence,
-        Set, MutableSet,
-        Container,
-        Hashable,
-        Sized,
-        Callable,
-        Iterable,
-        Iterator,
-    )
-except ImportError:
-    """Use old lib location under 2.6-3.2."""
-    from collections import (  # type: ignore[no-redef,attr-defined]  # pylint: disable=deprecated-class
-        MappingView,
-        ItemsView,
-        KeysView,
-        ValuesView,
-        Mapping, MutableMapping,
-        Sequence, MutableSequence,
-        Set, MutableSet,
-        Container,
-        Hashable,
-        Sized,
-        Callable,
-        Iterable,
-        Iterator,
-    )
+# Although this was originally intended for internal use only, it has wide adoption in collections.
+# This is due in part to sanity tests previously recommending its use over `collections` imports.
+from collections.abc import (  # pylint: disable=unused-import
+    MappingView,
+    ItemsView,
+    KeysView,
+    ValuesView,
+    Mapping, MutableMapping,
+    Sequence, MutableSequence,
+    Set, MutableSet,
+    Container,
+    Hashable,
+    Sized,
+    Callable,
+    Iterable,
+    Iterator,
+)
+
+from ansible.module_utils.common import warnings as _warnings
+
+
+_warnings.deprecate(
+    msg="The `ansible.module_utils.common._collections_compat` module is deprecated.",
+    help_text="Use `collections.abc` from the Python standard library instead.",
+    version="2.24",
+)

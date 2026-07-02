@@ -98,12 +98,3 @@
         owner: root
         group: "{{ chowngroup }}"
         mode: 0644
-
-    # OpenSUSE has a weird sudo default here and requires the root pw
-    # instead of the user pw. Undo that setting, we can clean it up later.
-    - name: Make it so unpriv1 can sudo (Chapter 2 - The Return Of the OpenSUSE)
-      lineinfile:
-        dest: "{{ sudoers_etc }}/sudoers"
-        regexp: '^Defaults targetpw'
-        line: '### Defaults targetpw'
-        backrefs: yes

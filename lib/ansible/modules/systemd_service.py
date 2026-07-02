@@ -3,11 +3,10 @@
 # Copyright: (c) 2016, Brian Coca <bcoca@ansible.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 module: systemd_service
 author:
     - Ansible Core Team
@@ -15,6 +14,8 @@ version_added: "2.2"
 short_description:  Manage systemd units
 description:
     - Controls systemd units (services, timers, and so on) on remote hosts.
+    - M(ansible.builtin.systemd) is renamed to M(ansible.builtin.systemd_service) to better reflect the scope of the module.
+      M(ansible.builtin.systemd) is kept as an alias for backward compatibility.
 options:
     name:
         description:
@@ -25,13 +26,16 @@ options:
         aliases: [ service, unit ]
     state:
         description:
-            - C(started)/C(stopped) are idempotent actions that will not run commands unless necessary.
-              C(restarted) will always bounce the unit. C(reloaded) will always reload.
+            - V(started)/V(stopped) are idempotent actions that will not run commands unless necessary.
+              V(restarted) will always bounce the unit.
+              V(reloaded) will always reload and if the service is not running at the moment of the reload, it is started.
+            - If set, requires O(name).
         type: str
         choices: [ reloaded, restarted, started, stopped ]
     enabled:
         description:
-            - Whether the unit should start on boot. B(At least one of state and enabled are required.)
+            - Whether the unit should start on boot. At least one of O(state) or O(enabled) are required.
+            - If set, requires O(name).
         type: bool
     force:
         description:
@@ -40,12 +44,13 @@ options:
         version_added: 2.6
     masked:
         description:
-            - Whether the unit should be masked or not, a masked unit is impossible to start.
+            - Whether the unit should be masked or not. A masked unit is impossible to start.
+            - If set, requires O(name).
         type: bool
     daemon_reload:
         description:
-            - Run daemon-reload before doing any other operations, to make sure systemd has read any changes.
-            - When set to C(true), runs daemon-reload even if the module does not start or stop anything.
+            - Run C(daemon-reload) before doing any other operations, to make sure systemd has read any changes.
+            - When set to V(true), runs C(daemon-reload) even if the module does not start or stop anything.
         type: bool
         default: no
         aliases: [ daemon-reload ]
@@ -58,12 +63,12 @@ options:
         version_added: "2.8"
     scope:
         description:
-            - Run systemctl within a given service manager scope, either as the default system scope C(system),
-              the current user's scope C(user), or the scope of all users C(global).
-            - "For systemd to work with 'user', the executing user must have its own instance of dbus started and accessible (systemd requirement)."
+            - Run C(systemctl) within a given service manager scope, either as the default system scope V(system),
+              the current user's scope V(user), or the scope of all users V(global).
+            - "For systemd to work with V(user), the executing user must have its own instance of dbus started and accessible (systemd requirement)."
             - "The user dbus process is normally started during normal login, but not during the run of Ansible tasks.
               Otherwise you will probably get a 'Failed to connect to bus: no such file or directory' error."
-            - The user must have access, normally given via setting the C(XDG_RUNTIME_DIR) variable, see example below.
+            - The user must have access, normally given via setting the C(XDG_RUNTIME_DIR) variable, see the example below.
 
         type: str
         choices: [ system, user, global ]
@@ -85,71 +90,72 @@ attributes:
     platform:
         platforms: posix
 notes:
-    - Since 2.4, one of the following options is required C(state), C(enabled), C(masked), C(daemon_reload), (C(daemon_reexec) since 2.8),
-      and all except C(daemon_reload) and (C(daemon_reexec) since 2.8) also require C(name).
-    - Before 2.4 you always required C(name).
-    - Globs are not supported in name, i.e C(postgres*.service).
-    - The service names might vary by specific OS/distribution
+    - O(state), O(enabled), O(masked) requires O(name).
+    - Before 2.4 you always required O(name).
+    - Globs are not supported in name, in other words, C(postgres*.service).
+    - The service names might vary by specific OS/distribution.
+    - The order of execution when having multiple properties is to first enable/disable, then mask/unmask and then deal with the service state.
+      It has been reported that C(systemctl) can behave differently depending on the order of operations if you do the same manually.
 requirements:
     - A system managed by systemd.
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
 - name: Make sure a service unit is running
-  ansible.builtin.systemd:
+  ansible.builtin.systemd_service:
     state: started
     name: httpd
 
 - name: Stop service cron on debian, if running
-  ansible.builtin.systemd:
+  ansible.builtin.systemd_service:
     name: cron
     state: stopped
 
 - name: Restart service cron on centos, in all cases, also issue daemon-reload to pick up config changes
-  ansible.builtin.systemd:
+  ansible.builtin.systemd_service:
     state: restarted
-    daemon_reload: yes
+    daemon_reload: true
     name: crond
 
 - name: Reload service httpd, in all cases
-  ansible.builtin.systemd:
+  ansible.builtin.systemd_service:
     name: httpd.service
     state: reloaded
 
 - name: Enable service httpd and ensure it is not masked
-  ansible.builtin.systemd:
+  ansible.builtin.systemd_service:
     name: httpd
-    enabled: yes
+    enabled: true
     masked: no
 
 - name: Enable a timer unit for dnf-automatic
-  ansible.builtin.systemd:
+  ansible.builtin.systemd_service:
     name: dnf-automatic.timer
     state: started
-    enabled: yes
+    enabled: true
 
 - name: Just force systemd to reread configs (2.4 and above)
-  ansible.builtin.systemd:
-    daemon_reload: yes
+  ansible.builtin.systemd_service:
+    daemon_reload: true
 
 - name: Just force systemd to re-execute itself (2.8 and above)
-  ansible.builtin.systemd:
-    daemon_reexec: yes
+  ansible.builtin.systemd_service:
+    daemon_reexec: true
 
 - name: Run a user service when XDG_RUNTIME_DIR is not set on remote login
-  ansible.builtin.systemd:
+  ansible.builtin.systemd_service:
     name: myservice
     state: started
     scope: user
   environment:
     XDG_RUNTIME_DIR: "/run/user/{{ myuid }}"
-'''
+"""
 
-RETURN = '''
+RETURN = """
 status:
     description: A dictionary with the key=value pairs returned from C(systemctl show).
     returned: success
-    type: complex
+    type: dict
     sample: {
             "ActiveEnterTimestamp": "Sun 2016-05-15 18:28:49 EDT",
             "ActiveEnterTimestampMonotonic": "8135942",
@@ -273,14 +279,14 @@ status:
             "WatchdogTimestampMonotonic": "0",
             "WatchdogUSec": "0",
         }
-'''  # NOQA
+"""  # NOQA
 
 import os
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.facts.system.chroot import is_chroot
 from ansible.module_utils.service import sysv_exists, sysv_is_enabled, fail_if_missing
-from ansible.module_utils._text import to_native
+from ansible.module_utils.common.text.converters import to_native
 
 
 def is_running_service(service_status):
@@ -367,7 +373,7 @@ def main():
     if os.getenv('XDG_RUNTIME_DIR') is None:
         os.environ['XDG_RUNTIME_DIR'] = '/run/user/%s' % os.geteuid()
 
-    ''' Set CLI options depending on params '''
+    # Set CLI options depending on params
     # if scope is 'system' or None, we can ignore as there is no extra switch.
     # The other choices match the corresponding switch
     if module.params['scope'] != 'system':
@@ -391,13 +397,19 @@ def main():
     if module.params['daemon_reload'] and not module.check_mode:
         (rc, out, err) = module.run_command("%s daemon-reload" % (systemctl))
         if rc != 0:
-            module.fail_json(msg='failure %d during daemon-reload: %s' % (rc, err))
+            if is_chroot(module) or os.environ.get('SYSTEMD_OFFLINE') == '1':
+                module.warn('daemon-reload failed, but target is a chroot or systemd is offline. Continuing. Error was: %d / %s' % (rc, err))
+            else:
+                module.fail_json(msg='failure %d during daemon-reload: %s' % (rc, err))
 
     # Run daemon-reexec
     if module.params['daemon_reexec'] and not module.check_mode:
         (rc, out, err) = module.run_command("%s daemon-reexec" % (systemctl))
         if rc != 0:
-            module.fail_json(msg='failure %d during daemon-reexec: %s' % (rc, err))
+            if is_chroot(module) or os.environ.get('SYSTEMD_OFFLINE') == '1':
+                module.warn('daemon-reexec failed, but target is a chroot or systemd is offline. Continuing. Error was: %d / %s' % (rc, err))
+            else:
+                module.fail_json(msg='failure %d during daemon-reexec: %s' % (rc, err))
 
     if unit:
         found = False
@@ -483,6 +495,8 @@ def main():
                     if rc != 0:
                         # some versions of system CAN mask/unmask non existing services, we only fail on missing if they don't
                         fail_if_missing(module, found, unit, msg='host')
+                        # here if service was not missing, but failed for other reasons
+                        module.fail_json(msg=f"Failed to {action} the service ({unit}): {err.strip()}")
 
         # Enable/disable service startup at boot if requested
         if module.params['enabled'] is not None:
@@ -500,11 +514,15 @@ def main():
 
             # check systemctl result or if it is a init script
             if rc == 0:
-                enabled = True
-                # Check if the service is indirect or alias and if out contains exactly 1 line of string 'indirect'/ 'alias' it's disabled
-                if out.splitlines() == ["indirect"] or out.splitlines() == ["alias"]:
+                # https://www.freedesktop.org/software/systemd/man/systemctl.html#is-enabled%20UNIT%E2%80%A6
+                if out.rstrip() in (
+                        "enabled-runtime",  # transiently enabled but we're trying to set a permanent enabled
+                        "indirect",  # We've been asked to enable this unit so do so despite possible reasons
+                                     # that systemctl may have for thinking it's enabled already.
+                        "alias"):  # Let systemd handle the alias as we can't be sure what's needed.
                     enabled = False
-
+                else:
+                    enabled = True
             elif rc == 1:
                 # if not a user or global user service and both init script and unit file exist stdout should have enabled/disabled, otherwise use rc entries
                 if module.params['scope'] == 'system' and \

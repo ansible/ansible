@@ -1,3 +1,0 @@
-bugfixes:
-  - winrm connection now handles default to inventory_hostname correctly.
-  - psrp connection now handles default to inventory_hostname correctly.

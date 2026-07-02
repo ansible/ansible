@@ -15,17 +15,16 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #############################################
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
     vars: v1_vars_plugin
     version_added: "2.10"
     short_description: load host and group vars
     description:
-      - 3rd party vars plugin to test loading host and group vars without requiring whitelisting and without a plugin-specific stage option
+      - Third-party vars plugin to test loading host and group vars without enabling and without a plugin-specific stage option
     options:
-'''
+"""
 
 from ansible.plugins.vars import BaseVarsPlugin
 

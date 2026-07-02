@@ -1,19 +1,18 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
     name: host_list
     version_added: "2.4"
     short_description: Parses a 'host list' string
     description:
         - Parses a host list string as a comma separated values of hosts
         - This plugin only applies to inventory strings that are not paths and contain a comma.
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
     # define 2 hosts in command line
     # ansible -i '10.10.2.6, 10.10.2.4' -m ping all
 
@@ -22,12 +21,12 @@ EXAMPLES = r'''
 
     # just use localhost
     # ansible-playbook -i 'localhost,' play.yml -c local
-'''
+"""
 
 import os
 
 from ansible.errors import AnsibleError, AnsibleParserError
-from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.parsing.utils.addresses import parse_address
 from ansible.plugins.inventory import BaseInventoryPlugin
 
@@ -35,6 +34,8 @@ from ansible.plugins.inventory import BaseInventoryPlugin
 class InventoryModule(BaseInventoryPlugin):
 
     NAME = 'host_list'
+
+    # host_list does not set vars, so needs no special trust assistance from the inventory API
 
     def verify_file(self, host_list):
 
@@ -45,7 +46,7 @@ class InventoryModule(BaseInventoryPlugin):
         return valid
 
     def parse(self, inventory, loader, host_list, cache=True):
-        ''' parses the inventory file '''
+        """ parses the inventory file """
 
         super(InventoryModule, self).parse(inventory, loader, host_list)
 

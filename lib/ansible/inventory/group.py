@@ -1,32 +1,26 @@
 # (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import annotations
+
+import typing as t
 
 from collections.abc import Mapping, MutableMapping
+from enum import Enum
 from itertools import chain
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
-from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils.common.text.converters import to_native, to_text
 from ansible.utils.display import Display
-from ansible.utils.vars import combine_vars
+from ansible.utils.vars import combine_vars, validate_variable_name
+
+from . import helpers  # this is left as a module import to facilitate easier unit test patching
 
 display = Display()
+
+if t.TYPE_CHECKING:
+    from .host import Host
 
 
 def to_safe_group_name(name, replacer="_", force=False, silent=False):
@@ -53,22 +47,29 @@ def to_safe_group_name(name, replacer="_", force=False, silent=False):
     return name
 
 
+class InventoryObjectType(Enum):
+    HOST = 0
+    GROUP = 1
+
+
 class Group:
-    ''' a group of ansible hosts '''
+    """A group of ansible hosts."""
+    base_type = InventoryObjectType.GROUP
 
     # __slots__ = [ 'name', 'hosts', 'vars', 'child_groups', 'parent_groups', 'depth', '_hosts_cache' ]
 
-    def __init__(self, name=None):
+    def __init__(self, name: str) -> None:
+        name = helpers.remove_trust(name)
 
-        self.depth = 0
-        self.name = to_safe_group_name(name)
-        self.hosts = []
-        self._hosts = None
-        self.vars = {}
-        self.child_groups = []
-        self.parent_groups = []
-        self._hosts_cache = None
-        self.priority = 1
+        self.depth: int = 0
+        self.name: str = to_safe_group_name(name)
+        self.hosts: list[Host] = []
+        self._hosts: set[str] | None = None
+        self.vars: dict[str, t.Any] = {}
+        self.child_groups: list[Group] = []
+        self.parent_groups: list[Group] = []
+        self._hosts_cache: list[Host] | None = None
+        self.priority: int = 1
 
     def __repr__(self):
         return self.get_name()
@@ -76,45 +77,8 @@ class Group:
     def __str__(self):
         return self.get_name()
 
-    def __getstate__(self):
-        return self.serialize()
-
-    def __setstate__(self, data):
-        return self.deserialize(data)
-
-    def serialize(self):
-        parent_groups = []
-        for parent in self.parent_groups:
-            parent_groups.append(parent.serialize())
-
-        self._hosts = None
-
-        result = dict(
-            name=self.name,
-            vars=self.vars.copy(),
-            parent_groups=parent_groups,
-            depth=self.depth,
-            hosts=self.hosts,
-        )
-
-        return result
-
-    def deserialize(self, data):
-        self.__init__()
-        self.name = data.get('name')
-        self.vars = data.get('vars', dict())
-        self.depth = data.get('depth', 0)
-        self.hosts = data.get('hosts', [])
-        self._hosts = None
-
-        parent_groups = data.get('parent_groups', [])
-        for parent_data in parent_groups:
-            g = Group()
-            g.deserialize(parent_data)
-            self.parent_groups.append(g)
-
-    def _walk_relationship(self, rel, include_self=False, preserve_ordering=False):
-        '''
+    def _walk_relationship(self, rel, include_self=False, preserve_ordering=False) -> set[Group] | list[Group]:
+        """
         Given `rel` that is an iterable property of Group,
         consitituting a directed acyclic graph among all groups,
         Returns a set of all groups in full tree
@@ -126,13 +90,13 @@ class Group:
         | /     are directed upward
         F
         Called on F, returns set of (A, B, C, D, E)
-        '''
-        seen = set([])
+        """
+        seen: set[Group] = set([])
         unprocessed = set(getattr(self, rel))
         if include_self:
             unprocessed.add(self)
         if preserve_ordering:
-            ordered = [self] if include_self else []
+            ordered: list[Group] = [self] if include_self else []
             ordered.extend(getattr(self, rel))
 
         while unprocessed:
@@ -152,22 +116,22 @@ class Group:
             return ordered
         return seen
 
-    def get_ancestors(self):
-        return self._walk_relationship('parent_groups')
+    def get_ancestors(self) -> set[Group]:
+        return t.cast(set, self._walk_relationship('parent_groups'))
 
-    def get_descendants(self, **kwargs):
+    def get_descendants(self, **kwargs) -> set[Group] | list[Group]:
         return self._walk_relationship('child_groups', **kwargs)
 
     @property
-    def host_names(self):
+    def host_names(self) -> set[str]:
         if self._hosts is None:
-            self._hosts = set(self.hosts)
+            self._hosts = {h.name for h in self.hosts}
         return self._hosts
 
-    def get_name(self):
+    def get_name(self) -> str:
         return self.name
 
-    def add_child_group(self, group):
+    def add_child_group(self, group: Group) -> bool:
         added = False
         if self == group:
             raise Exception("can't add group to itself")
@@ -202,7 +166,7 @@ class Group:
             self.clear_hosts_cache()
         return added
 
-    def _check_children_depth(self):
+    def _check_children_depth(self) -> None:
 
         depth = self.depth
         start_depth = self.depth  # self.depth could change over loop
@@ -221,7 +185,7 @@ class Group:
             if depth - start_depth > len(seen):
                 raise AnsibleError("The group named '%s' has a recursive dependency loop." % to_native(self.name))
 
-    def add_host(self, host):
+    def add_host(self, host: Host) -> bool:
         added = False
         if host.name not in self.host_names:
             self.hosts.append(host)
@@ -231,7 +195,7 @@ class Group:
             added = True
         return added
 
-    def remove_host(self, host):
+    def remove_host(self, host: Host) -> bool:
         removed = False
         if host.name in self.host_names:
             self.hosts.remove(host)
@@ -241,48 +205,58 @@ class Group:
             removed = True
         return removed
 
-    def set_variable(self, key, value):
+    def set_variable(self, key: str, value: t.Any) -> None:
+        key = helpers.remove_trust(key)
+
+        try:
+            validate_variable_name(key)
+        except AnsibleError as ex:
+            Display().deprecated(msg=f'Accepting inventory variable with invalid name {key!r}.', version='2.23', help_text=ex._help_text, obj=ex.obj)
 
         if key == 'ansible_group_priority':
-            self.set_priority(int(value))
+            self.set_priority(value)
         else:
             if key in self.vars and isinstance(self.vars[key], MutableMapping) and isinstance(value, Mapping):
                 self.vars = combine_vars(self.vars, {key: value})
             else:
                 self.vars[key] = value
 
-    def clear_hosts_cache(self):
+    def clear_hosts_cache(self) -> None:
 
         self._hosts_cache = None
         for g in self.get_ancestors():
             g._hosts_cache = None
 
-    def get_hosts(self):
+    def get_hosts(self) -> list[Host]:
 
         if self._hosts_cache is None:
             self._hosts_cache = self._get_hosts()
         return self._hosts_cache
 
-    def _get_hosts(self):
+    def _get_hosts(self) -> list[Host]:
 
-        hosts = []
-        seen = {}
+        hosts: list[Host] = []
+        seen: set[Host] = set()
         for kid in self.get_descendants(include_self=True, preserve_ordering=True):
             kid_hosts = kid.hosts
             for kk in kid_hosts:
                 if kk not in seen:
-                    seen[kk] = 1
+                    seen.add(kk)
                     if self.name == 'all' and kk.implicit:
                         continue
                     hosts.append(kk)
         return hosts
 
-    def get_vars(self):
+    def get_vars(self) -> dict[str, t.Any]:
         return self.vars.copy()
 
-    def set_priority(self, priority):
+    def set_priority(self, priority: int | str) -> None:
         try:
             self.priority = int(priority)
-        except TypeError:
-            # FIXME: warn about invalid priority
-            pass
+        except (TypeError, ValueError) as e:
+            display.error_as_warning(
+                msg=f"Invalid priority value '{priority}' for group '{self.name}'."
+                    "Setting priority to default value.",
+                exception=e,
+            )
+            # Keep the existing priority value when conversion fails

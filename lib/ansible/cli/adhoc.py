@@ -4,36 +4,40 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 # PYTHON_ARGCOMPLETE_OK
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
+
+import json
 
 # ansible.cli needs to be imported first, to ensure the source bin/* scripts run that code first
 from ansible.cli import CLI
 from ansible import constants as C
 from ansible import context
 from ansible.cli.arguments import option_helpers as opt_help
-from ansible.errors import AnsibleError, AnsibleOptionsError
-from ansible.executor.task_queue_manager import TaskQueueManager
-from ansible.module_utils._text import to_text
+from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleParserError
+from ansible.executor.task_queue_manager import AnsibleEndPlay, TaskQueueManager
+from ansible.module_utils.common.text.converters import to_text
 from ansible.parsing.splitter import parse_kv
 from ansible.playbook import Playbook
 from ansible.playbook.play import Play
+from ansible._internal._datatag._tags import Origin
 from ansible.utils.display import Display
+from ansible._internal._json._profiles import _legacy
 
 display = Display()
 
 
 class AdHocCLI(CLI):
-    ''' is an extra-simple tool/framework/API for doing 'remote things'.
+    """ is an extra-simple tool/framework/API for doing 'remote things'.
         this command allows you to define and run a single task 'playbook' against a set of hosts
-    '''
+    """
 
     name = 'ansible'
 
+    USES_CONNECTION = True
+
     def init_parser(self):
-        ''' create an options parser for bin/ansible '''
-        super(AdHocCLI, self).init_parser(usage='%prog <host-pattern> [options]',
-                                          desc="Define and run a single task 'playbook' against a set of hosts",
+        """ create an options parser for bin/ansible """
+        super(AdHocCLI, self).init_parser(desc="Define and run a single task 'playbook' against a set of hosts",
                                           epilog="Some actions do not make sense in Ad-Hoc (include, meta, etc)")
 
         opt_help.add_runas_options(self.parser)
@@ -51,7 +55,8 @@ class AdHocCLI(CLI):
 
         # options unique to ansible ad-hoc
         self.parser.add_argument('-a', '--args', dest='module_args',
-                                 help="The action's options in space separated k=v format: -a 'opt1=val1 opt2=val2'",
+                                 help="The action's options in space separated k=v format: -a 'opt1=val1 opt2=val2' "
+                                      "or a json string: -a '{\"opt1\": \"val1\", \"opt2\": \"val2\"}'",
                                  default=C.DEFAULT_MODULE_ARGS)
         self.parser.add_argument('-m', '--module-name', dest='module_name',
                                  help="Name of the action to execute (default=%s)" % C.DEFAULT_MODULE_NAME,
@@ -59,7 +64,7 @@ class AdHocCLI(CLI):
         self.parser.add_argument('args', metavar='pattern', help='host pattern')
 
     def post_process_args(self, options):
-        '''Post process and validate options for bin/ansible '''
+        """Post process and validate options for bin/ansible """
 
         options = super(AdHocCLI, self).post_process_args(options)
 
@@ -71,8 +76,24 @@ class AdHocCLI(CLI):
     def _play_ds(self, pattern, async_val, poll):
         check_raw = context.CLIARGS['module_name'] in C.MODULE_REQUIRE_ARGS
 
-        mytask = {'action': {'module': context.CLIARGS['module_name'], 'args': parse_kv(context.CLIARGS['module_args'], check_raw=check_raw)},
-                  'timeout': context.CLIARGS['task_timeout']}
+        module_args_raw = context.CLIARGS['module_args']
+        module_args = None
+        if module_args_raw and module_args_raw.startswith('{') and module_args_raw.endswith('}'):
+            try:
+                module_args = json.loads(module_args_raw, cls=_legacy.Decoder)
+            except AnsibleParserError:
+                pass
+
+        if not module_args:
+            module_args = parse_kv(module_args_raw, check_raw=check_raw)
+
+        mytask = dict(
+            action=context.CLIARGS['module_name'],
+            args=module_args,
+            timeout=context.CLIARGS['task_timeout'],
+        )
+
+        mytask = Origin(description=f'<adhoc {context.CLIARGS["module_name"]!r} task>').tag(mytask)
 
         # avoid adding to tasks that don't support it, unless set, then give user an error
         if context.CLIARGS['module_name'] not in C._ACTION_ALL_INCLUDE_ROLE_TASKS and any(frozenset((async_val, poll))):
@@ -86,7 +107,7 @@ class AdHocCLI(CLI):
             tasks=[mytask])
 
     def run(self):
-        ''' create and execute the single task playbook '''
+        """ create and execute the single task playbook """
 
         super(AdHocCLI, self).run()
 
@@ -165,7 +186,7 @@ class AdHocCLI(CLI):
                 variable_manager=variable_manager,
                 loader=loader,
                 passwords=passwords,
-                stdout_callback=cb,
+                stdout_callback_name=cb,
                 run_additional_callbacks=C.DEFAULT_LOAD_CALLBACK_PLUGINS,
                 run_tree=run_tree,
                 forks=context.CLIARGS['forks'],
@@ -177,6 +198,8 @@ class AdHocCLI(CLI):
             result = self._tqm.run(play)
 
             self._tqm.send_callback('v2_playbook_on_stats', self._tqm._stats)
+        except AnsibleEndPlay as e:
+            result = e.result
         finally:
             if self._tqm:
                 self._tqm.cleanup()

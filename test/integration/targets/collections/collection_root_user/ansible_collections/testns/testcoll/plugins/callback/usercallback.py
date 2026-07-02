@@ -1,15 +1,19 @@
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 from ansible.plugins.callback import CallbackBase
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
     callback: usercallback
     callback_type: notification
     short_description: does stuff
     description:
       - does some stuff
-'''
+    options:
+      ok_msg:
+        default: "usercallback says ok"
+        vars:
+          - name: on_ok
+"""
 
 
 class CallbackModule(CallbackBase):
@@ -23,4 +27,4 @@ class CallbackModule(CallbackBase):
         self._display.display("loaded usercallback from collection, yay")
 
     def v2_runner_on_ok(self, result):
-        self._display.display("usercallback says ok")
+        self._display.display(self.get_option("ok_msg"))

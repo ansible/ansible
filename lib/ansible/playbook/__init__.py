@@ -15,19 +15,18 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 
 from ansible import constants as C
 from ansible.errors import AnsibleParserError
-from ansible.module_utils._text import to_text, to_native
+from ansible.module_utils.common.text.converters import to_text, to_native
 from ansible.playbook.play import Play
 from ansible.playbook.playbook_include import PlaybookInclude
 from ansible.plugins.loader import add_all_plugin_dirs
 from ansible.utils.display import Display
+from ansible.utils.path import unfrackpath
 
 display = Display()
 
@@ -67,20 +66,20 @@ class Playbook:
         self._file_name = file_name
 
         try:
-            ds = self._loader.load_from_file(os.path.basename(file_name))
+            ds = self._loader.load_from_file(os.path.basename(file_name), trusted_as_template=True)
         except UnicodeDecodeError as e:
             raise AnsibleParserError("Could not read playbook (%s) due to encoding issues: %s" % (file_name, to_native(e)))
 
         # check for errors and restore the basedir in case this error is caught and handled
         if ds is None:
             self._loader.set_basedir(cur_basedir)
-            raise AnsibleParserError("Empty playbook, nothing to do", obj=ds)
+            raise AnsibleParserError("Empty playbook, nothing to do: %s" % unfrackpath(file_name), obj=ds)
         elif not isinstance(ds, list):
             self._loader.set_basedir(cur_basedir)
-            raise AnsibleParserError("A playbook must be a list of plays, got a %s instead" % type(ds), obj=ds)
+            raise AnsibleParserError("A playbook must be a list of plays, got a %s instead: %s" % (type(ds), unfrackpath(file_name)), obj=ds)
         elif not ds:
             self._loader.set_basedir(cur_basedir)
-            raise AnsibleParserError("A playbook must contain at least one play")
+            raise AnsibleParserError("A playbook must contain at least one play: %s" % unfrackpath(file_name))
 
         # Parse the playbook entries. For plays, we simply parse them
         # using the Play() object, and includes are parsed using the

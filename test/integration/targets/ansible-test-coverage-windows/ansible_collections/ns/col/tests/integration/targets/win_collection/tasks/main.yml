@@ -1,0 +1,22 @@
+- name: run module in collection to test coverage for collection plugins
+  win_collection:
+
+- name: run module in library adjacent to test coverage for test plugins
+  test_win_collection_normal:
+  register: library_result
+
+- name: assert run module with library adjacent module
+  assert:
+    that:
+    - library_result.util == 'foo'
+
+- name: test coverage under async
+  test_win_collection_async:
+  async: 30
+  poll: 2
+
+- name: test coverage under become
+  test_win_collection_become:
+  become: yes
+  become_method: runas
+  become_user: SYSTEM

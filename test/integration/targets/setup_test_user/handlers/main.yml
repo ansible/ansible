@@ -1,0 +1,12 @@
+- name: delete test user
+  user:
+    name: "{{ item }}"
+    state: absent
+    remove: yes
+    force: yes
+  loop: "{{ delete_users }}"
+
+- name: delete test user sudoers file
+  file:
+    path: '{{ sudoers_path ~ ".d/" ~ test_user_name }}'
+    state: absent

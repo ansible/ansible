@@ -3,10 +3,9 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
     name: memory
     short_description: RAM backed, non persistent
     description:
@@ -15,18 +14,21 @@ DOCUMENTATION = '''
         - There are no options to configure.
     version_added: historical
     author: core team (@ansible-core)
-'''
+"""
 
 from ansible.plugins.cache import BaseCacheModule
 
 
 class CacheModule(BaseCacheModule):
+    _persistent = False  # prevent unnecessary JSON serialization and key munging
 
     def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
         self._cache = {}
 
     def get(self, key):
-        return self._cache.get(key)
+        return self._cache[key]
 
     def set(self, key, value):
         self._cache[key] = value
@@ -42,12 +44,3 @@ class CacheModule(BaseCacheModule):
 
     def flush(self):
         self._cache = {}
-
-    def copy(self):
-        return self._cache.copy()
-
-    def __getstate__(self):
-        return self.copy()
-
-    def __setstate__(self, data):
-        self._cache = data

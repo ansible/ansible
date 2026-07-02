@@ -4,9 +4,11 @@
   pre_tasks:
     - name: remove {{ remove }}
       file: path={{ playbook_dir }}/{{ remove }} state=absent
-  roles:
-    - showfile
-  post_tasks:
+  tasks:
+    - import_role:
+        name: showfile
+        tasks_from: notmain.yml
+
     - name: from play
       set_fact: play_result="{{lookup('file', 'testfile')}}"
 

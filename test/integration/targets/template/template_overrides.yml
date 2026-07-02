@@ -1,0 +1,38 @@
+- hosts: localhost
+  gather_facts: false
+  vars:
+    output_dir: "{{ lookup('env', 'OUTPUT_DIR') }}"
+    var_a: "value"
+    var_b: "{{ var_a }}"
+    var_c: "<< var_a >>"
+  tasks:
+    - set_fact:
+        var_d: "{{ var_a }}"
+
+    - template:
+        src: in_template_overrides.j2
+        dest: '{{ output_dir }}/in_template_overrides.out'
+
+    - template:
+        src: arg_template_overrides.j2
+        dest: '{{ output_dir }}/arg_template_overrides.out'
+        variable_start_string: '<<'
+        variable_end_string: '>>'
+
+    - command: cat '{{ output_dir }}/in_template_overrides.out'
+      register: in_template_overrides_out
+
+    - command: cat '{{ output_dir }}/arg_template_overrides.out'
+      register: arg_template_overrides_out
+
+    - assert:
+        that:
+          - "'var_a: value' in in_template_overrides_out.stdout"
+          - "'var_b: value' in in_template_overrides_out.stdout"
+          - "'var_c: << var_a >>' in in_template_overrides_out.stdout"
+          - "'var_d: value' in in_template_overrides_out.stdout"
+
+          - "'var_a: value' in arg_template_overrides_out.stdout"
+          - "'var_b: value' in arg_template_overrides_out.stdout"
+          - "'var_c: << var_a >>' in arg_template_overrides_out.stdout"
+          - "'var_d: value' in arg_template_overrides_out.stdout"

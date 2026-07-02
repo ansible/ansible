@@ -2,55 +2,54 @@
 # Copyright 2019, Andrew Klychkov @Andersson007 <aaklychkov@mail.ru>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 import json
+import pathlib
 
 import pytest
 
 from collections.abc import Mapping
-from datetime import date, datetime
-from pytz import timezone as tz
+from datetime import date, datetime, timezone, timedelta
 
-from ansible.parsing.ajson import AnsibleJSONEncoder, AnsibleJSONDecoder
-from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
-from ansible.utils.unsafe_proxy import AnsibleUnsafeText
+from ansible._internal._json._legacy_encoder import LegacyControllerJSONEncoder
+from ansible.module_utils.common.json import get_encoder, get_decoder
+from ansible.parsing.vault import EncryptedString, AnsibleVaultError
+from ansible._internal._datatag._tags import TrustedAsTemplate
+from ansible._internal._json._profiles import _legacy
 
 
-def test_AnsibleJSONDecoder_vault():
+def test_AnsibleJSONDecoder_vault(_empty_vault_secrets_context):
+    profile = _legacy
+
     with open(os.path.join(os.path.dirname(__file__), 'fixtures/ajson.json')) as f:
-        data = json.load(f, cls=AnsibleJSONDecoder)
+        data = json.load(f, cls=get_decoder(profile))
 
-    assert isinstance(data['password'], AnsibleVaultEncryptedUnicode)
-    assert isinstance(data['bar']['baz'][0]['password'], AnsibleVaultEncryptedUnicode)
-    assert isinstance(data['foo']['password'], AnsibleVaultEncryptedUnicode)
+    assert isinstance(data['password'], EncryptedString)
+    with pytest.raises(AnsibleVaultError):
+        str(data['password'])
 
+    assert isinstance(data['bar']['baz'][0]['password'], EncryptedString)
+    with pytest.raises(AnsibleVaultError):
+        str(data['bar']['baz'][0]['password'])
 
-def test_encode_decode_unsafe():
-    data = {
-        'key_value': AnsibleUnsafeText(u'{#NOTACOMMENT#}'),
-        'list': [AnsibleUnsafeText(u'{#NOTACOMMENT#}')],
-        'list_dict': [{'key_value': AnsibleUnsafeText(u'{#NOTACOMMENT#}')}]}
-    json_expected = (
-        '{"key_value": {"__ansible_unsafe": "{#NOTACOMMENT#}"}, '
-        '"list": [{"__ansible_unsafe": "{#NOTACOMMENT#}"}], '
-        '"list_dict": [{"key_value": {"__ansible_unsafe": "{#NOTACOMMENT#}"}}]}'
-    )
-    assert json.dumps(data, cls=AnsibleJSONEncoder, preprocess_unsafe=True, sort_keys=True) == json_expected
-    assert json.loads(json_expected, cls=AnsibleJSONDecoder) == data
+    assert isinstance(data['foo']['password'], EncryptedString)
+    with pytest.raises(AnsibleVaultError):
+        str(data['foo']['password'])
 
 
 def vault_data():
     """
-    Prepare AnsibleVaultEncryptedUnicode test data for AnsibleJSONEncoder.default().
+    Prepare vault test data for AnsibleJSONEncoder.default().
 
     Return a list of tuples (input, expected).
     """
 
-    with open(os.path.join(os.path.dirname(__file__), 'fixtures/ajson.json')) as f:
-        data = json.load(f, cls=AnsibleJSONDecoder)
+    profile = _legacy
+
+    raw_data = TrustedAsTemplate().tag((pathlib.Path(__file__).parent / 'fixtures/ajson.json').read_text())
+    data = json.loads(raw_data, cls=get_decoder(profile))
 
     data_0 = data['password']
     data_1 = data['bar']['baz'][0]['password']
@@ -110,12 +109,16 @@ class TestAnsibleJSONEncoder:
             def __len__(self):
                 return len(self.__dict__)
 
-        return M(request.param)
+        mapping = M(request.param)
+
+        assert isinstance(len(mapping), int)   # ensure coverage of __len__
+
+        return mapping
 
     @pytest.fixture
     def ansible_json_encoder(self):
         """Return AnsibleJSONEncoder object."""
-        return AnsibleJSONEncoder()
+        return LegacyControllerJSONEncoder()
 
     ###############
     # Test methods:
@@ -127,8 +130,8 @@ class TestAnsibleJSONEncoder:
             (datetime(2019, 5, 14, 13, 47, 16, 923866), '2019-05-14T13:47:16.923866'),
             (date(2019, 5, 14), '2019-05-14'),
             (date(2020, 5, 14), '2020-05-14'),
-            (datetime(2019, 6, 15, 14, 45, tzinfo=tz('UTC')), '2019-06-15T14:45:00+00:00'),
-            (datetime(2019, 6, 15, 14, 45, tzinfo=tz('Europe/Helsinki')), '2019-06-15T14:45:00+01:40'),
+            (datetime(2019, 6, 15, 14, 45, tzinfo=timezone.utc), '2019-06-15T14:45:00+00:00'),
+            (datetime(2019, 6, 15, 14, 45, tzinfo=timezone(timedelta(hours=1, minutes=40))), '2019-06-15T14:45:00+01:40'),
         ]
     )
     def test_date_datetime(self, ansible_json_encoder, test_input, expected):
@@ -140,10 +143,10 @@ class TestAnsibleJSONEncoder:
     @pytest.mark.parametrize(
         'mapping,expected',
         [
-            ({1: 1}, {1: 1}),
-            ({2: 2}, {2: 2}),
-            ({1: 2}, {1: 2}),
-            ({2: 1}, {2: 1}),
+            ({'1': 1}, {'1': 1}),
+            ({'2': 2}, {'2': 2}),
+            ({'1': 2}, {'1': 2}),
+            ({'2': 1}, {'2': 1}),
         ], indirect=['mapping'],
     )
     def test_mapping(self, ansible_json_encoder, mapping, expected):
@@ -153,18 +156,18 @@ class TestAnsibleJSONEncoder:
         assert ansible_json_encoder.default(mapping) == expected
 
     @pytest.mark.parametrize('test_input,expected', vault_data())
-    def test_ansible_json_decoder_vault(self, ansible_json_encoder, test_input, expected):
+    def test_ansible_json_encoder_vault(self, test_input, expected):
         """
-        Test for passing AnsibleVaultEncryptedUnicode to AnsibleJSONEncoder.default().
+        Test for passing vaulted values to AnsibleJSONEncoder.default().
         """
-        assert ansible_json_encoder.default(test_input) == {'__ansible_vault': expected}
-        assert json.dumps(test_input, cls=AnsibleJSONEncoder, preprocess_unsafe=True) == '{"__ansible_vault": "%s"}' % expected.replace('\n', '\\n')
+        profile = _legacy
+        assert json.dumps(test_input, cls=get_encoder(profile)) == '{"__ansible_vault": "%s"}' % expected.replace('\n', '\\n')
 
     @pytest.mark.parametrize(
         'test_input,expected',
         [
-            ({1: 'first'}, {1: 'first'}),
-            ({2: 'second'}, {2: 'second'}),
+            ({'1': 'first'}, {'1': 'first'}),
+            ({'2': 'second'}, {'2': 'second'}),
         ]
     )
     def test_default_encoder(self, ansible_json_encoder, test_input, expected):
@@ -176,12 +179,18 @@ class TestAnsibleJSONEncoder:
         """
         assert ansible_json_encoder.default(test_input) == expected
 
-    @pytest.mark.parametrize('test_input', [1, 1.1, 'string', [1, 2], set('set'), True, None])
-    def test_default_encoder_unserializable(self, ansible_json_encoder, test_input):
-        """
-        Test for the default encoder of AnsibleJSONEncoder.default(), not serializable objects.
 
-        It must fail with TypeError 'object is not serializable'.
-        """
-        with pytest.raises(TypeError):
-            ansible_json_encoder.default(test_input)
+@pytest.mark.parametrize("trust_input_str", (
+    True,
+    False
+))
+def test_string_trust_propagation(trust_input_str: bool) -> None:
+    """Verify that input trust propagation behaves as expected. The presence of trust on the input string determines if trust is applied to outputs."""
+    data = '{"foo": "bar"}'
+
+    if trust_input_str:
+        data = TrustedAsTemplate().tag(data)
+
+    res = json.loads(data, cls=_legacy.Decoder)
+
+    assert trust_input_str == TrustedAsTemplate.is_tagged_on(res['foo'])

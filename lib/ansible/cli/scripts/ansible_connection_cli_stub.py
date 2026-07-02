@@ -1,14 +1,8 @@
-#!/usr/bin/env python
 # Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-from __future__ import (absolute_import, division, print_function)
+from __future__ import annotations
 
-__metaclass__ = type
-
-
-import argparse
 import fcntl
-import hashlib
 import io
 import os
 import pickle
@@ -24,12 +18,12 @@ from contextlib import contextmanager
 
 from ansible import constants as C
 from ansible.cli.arguments import option_helpers as opt_help
-from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.module_utils.connection import Connection, ConnectionError, send_data, recv_data
 from ansible.module_utils.service import fork_process
-from ansible.parsing.ajson import AnsibleJSONEncoder, AnsibleJSONDecoder
+from ansible.module_utils._internal._json._profiles import _tagless
 from ansible.playbook.play_context import PlayContext
-from ansible.plugins.loader import connection_loader
+from ansible.plugins.loader import connection_loader, init_plugin_loader
 from ansible.utils.path import unfrackpath, makedirs_safe
 from ansible.utils.display import Display
 from ansible.utils.jsonrpc import JsonRpcServer
@@ -43,13 +37,6 @@ def read_stream(byte_stream):
     data = byte_stream.read(size)
     if len(data) < size:
         raise Exception("EOF found before data was complete")
-
-    data_hash = to_text(byte_stream.readline().strip())
-    if data_hash != hashlib.sha1(data).hexdigest():
-        raise Exception("Read {0} bytes, but data did not match checksum".format(size))
-
-    # restore escaped loose \r characters
-    data = data.replace(br'\r', b'\r')
 
     return data
 
@@ -70,10 +57,10 @@ def file_lock(lock_path):
 
 
 class ConnectionProcess(object):
-    '''
+    """
     The connection process wraps around a Connection object that manages
     the connection to a remote device that persists over the playbook
-    '''
+    """
     def __init__(self, fd, play_context, socket_path, original_path, task_uuid=None, ansible_playbook_pid=None):
         self.play_context = play_context
         self.socket_path = socket_path
@@ -89,11 +76,11 @@ class ConnectionProcess(object):
         self.connection = None
         self._ansible_playbook_pid = ansible_playbook_pid
 
-    def start(self, variables):
-        try:
-            messages = list()
-            result = {}
+    def start(self, options):
+        messages = list()
+        result = {}
 
+        try:
             messages.append(('vvvv', 'control socket path is %s' % self.socket_path))
 
             # If this is a relative path (~ gets expanded later) then plug the
@@ -104,7 +91,7 @@ class ConnectionProcess(object):
             self.connection = connection_loader.get(self.play_context.connection, self.play_context, '/dev/null',
                                                     task_uuid=self._task_uuid, ansible_playbook_pid=self._ansible_playbook_pid)
             try:
-                self.connection.set_options(var_options=variables)
+                self.connection.set_options(direct=options)
             except ConnectionError as exc:
                 messages.append(('debug', to_text(exc)))
                 raise ConnectionError('Unable to decode JSON from response set_options. See the debug log for more information.')
@@ -123,7 +110,7 @@ class ConnectionProcess(object):
             result['exception'] = traceback.format_exc()
         finally:
             result['messages'] = messages
-            self.fd.write(json.dumps(result, cls=AnsibleJSONEncoder))
+            self.fd.write(json.dumps(result, cls=_tagless.Encoder))
             self.fd.close()
 
     def run(self):
@@ -225,11 +212,12 @@ def main(args=None):
     """ Called to initiate the connect to the remote device
     """
 
-    parser = opt_help.create_base_parser(prog='ansible-connection')
+    parser = opt_help.create_base_parser(prog=None)
     opt_help.add_verbosity_options(parser)
     parser.add_argument('playbook_pid')
     parser.add_argument('task_uuid')
     args = parser.parse_args(args[1:] if args is not None else args)
+    init_plugin_loader()
 
     # initialize verbosity
     display.verbosity = args.verbosity
@@ -248,14 +236,14 @@ def main(args=None):
 
     try:
         # read the play context data via stdin, which means depickling it
-        vars_data = read_stream(stdin)
+        opts_data = read_stream(stdin)
         init_data = read_stream(stdin)
 
         pc_data = pickle.loads(init_data, encoding='bytes')
-        variables = pickle.loads(vars_data, encoding='bytes')
+        options = pickle.loads(opts_data, encoding='bytes')
 
         play_context = PlayContext()
-        play_context.deserialize(pc_data)
+        play_context.from_attrs(pc_data)
 
     except Exception as e:
         rc = 1
@@ -289,7 +277,7 @@ def main(args=None):
                         os.close(r)
                         wfd = os.fdopen(w, 'w')
                         process = ConnectionProcess(wfd, play_context, socket_path, original_path, task_uuid, ansible_playbook_pid)
-                        process.start(variables)
+                        process.start(options)
                     except Exception:
                         messages.append(('error', traceback.format_exc()))
                         rc = 1
@@ -304,7 +292,7 @@ def main(args=None):
                 else:
                     os.close(w)
                     rfd = os.fdopen(r, 'r')
-                    data = json.loads(rfd.read(), cls=AnsibleJSONDecoder)
+                    data = json.loads(rfd.read(), cls=_tagless.Decoder)
                     messages.extend(data.pop('messages'))
                     result.update(data)
 
@@ -312,7 +300,7 @@ def main(args=None):
                 messages.append(('vvvv', 'found existing local domain socket, using it!'))
                 conn = Connection(socket_path)
                 try:
-                    conn.set_options(var_options=variables)
+                    conn.set_options(direct=options)
                 except ConnectionError as exc:
                     messages.append(('debug', to_text(exc)))
                     raise ConnectionError('Unable to decode JSON from response set_options. See the debug log for more information.')
@@ -342,10 +330,10 @@ def main(args=None):
     sys.stdout = saved_stdout
     if 'exception' in result:
         rc = 1
-        sys.stderr.write(json.dumps(result, cls=AnsibleJSONEncoder))
+        sys.stderr.write(json.dumps(result, cls=_tagless.Encoder))
     else:
         rc = 0
-        sys.stdout.write(json.dumps(result, cls=AnsibleJSONEncoder))
+        sys.stdout.write(json.dumps(result, cls=_tagless.Encoder))
 
     sys.exit(rc)
 

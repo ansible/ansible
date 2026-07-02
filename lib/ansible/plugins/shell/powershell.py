@@ -1,10 +1,9 @@
 # Copyright (c) 2014, Chris Church <chris@ninemoreminutes.com>
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 name: powershell
 version_added: historical
 short_description: Windows PowerShell
@@ -13,48 +12,23 @@ description:
 - Can also be used when using 'ssh' as a connection plugin and the C(DefaultShell) has been configured to PowerShell.
 extends_documentation_fragment:
 - shell_windows
-'''
+"""
 
 import base64
 import os
-import re
 import shlex
-import pkgutil
-import xml.etree.ElementTree as ET
 import ntpath
 
-from ansible.module_utils._text import to_bytes, to_text
-from ansible.plugins.shell import ShellBase
+from ansible._internal._powershell import _script
+from ansible.executor.powershell.module_manifest import _bootstrap_powershell_script
+from ansible.module_utils.common.text.converters import to_text
+from ansible.plugins.shell import ShellBase, _ShellCommand
+from ansible.utils.display import Display
 
+
+display = Display()
 
 _common_args = ['PowerShell', '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Unrestricted']
-
-
-def _parse_clixml(data, stream="Error"):
-    """
-    Takes a byte string like '#< CLIXML\r\n<Objs...' and extracts the stream
-    message encoded in the XML data. CLIXML is used by PowerShell to encode
-    multiple objects in stderr.
-    """
-    lines = []
-
-    # There are some scenarios where the stderr contains a nested CLIXML element like
-    # '<# CLIXML\r\n<# CLIXML\r\n<Objs>...</Objs><Objs>...</Objs>'.
-    # Parse each individual <Objs> element and add the error strings to our stderr list.
-    # https://github.com/ansible/ansible/issues/69550
-    while data:
-        end_idx = data.find(b"</Objs>") + 7
-        current_element = data[data.find(b"<Objs "):end_idx]
-        data = data[end_idx:]
-
-        clixml = ET.fromstring(current_element)
-        namespace_match = re.match(r'{(.*)}', clixml.tag)
-        namespace = "{%s}" % namespace_match.group(1) if namespace_match else ""
-
-        strings = clixml.findall("./%sS" % namespace)
-        lines.extend([e.text.replace('_x000D__x000A_', '') for e in strings if e.attrib.get('S') == stream])
-
-    return to_bytes('\r\n'.join(lines))
 
 
 class ShellModule(ShellBase):
@@ -66,6 +40,8 @@ class ShellModule(ShellBase):
     # Family of shells this has.  Must match the filename without extension
     SHELL_FAMILY = 'powershell'
 
+    # We try catch as some connection plugins don't have a console (PSRP).
+    _CONSOLE_ENCODING = "try { [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding } catch {}"
     _SHELL_REDIRECT_ALLNULL = '> $null'
     _SHELL_AND = ';'
 
@@ -80,7 +56,7 @@ class ShellModule(ShellBase):
 
     def join_path(self, *args):
         # use normpath() to remove doubled slashed and convert forward to backslashes
-        parts = [ntpath.normpath(self._unquote(arg)) for arg in args]
+        parts = [ntpath.normpath(arg) for arg in args]
 
         # Because ntpath.join treats any component that begins with a backslash as an absolute path,
         # we have to strip slashes from at least the beginning, otherwise join will ignore all previous
@@ -98,7 +74,6 @@ class ShellModule(ShellBase):
 
     def path_has_trailing_slash(self, path):
         # Allow Windows paths to be specified using either slash.
-        path = self._unquote(path)
         return path.endswith('/') or path.endswith('\\')
 
     def chmod(self, paths, mode):
@@ -111,67 +86,114 @@ class ShellModule(ShellBase):
         raise NotImplementedError('set_user_facl is not implemented for Powershell')
 
     def remove(self, path, recurse=False):
-        path = self._escape(self._unquote(path))
+        path = _script.quote_pwsh_argument(path)
+        script = f"Remove-Item {path} -Force"
         if recurse:
-            return self._encode_script('''Remove-Item '%s' -Force -Recurse;''' % path)
-        else:
-            return self._encode_script('''Remove-Item '%s' -Force;''' % path)
+            script += " -Recurse"
 
-    def mkdtemp(self, basefile=None, system=False, mode=None, tmpdir=None):
+        return self._encode_pwsh_script_as_command(script)
+
+    def mkdtemp(
+        self,
+        basefile: str | None = None,
+        system: bool = False,
+        mode: int = 0o700,
+        tmpdir: str | None = None,
+    ) -> str:
+        # This is used when connection plugins do not support pipelining.
+        if not basefile:
+            basefile = self.__class__._generate_temp_dir_name()
+        basefile = _script.quote_pwsh_argument(basefile, force_quote=True)
+        basetmpdir = _script.quote_pwsh_argument(tmpdir if tmpdir else self.get_option('remote_tmp'), force_quote=True)
+
+        script = f"""
+        {self._CONSOLE_ENCODING}
+        $tmp_path = [System.Environment]::ExpandEnvironmentVariables({basetmpdir})
+        $tmp = New-Item -Type Directory -Path $tmp_path -Name {basefile}
+        Write-Output -InputObject $tmp.FullName
+        """
+        return self._encode_pwsh_script_as_command(script)
+
+    def _mkdtemp2(
+        self,
+        basefile: str | None = None,
+        system: bool = False,
+        mode: int = 0o700,
+        tmpdir: str | None = None,
+    ) -> _ShellCommand:
         # Windows does not have an equivalent for the system temp files, so
         # the param is ignored
         if not basefile:
             basefile = self.__class__._generate_temp_dir_name()
-        basefile = self._escape(self._unquote(basefile))
+
         basetmpdir = tmpdir if tmpdir else self.get_option('remote_tmp')
 
-        script = '''
-        $tmp_path = [System.Environment]::ExpandEnvironmentVariables('%s')
-        $tmp = New-Item -Type Directory -Path $tmp_path -Name '%s'
-        Write-Output -InputObject $tmp.FullName
-        ''' % (basetmpdir, basefile)
-        return self._encode_script(script.strip())
+        script, stdin = _bootstrap_powershell_script("powershell_mkdtemp.ps1", {
+            'Directory': basetmpdir,
+            'Name': basefile,
+        })
+        command = self._encode_pwsh_script_as_command(script)
 
-    def expand_user(self, user_home_path, username=''):
-        # PowerShell only supports "~" (not "~username").  Resolve-Path ~ does
-        # not seem to work remotely, though by default we are always starting
-        # in the user's home directory.
-        user_home_path = self._unquote(user_home_path)
+        return _ShellCommand(
+            command=command,
+            input_data=stdin,
+        )
+
+    def expand_user(
+        self,
+        user_home_path: str,
+        username: str = '',
+    ) -> str:
+        # This is used when connection plugins do not support pipelining.
+
+        script = self._CONSOLE_ENCODING
         if user_home_path == '~':
-            script = 'Write-Output (Get-Location).Path'
+            script += "; (Get-Location).Path"
         elif user_home_path.startswith('~\\'):
-            script = "Write-Output ((Get-Location).Path + '%s')" % self._escape(user_home_path[1:])
+            quoted_home = _script.quote_pwsh_argument(user_home_path[1:], force_quote=True)
+            script += f"; ((Get-Location).Path + {quoted_home})"
         else:
-            script = "Write-Output '%s'" % self._escape(user_home_path)
-        return self._encode_script(script)
+            script += f"; {_script.quote_pwsh_argument(user_home_path, force_quote=True)}"
+
+        return self._encode_pwsh_script_as_command(script)
+
+    def _expand_user2(
+        self,
+        user_home_path: str,
+        username: str = '',
+    ) -> _ShellCommand:
+        script, stdin = _bootstrap_powershell_script("powershell_expand_user.ps1", {
+            'Path': user_home_path,
+        })
+        command = self._encode_pwsh_script_as_command(script)
+
+        return _ShellCommand(
+            command=command,
+            input_data=stdin,
+        )
 
     def exists(self, path):
-        path = self._escape(self._unquote(path))
-        script = '''
-            If (Test-Path '%s')
-            {
-                $res = 0;
-            }
-            Else
-            {
-                $res = 1;
-            }
-            Write-Output '$res';
-            Exit $res;
-         ''' % path
-        return self._encode_script(script)
+        path = _script.quote_pwsh_argument(path)
+        script = f"exit -not (Test-Path -LiteralPath {path})"
+
+        return self._encode_pwsh_script_as_command(script)
 
     def checksum(self, path, *args, **kwargs):
-        path = self._escape(self._unquote(path))
-        script = '''
-            If (Test-Path -PathType Leaf '%(path)s')
+        display.deprecated(
+            msg="The `ShellModule.checksum` method is deprecated.",
+            version="2.23",
+            help_text="Use `ActionBase._execute_remote_stat()` instead.",
+        )
+        path = _script.quote_pwsh_argument(path)
+        script = """
+            If (Test-Path -PathType Leaf %(path)s)
             {
                 $sp = new-object -TypeName System.Security.Cryptography.SHA1CryptoServiceProvider;
-                $fp = [System.IO.File]::Open('%(path)s', [System.IO.Filemode]::Open, [System.IO.FileAccess]::Read);
+                $fp = [System.IO.File]::Open(%(path)s, [System.IO.Filemode]::Open, [System.IO.FileAccess]::Read);
                 [System.BitConverter]::ToString($sp.ComputeHash($fp)).Replace("-", "").ToLower();
                 $fp.Dispose();
             }
-            ElseIf (Test-Path -PathType Container '%(path)s')
+            ElseIf (Test-Path -PathType Container %(path)s)
             {
                 Write-Output "3";
             }
@@ -179,92 +201,60 @@ class ShellModule(ShellBase):
             {
                 Write-Output "1";
             }
-        ''' % dict(path=path)
-        return self._encode_script(script)
+        """ % dict(path=path)
+
+        return self._encode_pwsh_script_as_command(script)
 
     def build_module_command(self, env_string, shebang, cmd, arg_path=None):
-        bootstrap_wrapper = pkgutil.get_data("ansible.executor.powershell", "bootstrap_wrapper.ps1")
-
-        # pipelining bypass
-        if cmd == '':
-            return self._encode_script(script=bootstrap_wrapper, strict_mode=False, preserve_rc=False)
-
-        # non-pipelining
-
+        # This will be called when executing modules not covered by the pwsh
+        # exec wrapper. For example module replacer, binary or basic shell
+        # modules.
+        # The env_string is never used in PowerShell.
         cmd_parts = shlex.split(cmd, posix=False)
-        cmd_parts = list(map(to_text, cmd_parts))
-        if shebang and shebang.lower() == '#!powershell':
-            if not self._unquote(cmd_parts[0]).lower().endswith('.ps1'):
-                # we're running a module via the bootstrap wrapper
-                cmd_parts[0] = '"%s.ps1"' % self._unquote(cmd_parts[0])
-            wrapper_cmd = "type " + cmd_parts[0] + " | " + self._encode_script(script=bootstrap_wrapper, strict_mode=False, preserve_rc=False)
-            return wrapper_cmd
-        elif shebang and shebang.startswith('#!'):
-            cmd_parts.insert(0, shebang[2:])
+
+        if shebang and shebang.startswith('#!'):
+            cmd = shebang[2:]
         elif not shebang:
             # The module is assumed to be a binary
-            cmd_parts[0] = self._unquote(cmd_parts[0])
+            cmd = cmd_parts.pop(0)
+
+        if arg_path:
             cmd_parts.append(arg_path)
-        script = '''
-            Try
-            {
-                %s
-                %s
-            }
-            Catch
-            {
-                $_obj = @{ failed = $true }
-                If ($_.Exception.GetType)
-                {
-                    $_obj.Add('msg', $_.Exception.Message)
-                }
-                Else
-                {
-                    $_obj.Add('msg', $_.ToString())
-                }
-                If ($_.InvocationInfo.PositionMessage)
-                {
-                    $_obj.Add('exception', $_.InvocationInfo.PositionMessage)
-                }
-                ElseIf ($_.ScriptStackTrace)
-                {
-                    $_obj.Add('exception', $_.ScriptStackTrace)
-                }
-                Try
-                {
-                    $_obj.Add('error_record', ($_ | ConvertTo-Json | ConvertFrom-Json))
-                }
-                Catch
-                {
-                }
-                Echo $_obj | ConvertTo-Json -Compress -Depth 99
-                Exit 1
-            }
-        ''' % (env_string, ' '.join(cmd_parts))
-        return self._encode_script(script, preserve_rc=False)
+
+        script = _script.build_pwsh_cmd_statement(cmd, cmd_parts)
+        return self._encode_pwsh_script_as_command(script)
 
     def wrap_for_exec(self, cmd):
+        super().wrap_for_exec(cmd)
         return '& %s; exit $LASTEXITCODE' % cmd
 
-    def _unquote(self, value):
-        '''Remove any matching quotes that wrap the given value.'''
-        value = to_text(value or '')
-        m = re.match(r'^\s*?\'(.*?)\'\s*?$', value)
-        if m:
-            return m.group(1)
-        m = re.match(r'^\s*?"(.*?)"\s*?$', value)
-        if m:
-            return m.group(1)
-        return value
+    def join(self, cmd_parts: list[str]) -> str:
+        if not cmd_parts:
+            return ""
 
-    def _escape(self, value):
-        '''Return value escaped for use in PowerShell single quotes.'''
-        # There are 5 chars that need to be escaped in a single quote.
-        # https://github.com/PowerShell/PowerShell/blob/b7cb335f03fe2992d0cbd61699de9d9aafa1d7c1/src/System.Management.Automation/engine/parser/CharTraits.cs#L265-L272
-        return re.compile(u"(['\u2018\u2019\u201a\u201b])").sub(u'\\1\\1', value)
+        cmd = cmd_parts[0]
+        args = []
+        if len(cmd_parts) > 1:
+            args = cmd_parts[1:]
+
+        return _script.build_pwsh_cmd_statement(cmd, args)
+
+    def quote(self, cmd: str) -> str:
+        return _script.quote_pwsh_argument(cmd)
+
+    def _encode_pwsh_script_as_command(self, script: str) -> str:
+        """Wraps the provided PowerShell script as a command line string for the current shell plugin."""
+        cmd_args = _script.get_pwsh_encoded_cmdline(script, override_execution_policy=True)
+        return self.join(cmd_args)
 
     def _encode_script(self, script, as_list=False, strict_mode=True, preserve_rc=True):
-        '''Convert a PowerShell script to a single base64-encoded command.'''
+        """Convert a PowerShell script to a single base64-encoded command."""
+        # Needs a deprecation as ansible.windows uses this in the reboot plugin.
+        display.deprecated(
+            msg="The `PowerShell._encode_script` method is deprecated.",
+            version="2.24",
+            help_text="Contact plugin author to update their plugin to use an alternative method.",
+        )
         script = to_text(script)
 
         if script == u'-':

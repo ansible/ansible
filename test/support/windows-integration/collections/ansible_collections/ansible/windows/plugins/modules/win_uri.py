@@ -5,7 +5,7 @@
 # Copyright: (c) 2017, Dag Wieers (@dagwieers) <dag@wieers.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: win_uri
 short_description: Interacts with webservices
@@ -88,9 +88,9 @@ seealso:
 author:
 - Corwin Brown (@blakfeld)
 - Dag Wieers (@dagwieers)
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: Perform a GET and Store Output
   ansible.windows.win_uri:
     url: http://example.com/endpoint
@@ -114,9 +114,9 @@ EXAMPLES = r'''
     url: http://www.somesite.com/
     method: POST
     body: "{ 'some': 'json' }"
-'''
+"""
 
-RETURN = r'''
+RETURN = r"""
 elapsed:
   description: The number of seconds that elapsed while performing the download.
   returned: always
@@ -152,4 +152,4 @@ json:
   returned: success and Content-Type is "application/json" or "application/javascript" and return_content is True
   type: dict
   sample: {"this-is-dependent": "on the actual return content"}
-'''
+"""

@@ -18,16 +18,15 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 ########################################################################
-''' This manages remote shared Ansible objects, mainly roles'''
+""" This manages remote shared Ansible objects, mainly roles"""
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 
 import ansible.constants as C
 from ansible import context
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils.common.text.converters import to_bytes
 from ansible.module_utils.common.yaml import yaml_load
 
 #      default_readme_template
@@ -41,7 +40,7 @@ def get_collections_galaxy_meta_info():
 
 
 class Galaxy(object):
-    ''' Keeps global galaxy info '''
+    """ Keeps global galaxy info """
 
     def __init__(self):
         # TODO: eventually remove this as it contains a mismash of properties that aren't really global

@@ -15,10 +15,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #############################################
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
     vars: custom_vars
     version_added: "2.10"
     short_description: load host and group vars
@@ -32,12 +31,16 @@ DOCUMENTATION = '''
             section: custom_vars
         env:
           - name: ANSIBLE_VARS_PLUGIN_STAGE
-'''
+"""
 
 from ansible.plugins.vars import BaseVarsPlugin
 
 
 class VarsModule(BaseVarsPlugin):
+
+    # Vars plugins in collections are only loaded when they are enabled by the user.
+    # If a vars plugin sets REQUIRES_ENABLED = False, a warning should occur (assuming it is loaded).
+    REQUIRES_ENABLED = False
 
     def get_vars(self, loader, path, entities, cache=True):
         super(VarsModule, self).get_vars(loader, path, entities)

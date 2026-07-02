@@ -3,11 +3,10 @@
 # Copyright: (c) 2012, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: raw
 short_description: Executes a low-down and dirty command
@@ -39,6 +38,8 @@ description:
      - This module does not require python on the remote system, much like
        the M(ansible.builtin.script) module.
      - This module is also supported for Windows targets.
+     - If the command returns non UTF-8 data, it must be encoded to avoid issues. One option is to pipe
+       the output through C(base64).
 extends_documentation_fragment:
     - action_common_attributes
     - action_common_attributes.raw
@@ -69,11 +70,11 @@ seealso:
 author:
     - Ansible Core Team
     - Michael DeHaan
-'''
+"""
 
-EXAMPLES = r'''
-- name: Bootstrap a host without python2 installed
-  ansible.builtin.raw: dnf install -y python2 python2-dnf libselinux-python
+EXAMPLES = r"""
+- name: Bootstrap a host without Python installed
+  ansible.builtin.raw: dnf install -y python3 python3-libdnf
 
 - name: Run a command that uses non-posix shell-isms (in this example /bin/sh doesn't handle redirection and wildcards together but bash does)
   ansible.builtin.raw: cat < /tmp/*txt
@@ -85,4 +86,4 @@ EXAMPLES = r'''
 
 - name: List user accounts on a Windows system
   ansible.builtin.raw: Get-WmiObject -Class Win32_UserAccount
-'''
+"""
