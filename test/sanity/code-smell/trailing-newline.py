@@ -5,6 +5,7 @@ from __future__ import annotations
 import sys
 import os
 
+
 def main():
     """Main entry point."""
     fix_mode = bool(int(os.environ['ANSIBLE_TEST_FIX_MODE']))
