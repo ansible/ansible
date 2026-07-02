@@ -33,6 +33,9 @@ notes:
     C(ansible_facts.services.zuul-gateway). It is instead recommended to
     using the string value of the service name as the key in order to obtain
     the fact data value like C(ansible_facts.services['zuul-gateway'])
+  - If C(INJECT_FACTS_AS_VARS) is enabled, this module also exposes the collected
+    facts as a top-level C(services) variable. It does not expose them as
+    C(ansible_services).
   - AIX SRC was added in version 2.11.
 author:
   - Adam Miller (@maxamillion)
