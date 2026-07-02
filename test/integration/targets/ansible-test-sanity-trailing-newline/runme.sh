@@ -20,20 +20,20 @@ export ANSIBLE_TEST_FIX_MODE=0
 # Check that sanity fails NO_NEWLINE, and succeeds on HAS_NEWLINE
 python "$SCRIPT_PATH" "$HAS_NEWLINE" "$NO_NEWLINE" | tee "$RESULTS"  
 cat "$RESULTS"
-! grep -q "$HAS_NEWLINE: text files should end with a newline character" "$RESULTS"
+! grep -q "$HAS_NEWLINE: text files should end with a newline character" "$RESULTS" && exit 1
 grep -q "$NO_NEWLINE: text files should end with a newline character" "$RESULTS"
 
 # Fix file, check no errors
 ANSIBLE_TEST_FIX_MODE=1 python "$SCRIPT_PATH" "$NO_NEWLINE" "$HAS_NEWLINE" | tee "$RESULTS"
 cat "$RESULTS"
-! grep -q "$NO_NEWLINE: text files should end with a newline character" "$RESULTS"
-! grep -q "$HAS_NEWLINE: text files should end with a newline character" "$RESULTS"
+! grep -q "$NO_NEWLINE: text files should end with a newline character" "$RESULTS" && exit 1
+! grep -q "$HAS_NEWLINE: text files should end with a newline character" "$RESULTS" && exit 1
 
 # Check again for no errors after fix
 python "$SCRIPT_PATH" "$HAS_NEWLINE" "$NO_NEWLINE" | tee "$RESULTS"  
 cat "$RESULTS"
-! grep -q "$NO_NEWLINE: text files should end with a newline character" "$RESULTS"
-! grep -q "$HAS_NEWLINE: text files should end with a newline character" "$RESULTS"
+! grep -q "$NO_NEWLINE: text files should end with a newline character" "$RESULTS" && exit 1
+! grep -q "$HAS_NEWLINE: text files should end with a newline character" "$RESULTS" && exit 1
 
 # Manual check for sanity (count newlines in last byte of file)
 [[ $(tail -c1 "$NO_NEWLINE" | wc -l) -gt 0 ]]
