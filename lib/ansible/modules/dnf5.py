@@ -93,6 +93,19 @@ options:
         required by any such package. Should be used alone or when O(state=absent).
     type: bool
     default: "no"
+  clean_requirements_on_remove:
+    description:
+      - If V(true), when removing a package with O(state=absent), also remove the
+        dependencies that were installed for it and are no longer required by any other
+        package.
+      - Unlike O(autoremove), this only affects dependencies of the packages being
+        removed in the current operation and does not perform a full system-wide sweep
+        of orphaned packages.
+      - When not set, the behavior falls back to the value of O(autoremove) to preserve
+        backwards compatibility.
+      - Only used when O(state=absent).
+    type: bool
+    version_added: "2.22"
   exclude:
     description:
       - Package name(s) to exclude from the operation. This can be a list or a comma separated string.
@@ -594,7 +607,12 @@ class Dnf5Module(YumDnf):
             conf.pkg_gpgcheck = not self.disable_gpg_check
         conf.localpkg_gpgcheck = not self.disable_gpg_check
         conf.sslverify = self.sslverify
-        conf.clean_requirements_on_remove = self.autoremove
+        # `clean_requirements_on_remove` can be set independently of `autoremove`. When it
+        # is not specified, fall back to `autoremove` to preserve backwards compatibility.
+        if self.clean_requirements_on_remove is None:
+            conf.clean_requirements_on_remove = self.autoremove
+        else:
+            conf.clean_requirements_on_remove = self.clean_requirements_on_remove
 
         if not os.path.isdir(self.installroot):
             self.module.fail_json(msg=f"Installroot {self.installroot} must be a directory")

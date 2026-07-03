@@ -115,6 +115,19 @@ options:
     type: bool
     default: "no"
     version_added: "2.4"
+  clean_requirements_on_remove:
+    description:
+      - If V(true), when removing a package with O(state=absent), also remove the
+        dependencies that were installed for it and are no longer required by any other
+        package.
+      - Unlike O(autoremove), this only affects dependencies of the packages being
+        removed in the current operation and does not perform a full system-wide sweep
+        of orphaned packages.
+      - When not set, the behavior falls back to the value of O(autoremove) to preserve
+        backwards compatibility.
+      - Only used when O(state=absent).
+    type: bool
+    version_added: "2.22"
   exclude:
     description:
       - Package name(s) to exclude from the operation. This can be a list or a comma separated string.
@@ -433,6 +446,7 @@ class DnfModule(YumDnf):
             'download_dir': self.download_dir,
             'cacheonly': self.cacheonly,
             'autoremove': self.autoremove,
+            'clean_requirements_on_remove': self.clean_requirements_on_remove,
             'install_weak_deps': self.install_weak_deps,
             'disablerepo': self.disablerepo,
             'enablerepo': self.enablerepo,
