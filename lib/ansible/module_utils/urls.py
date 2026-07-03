@@ -344,9 +344,7 @@ def get_response_filename(response):
     else:
         url = response.geturl()
         path = urlparse(url)[2]
-        filename = os.path.basename(path.rstrip('/')) or None
-        if filename:
-            filename = unquote(filename)
+        filename = os.path.basename(unquote(path).rstrip('/')) or None
 
     return filename
 
