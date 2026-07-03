@@ -211,7 +211,7 @@ class RoleMixin(object):
                             # select first-found role
                             if entry not in found_names:
                                 found_names.add(entry)
-                                # None here stands for 'colleciton', which stand alone roles dont have
+                                # None here stands for 'collection', which stand alone roles don't have
                                 # makes downstream code simpler by having same structure as collection roles
                                 found.add((entry, None, role_path))
                         # only read first existing spec
@@ -485,7 +485,7 @@ class DocCLI(CLI, RoleMixin):
         self.plugin_list = set()
 
     @staticmethod
-    def _tty_ify_sem_simle(matcher):
+    def _tty_ify_sem_simple(matcher):
         text = DocCLI._UNESCAPE.sub(r'\1', matcher.group(1))
         return f"`{text}'"
 
@@ -533,8 +533,8 @@ class DocCLI(CLI, RoleMixin):
         t = cls._REF.sub(_format(r"\1", 'REF'), t)      # R(word, sphinx-ref) => word
         t = cls._CONST.sub(_format(r"`\1'", 'CONSTANT'), t)
         t = cls._SEM_OPTION_NAME.sub(cls._tty_ify_sem_complex, t)  # O(expr)
-        t = cls._SEM_OPTION_VALUE.sub(cls._tty_ify_sem_simle, t)  # V(expr)
-        t = cls._SEM_ENV_VARIABLE.sub(cls._tty_ify_sem_simle, t)  # E(expr)
+        t = cls._SEM_OPTION_VALUE.sub(cls._tty_ify_sem_simple, t)  # V(expr)
+        t = cls._SEM_ENV_VARIABLE.sub(cls._tty_ify_sem_simple, t)  # E(expr)
         t = cls._SEM_RET_VALUE.sub(cls._tty_ify_sem_complex, t)  # RV(expr)
         t = cls._RULER.sub("\n{0}\n".format("-" * 13), t)   # HORIZONTALLINE => -------
 

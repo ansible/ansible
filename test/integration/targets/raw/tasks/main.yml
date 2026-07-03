@@ -65,7 +65,7 @@
 - name: get the path to bash
   shell: which bash
   register: bash_path
-- name: run exmample non-posix command with bash
+- name: run example non-posix command with bash
   raw: "echo 'foobar' > {{remote_tmp_dir_test | expanduser}}/test.txt ; cat < {{remote_tmp_dir_test | expanduser}}/test.txt"
   args:
       executable: "{{ bash_path.stdout }}"

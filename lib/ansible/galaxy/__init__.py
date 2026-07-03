@@ -43,7 +43,7 @@ class Galaxy(object):
     """ Keeps global galaxy info """
 
     def __init__(self):
-        # TODO: eventually remove this as it contains a mismash of properties that aren't really global
+        # TODO: eventually remove this as it contains a mishmash of properties that aren't really global
 
         # roles_path needs to be a list and will be by default
         roles_path = context.CLIARGS.get('roles_path', C.DEFAULT_ROLES_PATH)

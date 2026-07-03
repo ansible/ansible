@@ -140,7 +140,7 @@ def get_cache_plugin(plugin_name, **kwargs):
     except AnsibleError as e:
         if 'fact_caching_connection' in to_native(e):
             raise AnsibleError("error, '%s' inventory cache plugin requires the one of the following to be set "
-                               "to a writeable directory path:\nansible.cfg:\n[default]: fact_caching_connection,\n"
+                               "to a writable directory path:\nansible.cfg:\n[default]: fact_caching_connection,\n"
                                "[inventory]: cache_connection;\nEnvironment:\nANSIBLE_INVENTORY_CACHE_CONNECTION,\n"
                                "ANSIBLE_CACHE_PLUGIN_CONNECTION." % plugin_name)
         else:

@@ -12,7 +12,7 @@
 - import_tasks: test_zip_timezone_dst.yml
 - import_tasks: test_exclude.yml
 - import_tasks: test_include.yml
-- import_tasks: test_parent_not_writeable.yml
+- import_tasks: test_parent_not_writable.yml
 - import_tasks: test_mode.yml
 - import_tasks: test_quotable_characters.yml
 - import_tasks: test_non_ascii_filename.yml

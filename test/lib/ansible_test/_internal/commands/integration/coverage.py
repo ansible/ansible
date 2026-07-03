@@ -129,7 +129,7 @@ class PosixCoverageHandler(CoverageHandler[PosixConfig]):
     def __init__(self, args: IntegrationConfig, host_state: HostState, inventory_path: str) -> None:
         super().__init__(args, host_state, inventory_path)
 
-        # Common temporary directory used on all POSIX hosts that will be created world writeable.
+        # Common temporary directory used on all POSIX hosts that will be created world writable.
         self.common_temp_path = f'/tmp/ansible-test-{generate_name()}'
 
     def get_profiles(self) -> list[HostProfile]:

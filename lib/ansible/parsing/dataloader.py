@@ -115,7 +115,7 @@ class DataLoader:
             parsed_data = self.load(data=file_data, file_name=file_name, json_only=json_only)
 
             # only tagging the container, used by include_vars to determine if vars should be shown or not
-            # this is a temporary measure until a proper data senitivity system is in place
+            # this is a temporary measure until a proper data sensitivity system is in place
             if SourceWasEncrypted.is_tagged_on(file_data):
                 parsed_data = SourceWasEncrypted().tag(parsed_data)
 

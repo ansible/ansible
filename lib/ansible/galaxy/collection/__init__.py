@@ -530,7 +530,7 @@ def download_collections(
     :param allow_pre_release: Do not ignore pre-release versions when selecting the latest.
     """
     with _display_progress("Process download dependency map"):
-        dep_map = _resolve_depenency_map(
+        dep_map = _resolve_dependency_map(
             set(collections),
             galaxy_apis=apis,
             preferred_candidates=None,
@@ -722,7 +722,7 @@ def install_collections(
         for coll in preferred_requirements
     }
     with _display_progress("Process install dependency map"):
-        dependency_map = _resolve_depenency_map(
+        dependency_map = _resolve_dependency_map(
             collections,
             galaxy_apis=apis,
             preferred_candidates=preferred_collections,
@@ -1803,7 +1803,7 @@ def _is_child_path(path, parent_path, link_name=None):
     return b_path == b_parent_path or b_path.startswith(b_parent_path + to_bytes(os.path.sep))
 
 
-def _resolve_depenency_map(
+def _resolve_dependency_map(
         requested_requirements,  # type: t.Iterable[Requirement]
         galaxy_apis,  # type: t.Iterable[GalaxyAPI]
         concrete_artifacts_manager,  # type: ConcreteArtifactsManager

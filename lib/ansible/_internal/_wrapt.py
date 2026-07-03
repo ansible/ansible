@@ -736,7 +736,7 @@ class BoundFunctionWrapper(_FunctionWrapperBase):
             # more useful thing we can pass through even though we loose
             # knowledge of whether they were called on the instance vs the
             # class type, as it reflects what they have available in the
-            # decoratored function.
+            # decorated function.
 
             instance = getattr(self.__wrapped__, '__self__', None)
 
@@ -788,7 +788,7 @@ class FunctionWrapper(_FunctionWrapperBase):
         #
         # 4. The wrapper is being applied when performing monkey
         # patching of an instance of a class. In this case binding will
-        # have been perfomed where the instance was not None.
+        # have been performed where the instance was not None.
         #
         # This case is a problem because we can no longer tell if the
         # method was a static method.

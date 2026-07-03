@@ -168,7 +168,7 @@
     state: directory
     path: "{{ checkout_dir }}"
 
-- name: SPECIFIC-REVISION | prepare origina repo
+- name: SPECIFIC-REVISION | prepare original repo
   shell: |
     set -eEu
 

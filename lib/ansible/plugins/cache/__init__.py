@@ -120,7 +120,7 @@ class BaseFileCacheModule(BaseCacheModule):
     def validate_cache_connection(self):
         if not self._cache_dir:
             raise AnsibleError(f"'{self.plugin_name!r}' cache plugin requires the 'fact_caching_connection' configuration option "
-                               "to be set (to a writeable directory path)")
+                               "to be set (to a writable directory path)")
 
         if not os.path.exists(self._cache_dir):
             try:

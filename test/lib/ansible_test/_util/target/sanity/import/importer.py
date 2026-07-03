@@ -178,14 +178,14 @@ def main():
             if fullname in self.loaded_modules:
                 return None  # ignore modules that are already being loaded
 
-            if is_name_in_namepace(fullname, ['ansible']):
+            if is_name_in_namespace(fullname, ['ansible']):
                 if not self.restrict_to_module_paths:
                     return None  # for non-modules, everything in the ansible namespace is allowed
 
                 if fullname in ('ansible.module_utils.basic',):
                     return self  # intercept loading so we can modify the result
 
-                if is_name_in_namepace(fullname, ['ansible.module_utils', self.name]):
+                if is_name_in_namespace(fullname, ['ansible.module_utils', self.name]):
                     return None  # module_utils and module under test are always allowed
 
                 if any(os.path.exists(candidate_path) for candidate_path in convert_ansible_name_to_absolute_paths(fullname)):
@@ -193,14 +193,14 @@ def main():
 
                 return None  # ansible file does not exist, do not restrict access
 
-            if is_name_in_namepace(fullname, ['ansible_collections']):
+            if is_name_in_namespace(fullname, ['ansible_collections']):
                 if not collection_loader:
                     return self  # restrict access to collections when we are not testing a collection
 
                 if not self.restrict_to_module_paths:
                     return None  # for non-modules, everything in the ansible namespace is allowed
 
-                if is_name_in_namepace(fullname, ['ansible_collections...plugins.module_utils', self.name]):
+                if is_name_in_namespace(fullname, ['ansible_collections...plugins.module_utils', self.name]):
                     return None  # module_utils and module under test are always allowed
 
                 if collection_loader.find_module(fullname, path):
@@ -357,7 +357,7 @@ def main():
             capture_report(path, capture_normal, messages)
             capture_report(path, capture_main, messages)
 
-    def is_name_in_namepace(name, namespaces):
+    def is_name_in_namespace(name, namespaces):
         """Returns True if the given name is one of the given namespaces, otherwise returns False."""
         name_parts = name.split('.')
 
@@ -516,7 +516,7 @@ def main():
             check_sys_modules(path, snapshot, messages)
 
             for key in set(sys.modules.keys()) - set(snapshot.keys()):
-                if is_name_in_namepace(key, ('ansible', 'ansible_collections')):
+                if is_name_in_namespace(key, ('ansible', 'ansible_collections')):
                     del sys.modules[key]  # only unload our own code since we know it's native Python
 
     @contextlib.contextmanager

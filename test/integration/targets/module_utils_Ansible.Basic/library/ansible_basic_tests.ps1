@@ -1597,7 +1597,7 @@ test_no_log - Invoked with:
         $tmpdir_name = Split-Path -Path $actual_tmpdir -Leaf
 
         $parent_tmpdir | Assert-Equal -Expected $remote_tmp
-        $tmpdir_name.StartSwith("ansible-moduletmp-") | Assert-Equal -Expected $true
+        $tmpdir_name.StartsWith("ansible-moduletmp-") | Assert-Equal -Expected $true
         (Test-Path -LiteralPath $actual_tmpdir -PathType Container) | Assert-Equal -Expected $true
         (Test-Path -LiteralPath $remote_tmp -PathType Container) | Assert-Equal -Expected $true
         $children = [System.IO.Directory]::EnumerateDirectories($remote_tmp)
@@ -1653,7 +1653,7 @@ test_no_log - Invoked with:
         $tmpdir_name = Split-Path -Path $actual_tmpdir -Leaf
 
         $parent_tmpdir | Assert-Equal -Expected $remote_tmp
-        $tmpdir_name.StartSwith("ansible-moduletmp-") | Assert-Equal -Expected $true
+        $tmpdir_name.StartsWith("ansible-moduletmp-") | Assert-Equal -Expected $true
         (Test-Path -LiteralPath $actual_tmpdir -PathType Container) | Assert-Equal -Expected $true
         (Test-Path -LiteralPath $remote_tmp -PathType Container) | Assert-Equal -Expected $true
         $children = [System.IO.Directory]::EnumerateDirectories($remote_tmp)
@@ -1702,7 +1702,7 @@ test_no_log - Invoked with:
         $tmpdir_name = Split-Path -Path $actual_tmpdir -Leaf
 
         $parent_tmpdir | Assert-Equal -Expected $remote_tmp
-        $tmpdir_name.StartSwith("ansible-moduletmp-") | Assert-Equal -Expected $true
+        $tmpdir_name.StartsWith("ansible-moduletmp-") | Assert-Equal -Expected $true
         (Test-Path -LiteralPath $actual_tmpdir -PathType Container) | Assert-Equal -Expected $true
         (Test-Path -LiteralPath $remote_tmp -PathType Container) | Assert-Equal -Expected $true
 
@@ -2465,7 +2465,7 @@ test_no_log - Invoked with:
     #         #$output.warnings[0] | Assert-Equal -Expected $expected_warning
     #     }
 
-    "Case insentitive choice as list" = {
+    "Case insensitive choice as list" = {
         $spec = @{
             options = @{
                 option_key = @{
@@ -3348,7 +3348,7 @@ catch [System.Management.Automation.RuntimeException] {
     $module.Result.line = $_.InvocationInfo.ScriptLineNumber
     $module.Result.method = $_.InvocationInfo.Line.Trim()
 
-    if ($_.Exception.Message.StartSwith("exit: ")) {
+    if ($_.Exception.Message.StartsWith("exit: ")) {
         # The exception was caused by an unexpected Exit call, log that on the output
         $module.Result.output = (ConvertFrom-Json -InputObject $_.Exception.InnerException.Output)
         $module.Result.msg = "Uncaught AnsibleModule exit in tests, see output"

@@ -36,7 +36,7 @@
   block:
     - name: LINUX | Ensure changes were made appropriately
       assert:
-        msg: Creating an account with 'expries=0' then removing that expriation with 'expires=-1' resulted in incorrect changes
+        msg: Creating an account with 'expires=0' then removing that expiration with 'expires=-1' resulted in incorrect changes
         that:
           - user_test_expires_create0_1 is changed
           - user_test_expires_create0_2 is not changed
@@ -60,7 +60,7 @@
   block:
     - name: BSD | Ensure changes were made appropriately
       assert:
-        msg: Creating an account with 'expries=0' then removing that expriation with 'expires=-1' resulted in incorrect changes
+        msg: Creating an account with 'expires=0' then removing that expiration with 'expires=-1' resulted in incorrect changes
         that:
           - user_test_expires_create0_1 is changed
           - user_test_expires_create0_2 is not changed

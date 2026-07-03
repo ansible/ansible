@@ -69,7 +69,7 @@ def create_payload(args: CommonConfig, dst_path: str) -> None:
 
     def make_executable(tar_info: tarfile.TarInfo) -> t.Optional[tarfile.TarInfo]:
         """
-        Make the given file executable and readable by all, and writeable by the owner.
+        Make the given file executable and readable by all, and writable by the owner.
         Existing file type bits are preserved.
         This ensures consistency of test results when using unprivileged users.
         """
@@ -82,7 +82,7 @@ def create_payload(args: CommonConfig, dst_path: str) -> None:
 
     def make_non_executable(tar_info: tarfile.TarInfo) -> t.Optional[tarfile.TarInfo]:
         """
-        Make the given file readable by all, and writeable by the owner.
+        Make the given file readable by all, and writable by the owner.
         Existing file type bits are preserved.
         This ensures consistency of test results when using unprivileged users.
         """

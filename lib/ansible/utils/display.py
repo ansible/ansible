@@ -200,7 +200,7 @@ if getattr(C, 'DEFAULT_LOG_PATH'):
         else:
             print(f"[WARNING]: DEFAULT_LOG_PATH can not be a directory '{path}', aborting", file=sys.stderr)
     else:
-        print(f"[WARNING]: log file at '{path}' is not writeable and we cannot create it, aborting\n", file=sys.stderr)
+        print(f"[WARNING]: log file at '{path}' is not writable and we cannot create it, aborting\n", file=sys.stderr)
 
 # map color to log levels, in order of priority (low to high)
 color_to_log_level = {C.COLOR_DEBUG: logging.DEBUG,

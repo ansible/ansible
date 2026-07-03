@@ -1086,7 +1086,7 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
         return ['pkill', 'sleep']
 
     def check_systemd_cgroup_v1(self, options: list[str]) -> None:
-        """Check the cgroup v1 systemd hierarchy to verify it is writeable for our container."""
+        """Check the cgroup v1 systemd hierarchy to verify it is writable for our container."""
         probe_script = (read_text_file(os.path.join(ANSIBLE_TEST_TARGET_ROOT, 'setup', 'check_systemd_cgroup_v1.sh'))
                         .replace('@MARKER@', self.MARKER)
                         .replace('@LABEL@', f'{self.label}-{self.args.session_name}'))
