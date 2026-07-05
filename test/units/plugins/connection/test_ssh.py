@@ -70,6 +70,29 @@ class TestConnectionBaseClass(unittest.TestCase):
         res, stdout, stderr = conn.exec_command('ssh')
         res, stdout, stderr = conn.exec_command('ssh', 'this is some data')
 
+    def test_plugins_connection_ssh__is_tty_requested_requesttty(self):
+        pc = PlayContext()
+        conn = connection_loader.get('ssh', pc)
+
+        cases = (
+            ('-o RequestTTY', AnsibleError),
+            ('-o RequestTTY=', AnsibleError),
+            ('-o RequestTTY=unsupported-value', AnsibleError),
+            ('-o RequestTTY=true', True),
+            ('-o RequestTTY=force', True),
+            ('-o RequestTTY=no', False),
+            ('-o RequestTTY=auto', False),
+        )
+        for ssh_args, expected in cases:
+            with self.subTest(ssh_args=ssh_args):
+                options = {'ssh_args': ssh_args, 'ssh_common_args': '', 'ssh_extra_args': ''}
+                conn.get_option = MagicMock(side_effect=options.get)
+                if expected is AnsibleError:
+                    with self.assertRaises(AnsibleError):
+                        conn._is_tty_requested()
+                else:
+                    self.assertEqual(conn._is_tty_requested(), expected)
+
     def test_plugins_connection_ssh__examine_output(self):
         pc = PlayContext()
         become_success_token = b'BECOME-SUCCESS-abcdefghijklmnopqrstuvxyz'

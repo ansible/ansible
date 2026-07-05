@@ -1,0 +1,2 @@
+bugfixes:
+  - ssh connection plugin - ``RequestTTY`` parsing in tty detection now matches OpenSSH - a missing, empty, or unsupported value in ``ssh_args``/``ssh_common_args``/``ssh_extra_args`` fails the task with a readable error instead of an unhandled ``IndexError`` or being silently ignored, and ``true`` is now recognized as an alias for ``yes``.

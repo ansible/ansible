@@ -1600,7 +1600,13 @@ class Connection(ConnectionBase):
                 val = arg.split(maxsplit=1)
 
             if val[0].lower().strip() == 'requesttty':
-                if val[1].lower().strip() in ('yes', 'force'):
+                if len(val) < 2 or not val[1].strip():
+                    raise AnsibleError(f'Invalid SSH option {arg!r}: missing value')
+                value = val[1].lower().strip()
+                # valid values per multistate_requesttty in OpenSSH readconf.c
+                if value not in ('yes', 'true', 'force', 'no', 'false', 'auto'):
+                    raise AnsibleError(f'Invalid SSH option {arg!r}: unsupported value')
+                if value in ('yes', 'true', 'force'):
                     return True
 
         return False
