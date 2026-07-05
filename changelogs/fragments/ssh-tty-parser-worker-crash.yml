@@ -1,0 +1,2 @@
+bugfixes:
+  - ssh connection plugin - malformed ``ssh_args``/``ssh_common_args``/``ssh_extra_args`` (e.g. a trailing ``-o`` with no value) now fail the task with a readable error instead of crashing the worker process ("A worker was found in a dead state").
