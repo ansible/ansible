@@ -108,13 +108,14 @@ class TestResult:
 
         return name
 
-    def save_junit(self, args: TestConfig, test_case: junit_xml.TestCase) -> None:
+    def save_junit(self, args: TestConfig, test_case: junit_xml.TestCase, *, url: str | None = None) -> None:
         """Save the given test case results to disk as JUnit XML."""
         suites = junit_xml.TestSuites(
             suites=[
                 junit_xml.TestSuite(
                     name='ansible-test',
                     cases=[test_case],
+                    url=url,
                     timestamp=datetime.datetime.now(tz=datetime.timezone.utc),
                 ),
             ],
@@ -278,6 +279,7 @@ class TestFailure(TestResult):
         """Write results to a junit XML file."""
         title = self.format_title()
         output = self.format_block()
+        doc_url = self.find_docs()
 
         test_case = junit_xml.TestCase(
             classname=self.command,
@@ -290,7 +292,7 @@ class TestFailure(TestResult):
             ],
         )
 
-        self.save_junit(args, test_case)
+        self.save_junit(args, test_case, url=doc_url)
 
     def write_bot(self, args: TestConfig) -> None:
         """Write results to a file for ansibullbot to consume."""
