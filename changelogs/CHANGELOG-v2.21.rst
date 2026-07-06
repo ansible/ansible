@@ -4,6 +4,27 @@ ansible-core 2.21 "The Rain Song" Release Notes
 
 .. contents:: Topics
 
+v2.21.2rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2026-07-06
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.21/porting_guides/porting_guide_core_2.21.html>`__
+
+Minor Changes
+-------------
+
+- ansible-test - Added a timeout callback that dumps thread stacks when the test execution deadline defined by ``ansible-test env --timeout`` is approaching.
+- parallel fact gathering - the async wrapper now considers the timeout when determining whether to kill the process running the module. Previously, a 5 second sleep occurred twice before checking if the job had remaining time.
+
+Bugfixes
+--------
+
+- encrypt - fix bcrypt salt string formatting on musl libc by ensuring it is always zero-padded to 2 digits (https://github.com/ansible/ansible/issues/87180).
+- parallel fact gathering - fix hang caused by corrupt async job files.
+
 v2.21.1
 =======
 
