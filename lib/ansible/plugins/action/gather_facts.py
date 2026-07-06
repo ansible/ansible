@@ -118,7 +118,6 @@ class ActionModule(ActionBase):
             parallel = boolean(parallel)
 
         timeout = self._task.args.get('gather_timeout', None)
-        async_val = self._task.async_val
 
         if not parallel:
             # serially execute each module
@@ -142,14 +141,12 @@ class ActionModule(ActionBase):
             for fact_module in modules:
                 mod_args = self._get_module_args(fact_module, task_vars)
 
-                #  if module does not handle timeout, use timeout to handle module, hijack async_val as this is what async_wrapper uses
-                # TODO: make this action complain about async/async settings, use parallel option instead .. or remove parallel in favor of async settings?
-                if timeout and 'gather_timeout' not in mod_args:
+                # TODO: use parallel option instead .. or remove parallel in favor of async settings?
+                # Regardless of whether the module handles the timeout, ensure the async timeout does not prematurely stop the module.
+                if timeout:
                     self._task.async_val = int(timeout)
-                elif async_val != 0:
-                    self._task.async_val = async_val
                 else:
-                    self._task.async_val = 0
+                    self._task.async_val = 10
 
                 self._display.vvvv("Running %s" % fact_module)
                 jobs[fact_module] = (self._execute_module(module_name=fact_module, module_args=mod_args, task_vars=task_vars, wrap_async=True))
@@ -173,8 +170,8 @@ class ActionModule(ActionBase):
                     time.sleep(0.5)
 
         # restore value for post processing
-        if self._task.async_val != async_val:
-            self._task.async_val = async_val
+        if self._task.async_val != 0:
+            self._task.async_val = 0
 
         if skipped:
             result['msg'] = f"The following modules were skipped: {', '.join(skipped.keys())}."

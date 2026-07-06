@@ -1,0 +1,3 @@
+bugfixes:
+  - parallel fact gathering - setup now uses the ``gather_timeout`` when it exceeds the internal pause for async tasks.
+  - parallel fact gathering - restore and document that the default ``gather_timeout`` is 10.
