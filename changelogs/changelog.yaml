@@ -692,3 +692,27 @@ releases:
     - sort_obfuscation.yml
     - winrm-psrp-nolog.yml
     release_date: '2026-06-11'
+  2.21.2rc1:
+    changes:
+      bugfixes:
+      - encrypt - fix bcrypt salt string formatting on musl libc by ensuring it is
+        always zero-padded to 2 digits (https://github.com/ansible/ansible/issues/87180).
+      - parallel fact gathering - fix hang caused by corrupt async job files.
+      minor_changes:
+      - ansible-test - Added a timeout callback that dumps thread stacks when the
+        test execution deadline defined by ``ansible-test env --timeout`` is approaching.
+      - parallel fact gathering - the async wrapper now considers the timeout when
+        determining whether to kill the process running the module. Previously, a
+        5 second sleep occurred twice before checking if the job had remaining time.
+      release_summary: '| Release Date: 2026-07-06
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.21/porting_guides/porting_guide_core_2.21.html>`__
+
+        '
+    codename: The Rain Song
+    fragments:
+    - 2.21.2rc1_summary.yaml
+    - 87180-crypt-fixes.yml
+    - ansible-test-timeout-callback.yml
+    - fix-short-timeout-async-wrapper.yml
+    release_date: '2026-07-06'
