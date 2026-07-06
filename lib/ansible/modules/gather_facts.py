@@ -20,12 +20,6 @@ description:
      - It can also be executed directly by C(/usr/bin/ansible) to check what variables are available to a host.
      - Ansible provides many I(facts) about the system, automatically.
 options:
-    network_os:
-        description:
-            - Add the applicable fact module from R(CONNECTION_FACTS_MODULES, CONNECTION_FACTS_MODULES)
-              based on the connection when R(configured facts modules, FACTS_MODULES) contain C(smart).
-            - The C(ansible_facts['network_os']) variable can be used to set this option, overriding
-              the default, but not the direct assignment of the option in the task.
     parallel:
         description:
             - A toggle that controls if the fact modules are executed in parallel or serially and in order.
@@ -41,6 +35,7 @@ options:
             - The timeout used during parallel fact gathering.
         default: 10
         type: int
+        version_added: "2.16"
 attributes:
     action:
         support: full
