@@ -24,21 +24,13 @@ _server_ready: threading.Event = threading.Event()
 class LocalNotAProcess(BaseProcess):
     """Minimal BaseProcess impl that runs `target` locally in a thread instead of a subprocess."""
 
-    def __init__(self, *posargs: t.Any, target: t.Callable[..., t.Any], args: tuple[t.Any, ...], **kwargs: t.Any) -> None:
+    def __init__(self, *posargs, target: t.Callable[..., t.Any], args: tuple[t.Any, ...], **kwargs) -> None:
         super().__init__(*posargs, **kwargs)
 
         self._args = args
         self._kwargs = kwargs
         self._target = target
         self._tpe = DaemonThreadPoolExecutor()
-        self._startup_exception: BaseException | None = None
-
-    def _run_target_with_exception_capture(self) -> None:
-        """Wrapper to capture exceptions from the server thread."""
-        try:
-            self._target(*self._args, **self._kwargs)
-        except BaseException as ex:
-            self._startup_exception = ex
 
     def start(self) -> None:
         if threading.current_thread() is not threading.main_thread():
@@ -53,12 +45,13 @@ class LocalNotAProcess(BaseProcess):
 
             # the only target this should see is _run_server
             # start cannot return until Server.serve_forever is called (our custom subclass sets the _server_ready event)
-            self._tpe.submit(self._run_target_with_exception_capture)
+            future = self._tpe.submit(self._target, *self._args, **self._kwargs)
 
             if not _server_ready.wait(5):
-                # Check if the server thread failed with an exception
-                if self._startup_exception is not None:
-                    raise self._startup_exception
+                # if the server thread already exited, its Future carries the real failure; surface that instead of a generic timeout
+                if future.done() and (exception := future.exception()):
+                    raise exception
+
                 raise TimeoutError("Local RPC server did not start.")
         finally:
             signal.signal = original_signal  # always restore default signal impl
