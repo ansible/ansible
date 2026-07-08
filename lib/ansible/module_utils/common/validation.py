@@ -323,7 +323,7 @@ def check_missing_parameters(parameters, required_parameters=None):
 # FIXME: The param and prefix parameters here are coming from AnsibleModule._check_type_string()
 #        which is using those for the warning messaged based on string conversion warning settings.
 #        Not sure how to deal with that here since we don't have config state to query.
-def check_type_str(value, allow_conversion=True, param=None, prefix=''):
+def check_type_str(value, allow_conversion=True, param=None, prefix='', **kwargs):
     """Verify that the value is a string or convert to a string.
 
     Since unexpected changes can sometimes happen when converting to a string,
@@ -354,7 +354,7 @@ def _check_type_str_no_conversion(value) -> str:
     return check_type_str(value, allow_conversion=False)
 
 
-def check_type_list(value, allow_conversion=True):
+def check_type_list(value, allow_conversion=True, allow_scalar=True, **kwargs):
     """Verify that the value is a list or convert to a list
 
     A comma separated string will be split into a list. Raises a :class:`TypeError`
@@ -362,6 +362,7 @@ def check_type_list(value, allow_conversion=True):
 
     :arg value: Value to validate or convert to a list
     :arg allow_conversion: Whether to allow coercion and return it or raise a TypeError
+    :arg allow_scalar: Whether to wrap a scalar of one as a list
 
     :returns: Original value if it is already a list, single item list if a
         float, int, or string without commas, or a multi-item list if a
@@ -370,26 +371,19 @@ def check_type_list(value, allow_conversion=True):
     if isinstance(value, list):
         return value
     elif not allow_conversion:
+        if allow_scalar:
+            return [value]
         raise TypeError('%s is not a list' % type(value))
 
-    # DTFIX-FUTURE: deprecate legacy comma split functionality, eventually replace with `_check_type_list_strict`
     if isinstance(value, str):
         return value.split(",")
-    elif isinstance(value, int) or isinstance(value, float):
+    elif allow_scalar and isinstance(value, (int, float)):
         return [str(value)]
 
     raise TypeError('%s cannot be converted to a list' % type(value))
 
 
-def _check_type_list_strict(value):
-    # FUTURE: this impl should replace `check_type_list`
-    if isinstance(value, list):
-        return value
-
-    return [value]
-
-
-def check_type_dict(value, allow_conversion=True):
+def check_type_dict(value, allow_conversion=True, **kwargs):
     """Verify that value is a dict or convert it to a dict and return it.
 
     Raises :class:`TypeError` if unable to convert to a dict
@@ -454,7 +448,7 @@ def check_type_dict(value, allow_conversion=True):
     raise TypeError('%s cannot be converted to a dict' % type(value))
 
 
-def check_type_bool(value, allow_conversion=True):
+def check_type_bool(value, allow_conversion=True, **kwargs):
     """Verify that the value is a bool or convert it to a bool and return it.
 
     Raises :class:`TypeError` if unable to convert to a bool
@@ -476,7 +470,7 @@ def check_type_bool(value, allow_conversion=True):
     raise TypeError('%s cannot be converted to a bool' % type(value))
 
 
-def check_type_int(value, allow_conversion=True):
+def check_type_int(value, allow_conversion=True, **kwargs):
     """Verify that the value is an integer and return it or convert the value
     to an integer and return it
 
@@ -506,7 +500,7 @@ def check_type_int(value, allow_conversion=True):
         raise TypeError(f'"{value!r}" cannot be converted to an int') from e
 
 
-def check_type_float(value, allow_conversion=True):
+def check_type_float(value, allow_conversion=True, **kwargs):
     """Verify that value is a float or convert it to a float and return it
 
     Raises :class:`TypeError` if unable to convert to a float
@@ -529,7 +523,7 @@ def check_type_float(value, allow_conversion=True):
     return value
 
 
-def check_type_path(value, allow_conversion=True):
+def check_type_path(value, allow_conversion=True, **kwargs):
     """Verify the provided value is a string or convert it to a string,
     then return the expanded path
     """
@@ -537,12 +531,12 @@ def check_type_path(value, allow_conversion=True):
     return os.path.expanduser(os.path.expandvars(value))
 
 
-def check_type_raw(value, allow_conversion=True):
+def check_type_raw(value, **kwargs):
     """Returns the raw value"""
     return value
 
 
-def check_type_bytes(value, allow_conversion=True):
+def check_type_bytes(value, allow_conversion=True, **kwargs):
     """Convert a human-readable string value to bytes
 
     Raises :class:`TypeError` if unable to convert the value
@@ -555,7 +549,7 @@ def check_type_bytes(value, allow_conversion=True):
         raise TypeError('%s cannot be converted to a Byte value' % type(value))
 
 
-def check_type_bits(value, allow_conversion=True):
+def check_type_bits(value, allow_conversion=True, **kwargs):
     """Convert a human-readable string bits value to bits in integer.
 
     Example: ``check_type_bits('1Mb')`` returns integer 1048576.
@@ -570,7 +564,7 @@ def check_type_bits(value, allow_conversion=True):
         raise TypeError('%s cannot be converted to a Bit value' % type(value))
 
 
-def check_type_jsonarg(value, allow_conversion=True):
+def check_type_jsonarg(value, **kwargs):
     """
     JSON serialize dict/list/tuple, strip str and bytes.
     Previously required for cases where Ansible/Jinja classic-mode literal eval pass could inadvertently deserialize objects.

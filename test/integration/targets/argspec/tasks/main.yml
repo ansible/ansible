@@ -321,10 +321,8 @@
   register: argspec_aliases_both_different
 
 - command: >-
-    ansible localhost -m foo.bar.argspec --playbook-dir .
+    ansible localhost -m ansible_test.argspec.argspec
     -a 'required=value required_one_of_one=value primary=foo alias=bar'
-  environment:
-    ANSIBLE_LIBRARY: '{{ role_path }}/library'
   register: argspec_aliases_both_warning
 
 - command: ansible localhost -m import_role -a 'role=argspec tasks_from=password_no_log.yml'
@@ -513,8 +511,20 @@
     list_strict: one,two
     required: value
     required_one_of_one: value
+  failed_when: _task.result.list_strict != ['one,two']
+
+- argspec:
+    list_strict_without_scalar:
+      - one
+    required: value
+    required_one_of_one: value
+
+- argspec:
+    list_strict_without_scalar: one
+    required: value
+    required_one_of_one: value
   ignore_errors: true
-  register: list_strict_fail
+  register: list_strict_without_scalar_fail
 
 - argspec:
     dict_strict:
@@ -760,7 +770,7 @@
       - "'Both option required_one_of[0].other and its alias required_one_of[0].other_alias are set.' in alias_warning_listdict.warnings"
 
       - str_strict_fail is failed
-      - list_strict_fail is failed
+      - list_strict_without_scalar_fail is failed
       - dict_strict_fail is failed
       - bool_strict_fail is failed
       - int_strict_fail is failed

@@ -33,32 +33,53 @@ def main():
             },
             'str_strict': {
                 'type': 'str',
-                'strict': True,
+                'type_args': {
+                    'allow_conversion': False,
+                },
             },
             'list_strict': {
                 'type': 'list',
-                'strict': True,
+                'type_args': {
+                    'allow_conversion': False,
+                },
+            },
+            'list_strict_without_scalar': {
+                'type': 'list',
+                'type_args': {
+                    'allow_conversion': False,
+                    'allow_scalar': False,
+                },
             },
             'dict_strict': {
                 'type': 'dict',
-                'strict': True,
+                'type_args': {
+                    'allow_conversion': False,
+                },
             },
             'bool_strict': {
                 'type': 'bool',
-                'strict': True,
+                'type_args': {
+                    'allow_conversion': False,
+                },
             },
             'int_strict': {
                 'type': 'int',
-                'strict': True,
+                'type_args': {
+                    'allow_conversion': False,
+                },
             },
             'float_strict': {
                 'type': 'float',
-                'strict': True,
+                'type_args': {
+                    'allow_conversion': False,
+                },
             },
             'list_strict_with_elements': {
                 'type': 'list',
                 'elements': 'int',
-                'strict': True,
+                'type_args': {
+                    'allow_conversion': False,
+                },
             },
             'required_one_of': {
                 'required_one_of': [['thing', 'other']],

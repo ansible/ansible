@@ -20,7 +20,6 @@ import typing as t
 
 from ansible._internal._templating import _jinja_bits
 from ansible.errors import AnsibleTemplateError
-from ansible.module_utils.common.validation import _check_type_list_strict
 from ansible.plugins.action import ActionBase
 from ansible._internal._templating._engine import TemplateEngine
 
@@ -65,7 +64,7 @@ class ActionModule(ActionBase):
                 success_msg=dict(type=str_or_list_of_str, default='All assertions passed'),
                 quiet=dict(type='bool', default=False),
                 # explicitly not validating types `elements` here to let type rules for conditionals apply
-                that=dict(type=_check_type_list_strict, required=True),
+                that=dict(type='list', type_args=dict(allow_conversion=False), required=True),
             ),
         )
 

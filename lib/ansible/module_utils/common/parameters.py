@@ -18,7 +18,6 @@ from collections.abc import (
     MutableSet,
     MutableSequence,
 )
-from functools import partial
 from itertools import chain  # pylint: disable=unused-import
 
 from ansible.module_utils.common.collections import is_iterable
@@ -116,7 +115,7 @@ DEFAULT_TYPE_VALIDATORS = {
 }
 
 
-def _get_type_validator(wanted, strict=False):
+def _get_type_validator(wanted):
     """Returns the callable used to validate a wanted type and the type name.
 
     :arg wanted: String or callable. If a string, get the corresponding
@@ -133,10 +132,7 @@ def _get_type_validator(wanted, strict=False):
             # Default type for parameters
             wanted = 'str'
 
-        type_checker = partial(
-            DEFAULT_TYPE_VALIDATORS.get(wanted),
-            allow_conversion=not strict,
-        )
+        type_checker = DEFAULT_TYPE_VALIDATORS.get(wanted)
 
     # Use the custom callable for validation.
     else:
@@ -542,12 +538,12 @@ def _sanitize_keys_conditions(value, deferred_removals):
     raise TypeError('Value of unknown type: %s, %s' % (type(value), value))
 
 
-def _validate_elements(wanted_type, strict, parameter, values, options_context=None, errors=None):
+def _validate_elements(wanted_type, type_args, parameter, values, options_context=None, errors=None):
 
     if errors is None:
         errors = AnsibleValidationErrorMultiple()
 
-    type_checker, wanted_element_type = _get_type_validator(wanted_type, strict=strict)
+    type_checker, wanted_element_type = _get_type_validator(wanted_type)
     validated_parameters = []
     # Get param name for strings so we can later display this value in a useful error message if needed
     # Only pass 'kwargs' to our checkers and ignore custom callable checkers
@@ -560,7 +556,7 @@ def _validate_elements(wanted_type, strict, parameter, values, options_context=N
 
     for value in values:
         try:
-            validated_parameters.append(type_checker(value, **kwargs))
+            validated_parameters.append(type_checker(value, **kwargs, **type_args))
         except (TypeError, ValueError) as e:
             msg = "Elements value for option '%s'" % parameter
             if options_context:
@@ -608,8 +604,8 @@ def _validate_argument_types(argument_spec, parameters, prefix='', options_conte
             continue
 
         wanted_type = spec.get('type')
-        strict = spec.get('strict', False)
-        type_checker, wanted_name = _get_type_validator(wanted_type, strict=strict)
+        type_args = spec.get('type_args') or {}
+        type_checker, wanted_name = _get_type_validator(wanted_type)
         # Get param name for strings so we can later display this value in a useful error message if needed
         # Only pass 'kwargs' to our checkers and ignore custom callable checkers
         kwargs = {}
@@ -621,7 +617,7 @@ def _validate_argument_types(argument_spec, parameters, prefix='', options_conte
                 kwargs['prefix'] = prefix
 
         try:
-            parameters[param] = type_checker(value, **kwargs)
+            parameters[param] = type_checker(value, **kwargs, **type_args)
             elements_wanted_type = spec.get('elements', None)
             if elements_wanted_type:
                 elements = parameters[param]
@@ -631,7 +627,7 @@ def _validate_argument_types(argument_spec, parameters, prefix='', options_conte
                         msg += " found in '%s'." % " -> ".join(options_context)
                     msg += ", elements value check is supported only with 'list' type"
                     errors.append(ArgumentTypeError(msg))
-                parameters[param] = _validate_elements(elements_wanted_type, strict, param, elements, options_context, errors)
+                parameters[param] = _validate_elements(elements_wanted_type, type_args, param, elements, options_context, errors)
 
         except (TypeError, ValueError) as e:
             msg = "argument '%s' is of type %s" % (param, native_type_name(value))
