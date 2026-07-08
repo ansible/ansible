@@ -108,7 +108,7 @@
       - lookup_config_4 is success
       - 'lookup4|length == 0'
       - lookup_config_5 is failed
-      - lookup_config_5.msg is contains "Invalid value 'boo'"
+      - lookup_config_5.msg is contains "invalid value 'boo'"
       - lookup_config_6 is failed
       - '"Invalid setting identifier" in lookup_config_6.msg'
       - lookup_config_7 is failed

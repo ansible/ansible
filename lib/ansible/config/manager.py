@@ -222,7 +222,7 @@ def _ensure_type(value: object, value_type: str | None, origin: str | None = Non
             # FIXME: define and document a pass-through value_type (None, 'raw', 'object', '', ...) and then deprecate acceptance of unknown types
             return value  # return non-str values of unknown value_type as-is
 
-    raise ValueError(f'Invalid value provided for {value_type!r}: {original_value!r}')
+    raise ValueError(f'Invalid value provided for {value_type!r}: {original_value!r}.')
 
 
 # FIXME: see if this can live in utils/path
@@ -701,7 +701,11 @@ class ConfigManager:
                     origin = 'default'
                     value = ensure_type(defs[config].get('default'), defs[config].get('type'), origin=origin, origin_ftype=origin_ftype)
                 else:
-                    raise AnsibleOptionsError(f'Config {_get_config_label(plugin_type, plugin_name, config)} from {origin!r} has an invalid value.') from ex
+                    value_type = defs[config].get('type')
+                    raise AnsibleOptionsError(
+                        f'Config {_get_config_label(plugin_type, plugin_name, config)} from {origin!r} has an invalid value.',
+                        help_text=f'Value must be of type {value_type!r}.',
+                    ) from ex
 
             # deal with restricted values
             if value is not None and 'choices' in defs[config] and defs[config]['choices'] is not None:
@@ -724,8 +728,10 @@ class ConfigManager:
                     else:
                         valid = defs[config]['choices']
 
-                    raise AnsibleOptionsError(f'Invalid value {value!r} for config {_get_config_label(plugin_type, plugin_name, config)}.',
-                                              help_text=f'Valid values are: {valid}')
+                    raise AnsibleOptionsError(
+                        f'Config {_get_config_label(plugin_type, plugin_name, config)} from {origin!r} has an invalid value {value!r}.',
+                        help_text=f'Valid values are: {valid}.',
+                    )
 
             # deal with deprecation of the setting
             if 'deprecated' in defs[config] and origin != 'default':
