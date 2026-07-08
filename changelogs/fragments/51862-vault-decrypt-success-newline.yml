@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - vault - ensure ``ansible-vault decrypt`` prints a newline before the success message when writing to stdout (https://github.com/ansible/ansible/issues/51862).
