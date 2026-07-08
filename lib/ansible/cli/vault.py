@@ -442,7 +442,7 @@ class VaultCLI(CLI):
             self.editor.decrypt_file(f, output_file=context.CLIARGS['output_file'])
 
         if sys.stdout.isatty():
-            display.display("Decryption successful", stderr=True)
+            display.display("\nDecryption successful", stderr=True)
 
     def execute_create(self):
         """ create and open a file in an editor that will be encrypted with the provided vault secret when closed"""
