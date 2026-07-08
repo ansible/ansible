@@ -778,3 +778,6 @@
   assert:
     that:
       - uri_check.msg == "This action (uri) does not support check mode."
+
+- name: Include BOM JSON tests
+  include_tasks: test_bom_json.yml

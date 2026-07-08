@@ -1,0 +1,22 @@
+---
+- name: Test UTF-8 BOM in JSON response
+  block:
+    - name: Get JSON with UTF-8 BOM prefix
+      uri:
+        url: http://localhost:{{ http_port }}/bom_json
+        return_content: true
+      register: bom_json_result
+      # make it more resilient
+      until: bom_json_result.status == 200
+      retries: 3
+      delay: 1
+
+    - name: Verify JSON is correctly parsed despite BOM prefix
+      assert:
+        that:
+          - bom_json_result is success
+          - bom_json_result.json is defined
+          - bom_json_result.json.name == "dollarsign"
+          - bom_json_result.json.symbol == "$"
+        fail_msg: "Failed to properly parse JSON with UTF-8 BOM. Result: {{ bom_json_result }}"
+        success_msg: "Successfully parsed JSON with UTF-8 BOM prefix"
