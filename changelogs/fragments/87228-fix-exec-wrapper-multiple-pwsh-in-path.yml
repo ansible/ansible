@@ -1,0 +1,2 @@
+bugfixes:
+  - exec_wrapper - fix a failure when multiple ``pwsh``/``powershell.exe`` executables match on PATH (e.g. both the 32-bit and 64-bit Windows PowerShell directories), which caused ``Get-Command`` to return an array and break the interpreter respawn logic (https://github.com/ansible/ansible/issues/87228).
