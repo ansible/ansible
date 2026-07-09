@@ -1007,6 +1007,9 @@ class DnfBootstrapper(Bootstrapper):
         if cls.install_docker():
             packages.append('moby-engine')
 
+        if cls.install_docker() and os_release.id == 'fedora':
+            packages.append('runc')
+
         if os_release.id == 'rhel':
             # As of the release of RHEL 9.1, installing podman on RHEL 9.0 results in a non-fatal error at install time:
             #
