@@ -1024,7 +1024,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
             data = re.sub(r'^((\r)?\n)?BECOME-SUCCESS.*(\r)?\n', '', data)
         return data
 
-    def _update_module_args(self, module_name, module_args, task_vars, ignore_unknown_opts: bool = False, check_mode: bool | None = None):
+    def _update_module_args(self, module_name, module_args, task_vars, ignore_unknown_opts: bool = False, *, check_mode: bool | None = None):
 
         # set check mode in the module arguments, if required
         effective_check_mode = self._task.check_mode if check_mode is None else check_mode
@@ -1100,6 +1100,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         delete_remote_tmp: bool | None = None,
         wrap_async: bool = False,
         ignore_unknown_opts: bool = False,
+        *,
         check_mode: bool | None = None,
     ) -> dict[str, object]:
         """
