@@ -27,7 +27,14 @@ def is_netmask(val):
                 raise ValueError
         except ValueError:
             return False
-    return True
+    # The individually valid octets must also form a contiguous run of
+    # network bits (all 1s followed by all 0s), e.g. 255.255.0.255 is not a
+    # valid netmask even though every octet is in VALID_MASKS.
+    mask = 0
+    for part in parts:
+        mask = (mask << 8) | int(part)
+    inverted = mask ^ 0xFFFFFFFF
+    return inverted & (inverted + 1) == 0
 
 
 def is_masklen(val):

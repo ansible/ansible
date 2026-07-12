@@ -57,8 +57,16 @@ def test_is_masklen():
 
 def test_is_netmask():
     assert is_netmask('255.255.255.255')
+    assert is_netmask('0.0.0.0')
+    assert is_netmask('255.255.255.0')
+    assert is_netmask('255.255.254.0')
     assert not is_netmask(24)
     assert not is_netmask('foo')
+    # individually valid octets that are not a contiguous mask
+    assert not is_netmask('255.255.0.255')
+    assert not is_netmask('254.255.255.0')
+    assert not is_netmask('0.255.0.0')
+    assert not is_netmask('0.0.0.255')
 
 
 def test_to_ipv6_network():
