@@ -43,6 +43,8 @@ GALAXY_SERVER_DEF = [
     ('client_id', False, 'str'),
     ('client_secret', False, 'str'),
     ('timeout', False, 'int'),
+    ('client_cert', False, 'path'),
+    ('client_key', False, 'path'),
 ]
 
 # config definition fields

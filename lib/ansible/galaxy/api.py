@@ -261,6 +261,7 @@ class GalaxyAPI:
             clear_response_cache=False, no_cache=True,
             priority=float('inf'),
             timeout=60,
+            client_cert=None, client_key=None,
     ):
         self.galaxy = galaxy
         self.name = name
@@ -270,6 +271,8 @@ class GalaxyAPI:
         self.api_server = url
         self.validate_certs = validate_certs
         self.timeout = timeout
+        self.client_cert = client_cert
+        self.client_key = client_key
         self._available_api_versions = available_api_versions or {}
         self._priority = priority
         self._server_timeout = timeout
@@ -392,7 +395,8 @@ class GalaxyAPI:
         try:
             display.vvvv("Calling Galaxy at %s" % url)
             resp = open_url(to_native(url), data=args, validate_certs=self.validate_certs, headers=headers,
-                            method=method, timeout=self._server_timeout, http_agent=user_agent(), follow_redirects='safe')
+                            method=method, timeout=self._server_timeout, http_agent=user_agent(), follow_redirects='safe',
+                            client_cert=self.client_cert, client_key=self.client_key)
         except HTTPError as e:
             raise GalaxyError(e, error_context_msg)
         except Exception as ex:
@@ -452,7 +456,8 @@ class GalaxyAPI:
         args = urlencode({"github_token": github_token})
 
         try:
-            resp = open_url(url, data=args, validate_certs=self.validate_certs, method="POST", http_agent=user_agent(), timeout=self._server_timeout)
+            resp = open_url(url, data=args, validate_certs=self.validate_certs, method="POST", http_agent=user_agent(),
+                            timeout=self._server_timeout, client_cert=self.client_cert, client_key=self.client_key)
         except HTTPError as e:
             raise GalaxyError(e, 'Attempting to authenticate to galaxy')
         except Exception as ex:
