@@ -273,7 +273,7 @@ class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatab
 
     def filter_tagged_tasks(self, all_vars):
         """
-        Creates a new block, with task lists filtered based on the tags.
+        Mutates the block, with task lists filtered based on the tags.
         """
         def evaluate_and_append_task(target):
             tmp_list = []
