@@ -17,6 +17,6 @@
 
 from __future__ import annotations
 
-__version__ = '2.21.2'
+__version__ = '2.21.2.post0'
 __author__ = 'Ansible, Inc.'
 __codename__ = "The Rain Song"
