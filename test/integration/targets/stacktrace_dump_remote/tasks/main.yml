@@ -7,15 +7,15 @@
 
 - name: Locate stacktrace dump file
   find:
-    paths: "{{ result.tempdir }}"
+    paths: "{{ result.trace_dir }}"
     patterns: "ansible-{{ result.process_pid }}.debug"
   register: found_files
 
-- assert:
-    that:
-      - found_files.files | length == 1
-
 - block:
+  - assert:
+      that:
+        - found_files.files | length == 1
+
   - name: Read file contents
     command: "cat {{ found_files.files[0].path }}"
     register: file_contents

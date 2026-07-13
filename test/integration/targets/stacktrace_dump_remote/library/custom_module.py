@@ -20,8 +20,12 @@ def main():
     # Send SIGUSR1 to the current process to trigger a stacktrace dump
     os.kill(process_pid, signal.SIGUSR1)
 
-    # Exit with the tempdir and AnsiballZ PID
-    module.exit_json(tempdir=tempfile.gettempdir(), process_pid=process_pid)
+    # Exit with the system tempdir, stacktrace dir, and AnsiballZ PID
+    module.exit_json(
+        system_tempdir=tempfile.gettempdir(),
+        trace_dir=module._trace_dir,
+        process_pid=process_pid
+    )
 
 
 if __name__ == '__main__':

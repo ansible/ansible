@@ -2,12 +2,12 @@
 
 set -eux
 
-# Get the system temp directory (platform-independent)
-TEMP_DIR=$($ANSIBLE_TEST_PYTHON_INTERPRETER -c "import tempfile; print(tempfile.gettempdir())")
+# Get the debug directory where stacktrace files are written
+DEBUG_DIR="${ANSIBLE_HOME:-$HOME/.ansible}/debug"
 
-test_default_temp_directory() {
-    echo "=== Test: Stacktrace dump to default temp directory ==="
-    echo "Using temp directory: $TEMP_DIR"
+test_controller_debug_directory() {
+    echo "=== Test: Stacktrace dump to debug directory ==="
+    echo "Using debug directory: $DEBUG_DIR"
 
     # Start ansible-playbook in background with a long-running task
     ansible-playbook -i inventory playbook.yml &
@@ -31,12 +31,12 @@ test_default_temp_directory() {
     # Give it time to write the files
     sleep 1
 
-    # Find the stacktrace file for main process in temp directory
+    # Find the stacktrace file for main process in debug directory
     local STACKTRACE_FILE
-    STACKTRACE_FILE=$(find -L "$TEMP_DIR" -name "ansible-${ANSIBLE_PID}.debug" 2>/dev/null | head -1)
+    STACKTRACE_FILE=$(find -L "$DEBUG_DIR" -name "ansible-${ANSIBLE_PID}.debug" 2>/dev/null | head -1)
 
     if [[ -z "$STACKTRACE_FILE" ]]; then
-        echo "FAIL: Stacktrace file not found in $TEMP_DIR for main process"
+        echo "FAIL: Stacktrace file not found in $DEBUG_DIR for main process"
         kill $ANSIBLE_PID 2>/dev/null || true
         exit 1
     fi
@@ -64,7 +64,7 @@ test_default_temp_directory() {
     for child_pid in $CHILD_PIDS; do
         CHILD_PIDS_COUNT=$((CHILD_PIDS_COUNT + 1))
         local CHILD_FILE
-        CHILD_FILE=$(find -L "$TEMP_DIR" -name "ansible-${child_pid}.debug" 2>/dev/null | head -1)
+        CHILD_FILE=$(find -L "$DEBUG_DIR" -name "ansible-${child_pid}.debug" 2>/dev/null | head -1)
         if [[ -n "$CHILD_FILE" ]]; then
             echo "Found stacktrace file for child process $child_pid: $CHILD_FILE"
             CHILD_FILES_FOUND=$((CHILD_FILES_FOUND + 1))
@@ -107,7 +107,7 @@ test_multiple_signals_append() {
 
     # Find the stacktrace file
     local STACKTRACE_FILE
-    STACKTRACE_FILE=$(find -L "$TEMP_DIR" -name "ansible-${ANSIBLE_PID}.debug" 2>/dev/null | head -1)
+    STACKTRACE_FILE=$(find -L "$DEBUG_DIR" -name "ansible-${ANSIBLE_PID}.debug" 2>/dev/null | head -1)
 
     if [[ -z "$STACKTRACE_FILE" ]]; then
         echo "FAIL: Stacktrace file not found"
@@ -137,7 +137,7 @@ test_multiple_signals_append() {
 }
 
 # Run all tests
-test_default_temp_directory
+test_controller_debug_directory
 test_multiple_signals_append
 
 echo "=== All tests PASSED ==="

@@ -28,6 +28,8 @@ import time
 import typing as t
 import multiprocessing.queues
 
+from pathlib import Path
+
 from ansible import constants as C
 from ansible import context
 from ansible.errors import AnsibleError, ExitCode, AnsibleCallbackError
@@ -210,7 +212,17 @@ class TaskQueueManager:
         signal.signal(signal.SIGTERM, self._signal_handler)
         signal.signal(signal.SIGINT, self._signal_handler)
 
-        _debug.register_for_stacktrace()
+        # Location of our stacktrace dump directory. Pre-create so Workers don't have to.
+        trace_dir = Path(C.ANSIBLE_HOME).expanduser() / 'debug'
+        try:
+            trace_dir.mkdir(parents=True, exist_ok=True, mode=0o700)
+        except Exception as e:
+            display.warning(f"Unable to create debug directory {trace_dir}: {e}")
+            self.stacktrace_dir = None
+        else:
+            display.debug(f"Using stacktrace dump directory {trace_dir}")
+            self.stacktrace_dir = str(trace_dir)
+        _debug.register_for_stacktrace(self.stacktrace_dir)
 
     def _initialize_processes(self, num: int) -> None:
         # mutable update to ensure the reference stays the same

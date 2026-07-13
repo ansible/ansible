@@ -365,8 +365,6 @@ class AnsibleModule(object):
         and :ref:`developing_program_flow_modules` for more detailed explanation.
         """
 
-        _debug.register_for_stacktrace()
-
         self._name = os.path.basename(__file__)  # initialize name until we can parse from options
         self.argument_spec = argument_spec
         self.supports_check_mode = supports_check_mode
@@ -455,6 +453,18 @@ class AnsibleModule(object):
 
         # finally, make sure we're in a logical working dir
         self._set_cwd()
+
+        # Register the stacktrace dump signal handler, using a path under remote_tmp as the location for the files.
+        # Note that since self.tmpdir is accessed here, this needs to occur after self._tmpdir is defined.
+        self._trace_dir = os.path.abspath(os.path.join(self.tmpdir, '../debug'))
+        try:
+            os.makedirs(self._trace_dir, mode=0o700, exist_ok=True)
+        except OSError as ex:
+            self.error_as_warning(
+                msg=f"Unable to create stacktrace dump directory {self._trace_dir!r}, falling back to system default.",
+            )
+            self._trace_dir = None
+        _debug.register_for_stacktrace(self._trace_dir)
 
     @property
     def tmpdir(self):

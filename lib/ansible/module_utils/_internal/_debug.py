@@ -15,36 +15,34 @@ import traceback
 from datetime import datetime
 
 
-def _write_stacktraces(_signum, _frame):
+def _write_stacktraces(stacktrace_dir: str | None = None):
     """
-    Signal handler to write debug stacktrace information to a file.
+    Signal handler to write debug stacktrace information to a file located in `stacktrace_dir` or the system's temp directory.
 
-    Captures two types of stacktraces:
-    1. Current process stacktrace using `traceback.print_stack()` with the signal frame
-       (the frame parameter is crucial - without it, we'd only see the signal handler's stack)
-    2. All thread stacktraces using `faulthandler.dump_traceback()`
-
-    This combination is useful for debugging deadlocks and other concurrency issues.
-
-    The stacktrace file location can be controlled via the ANSIBLE_STACKTRACE_DIR
-    environment variable, defaulting to the system temporary directory.
+    In theory, the system temp directory should never be needed since the current practice is to use either
+    $ANSIBLE_HOME on the controller and `remote_tmp` on the target as the location for these files. Problems
+    accessing those locations should surface long before here, but this will remain a fallback just in case.
     """
-    now = datetime.now()
-    pid = os.getpid()
-    stacktrace_dir = tempfile.gettempdir()
-    file = pathlib.Path(stacktrace_dir) / f'ansible-{pid}.debug'
 
-    with contextlib.suppress(Exception):
-        with file.open('a') as trace_file:
-            trace_file.write(f'=== {now.isoformat()} on {platform.node()} ===\n\n')
+    def inner(_signum, _frame):
+        now = datetime.now()
+        pid = os.getpid()
+        trace_dir = stacktrace_dir if stacktrace_dir is not None else tempfile.gettempdir()
+        file = pathlib.Path(trace_dir) / f'ansible-{pid}.debug'
 
-            trace_file.write(f'*** Process {pid} stacktrace\n\n')
-            traceback.print_stack(f=_frame, file=trace_file)
+        with contextlib.suppress(Exception):
+            with file.open('a') as trace_file:
+                trace_file.write(f'=== {now.isoformat()} on {platform.node()} ===\n\n')
 
-            trace_file.write('\n\n*** Thread stacktraces\n\n')
-            faulthandler.dump_traceback(file=trace_file)
+                trace_file.write(f'*** Process {pid} stacktrace\n\n')
+                traceback.print_stack(f=_frame, file=trace_file)
+
+                trace_file.write('\n\n*** Thread stacktraces\n\n')
+                faulthandler.dump_traceback(file=trace_file)
+
+    return inner
 
 
-def register_for_stacktrace():
+def register_for_stacktrace(stacktrace_dir: str | None = None):
     """Register a signal handler to write debug stacktrace information to a file."""
-    signal.signal(signal.SIGUSR1, _write_stacktraces)
+    signal.signal(signal.SIGUSR1, _write_stacktraces(stacktrace_dir))

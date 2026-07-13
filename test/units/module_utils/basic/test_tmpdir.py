@@ -58,15 +58,13 @@ class TestAnsibleModuleTmpDir:
 
     @pytest.mark.parametrize('args, expected, stat_exists', [(s, e, t) for s, t, e in DATA])
     def test_tmpdir_property(self, monkeypatch, args, expected, stat_exists):
-        makedirs = {'called': False}
+        makedirs_calls = []
 
         def mock_mkdtemp(prefix, dir):
             return os.path.join(dir, prefix)
 
-        def mock_makedirs(path, mode):
-            makedirs['called'] = True
-            makedirs['path'] = path
-            makedirs['mode'] = mode
+        def mock_makedirs(path, mode, exist_ok=False):
+            makedirs_calls.append({'path': path, 'mode': mode})
             return
 
         monkeypatch.setattr(tempfile, 'mkdtemp', mock_mkdtemp)
@@ -84,10 +82,10 @@ class TestAnsibleModuleTmpDir:
         assert am.tmpdir == actual_tmpdir
 
         if not stat_exists:
-            assert makedirs['called']
             expected = os.path.expanduser(os.path.expandvars(am._remote_tmp))
-            assert makedirs['path'] == expected
-            assert makedirs['mode'] == 0o700
+            tmpdir_calls = [c for c in makedirs_calls if c['path'] == expected]
+            assert len(tmpdir_calls) == 1
+            assert tmpdir_calls[0]['mode'] == 0o700
 
     @pytest.mark.parametrize('stdin', ({"_ansible_tmpdir": None,
                                         "_ansible_remote_tmp": "$HOME/.test",
@@ -101,6 +99,9 @@ class TestAnsibleModuleTmpDir:
         monkeypatch.setattr(tempfile, 'mkdtemp', mock_mkdtemp)
         monkeypatch.setattr(os.path, 'exists', lambda x: False)
         monkeypatch.setattr(os, 'makedirs', mock_makedirs)
+
+        # Reset cached tmpdir so the property re-evaluates with mocked makedirs
+        am._tmpdir = None
 
         actual = am.tmpdir
         assert actual == "/tmp/path"

@@ -79,7 +79,8 @@ class WorkerProcess(multiprocessing_context.Process):  # type: ignore[name-defin
             variable_manager: VariableManager,
             shared_loader_obj: types.SimpleNamespace,
             worker_id: int,
-            cliargs: CLIArgs
+            cliargs: CLIArgs,
+            stacktrace_dir: str | None = None,
     ) -> None:
 
         super(WorkerProcess, self).__init__()
@@ -101,6 +102,7 @@ class WorkerProcess(multiprocessing_context.Process):  # type: ignore[name-defin
         self.worker_id = worker_id
 
         self._cliargs = cliargs
+        self._stacktrace_dir = stacktrace_dir
 
     def _term(self, signum, frame) -> None:
         """In child termination when notified by the parent"""
@@ -194,7 +196,8 @@ class WorkerProcess(multiprocessing_context.Process):  # type: ignore[name-defin
         display.set_queue(self._final_q)
         self._detach()
 
-        _debug.register_for_stacktrace()
+        # No need to create the stacktrace directory since TQM does that for us.
+        _debug.register_for_stacktrace(self._stacktrace_dir)
 
         # propagate signals
         signal.signal(signal.SIGINT, self._term)
