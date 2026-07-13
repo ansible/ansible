@@ -660,6 +660,14 @@ class GalaxyCLI(CLI):
                 server_options['validate_certs'] = context.CLIARGS['resolved_validate_certs']
             validate_certs = server_options['validate_certs']
 
+            for cert_key in ('client_cert', 'client_key'):
+                cert_path = server_options.get(cert_key)
+                if cert_path and not os.path.exists(cert_path):
+                    raise AnsibleError(
+                        "Galaxy server '%s' has an invalid %s '%s': file does not exist"
+                        % (server_key, cert_key, cert_path)
+                    )
+
             # default case if no auth info is provided.
             server_options['token'] = None
 

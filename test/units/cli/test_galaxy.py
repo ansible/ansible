@@ -1358,3 +1358,63 @@ def test_install_collection_with_roles(requirements_file, monkeypatch):
     assert mock_role_install.call_count == 0
 
     assert any(list('contains roles which will be ignored' in mock_call[1][0] for mock_call in mock_display.mock_calls))
+
+
+def _fake_server_options(**overrides):
+    """Return a minimal galaxy server options dict suitable for mocking get_plugin_options."""
+    opts = {
+        'url': 'https://example.com',
+        'auth_url': None,
+        'client_id': None,
+        'client_secret': None,
+        'token': None,
+        'username': None,
+        'password': None,
+        'validate_certs': True,
+        'timeout': 60,
+        'client_cert': None,
+        'client_key': None,
+    }
+    opts.update(overrides)
+    return opts
+
+
+def test_galaxy_server_client_cert_and_key_accepted_when_files_exist(monkeypatch, tmp_path):
+    cert = tmp_path / 'client.pem'
+    key = tmp_path / 'client.key'
+    cert.write_text('cert-data')
+    key.write_text('key-data')
+
+    monkeypatch.setattr(C, 'GALAXY_SERVER_LIST', ['myserver'])
+    monkeypatch.setattr(C.config, 'load_galaxy_server_defs', MagicMock())
+    monkeypatch.setattr(C.config, 'get_plugin_options',
+                        MagicMock(return_value=_fake_server_options(
+                            client_cert=str(cert), client_key=str(key))))
+    monkeypatch.setattr(GalaxyCLI, 'execute_install', MagicMock())
+
+    # Validation passes silently when both cert files exist.
+    GalaxyCLI(args=['ansible-galaxy', 'collection', 'install', 'namespace.collection']).run()
+
+
+def test_galaxy_server_client_cert_missing_file_raises_error(monkeypatch, tmp_path):
+    missing = str(tmp_path / 'nonexistent.pem')
+    monkeypatch.setattr(C, 'GALAXY_SERVER_LIST', ['myserver'])
+    monkeypatch.setattr(C.config, 'load_galaxy_server_defs', MagicMock())
+    monkeypatch.setattr(C.config, 'get_plugin_options',
+                        MagicMock(return_value=_fake_server_options(client_cert=missing)))
+
+    gc = GalaxyCLI(args=['ansible-galaxy', 'collection', 'install', 'namespace.collection'])
+    with pytest.raises(AnsibleError, match="invalid client_cert.*does not exist"):
+        gc.run()
+
+
+def test_galaxy_server_client_key_missing_file_raises_error(monkeypatch, tmp_path):
+    missing = str(tmp_path / 'nonexistent.key')
+    monkeypatch.setattr(C, 'GALAXY_SERVER_LIST', ['myserver'])
+    monkeypatch.setattr(C.config, 'load_galaxy_server_defs', MagicMock())
+    monkeypatch.setattr(C.config, 'get_plugin_options',
+                        MagicMock(return_value=_fake_server_options(client_key=missing)))
+
+    gc = GalaxyCLI(args=['ansible-galaxy', 'collection', 'install', 'namespace.collection'])
+    with pytest.raises(AnsibleError, match="invalid client_key.*does not exist"):
+        gc.run()

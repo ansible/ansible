@@ -1299,3 +1299,47 @@ def test_cache_missing_results_raises_descriptive_error(mocker):
             cache=True,
             cache_key='/api/v1/roles/'
         )
+
+
+def test_mtls_attributes_stored_on_init():
+    api = GalaxyAPI(None, "test", "https://galaxy.ansible.com/api/",
+                    client_cert='/path/to/client.pem', client_key='/path/to/client.key')
+    assert api.client_cert == '/path/to/client.pem'
+    assert api.client_key == '/path/to/client.key'
+
+
+def test_mtls_attributes_default_to_none_when_not_provided():
+    api = GalaxyAPI(None, "test", "https://galaxy.ansible.com/api/")
+    assert api.client_cert is None
+    assert api.client_key is None
+
+
+def test_mtls_client_cert_and_key_passed_to_open_url(monkeypatch):
+    mock_open = MagicMock(return_value=StringIO(u'{"results":[]}'))
+    monkeypatch.setattr(galaxy_api, 'open_url', mock_open)
+
+    api = GalaxyAPI(None, "test", "https://galaxy.ansible.com/api/",
+                    client_cert='/path/to/client.pem', client_key='/path/to/client.key')
+    api._available_api_versions = {'v1': 'v1/'}
+    api._call_galaxy('https://galaxy.ansible.com/api/v1/roles/')
+
+    kwargs = mock_open.call_args[1]
+    assert kwargs['client_cert'] == '/path/to/client.pem'
+    assert kwargs['client_key'] == '/path/to/client.key'
+
+
+def test_mtls_client_cert_and_key_passed_to_authenticate(monkeypatch):
+    mock_open = MagicMock(side_effect=[
+        StringIO(u'{"available_versions":{"v1":"v1/"}}'),
+        StringIO(u'{"token":"my_token"}'),
+    ])
+    monkeypatch.setattr(galaxy_api, 'open_url', mock_open)
+
+    api = GalaxyAPI(None, "test", "https://galaxy.ansible.com/api/",
+                    client_cert='/path/to/client.pem', client_key='/path/to/client.key')
+    api.authenticate("github_token")
+
+    # The second call is the authenticate POST to /api/v1/tokens/.
+    authenticate_kwargs = mock_open.call_args_list[1][1]
+    assert authenticate_kwargs['client_cert'] == '/path/to/client.pem'
+    assert authenticate_kwargs['client_key'] == '/path/to/client.key'
