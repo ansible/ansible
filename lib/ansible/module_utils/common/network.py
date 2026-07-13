@@ -34,6 +34,19 @@ def is_netmask(val):
     for part in parts:
         mask = (mask << 8) | int(part)
     inverted = mask ^ 0xFFFFFFFF
+    parts = str(val).split('.')
+    if not len(parts) == 4:
+        return False
+    mask = 0
+    for part in parts:
+        try:
+            octet = int(part)
+            if octet not in VALID_MASKS:
+                raise ValueError
+            mask = (mask << 8) | octet
+        except ValueError:
+            return False
+    inverted = mask ^ 0xFFFFFFFF
     return inverted & (inverted + 1) == 0
 
 
