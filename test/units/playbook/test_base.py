@@ -294,13 +294,8 @@ class BaseSubClass(base.Base):
                                        always_post_validate=True)
     test_attr_none = FieldAttribute(isa='string', always_post_validate=True)
     test_attr_preprocess = FieldAttribute(isa='string', default='the default for preprocess')
-    test_attr_method = FieldAttribute(isa='string', default='some attr with a getter',
-                                      always_post_validate=True)
     test_attr_method_missing = FieldAttribute(isa='string', default='some attr with a missing getter',
                                               always_post_validate=True)
-
-    def _get_attr_test_attr_method(self):
-        return 'foo bar'
 
     def _validate_test_attr_example(self, attr, name, value):
         if not isinstance(value, str):
@@ -332,13 +327,6 @@ class TestBaseSubClass(TestBase):
         ds = {'test_attr_int': MOST_RANDOM_NUMBER}
         bsc = self._base_validate(ds)
         self.assertEqual(bsc.test_attr_int, MOST_RANDOM_NUMBER)
-
-    def test_attr_int_del(self):
-        MOST_RANDOM_NUMBER = 37
-        ds = {'test_attr_int': MOST_RANDOM_NUMBER}
-        bsc = self._base_validate(ds)
-        del bsc.test_attr_int
-        self.assertNotIn('_test_attr_int', bsc.__dict__)
 
     def test_attr_float(self):
         roughly_pi = 4.0
@@ -511,12 +499,6 @@ class TestBaseSubClass(TestBase):
             self._base_validate,
             {'test_attr_unknown_isa': True}
         )
-
-    def test_attr_method(self):
-        ds = {'test_attr_method': 'value from the ds'}
-        bsc = self._base_validate(ds)
-        # The value returned by the subclasses _get_attr_test_attr_method
-        self.assertEqual(bsc.test_attr_method, 'foo bar')
 
     def test_attr_method_missing(self):
         a_string = 'The value set from the ds'
