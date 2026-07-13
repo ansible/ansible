@@ -56,7 +56,7 @@ class TestTask(unittest.TestCase):
                 p = dict(delay=delay)
                 p.update(task_base)
                 t = Task().load_data(p)
-                self.assertEqual(t.get_validated_value('delay', delay, None), expected)
+                self.assertEqual(t.get_validated_value('delay', t.fattributes.get('delay'), delay, None), expected)
 
         bad_params = [
             'E',
@@ -69,7 +69,7 @@ class TestTask(unittest.TestCase):
                 p.update(task_base)
                 t = Task().load_data(p)
                 with self.assertRaises(AnsibleError):
-                    dummy = t.get_validated_value('delay', delay, None)
+                    dummy = t.get_validated_value('delay', t.fattributes.get('delay'), delay, None)
 
     def test_task_auto_name_with_role(self):
         pass

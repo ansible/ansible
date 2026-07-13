@@ -1,2 +1,0 @@
-minor_changes:
-  - internals - simplify ``dep_chain`` handling in playbook objects.

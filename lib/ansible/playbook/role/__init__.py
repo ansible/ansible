@@ -41,6 +41,12 @@ from ansible.utils.display import Display
 from ansible.utils.path import is_subpath
 from ansible.utils.vars import combine_vars
 
+# NOTE: This import is only needed for the type-checking in __init__. While there's an alternative
+#       available by using forward references this seems not to work well with commonly used IDEs.
+#       Therefore the TYPE_CHECKING hack seems to be a more universal approach, even if not being very elegant.
+#       References:
+#       * https://stackoverflow.com/q/39740632/199513
+#       * https://peps.python.org/pep-0484/#forward-references
 if _t.TYPE_CHECKING:
     from ansible.playbook.block import Block
     from ansible.playbook.play import Play
@@ -149,8 +155,6 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
         self._completed: dict[str, bool] = dict()
         self._should_validate: bool = validate
 
-        self._dep_chain: list[Role] | None = None
-
         if from_files is None:
             from_files = {}
         self._from_files: dict[str, list[str]] = from_files
@@ -202,7 +206,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
         return self._get_hash_dict() == other._get_hash_dict()
 
     @staticmethod
-    def load(role_definition, play, parent_role=None, from_files=None, from_include=False, validate=True, public=None, static=True, rescuable=True):
+    def load(role_include, play, parent_role=None, from_files=None, from_include=False, validate=True, public=None, static=True, rescuable=True):
         if from_files is None:
             from_files = {}
         try:
@@ -211,7 +215,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
             #  that role?)
             # see https://github.com/ansible/ansible/issues/61527
             r = Role(play=play, from_files=from_files, from_include=from_include, validate=validate, public=public, static=static, rescuable=rescuable)
-            r._load_role_data(role_definition, parent_role=parent_role)
+            r._load_role_data(role_include, parent_role=parent_role)
 
             role_path = r.get_role_path()
             if role_path not in play.role_cache:
@@ -226,23 +230,23 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
 
         except RecursionError as ex:
             raise AnsibleError("A recursion loop was detected with the roles specified. Make sure child roles do not have dependencies on parent roles",
-                               obj=role_definition._ds) from ex
+                               obj=role_include._ds) from ex
 
-    def _load_role_data(self, role_definition, parent_role=None):
-        self._role_name = role_definition.role
-        self._role_path = role_definition.get_role_path()
-        self._role_collection = role_definition._role_collection
-        self._role_params = role_definition.get_role_params()
-        self._variable_manager = role_definition.get_variable_manager()
-        self._loader = role_definition.get_loader()
+    def _load_role_data(self, role_include, parent_role=None):
+        self._role_name = role_include.role
+        self._role_path = role_include.get_role_path()
+        self._role_collection = role_include._role_collection
+        self._role_params = role_include.get_role_params()
+        self._variable_manager = role_include.get_variable_manager()
+        self._loader = role_include.get_loader()
 
         if parent_role:
             self.add_parent(parent_role)
 
-        # copy over all field attributes from the RoleDefinition
+        # copy over all field attributes from the RoleInclude
         # update self._attr directly, to avoid squashing
         for attr_name in self.fattributes:
-            setattr(self, f'_{attr_name}', getattr(role_definition, f'_{attr_name}', Sentinel))
+            setattr(self, f'_{attr_name}', getattr(role_include, f'_{attr_name}', Sentinel))
 
         # vars and default vars are regular dictionaries
         self._role_vars = self._load_role_yaml('vars', main=self._from_files.get('vars'), allow_dir=True)
@@ -462,11 +466,13 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
         """
 
         deps = []
-        for role_definition in self._metadata.dependencies:
-            r = Role.load(role_definition, play=self._play, parent_role=self, static=self.static)
+        for role_include in self._metadata.dependencies:
+            r = Role.load(role_include, play=self._play, parent_role=self, static=self.static)
             deps.append(r)
 
         return deps
+
+    # other functions
 
     def add_parent(self, parent_role):
         """ adds a role to the list of this roles parents """
@@ -479,15 +485,12 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
     def get_parents(self):
         return self._parents
 
-    def get_dep_chain(self) -> list[Role]:
-        """Returns a copy of the parent chain list."""
-        if self._dep_chain is None:
-            dep_chain = []
-            for parent in self._parents:
-                dep_chain.extend(parent.get_dep_chain())
-                dep_chain.append(parent)
-            self._dep_chain = dep_chain
-        return self._dep_chain[:]
+    def get_dep_chain(self):
+        dep_chain = []
+        for parent in self._parents:
+            dep_chain.extend(parent.get_dep_chain())
+            dep_chain.append(parent)
+        return dep_chain
 
     def get_default_vars(self, dep_chain=None):
         dep_chain = [] if dep_chain is None else dep_chain
@@ -525,6 +528,8 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
 
     def get_vars(self, dep_chain=None, include_params=True, only_exports=False):
         dep_chain = [] if dep_chain is None else dep_chain
+
+        all_vars = {}
 
         # get role_vars: from parent objects
         # TODO: is this right precedence for inherited role_vars?
@@ -581,18 +586,25 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
         #
         # ``get_handler_blocks`` may be called when handling ``import_role`` during parsing
         # as well as with ``Play.compile_roles_handlers`` from ``TaskExecutor``
-        # FIXME deprecate unused dep_chain parameter
         if self._compiled_handler_blocks:
             return self._compiled_handler_blocks
 
         self._compiled_handler_blocks = block_list = []
 
+        # update the dependency chain here
+        if dep_chain is None:
+            dep_chain = []
+        new_dep_chain = dep_chain + [self]
+
         for dep in self.get_direct_dependencies():
-            block_list.extend(dep.get_handler_blocks(play=play))
+            dep_blocks = dep.get_handler_blocks(play=play, dep_chain=new_dep_chain)
+            block_list.extend(dep_blocks)
 
         for task_block in self._handler_blocks:
-            task_block._play = play
-            block_list.append(task_block)
+            new_task_block = task_block.copy()
+            new_task_block._dep_chain = new_dep_chain
+            new_task_block._play = play
+            block_list.append(new_task_block)
 
         return block_list
 
@@ -614,19 +626,26 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
         with each task, so tasks know by which route they were found, and
         can correctly take their parent's tags/conditionals into account.
         """
-        # FIXME deprecate unused dep_chain parameter
         from ansible.playbook.block import Block
         from ansible.playbook.task import Task
 
         block_list = []
 
-        for dep in self.get_direct_dependencies():
-            dep_blocks = dep.compile(play=play)
+        # update the dependency chain here
+        if dep_chain is None:
+            dep_chain = []
+        new_dep_chain = dep_chain + [self]
+
+        deps = self.get_direct_dependencies()
+        for dep in deps:
+            dep_blocks = dep.compile(play=play, dep_chain=new_dep_chain)
             block_list.extend(dep_blocks)
 
         for task_block in self._task_blocks:
-            task_block._play = play
-            block_list.append(task_block)
+            new_task_block = task_block.copy()
+            new_task_block._dep_chain = new_dep_chain
+            new_task_block._play = play
+            block_list.append(new_task_block)
 
         eor_block = Block(play=play)
         eor_block._loader = self._loader

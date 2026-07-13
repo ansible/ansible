@@ -21,7 +21,7 @@ import os
 
 from ansible.errors import AnsibleParserError, AnsibleError
 from ansible.playbook.attribute import NonInheritableFieldAttribute
-from ansible.playbook.base import FieldAttributeBase
+from ansible.playbook.base import Base
 from ansible.playbook.collectionsearch import CollectionSearch
 from ansible.playbook.helpers import load_list_of_roles
 from ansible.playbook.role.requirement import RoleRequirement
@@ -29,7 +29,7 @@ from ansible.playbook.role.requirement import RoleRequirement
 __all__ = ['RoleMetadata']
 
 
-class RoleMetadata(FieldAttributeBase, CollectionSearch):
+class RoleMetadata(Base, CollectionSearch):
     """
     This class wraps the parsing and validation of the optional metadata
     within each Role (meta/main.yml).
@@ -59,7 +59,7 @@ class RoleMetadata(FieldAttributeBase, CollectionSearch):
     def _load_dependencies(self, attr, ds):
         """
         This is a helper loading function for the dependencies list,
-        which returns a list of RoleDefinition objects
+        which returns a list of RoleInclude objects
         """
 
         roles = []

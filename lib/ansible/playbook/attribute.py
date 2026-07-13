@@ -90,13 +90,41 @@ class Attribute:
     def __set_name__(self, owner, name):
         self.name = name
 
+    def __eq__(self, other):
+        return other.priority == self.priority
+
+    def __ne__(self, other):
+        return other.priority != self.priority
+
     # NB: higher priority numbers sort first
-    # __lt__ is sufficient for sorted() which is our only use case
+
     def __lt__(self, other):
         return other.priority < self.priority
 
+    def __gt__(self, other):
+        return other.priority > self.priority
+
+    def __le__(self, other):
+        return other.priority <= self.priority
+
+    def __ge__(self, other):
+        return other.priority >= self.priority
+
     def __get__(self, obj: FieldAttributeBase, obj_type=None):
-        if (value := getattr(obj, f'_{self.name}', Sentinel)) is Sentinel:
+        method = f'_get_attr_{self.name}'
+        if hasattr(obj, method):
+            # NOTE this appears to be not used in the codebase,
+            # _get_attr_connection has been replaced by ConnectionFieldAttribute.
+            # Leaving it here for test_attr_method from
+            # test/units/playbook/test_base.py to pass and for backwards compat.
+            if getattr(obj, '_squashed', False):
+                value = getattr(obj, f'_{self.name}', Sentinel)
+            else:
+                value = getattr(obj, method)()
+        else:
+            value = getattr(obj, f'_{self.name}', Sentinel)
+
+        if value is Sentinel:
             value = self.default
             if callable(value):
                 value = value()
@@ -109,28 +137,15 @@ class Attribute:
         if self.alias is not None:
             setattr(obj, f'_{self.alias}', value)
 
+    # NOTE this appears to be not needed in the codebase,
+    # leaving it here for test_attr_int_del from
+    # test/units/playbook/test_base.py to pass.
+    def __delete__(self, obj):
+        delattr(obj, f'_{self.name}')
+
 
 class NonInheritableFieldAttribute(Attribute):
     ...
-
-
-def _get_parent_static_chain(obj):
-    # NOTE similar code in Taggable
-    # FIXME this encapsulates the mess caused by not having proper parent chain on playbook objects
-    parent = getattr(obj, '_parent', None)
-    while parent:
-        # If parent is static, we can grab attrs from the parent
-        # otherwise, defer to the grandparent
-        if getattr(parent, 'statically_loaded', True):
-            yield parent
-        parent = getattr(parent, '_parent', None)
-
-    if role := getattr(obj, '_role', None):
-        yield role
-        if dep_chain := obj.get_dep_chain():
-            yield from reversed(dep_chain)
-
-    yield obj.play
 
 
 class FieldAttribute(Attribute):
@@ -141,27 +156,24 @@ class FieldAttribute(Attribute):
         self.prepend = prepend
 
     def __get__(self, obj, obj_type=None):
-        value = getattr(obj, f'_{self.name}', Sentinel)
-        if not obj.finalized:
-            if self.extend:
-                # NOTE implements the historic behavior of now removed Base._extend_value
-                all_values = value if value not in (Sentinel, None) else []
-                _extend = all_values.extend
-                for parent in _get_parent_static_chain(obj):
-                    if (parent_value := getattr(parent, f'_{self.name}', Sentinel)) not in (Sentinel, None):
-                        if self.prepend:
-                            all_values[:0] = parent_value
-                        else:
-                            _extend(parent_value)
-
-                # some FAs contain non-hashable values, skip dedup in such a case
-                # FIXME deal with list of dicts differently?
-                value = all_values if self.name in ('module_defaults', 'environment') else list(dict.fromkeys(all_values))
-            elif value is Sentinel:
-                for parent in _get_parent_static_chain(obj):
-                    if (parent_value := getattr(parent, f'_{self.name}', Sentinel)) is not Sentinel:
-                        value = parent_value
-                        break
+        if getattr(obj, '_squashed', False) or getattr(obj, '_finalized', False):
+            value = getattr(obj, f'_{self.name}', Sentinel)
+        else:
+            try:
+                value = obj._get_parent_attribute(self.name)
+            except AttributeError:
+                method = f'_get_attr_{self.name}'
+                if hasattr(obj, method):
+                    # NOTE this appears to be not needed in the codebase,
+                    # _get_attr_connection has been replaced by ConnectionFieldAttribute.
+                    # Leaving it here for test_attr_method from
+                    # test/units/playbook/test_base.py to pass and for backwards compat.
+                    if getattr(obj, '_squashed', False):
+                        value = getattr(obj, f'_{self.name}', Sentinel)
+                    else:
+                        value = getattr(obj, method)()
+                else:
+                    value = getattr(obj, f'_{self.name}', Sentinel)
 
         if value is Sentinel:
             value = self.default

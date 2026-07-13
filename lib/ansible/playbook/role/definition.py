@@ -20,13 +20,12 @@ from __future__ import annotations
 import os
 
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsibleAssertionError, AnsibleParserError
+from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.module_utils._internal._datatag import AnsibleTagHelper
 from ansible.playbook.attribute import NonInheritableFieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.collectionsearch import CollectionSearch
 from ansible.playbook.conditional import Conditional
-from ansible.playbook.delegatable import Delegatable
 from ansible.playbook.taggable import Taggable
 from ansible._internal._templating._engine import TemplateEngine
 from ansible.utils.collection_loader import AnsibleCollectionRef
@@ -39,12 +38,13 @@ __all__ = ['RoleDefinition']
 display = Display()
 
 
-class RoleDefinition(Base, Conditional, Taggable, Delegatable, CollectionSearch):
+class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
 
     role = NonInheritableFieldAttribute(isa='string')
 
     def __init__(self, play=None, role_basedir=None, variable_manager=None, loader=None, collection_list=None):
-        super().__init__()
+
+        super(RoleDefinition, self).__init__()
 
         self._play = play
         self._variable_manager = variable_manager
@@ -56,16 +56,12 @@ class RoleDefinition(Base, Conditional, Taggable, Delegatable, CollectionSearch)
         self._role_params = dict()
         self._collection_list = collection_list
 
+    # def __repr__(self):
+    #     return 'ROLEDEF: ' + self._attributes.get('role', '<no name set>')
+
     @staticmethod
-    def load(data, play, current_role_path=None, parent_role=None, variable_manager=None, loader=None, collection_list=None):
-        if not (isinstance(data, str) or isinstance(data, dict)):
-            raise AnsibleParserError("Invalid role definition.", obj=data)
-
-        if isinstance(data, str) and ',' in data:
-            raise AnsibleError("Invalid old style role requirement: %s" % data)
-
-        rd = RoleDefinition(play=play, role_basedir=current_role_path, variable_manager=variable_manager, loader=loader, collection_list=collection_list)
-        return rd.load_data(data, variable_manager=variable_manager, loader=loader)
+    def load(data, variable_manager=None, loader=None):
+        raise AnsibleError("not implemented")
 
     def preprocess_data(self, ds):
         # role names that are simply numbers can be parsed by PyYAML

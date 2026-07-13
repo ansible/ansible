@@ -50,6 +50,17 @@ def test_basic_play():
     assert p.connection == 'local'
 
 
+def test_play_with_remote_user():
+    p = Play.load(dict(
+        name="test play",
+        hosts=['foo'],
+        user="testing",
+        gather_facts=False,
+    ))
+
+    assert p.remote_user == "testing"
+
+
 def test_play_with_user_conflict():
     play_data = dict(
         name="test play",
@@ -90,6 +101,7 @@ def test_play_with_handlers():
     ))
 
     assert len(p.handlers) >= 1
+    assert len(p.get_handlers()) >= 1
     assert isinstance(p.handlers[0], Block)
     assert p.handlers[0].has_tasks() is True
 
@@ -106,8 +118,9 @@ def test_play_with_pre_tasks():
     assert isinstance(p.pre_tasks[0], Block)
     assert p.pre_tasks[0].has_tasks() is True
 
-    assert isinstance(p.pre_tasks[0].block[0], Task)
-    assert p.pre_tasks[0].block[0].action == 'shell'
+    assert len(p.get_tasks()) >= 1
+    assert isinstance(p.get_tasks()[0][0], Task)
+    assert p.get_tasks()[0][0].action == 'shell'
 
 
 def test_play_with_post_tasks():
@@ -145,7 +158,7 @@ def test_play_with_roles(mocker):
     blocks = p.compile()
     assert len(blocks) > 1
     assert all(isinstance(block, Block) for block in blocks)
-    assert isinstance(p.roles[0], Role)
+    assert isinstance(p.get_roles()[0], Role)
 
 
 def test_play_compile():

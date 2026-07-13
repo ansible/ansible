@@ -213,6 +213,8 @@ class WorkerProcess(multiprocessing_context.Process):  # type: ignore[name-defin
 
         current_worker = self
 
+        self._task.squash()
+
         te = TaskExecutor(
             self._host,
             self._play_context,

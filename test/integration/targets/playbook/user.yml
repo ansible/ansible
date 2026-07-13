@@ -13,6 +13,11 @@
 - hosts: localhost
   user: "{{ me }}"
   tasks:
-    - name: should not happen
-      debug:
+    - debug:
         msg: worked with user ({{ me }})
+
+- hosts: localhost
+  remote_user: "{{ me }}"
+  tasks:
+    - debug:
+        msg: worked with remote_user ({{ me }})

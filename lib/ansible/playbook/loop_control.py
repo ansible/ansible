@@ -34,6 +34,9 @@ class LoopControl(FieldAttributeBase):
     extended_allitems = NonInheritableFieldAttribute(isa='bool', default=True, always_post_validate=True)
     break_when = NonInheritableFieldAttribute(isa='list', default=list, always_post_validate=True)
 
+    def __init__(self):
+        super(LoopControl, self).__init__()
+
     @staticmethod
     def load(data, variable_manager=None, loader=None):
         t = LoopControl()

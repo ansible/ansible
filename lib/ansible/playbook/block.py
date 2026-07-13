@@ -17,9 +17,8 @@
 
 from __future__ import annotations
 
-import itertools
-
 from ansible.errors import AnsibleParserError
+from ansible.module_utils.common.sentinel import Sentinel
 from ansible.playbook.attribute import NonInheritableFieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.conditional import Conditional
@@ -41,11 +40,13 @@ class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatab
     # similar to the 'else' clause for exceptions
     # otherwise = FieldAttribute(isa='list')
 
-    def __init__(self, play=None, parent_block=None, role=None, task_include=None, use_handlers=False):
+    def __init__(self, play=None, parent_block=None, role=None, task_include=None, use_handlers=False, implicit=False):
         self._play = play
         self._role = role
         self._parent = None
+        self._dep_chain = None
         self._use_handlers = use_handlers
+        self._implicit = implicit
 
         if task_include:
             self._parent = task_include
@@ -76,18 +77,25 @@ class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatab
         if self._parent:
             all_vars |= self._parent.get_vars()
 
-        all_vars |= self.vars
+        all_vars |= self.vars.copy()
 
         return all_vars
 
     @staticmethod
     def load(data, play=None, parent_block=None, role=None, task_include=None, use_handlers=False, variable_manager=None, loader=None):
-        b = Block(play=play, parent_block=parent_block, role=role, task_include=task_include, use_handlers=use_handlers)
+        implicit = not Block.is_block(data)
+        b = Block(play=play, parent_block=parent_block, role=role, task_include=task_include, use_handlers=use_handlers, implicit=implicit)
         return b.load_data(data, variable_manager=variable_manager, loader=loader)
 
     @staticmethod
     def is_block(ds):
-        return isinstance(ds, dict) and 'block' in ds
+        is_block = False
+        if isinstance(ds, dict):
+            for attr in ('block', 'rescue', 'always'):
+                if attr in ds:
+                    is_block = True
+                    break
+        return is_block
 
     def preprocess_data(self, ds):
         """
@@ -118,7 +126,14 @@ class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatab
         except AssertionError as ex:
             raise AnsibleParserError(f"A malformed block was encountered while loading {attr}.", obj=self._ds) from ex
 
-    _load_block = _load_rescue = _load_always = _load
+    def _load_block(self, attr, ds):
+        return self._load(attr, ds)
+
+    def _load_rescue(self, attr, ds):
+        return self._load(attr, ds)
+
+    def _load_always(self, attr, ds):
+        return self._load(attr, ds)
 
     def _validate_always(self, attr, name, value):
         if value and not self.block:
@@ -126,17 +141,26 @@ class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatab
 
     _validate_rescue = _validate_always
 
+    def get_dep_chain(self):
+        if self._dep_chain is None:
+            if self._parent:
+                return self._parent.get_dep_chain()
+            else:
+                return None
+        else:
+            return self._dep_chain[:]
+
     def copy(self, exclude_parent=False, exclude_tasks=False):
         def _dupe_task_list(task_list, new_block):
             new_task_list = []
             for task in task_list:
                 new_task = task.copy(exclude_parent=True, exclude_tasks=exclude_tasks)
                 if task._parent:
+                    new_task._parent = task._parent.copy(exclude_tasks=True)
                     if task._parent == new_block:
                         # If task._parent is the same as new_block, just replace it
                         new_task._parent = new_block
                     else:
-                        new_task._parent = task._parent.copy(exclude_tasks=True)
                         # task may not be a direct child of new_block, search for the correct place to insert new_block
                         cur_obj = new_task._parent
                         while cur_obj._parent and cur_obj._parent != new_block:
@@ -148,17 +172,27 @@ class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatab
                 new_task_list.append(new_task)
             return new_task_list
 
-        new_me = super().copy()
+        new_me = super(Block, self).copy()
+        new_me._play = self._play
+        new_me._use_handlers = self._use_handlers
+
+        if self._dep_chain is not None:
+            new_me._dep_chain = self._dep_chain[:]
 
         new_me._parent = None
         if self._parent and not exclude_parent:
             new_me._parent = self._parent.copy(exclude_tasks=True)
 
         if not exclude_tasks:
-            new_me.block = _dupe_task_list(self.block, new_me)
+            new_me.block = _dupe_task_list(self.block or [], new_me)
             new_me.rescue = _dupe_task_list(self.rescue or [], new_me)
             new_me.always = _dupe_task_list(self.always or [], new_me)
 
+        new_me._role = None
+        if self._role:
+            new_me._role = self._role
+
+        new_me.validate()
         return new_me
 
     def set_loader(self, loader):
@@ -168,48 +202,151 @@ class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatab
         elif self._role:
             self._role.set_loader(loader)
 
-        for dep in self.get_dep_chain():
-            dep.set_loader(loader)
+        dep_chain = self.get_dep_chain()
+        if dep_chain:
+            for dep in dep_chain:
+                dep.set_loader(loader)
+
+    def _get_parent_attribute(self, attr, omit=False):
+        """
+        Generic logic to get the attribute or parent attribute for a block value.
+        """
+        fattr = self.fattributes[attr]
+
+        extend = fattr.extend
+        prepend = fattr.prepend
+
+        try:
+            # omit self, and only get parent values
+            if omit:
+                value = Sentinel
+            else:
+                value = getattr(self, f'_{attr}', Sentinel)
+
+            # If parent is static, we can grab attrs from the parent
+            # otherwise, defer to the grandparent
+            if getattr(self._parent, 'statically_loaded', True):
+                _parent = self._parent
+            else:
+                _parent = self._parent._parent
+
+            if _parent and (value is Sentinel or extend):
+                try:
+                    if getattr(_parent, 'statically_loaded', True):
+                        if hasattr(_parent, '_get_parent_attribute'):
+                            parent_value = _parent._get_parent_attribute(attr)
+                        else:
+                            parent_value = getattr(_parent, f'_{attr}', Sentinel)
+                        if extend:
+                            value = self._extend_value(value, parent_value, prepend)
+                        else:
+                            value = parent_value
+                except AttributeError:
+                    pass
+            if self._role and (value is Sentinel or extend):
+                try:
+                    parent_value = getattr(self._role, f'_{attr}', Sentinel)
+                    if extend:
+                        value = self._extend_value(value, parent_value, prepend)
+                    else:
+                        value = parent_value
+
+                    dep_chain = self.get_dep_chain()
+                    if dep_chain and (value is Sentinel or extend):
+                        dep_chain.reverse()
+                        for dep in dep_chain:
+                            dep_value = getattr(dep, f'_{attr}', Sentinel)
+                            if extend:
+                                value = self._extend_value(value, dep_value, prepend)
+                            else:
+                                value = dep_value
+
+                            if value is not Sentinel and not extend:
+                                break
+                except AttributeError:
+                    pass
+            if self._play and (value is Sentinel or extend):
+                try:
+                    play_value = getattr(self._play, f'_{attr}', Sentinel)
+                    if play_value is not Sentinel:
+                        if extend:
+                            value = self._extend_value(value, play_value, prepend)
+                        else:
+                            value = play_value
+                except AttributeError:
+                    pass
+        except KeyError:
+            pass
+
+        return value
 
     def filter_tagged_tasks(self, all_vars):
         """
         Creates a new block, with task lists filtered based on the tags.
         """
+
         def evaluate_and_append_task(target):
             tmp_list = []
             for task in target:
                 if isinstance(task, Block):
-                    filtered_block = task.filter_tagged_tasks(all_vars)
+                    filtered_block = evaluate_block(task)
                     if filtered_block.has_tasks():
                         tmp_list.append(filtered_block)
                 elif task.evaluate_tags(self._play.only_tags, self._play.skip_tags, all_vars=all_vars):
                     tmp_list.append(task)
             return tmp_list
 
-        self.block = evaluate_and_append_task(self.block)
-        if self.rescue:
-            self.rescue = evaluate_and_append_task(self.rescue)
-        if self.always:
-            self.always = evaluate_and_append_task(self.always)
-        return self
+        def evaluate_block(block):
+            new_block = block.copy(exclude_parent=True, exclude_tasks=True)
+            new_block._parent = block._parent
+            new_block.block = evaluate_and_append_task(block.block)
+            new_block.rescue = evaluate_and_append_task(block.rescue)
+            new_block.always = evaluate_and_append_task(block.always)
+            return new_block
+
+        return evaluate_block(self)
 
     def get_tasks(self):
-        task_list = []
-        for task in itertools.chain(self.block, self.rescue, self.always):
-            if isinstance(task, Block):
-                task_list.extend(task.get_tasks())
-            else:
-                task_list.append(task)
-        return task_list
+        def evaluate_and_append_task(target):
+            tmp_list = []
+            for task in target:
+                if isinstance(task, Block):
+                    tmp_list.extend(evaluate_block(task))
+                else:
+                    tmp_list.append(task)
+            return tmp_list
+
+        def evaluate_block(block):
+            rv = evaluate_and_append_task(block.block)
+            rv.extend(evaluate_and_append_task(block.rescue))
+            rv.extend(evaluate_and_append_task(block.always))
+            return rv
+
+        return evaluate_block(self)
 
     def has_tasks(self):
-        return bool(self.block)
+        return len(self.block) > 0 or len(self.rescue) > 0 or len(self.always) > 0
 
     def get_include_params(self):
         if self._parent:
             return self._parent.get_include_params()
         else:
-            return {}
+            return dict()
+
+    def all_parents_static(self):
+        """
+        Determine if all of the parents of this block were statically loaded
+        or not. Since Task/TaskInclude objects may be in the chain, they simply
+        call their parents all_parents_static() method. Only Block objects in
+        the chain check the statically_loaded value of the parent.
+        """
+        from ansible.playbook.task_include import TaskInclude
+        if self._parent:
+            if isinstance(self._parent, TaskInclude) and not self._parent.statically_loaded:
+                return False
+            return self._parent.all_parents_static()
+
+        return True
 
     def get_first_parent_include(self):
         from ansible.playbook.task_include import TaskInclude

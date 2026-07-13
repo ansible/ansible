@@ -31,7 +31,7 @@ from units.mock.loader import DictDataLoader
 from units.mock.path import mock_unfrackpath_noop
 
 from ansible.playbook.role import Role
-from ansible.playbook.role.definition import RoleDefinition
+from ansible.playbook.role.include import RoleInclude
 from ansible.playbook.role import hash_params
 
 
@@ -168,7 +168,7 @@ class TestRole(unittest.TestCase):
         mock_play = MagicMock()
         mock_play.role_cache = {}
 
-        i = RoleDefinition.load('foo_tasks', play=mock_play, loader=fake_loader)
+        i = RoleInclude.load('foo_tasks', play=mock_play, loader=fake_loader)
         r = Role.load(i, play=mock_play)
 
         self.assertEqual(str(r), 'foo_tasks')
@@ -190,7 +190,7 @@ class TestRole(unittest.TestCase):
         mock_play = MagicMock()
         mock_play.role_cache = {}
 
-        i = RoleDefinition.load('foo_tasks', play=mock_play, loader=fake_loader)
+        i = RoleInclude.load('foo_tasks', play=mock_play, loader=fake_loader)
         r = Role.load(i, play=mock_play, from_files=dict(tasks='custom_main'))
 
         self.assertEqual(r._task_blocks[0]._ds[0]['command'], 'baz')
@@ -208,7 +208,7 @@ class TestRole(unittest.TestCase):
         mock_play = MagicMock()
         mock_play.role_cache = {}
 
-        i = RoleDefinition.load('foo_handlers', play=mock_play, loader=fake_loader)
+        i = RoleInclude.load('foo_handlers', play=mock_play, loader=fake_loader)
         r = Role.load(i, play=mock_play)
 
         self.assertEqual(len(r._handler_blocks), 1)
@@ -229,7 +229,7 @@ class TestRole(unittest.TestCase):
         mock_play = MagicMock()
         mock_play.role_cache = {}
 
-        i = RoleDefinition.load('foo_vars', play=mock_play, loader=fake_loader)
+        i = RoleInclude.load('foo_vars', play=mock_play, loader=fake_loader)
         r = Role.load(i, play=mock_play)
 
         self.assertEqual(r._default_vars, dict(foo='bar'))
@@ -250,7 +250,7 @@ class TestRole(unittest.TestCase):
         mock_play = MagicMock()
         mock_play.role_cache = {}
 
-        i = RoleDefinition.load('foo_vars', play=mock_play, loader=fake_loader)
+        i = RoleInclude.load('foo_vars', play=mock_play, loader=fake_loader)
         r = Role.load(i, play=mock_play)
 
         self.assertEqual(r._default_vars, dict(foo='bar'))
@@ -271,7 +271,7 @@ class TestRole(unittest.TestCase):
         mock_play = MagicMock()
         mock_play.role_cache = {}
 
-        i = RoleDefinition.load('foo_vars', play=mock_play, loader=fake_loader)
+        i = RoleInclude.load('foo_vars', play=mock_play, loader=fake_loader)
         r = Role.load(i, play=mock_play)
 
         self.assertEqual(r._default_vars, dict(foo='bar'))
@@ -294,7 +294,7 @@ class TestRole(unittest.TestCase):
         mock_play = MagicMock()
         mock_play.role_cache = {}
 
-        i = RoleDefinition.load('foo_vars', play=mock_play, loader=fake_loader)
+        i = RoleInclude.load('foo_vars', play=mock_play, loader=fake_loader)
         r = Role.load(i, play=mock_play)
 
         self.assertEqual(r._default_vars, dict(foo='bar', a=1, b=2))
@@ -314,7 +314,7 @@ class TestRole(unittest.TestCase):
         mock_play = MagicMock()
         mock_play.role_cache = {}
 
-        i = RoleDefinition.load('foo_vars', play=mock_play, loader=fake_loader)
+        i = RoleInclude.load('foo_vars', play=mock_play, loader=fake_loader)
         r = Role.load(i, play=mock_play)
 
         self.assertEqual(r._role_vars, dict(foo='bam'))
@@ -361,7 +361,7 @@ class TestRole(unittest.TestCase):
         mock_play.collections = None
         mock_play.role_cache = {}
 
-        i = RoleDefinition.load('foo_metadata', play=mock_play, loader=fake_loader)
+        i = RoleInclude.load('foo_metadata', play=mock_play, loader=fake_loader)
         r = Role.load(i, play=mock_play)
 
         role_deps = r.get_direct_dependencies()
@@ -379,16 +379,16 @@ class TestRole(unittest.TestCase):
         self.assertEqual(all_deps[1].get_name(), 'baz_metadata')
         self.assertEqual(all_deps[2].get_name(), 'bar_metadata')
 
-        i = RoleDefinition.load('bad1_metadata', play=mock_play, loader=fake_loader)
+        i = RoleInclude.load('bad1_metadata', play=mock_play, loader=fake_loader)
         self.assertRaises(AnsibleParserError, Role.load, i, play=mock_play)
 
-        i = RoleDefinition.load('bad2_metadata', play=mock_play, loader=fake_loader)
+        i = RoleInclude.load('bad2_metadata', play=mock_play, loader=fake_loader)
         self.assertRaises(AnsibleParserError, Role.load, i, play=mock_play)
 
         # TODO: re-enable this test once Ansible has proper role dep cycle detection
         # that doesn't rely on stack overflows being recoverable (as they aren't in Py3.7+)
         # see https://github.com/ansible/ansible/issues/61527
-        # i = RoleDefinition.load('recursive1_metadata', play=mock_play, loader=fake_loader)
+        # i = RoleInclude.load('recursive1_metadata', play=mock_play, loader=fake_loader)
         # self.assertRaises(AnsibleError, Role.load, i, play=mock_play)
 
     @patch('ansible.playbook.role.definition.unfrackpath', mock_unfrackpath_noop)
@@ -406,7 +406,7 @@ class TestRole(unittest.TestCase):
         mock_play = MagicMock()
         mock_play.role_cache = {}
 
-        i = RoleDefinition.load(dict(role='foo_complex'), play=mock_play, loader=fake_loader)
+        i = RoleInclude.load(dict(role='foo_complex'), play=mock_play, loader=fake_loader)
         r = Role.load(i, play=mock_play)
 
         self.assertEqual(r.get_name(), "foo_complex")

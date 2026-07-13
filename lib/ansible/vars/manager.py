@@ -548,7 +548,7 @@ class VariableManager:
 
         delegated_vars['ansible_delegated_vars'] = {
             delegated_host_name: self.get_vars(
-                play=task.play,
+                play=task.get_play(),
                 host=delegated_host,
                 task=task,
                 include_hostvars=True,
