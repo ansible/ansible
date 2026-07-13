@@ -2,3 +2,4 @@ context/target
 destructive
 shippable/posix/group7
 needs/target/dnf
+disabled  # fedora 41 support for dnf-nightly removed
