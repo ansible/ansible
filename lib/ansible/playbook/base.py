@@ -510,20 +510,8 @@ class FieldAttributeBase:
 
     def set_to_context(self, name: str) -> t.Any:
         """ set to parent inherited value or Sentinel as appropriate"""
-
-        attribute = self.fattributes[name]
-        if isinstance(attribute, NonInheritableFieldAttribute):
-            # setting to sentinel will trigger 'default/default()' on getter
-            value = Sentinel
-        else:
-            try:
-                value = self._get_parent_attribute(name, omit=True)
-            except AttributeError:
-                # mostly playcontext as only tasks/handlers/blocks really resolve parent
-                value = Sentinel
-
-        setattr(self, name, value)
-        return value
+        setattr(self, name, Sentinel)
+        return getattr(self, name, Sentinel)
 
     def post_validate(self, templar: TemplateEngine) -> None:
         """
