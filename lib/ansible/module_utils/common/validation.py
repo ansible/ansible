@@ -483,7 +483,7 @@ def check_type_int(value):
                 raise ValueError("Significant decimal part found")
             else:
                 value = int_value
-        except (decimal.DecimalException, TypeError, ValueError) as e:
+        except (ArithmeticError, TypeError, ValueError) as e:
             raise TypeError(f'"{value!r}" cannot be converted to an int') from e
     return value
 
