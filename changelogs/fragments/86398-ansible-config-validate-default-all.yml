@@ -1,6 +1,6 @@
 bugfixes:
   - >-
-    ansible-config validate - the ``validate`` action now defaults to ``-t all``,
+    ansible-config - all actions now default to ``-t all`` (use ``-t base`` for the previous behavior),
     so configuration files using sections owned by plugins (e.g.
     ``[ssh_connection]``) are no longer reported as unknown sections, and keys
     within those sections are actually validated (https://github.com/ansible/ansible/issues/86398).

@@ -23,12 +23,16 @@ def parse_type(args: list[str]) -> str:
 @pytest.mark.parametrize(
     ('args', 'expected_type'),
     (
+        pytest.param(['list'], 'all', id='list-defaults-to-all'),
+        pytest.param(['dump'], 'all', id='dump-defaults-to-all'),
+        pytest.param(['view'], 'all', id='view-defaults-to-all'),
+        pytest.param(['init'], 'all', id='init-defaults-to-all'),
         pytest.param(['validate'], 'all', id='validate-defaults-to-all'),
-        pytest.param(['validate', '-t', 'base'], 'base', id='validate-narrows-with-type'),
-        pytest.param(['dump'], 'base', id='other-actions-default-to-base'),
+        pytest.param(['dump', '-t', 'base'], 'base', id='base-compatibility-override'),
+        pytest.param(['validate', '-t', 'connection'], 'connection', id='specific-type-override'),
     ),
 )
 def test_config_type_default(args: list[str], expected_type: str) -> None:
-    # ``validate`` defaults to checking base settings and all plugins (#86398),
-    # an explicit ``-t`` still narrows it, and other actions keep the base default.
+    # All actions default to checking base settings and all plugins (#86398),
+    # while an explicit ``-t`` can restore the previous base-only behavior or narrow further.
     assert parse_type(args) == expected_type

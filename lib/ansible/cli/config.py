@@ -103,39 +103,30 @@ class ConfigCLI(CLI):
         opt_help.add_verbosity_options(common)
         common.add_argument('-c', '--config', dest='config_file',
                             help="path to configuration file, defaults to first file found in precedence.")
+        common.add_argument("-t", "--type", action="store", default='all', dest='type',
+                            choices=['all', 'base'] + list(C.CONFIGURABLE_PLUGINS),
+                            help="Filter down to a specific plugin type. Defaults to 'all'; use 'base' for the previous behavior.")
         common.add_argument('args', help='Specific plugin to target, requires type of plugin to be set', nargs='*')
-
-        def type_parser(default: str) -> opt_help.ArgumentParser:
-            parser = opt_help.ArgumentParser(add_help=False)
-            parser.add_argument("-t", "--type", action="store", default=default, dest='type',
-                                choices=['all', 'base'] + list(C.CONFIGURABLE_PLUGINS),
-                                help=f"Filter down to a specific plugin type. Defaults to '{default}'.")
-            return parser
-
-        # validate defaults to considering all plugin configuration (#86398),
-        # the other actions default to the base settings only
-        base_type = type_parser('base')
-        all_type = type_parser('all')
 
         subparsers = self.parser.add_subparsers(dest='action')
         subparsers.required = True
 
-        list_parser = subparsers.add_parser('list', help='Print all config options', parents=[common, base_type])
+        list_parser = subparsers.add_parser('list', help='Print all config options', parents=[common])
         list_parser.set_defaults(func=self.execute_list)
         list_parser.add_argument('--format', '-f', dest='format', action='store', choices=['json', 'yaml'], default='yaml',
                                  help='Output format for list')
 
-        dump_parser = subparsers.add_parser('dump', help='Dump configuration', parents=[common, base_type])
+        dump_parser = subparsers.add_parser('dump', help='Dump configuration', parents=[common])
         dump_parser.set_defaults(func=self.execute_dump)
         dump_parser.add_argument('--only-changed', '--changed-only', dest='only_changed', action='store_true',
                                  help="Only show configurations that have changed from the default")
         dump_parser.add_argument('--format', '-f', dest='format', action='store', choices=['json', 'yaml', 'display'], default='display',
                                  help='Output format for dump')
 
-        view_parser = subparsers.add_parser('view', help='View configuration file', parents=[common, base_type])
+        view_parser = subparsers.add_parser('view', help='View configuration file', parents=[common])
         view_parser.set_defaults(func=self.execute_view)
 
-        init_parser = subparsers.add_parser('init', help='Create initial configuration', parents=[common, base_type])
+        init_parser = subparsers.add_parser('init', help='Create initial configuration', parents=[common])
         init_parser.set_defaults(func=self.execute_init)
         init_parser.add_argument('--format', '-f', dest='format', action='store', choices=['ini', 'env', 'vars'], default='ini',
                                  help='Output format for init')
@@ -145,7 +136,7 @@ class ConfigCLI(CLI):
         validate_parser = subparsers.add_parser('validate',
                                                 help='Validate the configuration file and environment variables. '
                                                      'By default it checks the base settings and all installed plugins (use -t to narrow down).',
-                                                parents=[common, all_type])
+                                                parents=[common])
         validate_parser.set_defaults(func=self.execute_validate)
         validate_parser.add_argument('--format', '-f', dest='format', action='store', choices=['ini', 'env'] , default='ini',
                                      help='Output format for init')
