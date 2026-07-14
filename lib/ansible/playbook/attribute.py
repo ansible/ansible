@@ -17,6 +17,7 @@
 
 from __future__ import annotations
 
+import itertools
 import typing as t
 
 from ansible.utils.sentinel import Sentinel
@@ -129,6 +130,21 @@ class NonInheritableFieldAttribute(Attribute):
     ...
 
 
+# tags, when, module_defaults, environment
+def _extend_value(value, new_value, prepend=False):
+    if not isinstance(value, list):
+        value = [value]
+    if not isinstance(new_value, list):
+        new_value = [new_value]
+
+    if prepend:
+        combined = new_value + value
+    else:
+        combined = value + new_value
+
+    return combined
+
+
 def get_static_parents(obj):
     o = obj
     while getattr(o, '_parent', None):
@@ -153,18 +169,22 @@ class FieldAttribute(Attribute):
 
     def __get__(self, obj, obj_type=None):
         value = getattr(obj, f'_{self.name}', Sentinel)
-        if not (getattr(obj, '_squashed', False) or getattr(obj, '_finalized', False)):
+        if not obj.finalized:
             value = getattr(obj, f'_{self.name}', Sentinel)
             for parent in get_static_parents(obj):
                 parent_value = getattr(parent, f'_{self.name}', Sentinel)
+                if parent_value is Sentinel:
+                    continue
                 if self.extend:
-                    value = obj._extend_value(value, parent_value, self.prepend)
+                    value = _extend_value(value, parent_value, self.prepend)
                 else:
                     if value is not Sentinel:
                         break
-                    if parent_value is not Sentinel:
-                        value = parent_value
-                        break
+                    value = parent_value
+                    break
+
+        if self.extend and isinstance(value, list):
+            value = [i for i, dummy in itertools.groupby(value) if i not in (None, Sentinel)]
 
         if value is Sentinel:
             value = self.default
