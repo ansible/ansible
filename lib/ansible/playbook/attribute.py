@@ -17,6 +17,7 @@
 
 from __future__ import annotations
 
+import itertools
 import typing as t
 
 from ansible.utils.sentinel import Sentinel
@@ -144,6 +145,24 @@ def get_static_parents(obj):
     yield obj.play
 
 
+# when, tags, module_defaults, environment
+def _extend_value(value, new_value, prepend=False):
+    if not isinstance(value, list):
+        value = [value]
+    if not isinstance(new_value, list):
+        new_value = [new_value]
+
+    value = [v for v in value if v is not Sentinel]
+    new_value = [v for v in new_value if v is not Sentinel]
+
+    if prepend:
+        combined = new_value + value
+    else:
+        combined = value + new_value
+
+    return [i for i, dummy in itertools.groupby(combined) if i is not None]
+
+
 class FieldAttribute(Attribute):
     def __init__(self, extend=False, prepend=False, **kwargs):
         super().__init__(**kwargs)
@@ -158,7 +177,7 @@ class FieldAttribute(Attribute):
             for parent in get_static_parents(obj):
                 parent_value = getattr(parent, f'_{self.name}', Sentinel)
                 if self.extend:
-                    value = obj._extend_value(value, parent_value, self.prepend)
+                    value = _extend_value(value, parent_value, self.prepend)
                 else:
                     if value is not Sentinel:
                         break
