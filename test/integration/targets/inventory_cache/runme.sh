@@ -22,5 +22,4 @@ readhost="$(grep 'testhost[0-9]\{1,2\}' out.txt)"
 
 test "$readhost" = "$writehost"
 
-ansible-inventory -i exercise_cache.yml --graph
 test "$(ansible-inventory -i exercise_cache.yml --graph 2>&1 | grep -c '\[WARNING\]')" = 0
