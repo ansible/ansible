@@ -57,23 +57,7 @@ from collections.abc import (
 )
 from functools import reduce
 
-try:
-    import syslog
-    HAS_SYSLOG = True
-except ImportError:
-    HAS_SYSLOG = False
-
 _UNSET = t.cast(t.Any, object())
-
-try:
-    from systemd import journal, daemon as systemd_daemon
-    # Makes sure that systemd.journal has method sendv()
-    # Double check that journal has method sendv (some packages don't)
-    # check if the system is running under systemd
-    has_journal = hasattr(journal, 'sendv') and systemd_daemon.booted()
-except (ImportError, AttributeError):
-    # AttributeError would be caused from use of .booted() if wrong systemd
-    has_journal = False
 
 HAVE_SELINUX = False
 try:
@@ -85,7 +69,7 @@ except ImportError:
 # Python2 & 3 way to get NoneType
 NoneType = type(None)
 
-from ._internal import _traceback, _errors, _debugging, _deprecator, _messages
+from ._internal import _traceback, _errors, _debugging, _deprecator, _messages, _logging
 
 from .common.text.converters import (
     to_native,
@@ -1250,86 +1234,38 @@ class AnsibleModule(object):
         # debug overrides to read args from file or cmdline
         self.params = _load_params()
 
-    def _log_to_syslog(self, msg):
-        if HAS_SYSLOG:
-            try:
-                module = 'ansible-%s' % self._name
-                facility = getattr(syslog, self._syslog_facility, syslog.LOG_USER)
-                syslog.openlog(str(module), 0, facility)
-                syslog.syslog(syslog.LOG_INFO, msg)
-            except (TypeError, ValueError) as e:
-                self.fail_json(
-                    msg='Failed to log to syslog (%s). To proceed anyway, '
-                        'disable syslog logging by setting no_target_syslog '
-                        'to True in your Ansible config.' % to_native(e),
-                    msg_to_log=msg,
-                )
-
     def debug(self, msg):
         if self._debug:
             self.log('[debug] %s' % msg)
 
     def log(self, msg, log_args=None):
 
-        if not self.no_log:
+        if self.no_log:
+            return
 
-            if log_args is None:
-                log_args = dict()
+        if not isinstance(msg, (bytes, str)):
+            raise TypeError("msg should be a string (got %s)" % type(msg))
 
-            module = 'ansible-%s' % self._name
-            if isinstance(module, bytes):
-                module = module.decode('utf-8', 'replace')
+        if isinstance(msg, bytes):
+            msg = msg.decode('utf-8', 'replace')
 
-            # 6655 - allow for accented characters
-            if not isinstance(msg, (bytes, str)):
-                raise TypeError("msg should be a string (got %s)" % type(msg))
+        msg = remove_values(msg, self.no_log_values)
 
-            # We want journal to always take text type
-            # syslog takes bytes on py2, text type on py3
-            if isinstance(msg, bytes):
-                journal_msg = msg.decode('utf-8', 'replace')
-            else:
-                # TODO: surrogateescape is a danger here on Py3
-                journal_msg = msg
-
-            if self._target_log_info:
-                journal_msg = ' '.join([self._target_log_info, journal_msg])
-
-            # ensure we clean up secrets!
-            journal_msg = remove_values(journal_msg, self.no_log_values)
-
-            if has_journal:
-                journal_args = [("MODULE", os.path.basename(__file__))]
-                for arg in log_args:
-                    name, value = (arg.upper(), str(log_args[arg]))
-                    if name in (
-                        'PRIORITY', 'MESSAGE', 'MESSAGE_ID',
-                        'CODE_FILE', 'CODE_LINE', 'CODE_FUNC',
-                        'SYSLOG_FACILITY', 'SYSLOG_IDENTIFIER',
-                        'SYSLOG_PID',
-                    ):
-                        name = "_%s" % name
-                    journal_args.append((name, value))
-
-                try:
-                    if HAS_SYSLOG:
-                        # If syslog_facility specified, it needs to convert
-                        #  from the facility name to the facility code, and
-                        #  set it as SYSLOG_FACILITY argument of journal.send()
-                        facility = getattr(syslog,
-                                           self._syslog_facility,
-                                           syslog.LOG_USER) >> 3
-                        journal.send(MESSAGE=u"%s %s" % (module, journal_msg),
-                                     SYSLOG_FACILITY=facility,
-                                     **dict(journal_args))
-                    else:
-                        journal.send(MESSAGE=u"%s %s" % (module, journal_msg),
-                                     **dict(journal_args))
-                except OSError:
-                    # fall back to syslog since logging to journal failed
-                    self._log_to_syslog(journal_msg)
-            else:
-                self._log_to_syslog(journal_msg)
+        try:
+            _logging.log_to_system(
+                msg,
+                module_name=self._name,
+                log_args=log_args,
+                syslog_facility=self._syslog_facility,
+                target_log_info=self._target_log_info,
+            )
+        except (TypeError, ValueError) as e:
+            self.fail_json(
+                msg='Failed to log to syslog (%s). To proceed anyway, '
+                    'disable syslog logging by setting no_target_syslog '
+                    'to True in your Ansible config.' % to_native(e),
+                msg_to_log=msg,
+            )
 
     def _log_invocation(self):
         """ log that ansible ran the module """
