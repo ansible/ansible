@@ -1,0 +1,28 @@
+# This is the configuration template for ansible-test AWS integration tests.
+#
+# You do not need this template if you are:
+#
+# 1) Running integration tests without using ansible-test.
+# 2) Using the automatically provisioned AWS credentials in ansible-test.
+#
+# If you do not want to use the automatically provisioned temporary AWS credentials,
+# fill in the @VAR placeholders below and save this file without the .template extension,
+# into the tests/integration directory of the collection you're testing.
+# If you need to omit optional fields like security_token, comment out that line.
+# This will cause ansible-test to use the given configuration instead of temporary credentials.
+#
+# NOTE: Automatic provisioning of AWS credentials requires an ansible-core-ci API key.
+
+[default]
+aws_access_key: @ACCESS_KEY
+aws_secret_key: @SECRET_KEY
+security_token: @SECURITY_TOKEN
+aws_region: @REGION
+# aws_cleanup controls whether the environment is cleaned up after tests have completed
+# This only applies to tests that have a cleanup stage
+# Defaults to true when using this template
+# aws_cleanup: true
+# aliases for backwards compatibility with older integration test playbooks
+ec2_access_key: {{ aws_access_key }}
+ec2_secret_key: {{ aws_secret_key }}
+ec2_region: {{ aws_region }}

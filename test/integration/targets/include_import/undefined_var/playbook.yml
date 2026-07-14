@@ -1,0 +1,35 @@
+---
+- hosts: testhost
+  gather_facts: false
+  tasks:
+    - include_tasks: "include_tasks.yml"
+      ignore_errors: True
+      register: "_include_tasks_result"
+      when:
+        - "_undefined == 'yes'"
+
+    - assert:
+        that:
+          - "_include_tasks_result is failed"
+          - "_include_tasks_task_result is not defined"
+        msg: "'include_tasks' did not evaluate it's attached condition and failed"
+
+    - include_role:
+        name: "no_log"
+      ignore_errors: True
+      register: "_include_role_result"
+      when:
+        - "_undefined == 'yes'"
+
+    - assert:
+        that:
+          - "_include_role_result is failed"
+        msg: "'include_role' did not evaluate it's attached condition and failed"
+
+    - import_tasks: include_that_defines_var.yml
+      when:
+        - "_undefined == 'yes'"
+
+    - assert:
+        that:
+          - _include_defined_result == 'good'

@@ -1,0 +1,260 @@
+- set_fact:
+    become_test_username: ansible_become_test
+    become_test_admin_username: ansible_become_admin
+    gen_pw: "{{ 'password123!' + lookup('password', '/dev/null chars=ascii_letters,digits length=8') }}"
+
+- name: create unprivileged user
+  win_user:
+    name: "{{ become_test_username }}"
+    password: "{{ gen_pw }}"
+    update_password: always
+    groups: Users
+  register: user_limited_result
+
+- name: create a privileged user
+  win_user:
+    name: "{{ become_test_admin_username }}"
+    password: "{{ gen_pw }}"
+    update_password: always
+    groups: Administrators
+  register: user_admin_result
+
+- name: add requisite logon rights for test user
+  win_user_right:
+    name: '{{item}}'
+    users: '{{become_test_username}}'
+    action: add
+  with_items:
+  - SeNetworkLogonRight
+  - SeInteractiveLogonRight
+  - SeBatchLogonRight
+
+- name: fetch current target date/time for log filtering
+  raw: '[datetime]::now | Out-String'
+  register: test_starttime
+
+- name: execute tests and ensure that test user is deleted regardless of success/failure
+  block:
+  - name: ensure current user is not the become user
+    win_whoami:
+    register: whoami_out
+    failed_when: whoami_out.account.sid == user_limited_result.sid or whoami_out.account.sid == user_admin_result.sid
+
+  - name: get become user profile dir so we can clean it up later
+    vars: &become_vars
+      ansible_become_user: "{{ become_test_username }}"
+      ansible_become_password: "{{ gen_pw }}"
+      ansible_become_method: runas
+      ansible_become: yes
+    win_shell: $env:USERPROFILE
+    register: profile_dir_out
+
+  - name: ensure profile dir contains test username (eg, if become fails silently, prevent deletion of real user profile)
+    assert:
+      that:
+      - become_test_username in profile_dir_out.stdout_lines[0]
+
+  - name: get become admin user profile dir so we can clean it up later
+    vars: &admin_become_vars
+      ansible_become_user: "{{ become_test_admin_username }}"
+      ansible_become_password: "{{ gen_pw }}"
+      ansible_become_method: runas
+      ansible_become: yes
+    win_shell: $env:USERPROFILE
+    register: admin_profile_dir_out
+
+  - name: ensure profile dir contains admin test username
+    assert:
+      that:
+      - become_test_admin_username in admin_profile_dir_out.stdout_lines[0]
+
+  - name: test become runas via task vars (underprivileged user)
+    vars: *become_vars
+    win_whoami:
+    register: whoami_out
+
+  - name: verify output
+    assert:
+      that:
+      - whoami_out.account.sid == user_limited_result.sid
+      - whoami_out.account.account_name == become_test_username
+      - whoami_out.label.account_name == 'Medium Mandatory Level'
+      - whoami_out.label.sid == 'S-1-16-8192'
+      - whoami_out.logon_type == 'Interactive'
+
+  - name: test become runas via task vars (privileged user)
+    vars: *admin_become_vars
+    win_whoami:
+    register: whoami_out
+
+  - name: verify output
+    assert:
+      that:
+      - whoami_out.account.sid == user_admin_result.sid
+      - whoami_out.account.account_name == become_test_admin_username
+      - whoami_out.label.account_name == 'High Mandatory Level'
+      - whoami_out.label.sid == 'S-1-16-12288'
+      - whoami_out.logon_type == 'Interactive'
+
+  - name: test become runas via task keywords
+    vars:
+      ansible_become_password: "{{ gen_pw }}"
+    become: yes
+    become_method: runas
+    become_user: "{{ become_test_username }}"
+    win_shell: whoami
+    register: whoami_out
+
+  - name: verify output
+    assert:
+      that:
+      - whoami_out.stdout_lines[0].endswith(become_test_username)
+
+  - name: test become via block vars
+    vars: *become_vars
+    block:
+    - name: ask who the current user is
+      win_whoami:
+      register: whoami_out
+
+    - name: verify output
+      assert:
+        that:
+        - whoami_out.account.sid == user_limited_result.sid
+        - whoami_out.account.account_name == become_test_username
+        - whoami_out.label.account_name == 'Medium Mandatory Level'
+        - whoami_out.label.sid == 'S-1-16-8192'
+        - whoami_out.logon_type == 'Interactive'
+
+  - name: test with module that will return non-zero exit code (https://github.com/ansible/ansible/issues/30468)
+    vars: *become_vars
+    setup:
+
+  - name: test become with invalid password
+    win_whoami:
+    vars:
+      ansible_become_pass: '{{ gen_pw }}abc'
+    become: yes
+    become_method: runas
+    become_user: '{{ become_test_username }}'
+    register: become_invalid_pass
+    failed_when:
+    - '"Failed to become user " + become_test_username not in become_invalid_pass.msg'
+    - '"LogonUser failed" not in become_invalid_pass.msg'
+    - '"Win32ErrorCode 1326 - 0x0000052E)" not in become_invalid_pass.msg'
+
+  - name: test become password precedence
+    win_whoami:
+    become: yes
+    become_method: runas
+    become_user: '{{ become_test_username }}'
+    vars:
+      ansible_become_pass: broken
+      ansible_runas_pass: '{{ gen_pw }}'  # should have a higher precedence than ansible_become_pass
+
+  - name: test become + async
+    vars: *become_vars
+    win_command: whoami
+    async: 10
+    register: whoami_out
+
+  - name: verify become + async worked
+    assert:
+      that:
+      - whoami_out is successful
+      - become_test_username in whoami_out.stdout
+
+  - name: test failure with string become invalid key
+    vars: *become_vars
+    win_whoami:
+    become_flags: logon_type=batch invalid_flags=a
+    become_method: runas
+    register: failed_flags_invalid_key
+    ignore_errors: true
+
+  - name: test failure with invalid logon_type
+    vars: *become_vars
+    win_whoami:
+    become_flags: logon_type=invalid
+    register: failed_flags_invalid_type
+    ignore_errors: true
+
+  - name: test failure with invalid logon_flag
+    vars: *become_vars
+    win_whoami:
+    become_flags: logon_flags=with_profile,invalid
+    register: failed_flags_invalid_flag
+    ignore_errors: true
+
+  - name: assert test failures with invalid runas options
+    assert:
+      that:
+      - failed_flags_invalid_key.msg is contains "become_flags key 'invalid_flags' is not a valid runas flag, must be 'logon_type' or 'logon_flags'"
+      - >-
+        failed_flags_invalid_type.msg is contains "become_flags logon_type value 'invalid' is not valid, valid values are: interactive, network, batch, service, unlock, network_cleartext, new_credentials"
+      - >-
+        failed_flags_invalid_flag.msg is contains "become_flags logon_flags value 'invalid' is not valid, valid values are: none, with_profile, netcredentials_only"
+
+  - name: echo some non ascii characters
+    win_command: cmd.exe /c echo über den Fußgängerübergang gehen
+    vars: *become_vars
+    register: nonascii_output
+
+  - name: assert echo some non ascii characters
+    assert:
+      that:
+      - nonascii_output is changed
+      - nonascii_output.rc == 0
+      - nonascii_output.stdout_lines|count == 1
+      - nonascii_output.stdout_lines[0] == 'über den Fußgängerübergang gehen'
+      - nonascii_output.stderr == ''
+
+  - name: get PS events containing password or module args created since test start
+    raw: |
+      $dt=[datetime]"{{ test_starttime.stdout|trim }}"
+      (Get-WinEvent -LogName Microsoft-Windows-Powershell/Operational |
+      ? { $_.TimeCreated -ge $dt -and $_.Message -match "{{ gen_pw }}" }).Count
+    register: ps_log_count
+
+  - name: assert no PS events contain password or module args
+    assert:
+      that:
+      - ps_log_count.stdout | int == 0
+
+# FUTURE: test raw + script become behavior once they're running under the exec wrapper again
+# FUTURE: add standalone playbook tests to include password prompting and play become keywords
+
+  always:
+  - name: remove explicit logon rights for test user
+    win_user_right:
+      name: '{{item}}'
+      users: '{{become_test_username}}'
+      action: remove
+    with_items:
+    - SeNetworkLogonRight
+    - SeInteractiveLogonRight
+    - SeBatchLogonRight
+
+  - name: ensure underprivileged test user is deleted
+    win_user:
+      name: "{{ become_test_username }}"
+      state: absent
+
+  - name: ensure privileged test user is deleted
+    win_user:
+      name: "{{ become_test_admin_username }}"
+      state: absent
+
+  - name: ensure underprivileged test user profile is deleted
+    # NB: have to work around powershell limitation of long filenames until win_file fixes it
+    win_shell: rmdir /S /Q {{ profile_dir_out.stdout_lines[0] }}
+    args:
+      executable: cmd.exe
+    when: become_test_username in profile_dir_out.stdout_lines[0] | default([])
+
+  - name: ensure privileged test user profile is deleted
+    # NB: have to work around powershell limitation of long filenames until win_file fixes it
+    win_shell: rmdir /S /Q {{ admin_profile_dir_out.stdout_lines[0] }}
+    args:
+      executable: cmd.exe
+    when: become_test_admin_username in admin_profile_dir_out.stdout_lines[0] | default([])

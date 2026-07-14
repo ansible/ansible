@@ -1,0 +1,6 @@
+---
+ - name: skip test on unsupported platforms
+   meta: end_play
+   when: ansible_distribution not in ('Ubuntu', 'Debian')
+
+ - include_tasks: file='dpkg_selections.yaml'

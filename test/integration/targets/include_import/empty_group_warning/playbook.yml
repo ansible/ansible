@@ -1,0 +1,13 @@
+---
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Group
+      group_by:
+        key: test_{{ inventory_hostname }}
+
+- hosts: test_localhost
+  gather_facts: false
+  tasks:
+    - name: Print
+      import_tasks: tasks.yml

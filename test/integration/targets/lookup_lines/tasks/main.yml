@@ -1,0 +1,13 @@
+- name: test with_lines
+  #shell: echo "{{ item }}"
+  set_fact: "{{ item }}=set"
+  with_lines: for i in $(seq 1 5); do echo "l$i" ; done;
+
+- name: verify with_lines results
+  assert:
+    that:
+        - "l1 == 'set'"
+        - "l2 == 'set'"
+        - "l3 == 'set'"
+        - "l4 == 'set'"
+        - "l5 == 'set'"

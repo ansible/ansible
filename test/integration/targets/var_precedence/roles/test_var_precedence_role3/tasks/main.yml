@@ -1,0 +1,14 @@
+- debug: var=extra_var
+- debug: var=param_var
+- debug: var=vars_var
+- debug: var=vars_files_var
+- debug: var=vars_files_var_role
+- debug: var=defaults_file_var_role1
+- assert:
+    that:
+      - 'extra_var == "extra_var"'
+      - 'param_var == "param_var_role3"'
+      - 'vars_var == "vars_var"'
+      - 'vars_files_var == "vars_files_var"'
+      - 'vars_files_var_role == "vars_files_var_role3"'
+      - 'defaults_file_var_role3 == "overridden from inventory"'

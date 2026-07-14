@@ -1,0 +1,62 @@
+---
+#- name: Host in playbook is an integer
+#  hosts: 42
+#  tags: numeric_host
+#  tasks:
+#    - command: echo 'Running on {{ inventory_hostname }}'
+
+#- name: Host in playbook is a string of digits
+#  hosts: "42"
+#  tags: string_digit_host
+#  tasks:
+#    - command: echo 'Running on {{ inventory_hostname }}'
+
+#- name: Host in playbook is a list of integer
+#  hosts:
+#    - 42
+#  tags: numeric_host_in_list
+#  tasks:
+#    - command: echo 'Running on {{ inventory_hostname }}'
+
+- name: Host in playbook is a list of strings of digits
+  hosts:
+    - "42"
+  gather_facts: False
+  tags: string_digit_host_in_list
+  tasks:
+    - command: echo 'Running on {{ inventory_hostname }}'
+
+- name: Hosts taken from kv extra_var on the CLI
+  hosts: "{{ target_kv }}"
+  gather_facts: False
+  tags: hosts_from_kv_string
+  tasks:
+    - command: echo 'Running on {{ inventory_hostname }}'
+
+- name: Hosts taken from a json string on the CLI
+  hosts: "{{ target_json_cli }}"
+  gather_facts: False
+  tags: hosts_from_cli_json_string
+  tasks:
+    - command: echo 'Running on {{ inventory_hostname }}'
+
+- name: Hosts taken from a json list on the CLI
+  hosts: "{{ target_json_cli_list }}"
+  gather_facts: False
+  tags: hosts_from_cli_json_list
+  tasks:
+    - command: echo 'Running on {{ inventory_hostname }}'
+
+- name: Hosts is taken from a json string in an extra_vars file
+  hosts: "{{ target_json_file }}"
+  gather_facts: False
+  tags: hosts_from_json_file_string
+  tasks:
+    - command: echo 'Running on {{ inventory_hostname }}'
+
+- name: Hosts is taken from a json list in an extra_vars file
+  hosts: "{{ target_json_file_list }}"
+  gather_facts: False
+  tags: hosts_from_json_file_list
+  tasks:
+    - command: echo 'Running on {{ inventory_hostname }}'

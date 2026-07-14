@@ -1,0 +1,125 @@
+- hosts: testhost
+  gather_facts: no
+  tasks:
+  - name: Use a specially crafted module to see if things were imported correctly
+    test:
+    register: result
+
+  - name: Check that the module imported the correct version of each module_util
+    assert:
+      that:
+        - 'result["abcdefgh"] == "abcdefgh"'
+        - 'result["bar0"] == "bar0"'
+        - 'result["bar1"] == "bar1"'
+        - 'result["bar2"] == "bar2"'
+        - 'result["baz1"] == "baz1"'
+        - 'result["baz2"] == "baz2"'
+        - 'result["foo0"] == "foo0"'
+        - 'result["foo1"] == "foo1"'
+        - 'result["foo2"] == "foo2"'
+        - 'result["qux1"] == "qux1"'
+        - 'result["qux2"] == ["qux2:quux", "qux2:quuz"]'
+        - 'result["spam1"] == "spam1"'
+        - 'result["spam2"] == "spam2"'
+        - 'result["spam3"] == "spam3"'
+        - 'result["spam4"] == "spam4"'
+        - 'result["spam5"] == ["spam5:bacon", "spam5:eggs"]'
+        - 'result["spam6"] == ["spam6:bacon", "spam6:eggs"]'
+        - 'result["spam7"] == ["spam7:bacon", "spam7:eggs"]'
+        - 'result["spam8"] == ["spam8:bacon", "spam8:eggs"]'
+
+  # Test that overriding something in module_utils with something in the local library works
+  - name: Test that local module_utils overrides facts.py
+    test_override:
+    register: result
+
+  - name: Make sure the we used the local ansible_release.py, not the one shipped with ansible
+    assert:
+      that:
+        - result["data"] == "overridden ansible_release.py"
+
+  - name: Test that importing a module that only exists inside of a submodule does not work
+    test_failure:
+    ignore_errors: True
+    register: result
+
+  - name: Make sure we failed in AnsiBallZ
+    assert:
+      that:
+        - result is failed
+        - result.msg is contains "Could not find imported module support code for ansible.legacy.test_failure. Looked for (['ansible.module_utils.zebra.foo4', 'ansible.module_utils.zebra'])"
+
+  - name: Test that alias deprecation works
+    test_alias_deprecation:
+      baz: 'bar'
+    register: result
+
+  - name: Assert that the deprecation message is given correctly
+    assert:
+      that:
+        - result.deprecations[-1].msg == "Alias 'baz' is deprecated. See the module docs for more information"
+        - result.deprecations[-1].version == '9.99'
+
+  - block:
+      - import_role:
+          name: setup_remote_tmp_dir
+
+      - name: Get a string with a \0 in it
+        command: echo -e 'hi\0foo'
+        register: string_with_null
+
+      - name: Use the null string as a module parameter
+        lineinfile:
+          path: "{{ remote_tmp_dir }}/nulltest"
+          line: "{{ string_with_null.stdout }}"
+          create: yes
+        ignore_errors: yes
+        register: nulltest
+
+      - name: See if the file exists
+        stat:
+          path: "{{ remote_tmp_dir }}/nulltest"
+        register: nullstat
+
+      - assert:
+          that:
+            - nulltest is failed
+            - nulltest.msg_to_log.startswith('Invoked ')
+            - nulltest.msg.startswith('Failed to log to syslog')
+        # Conditionalize this, because when we log with something other than
+        # syslog, it's probably successful and these assertions will fail.
+        when: nulltest is failed
+
+      # Ensure we fail out early and don't actually run the module if logging
+      # failed.
+      - assert:
+          that:
+            - nullstat.stat.exists == nulltest is successful
+    always:
+      - file:
+          path: "{{ remote_tmp_dir }}/nulltest"
+          state: absent
+
+  - name: Test that date and datetime in module output works
+    test_datetime:
+      date: "2020-10-05"
+      datetime: "2020-10-05T10:05:05"
+    register: datetimetest
+
+  - assert:
+      that:
+        - datetimetest.date == '2020-10-05'
+        - datetimetest.datetime == '2020-10-05T10:05:05'
+
+  - name: Test that optional imports behave properly
+    test_optional:
+    register: optionaltest
+
+  - assert:
+      that:
+      - optionaltest is success
+      - optionaltest.msg == 'all missing optional imports behaved as expected'
+
+  - name: Test heuristic_log_sanitize
+    test_heuristic_log_sanitize:
+      data: https://user:pass@example.org/

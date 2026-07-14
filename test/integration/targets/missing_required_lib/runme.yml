@@ -1,0 +1,57 @@
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - command: ansible localhost -m import_role -a role=missing_required_lib -e url=true -e reason=true
+      register: missing_required_lib_all
+      failed_when: missing_required_lib_all.rc == 0
+
+    - command: ansible localhost -m import_role -a role=missing_required_lib
+      register: missing_required_lib_none
+      failed_when: missing_required_lib_none.rc == 0
+
+    - command: ansible localhost -m import_role -a role=missing_required_lib -e url=true
+      register: missing_required_lib_url
+      failed_when: missing_required_lib_url.rc == 0
+
+    - command: ansible localhost -m import_role -a role=missing_required_lib -e reason=true
+      register: missing_required_lib_reason
+      failed_when: missing_required_lib_reason.rc == 0
+
+    - assert:
+        that:
+          - missing_required_lib_all.stdout is search(expected_all)
+          - missing_required_lib_none.stdout is search(expected_none)
+          - missing_required_lib_url.stdout is search(expected_url)
+          - missing_required_lib_reason.stdout is search(expected_reason)
+      vars:
+        expected_all: >-
+          Failed to import the required Python library \(ansible_missing_lib\) on
+          \S+'s Python \S+\.
+          This is required for fun\. See https://github.com/ansible/ansible for
+          more info. Please read the module documentation and install it in the
+          appropriate location\. If the required library is installed, but Ansible
+          is using the wrong Python interpreter, please consult the documentation
+          on ansible_python_interpreter
+        expected_none: >-
+          Failed to import the required Python library \(ansible_missing_lib\) on
+          \S+'s Python \S+\.
+          Please read the module documentation and install it in the
+          appropriate location\. If the required library is installed, but Ansible
+          is using the wrong Python interpreter, please consult the documentation
+          on ansible_python_interpreter
+        expected_url: >-
+          Failed to import the required Python library \(ansible_missing_lib\) on
+          \S+'s Python \S+\.
+          See https://github.com/ansible/ansible for
+          more info\. Please read the module documentation and install it in the
+          appropriate location\. If the required library is installed, but Ansible
+          is using the wrong Python interpreter, please consult the documentation
+          on ansible_python_interpreter
+        expected_reason: >-
+          Failed to import the required Python library \(ansible_missing_lib\) on
+          \S+'s Python \S+\.
+          This is required for fun\.
+          Please read the module documentation and install it in the
+          appropriate location\. If the required library is installed, but Ansible
+          is using the wrong Python interpreter, please consult the documentation
+          on ansible_python_interpreter

@@ -1,0 +1,14 @@
+- name: "Testing end_host with strategy={{ test_strategy | default('linear') }}"
+  hosts:
+    - testhost
+    - testhost2
+  gather_facts: no
+  strategy: "{{ test_strategy | default('linear') }}"
+  tasks:
+    - debug:
+
+    - meta: end_host
+      when: "host_var_role_name == 'role2'"  # end play for testhost2, see inventory
+
+    - debug:
+        msg: "play not ended for {{ inventory_hostname }}"

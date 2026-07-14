@@ -1,0 +1,26 @@
+[local]
+testhost ansible_connection=local ansible_python_interpreter="{{ ansible_playbook_python }}"
+testhost2 ansible_connection=local  # connections are never made to this host, only host vars are accessed
+
+# the following inline declarations are accompanied
+# by (preferred) group_vars/ and host_vars/ variables
+# and are used in testing of variable precedence
+
+[arbitrary_parent:children]
+local
+
+[local:vars]
+parent_var=6000
+groups_tree_var=5000
+
+[arbitrary_parent:vars]
+groups_tree_var=4000
+overridden_in_parent=1000
+
+[arbitrary_grandparent:children]
+arbitrary_parent
+
+[arbitrary_grandparent:vars]
+groups_tree_var=3000
+grandparent_var=2000
+overridden_in_parent=2000

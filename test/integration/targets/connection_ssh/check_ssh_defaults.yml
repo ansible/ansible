@@ -1,0 +1,29 @@
+- hosts: ssh
+  gather_facts: false
+  vars:
+    ansible_connection: ssh
+    ansible_ssh_timeout: 10
+  tasks:
+    - name: contain the madness
+      block:
+        - name: test all is good
+          ping:
+
+        - name: start the fun
+          meta: reset_connection
+
+        - name: now test we can use wrong port from ssh/config
+          ping:
+          ignore_unreachable: True
+          vars:
+            ansible_ssh_args: "-F {{playbook_dir}}/files/port_override_ssh.cfg"
+          register: expected
+
+        - name: check all is as expected
+          assert:
+            that:
+              - expected['unreachable']|bool
+              - "'2222' in expected['msg']"
+      always:
+        - name: make sure we don't cache the bad connection
+          meta: reset_connection

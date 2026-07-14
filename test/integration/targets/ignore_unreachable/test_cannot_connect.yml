@@ -1,0 +1,23 @@
+- hosts: nonexistent
+  ignore_unreachable: true
+  gather_facts: false
+  tasks:
+    - name: Hi
+      ping:
+    - name: This should print anyway
+      debug:
+        msg: This should print worked even though host was unreachable
+    - name: Hi
+      ping:
+      register: should_fail
+
+- hosts: localhost
+  gather_facts: no
+  tasks:
+    - meta: clear_host_errors
+
+    - assert:
+        that:
+          - hostvars.nonexistent.should_fail is unreachable
+          - hostvars.nonexistent.should_fail is not skipped
+          - hostvars.nonexistent.should_fail is not failed

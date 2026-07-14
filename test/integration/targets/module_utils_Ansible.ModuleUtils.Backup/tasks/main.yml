@@ -1,0 +1,10 @@
+---
+- name: call module with BackupFile tests
+  backup_file_test:
+  register: backup_file_test
+
+- name: assert call module with BackupFile tests
+  assert:
+    that:
+    - not backup_file_test is failed
+    - backup_file_test.res == 'success'

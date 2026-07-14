@@ -1,0 +1,21 @@
+# The pulp container has a long start up time.
+# The first task to interact with pulp needs to wait until it responds appropriately.
+- name: Wait for Pulp API
+  uri:
+    url: '{{ galaxy_ng_server }}/pulp/api/v3/repositories/ansible/ansible/'
+    user: '{{ galaxy_user }}'
+    password: '{{ galaxy_password }}'
+    force_basic_auth: true
+  register: this
+  until: this is successful
+  delay: 1
+  retries: 60
+
+- name: Verify Galaxy NG server
+  uri:
+    url: "{{ amanda }}/api/"
+    force_basic_auth: true
+
+- name: Verify Pulp server
+  uri:
+    url: "{{ galaxy_ng_server }}"

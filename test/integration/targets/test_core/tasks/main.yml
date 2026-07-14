@@ -1,0 +1,397 @@
+- name: Failure
+  set_fact:
+    hello: world
+  failed_when: true
+  ignore_errors: yes
+  register: intentional_failure
+
+- name: Success
+  set_fact:
+    hello: world
+  register: intentional_success
+
+- name: Try failure test on non-dictionary
+  set_fact:
+    hello: "{{ 'nope' is failure }}"
+  ignore_errors: yes
+  register: misuse_of_failure
+
+- name: Assert failure tests work
+  assert:
+    that:
+      - intentional_failure is failed  # old name
+      - intentional_failure is failure
+      - intentional_success is not failure
+      - misuse_of_failure is failed
+
+- name: Assert successful tests work
+  assert:
+    that:
+      - intentional_success is succeeded  # old name
+      - intentional_success is success  # old name
+      - intentional_success is successful
+      - intentional_failure is not successful
+
+- name: Try reachable host
+  command: id
+  register: reachable_host
+
+- name: Try unreachable host
+  command: id
+  delegate_to: unreachable
+  ignore_unreachable: yes
+  ignore_errors: yes
+  register: unreachable_host
+
+- name: Try reachable test on non-dictionary
+  set_fact:
+    hello: "{{ 'nope' is reachable }}"
+  ignore_errors: yes
+  register: misuse_of_reachable
+
+- name: Assert reachable tests work
+  assert:
+    that:
+      - misuse_of_reachable is failed
+      - reachable_host is reachable
+      - unreachable_host is not reachable
+
+- name: Try unreachable test on non-dictionary
+  set_fact:
+    hello: "{{ 'nope' is unreachable }}"
+  ignore_errors: yes
+  register: misuse_of_unreachable
+
+- name: Assert unreachable tests work
+  assert:
+    that:
+      - misuse_of_unreachable is failed
+      - reachable_host is not unreachable
+      - unreachable_host is unreachable
+
+- name: Make changes
+  file:
+    path: dir_for_changed
+    state: directory
+  register: directory_created
+
+- name: Make no changes
+  file:
+    path: dir_for_changed
+    state: directory
+  register: directory_unchanged
+
+- name: Try changed test on non-dictionary
+  set_fact:
+    hello: "{{ 'nope' is changed }}"
+  ignore_errors: yes
+  register: misuse_of_changed
+
+# providing artificial task results since there are no modules in ansible-core that provide a 'results' list instead of 'changed'
+- name: Prepare artificial task results
+  set_fact:
+    results_all_changed:
+      results:
+        - changed: true
+        - changed: true
+    results_some_changed:
+      results:
+        - changed: true
+        - changed: false
+    results_none_changed:
+      results:
+        - changed: false
+        - changed: false
+    results_missing_changed: {}
+
+- name: Assert changed tests work
+  assert:
+    that:
+      - directory_created is changed
+      - directory_unchanged is not changed
+      - misuse_of_changed is failed
+      - results_all_changed is changed
+      - results_some_changed is changed
+      - results_none_changed is not changed
+      - results_missing_changed is not changed
+
+- name: Skip me
+  set_fact:
+    hello: world
+  when: false
+  register: skipped_task
+
+- name: Don't skip me
+  set_fact:
+    hello: world
+  register: executed_task
+
+- name: Skip me with multiple conditions
+  set_fact:
+    hello: world
+  when:
+  - True == True
+  - foo == 'bar'
+  vars:
+    foo: foo
+  register: skipped_task_multi_condition
+
+- name: Try skipped test on non-dictionary
+  set_fact:
+    hello: "{{ 'nope' is skipped }}"
+  ignore_errors: yes
+  register: misuse_of_skipped
+
+- name: Assert skipped tests work
+  assert:
+    that:
+      - skipped_task is skipped
+      - skipped_task.false_condition == False
+      - executed_task is not skipped
+      - misuse_of_skipped is failure
+      - skipped_task_multi_condition is skipped
+      - skipped_task_multi_condition.false_condition == "foo == 'bar'"
+
+- name: Not an async task
+  set_fact:
+    hello: world
+  register: non_async_task
+
+- name: Complete an async task
+  command: id
+  async: 10
+  poll: 1
+  register: async_completed
+
+- name: Start an async task without waiting for completion
+  shell: sleep 3
+  async: 10
+  poll: 0
+  register: async_incomplete
+
+- name: Try finished test on non-dictionary
+  set_fact:
+    hello: "{{ 'nope' is finished }}"
+  ignore_errors: yes
+  register: misuse_of_finished
+
+- name: Assert finished tests work (warning expected)
+  assert:
+    that:
+      - non_async_task is finished
+      - misuse_of_finished is failed
+      - async_completed is finished
+      - async_incomplete is not finished
+
+- name: Try started test on non-dictionary
+  set_fact:
+    hello: "{{ 'nope' is started }}"
+  ignore_errors: yes
+  register: misuse_of_started
+
+- name: Assert started tests work (warning expected)
+  assert:
+    that:
+      - non_async_task is started
+      - misuse_of_started is failed
+      - async_completed is started
+      - async_incomplete is started
+
+- name: Assert match tests work
+  assert:
+    that:
+      - "'hello' is match('h.ll.')"
+      - "'hello' is not match('.ll.')"
+
+- name: Assert search tests work
+  assert:
+    that:
+      - "'hello' is search('.l')"
+      - "'hello' is not search('nope')"
+
+- name: Assert regex tests work
+  assert:
+    that:
+      - "'hello' is regex('.l')"
+      - "'hello' is regex('.L', ignorecase=true)"
+      - "'hello\nAnsible' is regex('^Ansible', multiline=true)"
+      - "'hello' is not regex('.L')"
+      - "'hello\nAnsible' is not regex('^Ansible')"
+
+- name: Try regex test with an invalid match_type
+  set_fact:
+    result: "{{ '1.0' is regex('.l', match_type='invalid') }}"
+  ignore_errors: yes
+  register: regex_invalid_match_type
+
+- name: Assert regex test raises an error when a match_type is invalid
+  assert:
+    that:
+    - regex_invalid_match_type is failed
+    - "'Invalid match_type specified.' in regex_invalid_match_type.msg"
+
+- name: Try version tests with bad operator
+  set_fact:
+    result: "{{ '1.0' is version('1.0', 'equals') }}"
+  ignore_errors: yes
+  register: version_bad_operator
+
+- name: Try version tests with bad value
+  set_fact:
+    result: "{{ '1.0' is version('nope', '==', true) }}"
+  ignore_errors: yes
+  register: version_bad_value
+
+- name: Try version with both strict and version_type
+  debug:
+    msg: "{{ '1.0' is version('1.0', strict=False, version_type='loose') }}"
+  ignore_errors: yes
+  register: version_strict_version_type
+
+- name: Try version with bad version_type
+  debug:
+    msg: "{{ '1.0' is version('1.0', version_type='boom') }}"
+  ignore_errors: yes
+  register: version_bad_version_type
+
+- name: Try version with bad semver
+  debug:
+    msg: "{{ 'nope' is version('nopenope', version_type='semver') }}"
+  ignore_errors: yes
+  register: version_bad_semver
+
+- name: Try version with empty input value
+  debug:
+    msg: "{{ '' is version('1.0', '>') }}"
+  ignore_errors: yes
+  register: version_empty_input
+
+- name: Try version with empty comparison value
+  debug:
+    msg: "{{ '1.0' is version('', '>') }}"
+  ignore_errors: yes
+  register: version_empty_comparison
+
+- name: Try version with empty input and comparison values
+  debug:
+    msg: "{{ '' is version('', '>') }}"
+  ignore_errors: yes
+  register: version_empty_both
+
+- name: Assert version tests work
+  assert:
+    that:
+      - "'1.0' is version_compare('1.0', '==')"  # old name
+      - "'1.0' is version('1.0', '==')"
+      - "'1.0' is version('2.0', '!=')"
+      - "'1.0' is version('2.0', '<')"
+      - "'2.0' is version('1.0', '>')"
+      - "'1.0' is version('1.0', '<=')"
+      - "'1.0' is version('1.0', '>=')"
+      - "'1.0' is version_compare('1.0', '==', true)"  # old name
+      - "'1.0' is version('1.0', '==', true)"
+      - "'1.0' is version('2.0', '!=', true)"
+      - "'1.0' is version('2.0', '<', true)"
+      - "'2.0' is version('1.0', '>', true)"
+      - "'1.0' is version('1.0', '<=', true)"
+      - "'1.0' is version('1.0', '>=', true)"
+      - "'1.2.3' is version('2.0.0', 'lt', version_type='semver')"
+      - "'2.14.0rc1' is version('2.14.0', 'lt', version_type='pep440')"
+      - version_bad_operator is failed
+      - version_bad_value is failed
+      - version_strict_version_type is failed
+      - version_bad_version_type is failed
+      - version_bad_semver is failed
+      - version_empty_input is failed
+      - version_empty_input is search('version value cannot be empty')
+      - version_empty_comparison is failed
+      - version_empty_comparison is search('to compare against cannot be empty')
+      - version_empty_both is failed
+      - version_empty_both is search('version value cannot be empty')
+
+- name: Assert any tests work
+  assert:
+    that:
+      - "[true, false] is any"
+      - "[false] is not any"
+
+- name: Assert all tests work
+  assert:
+    that:
+      - "[true] is all"
+      - "[true, false] is not all"
+
+- name: Assert truthy tests work
+  assert:
+    that:
+      - '"string" is truthy'
+      - '"" is not truthy'
+      - True is truthy
+      - False is not truthy
+      - true is truthy
+      - false is not truthy
+      - 1 is truthy
+      - 0 is not truthy
+      - '[""] is truthy'
+      - '[] is not truthy'
+      - '"on" is truthy(convert_bool=True)'
+      - '"off" is not truthy(convert_bool=True)'
+      - '"fred" is truthy(convert_bool=True)'
+      - '{} is not truthy'
+      - '{"key": "value"} is truthy'
+
+- name: Assert falsy tests work
+  assert:
+    that:
+      - '"string" is not falsy'
+      - '"" is falsy'
+      - True is not falsy
+      - False is falsy
+      - true is not falsy
+      - false is falsy
+      - 1 is not falsy
+      - 0 is falsy
+      - '[""] is not falsy'
+      - '[] is falsy'
+      - '"on" is not falsy(convert_bool=True)'
+      - '"off" is falsy(convert_bool=True)'
+      - '{} is falsy'
+      - '{"key": "value"} is not falsy'
+
+- name: Create vaulted variable for vault_encrypted test
+  set_fact:
+    vaulted_value: !vault |
+          $ANSIBLE_VAULT;1.1;AES256
+          35323961353038346165643738646465376139363061353835303739663538343266303232326635
+          3365353662646236356665323135633630656238316530640a663362363763633436373439663031
+          33663433383037396438656464636433653837376361313638366362333037323961316364363363
+          3835616438623261650a636164376534376661393134326662326362323131373964313961623365
+          3833
+
+- name: Assert vault_encrypted tests work
+  assert:
+    that:
+      - vaulted_value is vault_encrypted
+      - inventory_hostname is not vault_encrypted
+
+- name: Check vaulted_file test
+  assert:
+    that:
+      - "'files/notvault' is not vaulted_file"
+      - "'files/vault1' is vaulted_file"
+      - "'files/vault2' is vaulted_file"
+
+
+- name: test timeout test
+  tags:
+  - timeout
+  block:
+  - command: sleep 5
+    timeout: 3
+    register: timed
+    ignore_errors: true
+
+  - assert:
+      that:
+        - timed is timedout
+        - timed['timedout'].get('period', 0) == 3

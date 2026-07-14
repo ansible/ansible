@@ -1,0 +1,24 @@
+{
+    "name": "OmniOS",
+    "uname_v": "omnios-10b9c79",
+    "result": {
+        "distribution_release": "OmniOS v11 r151012",
+        "distribution": "OmniOS",
+        "os_family": "Solaris",
+        "distribution_version": "r151012"
+    },
+    "platform.dist": ["", "", ""],
+    "distro": {
+        "codename": "",
+        "id": "",
+        "name": "",
+        "version": "",
+        "version_best": "",
+        "os_release_info": {},
+        "lsb_release_info": {}
+    },
+    "input": {
+        "/etc/release": "  OmniOS v11 r151012\n  Copyright 2014 OmniTI Computer Consulting, Inc. All rights reserved.\n  Use is subject to license terms.\n\n"
+    },
+    "platform.system": "SunOS"
+}

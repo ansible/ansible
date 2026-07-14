@@ -1,0 +1,36 @@
+---
+# Run with --check
+- hosts: testhost
+  gather_facts: False
+  tasks:
+  - command: 'echo ran'
+    register: command_out
+
+  - name: check that this did not run in check mode
+    assert:
+      that:
+      - '"check mode" in command_out["msg"]'
+
+- hosts: testhost
+  gather_facts: False
+  check_mode: False
+  tasks:
+  - command: 'echo ran'
+    register: command_out
+
+  - name: check that play level check_mode overrode the cli
+    assert:
+      that:
+      - '"ran" in command_out["stdout"]'
+
+- hosts: testhost
+  gather_facts: False
+  tasks:
+  - command: 'echo ran'
+    register: command_out
+    check_mode: False
+
+  - name: check that task level check_mode overrode the cli
+    assert:
+      that:
+      - '"ran" in command_out["stdout"]'

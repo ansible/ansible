@@ -1,0 +1,36 @@
+- name: Get control host details
+  setup:
+  delegate_to: localhost
+  register: control_host
+- name: Get managed host details
+  setup:
+  register: managed_host
+- name: Check split state
+  stat:
+    path: "{{ output_dir }}"
+  register: split
+  ignore_errors: yes
+- name: Build non-split status message
+  set_fact:
+    message: "
+      {{ control_host.ansible_facts.ansible_user_id }}@{{ control_host.ansible_facts.ansible_hostname }} on
+      {{ control_host.ansible_facts.ansible_distribution }} {{ control_host.ansible_facts.ansible_distribution_version }}
+      {{ control_host.ansible_facts.ansible_python.executable }} ({{ control_host.ansible_facts.ansible_python_version }})
+      --[ {{ ansible_connection }} ]-->
+      {{ managed_host.ansible_facts.ansible_user_id }} on
+      {{ managed_host.ansible_facts.ansible_python.executable }} ({{ managed_host.ansible_facts.ansible_python_version }})"
+  when: split is success and split.stat.exists
+- name: Build split status message
+  set_fact:
+    message: "
+      {{ control_host.ansible_facts.ansible_user_id }}@{{ control_host.ansible_facts.ansible_hostname }} on
+      {{ control_host.ansible_facts.ansible_distribution }} {{ control_host.ansible_facts.ansible_distribution_version }}
+      {{ control_host.ansible_facts.ansible_python.executable }} ({{ control_host.ansible_facts.ansible_python_version }})
+      --[ {{ ansible_connection }} ]-->
+      {{ managed_host.ansible_facts.ansible_user_id }}@{{ managed_host.ansible_facts.ansible_hostname }} on
+      {{ managed_host.ansible_facts.ansible_distribution }} {{ managed_host.ansible_facts.ansible_distribution_version }}
+      {{ managed_host.ansible_facts.ansible_python.executable }} ({{ managed_host.ansible_facts.ansible_python_version }})"
+  when: split is not success or not split.stat.exists
+- name: Show host details
+  debug:
+    msg: "{{ message | trim }}"

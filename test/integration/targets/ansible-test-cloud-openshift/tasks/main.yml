@@ -1,0 +1,13 @@
+- name: Load kubeconfig
+  include_vars: "{{ lookup('env', 'K8S_AUTH_KUBECONFIG') }}"
+
+- name: Verify endpoints exist
+  assert:
+    that: clusters is defined
+
+- name: Verify endpoints respond
+  uri:
+    url: "{{ item.cluster.server }}"
+    validate_certs: no
+  with_items:
+    - "{{ clusters }}"

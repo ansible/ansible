@@ -1,0 +1,308 @@
+#!/usr/bin/env python
+
+from __future__ import annotations
+
+import os
+import pexpect
+import sys
+import termios
+
+
+args = sys.argv[1:]
+
+env_vars = {
+    'ANSIBLE_ROLES_PATH': './roles',
+    'ANSIBLE_NOCOLOR': 'True',
+    'ANSIBLE_RETRY_FILES_ENABLED': 'False'
+}
+
+try:
+    backspace = termios.tcgetattr(sys.stdin.fileno())[6][termios.VERASE]
+except Exception:
+    backspace = b'\x7f'
+
+os.environ.update(env_vars)
+
+# -- Plain pause -- #
+playbook = 'pause-1.yml'
+
+# Case 1 - Continue with enter
+pause_test = pexpect.spawn(
+    'ansible-playbook',
+    args=[playbook] + args,
+    timeout=10,
+    env=os.environ
+)
+
+pause_test.logfile = sys.stdout.buffer
+pause_test.expect(r'Press enter to continue, Ctrl\+C to interrupt:')
+pause_test.send('\r')
+pause_test.expect('Task after pause')
+pause_test.expect(pexpect.EOF)
+pause_test.close()
+
+
+# Case 2 - Continue with C
+pause_test = pexpect.spawn(
+    'ansible-playbook',
+    args=[playbook] + args,
+    timeout=10,
+    env=os.environ
+)
+
+pause_test.logfile = sys.stdout.buffer
+pause_test.expect(r'Press enter to continue, Ctrl\+C to interrupt:')
+pause_test.send('\x03')
+pause_test.expect("Press 'C' to continue the play or 'A' to abort")
+pause_test.send('C')
+pause_test.expect('Task after pause')
+pause_test.expect(pexpect.EOF)
+pause_test.close()
+
+
+# Case 3 - Abort with A
+pause_test = pexpect.spawn(
+    'ansible-playbook',
+    args=[playbook] + args,
+    timeout=10,
+    env=os.environ
+)
+
+pause_test.logfile = sys.stdout.buffer
+pause_test.expect(r'Press enter to continue, Ctrl\+C to interrupt:')
+pause_test.send('\x03')
+pause_test.expect("Press 'C' to continue the play or 'A' to abort")
+pause_test.send('A')
+pause_test.expect('user requested abort!')
+pause_test.expect(pexpect.EOF)
+pause_test.close()
+
+# -- Custom Prompt -- #
+playbook = 'pause-2.yml'
+
+# Case 1 - Continue with enter
+pause_test = pexpect.spawn(
+    'ansible-playbook',
+    args=[playbook] + args,
+    timeout=10,
+    env=os.environ
+)
+
+pause_test.logfile = sys.stdout.buffer
+pause_test.expect(r'Custom prompt:')
+pause_test.send('\r')
+pause_test.expect('Task after pause')
+pause_test.expect(pexpect.EOF)
+pause_test.close()
+
+
+# Case 2 - Continue with C
+pause_test = pexpect.spawn(
+    'ansible-playbook',
+    args=[playbook] + args,
+    timeout=10,
+    env=os.environ
+)
+
+pause_test.logfile = sys.stdout.buffer
+pause_test.expect(r'Custom prompt:')
+pause_test.send('\x03')
+pause_test.expect("Press 'C' to continue the play or 'A' to abort")
+pause_test.send('C')
+pause_test.expect('Task after pause')
+pause_test.expect(pexpect.EOF)
+pause_test.close()
+
+
+# Case 3 - Abort with A
+pause_test = pexpect.spawn(
+    'ansible-playbook',
+    args=[playbook] + args,
+    timeout=10,
+    env=os.environ
+)
+
+pause_test.logfile = sys.stdout.buffer
+pause_test.expect(r'Custom prompt:')
+pause_test.send('\x03')
+pause_test.expect("Press 'C' to continue the play or 'A' to abort")
+pause_test.send('A')
+pause_test.expect('user requested abort!')
+pause_test.expect(pexpect.EOF)
+pause_test.close()
+
+# -- Pause for N seconds -- #
+
+playbook = 'pause-3.yml'
+
+# Case 1 - Wait for task to continue after timeout
+pause_test = pexpect.spawn(
+    'ansible-playbook',
+    args=[playbook] + args,
+    timeout=10,
+    env=os.environ
+)
+
+pause_test.logfile = sys.stdout.buffer
+pause_test.expect(r'Pausing for \d+ seconds')
+pause_test.expect(r"\(ctrl\+C then 'C' = continue early, ctrl\+C then 'A' = abort\)")
+pause_test.expect('Task after pause')
+pause_test.expect(pexpect.EOF)
+pause_test.close()
+
+# Case 2 - Continue with Ctrl + C, C
+pause_test = pexpect.spawn(
+    'ansible-playbook',
+    args=[playbook] + args,
+    timeout=10,
+    env=os.environ
+)
+
+pause_test.logfile = sys.stdout.buffer
+pause_test.expect(r'Pausing for \d+ seconds')
+pause_test.expect(r"\(ctrl\+C then 'C' = continue early, ctrl\+C then 'A' = abort\)")
+pause_test.send('\n')  # test newline does not stop the prompt - waiting for a timeout or ctrl+C
+pause_test.send('\x03')
+pause_test.expect("Press 'C' to continue the play or 'A' to abort")
+pause_test.send('C')
+pause_test.expect('Task after pause')
+pause_test.expect(pexpect.EOF)
+pause_test.close()
+
+
+# Case 3 - Abort with Ctrl + C, A
+pause_test = pexpect.spawn(
+    'ansible-playbook',
+    args=[playbook] + args,
+    timeout=10,
+    env=os.environ
+)
+
+pause_test.logfile = sys.stdout.buffer
+pause_test.expect(r'Pausing for \d+ seconds')
+pause_test.expect(r"\(ctrl\+C then 'C' = continue early, ctrl\+C then 'A' = abort\)")
+pause_test.send('\x03')
+pause_test.expect("Press 'C' to continue the play or 'A' to abort")
+pause_test.send('A')
+pause_test.expect('user requested abort!')
+pause_test.expect(pexpect.EOF)
+pause_test.close()
+
+# -- Pause for N seconds with custom prompt -- #
+
+playbook = 'pause-4.yml'
+
+# Case 1 - Wait for task to continue after timeout
+pause_test = pexpect.spawn(
+    'ansible-playbook',
+    args=[playbook] + args,
+    timeout=10,
+    env=os.environ
+)
+
+pause_test.logfile = sys.stdout.buffer
+pause_test.expect(r'Pausing for \d+ seconds')
+pause_test.expect(r"\(ctrl\+C then 'C' = continue early, ctrl\+C then 'A' = abort\)")
+pause_test.expect(r"Waiting for two seconds:")
+pause_test.expect('Task after pause')
+pause_test.expect(pexpect.EOF)
+pause_test.close()
+
+# Case 2 - Continue with Ctrl + C, C
+pause_test = pexpect.spawn(
+    'ansible-playbook',
+    args=[playbook] + args,
+    timeout=10,
+    env=os.environ
+)
+
+pause_test.logfile = sys.stdout.buffer
+pause_test.expect(r'Pausing for \d+ seconds')
+pause_test.expect(r"\(ctrl\+C then 'C' = continue early, ctrl\+C then 'A' = abort\)")
+pause_test.expect(r"Waiting for two seconds:")
+pause_test.send('\x03')
+pause_test.expect("Press 'C' to continue the play or 'A' to abort")
+pause_test.send('C')
+pause_test.expect('Task after pause')
+pause_test.expect(pexpect.EOF)
+pause_test.close()
+
+
+# Case 3 - Abort with Ctrl + C, A
+pause_test = pexpect.spawn(
+    'ansible-playbook',
+    args=[playbook] + args,
+    timeout=10,
+    env=os.environ
+)
+
+pause_test.logfile = sys.stdout.buffer
+pause_test.expect(r'Pausing for \d+ seconds')
+pause_test.expect(r"\(ctrl\+C then 'C' = continue early, ctrl\+C then 'A' = abort\)")
+pause_test.expect(r"Waiting for two seconds:")
+pause_test.send('\x03')
+pause_test.expect("Press 'C' to continue the play or 'A' to abort")
+pause_test.send('A')
+pause_test.expect('user requested abort!')
+pause_test.expect(pexpect.EOF)
+pause_test.close()
+
+# -- Enter input and ensure it's captured, echoed, and can be edited -- #
+
+playbook = 'pause-5.yml'
+
+pause_test = pexpect.spawn(
+    'ansible-playbook',
+    args=[playbook] + args,
+    timeout=10,
+    env=os.environ
+)
+
+pause_test.logfile = sys.stdout.buffer
+pause_test.expect(r'Enter some text:')
+pause_test.send('hello there')
+pause_test.send('\r')
+pause_test.expect(r'Enter some text to edit:')
+pause_test.send('hello there')
+pause_test.send(backspace * 4)
+pause_test.send('ommy boy')
+pause_test.send('\r')
+pause_test.expect(r'Enter some text \(output is hidden\):')
+pause_test.send('supersecretpancakes')
+pause_test.send('\r')
+pause_test.expect(pexpect.EOF)
+pause_test.close()
+
+# Test input is not returned if a timeout is given
+
+playbook = 'pause-6.yml'
+
+pause_test = pexpect.spawn(
+    'ansible-playbook',
+    args=[playbook] + args,
+    timeout=10,
+    env=os.environ
+)
+
+pause_test.logfile = sys.stdout.buffer
+pause_test.expect(r'Wait for three seconds:')
+pause_test.send('ignored user input')
+pause_test.expect('Task after pause')
+pause_test.expect(pexpect.EOF)
+pause_test.close()
+
+
+# Test that enter presses may not continue the play when a timeout is set.
+
+pause_test = pexpect.spawn(
+    'ansible-playbook',
+    args=["pause-3.yml"] + args,
+    timeout=10,
+    env=os.environ
+)
+
+pause_test.logfile = sys.stdout.buffer
+pause_test.expect(r"\(ctrl\+C then 'C' = continue early, ctrl\+C then 'A' = abort\)")
+pause_test.send('\r')
+pause_test.expect(pexpect.EOF)
+pause_test.close()

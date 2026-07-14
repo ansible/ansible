@@ -1,0 +1,10 @@
+# do not add a cryptography or pyopenssl constraint to this file, they require special handling, see get_cryptography_requirements in python_requirements.py
+# do not add a coverage constraint to this file, it is handled internally by ansible-test
+pypsrp < 1.0.0  # in case the next major version is too big of a change
+pywinrm >= 0.5.0  # support for WSManFaultError and type annotation
+pytest >= 4.5.0  # pytest 4.5.0 added support for --strict-markers
+ntlm-auth >= 1.3.0 # message encryption support using cryptography
+requests-ntlm >= 1.1.0 # message encryption support
+requests-credssp >= 0.1.0 # message encryption support
+mock >= 2.0.0 # needed for features backported from Python 3.6 unittest.mock (assert_called, assert_called_once...)
+pytest-mock >= 1.4.0 # needed for mock_use_standalone_module pytest option

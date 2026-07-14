@@ -1,0 +1,23 @@
+- hosts: localhost,nonexistent
+  gather_facts: false
+  tasks:
+    - name: task that does not run on nonexistent
+      ping:
+      register: pingres
+
+- hosts: localhost,nonexistent
+  gather_facts: no
+  tasks:
+    - meta: clear_host_errors
+
+- hosts: localhost
+  gather_facts: no
+  tasks:
+    - assert:
+        that:
+          - hostvars.localhost.pingres is success
+          - hostvars.nonexistent.pingres is unreachable
+
+    - name: Indicate test passed (checked by grep after playbook runs)
+      debug:
+        msg: "{{ 'PASS' ~ 'ED' }}"

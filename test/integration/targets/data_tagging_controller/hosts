@@ -1,0 +1,7 @@
+[somegroup]
+localhost ansible_connection=local
+
+[somegroup:vars]
+hostvar_access_deprecated={{demo_out.something_old}}
+ansible_pipelining=True
+ansible_python_interpreter={{ansible_playbook_python}}

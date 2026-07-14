@@ -1,0 +1,24 @@
+{
+    "name": "SLES 11.4",
+    "input": {
+        "/etc/SuSE-release": "\nSUSE Linux Enterprise Server 11 (x86_64)\nVERSION = 11\nPATCHLEVEL = 4",
+        "/etc/os-release": "NAME=\"SLES\"\nVERSION=\"11.4\"\nVERSION_ID=\"11.4\"\nPRETTY_NAME=\"SUSE Linux Enterprise Server 11 SP4\"\nID=\"sles\"\nANSI_COLOR=\"0;32\"\nCPE_NAME=\"cpe:/o:suse:sles:11:4\""
+    },
+    "platform.dist": ["SuSE", "11", "x86_64"],
+    "distro": {
+        "codename": "",
+        "id": "sles",
+        "name": "SUSE Linux Enterprise Server",
+        "version": "11.4",
+        "version_best": "11.4",
+        "os_release_info": {},
+        "lsb_release_info": {}
+    },
+    "result": {
+        "distribution": "SLES",
+        "distribution_major_version": "11",
+        "distribution_release": "4",
+        "os_family": "Suse",
+        "distribution_version": "11.4"
+    }
+}

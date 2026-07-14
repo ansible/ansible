@@ -1,0 +1,22 @@
+- name: run inventory script in success mode `{{ item.mode }}`
+  shell: ansible-inventory -i {{ role_path | quote }}/{{ item.script_name | default('script_inventory_fixture.py') }} --list --export
+  changed_when: false
+  environment:
+    ANSIBLE_INVENTORY_PLUGIN_SCRIPT_STDERR: '{{ item.show_stderr | default(omit) }}'
+    ANSIBLE_DEPRECATION_WARNINGS: 1  # some tests assert deprecation warnings
+    INVENTORY_EMIT_STDERR: '{{ item.emit_stderr | default(omit) }}'
+  register: inv_out
+
+- name: standard assertions for mode `{{ item.mode }}`
+  assert:
+    that:
+      - inv_out.stderr is contains("this is stderr") == ((item.show_stderr | default(0)) and (item.emit_stderr | default(0))) is truthy
+      - inv_out.stderr is not contains("No inventory was parsed")
+
+- name: apply trust to inventory output and parse as JSON
+  set_fact:
+    inventory_data: '{{ inv_out.stdout | ansible._protomatter.apply_trust | from_json(profile="inventory_legacy") }}'
+
+- name: test provided assertions for mode `{{ item.mode }}`
+  assert:
+    that: '{{ item.assertions }}'

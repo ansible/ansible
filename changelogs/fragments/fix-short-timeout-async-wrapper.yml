@@ -1,0 +1,4 @@
+bugfixes:
+  - parallel fact gathering - fix hang caused by corrupt async job files.
+minor_changes:
+  - parallel fact gathering - the async wrapper now considers the timeout when determining whether to kill the process running the module. Previously, a 5 second sleep occurred twice before checking if the job had remaining time.

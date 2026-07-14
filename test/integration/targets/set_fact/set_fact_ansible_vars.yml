@@ -1,0 +1,9 @@
+- name: Test set_fact with key starting with reserved keyword '_ansible_'
+  hosts: testhost
+  gather_facts: no
+  tasks:
+    - name: Define fact with key starting with reserved keyword '_ansible_'
+      set_fact:
+        _ansible_foo: bar
+      ignore_errors: yes
+      register: r

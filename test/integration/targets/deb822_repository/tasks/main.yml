@@ -1,0 +1,193 @@
+- meta: end_play
+  when: ansible_os_family != 'Debian'
+
+- set_fact:
+    python_debian: python3-debian
+
+- block:
+    # UNINSTALL 'python3-debian'
+    #  The `deb822_repository` module has the smarts to auto-install `python3-debian`.  To
+    # test, we will first uninstall `python3-debian`.
+    - name: check {{ python_debian }} with dpkg
+      shell: dpkg -s {{ python_debian }}
+      register: dpkg_result
+      ignore_errors: true
+
+    - name: uninstall {{ python_debian }} with apt
+      apt: pkg={{ python_debian }} state=absent purge=yes
+      register: apt_result
+      when: dpkg_result is successful
+
+    - name: check failure when python3-debian is absent
+      deb822_repository:
+        name: myrepo
+        types: deb
+        uris: "http://example.com/debian/"
+        suites: stable
+        components: main
+      register: no_python3_debian
+      ignore_errors: true
+
+    - name: Assert failure with absent python3-debian
+      assert:
+        that: no_python3_debian.msg is contains 'python3-debian is not installed'
+
+    - name: check failure when in check mode
+      deb822_repository:
+        name: myrepo
+        types: deb
+        uris: "http://example.com/debian/"
+        suites: stable
+        components: main
+      register: no_python3_debian_check
+      check_mode: true
+      ignore_errors: true
+
+    - name: assert check mode failure without python3-debian
+      assert:
+        that: no_python3_debian_check is failed
+
+    - name: find apt path
+      command:
+        cmd: which apt
+      register: aptpath
+
+    - name: hide apt from ansible
+      command:
+        cmd: mv {{ aptpath.stdout_lines[0] }} /usr/bin/apthidden
+      become: true
+
+    - name: run deb822 with installation to check failure on nonexistent apt
+      deb822_repository:
+        name: myrepo
+        types: deb
+        uris: "http://example.com/debian/"
+        suites: stable
+        components: main
+        install_python_debian: true
+      register: failed_no_apt
+      ignore_errors: true
+
+    - name: assert failure
+      assert:
+        that: failed_no_apt is failed
+
+    - name: move apt back
+      command:
+        cmd: mv /usr/bin/apthidden {{ aptpath.stdout_lines[0] }}
+      become: true
+
+    - name: break apt update
+      copy:
+        content: "deb [invalid syntax] http://invalid.example.com/debian stable main"
+        dest: /etc/apt/sources.list.d/broken.list
+
+    - name: run deb822 with installation to check failure on apt update
+      deb822_repository:
+        name: myrepo
+        types: deb
+        uris: "http://example.com/debian/"
+        suites: stable
+        components: main
+        install_python_debian: true
+      register: failed_apt_update
+      ignore_errors: true
+
+    - name: assert failure
+      assert:
+        that: failed_apt_update.msg is contains 'Failed update'
+
+    - name: restore apt update
+      file:
+        path: /etc/apt/sources.list.d/broken.list
+        state: absent
+
+    - name: create apt preference file to break python3-debian installation
+      copy:
+        content: |
+          Package: python3-debian
+          Pin: release *
+          Pin-Priority: -1 # Never install
+        dest: /etc/apt/preferences.d/99-break-python3-debian.pref
+
+    - name: run deb822 with installation to check failure on apt install
+      deb822_repository:
+        name: myrepo
+        types: deb
+        uris: "http://example.com/debian/"
+        suites: stable
+        components: main
+        install_python_debian: true
+      register: failed_apt_install
+      ignore_errors: true
+
+    - name: assert failure on broken install
+      assert:
+        that: failed_apt_install is failed
+
+    - name: remove preference file
+      file:
+        path: /etc/apt/preferences.d/99-break-python3-debian.pref
+        state: absent
+
+    - name: run deb822 to check for python3-debian installation
+      deb822_repository:
+        name: myrepo
+        types: deb
+        uris: "http://example.com/debian/"
+        suites: stable
+        components: main
+        install_python_debian: true
+
+    - name: Clean up the previously added basic Debian repository
+      deb822_repository:
+        name: myrepo
+        state: absent
+
+    - name: install python3-debian
+      apt:
+        name: python3-debian
+        state: present
+      register: py3_deb_install
+
+    - name: assert python3-debian already installed
+      assert:
+        that:
+           - not py3_deb_install.changed
+
+    - name: use venv to test interpreter respawn into installed environment
+      vars:
+        venv_dir:  "{{ output_dir }}/nodeb_venv"
+        venv_python: "{{ venv_dir }}/bin/python"
+      block:
+        - name: ensure venv exists
+          pip:
+            name: coverage
+            virtualenv: "{{ venv_dir }}"
+            virtualenv_command: "{{ ansible_python_interpreter }} -m venv"
+
+        - name: run deb822 WITHOUT python3-debian installed to test respawning
+          deb822_repository:
+            name: myrepo
+            types: deb
+            uris: "http://example.com/debian/"
+            suites: stable
+            components: main
+          register: no_python3_debian
+          vars:
+            ansible_python_interpreter: "{{ venv_python }}"
+          ignore_errors: true
+        - name: Clean up the previously added basic Debian repository
+          deb822_repository:
+            name: myrepo
+            state: absent
+
+    - import_tasks: test.yml
+    - import_tasks: name_handling.yml
+    - import_tasks: install.yml
+  always:
+    - name: uninstall python3-debian
+      apt:
+        name: python3-debian
+        state: absent
+      when: py3_deb_install is changed

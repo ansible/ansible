@@ -1,0 +1,5 @@
+- debug:
+    var: nested_var
+
+- debug:
+    var: var_precedence

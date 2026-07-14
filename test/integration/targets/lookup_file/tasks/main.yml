@@ -1,0 +1,13 @@
+- name: make a new file to read
+  copy: dest={{output_dir}}/foo.txt mode=0644 content="bar"
+
+- name: load the file as a fact
+  set_fact:
+    foo: "{{ lookup('file', output_dir + '/foo.txt' ) }}"
+
+- debug: var=foo
+
+- name: verify file lookup
+  assert:
+    that:
+        - "foo == 'bar'"

@@ -1,0 +1,77 @@
+- block:
+  - name: Disable ubuntu repos so system packages are not upgraded and do not change testing env
+    command: mv /etc/apt/sources.list /etc/apt/sources.list.backup
+
+  - name: install latest foo
+    apt:
+      name: foo
+      state: latest
+      allow_unauthenticated: yes
+
+  - name: check foo version
+    shell: dpkg -s foo | grep Version | awk '{print $2}'
+    register: apt_downgrade_foo_version
+
+  - name: ensure the correct version of foo has been installed
+    assert:
+      that:
+        - "'1.0.1' in apt_downgrade_foo_version.stdout"
+
+  - name: try to downgrade foo
+    apt:
+      name: foo=1.0.0
+      state: present
+      allow_unauthenticated: yes
+    ignore_errors: yes
+    register: apt_downgrade_foo_fail
+
+  - name: verify failure of downgrading without allow downgrade flag
+    assert:
+      that:
+        - apt_downgrade_foo_fail is failed
+
+  - name: try to downgrade foo with flag
+    apt:
+      name: foo=1.0.0
+      state: present
+      allow_downgrade: yes
+      allow_unauthenticated: yes
+    register: apt_downgrade_foo_succeed
+
+  - name: verify success of downgrading with allow downgrade flag
+    assert:
+      that:
+        - apt_downgrade_foo_succeed is success
+
+  - name: check foo version
+    shell: dpkg -s foo | grep Version | awk '{print $2}'
+    register: apt_downgrade_foo_version
+
+  - name: check that version downgraded correctly
+    assert:
+      that:
+        - "'1.0.0' in apt_downgrade_foo_version.stdout"
+        - "apt_downgrade_foo_version.changed"
+
+  - name: downgrade foo with flag again
+    apt:
+      name: foo=1.0.0
+      state: present
+      allow_downgrade: yes
+      allow_unauthenticated: yes
+    register: apt_downgrade_second_downgrade
+
+  - name: check that nothing has changed (idempotent)
+    assert:
+      that:
+        - "apt_downgrade_second_downgrade.changed == false"
+
+  always:
+    - name: Clean up
+      apt:
+        pkg: foo,foobar
+        state: absent
+        autoclean: yes
+
+    - name: Restore ubuntu repos
+      command: mv /etc/apt/sources.list.backup /etc/apt/sources.list

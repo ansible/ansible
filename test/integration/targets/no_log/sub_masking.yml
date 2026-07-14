@@ -1,0 +1,60 @@
+- name: Ensure no_log obfuscation does not mask on substrings
+  hosts: all
+  vars_files:
+    - secretvars.yml
+  gather_facts: no
+
+  tasks:
+    - name: test with option long
+      module:
+        secret: "{{ s101 }}"
+        subopt_dict:
+          str_sub_opt1: "{{ s102 }}"
+          nested_subopt:
+            n_subopt1: "{{ s103 }}"
+        subopt_list:
+            - subopt1: "{{sec}}"
+      register: long_first
+
+    - name: Task with suboptions long
+      module:
+        secret: "{{ sec }}"
+        subopt_dict: 
+          str_sub_opt1: '{{ s101 }}'
+          nested_subopt:
+            n_subopt1: "{{ s102 }}"
+        subopt_list:
+            - subopt1: "{{ s103 }}"
+      register: short_first 
+
+    - name: Task with suboptions long
+      module:
+        secret: "{{ s101 }}"
+        subopt_dict: 
+          str_sub_opt1: '{{ sec }}'
+          nested_subopt:
+            n_subopt1: "{{ s102 }}"
+        subopt_list:
+            - subopt1: "{{ s103 }}"
+      register: middle_top
+
+    - name: Task with suboptions long
+      module:
+        secret: "{{ s102}}"
+        subopt_dict: 
+          str_sub_opt1: '{{ s102 }}'
+          nested_subopt:
+            n_subopt1: "{{ sec }}"
+        subopt_list:
+            - subopt1: "{{ s103 }}"
+      register: middle_bottom
+
+    - name: check output
+      assert:
+        that:
+          - "'SEC' not in (q('vars', item)|to_json)"
+      loop:
+        - long_first
+        - short_first
+        - middle_top
+        - middle_bottom

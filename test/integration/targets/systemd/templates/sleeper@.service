@@ -1,0 +1,8 @@
+[Unit]
+Description=Basic service to use as a template
+
+[Service]
+ExecStart={{ sleep_bin_path }} %i
+
+[Install]
+WantedBy=multi-user.target

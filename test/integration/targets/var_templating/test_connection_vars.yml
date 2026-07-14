@@ -1,0 +1,26 @@
+---
+- hosts: localhost
+  gather_facts: no
+  vars:
+    my_var:
+      become_method: sudo
+      connection: local
+      become: 1
+  tasks:
+
+  - include_vars: "./vars/connection.yml"
+
+  - command: whoami
+    ignore_errors: yes
+    register: result
+    failed_when: result is not success and (result.module_stderr is defined or result.module_stderr is defined)
+
+  - assert:
+      that:
+        - "'sudo' in result.module_stderr"
+    when: result is not success and result.module_stderr is defined
+
+  - assert:
+      that:
+        - "'Invalid become method specified'  not in result.msg"
+    when: result is not success and result.msg is defined

@@ -1,0 +1,7 @@
+plugin: ansible.builtin.constructed
+use_vars_plugins: true
+keyed_groups:
+  - key: iamdefined
+    prefix: c
+  - key: hola
+    prefix: c

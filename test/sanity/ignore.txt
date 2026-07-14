@@ -1,0 +1,284 @@
+lib/ansible/_internal/_wrapt.py black!skip  # vendored code
+lib/ansible/config/base.yml no-unwanted-files
+lib/ansible/keyword_desc.yml no-unwanted-files
+lib/ansible/modules/apt.py validate-modules:parameter-invalid
+lib/ansible/modules/apt_repository.py validate-modules:parameter-invalid
+lib/ansible/modules/async_status.py validate-modules!skip
+lib/ansible/modules/async_wrapper.py ansible-doc!skip  # not an actual module
+lib/ansible/modules/async_wrapper.py pylint:ansible-bad-function # ignore, required
+lib/ansible/modules/async_wrapper.py use-argspec-type-path
+lib/ansible/modules/command.py validate-modules:doc-default-does-not-match-spec  # _uses_shell is undocumented
+lib/ansible/modules/command.py validate-modules:doc-missing-type
+lib/ansible/modules/command.py validate-modules:nonexistent-parameter-documented
+lib/ansible/modules/command.py validate-modules:undocumented-parameter
+lib/ansible/modules/copy.py validate-modules:nonexistent-parameter-documented
+lib/ansible/modules/copy.py validate-modules:undocumented-parameter
+lib/ansible/modules/dnf.py validate-modules:parameter-invalid
+lib/ansible/modules/dnf5.py validate-modules:parameter-invalid
+lib/ansible/modules/file.py validate-modules:undocumented-parameter
+lib/ansible/modules/getent.py validate-modules:bad-return-value-key  # used for documentation, not a real key
+lib/ansible/modules/git.py use-argspec-type-path
+lib/ansible/modules/git.py validate-modules:doc-required-mismatch
+lib/ansible/modules/package_facts.py validate-modules:doc-choices-do-not-match-spec
+lib/ansible/modules/service.py validate-modules:nonexistent-parameter-documented
+lib/ansible/modules/stat.py validate-modules:parameter-invalid
+lib/ansible/modules/systemd_service.py validate-modules:parameter-invalid
+lib/ansible/modules/user.py validate-modules:doc-default-does-not-match-spec
+lib/ansible/module_utils/basic.py pylint:ansible-bad-function
+lib/ansible/module_utils/common/respawn.py pylint:ansible-bad-function
+lib/ansible/module_utils/distro/_distro.py pylint:ansible-bad-function
+lib/ansible/module_utils/facts/system/pkg_mgr.py pylint:ansible-bad-function
+lib/ansible/module_utils/service.py pylint:ansible-bad-function
+lib/ansible/modules/mount_facts.py pylint:ansible-bad-function
+lib/ansible/modules/service.py pylint:ansible-bad-function
+lib/ansible/modules/user.py pylint:ansible-bad-function
+lib/ansible/module_utils/_embed/dnf.py boilerplate  # annotations future bombs on Python 3.6
+lib/ansible/module_utils/basic.py pylint:unused-import  # deferring resolution to allow enabling the rule now
+lib/ansible/module_utils/compat/selinux.py import-3.9!skip # pass/fail depends on presence of libselinux.so
+lib/ansible/module_utils/compat/selinux.py import-3.10!skip # pass/fail depends on presence of libselinux.so
+lib/ansible/module_utils/compat/selinux.py import-3.11!skip # pass/fail depends on presence of libselinux.so
+lib/ansible/module_utils/compat/selinux.py import-3.12!skip # pass/fail depends on presence of libselinux.so
+lib/ansible/module_utils/compat/selinux.py import-3.13!skip # pass/fail depends on presence of libselinux.so
+lib/ansible/module_utils/compat/selinux.py import-3.14!skip # pass/fail depends on presence of libselinux.so
+lib/ansible/module_utils/compat/selinux.py import-3.15!skip # pass/fail depends on presence of libselinux.so
+lib/ansible/module_utils/compat/selinux.py pylint:unidiomatic-typecheck
+lib/ansible/module_utils/distro/_distro.py no-assert
+lib/ansible/module_utils/powershell/Ansible.ModuleUtils.ArgvParser.psm1 pslint:PSUseApprovedVerbs
+lib/ansible/module_utils/powershell/Ansible.ModuleUtils.CommandUtil.psm1 pslint:PSProvideCommentHelp # need to agree on best format for comment location
+lib/ansible/module_utils/powershell/Ansible.ModuleUtils.CommandUtil.psm1 pslint:PSUseApprovedVerbs
+lib/ansible/module_utils/powershell/Ansible.ModuleUtils.FileUtil.psm1 pslint:PSCustomUseLiteralPath
+lib/ansible/module_utils/powershell/Ansible.ModuleUtils.FileUtil.psm1 pslint:PSProvideCommentHelp
+lib/ansible/module_utils/powershell/Ansible.ModuleUtils.Legacy.psm1 pslint:PSCustomUseLiteralPath
+lib/ansible/module_utils/powershell/Ansible.ModuleUtils.Legacy.psm1 pslint:PSUseApprovedVerbs
+lib/ansible/module_utils/powershell/Ansible.ModuleUtils.LinkUtil.psm1 pslint:PSUseApprovedVerbs
+lib/ansible/module_utils/six/__init__.py pylint:self-assigning-variable
+lib/ansible/module_utils/six/__init__.py pylint:trailing-comma-tuple
+lib/ansible/module_utils/six/__init__.py pylint:unidiomatic-typecheck
+lib/ansible/module_utils/six/__init__.py replace-urlopen
+lib/ansible/module_utils/urls.py replace-urlopen
+lib/ansible/playbook/role/include.py pylint:arguments-renamed
+lib/ansible/plugins/action/normal.py action-plugin-docs # default action plugin for modules without a dedicated action plugin
+lib/ansible/plugins/cache/base.py ansible-doc!skip  # not a plugin, but a stub for backwards compatibility
+lib/ansible/plugins/callback/__init__.py pylint:arguments-renamed
+lib/ansible/plugins/inventory/advanced_host_list.py pylint:arguments-renamed
+lib/ansible/plugins/inventory/host_list.py pylint:arguments-renamed
+lib/ansible/_internal/_wrapt.py mypy-3.13!skip # vendored code
+lib/ansible/_internal/_wrapt.py mypy-3.14!skip # vendored code
+lib/ansible/_internal/_wrapt.py mypy-3.15!skip # vendored code
+lib/ansible/_internal/_wrapt.py pep8!skip # vendored code
+lib/ansible/_internal/_wrapt.py pylint!skip # vendored code
+lib/ansible/_internal/ansible_collections/ansible/_protomatter/README.md no-unwanted-files
+test/integration/targets/ansible-doc/library/bogus_facts shebang
+test/integration/targets/ansible-doc/library/facts_one shebang
+test/integration/targets/ansible-test-sanity/ansible_collections/ns/col/tests/integration/targets/hello/files/bad.py pylint:ansible-bad-function # ignore, required for testing
+test/integration/targets/ansible-test-sanity/ansible_collections/ns/col/tests/integration/targets/hello/files/bad.py pylint:ansible-bad-import-from # ignore, required for testing
+test/integration/targets/ansible-test-sanity/ansible_collections/ns/col/tests/integration/targets/hello/files/bad.py pylint:ansible-bad-import # ignore, required for testing
+test/integration/targets/ansible-test-integration/ansible_collections/ns/col/plugins/modules/hello.py pylint:relative-beyond-top-level
+test/integration/targets/ansible-test-units/ansible_collections/ns/col/plugins/modules/hello.py pylint:relative-beyond-top-level
+test/integration/targets/ansible-test-units/ansible_collections/ns/col/tests/unit/plugins/modules/test_hello.py pylint:relative-beyond-top-level
+test/integration/targets/ansible-test-units/ansible_collections/ns/col/tests/unit/plugins/module_utils/test_my_util.py pylint:relative-beyond-top-level
+test/integration/targets/ansible-test-docker/ansible_collections/ns/col/plugins/modules/hello.py pylint:relative-beyond-top-level
+test/integration/targets/ansible-test-docker/ansible_collections/ns/col/tests/unit/plugins/modules/test_hello.py pylint:relative-beyond-top-level
+test/integration/targets/ansible-test-docker/ansible_collections/ns/col/tests/unit/plugins/module_utils/test_my_util.py pylint:relative-beyond-top-level
+test/integration/targets/ansible-test-no-tty/ansible_collections/ns/col/vendored_pty.py pep8!skip # vendored code
+test/integration/targets/collections_relative_imports/collection_root/ansible_collections/my_ns/my_col/plugins/modules/my_module.py pylint:relative-beyond-top-level
+test/integration/targets/collections_relative_imports/collection_root/ansible_collections/my_ns/my_col/plugins/module_utils/my_util2.py pylint:relative-beyond-top-level
+test/integration/targets/fork_safe_stdio/vendored_pty.py pep8!skip # vendored code
+test/integration/targets/gathering_facts/library/bogus_facts shebang
+test/integration/targets/gathering_facts/library/dummy1 shebang
+test/integration/targets/gathering_facts/library/facts_one shebang
+test/integration/targets/gathering_facts/library/facts_two shebang
+test/integration/targets/gathering_facts/library/slow shebang
+test/integration/targets/incidental_win_reboot/templates/post_reboot.ps1 pslint!skip
+test/integration/targets/json_cleanup/library/bad_json shebang
+test/integration/targets/lookup_csvfile/files/crlf.csv line-endings
+test/integration/targets/lookup_ini/lookup-8859-15.ini no-smart-quotes
+test/integration/targets/lookup_ini/lookup-8859-15.ini no-unwanted-characters
+test/integration/targets/module_precedence/lib_with_extension/a.ini shebang
+test/integration/targets/module_precedence/lib_with_extension/ping.ini shebang
+test/integration/targets/module_precedence/roles_with_extension/foo/library/a.ini shebang
+test/integration/targets/module_precedence/roles_with_extension/foo/library/ping.ini shebang
+test/integration/targets/old_style_modules_posix/library/helloworld.sh shebang
+test/integration/targets/powershell_exec_wrapper/library/test_fail.ps1 pslint:PSCustomUseLiteralPath
+test/integration/targets/powershell_exec_wrapper/library/test_invalid_syntax.ps1 pslint!skip # tests code with invalid syntax
+test/integration/targets/powershell_exec_wrapper/module_utils/Ansible.ModuleUtils.InvalidSyntax.psm1 pslint!skip # tests code with invalid syntax
+test/integration/targets/powershell_exec_wrapper/tasks/main.yml no-smart-quotes  # We are explicitly testing smart quote support for env vars
+test/integration/targets/powershell_module_utils/library/legacy_only_new_way_win_line_ending.ps1 line-endings  # Explicitly tests that we still work with Windows line endings
+test/integration/targets/powershell_module_utils/library/legacy_only_old_way_win_line_ending.ps1 line-endings  # Explicitly tests that we still work with Windows line endings
+test/integration/targets/template/files/encoding_1252_utf-8.expected no-smart-quotes
+test/integration/targets/template/files/encoding_1252_utf-8.expected no-unwanted-characters
+test/integration/targets/template/files/encoding_1252_windows-1252.expected no-smart-quotes
+test/integration/targets/template/files/encoding_1252_windows-1252.expected no-unwanted-characters
+test/integration/targets/template/files/foo.dos.txt line-endings
+test/integration/targets/template/templates/encoding_1252.j2 no-smart-quotes
+test/integration/targets/template/templates/encoding_1252.j2 no-unwanted-characters
+test/integration/targets/unicode/unicode.yml no-smart-quotes
+test/integration/targets/windows-minimal/library/win_ping_syntax_error.ps1 pslint!skip
+test/integration/targets/win_app_control/files/New-AnsiblePowerShellSignature.ps1 pslint:PSCustomUseLiteralPath  # We want to use wildcard matching with -Path
+test/integration/targets/win_app_control/files/New-AnsiblePowerShellSignature.ps1 shebang  # We want to run with pwsh from the environment in the test
+test/integration/targets/win_app_control/files/Set-ManifestSignature.ps1 shebang  # We want to run with pwsh from the environment in the test
+test/integration/targets/win_fetch/tasks/main.yml no-smart-quotes  # We are explicitly testing smart quotes in the file name to fetch
+test/integration/targets/win_script/files/test_script.ps1 pslint:PSAvoidUsingWriteHost # Keep
+test/integration/targets/win_script/files/test_script_removes_file.ps1 pslint:PSCustomUseLiteralPath
+test/integration/targets/win_script/files/test_script_with_args.ps1 pslint:PSAvoidUsingWriteHost # Keep
+test/integration/targets/win_script/files/test_script_with_splatting.ps1 pslint:PSAvoidUsingWriteHost # Keep
+test/integration/targets/ssh_agent/fake_agents/ssh-agent-bad-shebang shebang  # required for test
+test/lib/ansible_test/_data/requirements/sanity.pslint.ps1 pslint:PSCustomUseLiteralPath # Uses wildcards on purpose
+test/support/windows-integration/collections/ansible_collections/ansible/windows/plugins/module_utils/WebRequest.psm1 pslint!skip
+test/support/windows-integration/collections/ansible_collections/ansible/windows/plugins/modules/win_uri.ps1 pslint!skip
+test/support/windows-integration/plugins/modules/async_status.ps1 pslint!skip
+test/support/windows-integration/plugins/modules/setup.ps1 pslint!skip
+test/support/windows-integration/plugins/modules/slurp.ps1 pslint!skip
+test/support/windows-integration/plugins/modules/win_acl.ps1 pslint!skip
+test/support/windows-integration/plugins/modules/win_certificate_store.ps1 pslint!skip
+test/support/windows-integration/plugins/modules/win_command.ps1 pslint!skip
+test/support/windows-integration/plugins/modules/win_copy.ps1 pslint!skip
+test/support/windows-integration/plugins/modules/win_file.ps1 pslint!skip
+test/support/windows-integration/plugins/modules/win_get_url.ps1 pslint!skip
+test/support/windows-integration/plugins/modules/win_lineinfile.ps1 pslint!skip
+test/support/windows-integration/plugins/modules/win_regedit.ps1 pslint!skip
+test/support/windows-integration/plugins/modules/win_shell.ps1 pslint!skip
+test/support/windows-integration/plugins/modules/win_stat.ps1 pslint!skip
+test/support/windows-integration/plugins/modules/win_tempfile.ps1 pslint!skip
+test/support/windows-integration/plugins/modules/win_user_right.ps1 pslint!skip
+test/support/windows-integration/plugins/modules/win_user.ps1 pslint!skip
+test/support/windows-integration/plugins/modules/win_wait_for.ps1 pslint!skip
+test/support/windows-integration/plugins/modules/win_whoami.ps1 pslint!skip
+test/units/module_utils/urls/fixtures/multipart.txt line-endings  # Fixture for HTTP tests that use CRLF
+test/units/utils/collection_loader/fixtures/collections/ansible_collections/testns/testcoll/plugins/action/my_action.py pylint:relative-beyond-top-level
+test/units/utils/collection_loader/fixtures/collections/ansible_collections/testns/testcoll/plugins/modules/__init__.py empty-init  # testing that collections don't need inits
+test/units/utils/collection_loader/fixtures/collections_masked/ansible_collections/ansible/__init__.py empty-init  # testing that collections don't need inits
+test/units/utils/collection_loader/fixtures/collections_masked/ansible_collections/__init__.py empty-init  # testing that collections don't need inits
+test/units/utils/collection_loader/fixtures/collections_masked/ansible_collections/testns/__init__.py empty-init  # testing that collections don't need inits
+test/units/utils/collection_loader/fixtures/collections_masked/ansible_collections/testns/testcoll/__init__.py empty-init  # testing that collections don't need inits
+test/units/utils/collection_loader/test_collection_loader.py pylint:undefined-variable  # magic runtime local var splatting
+test/units/utils/collection_loader/fixtures/collections/ansible_collections/testns/testcoll/plugins/module_utils/my_util.py boilerplate  # test requires missing boilerplate
+lib/ansible/galaxy/data/container/README.md pymarkdown:line-length
+lib/ansible/galaxy/data/default/role/README.md pymarkdown:line-length
+lib/ansible/galaxy/data/network/README.md pymarkdown:line-length
+README.md pymarkdown:line-length
+test/units/cli/test_data/role_skeleton/README.md pymarkdown:line-length
+test/integration/targets/find/files/hello_world.gbk no-smart-quotes
+test/integration/targets/find/files/hello_world.gbk no-unwanted-characters
+lib/ansible/module_utils/facts/hardware/aix.py pylint:used-before-assignment
+lib/ansible/modules/rpm_key.py pylint:used-before-assignment
+lib/ansible/modules/service.py pylint:used-before-assignment
+lib/ansible/modules/user.py pylint:used-before-assignment
+lib/ansible/_internal/_wrapt.py codespell!skip  # vendored code
+lib/ansible/config/ansible_builtin_runtime.yml codespell:aci  # network collection name
+lib/ansible/galaxy/token.py codespell:chouse  # contributor's name
+lib/ansible/modules/assemble.py codespell:Fromm  # contributor's name
+lib/ansible/modules/group.py codespell:Fromm  # contributor's name
+lib/ansible/modules/stat.py codespell:woth  # write-other
+lib/ansible/modules/uri.py codespell:aNULL  # cipher name
+lib/ansible/modules/user.py codespell:Fromm  # contributor's name
+lib/ansible/plugins/action/assemble.py codespell:Fromm  # contributor's name
+test/integration/targets/ansible_log/runme.sh codespell:ALOG  # variable name
+test/integration/targets/apt/tasks/apt.yml codespell:hel  # test data
+test/integration/targets/filter_mathstuff/tasks/main.yml codespell:fo  # expected test output
+test/integration/targets/lineinfile/tasks/test_string01.yml codespell:Thi  # test data
+test/integration/targets/lineinfile/tasks/test_string01.yml codespell:ine  # test data
+test/integration/targets/lookup_ini/lookup-8859-15.ini codespell:indien  # French
+test/integration/targets/lookup_ini/lookup.ini codespell:indien  # French
+test/integration/targets/lookup_ini/lookup.properties codespell:indien  # French
+test/integration/targets/lookup_ini/test_lookup_properties.yml codespell:indien  # French
+test/integration/targets/module_utils_Ansible.Process/library/ansible_process_tests.ps1 codespell:caf  # expected test output
+test/integration/targets/setup_rpm_repo/ansible_collections/ansible_test/setup_rpm_repo/plugins/module_utils/_embed/create_repo.py boilerplate  # not an actual module_util, a script that supports lower python versions
+test/lib/ansible_test/config/inventory.networking.template codespell:aci  # network collection name
+test/units/errors/fixtures/outputs/short_file_left_marker.txt codespell!skip  # intentionally truncated test data
+test/units/errors/fixtures/outputs/short_file_long_line_truncated_past_target.txt codespell!skip  # intentionally truncated test data
+test/units/errors/fixtures/outputs/short_file_no_column.txt codespell!skip  # intentionally truncated test data
+test/units/errors/fixtures/outputs/short_file_truncated_target.txt codespell!skip  # intentionally truncated test data
+test/units/errors/fixtures/outputs/short_file_truncated_target_last_displayed_char.txt codespell!skip  # intentionally truncated test data
+test/units/module_utils/facts/fixtures/cpuinfo/s390x-z13-2cpu-cpuinfo codespell!skip  # test data
+test/units/module_utils/facts/fixtures/cpuinfo/s390x-z14-64cpu-cpuinfo codespell!skip  # test data
+test/units/module_utils/facts/system/distribution/fixtures/univention_corporate_server_5.2.json codespell!skip  # test data
+lib/ansible/plugins/action/copy.py pylint:undefined-variable
+test/integration/targets/module_utils/library/test_optional.py pylint:used-before-assignment
+test/support/windows-integration/plugins/action/win_copy.py pylint:undefined-variable
+test/units/module_utils/basic/test_exit_json.py mypy-3.13:assignment
+test/units/module_utils/basic/test_exit_json.py mypy-3.13:misc
+test/units/module_utils/facts/other/test_facter.py mypy-3.13:assignment
+test/units/module_utils/facts/other/test_ohai.py mypy-3.13:assignment
+test/units/module_utils/facts/system/test_lsb.py mypy-3.13:assignment
+test/units/module_utils/facts/test_collectors.py mypy-3.13:assignment
+test/units/module_utils/facts/test_facts.py mypy-3.13:assignment
+test/units/modules/mount_facts_data.py mypy-3.13:arg-type
+test/units/modules/test_apt.py mypy-3.13:name-match
+test/units/modules/test_mount_facts.py mypy-3.13:index
+test/units/module_utils/basic/test_exit_json.py mypy-3.12:assignment
+test/units/module_utils/basic/test_exit_json.py mypy-3.12:misc
+test/units/module_utils/facts/other/test_facter.py mypy-3.12:assignment
+test/units/module_utils/facts/other/test_ohai.py mypy-3.12:assignment
+test/units/module_utils/facts/system/test_lsb.py mypy-3.12:assignment
+test/units/module_utils/facts/test_collectors.py mypy-3.12:assignment
+test/units/module_utils/facts/test_facts.py mypy-3.12:assignment
+test/units/modules/mount_facts_data.py mypy-3.12:arg-type
+test/units/modules/test_apt.py mypy-3.12:name-match
+test/units/modules/test_mount_facts.py mypy-3.12:index
+test/units/module_utils/basic/test_exit_json.py mypy-3.11:assignment
+test/units/module_utils/basic/test_exit_json.py mypy-3.11:misc
+test/units/module_utils/facts/other/test_facter.py mypy-3.11:assignment
+test/units/module_utils/facts/other/test_ohai.py mypy-3.11:assignment
+test/units/module_utils/facts/system/test_lsb.py mypy-3.11:assignment
+test/units/module_utils/facts/test_collectors.py mypy-3.11:assignment
+test/units/module_utils/facts/test_facts.py mypy-3.11:assignment
+test/units/modules/mount_facts_data.py mypy-3.11:arg-type
+test/units/modules/test_apt.py mypy-3.11:name-match
+test/units/modules/test_mount_facts.py mypy-3.11:index
+test/units/module_utils/basic/test_exit_json.py mypy-3.10:assignment
+test/units/module_utils/basic/test_exit_json.py mypy-3.10:misc
+test/units/module_utils/facts/other/test_facter.py mypy-3.10:assignment
+test/units/module_utils/facts/other/test_ohai.py mypy-3.10:assignment
+test/units/module_utils/facts/system/test_lsb.py mypy-3.10:assignment
+test/units/module_utils/facts/test_collectors.py mypy-3.10:assignment
+test/units/module_utils/facts/test_facts.py mypy-3.10:assignment
+test/units/modules/mount_facts_data.py mypy-3.10:arg-type
+test/units/modules/test_apt.py mypy-3.10:name-match
+test/units/modules/test_mount_facts.py mypy-3.10:index
+test/units/module_utils/basic/test_exit_json.py mypy-3.9:assignment
+test/units/module_utils/basic/test_exit_json.py mypy-3.9:misc
+test/units/module_utils/facts/other/test_facter.py mypy-3.9:assignment
+test/units/module_utils/facts/other/test_ohai.py mypy-3.9:assignment
+test/units/module_utils/facts/system/test_lsb.py mypy-3.9:assignment
+test/units/module_utils/facts/test_collectors.py mypy-3.9:assignment
+test/units/module_utils/facts/test_facts.py mypy-3.9:assignment
+test/units/modules/mount_facts_data.py mypy-3.9:arg-type
+test/units/modules/test_apt.py mypy-3.9:name-match
+test/units/modules/test_mount_facts.py mypy-3.9:index
+test/units/module_utils/basic/test_exit_json.py mypy-3.14:assignment
+test/units/module_utils/basic/test_exit_json.py mypy-3.14:misc
+test/units/module_utils/facts/other/test_facter.py mypy-3.14:assignment
+test/units/module_utils/facts/other/test_ohai.py mypy-3.14:assignment
+test/units/module_utils/facts/system/test_lsb.py mypy-3.14:assignment
+test/units/module_utils/facts/test_collectors.py mypy-3.14:assignment
+test/units/module_utils/facts/test_facts.py mypy-3.14:assignment
+test/units/modules/mount_facts_data.py mypy-3.14:arg-type
+test/units/modules/test_apt.py mypy-3.14:name-match
+test/units/modules/test_mount_facts.py mypy-3.14:index
+test/units/module_utils/basic/test_exit_json.py mypy-3.15:assignment
+test/units/module_utils/basic/test_exit_json.py mypy-3.15:misc
+test/units/module_utils/facts/other/test_facter.py mypy-3.15:assignment
+test/units/module_utils/facts/other/test_ohai.py mypy-3.15:assignment
+test/units/module_utils/facts/system/test_lsb.py mypy-3.15:assignment
+test/units/module_utils/facts/test_collectors.py mypy-3.15:assignment
+test/units/module_utils/facts/test_facts.py mypy-3.15:assignment
+test/units/modules/mount_facts_data.py mypy-3.15:arg-type
+test/units/modules/test_apt.py mypy-3.15:name-match
+test/units/modules/test_mount_facts.py mypy-3.15:index
+test/integration/targets/interpreter_discovery_python/library/test_non_python_interpreter.py shebang  # test needs non-standard shebang
+test/integration/targets/inventory_script/bad_shebang shebang  # test needs an invalid shebang
+test/integration/targets/ansible-test-sanity-pylint/ansible_collections/ns/col/plugins/lookup/deprecated.py pylint!skip  # validated as a collection
+test/integration/targets/ansible-test-sanity-pylint/ansible_collections/ns/col/plugins/action/do_deprecated_stuff.py pylint!skip  # validated as a collection
+test/integration/targets/ansible-test-sanity-pylint/ansible_collections/ns/col/plugins/module_utils/deprecated_utils.py pylint!skip  # validated as a collection
+test/integration/targets/ansible-test-sanity-pylint/deprecated_thing.py pylint:ansible-deprecated-version  # required to verify plugin against core
+test/integration/targets/ansible-test-sanity-pylint/deprecated_thing.py pylint:ansible-deprecated-no-version  # required to verify plugin against core
+test/integration/targets/ansible-test-sanity-pylint/deprecated_thing.py pylint:ansible-invalid-deprecated-version  # required to verify plugin against core
+test/integration/targets/ansible-test-sanity-pylint/deprecated_thing.py pylint:ansible-deprecated-date-not-permitted  # required to verify plugin against core
+test/integration/targets/ansible-test-sanity-pylint/deprecated_thing.py pylint:ansible-deprecated-unnecessary-collection-name  # required to verify plugin against core
+test/integration/targets/ansible-test-sanity-pylint/deprecated_thing.py pylint:ansible-deprecated-collection-name-not-permitted  # required to verify plugin against core
+test/integration/targets/lineinfile/files/testnoeof.txt trailing-newline  # Specifically testing EOF
+test/units/errors/fixtures/inputs/long_file.txt trailing-newline
+test/units/errors/fixtures/inputs/one_line_file.txt trailing-newline
+test/units/errors/fixtures/inputs/short_file_missing_trailing_newline.txt trailing-newline
+.github/RELEASE_NAMES.txt release-names  # TODO: 2.21

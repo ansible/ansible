@@ -1,0 +1,15 @@
+- name: set variables
+  set_fact:
+    test_user_group: staff
+    test_user_groups:
+      - com.apple.access_ssh
+
+- name: set plaintext password
+  no_log: yes
+  set_fact:
+    test_user_plaintext_password: "{{ lookup('password', '/dev/null') }}"
+
+- name: set hashed password
+  no_log: yes
+  set_fact:
+    test_user_hashed_password: "{{ test_user_plaintext_password }}"

@@ -1,0 +1,9 @@
+{
+    "disabled": true,
+    "all_targets": true,
+    "include_symlinks": true,
+    "multi_version": "target",
+    "controller_only": true,
+    "min_max_python_only": true,
+    "output": "path-message"
+}

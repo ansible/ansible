@@ -1,0 +1,24 @@
+{
+    "name": "Ubuntu 14.04",
+    "input": {
+        "/etc/lsb-release": "DISTRIB_ID=Ubuntu\nDISTRIB_RELEASE=14.04\nDISTRIB_CODENAME=trusty\nDISTRIB_DESCRIPTION=\"Ubuntu 14.04.4 LTS\"",
+        "/etc/os-release": "NAME=\"Ubuntu\"\nVERSION=\"14.04.4 LTS, Trusty Tahr\"\nID=ubuntu\nID_LIKE=debian\nPRETTY_NAME=\"Ubuntu 14.04.4 LTS\"\nVERSION_ID=\"14.04\"\nHOME_URL=\"http://www.ubuntu.com/\"\nSUPPORT_URL=\"http://help.ubuntu.com/\"\nBUG_REPORT_URL=\"http://bugs.launchpad.net/ubuntu/\""
+    },
+    "platform.dist": ["Ubuntu", "14.04", "trusty"],
+    "distro": {
+        "codename": "trusty",
+        "id": "ubuntu",
+        "name": "Ubuntu",
+        "version": "14.04",
+        "version_best": "14.04.4",
+        "os_release_info": {},
+        "lsb_release_info": {}
+    },
+    "result": {
+        "distribution": "Ubuntu",
+        "distribution_major_version": "14",
+        "distribution_release": "trusty",
+        "os_family": "Debian",
+        "distribution_version": "14.04"
+    }
+}

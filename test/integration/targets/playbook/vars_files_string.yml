@@ -1,0 +1,6 @@
+- hosts: localhost
+  vars_files: some_vars.yml
+  tasks:
+    - assert:
+        that:
+          - 'a_variable == "yep"'

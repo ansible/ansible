@@ -1,0 +1,38 @@
+# Tests against https://github.com/ansible/ansible/issues/67972
+
+# Do our first clone manually; there are no commits yet and Ansible doesn't like
+# that.
+- name: FORCEFULLY-FETCH-TAG | Clone the bare repo in a non-bare clone
+  shell: git clone {{ repo_dir }}/tag_force_push {{ repo_dir }}/tag_force_push_clone1
+
+- name: FORCEFULLY-FETCH-TAG | Prepare repo with a tag
+  shell: |
+    echo 1337 > leet;
+    git add leet;
+    git commit -m uh-oh;
+    git tag -f herewego;
+    git push --tags origin '{{ git_default_branch }}'
+  args:
+    chdir: "{{ repo_dir }}/tag_force_push_clone1"
+
+- name: FORCEFULLY-FETCH-TAG | clone the repo for the second time
+  git:
+    repo: "{{ repo_dir }}/tag_force_push"
+    dest: "{{ repo_dir }}/tag_force_push_clone2"
+
+- name: FORCEFULLY-FETCH-TAG | Forcefully overwrite the tag in clone1
+  shell: |
+    echo 1338 > leet;
+    git add leet;
+    git commit -m uh-oh;
+    git tag -f herewego;
+    git push -f --tags origin '{{ git_default_branch }}'
+  args:
+    chdir: "{{ repo_dir }}/tag_force_push_clone1"
+
+- name: FORCEFULLY-FETCH-TAG | Try to update the second clone
+  git:
+    repo: "{{ repo_dir }}/tag_force_push"
+    dest: "{{ repo_dir }}/tag_force_push_clone2"
+    force: yes
+  register: git_res

@@ -1,0 +1,43 @@
+> ROLE: *test_role1* (test/integration/targets/ansible-doc/roles/test_role1)
+
+ENTRY POINT: *main* - test_role1 from roles subdir
+
+ADDED IN: version 1.2.0
+
+          In to am attended desirous raptures *declared* diverted
+          confined at. Collected instantly remaining up certainly to
+          `necessary' as. Over walk dull into son boy door went new.
+          At or happiness commanded daughters as. Is `handsome` an
+          declared at received in extended vicinity subjects. Into
+          miss on he over been late pain an. Only week bore boy what
+          fat case left use. Match round scale now style far times.
+          Your me past an much.
+
+Options (= indicates it is required):
+
+= myopt1    First option.
+          type: str
+
+- myopt2    Second option
+          default: 8000
+          type: int
+
+- myopt3    Third option.
+          choices: [choice1, choice2]
+          default: null
+          type: str
+
+NOTES:
+        * This is a role.
+        * More text.
+
+SEE ALSO:
+        * Module ansible.builtin.file
+             The official documentation on the
+             ansible.builtin.file module.
+             https://docs.ansible.com/ansible-core/devel/collections/ansible/builtin/file_module.html
+        * Lookup plugin ansible.builtin.file
+             Reads a file from the controller.
+             https://docs.ansible.com/ansible-core/devel/collections/ansible/builtin/file_lookup.html
+
+AUTHOR: John Doe (@john), Jane Doe (@jane)

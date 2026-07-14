@@ -1,0 +1,3 @@
+_boot_time_command:
+  freebsd: '/sbin/sysctl kern.boottime'
+  macosx: 'who -b'

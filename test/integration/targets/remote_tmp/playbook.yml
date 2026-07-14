@@ -1,0 +1,72 @@
+- name: Test temp dir on de escalation
+  hosts: testhost
+  become: yes
+  tasks:
+    - name: create test user
+      user:
+        name: tmptest
+        state: present
+        group: '{{ "staff" if ansible_facts.distribution == "MacOSX" else omit }}'
+
+    - name: execute test case
+      become_user: tmptest
+      block:
+        - name: Test case from issue 41340
+          blockinfile:
+              create: yes
+              block: |
+                export foo=bar
+              marker: "# {mark} Here there be a marker"
+              dest: /tmp/testing.txt
+              mode: 0644
+      always:
+        - name: clean up file
+          file: path=/tmp/testing.txt state=absent
+
+        - name: clean up test user
+          user: name=tmptest state=absent
+          become_user: root
+
+- name: Test tempdir is removed
+  hosts: testhost
+  gather_facts: false
+  vars:
+    # These tests cannot be run with pipelining as it defeats the purpose of
+    # ensuring remote_tmp is cleaned up. Pipelining is enabled in the test
+    # inventory
+    ansible_pipelining: false
+    # Ensure that the remote_tmp_dir we create allows the unpriv connection user
+    # to create the remote_tmp
+    ansible_become: false
+  tasks:
+    - import_role:
+        name: ../setup_remote_tmp_dir
+
+    - vars:
+        # Isolate the remote_tmp used by these tests
+        ansible_remote_tmp: "{{ remote_tmp_dir }}/remote_tmp"
+      block:
+        - file:
+            state: touch
+            path: "{{ remote_tmp_dir }}/65393"
+
+        - copy:
+            src: "{{ remote_tmp_dir }}/65393"
+            dest: "{{ remote_tmp_dir }}/65393.2"
+            remote_src: true
+
+        - find:
+            path: "{{ ansible_remote_tmp }}"
+            use_regex: yes
+            patterns: 'AnsiballZ_.+\.py'
+            recurse: true
+          register: result
+
+    - debug:
+        var: result
+
+    - assert:
+        that:
+          # Should only be AnsiballZ_find.py because find is actively running
+          - result.files|length == 1
+          - result.files[0].path.endswith('/AnsiballZ_find.py')

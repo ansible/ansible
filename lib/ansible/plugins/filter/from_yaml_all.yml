@@ -1,0 +1,28 @@
+DOCUMENTATION:
+  name: from_yaml_all
+  version_added: 'historical'
+  short_description: Convert a series of YAML documents into a variable structure
+  description:
+    - Converts a YAML documents in a string representation into an equivalent structured Ansible variable.
+    - Ansible internally auto-converts YAML strings into variable structures in most contexts, but by default does not handle 'multi document' YAML files or strings.
+    - If multiple YAML documents are not supplied, this is the equivalence of using C(from_yaml).
+  notes:
+    - This filter functions as a wrapper to the Python C(yaml.safe_load_all) function, part of the L(pyyaml Python library, https://pypi.org/project/PyYAML/).
+    - Possible conflicts in variable names from the multiple documents are resolved directly by the pyyaml library.
+  options:
+    _input:
+      description: A YAML string.
+      type: string
+      required: true
+
+EXAMPLES: |
+  # variable from string variable containing YAML documents
+  {{ multidoc_yaml_string | from_yaml_all }}
+
+  # variable from multidocument YAML string
+  {{ '---\n{"a": true, "b": 54, "c": [1,2,3]}\n...\n---{"x": 1}\n...\n' | from_yaml_all }}
+
+RETURN:
+  _value:
+    description: The variable resulting from deserializing the YAML documents.
+    type: raw

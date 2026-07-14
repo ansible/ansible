@@ -1,0 +1,5 @@
+- name: remove git from FreeBSD
+  pkgng:
+    name: git
+    state: absent
+    autoremove: yes

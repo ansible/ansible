@@ -1,0 +1,57 @@
+- block:
+  - name: Install the acl package on Ubuntu
+    apt:
+      name: acl
+    when: ansible_distribution in ('Ubuntu')
+    register: setup_acl
+
+  - name: Install the acl package on RedHat
+    dnf:
+      name: acl
+    when: ansible_distribution in ('RedHat')
+    register: setup_acl
+
+  - block:
+    - name: Testing ACLs
+      copy:
+        content: "TEST"
+        mode: 0644
+        dest: "~/test.txt"
+
+    - shell: getfacl ~/test.txt
+      register: acls
+
+    become: yes
+    become_user: "{{ remote_unprivileged_user }}"
+
+  - name: Check that there are no ACLs leftovers
+    assert:
+      that:
+        - "'user:' + remote_unprivileged_user + ':r-x\t#effective:r--' not in acls.stdout_lines"
+
+  - name: Check that permissions match with what was set in the mode param
+    assert:
+      that:
+        - "'user::rw-' in acls.stdout_lines"
+        - "'group::r--' in acls.stdout_lines"
+        - "'other::r--' in acls.stdout_lines"
+
+  always:
+    - name: Remove the acl package on Ubuntu
+      apt:
+        name: acl
+        state: absent
+      when: setup_acl is changed and ansible_distribution in ('Ubuntu')
+
+    - name: Remove the acl package on RedHat
+      dnf:
+        name: acl
+        state: absent
+      when: setup_acl is changed and ansible_distribution in ('RedHat')
+
+    - name: Clean up
+      file:
+        path: "~/test.txt"
+        state: absent
+      become: yes
+      become_user: "{{ remote_unprivileged_user }}"

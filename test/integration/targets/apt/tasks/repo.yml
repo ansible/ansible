@@ -1,0 +1,457 @@
+- block:
+  - name: Install foo package version 1.0.0
+    apt:
+      name: foo=1.0.0
+      allow_unauthenticated: yes
+    register: apt_result
+
+  - name: Check install with dpkg
+    shell: dpkg-query -l foo
+    register: dpkg_result
+
+  - name: Check if install was successful
+    assert:
+      that:
+        - "apt_result is success"
+        - "dpkg_result is success"
+        - "'1.0.0' in dpkg_result.stdout"
+
+  - name: Update to foo version 1.0.1
+    apt:
+      name: foo
+      state: latest
+      allow_unauthenticated: yes
+    register: apt_result
+
+  - name: Check install with dpkg
+    shell: dpkg-query -l foo
+    register: dpkg_result
+
+  - name: Check if install was successful
+    assert:
+      that:
+        - "apt_result is success"
+        - "dpkg_result is success"
+        - "'1.0.1' in dpkg_result.stdout"
+  always:
+    - name: Clean up
+      apt:
+        name: foo
+        state: absent
+        allow_unauthenticated: yes
+
+- name: Try to install non-existent version
+  apt:
+    name: foo=99
+    state: present
+  ignore_errors: true
+  register: apt_result
+
+- name: Check if install failed
+  assert:
+    that:
+      - apt_result is failed
+
+# https://github.com/ansible/ansible/issues/30638
+- block:
+  - name: Don't install foo=1.0.1 since foo is not installed and only_upgrade is set
+    apt:
+      name: foo=1.0.1
+      state: present
+      only_upgrade: yes
+      allow_unauthenticated: yes
+    ignore_errors: yes
+    register: apt_result
+
+  - name: Check that foo was not upgraded
+    assert:
+      that:
+        - "apt_result is not changed"
+        - "apt_result is success"
+
+  - apt:
+      name: foo=1.0.0
+      allow_unauthenticated: yes
+
+  - name: Upgrade foo to 1.0.1 but don't upgrade foobar since it is not installed
+    apt:
+      name: foobar=1.0.1,foo=1.0.1
+      state: present
+      only_upgrade: yes
+      allow_unauthenticated: yes
+    register: apt_result
+
+  - name: Check install with dpkg
+    shell: "dpkg-query -l {{ item }}"
+    register: dpkg_result
+    ignore_errors: yes
+    loop:
+      - foobar
+      - foo
+
+  - name: Check if install was successful
+    assert:
+      that:
+        - "apt_result is success"
+        - "dpkg_result.results[0] is failure"
+        - "'1.0.1' not in dpkg_result.results[0].stdout"
+        - "dpkg_result.results[1] is success"
+        - "'1.0.1' in dpkg_result.results[1].stdout"
+  always:
+    - name: Clean up
+      apt:
+        name: foo
+        state: absent
+        allow_unauthenticated: yes
+
+- block:
+  - name: Install foo=1.0.0
+    apt:
+      name: foo=1.0.0
+
+  - name: Run version test matrix
+    apt:
+      name: foo{{ item.0 }}
+      default_release: '{{ item.1 }}'
+      state: '{{ item.2 | ternary("latest","present") }}'
+    check_mode: true
+    register: apt_result
+    loop:
+      # [filter, release, state_latest, expected]
+      - ["", null, false, null]
+      - ["", null, true, "1.0.1"]
+      - ["=1.0.0", null, false, null]
+      - ["=1.0.0", null, true, null]
+      - ["=1.0.1", null, false, "1.0.1"]
+      #- ["=1.0.*", null, false, null] # legacy behavior. should not upgrade without state=latest
+      - ["=1.0.*", null, true, "1.0.1"]
+      - [">=1.0.0", null, false, null]
+      - [">=1.0.0", null, true, "1.0.1"]
+      - [">=1.0.1", null, false, "1.0.1"]
+      - ["", "testing", false, null]
+      - ["", "testing", true, "2.0.1"]
+      - ["=2.0.0", null, false, "2.0.0"]
+      - [">=2.0.0", "testing", false, "2.0.1"]
+
+  - name: Validate version test matrix
+    assert:
+      that:
+        - (item.item.3 is not none) == (item.stdout is defined)
+        - item.item.3 is none or "Inst foo [1.0.0] (" + item.item.3 + " localhost [all])" in item.stdout_lines
+    loop: '{{ apt_result.results }}'
+
+  - name: Pin foo=1.0.0
+    copy:
+      content: |-
+        Package: foo
+        Pin: version 1.0.0
+        Pin-Priority: 1000
+      dest: /etc/apt/preferences.d/foo
+
+  - name: Run pinning version test matrix
+    apt:
+      name: foo{{ item.0 }}
+      default_release: '{{ item.1 }}'
+      state: '{{ item.2 | ternary("latest","present") }}'
+    check_mode: true
+    ignore_errors: true
+    register: apt_result
+    loop:
+      # [filter, release, state_latest, expected] # expected=null for no change. expected=False to assert an error
+      - ["", null, false, null]
+      - ["", null, true, null]
+      - ["=1.0.0", null, false, null]
+      - ["=1.0.0", null, true, null]
+      - ["=1.0.1", null, false, "1.0.1"]
+      #- ["=1.0.*", null, false, null] # legacy behavior. should not upgrade without state=latest
+      - ["=1.0.*", null, true, "1.0.1"]
+      - [">=1.0.0", null, false, null]
+      - [">=1.0.0", null, true, null]
+      - [">=1.0.1", null, false, False]
+      - ["", "testing", false, null]
+      - ["", "testing", true, null]
+      - ["=2.0.0", null, false, "2.0.0"]
+      - [">=2.0.0", "testing", false, False]
+
+  - name: Validate pinning version test matrix
+    assert:
+      that:
+        - (item.item.3 != False) or (item.item.3 == False and item is failed)
+        - (item.item.3 is string) == (item.stdout is defined)
+        - item.item.3 is not string or "Inst foo [1.0.0] (" + item.item.3 + " localhost [all])" in item.stdout_lines
+    loop: '{{ apt_result.results }}'
+
+  always:
+    - name: Uninstall foo
+      apt:
+        name: foo
+        state: absent
+
+    - name: Unpin foo
+      file:
+        path: /etc/apt/preferences.d/foo
+        state: absent
+
+# https://github.com/ansible/ansible/issues/35900
+- block:
+  - name: Disable ubuntu repos so system packages are not upgraded and do not change testing env
+    command: mv /etc/apt/sources.list /etc/apt/sources.list.backup
+
+  - name: Install foobar, installs foo as a dependency
+    apt:
+      name: foobar=1.0.0
+      allow_unauthenticated: yes
+
+  - name: mark foobar as auto for next test
+    shell: apt-mark auto foobar
+
+  - name: Install foobar (marked as manual) (check mode)
+    apt:
+      name: foobar=1.0.1
+      allow_unauthenticated: yes
+    check_mode: yes
+    register: manual_foobar_install_check_mode
+
+  - name: check foobar was not marked as manually installed by check mode
+    shell: apt-mark showmanual | grep foobar
+    ignore_errors: yes
+    register: showmanual
+
+  - assert:
+      that:
+        - manual_foobar_install_check_mode.changed
+        - "'foobar' not in showmanual.stdout"
+
+  - name: Install foobar (marked as manual)
+    apt:
+      name: foobar=1.0.1
+      allow_unauthenticated: yes
+    register: manual_foobar_install
+
+  - name: check foobar was marked as manually installed
+    shell: apt-mark showmanual | grep foobar
+    ignore_errors: yes
+    register: showmanual
+
+  - assert:
+      that:
+        - manual_foobar_install.changed
+        - "'foobar' in showmanual.stdout"
+
+  - name: Upgrade foobar to a version which does not depend on foo, autoremove should remove foo
+    apt:
+      upgrade: dist
+      autoremove: yes
+      allow_unauthenticated: yes
+
+  - name: Check foo with dpkg
+    shell: dpkg-query -l foo
+    register: dpkg_result
+    ignore_errors: yes
+
+  - name: Check that foo was removed by autoremove
+    assert:
+      that:
+        - "dpkg_result is failed"
+
+  always:
+    - name: Clean up
+      apt:
+        pkg: foo,foobar
+        state: absent
+        autoclean: yes
+
+    - name: Restore ubuntu repos
+      command: mv /etc/apt/sources.list.backup /etc/apt/sources.list
+
+
+# https://github.com/ansible/ansible/issues/26298
+- block:
+  - name: Disable ubuntu repos so system packages are not upgraded and do not change testing env
+    command: mv /etc/apt/sources.list /etc/apt/sources.list.backup
+
+  - name: Install foobar, installs foo as a dependency
+    apt:
+      name: foobar=1.0.0
+      allow_unauthenticated: yes
+
+  - name: Upgrade foobar to a version which does not depend on foo
+    apt:
+      upgrade: dist
+      force: yes  # workaround for --allow-unauthenticated used along with upgrade
+
+  - name: autoremove should remove foo
+    apt:
+      autoremove: yes
+    register: autoremove_result
+
+  - name: Check that autoremove correctly reports changed=True
+    assert:
+      that:
+        - "autoremove_result is changed"
+
+  - name: Check foo with dpkg
+    shell: dpkg-query -l foo
+    register: dpkg_result
+    ignore_errors: yes
+
+  - name: Check that foo was removed by autoremove
+    assert:
+      that:
+        - "dpkg_result is failed"
+
+  - name: Nothing to autoremove
+    apt:
+      autoremove: yes
+    register: autoremove_result
+
+  - name: Check that autoremove correctly reports changed=False
+    assert:
+      that:
+        - "autoremove_result is not changed"
+
+  - name: Create a fake .deb file for autoclean to remove
+    file:
+      name: /var/cache/apt/archives/python3-q_2.4-1_all.deb
+      state: touch
+
+  - name: autoclean fake .deb file
+    apt:
+      autoclean: yes
+    register: autoclean_result
+
+  - name: Check if the .deb file exists
+    stat:
+      path: /var/cache/apt/archives/python3-q_2.4-1_all.deb
+    register: stat_result
+
+  - name: Check that autoclean correctly reports changed=True and file was removed
+    assert:
+      that:
+        - "autoclean_result is changed"
+        - "not stat_result.stat.exists"
+
+  - name: Nothing to autoclean
+    apt:
+      autoclean: yes
+    register: autoclean_result
+
+  - name: Check that autoclean correctly reports changed=False
+    assert:
+      that:
+        - "autoclean_result is not changed"
+
+  always:
+    - name: Clean up
+      apt:
+        pkg: foo,foobar
+        state: absent
+        autoclean: yes
+
+    - name: Restore ubuntu repos
+      command: mv /etc/apt/sources.list.backup /etc/apt/sources.list
+
+- name: Downgrades
+  import_tasks: "downgrade.yml"
+
+- name: Upgrades
+  block:
+    - import_tasks: "upgrade.yml"
+      vars:
+        aptitude_present: "{{ True | bool }}"
+        upgrade_type: "dist"
+        force_apt_get: "{{ False | bool }}"
+
+    - name: Check if aptitude is installed
+      command: dpkg-query --show --showformat='${db:Status-Abbrev}' aptitude
+      register: aptitude_status
+
+    - name: Remove aptitude, if installed, to test fall-back to apt-get
+      apt:
+        pkg: aptitude
+        state: absent
+      when:
+        - aptitude_status.stdout.find('ii') != -1
+
+    - include_tasks: "upgrade.yml"
+      vars:
+        aptitude_present: "{{ False | bool }}"
+        upgrade_type: "{{ item.upgrade_type }}"
+        force_apt_get: "{{ item.force_apt_get }}"
+      with_items:
+        - { upgrade_type: safe, force_apt_get: False }
+        - { upgrade_type: full, force_apt_get: False }
+        - { upgrade_type: safe, force_apt_get: True }
+        - { upgrade_type: full, force_apt_get: True }
+
+    - include_tasks: "upgrade_autoremove.yml"
+
+    - name: (Re-)Install aptitude, run same tests again
+      apt:
+        pkg: aptitude
+        state: present
+
+    - include_tasks: "upgrade.yml"
+      vars:
+        aptitude_present: "{{ True | bool }}"
+        upgrade_type: "{{ item.upgrade_type }}"
+        force_apt_get: "{{ item.force_apt_get }}"
+      with_items:
+        - { upgrade_type: safe, force_apt_get: False }
+        - { upgrade_type: full, force_apt_get: False }
+        - { upgrade_type: safe, force_apt_get: True }
+        - { upgrade_type: full, force_apt_get: True }
+
+    - include_tasks: "upgrade_scenarios.yml"
+    - include_tasks: "upgrade_autoremove.yml"
+
+    - name: Remove aptitude if not originally present
+      apt:
+        pkg: aptitude
+        state: absent
+      when:
+        - aptitude_status.stdout.find('ii') == -1
+
+- block:
+   - name: Install the foo package with diff=yes
+     apt:
+       name: foo
+       allow_unauthenticated: yes
+     diff: yes
+     register: apt_result
+
+   - name: Check the content of diff.prepared
+     assert:
+       that:
+         - apt_result is success
+         - "'The following NEW packages will be installed:\n  foo' in apt_result.diff.prepared"
+  always:
+    - name: Clean up
+      apt:
+        name: foo
+        state: absent
+        allow_unauthenticated: yes
+
+- block:
+  - name: Install foo package version 1.0.0 with force=yes, implies allow_unauthenticated=yes
+    apt:
+      name: foo=1.0.0
+      force: yes
+    register: apt_result
+
+  - name: Check install with dpkg
+    shell: dpkg-query -l foo
+    register: dpkg_result
+
+  - name: Check if install was successful
+    assert:
+      that:
+        - "apt_result is success"
+        - "dpkg_result is success"
+        - "'1.0.0' in dpkg_result.stdout"
+  always:
+    - name: Clean up
+      apt:
+        name: foo
+        state: absent
+        allow_unauthenticated: yes

@@ -1,0 +1,52 @@
+---
+- hosts: testhost
+  gather_facts: False
+  tasks:
+  - name: set output_dir
+    set_fact:
+      output_dir: "{{ lookup('env', 'OUTPUT_DIR') }}"
+    tags: ['always']
+
+  - name: Smoketest that ansible_managed with non-ascii chars works, https://github.com/ansible/ansible/issues/27262
+    tags: ['27262']
+    block:
+    - name: ensure output file does not exist
+      file:
+        path: '{{ output_dir }}/café.txt'
+        state: 'absent'
+
+    - name: test templating with unicode in template name
+      template:
+        src: 'templates/café.j2'
+        dest: '{{ output_dir }}/café.txt'
+
+    always:
+    - name: clean up!
+      file:
+        path: '{{ output_dir }}/café.txt'
+        state: 'absent'
+
+    - name: check strftime resolution in ansible_managed, https://github.com/ansible/ansible/pull/79129
+      tags: ['79129']
+      block:
+        - template:
+            src: "templates/%necho Onii-chan help Im stuck;exit 1%n.j2"
+            dest: "{{ output_dir }}/strftime.sh"
+            mode: '0755'
+
+        - shell: "exec {{ output_dir | quote }}/strftime.sh"
+
+        - name: Avoid templating 'injections' via file names
+          template:
+            src: !unsafe "templates/completely{{ 1 % 0 }} safe template.j2"
+            dest: "{{ output_dir }}/jinja.sh"
+            mode: '0755'
+
+        - shell: "exec {{ output_dir | quote }}/jinja.sh"
+          register: result
+
+        - assert:
+            that:
+              - "'Hello' in result.stdout"
+              - "'uname' not in lookup('file', output_dir ~ '/strftime.sh')"
+              - "'uname' not in lookup('file', output_dir ~ '/jinja.sh')"

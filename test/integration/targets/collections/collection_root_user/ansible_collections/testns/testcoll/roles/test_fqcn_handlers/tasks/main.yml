@@ -1,0 +1,16 @@
+- name: Fire fqcn handler 1
+  debug:
+    msg: Fire fqcn handler
+  changed_when: true
+  notify:
+    - 'testns.testcoll.common_handlers : test_fqcn_handler'
+    - 'common_handlers : test_fqcn_handler'
+    - 'test_fqcn_handler'
+
+- debug:
+    msg: Fire fqcn handler with role name
+  changed_when: true
+  notify:
+    - 'testns.testcoll.common_handlers : common_handlers test_fqcn_handler'
+    - 'common_handlers : common_handlers test_fqcn_handler'
+    - 'common_handlers test_fqcn_handler'

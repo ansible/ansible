@@ -1,0 +1,2 @@
+- name: relative to role
+  set_fact: role_result="{{lookup('file', 'testfile')}}"

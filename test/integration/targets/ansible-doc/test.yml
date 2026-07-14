@@ -1,0 +1,341 @@
+- hosts: localhost
+  gather_facts: no
+  environment:
+    ANSIBLE_LIBRARY: "{{ playbook_dir }}/library"
+    ANSIBLE_NOCOLOR: 1
+    ANSIBLE_DEPRECATION_WARNINGS: 1
+    ANSIBLE_DOC_FRAGMENT_PLUGINS: "{{ playbook_dir }}/doc_fragments"
+  vars:
+    # avoid header that has full path and won't work across random paths for tests
+    actual_output_clean: '{{ actual_output.splitlines()[1:] }}'
+    expected_output_clean: '{{ expected_output.splitlines()[1:] }}'
+  tasks:
+    - name: module with missing description return docs
+      command: ansible-doc test_docs_missing_description
+      register: result
+      ignore_errors: true
+
+    - assert:
+        that:
+          - result is failed
+          - |
+              "Unable to retrieve documentation from 'test_docs_missing_description': All (sub-)options and return values must have a 'description' field"
+              in result.stderr
+
+    - name: module with suboptions (avoid first line as it has full path)
+      shell: ansible-doc test_docs_suboptions| tail -n +3
+      register: result
+      ignore_errors: true
+
+    - assert:
+        that:
+          - result is succeeded
+          - actual_output_clean == expected_output_clean
+      vars:
+        actual_output: "{{ result.stdout }}"
+        expected_output: "{{ lookup('file', 'test_docs_suboptions.output') }}"
+
+    - name: module with return docs
+      shell: ansible-doc test_docs_returns| tail -n +3
+      register: result
+      ignore_errors: true
+
+    - assert:
+        that:
+          - result is succeeded
+          - actual_output_clean == expected_output_clean
+      vars:
+        actual_output: "{{ result.stdout }}"
+        expected_output: "{{ lookup('file', 'test_docs_returns.output') }}"
+
+    - name: module with broken return docs
+      command: ansible-doc test_docs_returns_broken
+      register: result
+      ignore_errors: true
+
+    - assert:
+        that:
+          - result is failed
+          - '"module test_docs_returns_broken Missing documentation (or could not parse documentation)" in result.stderr'
+
+    - name: module with return docs with fragments
+      command: ansible-doc test_docs_return_fragments
+      register: result
+      ignore_errors: true
+
+    - name: test fragments work
+      assert:
+        that:
+          - result is success
+          - "'z_last' in actual_output"
+          - "'y_notlast' in actual_output"
+          - actual_output_clean == expected_output_clean
+      vars:
+        actual_output: "{{ result.stdout }}"
+        expected_output: "{{ lookup('file', 'test_docs_return_fragments.output') }}"
+
+    - name: non-existent module
+      command: ansible-doc test_does_not_exist
+      register: result
+    - assert:
+        that:
+          - '"test_does_not_exist was not found" in result.stderr'
+
+    - name: documented module
+      command: ansible-doc test_docs
+      register: result
+    - assert:
+        that:
+          - '"WARNING" not in result.stderr'
+          - '"test_docs" in result.stdout'
+          - '"AUTHOR: Ansible Core Team" in result.stdout'
+
+    - name: documented module without metadata
+      command: ansible-doc test_docs_no_metadata
+      register: result
+    - assert:
+        that:
+          - '"WARNING" not in result.stderr'
+          - '"test_docs_no_metadata " in result.stdout'
+          - '"AUTHOR: Ansible Core Team" in result.stdout'
+
+    - name: documented module with no status in metadata
+      command: ansible-doc test_docs_no_status
+      register: result
+    - assert:
+        that:
+          - '"WARNING" not in result.stderr'
+          - '"test_docs_no_status " in result.stdout'
+          - '"AUTHOR: Ansible Core Team" in result.stdout'
+
+    - name: documented module with non-iterable status in metadata
+      command: ansible-doc test_docs_non_iterable_status
+      register: result
+    - assert:
+        that:
+          - '"WARNING" not in result.stderr'
+          - '"test_docs_non_iterable_status " in result.stdout'
+          - '"AUTHOR: Ansible Core Team" in result.stdout'
+
+    - name: documented module with removed status
+      command: ansible-doc test_docs_removed_status
+      register: result
+
+    - assert:
+        that:
+          - '"WARNING" not in result.stderr'
+          - '"test_docs_removed_status " in result.stdout'
+          - '"AUTHOR: Ansible Core Team" in result.stdout'
+
+    - name: empty module
+      command: ansible-doc test_empty
+      register: result
+      ignore_errors: true
+
+    - assert:
+        that:
+          - result is failed
+
+    - name: module with no documentation
+      command: ansible-doc test_no_docs
+      register: result
+      ignore_errors: true
+
+    - assert:
+        that:
+          - result is failed
+
+    - name: deprecated module with both removed date and version (date should get precedence)
+      command: ansible-doc test_docs_removed_precedence
+      register: result
+
+    - assert:
+        that:
+          - '"DEPRECATED" in result.stdout'
+          - '"Reason: Updated module released with more functionality" in result.stdout'
+          - '"Will be removed in a release after 2022-06-01" in result.stdout'
+          - '"Alternatives: new_module" in result.stdout'
+
+    - name: documented module with YAML anchors
+      shell: ansible-doc test_docs_yaml_anchors |tail -n +3
+      register: result
+
+    - set_fact:
+        actual_output: >-
+          {{ result.stdout | regex_replace('^(> [A-Z_]+ +\().+library/([a-z_]+.py)\)$', '\1library/\2)', multiline=true) }}
+        expected_output: "{{ lookup('file', 'test_docs_yaml_anchors.output') }}"
+
+    - assert:
+        that:
+          - actual_output == expected_output
+          - actual_output_clean == expected_output_clean
+
+    - name: ensure 'donothing' adjacent filter is loaded
+      assert:
+        that:
+          - "'x' == ('x'|donothing)"
+
+    - name: docs for deprecated plugin
+      command: ansible-doc deprecated_with_docs -t lookup --playbook-dir ./
+      register: result
+
+    - assert:
+        that:
+          - '"[WARNING]" in result.stderr'
+          - '"[DEPRECATION WARNING]" in result.stderr'
+          - '"deprecated_with_docs " in result.stdout'
+          - '"AUTHOR: Ansible Core Team" in result.stdout'
+
+    - name: adjacent docs for deprecated plugin
+      command: ansible-doc deprecated_with_adj_docs -t lookup --playbook-dir ./
+      register: result
+
+    - assert:
+        that:
+          - '"[WARNING]" in result.stderr'
+          - '"[DEPRECATION WARNING]" in result.stderr'
+          - '"deprecated_with_adj_docs " in result.stdout'
+          - '"AUTHOR: Ansible Core Team" in result.stdout'
+
+    - name: Handle plugin docs
+      debug:
+        msg: "{{ lookup('broken_docs') }}"
+      register: r
+      ignore_errors: yes
+
+    - assert:
+        that:
+          - "'plugin broken_docs has malformed documentation' in r.msg"
+
+    - name: check ansible._protomatter excluded from output by default
+      command: ansible-doc -t filter --list
+      register: result
+
+    - assert:
+        that:
+          - result.stdout_lines | select("match", "^ansible\\._protomatter\\.") | length == 0
+
+    - name: check ansible._protomatter is shown when requested
+      command: ansible-doc ansible._protomatter -t filter --list
+      register: result
+
+    - assert:
+        that:
+          - result.stdout_lines | select("match", "^ansible\\._protomatter\\.") | length == result.stdout_lines | length
+
+    - name: List all filter plugins without any filter
+      command: ansible-doc -t filter --list --json
+      register: filter_list_all_raw
+
+    - set_fact:
+        filter_list_all: "{{ filter_list_all_raw.stdout | from_json }}"
+
+    - name: Check Jinja2 filters have a short description on list without any filter
+      assert:
+        that:
+        - filter_list_all['ansible.builtin.default'] is contains("the passed default value")
+        - filter_list_all['ansible.builtin.sum'] is contains("sum of a sequence")
+
+    - name: List only ansible.builtin filter plugins
+      command: ansible-doc ansible.builtin -t filter --list --json
+      register: filter_list_builtin_raw
+
+    - set_fact:
+        filter_list_builtin: "{{ filter_list_builtin_raw.stdout | from_json }}"
+
+    - name: Check Jinja2 filters have a short description on list with builtin filter
+      assert:
+        that:
+        - filter_list_builtin['ansible.builtin.default'] is contains("the passed default value")
+        - filter_list_builtin['ansible.builtin.sum'] is contains("sum of a sequence")
+
+    - name: List only ansible.builtin filter plugin files
+      command: ansible-doc ansible.builtin -t filter --list_files
+      register: filter_list_builtin_files
+
+    - name: Verify files for Jinja2 filters
+      assert:
+        that:
+        - filter_list_builtin_files.stdout_lines | select("match", "^ansible\\.builtin\\.default\\s+.*/core\\.py") | length == 1
+        - filter_list_builtin_files.stdout_lines | select("match", "^ansible\\.builtin\\.sum\\s+None") | length == 1
+
+    - name: Get jinja2 filter docs shadowed by Ansible
+      command: ansible-doc ansible.builtin.default -t filter
+      register: filter_jinja2_default
+
+    - name: Assert jinja2 filter docs shadowed by Ansible
+      assert:
+        that:
+        - filter_jinja2_default.stdout is search("\\s+FILTER ansible.builtin.default\\s+")
+        - filter_jinja2_default.stdout is search("the Jinja builtin filter plugin 'default'")
+        - filter_jinja2_default.stdout is search("the passed default value")
+        - filter_jinja2_default.stdout is search("https://jinja\\.palletsprojects\\.com/.*")
+
+    - name: Get jinja2 filter docs not shadowed by Ansible
+      command: ansible-doc ansible.builtin.sum -t filter
+      register: filter_jinja2_sum
+
+    - name: Assert jinja2 filter docs not shadowed by Ansible
+      assert:
+        that:
+        - filter_jinja2_sum.stdout is search("\\s+FILTER ansible.builtin.sum\\s+")
+        - filter_jinja2_sum.stdout is search("the Jinja builtin filter plugin 'sum'")
+        - filter_jinja2_sum.stdout is search("sum of a sequence")
+        - filter_jinja2_sum.stdout is search("https://jinja\\.palletsprojects\\.com/.*")
+
+    - name: List all test plugins without any filter
+      command: ansible-doc -t test --list --json
+      register: test_list_all_raw
+
+    - set_fact:
+        test_list_all: "{{ test_list_all_raw.stdout | from_json }}"
+
+    - name: Check Jinja2 tests have a short description on list without any filter
+      assert:
+        that:
+        - test_list_all['ansible.builtin.number'] is contains("is a number")
+
+    - name: List only ansible.builtin test plugins
+      command: ansible-doc ansible.builtin -t test --list --json
+      register: test_list_builtin_raw
+
+    - set_fact:
+        test_list_builtin: "{{ test_list_builtin_raw.stdout | from_json }}"
+
+    - name: Check Jinja2 tests have a short description on list with builtin tests
+      assert:
+        that:
+        - test_list_builtin['ansible.builtin.number'] is contains("is a number")
+
+    - name: List only ansible.builtin test plugin files
+      command: ansible-doc ansible.builtin -t test --list_files
+      register: test_list_builtin_files
+
+    - name: Verify files for Jinja2 filters
+      assert:
+        that:
+        - test_list_builtin_files.stdout_lines | select("match", "^ansible\\.builtin\\.number\\s+None") | length == 1
+
+    - name: Get jinja2 test docs
+      command: ansible-doc ansible.builtin.number -t test
+      register: test_jinja2_number
+
+    - name: Assert jinja2 test docs
+      assert:
+        that:
+        - test_jinja2_number.stdout is search("\\s+TEST ansible.builtin.number\\s+")
+        - test_jinja2_number.stdout is search("the Jinja builtin test plugin 'number'")
+        - test_jinja2_number.stdout is contains("is a number")
+        - test_jinja2_number.stdout is search("https://jinja\\.palletsprojects\\.com/.*")
+
+    - name: Get jinja2 test docs for an unqualified builtin
+      command: ansible-doc number -t test
+      register: test_jinja2_number_short
+
+    - name: Assert jinja2 test docs
+      assert:
+        that:
+        - test_jinja2_number_short.stdout is search("\\s+TEST ansible.builtin.number\\s+")
+        - test_jinja2_number_short.stdout is search("the Jinja builtin test plugin 'number'")
+        - test_jinja2_number_short.stdout is contains("is a number")
+        - test_jinja2_number_short.stdout is search("https://jinja\\.palletsprojects\\.com/.*")

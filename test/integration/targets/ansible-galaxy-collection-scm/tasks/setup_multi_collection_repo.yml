@@ -1,0 +1,70 @@
+- name: Initialize a git repo
+  command: 'git init {{ test_repo_path }}'
+
+- stat:
+    path: "{{ test_repo_path }}"
+
+- name: Add a couple collections to the repository
+  command: 'ansible-galaxy collection init {{ item }}'
+  args:
+    chdir: '{{ scm_path }}'
+  loop:
+    - 'ansible_test.collection_1'
+    - 'ansible_test.collection_2'
+
+- name: Preserve the (empty) docs directory for the SCM collection
+  file:
+    path: '{{ test_repo_path }}/{{ item }}/docs/README.md'
+    state: touch
+  loop:
+    - collection_1
+    - collection_2
+
+- name: Preserve the (empty) roles directory for the SCM collection
+  file:
+    path: '{{ test_repo_path }}/{{ item }}/roles/README.md'
+    state: touch
+  loop:
+    - collection_1
+    - collection_2
+
+- name: create extra files and folders to test build_ignore
+  file:
+    path: '{{ test_repo_path }}/collection_1/{{ item.name }}'
+    state: '{{ item.state }}'
+  loop:
+    - name: foo.txt
+      state: touch
+    - name: foobar
+      state: directory
+    - name: foobar/qux
+      state: directory
+    - name: foobar/qux/bar
+      state: touch
+    - name: foobar/baz.txt
+      state: touch
+
+- name: Add collection_2 as a dependency of collection_1
+  lineinfile:
+    path: '{{ test_repo_path }}/collection_1/galaxy.yml'
+    regexp: '^dependencies'
+    line: "dependencies: {'git+file://{{ test_repo_path }}/.git#collection_2/': '*'}"
+
+- name: Ignore a directory and files
+  lineinfile:
+    path: '{{ test_repo_path }}/collection_1/galaxy.yml'
+    regexp: '^build_ignore'
+    line: "build_ignore: ['foo.txt', 'foobar/*']"
+
+- name: Commit the changes
+  command: '{{ item }}'
+  args:
+    chdir: '{{ test_repo_path }}'
+  loop:
+    - git add ./
+    - git commit -m 'add collections'
+
+- name: Build the actual artifact for ansible_test.collection_1 for comparison
+  command: "ansible-galaxy collection build ansible_test/collection_1 --output-path {{ galaxy_dir }}"
+  args:
+    chdir: "{{ scm_path }}"

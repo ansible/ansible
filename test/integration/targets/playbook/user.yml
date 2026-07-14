@@ -1,0 +1,23 @@
+- hosts: localhost
+  tasks:
+    - command: whoami
+      register: whoami
+
+    - assert:
+        that:
+          - whoami is successful
+
+    - set_fact:
+        me: "{{ whoami.stdout }}"
+
+- hosts: localhost
+  user: "{{ me }}"
+  tasks:
+    - debug:
+        msg: worked with user ({{ me }})
+
+- hosts: localhost
+  remote_user: "{{ me }}"
+  tasks:
+    - debug:
+        msg: worked with remote_user ({{ me }})

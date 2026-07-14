@@ -1,0 +1,11 @@
+- set_fact:
+    filter_name: "{{ 1 | filter_name }}"
+    lookup_name: "{{ lookup('lookup_name') }}"
+    test_name_ok: "{{ 1 is test_name_ok }}"
+
+- assert:
+    that:
+      # filter names include a unique hash value to prevent shadowing of other plugins
+      - filter_name | regex_search('^ansible\.plugins\.filter\.test_filter_[0-9]+$') is truthy
+      - lookup_name == 'ansible.plugins.lookup.lookup_name'
+      - test_name_ok

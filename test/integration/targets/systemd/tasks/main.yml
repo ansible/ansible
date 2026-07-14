@@ -1,0 +1,125 @@
+# Test code for the systemd module.
+# (c) 2017, James Tanner <tanner.jc@gmail.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+##
+## systemctl
+##
+
+- name: End if this system does not use systemd
+  meta: end_host
+  when: ansible_facts.service_mgr != 'systemd'
+
+- name: Include distribution specific variables
+  include_vars: "{{ lookup('first_found', params) }}"
+  vars:
+    params:
+      files:
+        - "{{ ansible_facts.distribution }}.yml"
+        - "{{ ansible_facts.os_family }}.yml"
+        - default.yml
+      paths:
+        - vars
+
+- name: get a list of running services
+  shell: systemctl | fgrep 'running' | awk '{print $1}' | sed 's/\.service//g' | fgrep -v '.' | egrep ^[a-z]
+  register: running_names
+- debug: var=running_names
+
+- name: check running state
+  systemd:
+      name: "{{ running_names.stdout_lines|random }}"
+      state: started
+  register: systemd_test0
+- debug: var=systemd_test0
+- name: validate results for test0
+  assert:
+      that:
+          - 'systemd_test0.changed is defined'
+          - 'systemd_test0.name is defined'
+          - 'systemd_test0.state is defined'
+          - 'systemd_test0.status is defined'
+          - 'not systemd_test0.changed'
+          - 'systemd_test0.state == "started"'
+
+- name: the module must fail when a service is not found
+  systemd:
+      name: '{{ fake_service }}'
+      state: stopped
+  register: result
+  ignore_errors: yes
+
+- assert:
+      that:
+          - result is failed
+          - result is search("Could not find the requested service " + fake_service)
+
+- name: the module must fail in check_mode as well when a service is not found
+  systemd:
+      name: '{{ fake_service }}'
+      state: stopped
+  register: result
+  check_mode: yes
+  ignore_errors: yes
+
+- assert:
+      that:
+          - result is failed
+          - result is search("Could not find the requested service " + fake_service)
+
+- name: check that the module works even when systemd is offline (eg in chroot)
+  systemd:
+      name: "{{ running_names.stdout_lines|random }}"
+      state: started
+  environment:
+      SYSTEMD_OFFLINE: 1
+
+- name: Disable ssh 1
+  systemd:
+    name: '{{ ssh_service }}'
+    enabled: false
+  register: systemd_disable_ssh_1
+
+- name: Disable ssh 2
+  systemd:
+    name: '{{ ssh_service }}'
+    enabled: false
+  register: systemd_disable_ssh_2
+
+- name: Enable ssh 1
+  systemd:
+    name: '{{ ssh_service }}'
+    enabled: true
+  register: systemd_enable_ssh_1
+
+- name: Enable ssh 2
+  systemd:
+    name: '{{ ssh_service }}'
+    enabled: true
+  register: systemd_enable_ssh_2
+
+- assert:
+    that:
+      - systemd_disable_ssh_2 is not changed
+      - systemd_enable_ssh_1 is changed
+      - systemd_enable_ssh_2 is not changed
+
+- import_tasks: test_unit_template.yml
+- import_tasks: test_indirect_service.yml
+- import_tasks: test_enabled_runtime.yml
+- import_tasks: test_systemd_version.yml
+- import_tasks: test_mask.yml

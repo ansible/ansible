@@ -1,0 +1,26 @@
+# Ref: https://help.github.com/en/github/building-a-strong-community/configuring-issue-templates-for-your-repository#configuring-the-template-chooser
+blank_issues_enabled: false  # default: true
+contact_links:
+- name: 🔐 Security bug report 🔥
+  url: https://docs.ansible.com/ansible/devel/community/reporting_bugs_and_features.html?utm_medium=github&utm_source=issue_template_chooser
+  about: |
+    Please learn how to report security vulnerabilities here.
+
+    For all security related bugs, email security@ansible.com
+    instead of using this issue tracker and you will receive
+    a prompt response.
+
+    For more information, see
+    https://docs.ansible.com/ansible/devel/community/reporting_bugs_and_features.html
+- name: 📝 Ansible Code of Conduct
+  url: https://docs.ansible.com/ansible/devel/community/code_of_conduct.html?utm_medium=github&utm_source=issue_template_chooser
+  about: ❤ Be nice to other members of the community. ☮ Behave.
+- name: 💬 Talk to the community
+  url: https://docs.ansible.com/ansible/devel/community/communication.html?utm_medium=github&utm_source=issue_template_chooser#forum
+  about: Please ask and answer usage questions here
+- name: ⚡ Working groups
+  url: https://forum.ansible.com/g?utm_medium=github&utm_source=issue_template_chooser
+  about: Interested in improving a specific area? Become a part of a working group!
+- name: 💼 For Enterprise
+  url: https://www.ansible.com/products/engine?utm_medium=github&utm_source=issue_template_chooser
+  about: Red Hat offers support for the Ansible Automation Platform

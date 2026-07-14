@@ -1,0 +1,59 @@
+- name: Test that retrieving a url works
+  set_fact:
+    web_data: "{{ lookup('url', 'https://' ~ httpbin_host ~ '/get?one') | from_json }}"
+
+- name: Assert that the url was retrieved
+  assert:
+    that:
+      - "'one' in web_data.args"
+
+- name: Test that retrieving a url with invalid cert fails
+  set_fact:
+    web_data: "{{ lookup('url', 'https://' ~ badssl_host ~ '/') }}"
+  ignore_errors: True
+  register: url_invalid_cert
+
+- assert:
+    that:
+      - "url_invalid_cert.failed"
+      - "'Error validating the server' in url_invalid_cert.msg or 'Hostname mismatch' in url_invalid_cert.msg or ( url_invalid_cert.msg is search('hostname .* doesn.t match .*'))"
+
+- name: Test that retrieving a url with invalid cert with validate_certs=False works
+  set_fact:
+    web_data: "{{ lookup('url', 'https://' ~ badssl_host ~ '/', validate_certs=False) }}"
+  register: url_no_validate_cert
+
+- assert:
+    that:
+      - badssl_host_substring in web_data
+
+- name: Test ciphers
+  import_tasks: ciphers.yml
+  when: false  # skipped until we have a way to disable TLS 1.3 on the client or server, since cipher suite selection won't break TLS 1.3
+
+- name: Test use_netrc=False
+  import_tasks: use_netrc.yml
+
+- vars:
+    ansible_lookup_url_agent: ansible-test-lookup-url-agent
+  block:
+    - name: Test user agent
+      set_fact:
+        web_data: "{{ lookup('url', 'https://' ~ httpbin_host ~ '/user-agent') | from_json }}"
+
+    - name: Assert that user agent is set
+      assert:
+        that:
+          - ansible_lookup_url_agent in web_data['user-agent']
+
+- vars:
+    ansible_lookup_url_force_basic_auth: yes
+  block:
+    - name: Test force basic auth
+      set_fact:
+        web_data: "{{ lookup('url', 'https://' ~ httpbin_host ~ '/headers', username='abc') | from_json }}"
+
+    - name: Assert that Authorization header is set
+      assert:
+        that:
+          - "'Authorization' in web_data.headers"

@@ -1,0 +1,9 @@
+- name: test vault lookup plugin
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - debug: msg={{lookup('unvault', 'foot.txt.vault')}}
+    - name: verify vault lookup works with both vaulted and unvaulted
+      assert:
+        that:
+            - lookup('unvault', 'foot.txt.vault') == lookup('unvault', 'foot.txt')

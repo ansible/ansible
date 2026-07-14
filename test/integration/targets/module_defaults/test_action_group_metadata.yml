@@ -1,0 +1,123 @@
+---
+- hosts: localhost
+  gather_facts: no
+  environment:
+    ANSIBLE_NOCOLOR: True
+    ANSIBLE_FORCE_COLOR: False
+  tasks:
+
+    - template:
+        src: test_metadata_warning.yml.j2
+        dest: test_metadata_warning.yml
+      vars:
+        group_name: testns.testcoll.empty_metadata
+
+    - command: ansible-playbook test_metadata_warning.yml
+      register: result
+
+    - assert:
+        that: metadata_warning not in warnings
+      vars:
+        warnings: "{{ result.stderr | regex_replace('\\n', ' ') }}"
+        metadata_warning: "Invalid metadata was found"
+
+    - template:
+        src: test_metadata_warning.yml.j2
+        dest: test_metadata_warning.yml
+      vars:
+        group_name: testns.testcoll.bad_metadata_format
+
+    - command: ansible-playbook test_metadata_warning.yml
+      register: result
+
+    - assert:
+        that: metadata_warning in warnings
+      vars:
+        warnings: "{{ result.stderr | regex_replace('\\n', ' ') }}"
+        metadata_warning: >-
+                Invalid metadata was found for action_group testns.testcoll.bad_metadata_format while loading module_defaults.
+                The only expected key is metadata, but got keys: metadata, unexpected_key
+
+    - template:
+        src: test_metadata_warning.yml.j2
+        dest: test_metadata_warning.yml
+      vars:
+        group_name: testns.testcoll.multiple_metadata
+
+    - command: ansible-playbook test_metadata_warning.yml
+      register: result
+
+    - assert:
+        that: metadata_warning in warnings
+      vars:
+        warnings: "{{ result.stderr | regex_replace('\\n', ' ') }}"
+        metadata_warning: >-
+                Invalid metadata was found for action_group testns.testcoll.multiple_metadata while loading module_defaults.
+                The group contains multiple metadata entries.
+
+    - template:
+        src: test_metadata_warning.yml.j2
+        dest: test_metadata_warning.yml
+      vars:
+        group_name: testns.testcoll.bad_metadata_options
+
+    - command: 'ansible-playbook test_metadata_warning.yml'
+      register: result
+
+    - assert:
+        that: metadata_warning in warnings
+      vars:
+        warnings: "{{ result.stderr | regex_replace('\\n', ' ') }}"
+        metadata_warning: >-
+                Invalid metadata was found for action_group testns.testcoll.bad_metadata_options while loading module_defaults.
+                The metadata contains unexpected keys: unexpected_key
+
+    - template:
+        src: test_metadata_warning.yml.j2
+        dest: test_metadata_warning.yml
+      vars:
+        group_name: testns.testcoll.bad_metadata_type
+
+    - command: ansible-playbook test_metadata_warning.yml
+      register: result
+
+    - assert:
+        that: metadata_warning in warnings
+      vars:
+        warnings: "{{ result.stderr | regex_replace('\\n', ' ') }}"
+        metadata_warning: >-
+                Invalid metadata was found for action_group testns.testcoll.bad_metadata_type while loading module_defaults.
+                The metadata is not a dictionary. Got ['testgroup']
+
+    - template:
+        src: test_metadata_warning.yml.j2
+        dest: test_metadata_warning.yml
+      vars:
+        group_name: testns.testcoll.bad_metadata_option_type
+
+    - command: ansible-playbook test_metadata_warning.yml
+      register: result
+
+    - assert:
+        that: metadata_warning in warnings
+      vars:
+        warnings: "{{ result.stderr | regex_replace('\\n', ' ') }}"
+        metadata_warning: >-
+                Invalid metadata was found for action_group testns.testcoll.bad_metadata_option_type while loading module_defaults.
+                The metadata contains unexpected key types: extend_group is {'name': 'testgroup'} (expected type list)
+
+    - name: test disabling action_group metadata validation
+      command: ansible-playbook test_metadata_warning.yml
+      environment:
+        ANSIBLE_VALIDATE_ACTION_GROUP_METADATA: False
+      register: result
+
+    - assert:
+        that: metadata_warning not in warnings
+      vars:
+        warnings: "{{ result.stderr | regex_replace('\\n', ' ') }}"
+        metadata_warning: "Invalid metadata was found for action_group"
+
+    - file:
+        path: test_metadata_warning.yml
+        state: absent

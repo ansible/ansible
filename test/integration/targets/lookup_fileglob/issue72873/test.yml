@@ -1,0 +1,31 @@
+- hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+     dir: files
+  tasks:
+  - file: path='{{ dir }}' state=directory
+
+  - file: path='setvars.bat' state=touch  # in current directory!
+
+  - file: path='{{ dir }}/{{ item }}' state=touch
+    loop:
+        - json.c
+        - strlcpy.c
+        - base64.c
+        - json.h
+        - base64.h
+        - strlcpy.h
+        - jo.c
+
+  - name: Get working order results and sort them
+    set_fact:
+        working: '{{ query("fileglob", "setvars.bat", dir ~ "/*.[ch]") | sort }}'
+
+  - name: Get broken order results and sort them
+    set_fact:
+        broken: '{{ query("fileglob", dir ~ "/*.[ch]", "setvars.bat") | sort }}'
+
+  - assert:
+      that:
+        - working == broken

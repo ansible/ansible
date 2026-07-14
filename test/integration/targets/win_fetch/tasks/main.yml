@@ -1,0 +1,231 @@
+# test code for the fetch module when using winrm connection
+# (c) 2014, Chris Church <chris@ninemoreminutes.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: define host-specific host_output_dir
+  set_fact:
+    host_output_dir: "{{ output_dir }}/{{ inventory_hostname }}"
+
+- name: clean out the test directory
+  file: name={{ host_output_dir|mandatory }} state=absent
+  delegate_to: localhost
+  run_once: true
+
+- name: create the test directory
+  file: name={{ host_output_dir }} state=directory
+  delegate_to: localhost
+  run_once: true
+
+- name: fetch a small file
+  fetch: src="C:/Windows/win.ini" dest={{ host_output_dir }}
+  register: fetch_small
+
+- name: check fetch small result
+  assert:
+    that:
+      - "fetch_small.changed"
+
+- name: check file created by fetch small
+  stat: path={{ fetch_small.dest }}
+  delegate_to: localhost
+  register: fetch_small_stat
+
+- name: verify fetched small file exists locally
+  assert:
+    that:
+      - "fetch_small_stat.stat.exists"
+      - "fetch_small_stat.stat.isreg"
+      - "fetch_small_stat.stat.checksum == fetch_small.checksum"
+
+- name: fetch the same small file
+  fetch: src="C:/Windows/win.ini" dest={{ host_output_dir }}
+  register: fetch_small_again
+
+- name: check fetch small result again
+  assert:
+    that:
+      - "not fetch_small_again.changed"
+
+- name: fetch a small file to flat namespace
+  fetch: src="C:/Windows/win.ini" dest="{{ host_output_dir }}/" flat=yes
+  register: fetch_flat
+
+- name: check fetch flat result
+  assert:
+    that:
+      - "fetch_flat.changed"
+
+- name: check file created by fetch flat
+  stat: path="{{ host_output_dir }}/win.ini"
+  delegate_to: localhost
+  register: fetch_flat_stat
+
+- name: verify fetched file exists locally in host_output_dir
+  assert:
+    that:
+      - "fetch_flat_stat.stat.exists"
+      - "fetch_flat_stat.stat.isreg"
+      - "fetch_flat_stat.stat.checksum == fetch_flat.checksum"
+
+#- name: fetch a small file to flat directory (without trailing slash)
+#  fetch: src="C:/Windows/win.ini" dest="{{ host_output_dir }}" flat=yes
+#  register: fetch_flat_dir
+
+#- name: check fetch flat to directory result
+#  assert:
+#    that:
+#      - "fetch_flat_dir is not changed"
+
+- name: fetch a large binary file
+  fetch: src="C:/Windows/explorer.exe" dest={{ host_output_dir }}
+  register: fetch_large
+
+- name: check fetch large binary file result
+  assert:
+    that:
+      - "fetch_large.changed"
+
+- name: check file created by fetch large binary
+  stat: path={{ fetch_large.dest }}
+  delegate_to: localhost
+  register: fetch_large_stat
+
+- name: verify fetched large file exists locally
+  assert:
+    that:
+      - "fetch_large_stat.stat.exists"
+      - "fetch_large_stat.stat.isreg"
+      - "fetch_large_stat.stat.checksum == fetch_large.checksum"
+
+- name: fetch a large binary file again
+  fetch: src="C:/Windows/explorer.exe" dest={{ host_output_dir }}
+  register: fetch_large_again
+
+- name: check fetch large binary file result again
+  assert:
+    that:
+      - "not fetch_large_again.changed"
+
+- name: fetch a small file using backslashes in src path
+  fetch: src="C:\\Windows\\system.ini" dest={{ host_output_dir }}
+  register: fetch_small_bs
+
+- name: check fetch small result with backslashes
+  assert:
+    that:
+      - "fetch_small_bs.changed"
+
+- name: check file created by fetch small with backslashes
+  stat: path={{ fetch_small_bs.dest }}
+  delegate_to: localhost
+  register: fetch_small_bs_stat
+
+- name: verify fetched small file with backslashes exists locally
+  assert:
+    that:
+      - "fetch_small_bs_stat.stat.exists"
+      - "fetch_small_bs_stat.stat.isreg"
+      - "fetch_small_bs_stat.stat.checksum == fetch_small_bs.checksum"
+
+- name: attempt to fetch a non-existent file - do not fail on missing
+  fetch: src="C:/this_file_should_not_exist.txt" dest={{ host_output_dir }} fail_on_missing=no
+  register: fetch_missing_nofail
+
+- name: check fetch missing no fail result
+  assert:
+    that:
+      - "fetch_missing_nofail is not failed"
+      - "fetch_missing_nofail.msg | length > 0"
+      - "fetch_missing_nofail is not changed"
+
+- name: attempt to fetch a non-existent file - fail on missing
+  fetch: src="~/this_file_should_not_exist.txt" dest={{ host_output_dir }} fail_on_missing=yes
+  register: fetch_missing
+  ignore_errors: true
+
+- name: check fetch missing with failure
+  assert:
+    that:
+      - "fetch_missing is failed"
+      - "fetch_missing.msg | length > 0"
+      - "fetch_missing is not changed"
+
+- name: attempt to fetch a non-existent file - fail on missing implicit
+  fetch: src="~/this_file_should_not_exist.txt" dest={{ host_output_dir }}
+  register: fetch_missing_implicit
+  ignore_errors: true
+
+- name: check fetch missing with failure on implicit
+  assert:
+    that:
+      - "fetch_missing_implicit is failed"
+      - "fetch_missing_implicit.msg | length > 0"
+      - "fetch_missing_implicit is not changed"
+
+- name: create empty temp directory
+  win_file:
+    path: '{{ remote_tmp_dir }}\fetch_tmp'
+    state: directory
+
+- name: attempt to fetch a directory
+  fetch: src="{{ remote_tmp_dir }}\\fetch_tmp" dest={{ host_output_dir }}
+  register: fetch_dir
+  ignore_errors: true
+
+- name: check fetch directory result
+  assert:
+    that:
+      # Doesn't fail anymore, only returns a message.
+      - "fetch_dir is not changed"
+      - "fetch_dir.msg | length > 0"
+
+- name: create file with special characters
+  raw: Set-Content -LiteralPath '{{ remote_tmp_dir }}\abc$not var''quote‘‘' -Value 'abc'
+
+- name: fetch file with special characters
+  fetch:
+    src: '{{ remote_tmp_dir }}\abc$not var''quote‘'
+    dest: '{{ host_output_dir }}/'
+    flat: yes
+  register: fetch_special_file
+
+- name: get content of fetched file
+  command: cat {{ (host_output_dir ~ "/abc$not var'quote‘") | quote }}
+  register: fetch_special_file_actual
+  delegate_to: localhost
+
+- name: assert fetch file with special characters
+  assert:
+    that:
+    - fetch_special_file is changed
+    - fetch_special_file.checksum == '34d4150adc3347f1dd8ce19fdf65b74d971ab602'
+    - fetch_special_file.dest == host_output_dir + "/abc$not var'quote‘"
+    - fetch_special_file_actual.stdout == 'abc'
+
+- name: create file with wildcard characters
+  raw: Set-Content -LiteralPath '{{ remote_tmp_dir }}\abc[].txt' -Value 'abc'
+
+- name: fetch file with wildcard characters
+  fetch:
+    src: '{{ remote_tmp_dir }}\abc[].txt'
+    dest: '{{ host_output_dir }}/'
+  register: fetch_wildcard_file_nofail
+
+- name: assert fetch file with wildcard characters
+  assert:
+    that:
+    - "fetch_wildcard_file_nofail is not failed"

@@ -1,0 +1,41 @@
+# Sample ansible-test configuration file for collections.
+# Support for this feature was first added in ansible-core 2.12.
+# Use of this file is optional.
+# If used, this file must be placed in "tests/config.yml" relative to the base of the collection.
+
+modules:
+  # Configuration for modules/module_utils.
+  # These settings do not apply to other content in the collection.
+
+  python_requires: default
+  # Python versions supported by modules/module_utils.
+  # This setting is required.
+  #
+  # Possible values:
+  #
+  #  - 'default'    - All Python versions supported by Ansible.
+  #                   This is the default value if no configuration is provided.
+  #  - 'controller' - All Python versions supported by the Ansible controller.
+  #                   This indicates the modules/module_utils can only run on the controller.
+  #                   Intended for use only with modules/module_utils that depend on the Ansible persistent connection helper, which only runs on the controller.
+  #                   Unit tests for modules/module_utils will be permitted to import any Ansible code, instead of only module_utils.
+  #  - SpecifierSet - A PEP 440 specifier set indicating the supported Python versions.
+  #                   This is only needed when modules/module_utils do not support all Python versions supported by Ansible.
+  #                   It is not necessary to exclude versions which Ansible does not support, as this will be done automatically.
+  #
+  # What does this affect?
+  #
+  #  - Unit tests will be skipped on any unsupported Python version.
+  #  - Sanity tests that are Python version specific will be skipped on any unsupported Python version that is not supported by the controller.
+  #
+  # Sanity tests that are Python version specific will always be executed for Python versions supported by the controller, regardless of this setting.
+  # Reasons for this restriction include, but are not limited to:
+  #
+  #  - AnsiballZ must be able to AST parse modules/module_utils on the controller, even though they may execute on a managed node.
+  #  - ansible-doc must be able to AST parse modules/module_utils on the controller to display documentation.
+  #  - ansible-test must be able to AST parse modules/module_utils to perform static analysis on them.
+  #  - ansible-test must be able to execute portions of modules/module_utils to validate their argument specs.
+  #
+  # These settings only apply to modules/module_utils.
+  # It is not possible to declare supported Python versions for controller-only code.
+  # All Python versions supported by the controller must be supported by controller-only code.

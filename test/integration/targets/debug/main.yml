@@ -1,0 +1,59 @@
+- hosts: localhost
+  gather_facts: no
+  vars:
+    debug_me: hi mom
+    dictvar:
+      subdict1:
+        list1:
+          - value1
+          - value2
+
+  tasks:
+    - name: test item being present in the output
+      debug: var=item
+      loop: [1, 2, 3]
+
+    - name: ensure that explicitly-tagged unsafe debug var fails
+      debug:
+        var: !unsafe debug_me
+      ignore_errors: true
+      register: debug_out_unsafe
+
+    - assert:
+        that:
+          - debug_out_unsafe is failed
+          - debug_out_unsafe.msg is contains "untrusted template or expression"
+
+    - name: ensure that the same var templates properly when its expression is not marked unsafe
+      debug:
+        var: debug_me
+      register: debug_out_safe
+
+    - assert:
+        that:
+        - debug_out_safe.debug_me == 'hi mom'
+
+    - name: render a data structure
+      debug:
+        var: dictvar
+      register: result
+
+    - assert:
+        that:
+          - result.dictvar == dictvar
+
+    - name: statically pass a non-scalar to var
+      debug:
+        var:
+          some_diot:
+            sub_dict:
+      ignore_errors: true
+      register: result
+
+    - assert:
+        that:
+          - result is failed
+          - '"is not a string and conversion is not allowed" in result.msg'
+
+    - include_tasks: errors.yml
+    - include_tasks: args_templating.yml

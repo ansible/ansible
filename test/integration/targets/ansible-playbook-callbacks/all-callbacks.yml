@@ -1,0 +1,123 @@
+- hosts: localhost
+  gather_facts: false
+  vars_prompt:
+    name: vars_prompt_var
+    default: hamsandwich
+  handlers:
+    - name: handler1
+      debug:
+        msg: handler1
+
+    - debug:
+        msg: listen1
+      listen:
+        - listen1
+  roles:
+    - setup_remote_tmp_dir
+  tasks:
+    - name: ok
+      debug:
+        msg: ok
+
+    - name: changed
+      debug:
+        msg: changed
+      changed_when: true
+
+    - name: skipped
+      debug:
+        msg: skipped
+      when: false
+
+    - name: failed
+      debug:
+        msg: failed
+      failed_when: true
+      ignore_errors: true
+
+    - name: unreachable
+      ping:
+      delegate_to: example.org
+      ignore_unreachable: true
+      vars:
+        ansible_timeout: 1
+
+    - name: loop
+      debug:
+      ignore_errors: true
+      changed_when: item.changed
+      failed_when: item.failed
+      when: item.when
+      loop:
+        # ok
+        - changed: false
+          failed: false
+          when: true
+        # changed
+        - changed: true
+          failed: false
+          when: true
+        # failed
+        - changed: false
+          failed: true
+          when: true
+        # skipped
+        - changed: false
+          failed: false
+          when: false
+
+    - name: notify handler1
+      debug:
+        msg: notify handler1
+      changed_when: true
+      notify:
+        - handler1
+
+    - name: notify listen1
+      debug:
+        msg: notify listen1
+      changed_when: true
+      notify:
+        - listen1
+
+    - name: retry ok
+      debug:
+      register: result
+      until: result.attempts == 2
+      retries: 1
+      delay: 0
+
+    - name: retry failed
+      debug:
+      register: result
+      until: result.attempts == 3
+      retries: 1
+      delay: 0
+      ignore_errors: true
+
+    - name: async poll ok
+      command: sleep 3
+      async: 5
+      poll: 2
+
+    - name: async poll failed
+      shell: sleep 3; false
+      async: 5
+      poll: 2
+      ignore_errors: true
+
+    - include_tasks: include_me.yml
+
+    - name: diff
+      copy:
+        content: diff
+        dest: '{{ remote_tmp_dir }}/diff.txt'
+      diff: true
+
+- hosts: i_dont_exist
+
+- hosts: localhost
+  gather_facts: false
+  max_fail_percentage: 0
+  tasks:
+    - fail:

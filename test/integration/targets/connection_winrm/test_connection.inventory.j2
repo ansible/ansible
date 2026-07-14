@@ -1,0 +1,10 @@
+[windows]
+{% for host in vars.groups.windows %}
+{{ host }}  ansible_host={{ hostvars[host]['ansible_host'] }}{% if hostvars[host]['ansible_connection'] != 'ssh' %} ansible_port={{ hostvars[host]['ansible_port'] }}{% endif %} ansible_user={{ hostvars[host]['ansible_user'] }} ansible_password={{ hostvars[host]['ansible_password'] | default(hostvars[host]['ansible_test_connection_password']) }}
+{% endfor %}
+
+[windows:vars]
+ansible_connection=winrm
+# we don't know if we're using an encrypted connection or not, so we'll use message encryption
+ansible_winrm_transport=ntlm
+ansible_winrm_server_cert_validation=ignore

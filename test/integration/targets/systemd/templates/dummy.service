@@ -1,0 +1,11 @@
+[Unit]
+Description=Dummy Server
+Requires=dummy.socket
+Documentation=dummy
+
+[Service]
+ExecStart=/bin/yes
+StandardInput=socket
+
+[Install]
+Also=dummy.socket

@@ -1,0 +1,26 @@
+DOCUMENTATION:
+  name: basename
+  author: ansible core team
+  version_added: "historical"
+  short_description: get a path's base name
+  description:
+    - Returns the last name component of a path, what is left in the string that is not 'dirname'.
+  notes:
+    - The result of this filter is different from the Unix basename program; where basename for C(/foo/bar/) returns C(bar), the basename filter returns an empty string (C('')).
+  options:
+    _input:
+      description: A path.
+      type: path
+      required: true
+  seealso:
+    - plugin_type: filter
+      plugin: ansible.builtin.dirname
+EXAMPLES: |
+
+  # To get the last name of a file path, like 'foo.txt' out of '/etc/asdf/foo.txt'.
+  {{ mypath | basename }}
+
+RETURN:
+  _value:
+    description: The base name from the path provided.
+    type: str

@@ -1,0 +1,11 @@
+- hosts: all
+  gather_facts: no
+  tasks:
+    - name: verify a template retrieved from the cache renders
+      debug:
+        var: my_template
+
+    - name: verify the values retrieved from the cache are correct
+      assert:
+        that:
+          - my_template == verify

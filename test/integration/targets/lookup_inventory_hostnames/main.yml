@@ -1,0 +1,23 @@
+---
+- hosts: localhost
+  gather_facts: no
+  tasks:
+  - set_fact:
+      hosts_a: "{{ lookup('inventory_hostnames', 'group01', wantlist=true) }}"
+      hosts_b: "{{ groups['group01'] }}"
+      exclude: "{{ lookup('inventory_hostnames', 'group01:!test03', wantlist=true) }}"
+      intersect: "{{ lookup('inventory_hostnames', 'group01:&group02', wantlist=true) }}"
+      nogroup: "{{ lookup('inventory_hostnames', 'nogroup01', wantlist=true) }}"
+      doesnotexist: "{{ lookup('inventory_hostnames', 'doesnotexist', wantlist=true) }}"
+      all: "{{ lookup('inventory_hostnames', 'all', wantlist=true) }}"
+      from_patterns: "{{ lookup('inventory_hostnames', 't?s?03', wantlist=True) }}"
+
+  - assert:
+      that:
+        - hosts_a == hosts_b
+        - "'test03' not in exclude"
+        - intersect == ['test03', 'test04']
+        - nogroup == ['nogroup01']
+        - doesnotexist == []
+        - all|length == 12
+        - from_patterns == ['test03']

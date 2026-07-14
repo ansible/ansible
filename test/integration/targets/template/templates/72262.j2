@@ -1,0 +1,3 @@
+{% import '72262-vars.j2' as vars with context %}
+{% macro included() %}{% include '72262-included.j2' %}{% endmacro %}
+{{ included()|indent }}

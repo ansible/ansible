@@ -1,0 +1,89 @@
+# Test single_branch parameter
+
+- name: SINGLE_BRANCH | clear checkout_dir
+  file:
+    state: absent
+    path: "{{ checkout_dir }}"
+
+- name: SINGLE_BRANCH | Clone example git repo using single_branch
+  git:
+    repo: 'file://{{ repo_dir|expanduser }}/shallow_branches'
+    dest: '{{ checkout_dir }}'
+    single_branch: yes
+  register: single_branch_1
+
+- name: SINGLE_BRANCH | Clone example git repo using single_branch again
+  git:
+    repo: 'file://{{ repo_dir|expanduser }}/shallow_branches'
+    dest: '{{ checkout_dir }}'
+    single_branch: yes
+  register: single_branch_2
+
+- name: SINGLE_BRANCH | List revisions
+  command: git rev-list --all --count
+  args:
+    chdir: '{{ checkout_dir }}'
+  register: rev_list1
+  when: git_version.stdout is version(git_version_supporting_single_branch, '>=')
+
+- name: SINGLE_BRANCH | Ensure single_branch did the right thing with git >= {{ git_version_supporting_single_branch }}
+  assert:
+    that:
+      - single_branch_1 is changed
+      - single_branch_2 is not changed
+  when: git_version.stdout is version(git_version_supporting_single_branch, '>=')
+
+- name: SINGLE_BRANCH | Ensure single_branch did the right thing with git < {{ git_version_supporting_single_branch }}
+  assert:
+    that:
+      - single_branch_1 is changed
+      - single_branch_1.warnings | length == 1
+      - single_branch_2 is not changed
+  when: git_version.stdout is version(git_version_supporting_single_branch, '<')
+
+
+- name: SINGLE_BRANCH | clear checkout_dir
+  file:
+    state: absent
+    path: "{{ checkout_dir }}"
+
+- name: SINGLE_BRANCH | Clone example git repo using single_branch with version
+  git:
+    repo: 'file://{{ repo_dir|expanduser }}/shallow_branches'
+    dest: '{{ checkout_dir }}'
+    single_branch: yes
+    version: >-
+      {{ git_default_branch }}
+  register: single_branch_3
+
+- name: SINGLE_BRANCH | Clone example git repo using single_branch with version again
+  git:
+    repo: 'file://{{ repo_dir|expanduser }}/shallow_branches'
+    dest: '{{ checkout_dir }}'
+    single_branch: yes
+    version: >-
+      {{ git_default_branch }}
+  register: single_branch_4
+
+- name: SINGLE_BRANCH | List revisions
+  command: git rev-list --all --count
+  args:
+    chdir: '{{ checkout_dir }}'
+  register: rev_list2
+  when: git_version.stdout is version(git_version_supporting_single_branch, '>=')
+
+- name: SINGLE_BRANCH | Ensure single_branch did the right thing with git >= {{ git_version_supporting_single_branch }}
+  assert:
+    that:
+      - single_branch_3 is changed
+      - single_branch_4 is not changed
+      - rev_list2.stdout == '1'
+  when: git_version.stdout is version(git_version_supporting_single_branch, '>=')
+
+- name: SINGLE_BRANCH | Ensure single_branch did the right thing with git < {{ git_version_supporting_single_branch }}
+  assert:
+    that:
+      - single_branch_3 is changed
+      - single_branch_3.warnings | length == 1
+      - single_branch_4 is not changed
+  when: git_version.stdout is version(git_version_supporting_single_branch, '<')

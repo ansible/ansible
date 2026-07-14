@@ -1,0 +1,20 @@
+- hosts: localhost
+  gather_facts: false
+  tags: the_whole_play
+  tasks:
+    - debug:
+      changed_when: true
+      notify: h
+
+    - debug:
+      changed_when: true
+      notify: h1
+      tags: task_tag
+  handlers:
+    - name: h
+      debug:
+        msg: handler_ran
+
+    - name: h1
+      debug:
+        msg: handler1_ran

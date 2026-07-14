@@ -1,0 +1,79 @@
+# Set up a repo of unsigned rpms
+- block:
+    - set_fact:
+        pkg_name: langtable
+        pkg_repo_dir: "{{ remote_tmp_dir }}/unsigned"
+
+    - name: Ensure our test package isn't already installed
+      dnf:
+        name:
+          - '{{ pkg_name }}'
+        state: absent
+
+    - name: Install rpm-sign and attr
+      dnf:
+        name:
+          - rpm-sign
+          - attr
+        state: present
+
+    - name: Create directory to use as local repo
+      file:
+        path: "{{ pkg_repo_dir }}"
+        state: directory
+
+    - name: Download the test package
+      dnf:
+        name: '{{ pkg_name }}'
+        state: latest
+        download_only: true
+        download_dir: "{{ pkg_repo_dir }}"
+
+    - name: Unsign the RPM
+      shell: rpmsign --delsign {{ remote_tmp_dir }}/unsigned/{{ pkg_name }}*
+
+    - name: createrepo
+      command: createrepo .
+      args:
+        chdir: "{{ pkg_repo_dir }}"
+
+    - name: Add the repo
+      yum_repository:
+        name: unsigned
+        description: unsigned rpms
+        baseurl: "file://{{ pkg_repo_dir }}"
+        # we want to ensure that signing is verified
+        gpgcheck: true
+
+    - name: Install test package
+      dnf:
+        name:
+          - "{{ pkg_name }}"
+        disablerepo: '*'
+        enablerepo: unsigned
+      register: res
+      ignore_errors: yes
+
+    - assert:
+        that:
+          - res is failed
+          - "'Failed to validate GPG signature' in res.msg"
+          - "'is not signed' in res.msg"
+
+  always:
+    - name: Remove rpm-sign and test package if it got installed
+      dnf:
+        name:
+          - rpm-sign
+          - "{{ pkg_name }}"
+        state: absent
+
+    - name: Remove test repo
+      yum_repository:
+        name: unsigned
+        state: absent
+
+    - name: Remove repo dir
+      file:
+        path: "{{ pkg_repo_dir }}"
+        state: absent

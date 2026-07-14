@@ -1,0 +1,61 @@
+- name: setup test facts
+  set_fact:
+    cert_pw: "{{ 'password123!' + lookup('password', '/dev/null chars=ascii_letters,digits length=8') }}"
+
+- name: setup WDAC certificates
+  wdac_setup:
+    cert_pw: '{{ cert_pw }}'
+    remote_tmp_dir: '{{ remote_tmp_dir }}'
+  register: cert_info
+  become: true
+  become_method: runas
+  vars:
+    ansible_become_user: '{{ ansible_user }}'
+    ansible_become_pass: '{{ ansible_password | default(ansible_test_connection_password) }}'
+    # WDAC cmdlets only work on WinPS.
+    ansible_pwsh_interpreter: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
+
+- name: fetch signing certificates
+  fetch:
+    src: '{{ remote_tmp_dir }}\{{ item }}.pfx'
+    dest: '{{ local_tmp_dir }}/wdac-{{ item }}.pfx'
+    flat: yes
+  loop:
+  - signing
+  - untrusted
+
+- name: install OpenAuthenticode
+  shell: |
+    if (-not (Get-Module -Name OpenAuthenticode -ListAvailable | Where-Object Version -ge '0.5.0')) {
+        $url = 'https://ci-files.testing.ansible.com/test/integration/targets/win_app_control/openauthenticode.0.6.1.nupkg'
+        Invoke-WebRequest -Uri $url -OutFile '{{ local_tmp_dir }}/openauthenticode.0.6.1.nupkg'
+
+        Register-PSResourceRepository -Name AnsibleTemp -Trusted -Uri '{{ local_tmp_dir }}'
+        try {
+            Install-PSResource -Name OpenAuthenticode -Repository AnsibleTemp
+        } finally {
+            Unregister-PSResourceRepository -Name AnsibleTemp
+        }
+
+        $true
+    } else {
+        $false
+    }
+  args:
+    executable: pwsh
+  register: open_auth_install
+  changed_when: open_auth_install.stdout | bool
+  notify: remove openauthenticode
+  delegate_to: localhost
+
+- name: sign Ansible content
+  script: >-
+    New-AnsiblePowerShellSignature.ps1
+    -CollectionPath {{ local_tmp_dir ~ "/ansible_collections/ns/col" | quote }}
+    -CertPath {{ local_tmp_dir ~ "/wdac-signing.pfx" | quote }}
+    -UntrustedCertPath {{ local_tmp_dir ~ "/wdac-untrusted.pfx" | quote }}
+    -CertPass {{ cert_pw | quote }}
+    -Verbose
+  environment:
+    NO_COLOR: '1'
+  delegate_to: localhost

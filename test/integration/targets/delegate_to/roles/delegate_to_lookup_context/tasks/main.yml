@@ -1,0 +1,5 @@
+- name: sends SQL template files to mysql host(s)
+  debug:
+    msg: "{{ item }}"
+  with_fileglob: ../templates/*.j2
+  delegate_to: localhost

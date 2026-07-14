@@ -1,0 +1,20 @@
+- name: test playbook for ansible-pull
+  hosts: all
+  gather_facts: False
+  tasks:
+    - name: debug output
+      debug: msg="test task"
+    - name: check for correct inventory
+      debug: msg="testing for inventory content"
+      failed_when: "'testhost1.example.com' not in groups['all']"
+    - name: check for correct limit
+      debug: msg="testing for limit"
+      failed_when: "'testhost1.example.com' == inventory_hostname"
+    - name: final task, has to be reached for the test to succeed
+      debug: msg="MAGICKEYWORD"
+
+    - name: check that extra vars are correctly passed
+      assert:
+        that:
+            - docker_registries_login is defined
+      tags: ['never', 'test_ev']

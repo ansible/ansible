@@ -1,0 +1,143 @@
+---
+- name: test listen with named handlers
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: test notify handlers listen
+      command: uptime
+      notify:
+        - notify_listen
+    - meta: flush_handlers
+    - name: verify test notify handlers listen
+      assert:
+        that:
+          - "notify_listen_ran_1_1 is defined"
+          - "notify_listen_ran_1_2 is defined"
+          - "notify_listen_ran_1_3 is undefined"
+  handlers:
+    - name: notify_handler_ran_1_1
+      set_fact:
+        notify_listen_ran_1_1: True
+      listen: notify_listen
+    - name: notify_handler_ran_1_2
+      set_fact:
+        notify_listen_ran_1_2: True
+      listen: notify_listen
+    - name: notify_handler_ran_1_3
+      set_fact:
+        notify_handler_ran_1_3: True
+      listen: notify_listen2
+
+- name: test listen unnamed handlers
+  hosts: localhost
+  gather_facts: false
+  pre_tasks:
+    - name: notify some handlers
+      command: echo foo
+      notify:
+        - notify_listen
+  tasks:
+    - meta: flush_handlers
+    - name: assert all defined handlers ran without error
+      assert:
+        that:
+          - "notify_listen_ran_1 is defined"
+          - "notify_listen_ran_2 is defined"
+          - "notify_listen_ran_3 is undefined"
+  handlers:
+    - set_fact:
+        notify_listen_ran_1: True
+      listen: notify_listen
+    - set_fact:
+        notify_listen_ran_2: True
+      listen: notify_listen
+    - set_fact:
+        notify_handler_ran_3: True
+      listen: notify_listen2
+
+- name: test with mixed notify by name and listen
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: test notify handlers names and identical listen
+      command: uptime
+      notify:
+        - notify_listen
+    - meta: flush_handlers
+    - name: verify test notify handlers names and identical listen
+      assert:
+        that:
+          - "notify_handler_name_ran_3 is defined"
+          - "notify_handler_name_ran_3_1 is not defined"
+          - "notify_listen_ran_3_2 is defined"
+          - "notify_listen_ran_3_3 is defined"
+          - "not_notify_listen_3_4 is not defined"
+  handlers:
+    - name: notify_listen
+      set_fact:
+        notify_handler_name_ran_3: True
+    # this will not run as we have a handler with a identical name notified first
+    - name: notify_listen
+      set_fact:
+        notify_handler_name_ran_3_1: True
+    - name: notify_handler_ran_3_2
+      set_fact:
+        notify_listen_ran_3_2: True
+      listen: notify_listen
+    - name: notify_handler_ran_3_3
+      set_fact:
+        notify_listen_ran_3_3: True
+      listen: notify_listen
+    # this one is not notified
+    - name: not_notify_listen_3_4
+      set_fact:
+        not_notify_listen_3_4: True
+      listen: not_notified
+
+- name: test listen in roles
+  hosts: localhost
+  gather_facts: false
+  roles:
+    - role: test_handlers_listen
+    - role: ns.col.test_handlers_listen
+  tasks:
+    - name: test notify handlers listen in roles
+      command: uptime
+      notify:
+        - notify_listen
+    - meta: flush_handlers
+    - name: verify test notify handlers listen in roles
+      assert:
+        that:
+          - "notify_listen_ran_4_1 is defined"
+          - "notify_listen_ran_4_2 is defined"
+          - "notify_listen_ran_4_3 is defined"
+          - "notify_listen_in_role_4 is defined"
+          - "notify_listen_from_role_4 is defined"
+    - name: test notifying handlers using the role name prefix
+      command: uptime
+      notify:
+        - 'test_handlers_listen : notify_specific_role_listen'
+        - 'test_handlers_listen : notify_specific_collection_role_listen'
+    - meta: flush_handlers
+    - assert:
+        that:
+          - notify_listen_in_specific_collection_role is defined
+          - notify_listen_in_specific_role is defined
+    - name: test notifying the collection listener by the role's FQCN also works
+      command: uptime
+      notify:
+        - 'ns.col.test_handlers_listen : notify_specific_collection_role_listen'
+  handlers:
+    - name: notify_listen_ran_4_1
+      set_fact:
+        notify_listen_ran_4_1: True
+      listen: notify_listen
+    - name: notify_listen_ran_4_2
+      set_fact:
+        notify_listen_ran_4_2: True
+      listen: notify_listen
+    - name: notify_listen_from_role_4
+      set_fact:
+        notify_listen_from_role_4: True
+      listen: notify_listen_from_role

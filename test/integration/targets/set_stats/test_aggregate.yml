@@ -1,0 +1,13 @@
+---
+- hosts: testhost
+  gather_facts: false
+  tasks:
+      - name: First set_stats
+        set_stats:
+            data:
+                my_int: 10
+
+      - name: Second set_stats
+        set_stats:
+            data:
+                my_int: 15

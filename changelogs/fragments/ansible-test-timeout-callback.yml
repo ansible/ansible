@@ -1,0 +1,2 @@
+minor_changes:
+- ansible-test - Added a timeout callback that dumps thread stacks when the test execution deadline defined by ``ansible-test env --timeout`` is approaching.

@@ -1,0 +1,6 @@
+- hosts: localhost
+  remote_user: a
+  user: b
+  tasks:
+    - debug:
+        msg: did not run

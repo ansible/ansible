@@ -1,0 +1,6 @@
+needs/ssh
+shippable/posix/group3
+needs/target/connection
+needs/target/setup_test_user
+needs/target/test_utils
+setup/always/setup_passlib_controller  # required for setup_test_user

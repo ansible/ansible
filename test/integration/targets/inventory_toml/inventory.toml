@@ -1,0 +1,14 @@
+[somehosts.hosts.host1]
+string_value = 'hi mom'
+integer_value = 42
+float_value = 42.1
+boolean_value = false
+offset_datetime = 2020-01-01T12:42:42-07:00
+local_datetime = 2020-01-01T12:42:42
+local_date = 2020-01-01
+local_time = 12:42:42
+array = [1,2,3]
+table = { foo = "bar" }
+
+[somehosts.vars]
+group_template_str = "{{ 'i am a ' + 'group level template' }}"

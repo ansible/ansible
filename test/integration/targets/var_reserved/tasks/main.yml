@@ -1,0 +1,33 @@
+- name: check output for warning
+  vars:
+    canary: Found variable using reserved name
+  block:
+  - shell: ansible-playbook '{{[ role_path, "tasks", item.file ~ ".yml"] | path_join }}'
+    environment:
+      ANSIBLE_LOCALHOST_WARNING: 0
+      ANSIBLE_FORCE_COLOR: 0
+    failed_when: false
+    loop:
+    - file: play_vars
+      name: lipsum
+    - file: block_vars
+      name: query
+    - file: task_vars
+      name: query
+    - file: task_vars_used
+      name: q
+    - file: set_fact
+      name: lookup
+    - file: include_vars
+      name: query
+    register: play_out
+
+  - name: check they all complain about bad defined var
+    assert:
+      that:
+        - item.stderr.startswith(warning_message)
+    loop: '{{play_out.results}}'
+    loop_control:
+      label: '{{item.item.file}}'
+    vars:
+      warning_message: "[WARNING]: {{ canary }} '{{ item.item.name }}'.\nOrigin: "

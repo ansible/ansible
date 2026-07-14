@@ -1,0 +1,2 @@
+remote_dir: "{{ remote_tmp_dir }}"
+faketime_pkg: libfaketime

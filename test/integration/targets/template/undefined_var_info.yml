@@ -1,0 +1,15 @@
+- hosts: localhost
+  gather_facts: no
+  vars:
+    foo: []
+    bar: "{{ foo[0] }}"
+  tasks:
+    - raw: echo {{ bar }}
+      register: result
+      ignore_errors: yes
+
+    - assert:
+        that:
+          - result is failed
+          #- '"foo[0]" in result.msg'
+          - '"object has no element 0" in result.msg'

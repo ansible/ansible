@@ -1,0 +1,7 @@
+- block:
+    - block:
+      - name: Nested task 1
+        debug: msg="Nested task 1"
+
+      - name: Nested task 2
+        debug: msg="Nested task 2"

@@ -1,0 +1,51 @@
+- block:
+    - name: Add IP to interface
+      command: ip address add 100.42.42.1/32 dev {{ ansible_facts.default_ipv4.interface }}
+      ignore_errors: yes
+
+    - name: Gather network facts
+      setup:
+        gather_subset: network
+
+    - name: Ensure broadcast is reported as empty
+      assert:
+        that:
+          - ansible_facts[ansible_facts['default_ipv4']['interface']]['ipv4_secondaries'][0]['broadcast'] == ''
+
+  always:
+    - name: Remove IP from interface
+      command: ip address delete 100.42.42.1/32 dev {{ ansible_facts.default_ipv4.interface }}
+      ignore_errors: yes
+
+- block:
+    - name: Add bridge device
+      command: ip link add name br1337 type bridge stp_state 1
+
+    - name: Add virtual interface
+      command: ip link add name veth1337 type veth
+
+    - name: Add virtual interface to bridge
+      command: ip link set veth1337 master br1337
+
+    - name: Gather network facts
+      setup:
+        gather_subset: network
+
+    - debug:
+        var: ansible_facts.br1337
+
+    - assert:
+        that:
+          - ansible_facts.br1337.type == 'bridge'
+          - ansible_facts.br1337.id != ''
+          - ansible_facts.br1337.stp is true
+          - ansible_facts.br1337.interfaces|first == 'veth1337'
+
+  always:
+    - name: Remove virtual interface
+      command: ip link delete veth1337 type veth
+      ignore_errors: yes
+
+    - name: Remove bridge device
+      command: ip link delete br1337 type bridge
+      ignore_errors: yes

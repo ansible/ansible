@@ -1,0 +1,10 @@
+NAME="Clear Linux OS"
+VERSION=1
+ID=clear-linux-os
+ID_LIKE=clear-linux-os
+VERSION_ID=28120
+PRETTY_NAME="Clear Linux OS"
+ANSI_COLOR="1;35"
+HOME_URL="https://clearlinux.org"
+SUPPORT_URL="https://clearlinux.org"
+BUG_REPORT_URL="mailto:dev@lists.clearlinux.org"',

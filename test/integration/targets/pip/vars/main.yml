@@ -1,0 +1,14 @@
+pip_test_package: sampleprojectpy2
+pip_test_packages:
+  - sampleprojectpy2
+  - jiphy
+pip_test_pkg_ver:
+  - sampleprojectpy2<=100, !=9.0.0,>=0.0.1
+  - jiphy<100 ,!=9,>=0.0.1
+pip_test_pkg_ver_unsatisfied:
+  - sampleprojectpy2>= 999.0.0
+  - jiphy >999.0
+pip_test_modules:
+  - sample
+  - jiphy
+remote_sample_project: "{{ remote_tmp_dir }}/sample-project"

@@ -1,0 +1,22 @@
+---
+- hosts: localhost
+  gather_facts: no
+  tags:
+    - flush
+  tasks:
+    - meta: clear_facts
+
+- hosts: localhost
+  gather_facts: yes
+  gather_subset: min
+  tags:
+    - gather_facts
+
+- hosts: localhost
+  gather_facts: no
+  tags:
+    - set_fact
+  tasks:
+    - set_fact:
+        foo: bar
+        cacheable: true

@@ -1,0 +1,75 @@
+- name: Fetch with no parameters
+  fetch:
+  register: fetch_no_params
+  ignore_errors: yes
+
+- name: Fetch with incorrect source type
+  fetch:
+    src: [1, 2]
+    dest: "{{ output_dir }}/fetched"
+  register: fetch_incorrect_src
+  ignore_errors: yes
+
+- name: Try to fetch a file inside an inaccessible directory
+  fetch:
+    src: "{{ remote_tmp_dir }}/noaccess/file1"
+    dest: "{{ output_dir }}"
+  register: failed_fetch_no_access
+  become: yes
+  become_user: fetcher
+  become_method: su
+  ignore_errors: yes
+
+- name: Dest is an existing directory name without trailing slash and flat=yes, should fail
+  fetch:
+    src: "{{ remote_tmp_dir }}/orig"
+    dest: "{{ output_dir }}"
+    flat: yes
+  register: failed_fetch_dest_dir
+  ignore_errors: true
+
+- block:
+  - name: create local dir for test
+    file:
+      path: "{{ output_dir }}/test dir/orig"
+      state: directory
+    delegate_to: localhost
+
+  - name: Dest is a path that is calculated as an existing directory, should fail
+    fetch:
+      src: "{{ remote_tmp_dir }}/orig"
+      dest: "{{ output_dir }}/test dir/"
+      flat: true
+    register: failed_detch_dest_calc_dir
+    ignore_errors: true
+
+  always:
+  - name: remote local dir for test
+    file:
+      path: "{{ output_dir }}/test dir"
+      state: absent
+    delegate_to: localhost
+
+- name: Test unreachable
+  fetch:
+    src: "{{ remote_tmp_dir }}/orig"
+    dest: "{{ output_dir }}"
+  register: unreachable_fetch
+  ignore_unreachable: true
+  vars:
+    ansible_user: wrong
+
+- name: Ensure fetch failed
+  assert:
+    that:
+      - fetch_no_params is failed
+      - fetch_no_params.msg is search('src and dest are required')
+      - fetch_incorrect_src is failed
+      - fetch_incorrect_src.msg is search('Invalid type supplied for source')
+      - failed_fetch_no_access is failed
+      - failed_fetch_no_access.msg is search('File is not readable')
+      - failed_fetch_dest_dir is failed
+      - failed_fetch_dest_dir.msg is search('dest is an existing directory')
+      - failed_detch_dest_calc_dir is failed
+      - failed_detch_dest_calc_dir.msg is search("calculated dest '" ~ output_dir ~ "/test dir/orig' is an existing directory")
+      - unreachable_fetch is unreachable

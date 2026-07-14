@@ -1,0 +1,54 @@
+- hosts: testhost
+  gather_facts: no
+  tasks:
+    - name: make sure the test user is available
+      include_role:
+        name: setup_test_user
+        public: yes
+
+    - name: verify AnsibleModule works when cwd is missing
+      test_cwd_missing:
+      register: missing
+
+    - name: record the mode of the connection user's home directory
+      stat:
+        path: "~"
+      vars:
+        ansible_become: no
+      register: connection_user_home
+
+    - name: limit access to the connection user's home directory
+      file:
+        state: directory
+        path: "{{ connection_user_home.stat.path }}"
+        mode: "0700"
+      vars:
+        ansible_become: no
+
+    - block:
+        - name: verify AnsibleModule works when cwd is unreadable
+          test_cwd_unreadable:
+          register: unreadable
+          vars: &test_user_become
+            ansible_become: yes
+            ansible_become_user: "{{ test_user_name }}"  # root can read cwd regardless of permissions, so a non-root user is required here
+            ansible_become_password: "{{ test_user_plaintext_password }}"
+      always:
+        - name: restore access to the connection user's home directory
+          file:
+            state: directory
+            path: "{{ connection_user_home.stat.path }}"
+            mode: "{{ connection_user_home.stat.mode }}"
+          vars:
+            ansible_become: no
+
+    - name: get real path of home directory of the unprivileged user
+      raw: "{{ ansible_python_interpreter }} -c 'import os.path; print(os.path.realpath(os.path.expanduser(\"~\")))'"
+      register: home
+      vars: *test_user_become
+
+    - name: verify AnsibleModule was able to adjust cwd as expected
+      assert:
+        that:
+          - missing.before != missing.after
+          - unreadable.before != unreadable.after or unreadable.before == '/' or unreadable.before == home.stdout.strip()  # allow / and $HOME fallback on macOS when using an unprivileged user

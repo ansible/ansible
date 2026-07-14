@@ -1,0 +1,54 @@
+{
+    "name": "CentOS 8.1",
+    "distro": {
+        "codename": "Core",
+        "id": "centos",
+        "name": "CentOS Linux",
+        "version": "8",
+        "version_best": "8.1.1911",
+        "lsb_release_info": {
+            "lsb_version": ":core-4.1-amd64:core-4.1-noarch:cxx-4.1-amd64:cxx-4.1-noarch:desktop-4.1-amd64:desktop-4.1-noarch:languages-4.1-amd64:languages-4.1-noarch:printing-4.1-amd64:printing-4.1-noarch",
+            "distributor_id": "CentOS",
+            "description": "CentOS Linux release 8.1.1911 (Core)",
+            "release": "8.1.1911",
+            "codename": "Core"
+        },
+        "os_release_info": {
+            "name": "CentOS Linux",
+            "version": "8 (Core)",
+            "id": "centos",
+            "id_like": "rhel fedora",
+            "version_id": "8",
+            "platform_id": "platform:el8",
+            "pretty_name": "CentOS Linux 8 (Core)",
+            "ansi_color": "0;31",
+            "cpe_name": "cpe:/o:centos:centos:8",
+            "home_url": "https://www.centos.org/",
+            "bug_report_url": "https://bugs.centos.org/",
+            "centos_mantisbt_project": "CentOS-8",
+            "centos_mantisbt_project_version": "8",
+            "redhat_support_product": "centos",
+            "redhat_support_product_version": "8",
+            "codename": "Core"
+        }
+    },
+    "input": {
+        "/etc/centos-release": "CentOS Linux release 8.1.1911 (Core) \n",
+        "/etc/redhat-release": "CentOS Linux release 8.1.1911 (Core) \n",
+        "/etc/system-release": "CentOS Linux release 8.1.1911 (Core) \n",
+        "/etc/os-release": "NAME=\"CentOS Linux\"\nVERSION=\"8 (Core)\"\nID=\"centos\"\nID_LIKE=\"rhel fedora\"\nVERSION_ID=\"8\"\nPLATFORM_ID=\"platform:el8\"\nPRETTY_NAME=\"CentOS Linux 8 (Core)\"\nANSI_COLOR=\"0;31\"\nCPE_NAME=\"cpe:/o:centos:centos:8\"\nHOME_URL=\"https://www.centos.org/\"\nBUG_REPORT_URL=\"https://bugs.centos.org/\"\n\nCENTOS_MANTISBT_PROJECT=\"CentOS-8\"\nCENTOS_MANTISBT_PROJECT_VERSION=\"8\"\nREDHAT_SUPPORT_PRODUCT=\"centos\"\nREDHAT_SUPPORT_PRODUCT_VERSION=\"8\"\n\n"
+    },
+    "platform.dist": [
+        "centos",
+        "8",
+        "Core"
+    ],
+    "result": {
+        "distribution": "CentOS",
+        "distribution_version": "8.1",
+        "distribution_release": "Core",
+        "distribution_major_version": "8",
+        "os_family": "RedHat"
+    },
+    "platform.release": "4.18.0-147.el8.x86_64"
+}

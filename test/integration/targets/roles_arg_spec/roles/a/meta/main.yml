@@ -1,0 +1,13 @@
+# This meta/main.yml exists to test that it is NOT read, with preference being
+# given to the meta/argument_specs.yml file. This spec contains an extra required
+# parameter, a_something, that argument_specs.yml does not.
+argument_specs:
+    main:
+        short_description: Main entry point for role A.
+        options:
+            a_str:
+                type: "str"
+                required: true
+            a_something:
+                type: "str"
+                required: true

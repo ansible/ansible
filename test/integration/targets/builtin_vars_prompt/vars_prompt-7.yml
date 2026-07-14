@@ -1,0 +1,12 @@
+- name: Test vars_prompt play vars
+  hosts: "{{ target_hosts }}"
+  become: no
+  gather_facts: no
+
+  vars_prompt:
+    - name: target_hosts
+      prompt: prompting for host
+      private: no
+
+  tasks:
+    - ping:

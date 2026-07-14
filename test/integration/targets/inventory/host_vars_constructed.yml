@@ -1,0 +1,6 @@
+plugin: ansible.legacy.constructed_with_hostvars
+groups:
+  host_var1_defined: host_var1 is defined
+keyed_groups:
+  - key: host_var2
+    prefix: host_var2

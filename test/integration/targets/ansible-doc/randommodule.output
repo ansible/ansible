@@ -1,0 +1,150 @@
+{
+    "testns.testcol.randommodule": {
+        "doc": {
+            "author": [
+                "Ansible Core Team"
+            ],
+            "collection": "testns.testcol",
+            "deprecated": {
+                "alternative": "Use some other module",
+                "removed_from_collection": "testns.testcol",
+                "removed_in": "3.0.0",
+                "why": "Test deprecation"
+            },
+            "description": [
+                "A random module.",
+                "See O(foo.bar.baz#role:main:foo=bar) for how this is used in the P(foo.bar.baz#role)'s C(main) entrypoint.",
+                "See L(the docsite,https://docs.ansible.com/ansible-core/devel/) for more information on ansible-core.",
+                "This module is not related to the M(ansible.builtin.copy) module. HORIZONTALLINE You might also be interested in R(ansible_python_interpreter, ansible_python_interpreter).",
+                "Sometimes you have M(broken markup) that will result in error messages."
+            ],
+            "filename": "./collections/ansible_collections/testns/testcol/plugins/modules/randommodule.py",
+            "has_action": false,
+            "module": "randommodule",
+            "notes": [
+                "This is a note.",
+                "This is a multi-paragraph note.\n\nThis is its second paragraph.\nThis is just another line in the second paragraph.\nEventually this will break into a new line,\ndepending with which line width this is rendered."
+            ],
+            "options": {
+                "sub": {
+                    "description": "Suboptions. Contains O(sub.subtest), which can be set to V(123). You can use E(TEST_ENV) to set this.",
+                    "env": [
+                        {
+                            "deprecated": {
+                                "alternative": "none",
+                                "removed_in": "2.0.0",
+                                "version": "2.0.0",
+                                "why": "Test deprecation"
+                            },
+                            "name": "TEST_ENV",
+                            "version_added": "1.0.0"
+                        }
+                    ],
+                    "options": {
+                        "subtest2": {
+                            "description": "Another suboption. Useful when P(ansible.builtin.shuffle#filter) is used with value V([a,b,\\),d\\\\]).",
+                            "type": "float",
+                            "version_added": "1.1.0"
+                        }
+                    },
+                    "suboptions": {
+                        "subtest": {
+                            "description": "A suboption. Not compatible to O(ansible.builtin.copy#module:path=c:\\\\foo\\(1\\).txt).",
+                            "type": "int",
+                            "version_added": "1.1.0",
+                            "version_added_collection": "testns.testcol"
+                        }
+                    },
+                    "type": "dict"
+                },
+                "test": {
+                    "description": "Some text. Consider not using O(ignore:foo=bar).",
+                    "type": "str",
+                    "version_added": "1.2.0",
+                    "version_added_collection": "testns.testcol"
+                },
+                "testcol2option": {
+                    "description": [
+                        "An option taken from testcol2"
+                    ],
+                    "type": "str",
+                    "version_added": "1.0.0",
+                    "version_added_collection": "testns.testcol2"
+                },
+                "testcol2option2": {
+                    "description": [
+                        "Another option taken from testcol2"
+                    ],
+                    "type": "str"
+                }
+            },
+            "plugin_name": "testns.testcol.randommodule",
+            "seealso": [
+                {
+                    "module": "ansible.builtin.ping"
+                },
+                {
+                    "description": "Use this to fetch an URI",
+                    "module": "ansible.builtin.uri"
+                },
+                {
+                    "module": "testns.testcol.test"
+                },
+                {
+                    "description": "A fake module",
+                    "module": "testns.testcol.fakemodule"
+                },
+                {
+                    "description": "See also the Ansible docsite.",
+                    "link": "https://docs.ansible.com",
+                    "name": "Ansible docsite"
+                },
+                {
+                    "description": "Some foo bar.",
+                    "ref": "foo_bar"
+                }
+            ],
+            "short_description": "A random module",
+            "version_added": "1.0.0",
+            "version_added_collection": "testns.testcol"
+        },
+        "examples": "\n",
+        "metadata": null,
+        "return": {
+            "a_first": {
+                "description": "A first result. Use RV(a_first=foo\\(bar\\\\baz\\)bam).",
+                "returned": "success",
+                "type": "str"
+            },
+            "m_middle": {
+                "contains": {
+                    "suboption": {
+                        "choices": [
+                            "ARF",
+                            "BARN",
+                            "c_without_capital_first_letter"
+                        ],
+                        "description": "A suboption.",
+                        "type": "str",
+                        "version_added": "1.4.0",
+                        "version_added_collection": "testns.testcol"
+                    }
+                },
+                "description": [
+                    "This should be in the middle.",
+                    "Has some more data.",
+                    "Check out RV(m_middle.suboption) and compare it to RV(a_first=foo) and RV(community.general.foo#lookup:value)."
+                ],
+                "returned": "success and 1st of month",
+                "type": "dict"
+            },
+            "z_last": {
+                "description": "A last result.",
+                "returned": "success",
+                "type": "str",
+                "version_added": "1.3.0",
+                "version_added_collection": "testns.testcol"
+            }
+        }
+    }
+}

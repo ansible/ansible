@@ -1,0 +1,12 @@
+- name: included_handler
+  set_fact:
+    ca: 4001
+    cb: 4002
+    cc: 4003
+
+- name: verify_handler
+  assert:
+    that:
+      - "ca == 4001"
+      - "cb == 4002"
+      - "cc == 4003"

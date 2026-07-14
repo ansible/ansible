@@ -1,0 +1,5 @@
+- name: Tagged Play
+  hosts: localhost
+  tags:
+    - play_level_tag
+  validate_argspec: True

@@ -1,0 +1,20 @@
+DOCUMENTATION:
+  name: type_debug
+  author: Adrian Likins (@alikins)
+  version_added: "2.3"
+  short_description: show input data type
+  description:
+    - Returns the equivalent of Python's C(type) function.
+  options:
+    _input:
+      description: Variable or expression of which you want to determine type.
+      type: any
+      required: true
+EXAMPLES: |
+  # get type of 'myvar'
+  {{ myvar | type_debug }}
+
+RETURN:
+  _value:
+    description: The Python 'type' of the O(_input) provided.
+    type: string

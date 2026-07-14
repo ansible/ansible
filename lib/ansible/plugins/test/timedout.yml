@@ -1,0 +1,20 @@
+DOCUMENTATION:
+  name: timedout
+  author: Ansible Core
+  version_added: "2.18"
+  short_description: did the task time out
+  description:
+    - Tests if task finished ended due to a time out
+  options:
+    _input:
+      description: registered result from an Ansible task
+      type: dictionary
+      required: True
+EXAMPLES: |
+  # test 'status' to know how to respond
+  {{ taskresults is timedout }}
+
+RETURN:
+  _value:
+    description: A dictionary with 2 keys 'frame' showing the 'frame of code' in which the timeout occurred and 'period' with the time limit that was enforced.
+    type: dict

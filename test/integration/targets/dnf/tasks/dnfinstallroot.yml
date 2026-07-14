@@ -1,0 +1,65 @@
+# make a installroot
+- name: Create installroot
+  command: mktemp -d "{{ remote_tmp_dir }}/ansible.test.XXXXXX"
+  register: dnfroot
+
+# This will drag in > 200 MB.
+- name: attempt installroot
+  dnf: name=sos installroot="/{{ dnfroot.stdout }}/" disable_gpg_check=yes releasever={{ansible_facts['distribution_major_version']}}
+  register: dnf_result
+
+- name: check sos with rpm in installroot
+  shell: rpm -q sos --root="/{{ dnfroot.stdout }}/"
+  failed_when: False
+  register: rpm_result
+
+- debug: var=dnf_result
+- debug: var=rpm_result
+
+- name: verify installation of sos in installroot
+  assert:
+    that:
+        - "not dnf_result.failed | default(False)"
+        - "dnf_result.changed"
+        - "rpm_result.rc == 0"
+
+- name: verify dnf module outputs in /
+  assert:
+    that:
+        - "'changed' in dnf_result"
+        - "'results' in dnf_result"
+
+- name: cleanup installroot
+  file:
+    path: "/{{ dnfroot.stdout }}/"
+    state: absent
+
+- block:
+    - name: Clean setup
+      file:
+        path: "{{ remote_tmp_dir }}/file_root"
+        state: absent
+
+    - name: Setup - create invalid installroot file (not a dir)
+      copy:
+        content: ''
+        dest: "{{ remote_tmp_dir }}/file_root"
+
+    - name: Try with invalid installroot
+      dnf:
+        name: bash
+        state: present
+        installroot: "{{ remote_tmp_dir }}/file_root"
+      ignore_errors: yes
+      register: invalid_install_root
+
+    - name: Check if invalid installroot failed
+      assert:
+        that:
+            - invalid_install_root.failed
+            - "'Installroot ' ~ remote_tmp_dir ~ '/file_root must be a directory' in invalid_install_root.msg"
+  always:
+    - name: Cleanup invalid installroot
+      file:
+        path: "{{ remote_tmp_dir }}/file_root"
+        state: absent

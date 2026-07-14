@@ -1,0 +1,4 @@
+cron_pkg: cronie
+cron_service: crond
+faketime_pkg:
+list_pkg_files: rpm -ql

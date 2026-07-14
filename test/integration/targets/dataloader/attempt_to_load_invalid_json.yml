@@ -1,0 +1,4 @@
+- hosts: localhost
+  gather_facts: false
+  vars_files:
+    - vars/invalid.json

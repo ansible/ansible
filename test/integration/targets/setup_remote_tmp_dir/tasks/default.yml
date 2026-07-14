@@ -1,0 +1,12 @@
+- name: create temporary directory
+  tempfile:
+    state: directory
+    suffix: .test
+  register: remote_tmp_dir
+  notify:
+    - delete temporary directory
+
+- name: record temporary directory
+  set_fact:
+    remote_tmp_dir: "{{ remote_tmp_dir.path }}"
+    cacheable: "{{ setup_remote_tmp_dir_cache_path | bool }}"

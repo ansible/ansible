@@ -1,0 +1,42 @@
+- hosts: testhost
+  gather_facts: no
+  tasks:
+    - name: invoke a module that fires deprecations and returns a deprecated value
+      foo.bar.noisy:
+      register: noisy_module_result
+
+    - name: invoke an action that fires deprecations and returns a deprecated value
+      foo.bar.noisy_action:
+      register: noisy_action_result
+
+    - name: validate deprecation warnings fired by action/module
+      assert:
+        that:
+          - item.deprecations | length == 4
+          - item.deprecations[0].msg is contains "passes collection_name, version, and help_text"
+          - item.deprecations[0].collection_name == 'bla.bla'
+          - item.deprecations[0].version == '9999.9'
+          - item.deprecations[1].msg is contains "passes deprecator and date"
+          - item.deprecations[1].collection_name == 'bla.bla'
+          - item.deprecations[1].date == '2034-01-02'
+          - item.deprecations[2].msg is contains "passes deprecator and string date"
+          - item.deprecations[2].collection_name == 'bla.bla'
+          - item.deprecations[2].date == '2034-01-02'
+          - item.deprecations[3].msg is contains "passes no deprecator, collection name, or date/version"
+          - item.deprecations[3].collection_name == 'foo.bar'
+          - item.deprecations[3].date is not defined
+      loop: '{{ [noisy_module_result, noisy_action_result] }}'
+
+    - name: touch the deprecated value
+      debug:
+        var: noisy_module_result.deprecated_result
+      register: debug_result
+
+    - name: validate deprecation warnings from tagged result
+      assert:
+        that:
+          - debug_result.deprecations | length == 1
+          - debug_result.deprecations[0].msg is contains "value is deprecated"
+          - debug_result.deprecations[0].date is not defined
+          - debug_result.deprecations[0].version is defined
+          - debug_result.deprecations[0].collection_name == 'foo.bar'

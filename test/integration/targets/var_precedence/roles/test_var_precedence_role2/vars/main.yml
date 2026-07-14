@@ -1,0 +1,5 @@
+---
+# should override the global vars_files_var since it's local to the role
+vars_files_var_role: "vars_files_var_role2"
+# should override the value in defaults/main.yml for role 2
+defaults_file_var_role2: "overridden by role vars"

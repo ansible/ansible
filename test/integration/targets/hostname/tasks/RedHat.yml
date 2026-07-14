@@ -1,0 +1,15 @@
+- name: Make sure we used SystemdStrategy...
+  lineinfile:
+    path: "{{ _hostname_file }}"
+    line: crocodile.ansible.test.doesthiswork.net.example.com
+  check_mode: true
+  register: etc_hostname
+  failed_when: etc_hostname is changed
+
+- name: ...and not RedhatStrategy
+  lineinfile:
+    path: /etc/sysconfig/network
+    line: HOSTNAME=crocodile.ansible.test.doesthiswork.net.example.com
+  check_mode: true
+  register: etc_sysconfig_network
+  failed_when: etc_sysconfig_network is not changed

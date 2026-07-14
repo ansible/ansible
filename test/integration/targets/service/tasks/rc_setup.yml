@@ -1,0 +1,21 @@
+- name: install the rc init file
+  copy: src=ansible.rc dest=/etc/rc.d/ansible_test mode=0755
+  register: install_rc_result
+
+- name: assert that the rc init file was installed
+  assert:
+    that:
+    - "install_rc_result.dest == '/etc/rc.d/ansible_test'"
+    - "install_rc_result.state == 'file'"
+    - "install_rc_result.mode == '0755'"
+    - "install_rc_result.checksum == '8526e4571d2ac685fa5a73af723183c194bda35d'"
+
+# FreeBSD (likely others as well) requires the command_interpreter to match the
+# shebang the script was started with as an extra caution against killing the
+# wrong thing. We add the line here.
+- name: add command_interpreter in rc init file
+  lineinfile:
+    path: /etc/rc.d/ansible_test
+    line: "command_interpreter={{ ansible_python_interpreter | realpath }}"
+    insertafter: '^pidfile.*'
+    firstmatch: yes

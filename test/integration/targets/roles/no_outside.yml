@@ -1,0 +1,7 @@
+- hosts: testhost
+  gather_facts: false
+  tasks:
+    - name: role attempts to load file from outside itself
+      include_role:
+          name: a
+          tasks_from: "{{ playbook_dir }}/tasks/dummy.yml"

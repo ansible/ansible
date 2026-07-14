@@ -1,0 +1,30 @@
+{
+    "name": "UOS Server 20 (uelc20)",
+    "distro": {
+        "codename": "kongzi",
+        "id": "uos",
+        "name": "UOS Server 20",
+        "version": "20",
+        "version_best": "20",
+        "os_release_info": {},
+        "lsb_release_info": {}
+    },
+    "input": {
+        "/etc/os-release": "PRETTY_NAME=\"UOS Server 20\"\nNAME=\"UOS Server 20\"\nVERSION_ID=\"20\"\nVERSION=\"20\"\nID=uos\nHOME_URL=\"https://www.chinauos.com/\"\nBUG_REPORT_URL=\"https://bbs.chinauos.com/\"\nVERSION_CODENAME=kongzi\nPLATFORM_ID=\"platform:uelc20\"\n",
+        "/etc/lsb-release": "DISTRIB_ID=Uos\nDISTRIB_RELEASE=20\nDISTRIB_DESCRIPTION=\"UOS Server 20\"\nDISTRIB_CODENAME=kongzi\n",
+        "/etc/system-release": "UOS Server release 20 (kongzi)\n",
+        "/etc/redhat-release": "UOS Server release 20 (kongzi)\n"
+    },
+    "platform.dist": [
+        "uos",
+        "20",
+        "kongzi"
+    ],
+    "result": {
+        "distribution": "UnionTech",
+        "distribution_version": "20",
+        "distribution_release": "kongzi",
+        "distribution_major_version": "20",
+        "os_family": "RedHat"
+    }
+}

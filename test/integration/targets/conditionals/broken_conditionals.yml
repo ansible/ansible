@@ -1,0 +1,13 @@
+- hosts: testhost
+  gather_facts: no
+  vars:
+    allow_broken_conditionals: "{{ lookup('config', 'ALLOW_BROKEN_CONDITIONALS') }}"
+  tasks:
+    - name: use a conditional with a static non-boolean result
+      assert:
+        that: "'broken static'"
+      ignore_errors: yes
+      register: result
+
+    - assert:
+        that: result.failed != allow_broken_conditionals

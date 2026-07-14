@@ -1,0 +1,17 @@
+- name: install the systemd unit file
+  copy: src=ansible.systemd dest=/etc/systemd/system/ansible_test.service mode=0644
+  register: install_systemd_result
+
+- name: install a broken systemd unit file
+  file: src=ansible_test.service path=/etc/systemd/system/ansible_test_broken.service state=link
+  register: install_broken_systemd_result
+
+- name: assert that the systemd unit file was installed
+  assert:
+    that:
+    - "install_systemd_result.dest == '/etc/systemd/system/ansible_test.service'"
+    - "install_systemd_result.state == 'file'"
+    - "install_systemd_result.mode == '0644'"
+    - "install_systemd_result.checksum == '9e6320795a5c79c01230a6de1c343ea32097af52'"
+    - "install_broken_systemd_result.dest == '/etc/systemd/system/ansible_test_broken.service'"
+    - "install_broken_systemd_result.state == 'link'"

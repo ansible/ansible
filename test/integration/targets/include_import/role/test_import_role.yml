@@ -1,0 +1,139 @@
+- name: Test import_role
+  hosts: testhost
+
+  vars:
+    run_role: yes
+    do_not_run_role: no
+    role_name: role1
+    test_var: templating test in playbook
+    role_vars:
+      where_am_i_defined: in the playbook
+    entire_task:
+      include_role:
+        name: role1
+
+  tasks:
+    - name: Test basic role import
+      import_role:
+        name: role1
+
+    - name: Assert that basic include works
+      assert:
+        that:
+          - _role1_result.msg == 'In role1'
+
+    - name: Test conditional role include
+      import_role:
+        name: role1
+        tasks_from: canary1.yml
+      when: run_role
+
+    - name: Assert that role ran
+      assert:
+        that:
+          - role1_canary1 == 'r1c1'
+
+    - name: Test conditional role import that should be skipped
+      import_role:
+        name: role1
+        tasks_from: canary2.yml
+      when: do_not_run_role
+
+    - name: Assert that role did not run
+      assert:
+        that:
+          - role1_canary2 is not defined
+
+    # FIXME We expect this to fail, but I'm not sure how best to test for
+    # syntax level failures.
+    #
+    # - name: Test role import with a loop
+    #   import_role:
+    #     name: "{{ item }}"
+    #   register: loop_test
+    #   with_items:
+    #     - role1
+    #     - role3
+    #     - role2
+
+    - name: Test importing a task file from a role
+      import_role:
+        name: role1
+        tasks_from: tasks.yml
+
+    - name: Test importing vars file and tasks file from a role
+      import_role:
+        name: role3
+        tasks_from: vartest.yml
+        vars_from: role3vars.yml
+
+    - name: Assert that variables defined in previous task are available to play
+      assert:
+        that:
+          - role3_default == 'defined in role3/defaults/main.yml'
+          - role3_main == 'defined in role3/vars/main.yml'
+          - role3_var == 'defined in role3/vars/role3vars.yml'
+      ignore_errors: yes
+
+    - name: Test using a play variable for role name
+      import_role:
+        name: "{{ role_name }}"
+
+    # FIXME Trying to use a host_var here causes play execution to fail because
+    # the variable is undefined.
+    #
+    # - name: Test using a host variable for role name
+    #   import_role:
+    #     name: "{{ host_var_role_name }}"
+
+    - name: Pass variable to role
+      import_role:
+        name: role1
+        tasks_from: vartest.yml
+      vars:
+        where_am_i_defined: in the task
+
+    ## FIXME Currently failing
+    ## ERROR! Vars in a IncludeRole must be specified as a dictionary, or a list of dictionaries
+    # - name: Pass all variables in a variable to role
+    #   import_role:
+    #     name: role1
+    #     tasks_from: vartest.yml
+    #   vars: "{{ role_vars }}"
+
+    - name: Pass templated variable to a role
+      import_role:
+        name: role1
+        tasks_from: vartest.yml
+      vars:
+        where_am_i_defined: "{{ test_var }}"
+
+    # FIXME This fails with the following error:
+    # The module {u'import_role': {u'name': u'role1'}} was not found in configured module paths.
+    #
+    - name: Include an entire task
+      action:
+        module: "{{ entire_task }}"
+      tags:
+        - never
+
+    - block:
+        - name: Include a role that will fail
+          import_role:
+            name: role1
+            tasks_from: fail.yml
+
+      rescue:
+        - name: Include a role inside rescue
+          import_role:
+            name: role2
+
+      always:
+        - name: Include role inside always
+          import_role:
+            name: role3
+
+    - name: Test delegate_to handler is delegated
+      import_role:
+        name: delegated_handler
+      delegate_to: localhost

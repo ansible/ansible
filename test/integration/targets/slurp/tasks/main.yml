@@ -1,0 +1,71 @@
+# Copyright:  (c) 2025, Ansible Project
+#             (c) 2014, Chris Church <chris@ninemoreminutes.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+# test code for the slurp module.  Based on win_slurp test cases
+- name: Create a UTF-8 file to test with
+  copy:
+    content: 'We are at the café'
+    dest: '{{ remote_tmp_dir }}/foo.txt'
+
+- name: test slurping an existing file
+  slurp:
+    src: '{{ remote_tmp_dir }}/foo.txt'
+  register: slurp_existing
+
+- name: check slurp existing result
+  assert:
+    that:
+      - slurp_existing.content is truthy
+      - slurp_existing.encoding == "base64"
+      - slurp_existing is not changed
+      - slurp_existing is not failed
+      - slurp_existing.content | b64decode == "We are at the café"
+
+- name: test slurping w/o encoding
+  slurp:
+    src: '{{ remote_tmp_dir }}/foo.txt'
+    armor: off
+  register: slurp_existing_noarmor
+
+- name: check slurp existing result no armor
+  assert:
+    that:
+      - slurp_existing_noarmor.content is truthy
+      - slurp_existing_noarmor.encoding == "utf-8"
+      - slurp_existing_noarmor is not changed
+      - slurp_existing_noarmor is not failed
+      - slurp_existing_noarmor.content == "We are at the café"
+
+- name: Create a binary file to test with
+  copy:
+    src: bar.bin
+    dest: '{{ remote_tmp_dir }}/bar.bin'
+
+- name: test slurping a binary file
+  slurp:
+    path: '{{ remote_tmp_dir }}/bar.bin'
+  register: slurp_binary
+  no_log: true
+
+- name: check slurp result of binary
+  assert:
+    that:
+      - slurp_binary.content is truthy
+      - slurp_binary.encoding == 'base64'
+      - slurp_binary is not changed
+      - slurp_binary is not failed
+
+- name: test slurp with missing argument
+  action: slurp
+  register: slurp_no_args
+  ignore_errors: true
+
+- name: check slurp with missing argument result
+  assert:
+    that:
+      - slurp_no_args is failed
+      - slurp_no_args.msg is truthy
+      - slurp_no_args is not changed
+
+- import_tasks: test_unreadable.yml

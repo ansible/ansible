@@ -1,0 +1,55 @@
+# mock config defs with diff use cases
+config_entry: &entry
+    name: test config
+    default: DEFAULT
+    description:
+      - This does nothing, its for testing
+    env:
+      - name: ENVVAR
+    ini:
+      - section: defaults
+        key: inikey
+    type: string
+config_entry_multi: &entry_multi
+    name: has more than one entry per config source
+    default: DEFAULT
+    description:
+      - This does nothing, its for testing
+    env:
+      - name: MATTERLESS
+      - name: MATTERMORE
+    ini:
+      - section: defaults
+        key: matterless
+      - section: defaults
+        key: mattermore
+    type: string
+config_entry_bool:
+    <<: *entry
+    type: bool
+    default: False
+config_entry_list:
+    <<: *entry
+    type: list
+    default: [DEFAULT]
+config_entry_deprecated:
+    <<: *entry
+    deprecated: &dep
+        why: 'cause i wanna'
+        version: 9.2
+        alternative: 'none whatso ever'
+config_entry_multi_deprecated:
+    <<: *entry_multi
+    deprecated: *dep
+config_entry_multi_deprecated_source:
+    <<: *entry_multi
+    env:
+      - name: MATTERLESS
+        deprecated: *dep
+      - name: MATTERMORE
+    ini:
+      - section: defaults
+        key: matterless
+        deprecated: *dep
+      - section: defaults
+        key: mattermore

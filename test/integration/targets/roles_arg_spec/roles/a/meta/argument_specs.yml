@@ -1,0 +1,17 @@
+argument_specs:
+    main:
+        short_description: Main entry point for role A.
+        options:
+            a_str:
+                type: "str"
+                required: true
+
+    alternate:
+        short_description: Alternate entry point for role A.
+        options:
+            a_int:
+                type: "int"
+                required: true
+
+    no_spec_entrypoint:
+        short_description: An entry point with no spec

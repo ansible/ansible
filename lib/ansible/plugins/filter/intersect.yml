@@ -1,0 +1,36 @@
+DOCUMENTATION:
+  name: intersect
+  author: Brian Coca (@bcoca)
+  version_added: "1.4"
+  short_description: intersection of lists
+  description:
+    - Provide a list with the common elements from other lists.
+    - Items in the resulting list are returned in arbitrary order.
+  options:
+    _input:
+      description: A list.
+      type: list
+      required: true
+    _second_list:
+      description: A list.
+      type: list
+      required: true
+  seealso:
+    - plugin_type: filter
+      plugin: ansible.builtin.difference
+    - plugin_type: filter
+      plugin: ansible.builtin.symmetric_difference
+    - plugin_type: filter
+      plugin: ansible.builtin.unique
+    - plugin_type: filter
+      plugin: ansible.builtin.union
+EXAMPLES: |
+  # return only the common elements of list1 and list2
+  # list1: [1, 2, 5, 3, 4, 10]
+  # list2: [1, 2, 3, 4, 5, 11, 99]
+  {{ list1 | intersect(list2) }}
+  # => [1, 2, 5, 3, 4]
+RETURN:
+  _value:
+    description: A list with unique elements common to both lists, also known as a set.
+    type: list
