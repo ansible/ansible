@@ -219,13 +219,14 @@ class FieldAttributeBase:
     def validate(self, all_vars=None):
         """ validation that is done at parse time, not load time """
         for (name, attribute) in self.fattributes.items():
-            method = getattr(self, '_validate_%s' % name, None)
-            if method:
-                method(attribute, name, getattr(self, name))
+            if (value := getattr(self, f'_{name}', Sentinel)) is Sentinel:
+                continue
+
+            if method := getattr(self, '_validate_%s' % name, None):
+                method(attribute, name, value)
             else:
                 # FIXME move this to get_validated_value
                 # and make sure the attribute is of the type it should be
-                value = getattr(self, f'_{name}', Sentinel)
                 if value is not None:
                     if attribute.isa == 'string' and isinstance(value, (list, dict)):
                         raise AnsibleParserError(

@@ -142,6 +142,7 @@ def get_static_parents(obj):
         if dep_chain := obj.get_dep_chain():
             yield from reversed(dep_chain)
 
+    # FIXME if obj not play
     yield obj.play
 
 
@@ -173,7 +174,6 @@ class FieldAttribute(Attribute):
     def __get__(self, obj, obj_type=None):
         value = getattr(obj, f'_{self.name}', Sentinel)
         if not obj.finalized:
-            value = getattr(obj, f'_{self.name}', Sentinel)
             if self.extend:
                 for parent in get_static_parents(obj):
                     parent_value = getattr(parent, f'_{self.name}', Sentinel)
