@@ -20,6 +20,7 @@ from __future__ import annotations
 import typing as t
 
 from ansible import constants as C
+from ansible.module_utils.common.sentinel import Sentinel
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleAssertionError, AnsibleValueOmittedError
 from ansible.executor.module_common import _get_action_arg_defaults
 from ansible.module_utils.common.text.converters import to_native
