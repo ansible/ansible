@@ -1,0 +1,2 @@
+bugfixes:
+  - pip - resolve relative virtualenv paths when used with chdir (https://github.com/ansible/ansible/issues/81522).

@@ -780,8 +780,10 @@ def main():
     editable = module.params['editable']
 
     venv_created = False
-    if env and chdir:
-        env = os.path.join(chdir, env)
+    if env:
+        if chdir:
+            env = os.path.join(chdir, env)
+        env = os.path.abspath(env)
 
     if umask and not isinstance(umask, int):
         try:
