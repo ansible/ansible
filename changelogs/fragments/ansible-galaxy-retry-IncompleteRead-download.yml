@@ -1,0 +1,6 @@
+bugfixes:
+- >-
+  ansible-galaxy - Fix attempting to download the collection again if the
+  response from the server is shorter than expected, instead of failing due to
+  the mismatched artifact hash on the first attempt.
+  (https://github.com/ansible/ansible/pull/86025)
