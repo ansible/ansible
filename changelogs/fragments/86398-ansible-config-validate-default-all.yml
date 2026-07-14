@@ -1,6 +1,6 @@
 bugfixes:
   - >-
     ansible-config - all actions now default to ``-t all`` (use ``-t base`` for the previous behavior),
-    so configuration files using sections owned by plugins (e.g.
+    so configuration files using sections owned by plugins (for example,
     ``[ssh_connection]``) are no longer reported as unknown sections, and keys
     within those sections are actually validated (https://github.com/ansible/ansible/issues/86398).
