@@ -153,7 +153,7 @@ class FieldAttribute(Attribute):
 
     def __get__(self, obj, obj_type=None):
         value = getattr(obj, f'_{self.name}', Sentinel)
-        if not (getattr(obj, '_squashed', False) or getattr(obj, '_finalized', False)):
+        if not obj.finalized:
             value = getattr(obj, f'_{self.name}', Sentinel)
             for parent in get_static_parents(obj):
                 parent_value = getattr(parent, f'_{self.name}', Sentinel)

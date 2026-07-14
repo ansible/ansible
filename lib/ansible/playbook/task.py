@@ -20,7 +20,6 @@ from __future__ import annotations
 import typing as t
 
 from ansible import constants as C
-from ansible.module_utils.common.sentinel import Sentinel
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleAssertionError, AnsibleValueOmittedError
 from ansible.executor.module_common import _get_action_arg_defaults
 from ansible.module_utils.common.text.converters import to_native
@@ -544,10 +543,9 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
 
         # from_attrs is only used to create a finalized task
         # from attrs from the Worker/TaskExecutor
-        # Those attrs are finalized and squashed in the TE
+        # Those attrs are finalized in the TE
         # and controller side use needs to reflect that
         self._finalized = True
-        self._squashed = True
 
     def _resolve_conditional(
         self,

@@ -18,7 +18,6 @@
 from __future__ import annotations
 
 from ansible.errors import AnsibleParserError
-from ansible.module_utils.common.sentinel import Sentinel
 from ansible.playbook.attribute import NonInheritableFieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.conditional import Conditional

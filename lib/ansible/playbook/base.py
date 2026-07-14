@@ -114,7 +114,6 @@ class FieldAttributeBase:
 
         # other internal params
         self._validated = False
-        self._squashed = False
         self._finalized = False
 
         # every object gets a random uuid:
@@ -410,17 +409,6 @@ class FieldAttributeBase:
         if mandatory:
             raise AnsibleParserError("Could not resolve action %s in module_defaults" % action_name)
         display.vvvvv("Could not resolve action %s in module_defaults" % action_name)
-
-    def squash(self):
-        """
-        Evaluates all attributes and sets them to the evaluated version,
-        so that all future accesses of attributes do not need to evaluate
-        parent attributes.
-        """
-        if not self._squashed:
-            for name in self.fattributes:
-                setattr(self, name, getattr(self, name))
-            self._squashed = True
 
     def copy(self):
         """
