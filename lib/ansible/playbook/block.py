@@ -191,7 +191,6 @@ class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatab
         if self._role:
             new_me._role = self._role
 
-        new_me.validate()
         return new_me
 
     def set_loader(self, loader):

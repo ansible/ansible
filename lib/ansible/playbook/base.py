@@ -112,8 +112,7 @@ class FieldAttributeBase:
         self._variable_manager = None
         self._origin: Origin | None = None
 
-        # other internal params
-        self._validated = False
+        # indicates the field attributes has been inherited, templated and cached
         self._finalized = False
 
         # every object gets a random uuid:
@@ -148,7 +147,7 @@ class FieldAttributeBase:
             raise AnsibleAssertionError('ds (%s) should not be None but it is.' % ds)
 
         # cache the datastructure internally
-        setattr(self, '_ds', ds)
+        self._ds = ds
 
         # the variable manager class is used to manage and merge variables
         # down to a single dictionary for reference in templating, etc.
@@ -220,24 +219,20 @@ class FieldAttributeBase:
 
     def validate(self, all_vars=None):
         """ validation that is done at parse time, not load time """
-        if not self._validated:
-            # walk all fields in the object
-            for (name, attribute) in self.fattributes.items():
-                # run validator only if present
-                method = getattr(self, '_validate_%s' % name, None)
-                if method:
-                    method(attribute, name, getattr(self, name))
-                else:
-                    # and make sure the attribute is of the type it should be
-                    value = getattr(self, f'_{name}', Sentinel)
-                    if value is not None:
-                        if attribute.isa == 'string' and isinstance(value, (list, dict)):
-                            raise AnsibleParserError(
-                                "The field '%s' is supposed to be a string type,"
-                                " however the incoming data structure is a %s" % (name, type(value)), obj=value
-                            )
-
-        self._validated = True
+        for (name, attribute) in self.fattributes.items():
+            method = getattr(self, '_validate_%s' % name, None)
+            if method:
+                method(attribute, name, getattr(self, name))
+            else:
+                # FIXME move this to get_validated_value
+                # and make sure the attribute is of the type it should be
+                value = getattr(self, f'_{name}', Sentinel)
+                if value is not None:
+                    if attribute.isa == 'string' and isinstance(value, (list, dict)):
+                        raise AnsibleParserError(
+                            "The field '%s' is supposed to be a string type,"
+                            " however the incoming data structure is a %s" % (name, type(value)), obj=value
+                        )
 
     def _load_module_defaults(self, name, value):
         if value is None:
@@ -426,7 +421,6 @@ class FieldAttributeBase:
         new_me._loader = self._loader
         new_me._variable_manager = self._variable_manager
         new_me._origin = self._origin
-        new_me._validated = self._validated
         new_me._finalized = self._finalized
         new_me._uuid = self._uuid
 
