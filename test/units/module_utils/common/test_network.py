@@ -67,6 +67,11 @@ def test_is_netmask():
     assert not is_netmask('254.255.255.0')
     assert not is_netmask('0.255.0.0')
     assert not is_netmask('0.0.0.255')
+    # inet_aton-style legacy forms must stay rejected (they break to_masklen)
+    assert not is_netmask('0xffffff00')
+    assert not is_netmask('0377.0377.0377.0')
+    assert not is_netmask('4294967040')
+    assert not is_netmask('255.255.0')
 
 
 def test_to_ipv6_network():

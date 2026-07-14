@@ -25,11 +25,11 @@ def is_netmask(val):
     for part in parts:
         try:
             octet = int(part)
-            if octet not in VALID_MASKS:
-                raise ValueError
-            mask = (mask << 8) | octet
         except ValueError:
             return False
+        if octet not in VALID_MASKS:
+            return False
+        mask = (mask << 8) | octet
     inverted = mask ^ 0xFFFFFFFF
     return inverted & (inverted + 1) == 0
 
