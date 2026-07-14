@@ -174,15 +174,13 @@ class FieldAttribute(Attribute):
         value = getattr(obj, f'_{self.name}', Sentinel)
         if not obj.finalized:
             value = getattr(obj, f'_{self.name}', Sentinel)
-            for parent in get_static_parents(obj):
-                parent_value = getattr(parent, f'_{self.name}', Sentinel)
-                if self.extend:
+            if self.extend:
+                for parent in get_static_parents(obj):
+                    parent_value = getattr(parent, f'_{self.name}', Sentinel)
                     value = _extend_value(value, parent_value, self.prepend)
-                else:
-                    if value is not Sentinel:
-                        break
-                    if parent_value is not Sentinel:
-                        value = parent_value
+            elif value is Sentinel:
+                for parent in get_static_parents(obj):
+                    if (value := getattr(parent, f'_{self.name}', Sentinel)) is not Sentinel:
                         break
 
         if value is Sentinel:
