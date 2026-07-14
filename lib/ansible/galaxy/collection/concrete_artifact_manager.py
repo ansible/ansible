@@ -17,6 +17,7 @@ from contextlib import contextmanager, suppress
 from functools import cache
 from hashlib import sha256
 from pathlib import Path
+from http.client import IncompleteRead, HTTPResponse
 from urllib.error import URLError
 from urllib.parse import urldefrag
 from shutil import rmtree
@@ -509,7 +510,10 @@ def _download_file(url, b_path, expected_hash, validate_certs, token=None, timeo
     )
 
     with open(b_file_path, 'wb') as download_file:  # type: t.BinaryIO
-        actual_hash = _consume_file(resp, write_to=download_file)
+        try:
+            actual_hash = _consume_file(resp, write_to=download_file)
+        except IncompleteRead as orig_exc:
+            raise AnsibleError(f"Downloading {url} failed") from orig_exc
 
     if expected_hash:
         display.vvvv(
@@ -523,17 +527,29 @@ def _download_file(url, b_path, expected_hash, validate_certs, token=None, timeo
     return b_file_path
 
 
-def _consume_file(read_from, write_to=None):
-    # type: (t.BinaryIO, t.BinaryIO) -> str
+def _consume_file(read_from: t.BinaryIO | HTTPResponse, write_to: t.BinaryIO | None = None) -> str:
     bufsize = 65536
     sha256_digest = sha256()
-    data = read_from.read(bufsize)
-    while data:
+    length = getattr(read_from, 'length', None)
+    actual_length = 0
+    remaining = None
+    while True:
+        if isinstance(length, int) and (remaining := length - actual_length) <= 0:
+            break
+
+        if not (data := read_from.read(min(bufsize, remaining or bufsize))):
+            break
+
         if write_to is not None:
             write_to.write(data)
             write_to.flush()
+
         sha256_digest.update(data)
-        data = read_from.read(bufsize)
+        actual_length += len(data)
+
+    if isinstance(length, int) and length > actual_length:
+        read_len = b' ' * actual_length if actual_length else b''
+        raise IncompleteRead(read_len, length - actual_length)
 
     return sha256_digest.hexdigest()
 
