@@ -146,8 +146,23 @@ def get_static_parents(obj):
     yield obj.play
 
 
-# when, tags, module_defaults, environment
+# when, tags
 def _extend_value(value, new_value, prepend=False):
+    if value is Sentinel:
+        value = []
+
+    # FIXME import_role post_validate
+    if not isinstance(new_value, list):
+        new_value = [new_value]
+
+    if prepend:
+        combined = new_value + value
+    else:
+        combined = value + new_value
+    return combined
+
+
+def old(value, new_value, prepend=False):
     if not isinstance(value, list):
         value = [value]
     if not isinstance(new_value, list):
@@ -177,7 +192,12 @@ class FieldAttribute(Attribute):
             if self.extend:
                 for parent in get_static_parents(obj):
                     parent_value = getattr(parent, f'_{self.name}', Sentinel)
-                    value = _extend_value(value, parent_value, self.prepend)
+                    if self.name in ('when', 'tags', 'module_defaults',):
+                        if parent_value not in (None, Sentinel):
+                            value = _extend_value(value, parent_value, self.prepend)
+                    else:
+                        # environment
+                        value = old(value, parent_value, self.prepend)
             elif value is Sentinel:
                 for parent in get_static_parents(obj):
                     if (value := getattr(parent, f'_{self.name}', Sentinel)) is not Sentinel:

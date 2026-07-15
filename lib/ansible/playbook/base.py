@@ -236,7 +236,7 @@ class FieldAttributeBase:
 
     def _load_module_defaults(self, name, value):
         if value is None:
-            return
+            return []
 
         if not isinstance(value, list):
             value = [value]
@@ -641,10 +641,10 @@ class Base(FieldAttributeBase):
     vars = NonInheritableFieldAttribute(isa='dict', priority=100, static=True, default=dict)
 
     # module default params
-    module_defaults = FieldAttribute(isa='list', extend=True, prepend=True)
+    module_defaults = FieldAttribute(isa='list', extend=True, prepend=True, default=list)
 
     # flags and misc. settings
-    environment = FieldAttribute(isa='list', extend=True, prepend=True)
+    environment = FieldAttribute(isa='list', listof=(dict,), extend=True, prepend=True)
     no_log = FieldAttribute(isa='bool', default=C.DEFAULT_NO_LOG)
     run_once = FieldAttribute(isa='bool')
     ignore_errors = FieldAttribute(isa='bool')
@@ -727,3 +727,11 @@ class Base(FieldAttributeBase):
             path_stack.append(task_dir)
 
         return path_stack
+
+    # def _load_environment(self, attr, value):
+    #     # FIXME validate?
+    #     if value is None:
+    #         return []
+
+    #     if not isinstance(value, list):
+    #         setattr(self, attr, [value])
