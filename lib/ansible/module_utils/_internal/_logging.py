@@ -39,13 +39,12 @@ def log_to_system(
     Dispatches to systemd journal when available, falling back to syslog.
     The caller is responsible for sanitizing secrets from *msg* before calling.
 
-    :param msg: The log message. Must already be sanitized of sensitive values.
-    :param module_name: Name of the Ansible module (used to build the syslog identifier ``ansible-<module_name>``).
-    :param log_args: Optional mapping of extra key/value pairs to include as structured journal fields.
-    :param syslog_facility: Syslog facility name (e.g. ``LOG_USER``). Passed to :func:`syslog.openlog` or journal.
-    :param target_log_info: Optional string prepended to *msg* (typically remote host information).
-    :raises TypeError: If the underlying syslog call receives an invalid type.
-    :raises ValueError: If the syslog facility name is invalid.
+    The syslog identifier is built as ``ansible-<module_name>``.
+    When *target_log_info* is provided (typically remote host information), it is prepended to the message.
+    Extra key/value pairs in *log_args* are included as structured journal fields.
+    The *syslog_facility* should be a syslog facility name such as ``LOG_USER``.
+
+    Raises TypeError or ValueError if the underlying syslog call fails due to invalid input.
     """
     if log_args is None:
         log_args = {}
