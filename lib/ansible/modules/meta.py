@@ -26,12 +26,6 @@ options:
           Ansible cannot know this and has no way of refreshing it (you can disable the cache or, if available for your specific inventory
           datasource (for example P(amazon.aws.aws_ec2#inventory)), you can use an inventory plugin instead of an inventory script).
           This is mainly useful when additional hosts are created and users wish to use them instead of using the M(ansible.builtin.add_host) module.
-        - Variable plugins are not part of inventory and handle caching independently of V(refresh_inventory).
-          V(refresh_inventory) will only reload variable plugins that perform no caching and are configured to run after inventory is parsed
-          instead of per task.
-          The default variable plugin P(ansible.builtin.host_group_vars#vars) caches applicable paths and file content, so creating, modifying, or removing
-          C(host_vars) and C(group_vars) files mid-play for hosts or groups that have already been targeted has no effect on the current or any
-          subsequent plays.
         - Note that neither V(refresh_inventory) nor the M(ansible.builtin.add_host) add hosts to the hosts the current play iterates over.
           However, if needed, you can explicitly delegate tasks to new hosts with C(delegate_to). Generally,
           C(delegate_to) can be used against hosts regardless of whether they are in the inventory or not, as long as
@@ -85,6 +79,12 @@ attributes:
 notes:
     - V(clear_facts) will remove the persistent facts from M(ansible.builtin.set_fact) using O(ansible.builtin.set_fact#module:cacheable=True),
       but not the current host variable it creates for the current run.
+    - Variable plugins are not part of inventory and handle execution and caching independently of V(refresh_inventory).
+      V(refresh_inventory) does not invalidate variable plugin caches. Whether later variable resolution sees updated variable plugin data depends
+      on the plugin's stage and caching behavior.
+    - The default variable plugin P(ansible.builtin.host_group_vars#vars) caches applicable paths and file content, so creating, modifying, or removing
+      C(host_vars) and C(group_vars) files mid-play for hosts or groups that have already been targeted has no effect on the current or any
+      subsequent plays. Use M(ansible.builtin.include_vars) to load variable files modified during playbook execution.
     - Skipping M(ansible.builtin.meta) tasks with tags is not supported before Ansible 2.11.
 seealso:
 - module: ansible.builtin.assert
