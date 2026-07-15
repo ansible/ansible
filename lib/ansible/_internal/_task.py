@@ -922,7 +922,7 @@ class UnifiedTaskResult:
                 metadata.destination is Destination.ANY
                 or ((for_round_trip or for_callback) and metadata.destination is Destination.CALLBACK)
                 or ((for_round_trip or not for_callback) and metadata.destination is Destination.NOT_CALLBACK)
-                or (for_round_trip and metadata.destination is Destination.INTERNAL)
+                or (for_round_trip and not for_callback and metadata.destination is Destination.INTERNAL)
             ):
                 key = metadata.key or dc_field.name
                 field_name = key if hasattr(cls, key) else dc_field.name  # properties matching the exported key take precedence over the field during export
