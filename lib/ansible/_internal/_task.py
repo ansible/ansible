@@ -470,6 +470,7 @@ class Destination(enum.Enum):
     CALLBACK = enum.auto()
     NOT_CALLBACK = enum.auto()
     ANY = enum.auto()
+    INTERNAL = enum.auto()
 
 
 @dataclasses.dataclass(kw_only=True, frozen=True, slots=True)
@@ -832,7 +833,7 @@ class UnifiedTaskResult:
 
     ansible_facts: dict[str, t.Any] | None = dataclasses.field(default=None, metadata=import_export())
     async_result: dict[str, t.Any] | None = dataclasses.field(default=None, metadata=export_only())
-    ansible_parsed: bool | None = dataclasses.field(default=None, metadata=import_export(destination=Destination.NOT_CALLBACK))  # formerly _ansible_parsed
+    ansible_parsed: bool | None = dataclasses.field(default=None, metadata=import_export(source=Source.ACTION, destination=Destination.INTERNAL))  # formerly _ansible_parsed
     exception: _messages.ErrorSummary | None = dataclasses.field(default=None, metadata=import_export())
     finished: bool | None = dataclasses.field(default=None, metadata=import_export())
     msg: object | None = dataclasses.field(default=None, metadata=import_export())
@@ -919,6 +920,7 @@ class UnifiedTaskResult:
                 metadata.destination is Destination.ANY
                 or ((for_round_trip or for_callback) and metadata.destination is Destination.CALLBACK)
                 or ((for_round_trip or not for_callback) and metadata.destination is Destination.NOT_CALLBACK)
+                or (for_round_trip and metadata.destination is Destination.INTERNAL)
             ):
                 key = metadata.key or dc_field.name
                 field_name = key if hasattr(cls, key) else dc_field.name  # properties matching the exported key take precedence over the field during export
