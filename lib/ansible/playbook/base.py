@@ -644,7 +644,7 @@ class Base(FieldAttributeBase):
     module_defaults = FieldAttribute(isa='list', extend=True, prepend=True, default=list)
 
     # flags and misc. settings
-    environment = FieldAttribute(isa='list', listof=(dict,), extend=True, prepend=True)
+    environment = FieldAttribute(isa='list', listof=(dict,), extend=True, prepend=True, default=list)
     no_log = FieldAttribute(isa='bool', default=C.DEFAULT_NO_LOG)
     run_once = FieldAttribute(isa='bool')
     ignore_errors = FieldAttribute(isa='bool')
@@ -728,10 +728,12 @@ class Base(FieldAttributeBase):
 
         return path_stack
 
-    # def _load_environment(self, attr, value):
-    #     # FIXME validate?
-    #     if value is None:
-    #         return []
+    def _load_environment(self, attr, value):
+        # FIXME validate?
+        if value is None:
+            return []
 
-    #     if not isinstance(value, list):
-    #         setattr(self, attr, [value])
+        if not isinstance(value, list):
+            return [value]
+
+        return value

@@ -146,39 +146,6 @@ def get_static_parents(obj):
     yield obj.play
 
 
-# when, tags
-def _extend_value(value, new_value, prepend=False):
-    if value is Sentinel:
-        value = []
-
-    # FIXME import_role post_validate
-    if not isinstance(new_value, list):
-        new_value = [new_value]
-
-    if prepend:
-        combined = new_value + value
-    else:
-        combined = value + new_value
-    return combined
-
-
-def old(value, new_value, prepend=False):
-    if not isinstance(value, list):
-        value = [value]
-    if not isinstance(new_value, list):
-        new_value = [new_value]
-
-    value = [v for v in value if v is not Sentinel]
-    new_value = [v for v in new_value if v is not Sentinel]
-
-    if prepend:
-        combined = new_value + value
-    else:
-        combined = value + new_value
-
-    return [i for i, dummy in itertools.groupby(combined) if i is not None]
-
-
 class FieldAttribute(Attribute):
     def __init__(self, extend=False, prepend=False, **kwargs):
         super().__init__(**kwargs)
@@ -190,14 +157,15 @@ class FieldAttribute(Attribute):
         value = getattr(obj, f'_{self.name}', Sentinel)
         if not obj.finalized:
             if self.extend:
+                if value is Sentinel:
+                    value = []
                 for parent in get_static_parents(obj):
                     parent_value = getattr(parent, f'_{self.name}', Sentinel)
-                    if self.name in ('when', 'tags', 'module_defaults',):
-                        if parent_value not in (None, Sentinel):
-                            value = _extend_value(value, parent_value, self.prepend)
-                    else:
-                        # environment
-                        value = old(value, parent_value, self.prepend)
+                    if parent_value not in (None, Sentinel):
+                        if self.prepend:
+                            value[:0] = parent_value
+                        else:
+                            value.extend(parent_value)
             elif value is Sentinel:
                 for parent in get_static_parents(obj):
                     if (value := getattr(parent, f'_{self.name}', Sentinel)) is not Sentinel:

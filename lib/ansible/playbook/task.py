@@ -71,10 +71,6 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
     # will be used if defined
     # might be possible to define others
 
-    # NOTE: ONLY set defaults on task attributes that are not inheritable,
-    # inheritance is only triggered if the 'current value' is Sentinel,
-    # default can be set at play/top level object and inheritance will take it's course.
-
     args = t.cast(dict, NonInheritableFieldAttribute(isa='dict', default=dict))
     action = t.cast(str, NonInheritableFieldAttribute(isa='string'))
 
