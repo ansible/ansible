@@ -1,0 +1,5 @@
+bugfixes:
+  - module_utils - ``is_netmask`` now rejects non-contiguous netmasks such as
+    ``255.255.0.255``, where each octet is individually valid but the mask is not
+    a contiguous run of network bits followed by host bits
+    (https://github.com/ansible/ansible/pull/87235).

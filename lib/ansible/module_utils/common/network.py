@@ -21,13 +21,17 @@ def is_netmask(val):
     parts = str(val).split('.')
     if not len(parts) == 4:
         return False
+    mask = 0
     for part in parts:
         try:
-            if int(part) not in VALID_MASKS:
-                raise ValueError
+            octet = int(part)
         except ValueError:
             return False
-    return True
+        if octet not in VALID_MASKS:
+            return False
+        mask = (mask << 8) | octet
+    inverted = mask ^ 0xFFFFFFFF
+    return inverted & (inverted + 1) == 0
 
 
 def is_masklen(val):
