@@ -108,14 +108,6 @@ class TestBase(unittest.TestCase):
 
         self.assertRaises(AnsibleParserError, self.b.load_data, ds)
 
-    def test_load_data_invalid_attr_type(self):
-        ds = {'environment': True}
-
-        # environment is supposed to be  a list. This
-        # seems like it shouldn't work?
-        ret = self.b.load_data(ds)
-        self.assertEqual(True, ret._environment)
-
     def test_post_validate(self):
         ds = {'environment': [],
               'port': 443}

@@ -17,7 +17,6 @@
 
 from __future__ import annotations
 
-import itertools
 import typing as t
 
 from ansible.utils.sentinel import Sentinel
@@ -161,7 +160,7 @@ class FieldAttribute(Attribute):
                     value = []
                 for parent in get_static_parents(obj):
                     parent_value = getattr(parent, f'_{self.name}', Sentinel)
-                    if parent_value not in (None, Sentinel):
+                    if parent_value is not Sentinel:
                         if self.prepend:
                             value[:0] = parent_value
                         else:
