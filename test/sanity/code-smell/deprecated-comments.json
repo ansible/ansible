@@ -1,0 +1,19 @@
+{
+  "text": true,
+  "output": "path-line-column-code-message",
+  "extensions": [
+	".bash",
+	".bat",
+	".cs",
+	".fish",
+	".ini",
+	".ps1",
+	".psm1",
+	".py",
+	".pyi",
+	".sh",
+	".yml",
+	".yaml"
+  ],
+  "split_targets": true
+}
