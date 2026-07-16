@@ -141,7 +141,6 @@ def get_static_parents(obj):
         if dep_chain := obj.get_dep_chain():
             yield from reversed(dep_chain)
 
-    # FIXME if obj not play
     yield obj.play
 
 
@@ -153,8 +152,10 @@ class FieldAttribute(Attribute):
         self.prepend = prepend
 
     def __get__(self, obj, obj_type=None):
+        from ansible.playbook.block import Block
+        from ansible.playbook.task import Task
         value = getattr(obj, f'_{self.name}', Sentinel)
-        if not obj.finalized:
+        if not obj.finalized and isinstance(obj, (Block, Task)):
             if self.extend:
                 if value is Sentinel:
                     value = []
