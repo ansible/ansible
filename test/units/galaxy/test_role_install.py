@@ -166,3 +166,43 @@ def test_role_download_url_default_version(init_mock_temp_file, mocker, galaxy_s
 
     assert mock_role_download_api.call_count == 1
     assert mock_role_download_api.mock_calls[0][1][0] == 'http://localhost:8080/test_owner/test_role/0.0.2.tar.gz'
+
+
+def test_role_download_url_passes_mtls_client_cert(init_mock_temp_file, mocker, galaxy_server, mock_role_download_api, monkeypatch):
+    galaxy_server.client_cert = '/path/client.pem'
+    galaxy_server.client_key = '/path/client.key'
+
+    mock_api = mocker.MagicMock()
+    mock_api.side_effect = [
+        StringIO(u'{"available_versions":{"v1":"v1/"}}'),
+        StringIO(u'{"results":[{"id":"123","github_user":"test_owner","github_repo": "test_role"}]}'),
+        StringIO(u'{"results":[{"name": "0.0.1","download_url":"http://localhost:8080/test_owner/test_role/0.0.1.tar.gz"}]}'),
+    ]
+    monkeypatch.setattr(api, 'open_url', mock_api)
+
+    role.GalaxyRole(Galaxy(), galaxy_server, 'test_owner.test_role', version="0.0.1").install()
+
+    assert mock_role_download_api.call_count == 1
+    kwargs = mock_role_download_api.call_args[1]
+    assert kwargs['client_cert'] == '/path/client.pem'
+    assert kwargs['client_key'] == '/path/client.key'
+
+
+def test_role_download_github_does_not_pass_mtls_client_cert(init_mock_temp_file, mocker, galaxy_server, mock_role_download_api, monkeypatch):
+    galaxy_server.client_cert = '/path/client.pem'
+    galaxy_server.client_key = '/path/client.key'
+
+    mock_api = mocker.MagicMock()
+    mock_api.side_effect = [
+        StringIO(u'{"available_versions":{"v1":"v1/"}}'),
+        StringIO(u'{"results":[{"id":"123","github_user":"test_owner","github_repo": "test_role"}]}'),
+        StringIO(u'{"results":[{"name": "0.0.1"}]}'),
+    ]
+    monkeypatch.setattr(api, 'open_url', mock_api)
+
+    role.GalaxyRole(Galaxy(), galaxy_server, 'test_owner.test_role', version="0.0.1").install()
+
+    assert mock_role_download_api.call_count == 1
+    kwargs = mock_role_download_api.call_args[1]
+    assert kwargs.get('client_cert') is None
+    assert kwargs.get('client_key') is None

@@ -95,3 +95,24 @@ def test_token_from_file_missing(b_token_file):
 @pytest.mark.parametrize('b_token_file', ['file'], indirect=True)
 def test_token_none(b_token_file):
     assert GalaxyToken(token=NoTokenSentinel).get() is None
+
+
+def test_keycloak_token_passes_mtls_client_cert_and_key(monkeypatch):
+    from io import StringIO
+
+    from ansible.galaxy.token import KeycloakToken
+
+    mock_open = MagicMock(return_value=StringIO('{"access_token":"tok","expires_in":3600,"token_type":"Bearer"}'))
+    monkeypatch.setattr('ansible.galaxy.token.open_url', mock_open)
+
+    token = KeycloakToken(
+        access_token='refresh',
+        auth_url='https://sso.example.com/token',
+        client_cert='/path/client.pem',
+        client_key='/path/client.key',
+    )
+    assert token.get() == 'tok'
+
+    kwargs = mock_open.call_args[1]
+    assert kwargs['client_cert'] == '/path/client.pem'
+    assert kwargs['client_key'] == '/path/client.key'

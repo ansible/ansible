@@ -1,0 +1,4 @@
+minor_changes:
+  - >-
+    ansible-galaxy - Add per-server ``client_cert`` and ``client_key`` options for mTLS authentication
+    to Galaxy servers (https://github.com/ansible/ansible/issues/87236).

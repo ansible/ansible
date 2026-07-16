@@ -960,6 +960,24 @@ def test_download_file_hash_mismatch(tmp_path_factory: pytest.TempPathFactory, m
         collection._download_file('http://google.com/file', temp_dir, 'bad', True)
 
 
+def test_download_file_mtls_client_cert_and_key(tmp_path_factory: pytest.TempPathFactory, monkeypatch: pytest.MonkeyPatch) -> None:
+    temp_dir = to_bytes(tmp_path_factory.mktemp('test-mtls'))
+
+    data = b"\x00\x01\x02\x03"
+    mock_open = MagicMock()
+    mock_open.return_value = MockHTTPResponses([(data, len(data))])
+    monkeypatch.setattr(collection.concrete_artifact_manager, 'open_url', mock_open)
+
+    collection._download_file(
+        'http://example.com/ns-col-1.0.0.tar.gz', temp_dir, None, True,
+        client_cert='/path/client.pem', client_key='/path/client.key',
+    )
+
+    call_kwargs = mock_open.call_args[1]
+    assert call_kwargs['client_cert'] == '/path/client.pem'
+    assert call_kwargs['client_key'] == '/path/client.key'
+
+
 def test_download_file_incomplete_read(
     tmp_path_factory: pytest.TempPathFactory,
     monkeypatch: pytest.MonkeyPatch

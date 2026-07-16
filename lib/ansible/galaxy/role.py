@@ -217,17 +217,34 @@ class GalaxyRole(object):
         if role_data:
 
             # first grab the file and save it to a temp location
+            from_github = False
             if self.download_url is not None:
                 archive_url = self.download_url
             elif "github_user" in role_data and "github_repo" in role_data:
                 archive_url = 'https://github.com/%s/%s/archive/%s.tar.gz' % (role_data["github_user"], role_data["github_repo"], self.version)
+                from_github = True
             else:
                 archive_url = self.src
 
             display.display("- downloading role from %s" % archive_url)
 
+            # Only attach per-server mTLS credentials for non-GitHub downloads so
+            # private client certificates are not presented to github.com.
+            client_cert = None
+            client_key = None
+            if not from_github:
+                client_cert = getattr(self.api, 'client_cert', None)
+                client_key = getattr(self.api, 'client_key', None)
+
             try:
-                url_file = open_url(archive_url, validate_certs=self._validate_certs, http_agent=user_agent(), timeout=60)
+                url_file = open_url(
+                    archive_url,
+                    validate_certs=self._validate_certs,
+                    http_agent=user_agent(),
+                    timeout=60,
+                    client_cert=client_cert,
+                    client_key=client_key,
+                )
                 temp_file = tempfile.NamedTemporaryFile(delete=False)
                 data = url_file.read()
                 while data:

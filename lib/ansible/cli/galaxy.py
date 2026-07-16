@@ -660,6 +660,22 @@ class GalaxyCLI(CLI):
                 server_options['validate_certs'] = context.CLIARGS['resolved_validate_certs']
             validate_certs = server_options['validate_certs']
 
+            client_cert = server_options.get('client_cert')
+            client_key = server_options.get('client_key')
+            if client_key and not client_cert:
+                raise AnsibleError(
+                    "Galaxy server '%s' has client_key set without client_cert. "
+                    "Provide client_cert, or a combined PEM via client_cert alone."
+                    % server_key
+                )
+            for cert_key in ('client_cert', 'client_key'):
+                cert_path = server_options.get(cert_key)
+                if cert_path and not os.path.exists(cert_path):
+                    raise AnsibleError(
+                        "Galaxy server '%s' has an invalid %s '%s': file does not exist"
+                        % (server_key, cert_key, cert_path)
+                    )
+
             # default case if no auth info is provided.
             server_options['token'] = None
 
@@ -673,6 +689,8 @@ class GalaxyCLI(CLI):
                         validate_certs=validate_certs,
                         client_id=client_id,
                         client_secret=client_secret,
+                        client_cert=client_cert,
+                        client_key=client_key,
                     )
                 elif token_val:
                     # The galaxy v1 / github / django / 'Token'

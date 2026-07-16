@@ -48,7 +48,16 @@ class KeycloakToken(object):
 
     token_type = 'Bearer'
 
-    def __init__(self, access_token=None, auth_url=None, validate_certs=True, client_id=None, client_secret=None):
+    def __init__(
+        self,
+        access_token=None,
+        auth_url=None,
+        validate_certs=True,
+        client_id=None,
+        client_secret=None,
+        client_cert=None,
+        client_key=None,
+    ):
         self.access_token = access_token
         self.auth_url = auth_url
         self._token = None
@@ -57,6 +66,8 @@ class KeycloakToken(object):
         if self.client_id is None:
             self.client_id = 'cloud-services'
         self.client_secret = client_secret
+        self.client_cert = client_cert
+        self.client_key = client_key
         self._expiration = None
 
     def _form_payload(self):
@@ -88,11 +99,15 @@ class KeycloakToken(object):
 
         display.vvv(f'Authenticating via {self.auth_url}')
         try:
-            resp = open_url(to_native(self.auth_url),
-                            data=payload,
-                            validate_certs=self.validate_certs,
-                            method='POST',
-                            http_agent=user_agent())
+            resp = open_url(
+                to_native(self.auth_url),
+                data=payload,
+                validate_certs=self.validate_certs,
+                method='POST',
+                http_agent=user_agent(),
+                client_cert=self.client_cert,
+                client_key=self.client_key,
+            )
         except HTTPError as e:
             raise GalaxyError(e, 'Unable to get access token')
         display.vvv('Authentication successful')

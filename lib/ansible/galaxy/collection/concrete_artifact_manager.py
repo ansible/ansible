@@ -155,6 +155,8 @@ class ConcreteArtifactsManager:
                 expected_hash=metadata.artifact_sha256,
                 validate_certs=api.validate_certs,
                 token=api.token,
+                client_cert=api.client_cert,
+                client_key=api.client_key,
             )  # type: bytes
         except URLError as err:
             raise AnsibleError(
@@ -483,8 +485,8 @@ def _extract_collection_from_git(repo_url, coll_ver, b_path):
     backoff_iterator=generate_jittered_backoff(retries=6, delay_base=2, delay_threshold=40),
     should_retry_error=should_retry_error
 )
-def _download_file(url, b_path, expected_hash, validate_certs, token=None, timeout=60):
-    # type: (str, bytes, t.Optional[str], bool, GalaxyToken, int) -> bytes
+def _download_file(url, b_path, expected_hash, validate_certs, token=None, timeout=60, client_cert=None, client_key=None):
+    # type: (str, bytes, t.Optional[str], bool, GalaxyToken, int, t.Optional[str], t.Optional[str]) -> bytes
     # ^ NOTE: used in download and verify_collections ^
     b_tarball_name = to_bytes(
         url.rsplit('/', 1)[1], errors='surrogate_or_strict',
@@ -506,7 +508,9 @@ def _download_file(url, b_path, expected_hash, validate_certs, token=None, timeo
         validate_certs=validate_certs,
         headers=None if token is None else token.headers(),
         unredirected_headers=['Authorization'], http_agent=user_agent(),
-        timeout=timeout
+        timeout=timeout,
+        client_cert=client_cert,
+        client_key=client_key,
     )
 
     with open(b_file_path, 'wb') as download_file:  # type: t.BinaryIO
