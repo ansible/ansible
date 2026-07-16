@@ -130,15 +130,15 @@ class NonInheritableFieldAttribute(Attribute):
 
 
 def get_static_parents(obj):
-    o = obj
-    while getattr(o, '_parent', None):
-        if getattr(o._parent, 'statically_loaded', True):
-            yield o._parent
-        o = getattr(o, '_parent', None)
+    parent = obj._parent
+    while parent:
+        if getattr(parent, 'statically_loaded', True):
+            yield parent
+        parent = parent._parent
 
-    if role := getattr(obj, '_role', None):
+    if role := obj._role:
         yield role
-        if dep_chain := obj.get_dep_chain():
+        if dep_chain := role.get_dep_chain():
             yield from reversed(dep_chain)
 
     yield obj.play
