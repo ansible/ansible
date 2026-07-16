@@ -33,7 +33,8 @@ options:
     gather_timeout:
         description:
             - The timeout used during parallel fact gathering.
-        default: 10
+            - Additionally, this option is passed to the M(ansible.builtin.setup) module, which has a separate default of 10 seconds.
+            - When unspecified, the action plugin will wait until the fact modules complete.
         type: int
         version_added: "2.16"
 attributes:
