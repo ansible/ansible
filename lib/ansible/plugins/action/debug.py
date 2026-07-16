@@ -18,7 +18,6 @@
 from __future__ import annotations
 
 from ansible.errors import AnsibleValueOmittedError, AnsibleError
-from ansible.module_utils.common.validation import _check_type_str_no_conversion
 from ansible.plugins.action import ActionBase, VariableLayer
 from ansible._internal._templating._jinja_common import UndefinedMarker, TruncationMarker
 from ansible._internal._templating._utils import Omit
@@ -40,7 +39,7 @@ class ActionModule(ActionBase):
         validation_result, new_module_args = self.validate_argument_spec(
             argument_spec=dict(
                 msg=dict(type='raw', default='Hello world!'),
-                var=dict(type=_check_type_str_no_conversion),
+                var=dict(type='str', type_args=dict(allow_conversion=False)),
                 verbosity=dict(type='int', default=0),
             ),
             mutually_exclusive=(

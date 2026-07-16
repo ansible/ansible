@@ -314,6 +314,7 @@ def argument_spec_schema(for_collection):
     schema = {
         str: {
             'type': Any(is_callable, *argument_spec_types),
+            'type_args': dict,
             'elements': Any(*argument_spec_types),
             'default': object,
             'fallback': Any(

@@ -323,7 +323,7 @@ def check_missing_parameters(parameters, required_parameters=None):
 # FIXME: The param and prefix parameters here are coming from AnsibleModule._check_type_string()
 #        which is using those for the warning messaged based on string conversion warning settings.
 #        Not sure how to deal with that here since we don't have config state to query.
-def check_type_str(value, allow_conversion=True, param=None, prefix=''):
+def check_type_str(value, allow_conversion=True, param=None, prefix='', **kwargs):
     """Verify that the value is a string or convert to a string.
 
     Since unexpected changes can sometimes happen when converting to a string,
@@ -354,13 +354,15 @@ def _check_type_str_no_conversion(value) -> str:
     return check_type_str(value, allow_conversion=False)
 
 
-def check_type_list(value):
+def check_type_list(value, allow_conversion=True, allow_scalar=True, **kwargs):
     """Verify that the value is a list or convert to a list
 
     A comma separated string will be split into a list. Raises a :class:`TypeError`
     if unable to convert to a list.
 
     :arg value: Value to validate or convert to a list
+    :arg allow_conversion: Whether to allow coercion and return it or raise a TypeError
+    :arg allow_scalar: Whether to wrap a scalar of one as a list
 
     :returns: Original value if it is already a list, single item list if a
         float, int, or string without commas, or a multi-item list if a
@@ -368,35 +370,33 @@ def check_type_list(value):
     """
     if isinstance(value, list):
         return value
+    elif not allow_conversion:
+        if allow_scalar:
+            return [value]
+        raise TypeError('%s is not a list' % type(value))
 
-    # DTFIX-FUTURE: deprecate legacy comma split functionality, eventually replace with `_check_type_list_strict`
     if isinstance(value, str):
         return value.split(",")
-    elif isinstance(value, int) or isinstance(value, float):
+    elif allow_scalar and isinstance(value, (int, float)):
         return [str(value)]
 
     raise TypeError('%s cannot be converted to a list' % type(value))
 
 
-def _check_type_list_strict(value):
-    # FUTURE: this impl should replace `check_type_list`
-    if isinstance(value, list):
-        return value
-
-    return [value]
-
-
-def check_type_dict(value):
+def check_type_dict(value, allow_conversion=True, **kwargs):
     """Verify that value is a dict or convert it to a dict and return it.
 
     Raises :class:`TypeError` if unable to convert to a dict
 
     :arg value: Dict or string to convert to a dict. Accepts ``k1=v2, k2=v2`` or ``k1=v2 k2=v2``.
+    :arg allow_conversion: Whether to allow coercion and return it or raise a TypeError
 
     :returns: value converted to a dictionary
     """
     if isinstance(value, dict):
         return value
+    elif not allow_conversion:
+        raise TypeError('%s is not a dict' % type(value))
 
     if isinstance(value, str):
         if value.startswith("{"):
@@ -448,18 +448,21 @@ def check_type_dict(value):
     raise TypeError('%s cannot be converted to a dict' % type(value))
 
 
-def check_type_bool(value):
+def check_type_bool(value, allow_conversion=True, **kwargs):
     """Verify that the value is a bool or convert it to a bool and return it.
 
     Raises :class:`TypeError` if unable to convert to a bool
 
     :arg value: String, int, or float to convert to bool. Valid booleans include:
          '1', 'on', 1, '0', 0, 'n', 'f', 'false', 'true', 'y', 't', 'yes', 'no', 'off'
+    :arg allow_conversion: Whether to allow coercion and return it or raise a TypeError
 
     :returns: Boolean True or False
     """
     if isinstance(value, bool):
         return value
+    elif not allow_conversion:
+        raise TypeError('%s is not a bool' % type(value))
 
     if isinstance(value, str) or isinstance(value, (int, float)):
         return boolean(value)
@@ -467,82 +470,101 @@ def check_type_bool(value):
     raise TypeError('%s cannot be converted to a bool' % type(value))
 
 
-def check_type_int(value):
+def check_type_int(value, allow_conversion=True, **kwargs):
     """Verify that the value is an integer and return it or convert the value
     to an integer and return it
 
     Raises :class:`TypeError` if unable to convert to an int
 
     :arg value: String or int to convert of verify
+    :arg allow_conversion: Whether to allow coercion and return it or raise a TypeError
 
     :return: int of given value
     """
-    if not isinstance(value, int):
-        try:
-            if (decimal_value := decimal.Decimal(value)) != (int_value := int(decimal_value)):
-                raise ValueError("Significant decimal part found")
-            else:
-                value = int_value
-        except (decimal.DecimalException, TypeError, ValueError) as e:
-            raise TypeError(f'"{value!r}" cannot be converted to an int') from e
-    return value
+    # bools are ints, handle bools first
+    if isinstance(value, bool):
+        if not allow_conversion:
+            raise TypeError('%s is not an int' % type(value))
+        return int(value)
+
+    if isinstance(value, int):
+        return value
+    elif not allow_conversion:
+        raise TypeError('%s is not an int' % type(value))
+
+    try:
+        if (decimal_value := decimal.Decimal(value)) != (int_value := int(decimal_value)):
+            raise ValueError("Significant decimal part found")
+        return int_value
+    except (decimal.DecimalException, TypeError, ValueError) as e:
+        raise TypeError(f'"{value!r}" cannot be converted to an int') from e
 
 
-def check_type_float(value):
+def check_type_float(value, allow_conversion=True, **kwargs):
     """Verify that value is a float or convert it to a float and return it
 
     Raises :class:`TypeError` if unable to convert to a float
 
     :arg value: float, int, str, or bytes to verify or convert and return.
+    :arg allow_conversion: Whether to allow coercion and return it or raise a TypeError
 
     :returns: float of given value.
     """
-    if not isinstance(value, float):
-        try:
-            value = float(value)
-        except (TypeError, ValueError) as e:
-            raise TypeError(f'{type(value)} cannot be converted to a float')
+    if isinstance(value, float):
+        return value
+
+    if not allow_conversion:
+        raise TypeError('%s is not a float' % type(value))
+
+    try:
+        value = float(value)
+    except (TypeError, ValueError) as e:
+        raise TypeError(f'{type(value)} cannot be converted to a float')
     return value
 
 
-def check_type_path(value,):
+def check_type_path(value, allow_conversion=True, **kwargs):
     """Verify the provided value is a string or convert it to a string,
     then return the expanded path
     """
-    value = check_type_str(value)
+    value = check_type_str(value, allow_conversion=allow_conversion)
     return os.path.expanduser(os.path.expandvars(value))
 
 
-def check_type_raw(value):
+def check_type_raw(value, **kwargs):
     """Returns the raw value"""
     return value
 
 
-def check_type_bytes(value):
+def check_type_bytes(value, allow_conversion=True, **kwargs):
     """Convert a human-readable string value to bytes
 
     Raises :class:`TypeError` if unable to convert the value
     """
+    if not isinstance(value, str) and not allow_conversion:
+        raise TypeError('%s is not an str' % type(value))
     try:
         return human_to_bytes(value)
     except ValueError:
         raise TypeError('%s cannot be converted to a Byte value' % type(value))
 
 
-def check_type_bits(value):
+def check_type_bits(value, allow_conversion=True, **kwargs):
     """Convert a human-readable string bits value to bits in integer.
 
     Example: ``check_type_bits('1Mb')`` returns integer 1048576.
 
     Raises :class:`TypeError` if unable to convert the value.
     """
+    if not isinstance(value, str) and not allow_conversion:
+        raise TypeError('%s is not an str' % type(value))
     try:
         return human_to_bytes(value, isbits=True)
     except ValueError:
         raise TypeError('%s cannot be converted to a Bit value' % type(value))
 
 
-def check_type_jsonarg(value):
+def check_type_jsonarg(value, **kwargs):
     """
     JSON serialize dict/list/tuple, strip str and bytes.
     Previously required for cases where Ansible/Jinja classic-mode literal eval pass could inadvertently deserialize objects.

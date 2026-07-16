@@ -1,0 +1,2 @@
+minor_changes:
+- argument spec - Add strict capability for argspec arguments that will prevent coercion for built in type checkers.

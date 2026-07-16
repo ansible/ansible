@@ -538,7 +538,7 @@ def _sanitize_keys_conditions(value, deferred_removals):
     raise TypeError('Value of unknown type: %s, %s' % (type(value), value))
 
 
-def _validate_elements(wanted_type, parameter, values, options_context=None, errors=None):
+def _validate_elements(wanted_type, type_args, parameter, values, options_context=None, errors=None):
 
     if errors is None:
         errors = AnsibleValidationErrorMultiple()
@@ -556,7 +556,7 @@ def _validate_elements(wanted_type, parameter, values, options_context=None, err
 
     for value in values:
         try:
-            validated_parameters.append(type_checker(value, **kwargs))
+            validated_parameters.append(type_checker(value, **kwargs, **type_args))
         except (TypeError, ValueError) as e:
             msg = "Elements value for option '%s'" % parameter
             if options_context:
@@ -604,6 +604,7 @@ def _validate_argument_types(argument_spec, parameters, prefix='', options_conte
             continue
 
         wanted_type = spec.get('type')
+        type_args = spec.get('type_args') or {}
         type_checker, wanted_name = _get_type_validator(wanted_type)
         # Get param name for strings so we can later display this value in a useful error message if needed
         # Only pass 'kwargs' to our checkers and ignore custom callable checkers
@@ -616,7 +617,7 @@ def _validate_argument_types(argument_spec, parameters, prefix='', options_conte
                 kwargs['prefix'] = prefix
 
         try:
-            parameters[param] = type_checker(value, **kwargs)
+            parameters[param] = type_checker(value, **kwargs, **type_args)
             elements_wanted_type = spec.get('elements', None)
             if elements_wanted_type:
                 elements = parameters[param]
@@ -626,7 +627,7 @@ def _validate_argument_types(argument_spec, parameters, prefix='', options_conte
                         msg += " found in '%s'." % " -> ".join(options_context)
                     msg += ", elements value check is supported only with 'list' type"
                     errors.append(ArgumentTypeError(msg))
-                parameters[param] = _validate_elements(elements_wanted_type, param, elements, options_context, errors)
+                parameters[param] = _validate_elements(elements_wanted_type, type_args, param, elements, options_context, errors)
 
         except (TypeError, ValueError) as e:
             msg = "argument '%s' is of type %s" % (param, native_type_name(value))

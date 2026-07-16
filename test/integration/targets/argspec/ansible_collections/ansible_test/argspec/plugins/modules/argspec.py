@@ -31,6 +31,56 @@ def main():
             'mapping': {
                 'type': 'dict',
             },
+            'str_strict': {
+                'type': 'str',
+                'type_args': {
+                    'allow_conversion': False,
+                },
+            },
+            'list_strict': {
+                'type': 'list',
+                'type_args': {
+                    'allow_conversion': False,
+                },
+            },
+            'list_strict_without_scalar': {
+                'type': 'list',
+                'type_args': {
+                    'allow_conversion': False,
+                    'allow_scalar': False,
+                },
+            },
+            'dict_strict': {
+                'type': 'dict',
+                'type_args': {
+                    'allow_conversion': False,
+                },
+            },
+            'bool_strict': {
+                'type': 'bool',
+                'type_args': {
+                    'allow_conversion': False,
+                },
+            },
+            'int_strict': {
+                'type': 'int',
+                'type_args': {
+                    'allow_conversion': False,
+                },
+            },
+            'float_strict': {
+                'type': 'float',
+                'type_args': {
+                    'allow_conversion': False,
+                },
+            },
+            'list_strict_with_elements': {
+                'type': 'list',
+                'elements': 'int',
+                'type_args': {
+                    'allow_conversion': False,
+                },
+            },
             'required_one_of': {
                 'required_one_of': [['thing', 'other']],
                 'type': 'list',

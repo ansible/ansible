@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import typing as t
 
-from ansible.module_utils.common.validation import _check_type_str_no_conversion, _check_type_list_strict
 from ansible.plugins.action import ActionBase
 from ansible._internal._templating._engine import TemplateEngine
 from ansible._internal._templating._marker_behaviors import ReplacingMarkerBehavior
@@ -23,7 +22,7 @@ class ActionModule(ActionBase):
         # accepts a list of literal expressions (no templating), evaluates with no failure on undefined, returns all results
         _vr, args = self.validate_argument_spec(
             argument_spec=dict(
-                expression=dict(type=_check_type_list_strict, elements=_check_type_str_no_conversion, required=True),
+                expression=dict(type='list', strict=True, elements='str', required=True),
             ),
         )
 
