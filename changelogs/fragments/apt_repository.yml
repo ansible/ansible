@@ -1,0 +1,3 @@
+---
+bugfixes:
+    - apt_repository - validate the line in sources.list (https://github.com/ansible/ansible/issues/85715).

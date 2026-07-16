@@ -711,7 +711,7 @@
         name: dinginessentail
         state: absent
 
-- name: Test failures occured during loading repositories are properly handled
+- name: Test failures occurred during loading repositories are properly handled
   vars:
     repo_name: test-non-existing-gpgkey-file
   block:

@@ -26,3 +26,5 @@ ansible localhost -m setup > /dev/null
 ansible localhost -m assert -a '{"that": "ansible_facts.distribution is defined"}'
 # test flushing the fact cache
 ansible --flush-cache localhost -m debug -a "msg={{ ansible_facts }}" | grep '"msg": {}'
+# test meta end_play
+ansible localhost -m include_role -a name=end_play

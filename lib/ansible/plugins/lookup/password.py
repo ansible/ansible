@@ -20,6 +20,7 @@ DOCUMENTATION = """
         which simplifies password management in C("host_vars") variables.'
       - A special case is using /dev/null as a path. The password lookup will generate a new random password each time,
         but will not write it to /dev/null. This can be used when you need a password without storing it on the controller.
+    positional: _terms
     options:
       _terms:
          description:

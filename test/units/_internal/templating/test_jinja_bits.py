@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import pathlib
 import sys
 import typing as t
@@ -400,7 +401,7 @@ def test_builtin_alt_names(name: str) -> None:
 def test_macro_marker_handling(template: str, variables: dict[str, object], expected: object) -> None:
     """
     Ensure that `JinjaCallContext` Marker handling is masked/set correctly for Jinja macro callables.
-    Jinja's generated macro code handles Markers, so pre-emptive raise on retrieval should be disabled for the macro `call()`.
+    Jinja's generated macro code handles Markers, so preemptive raise on retrieval should be disabled for the macro `call()`.
     """
     res = TemplateEngine(variables=variables).template(TRUST.tag(template))
 
@@ -467,3 +468,11 @@ def test_marker_access_getattr_and_getitem(template: str) -> None:
         TemplateEngine(variables=dict(adict={})).template(TRUST.tag(template))
 
     assert type(tracker._markers[0]) is UndefinedMarker  # pylint: disable=unidiomatic-typecheck
+
+
+def test_ansible_template_deepcopy() -> None:
+    """Ensure that AnsibleTemplate instances return themselves when a deep copy is made."""
+    template = AnsibleEnvironment().from_string("Hello")
+    deep_copy = copy.deepcopy(template)
+
+    assert deep_copy is template

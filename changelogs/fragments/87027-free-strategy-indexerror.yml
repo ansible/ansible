@@ -1,0 +1,2 @@
+bugfixes:
+  - free strategy - Fix ``IndexError`` when hosts become unreachable during playbook execution (https://github.com/ansible/ansible/issues/87027).

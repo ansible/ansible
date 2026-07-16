@@ -68,14 +68,19 @@ def get_common_variables(target_profile: HostProfile, controller: bool = False) 
 
 def create_controller_inventory(args: EnvironmentConfig, path: str, controller_host: ControllerHostProfile) -> None:
     """Create and return inventory for use in controller-only integration tests."""
+    testhost: dict[str, str | int | None] = get_common_variables(controller_host, controller=True) | dict(
+        ansible_connection='local',
+        ansible_pipelining='yes',
+        ansible_python_interpreter=controller_host.python.path,
+        ansible_pwsh_interpreter=controller_host.powershell.path,
+    )
+
+    testhost = exclude_none_values(testhost)
+
     inventory = Inventory(
         host_groups=dict(
             testgroup=dict(
-                testhost=get_common_variables(controller_host, controller=True) | dict(
-                    ansible_connection='local',
-                    ansible_pipelining='yes',
-                    ansible_python_interpreter=controller_host.python.path,
-                ),
+                testhost=testhost,
             ),
         ),
     )
@@ -159,17 +164,14 @@ def create_posix_inventory(args: EnvironmentConfig, path: str, target_hosts: lis
 
     target_host = target_hosts[0]
 
+    testhost: dict[str, str | int | None] = get_common_variables(target_host)
+
     if isinstance(target_host, ControllerProfile) and not needs_ssh:
-        inventory = Inventory(
-            host_groups=dict(
-                testgroup=dict(
-                    testhost=get_common_variables(target_host) | dict(
-                        ansible_connection='local',
-                        ansible_pipelining='yes',
-                        ansible_python_interpreter=target_host.python.path,
-                    ),
-                ),
-            ),
+        testhost |= dict(
+            ansible_connection='local',
+            ansible_pipelining='yes',
+            ansible_python_interpreter=target_host.python.path,
+            ansible_pwsh_interpreter=target_host.powershell.path,
         )
     else:
         connections = target_host.get_controller_target_connections()
@@ -179,10 +181,11 @@ def create_posix_inventory(args: EnvironmentConfig, path: str, target_hosts: lis
 
         ssh = connections[0]
 
-        testhost: dict[str, t.Optional[t.Union[str, int]]] = get_common_variables(target_host) | dict(
+        testhost |= dict(
             ansible_connection='ssh',
             ansible_pipelining='yes',
             ansible_python_interpreter=ssh.settings.python_interpreter,
+            ansible_pwsh_interpreter=ssh.settings.powershell_interpreter,
             ansible_host=ssh.settings.host,
             ansible_port=ssh.settings.port,
             ansible_user=ssh.settings.user,
@@ -196,14 +199,14 @@ def create_posix_inventory(args: EnvironmentConfig, path: str, target_hosts: lis
                 ansible_become_method=ssh.become.method,
             )
 
-        testhost = exclude_none_values(testhost)
+    testhost = exclude_none_values(testhost)
 
-        inventory = Inventory(
-            host_groups=dict(
-                testgroup=dict(
-                    testhost=testhost,
-                ),
+    inventory = Inventory(
+        host_groups=dict(
+            testgroup=dict(
+                testhost=testhost,
             ),
-        )
+        ),
+    )
 
     inventory.write(args, path)

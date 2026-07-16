@@ -1,2 +1,0 @@
-- name: Uninstall Paramiko for Python 3 on Alpine
-  command: apk del py3-paramiko

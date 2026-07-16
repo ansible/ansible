@@ -14,6 +14,7 @@ from ...encoding import (
 
 from ...util import (
     SubprocessError,
+    display,
 )
 
 from . import (
@@ -50,7 +51,13 @@ class GitSource(SourceProvider):
             submodule_paths = [os.path.relpath(p, rel_path) for p in submodule_paths if p.startswith(rel_path)]
 
         for submodule_path in submodule_paths:
-            paths.extend(os.path.join(submodule_path, p) for p in self.__get_paths(os.path.join(path, submodule_path)))
+            submodule_full_path = os.path.join(path, submodule_path)
+
+            if not os.path.exists(submodule_full_path):
+                display.warning(f"Missing submodule: {submodule_path}")
+                continue
+
+            paths.extend(os.path.join(submodule_path, p) for p in self.__get_paths(submodule_full_path))
 
         # git reports submodule directories as regular files
         paths = [p for p in paths if p not in submodule_paths]

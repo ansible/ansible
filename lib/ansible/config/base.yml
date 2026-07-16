@@ -104,21 +104,6 @@ ANSIBLE_HOME:
     section: defaults
   type: path
   version_added: '2.14'
-ANSIBLE_CONNECTION_PATH:
-  name: Path of ansible-connection script
-  default: null
-  description:
-    - Specify where to look for the ansible-connection script. This location will be checked before searching $PATH.
-    - If null, ansible will start with the same directory as the ansible script.
-  type: path
-  env: [{name: ANSIBLE_CONNECTION_PATH}]
-  ini:
-  - {key: ansible_connection_path, section: persistent_connection}
-  yaml: {key: persistent_connection.ansible_connection_path}
-  version_added: "2.8"
-  deprecated:
-    why: This setting has no effect.
-    version: "2.22"
 ANSIBLE_COW_SELECTION:
   name: Cowsay filter selection
   default: default
@@ -291,7 +276,7 @@ COLLECTIONS_PATHS:
     Collections must be in nested *subdirectories*, not directly in these directories.
     For example, if ``COLLECTIONS_PATHS`` includes ``'{{ ANSIBLE_HOME ~ "/collections" }}'``,
     and you want to add ``my.collection`` to that directory, it must be saved as
-    ``'{{ ANSIBLE_HOME} ~ "/collections/ansible_collections/my/collection" }}'``.
+    ``'{{ ANSIBLE_HOME ~ "/collections/ansible_collections/my/collection" }}'``.
   default: '{{ ANSIBLE_HOME ~ "/collections:/usr/share/ansible/collections" }}'
   type: pathspec
   env:
@@ -874,22 +859,6 @@ DEFAULT_KEEP_REMOTE_FILES:
   ini:
   - {key: keep_remote_files, section: defaults}
   type: boolean
-DEFAULT_LIBVIRT_LXC_NOSECLABEL:
-  name: No security label on Lxc
-  default: False
-  description:
-    - "This setting causes libvirt to connect to LXC containers by passing ``--noseclabel`` parameter to ``virsh`` command.
-      This is necessary when running on systems which do not have SELinux."
-  env:
-  - name: ANSIBLE_LIBVIRT_LXC_NOSECLABEL
-  ini:
-  - {key: libvirt_lxc_noseclabel, section: selinux}
-  type: boolean
-  version_added: "2.1"
-  deprecated:
-    why: This option was moved to the plugin itself
-    version: "2.22"
-    alternatives: Use the option from the plugin itself.
 DEFAULT_LOAD_CALLBACK_PLUGINS:
   name: Load callbacks for adhoc
   default: False
@@ -1646,7 +1615,7 @@ GALAXY_COLLECTION_IMPORT_POLL_FACTOR:
     - name: ANSIBLE_GALAXY_COLLECTION_IMPORT_POLL_FACTOR
   version_added: "2.18"
 HOST_KEY_CHECKING:
-  # NOTE: constant not in use by ssh/paramiko plugins anymore, but they do support the same configuration sources
+  # NOTE: constant not in use by ssh plugin anymore, but it does support the same configuration sources
   # TODO: check non ssh connection plugins for use/migration
   name: Toggle host/key check
   default: True
@@ -1667,6 +1636,21 @@ HOST_PATTERN_MISMATCH:
   choices:
     <<: *basic_error
   version_added: "2.8"
+INJECT_INVOCATION:
+  name: Control task result injection of ``invocation``
+  description:
+    - When enabled, an ``invocation`` key will be added to the task result with the module/action arguments used.
+      Most callback plugins mask the ``invocation`` key from task result display by default.
+  type: boolean
+  default: false
+  env:
+    - name: ANSIBLE_INJECT_INVOCATION
+  ini:
+    - key: inject_invocation
+      section: defaults
+  vars:
+    - name: ansible_inject_invocation
+  version_added: "2.21"
 INTERPRETER_PYTHON:
   name: Python interpreter path (or automatic discovery behavior) used for module execution
   default: auto
@@ -1688,6 +1672,7 @@ INTERPRETER_PYTHON:
 INTERPRETER_PYTHON_FALLBACK:
   name: Ordered list of Python interpreters to check for in discovery
   default:
+  - python3.15
   - python3.14
   - python3.13
   - python3.12
@@ -2109,6 +2094,22 @@ _TEMPLAR_UNTRUSTED_TEMPLATE_BEHAVIOR:
   choices: *basic_error
   env: [{name: _ANSIBLE_TEMPLAR_UNTRUSTED_TEMPLATE_BEHAVIOR}]
   version_added: '2.19'
+WORKER_SESSION_ISOLATION:
+  name: Control worker session isolation
+  description:
+    - Ansible forked workers run session-isolated by default to avoid contention on shared TTYs.
+    - If access to the inherited parent TTY is required, set this option to ``false`` to disable session isolation.
+    - Disabling session isolation should be limited to the smallest possible scope by setting the ``ansible_worker_session_isolation`` variable on individual tasks, blocks, plays, roles, or hosts as needed.
+  default: true
+  env:
+  - name: ANSIBLE_WORKER_SESSION_ISOLATION
+  ini:
+    - key: worker_session_isolation
+      section: defaults
+  vars:
+  - { name: ansible_worker_session_isolation }
+  type: boolean
+  version_added: '2.21'
 WORKER_SHUTDOWN_POLL_COUNT:
   name: Worker Shutdown Poll Count
   default: 0
@@ -2248,3 +2249,14 @@ _Z_TEST_ENTRY_2:
   ini:
     - section: testing
       key: valid2
+_Z_TEST_ENTRY_3:
+  version_added: '2.21'
+  name: testentry
+  description: for tests
+  type: path
+  default: '{{ANSIBLE_HOME}}'
+  env:
+    - name: ANSIBLE_TEST_ENTRY3
+  ini:
+    - section: testing
+      key: valid3

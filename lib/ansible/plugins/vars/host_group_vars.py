@@ -53,7 +53,7 @@ DOCUMENTATION = """
 """
 
 import os
-from ansible.errors import AnsibleParserError
+from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.module_utils.common.text.converters import to_native
 from ansible.plugins.vars import BaseVarsPlugin
 from ansible.utils.path import basedir
@@ -74,7 +74,10 @@ class VarsModule(BaseVarsPlugin):
         for found in found_files:
             new_data = loader.load_from_file(found, cache='all', unsafe=True, trusted_as_template=True)
             if new_data:  # ignore empty files
-                data = combine_vars(data, new_data)
+                try:
+                    data = combine_vars(data, new_data)
+                except AnsibleError as e:
+                    raise AnsibleParserError(f"Could not process {found!r}.") from e
         return data
 
     def get_vars(self, loader, path, entities, cache=True):

@@ -783,10 +783,9 @@ def deprecation_schema(for_collection):
         Required('why'): doc_string,
         'alternative': doc_string,
         'alternatives': doc_string,
+        Required('removed_from_collection'): collection_name,
+        'removed': Any(True),
     }
-
-    if for_collection:
-        main_fields.update({Required('removed_from_collection'): collection_name, 'removed': Any(True)})
 
     date_schema = {
         Required('removed_at_date'): date(),
@@ -842,11 +841,6 @@ def doc_schema(module_name, for_collection=False, deprecated_module=False, plugi
     if module_name.startswith('_') and not for_collection:
         module_name = module_name[1:]
         deprecated_module = True
-    if for_collection is False and plugin_type == 'connection' and module_name == 'paramiko_ssh':
-        # The plugin loader has a hard-coded exception: when the builtin connection 'paramiko' is
-        # referenced, it loads 'paramiko_ssh' instead. That's why in this plugin, the name must be
-        # 'paramiko' and not 'paramiko_ssh'.
-        module_name = 'paramiko'
     doc_schema_dict = {
         Required('module' if plugin_type == 'module' else 'name'): module_name,
         Required('short_description'): doc_string,
@@ -866,6 +860,8 @@ def doc_schema(module_name, for_collection=False, deprecated_module=False, plugi
         doc_schema_dict['author'] = All(Any(None, list_string_types, str), author)
     if plugin_type == 'callback':
         doc_schema_dict[Required('type')] = Any('aggregate', 'notification', 'stdout')
+    if plugin_type in ('lookup', 'filter', 'test'):
+        doc_schema_dict['positional'] = Any(list_string_types, str)
 
     if for_collection:
         # Optional

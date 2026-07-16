@@ -661,6 +661,9 @@ def main():
         res_args['backup_file'] = backup_file
 
     file_args = module.load_file_common_arguments(module.params, path=dest)
+    directory_mode = module.params['directory_mode']
+    if os.path.isdir(b_dest) and directory_mode is not None:
+        file_args['mode'] = directory_mode
     res_args['changed'] = module.set_fs_attributes_if_different(file_args, res_args['changed'])
 
     module.exit_json(**res_args)

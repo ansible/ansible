@@ -69,7 +69,7 @@ class ActionModule(RebootActionModule, ActionBase):
         stdout = reboot_result['stdout']
         stderr = reboot_result['stderr']
         if reboot_result['rc'] == 1190 or (reboot_result['rc'] != 0 and "(1190)" in reboot_result['stderr']):
-            display.warning('A scheduled reboot was pre-empted by Ansible.')
+            display.warning('A scheduled reboot was preempted by Ansible.')
 
             # Try to abort (this may fail if it was already aborted)
             result1 = self._low_level_execute_command(self._connection._shell._encode_script('shutdown /a'),

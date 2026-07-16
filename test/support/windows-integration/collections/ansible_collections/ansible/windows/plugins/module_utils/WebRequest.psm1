@@ -17,7 +17,7 @@ Function Get-AnsibleWindowsWebRequest {
     The protocol method to use, if omitted, will use the default value for the URI protocol specified.
 
     .PARAMETER FollowRedirects
-    Whether to follow redirect reponses. This is only valid when using a HTTP URI.
+    Whether to follow redirect responses. This is only valid when using a HTTP URI.
         all - Will follow all redirects
         none - Will follow no redirects
         safe - Will only follow redirects when GET or HEAD is used as the UrlMethod
@@ -195,7 +195,19 @@ Function Get-AnsibleWindowsWebRequest {
     # Disable certificate validation if requested
     # FUTURE: set this on ServerCertificateValidationCallback of the HttpWebRequest once .NET 4.5 is the minimum
     if (-not $ValidateCerts) {
-        [System.Net.ServicePointManager]::ServerCertificateValidationCallback = { $true }
+        # .NET (Core/5+) runs the callback in a different thread so we cannot
+        # rely on the pwsh callback to work. Use a simple Linq expression that
+        # returns $true.
+        $callback = [System.Linq.Expressions.Expression]::Lambda(
+            [System.Net.Security.RemoteCertificateValidationCallback],
+            [System.Linq.Expressions.Expression]::Constant($true, [bool]),
+            [System.Linq.Expressions.Expression]::Parameter([object], "sender"),
+            [System.Linq.Expressions.Expression]::Parameter([System.Security.Cryptography.X509Certificates.X509Certificate], "certificate"),
+            [System.Linq.Expressions.Expression]::Parameter([System.Security.Cryptography.X509Certificates.X509Chain], "chain"),
+            [System.Linq.Expressions.Expression]::Parameter([System.Net.Security.SslPolicyErrors], "sslPolicyErrors")
+        ).Compile()
+
+        [System.Net.ServicePointManager]::ServerCertificateValidationCallback = $callback
     }
 
     # Enable TLS1.1/TLS1.2 if they're available but disabled (eg. .NET 4.5)

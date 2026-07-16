@@ -386,9 +386,11 @@
     label: "{{ r.stdout }}"
   when:
     - item == "changed"
-  ignore_errors: true
 
-- name: test that the second iteration result was stored, since it was skipped no stdout should be present there
+- name: test that the second iteration result was skipped and generated a warning about the loop label
   assert:
     that:
-      - "r['results'][1]['msg'] is contains(\"no attribute 'stdout'\")"
+      - r.results[1] is skipped
+      - r.results[1].skip_reason is contains "result was False"
+      - r.results[1].warnings | length == 1
+      - r.results[1].warnings[0] is contains "no attribute 'stdout'"

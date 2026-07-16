@@ -123,6 +123,16 @@
   assert:
     that: key_id_idempotence is not changed
 
+- name: Add key to test deleting by fingerprint
+  rpm_key:
+    state: present
+    key: "{{ test_key_url }}"
+
+- name: Remove key by using fingerprint
+  rpm_key:
+    state: absent
+    key: "{{ primary_fingerprint }}"
+
 - name: Add very first key on system again
   rpm_key:
     state: present
@@ -227,3 +237,68 @@
     that:
       - result is success
       - result is not changed
+
+# Test PGPv6 keys
+- name: Test PGPv6 Keys
+  block:
+
+    # Reset to test PGPv6 keys validation
+    - name: Remove all keys from key ring
+      shell: rpm -q gpg-pubkey | xargs rpm -e
+
+    - name: Copy v6 key to remote
+      copy:
+        src: "files/{{ test_v6_key_file }}"
+        dest: "{{ remote_tmp_dir }}/{{ test_v6_key_file }}"
+        mode: "0644"
+
+    - name: Import v6 key
+      rpm_key:
+        state: present
+        key: "{{ remote_tmp_dir }}/{{ test_v6_key_file }}"
+        fingerprint: "{{ invalid_fingerprint }}"
+      register: result
+      failed_when: result is success
+
+    - name: Verify invalid fingerprint failure
+      assert:
+        that:
+           - result is success
+           - result is not changed
+           - result.msg is contains 'does not match any key fingerprints'
+
+    - name: Import v6 key
+      rpm_key:
+        state: present
+        key: "{{ remote_tmp_dir }}/{{ test_v6_key_file }}"
+        fingerprint: "{{ test_v6_key_fingerprint }}"
+
+    - name: Import v6 key (idempotent)
+      rpm_key:
+        state: present
+        key: "{{ remote_tmp_dir }}/{{ test_v6_key_file }}"
+        fingerprint: "{{ test_v6_key_fingerprint }}"
+      register: key_idempotence
+
+    - name: Verify idempotence
+      assert:
+        that: key_idempotence is not changed
+
+    - name: Delete v6 key
+      rpm_key:
+        state: absent
+        key: "{{ test_v6_key_keyid }}"
+
+    - name: Import v6 key again
+      rpm_key:
+        state: present
+        key: "{{ remote_tmp_dir }}/{{ test_v6_key_file }}"
+        fingerprint: "{{ test_v6_key_fingerprint }}"
+
+    - name: Delete v6 key by fingerprint
+      rpm_key:
+        state: absent
+        key: "{{ test_v6_key_fingerprint }}"
+
+  when: (ansible_facts['distribution'] == "RedHat" and ansible_facts['distribution_version'] is version('10.1', '>='))
+        or (ansible_facts['distribution'] == "Fedora" and ansible_facts['distribution_version'] is version('43', '>='))

@@ -55,14 +55,19 @@
       register: apt_url_deps
 
     - name: check to make sure we installed the package
-      shell: dpkg -l | grep baz
+      shell: dpkg-query -l baz
       failed_when: False
       register: baz_dpkg_result
 
-    - name: check to make sure we installed the package's recommends
-      shell: dpkg -l | grep rolldice
+    - name: check to make sure we installed the package's recommends (rolldice)
+      shell: dpkg-query -l rolldice
       failed_when: False
       register: rolldice_dpkg_result
+
+    - name: check to make sure we installed the package's recommends (uidmap)
+      shell: dpkg-query -l uidmap
+      failed_when: False
+      register: uidmap_dpkg_result
 
     - name: verify real installation of bar
       assert:
@@ -72,6 +77,8 @@
         - baz_dpkg_result.rc == 0
         - rolldice_dpkg_result is successful
         - rolldice_dpkg_result.rc == 0
+        - uidmap_dpkg_result is successful
+        - uidmap_dpkg_result.rc == 0
 
   always:
     - name: uninstall packages with apt
@@ -80,5 +87,6 @@
           - echo-hello
           - rolldice
           - baz
+          - uidmap
         state: absent
         purge: yes

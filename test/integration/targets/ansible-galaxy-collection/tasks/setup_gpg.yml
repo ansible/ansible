@@ -32,14 +32,18 @@
   command: whoami
   register: user
 
-- name: generate key for user with gpg
-  command: "gpg --no-tty --homedir {{ gpg_homedir }} --passphrase '' --pinentry-mode loopback --quick-gen-key {{ user.stdout }} default default"
+- name: import public key
+  command:
+    cmd: gpg --no-tty --homedir {{ gpg_homedir }} --import
+    stdin: '{{ pulp_published_repo.gpgkey }}'
+  register: gpg_import
 
-- name: list gpg keys for user
-  command: "gpg --no-tty --homedir {{ gpg_homedir }} --list-keys {{ user.stdout }}"
+- command: gpg --no-tty --homedir {{ gpg_homedir }} --list-keys {{ keyid }}
+  vars:
+    keyid: "{{ (gpg_import.stderr_lines | select('match', 'gpg: key ') | first | split).2 | replace(':', '') }}"
   register: gpg_list_keys
 
 - name: save gpg user and fingerprint of new key
   set_fact:
-    gpg_user: "{{ user.stdout }}"
+    gpg_user: ansible-test
     fingerprint: "{{ gpg_list_keys.stdout_lines[1] | trim }}"

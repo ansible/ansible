@@ -39,6 +39,7 @@ class SshConnectionDetail:
     user: str
     identity_file: str
     python_interpreter: t.Optional[str] = None
+    powershell_interpreter: str | None = None
     shell_type: t.Optional[str] = None
     enable_rsa_sha1: bool = False
 
@@ -285,6 +286,7 @@ def generate_ssh_inventory(ssh_connections: list[SshConnectionDetail]) -> str:
                 ansible_connection='ssh',
                 ansible_pipelining='yes',
                 ansible_python_interpreter=ssh.python_interpreter,
+                ansible_pwsh_interpreter=ssh.powershell_interpreter,
                 ansible_shell_type=ssh.shell_type,
                 ansible_ssh_extra_args=ssh_options_to_str(dict(UserKnownHostsFile='/dev/null', **ssh.options)),  # avoid changing the test environment
                 ansible_ssh_host_key_checking='no',

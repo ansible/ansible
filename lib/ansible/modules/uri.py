@@ -445,10 +445,10 @@ from urllib.parse import urlencode, urljoin
 from ansible.module_utils.basic import AnsibleModule, sanitize_keys
 from ansible.module_utils.common.text.converters import to_native, to_text
 from ansible.module_utils.urls import (
+    create_multipart,
     fetch_url,
     get_response_filename,
     parse_content_type,
-    prepare_multipart,
     url_argument_spec,
     url_redirect_argument_spec,
 )
@@ -562,12 +562,6 @@ def uri(module, url, dest, body, body_format, method, headers, socket_timeout, c
             tz=timezone.utc,
         )
 
-    if module.params.get('follow_redirects') in ('no', 'yes'):
-        module.deprecate(
-            "Using 'yes' or 'no' for 'follow_redirects' parameter is deprecated.",
-            version='2.22'
-        )
-
     resp, info = fetch_url(module, url, data=data, headers=headers,
                            method=method, timeout=socket_timeout, unix_socket=module.params['unix_socket'],
                            ca_path=ca_path, unredirected_headers=unredirected_headers,
@@ -597,7 +591,7 @@ def main():
         src=dict(type='path'),
         method=dict(type='str', default='GET'),
         return_content=dict(type='bool', default=False),
-        follow_redirects=dict(type='str', default='safe', choices=['all', 'no', 'none', 'safe', 'urllib2', 'yes']),
+        follow_redirects=dict(type='str', default='safe', choices=['all', 'none', 'safe', 'urllib2']),
         creates=dict(type='path'),
         removes=dict(type='path'),
         status_code=dict(type='list', elements='int', default=[200]),
@@ -654,7 +648,9 @@ def main():
             dict_headers['Content-Type'] = 'application/x-www-form-urlencoded'
     elif body_format == 'form-multipart':
         try:
-            content_type, body = prepare_multipart(body)
+            multipart = create_multipart(body)
+            content_type = multipart.content_type
+            body = multipart.as_fp()
         except (TypeError, ValueError) as e:
             module.fail_json(msg='failed to parse body as form-multipart: %s' % to_native(e))
         dict_headers['Content-Type'] = content_type

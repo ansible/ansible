@@ -11,6 +11,7 @@ DOCUMENTATION = """
     short_description: read lines from command
     description:
       - Run one or more commands and split the output into lines, returning them as a list
+    positional: _terms
     options:
       _terms:
         description: command(s) to run

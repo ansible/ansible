@@ -1,2 +1,0 @@
-bugfixes:
-  - psrp - ReadTimeout exceptions now mark host as unreachable instead of fatal (https://github.com/ansible/ansible/issues/85966)

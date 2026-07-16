@@ -26,6 +26,7 @@ import os
 import re
 import sys
 import traceback
+import typing as t
 import warnings
 
 from collections import OrderedDict
@@ -91,8 +92,6 @@ from .constants import (
     NO_LOG_REGEX,
     FORBIDDEN_DICTIONARY_KEYS,
     REJECTLIST_IMPORTS,
-    SUBPROCESS_REGEX,
-    OS_CALL_REGEX,
     PLUGINS_WITH_RETURN_VALUES,
     PLUGINS_WITH_EXAMPLES,
     PLUGINS_WITH_YAML_EXAMPLES,
@@ -454,34 +453,6 @@ class ModuleValidator(Validator):
                     msg='Found old style GPLv3 license header: '
                         'https://docs.ansible.com/ansible-core/devel/dev_guide/developing_modules_documenting.html#copyright'
                 )
-
-    def _check_for_subprocess(self):
-        for child in self.ast.body:
-            if isinstance(child, ast.Import):
-                if child.names[0].name == 'subprocess':
-                    for line_no, line in enumerate(self.text.splitlines()):
-                        sp_match = SUBPROCESS_REGEX.search(line)
-                        if sp_match:
-                            self.reporter.error(
-                                path=self.object_path,
-                                code='use-run-command-not-popen',
-                                msg=('subprocess.Popen call found. Should be module.run_command'),
-                                line=(line_no + 1),
-                                column=(sp_match.span()[0] + 1)
-                            )
-
-    def _check_for_os_call(self):
-        if 'os.call' in self.text:
-            for line_no, line in enumerate(self.text.splitlines()):
-                os_call_match = OS_CALL_REGEX.search(line)
-                if os_call_match:
-                    self.reporter.error(
-                        path=self.object_path,
-                        code='use-run-command-not-os-call',
-                        msg=('os.call() call found. Should be module.run_command'),
-                        line=(line_no + 1),
-                        column=(os_call_match.span()[0] + 1)
-                    )
 
     def _find_rejectlist_imports(self):
         for child in self.ast.body:
@@ -846,21 +817,40 @@ class ModuleValidator(Validator):
                 msg='%s: %s' % (combined_path, error_message)
             )
 
-    def _validate_option_docs(self, options, context=None):
+    def _validate_option_docs(self, options: t.Any, *, context: list[str] | None = None, positional: t.Any | None = None) -> None:
         if not isinstance(options, dict):
             return
         if context is None:
             context = []
 
-        normalized_option_alias_names = dict()
+        if isinstance(positional, str):
+            positional = [part.strip() for part in positional.split(",")] if positional else []
+        if isinstance(positional, list):
+            prev_positional = set()
+            for pos_opt in positional:
+                if pos_opt in prev_positional:
+                    self.reporter.error(
+                        path=self.object_path,
+                        code='positional-repeated',
+                        msg=f"The option {pos_opt!r} is listed as a positional option more than once",
+                    )
+                if pos_opt not in options:
+                    self.reporter.error(
+                        path=self.object_path,
+                        code='positional-not-option',
+                        msg=f"{pos_opt!r} is listed as a positional option, but is not an option of the plugin",
+                    )
+                prev_positional.add(pos_opt)
 
-        def add_option_alias_name(name, option_name):
+        normalized_option_alias_names: dict[str, dict[str, set[str]]] = dict()
+
+        def add_option_alias_name(name: str, option_name: str) -> None:
             normalized_name = str(name).lower()
             normalized_option_alias_names.setdefault(normalized_name, {}).setdefault(option_name, set()).add(name)
 
         for option, data in options.items():
             if 'suboptions' in data:
-                self._validate_option_docs(data.get('suboptions'), context + [option])
+                self._validate_option_docs(data.get('suboptions'), context=context + [option])
             add_option_alias_name(option, option)
             if 'aliases' in data and isinstance(data['aliases'], list):
                 for alias in data['aliases']:
@@ -909,25 +899,19 @@ class ModuleValidator(Validator):
 
     def _validate_docs(self):
         doc = None
-        # We have three ways of marking deprecated/removed files.  Have to check each one
+        # We have two ways of marking deprecated/removed files. Have to check each one
         # individually and then make sure they all agree
-        filename_deprecated_or_removed = False
-        deprecated = False
         doc_deprecated = None  # doc legally might not exist
         routing_says_deprecated = False
 
-        if self.object_name.startswith('_') and not os.path.islink(self.object_path):
-            filename_deprecated_or_removed = True
-
-        # We are testing a collection
         if self.routing:
             routing_deprecation = self.routing.get('plugin_routing', {})
             routing_deprecation = routing_deprecation.get('modules' if self.plugin_type == 'module' else self.plugin_type, {})
             routing_deprecation = routing_deprecation.get(self.name, {}).get('deprecation', {})
             if routing_deprecation:
-                # meta/runtime.yml says this is deprecated
+                # consult meta/runtime.yml for collection to see if this is deprecated
+                # consult ansible_builtin_runtime.yml for ansible.builtin to see if this is deprecated
                 routing_says_deprecated = True
-                deprecated = True
 
         if self._python_module():
             doc_info = self._get_py_docs()
@@ -1007,10 +991,13 @@ class ModuleValidator(Validator):
 
             with CaptureStd():
                 try:
-                    get_docstring(os.path.abspath(self.path), fragment_loader=fragment_loader,
-                                  verbose=True,
-                                  collection_name=self.collection_name,
-                                  plugin_type=self.plugin_type)
+                    get_docstring(
+                        filename=os.path.abspath(self.path),
+                        fragment_loader=fragment_loader,
+                        verbose=True,
+                        collection_name=self.collection_name,
+                        plugin_type=self.plugin_type,
+                    )
                 except AnsibleFragmentError:
                     # Will be re-triggered below when explicitly calling add_fragments()
                     pass
@@ -1060,33 +1047,25 @@ class ModuleValidator(Validator):
             if os.path.islink(self.object_path):
                 # This module has an alias, which we can tell as it's a symlink
                 # Rather than checking for `module: $filename` we need to check against the true filename
-                self._validate_docs_schema(
-                    doc,
-                    doc_schema(
-                        os.readlink(self.object_path).split('.')[0],
-                        for_collection=bool(self.collection),
-                        deprecated_module=deprecated,
-                        plugin_type=self.plugin_type,
-                    ),
-                    'DOCUMENTATION',
-                    'invalid-documentation',
-                )
+                module_name = os.readlink(self.object_path).split('.')[0]
             else:
                 # This is the normal case
-                self._validate_docs_schema(
-                    doc,
-                    doc_schema(
-                        self.object_name.split('.')[0],
-                        for_collection=bool(self.collection),
-                        deprecated_module=deprecated,
-                        plugin_type=self.plugin_type,
-                    ),
-                    'DOCUMENTATION',
-                    'invalid-documentation',
-                )
+                module_name = self.object_name.split('.')[0]
+
+            self._validate_docs_schema(
+                doc,
+                doc_schema(
+                    module_name,
+                    for_collection=bool(self.collection),
+                    deprecated_module=routing_says_deprecated or doc_deprecated,
+                    plugin_type=self.plugin_type,
+                ),
+                'DOCUMENTATION',
+                'invalid-documentation',
+            )
 
             if doc:
-                self._validate_option_docs(doc.get('options'))
+                self._validate_option_docs(doc.get('options'), positional=doc.get('positional'))
 
             self._validate_all_semantic_markup(doc, returns)
 
@@ -1165,21 +1144,12 @@ class ModuleValidator(Validator):
 
         # Check for mismatched deprecation
         if not self.collection:
-            mismatched_deprecation = True
-            if not (filename_deprecated_or_removed or deprecated or doc_deprecated):
-                mismatched_deprecation = False
-            else:
-                if (filename_deprecated_or_removed and doc_deprecated):
-                    mismatched_deprecation = False
-                if (filename_deprecated_or_removed and not doc):
-                    mismatched_deprecation = False
-
-            if mismatched_deprecation:
+            if doc_deprecated != routing_says_deprecated:
                 self.reporter.error(
                     path=self.object_path,
                     code='deprecation-mismatch',
-                    msg='Module deprecation/removed must agree in documentation, by prepending filename with'
-                        ' "_", and setting DOCUMENTATION.deprecated for deprecation or by removing all'
+                    msg='Module deprecation/removed must agree in documentation, by adding an entry in ansible_builtin_runtime.yml'
+                        ' and setting DOCUMENTATION.deprecated for deprecation or by removing all'
                         ' documentation for removed'
                 )
         else:
@@ -1328,7 +1298,12 @@ class ModuleValidator(Validator):
         self._validate_semantic_markup_return_values(return_docs)
 
     def _check_version_added(self, doc, existing_doc):
+        deprecated = doc.get('deprecated', False)
+        if deprecated:
+            return
+
         version_added_raw = doc.get('version_added')
+
         try:
             collection_name = doc.get('version_added_collection')
             version_added = self._create_strict_version(
@@ -2229,8 +2204,11 @@ class ModuleValidator(Validator):
         with CaptureStd():
             try:
                 existing_doc, dummy_examples, dummy_return, existing_metadata = get_docstring(
-                    os.path.abspath(self.base_module), fragment_loader, verbose=True, collection_name=self.collection_name,
-                    is_module=self.plugin_type == 'module')
+                    filename=os.path.abspath(self.base_module),
+                    fragment_loader=fragment_loader,
+                    verbose=True,
+                    collection_name=self.collection_name,
+                    plugin_type=self.plugin_type)
                 existing_options = existing_doc.get('options', {}) or {}
             except AssertionError:
                 fragment = doc['extends_documentation_fragment']
@@ -2445,10 +2423,6 @@ class ModuleValidator(Validator):
                 first_callable = self._get_first_callable() or 1000000  # use a bogus "high" line number if no callable exists
                 self._ensure_imports_below_docs(doc_info, first_callable)
 
-            if self.plugin_type == 'module':
-                self._check_for_subprocess()
-                self._check_for_os_call()
-
         if self._powershell_module():
             self._validate_ps_replacers()
             docs_path = self._find_ps_docs_file()
@@ -2631,15 +2605,17 @@ def run():
     routing = None
     if args.collection:
         routing_file = 'meta/runtime.yml'
-        # Load meta/runtime.yml if it exists, as it may contain deprecation information
-        if os.path.isfile(routing_file):
-            try:
-                with open(routing_file) as f:
-                    routing = yaml.safe_load(f)
-            except yaml.error.MarkedYAMLError as ex:
-                print('%s:%d:%d: YAML load failed: %s' % (routing_file, ex.context_mark.line + 1, ex.context_mark.column + 1, re.sub(r'\s+', ' ', str(ex))))
-            except Exception as ex:  # pylint: disable=broad-except
-                print('%s:%d:%d: YAML load failed: %s' % (routing_file, 0, 0, re.sub(r'\s+', ' ', str(ex))))
+    else:
+        routing_file = 'lib/ansible/config/ansible_builtin_runtime.yml'
+
+    if os.path.isfile(routing_file):
+        try:
+            with open(routing_file) as f:
+                routing = yaml.safe_load(f)
+        except yaml.error.MarkedYAMLError as ex:
+            print('%s:%d:%d: YAML load failed: %s' % (routing_file, ex.context_mark.line + 1, ex.context_mark.column + 1, re.sub(r'\s+', ' ', str(ex))))
+        except Exception as ex:  # pylint: disable=broad-except
+            print('%s:%d:%d: YAML load failed: %s' % (routing_file, 0, 0, re.sub(r'\s+', ' ', str(ex))))
 
     for plugin in args.plugins:
         if os.path.isfile(plugin):

@@ -1,0 +1,13 @@
+---
+- hosts: testgroup
+  gather_facts: no
+  vars:
+    _vars_files:
+        - 'vars/findme.txt'
+        - 'vars/defaults.yml'
+  vars_files:
+    - "{{ lookup('first_found', _vars_files) }}"
+  tasks:
+    - assert:
+        that:
+          - "hello == 'world'"

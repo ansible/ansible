@@ -1,0 +1,11 @@
+---
+- hosts: host0, host1, host2
+  strategy: free
+  gather_facts: false
+  tasks:
+    - name: EXPECTED FAILURE - First ping
+      ping:
+      throttle: 2
+
+    - name: Second ping
+      ping:

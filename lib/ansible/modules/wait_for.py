@@ -581,7 +581,7 @@ def main():
                     os.stat(b_path)
                 except OSError as e:
                     # If anything except file not present, throw an error
-                    if e.errno != 2:
+                    if e.errno != errno.ENOENT:
                         elapsed = datetime.now(timezone.utc) - start
                         module.fail_json(msg=msg or "Failed to stat %s, %s" % (path, e.strerror), elapsed=elapsed.seconds)
                     # file doesn't exist yet, so continue

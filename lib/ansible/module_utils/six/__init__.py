@@ -33,7 +33,15 @@ import operator
 import sys
 import types
 
-# deprecated: description="Replace with ansible.module_utils.common.warnings.deprecate for 2.24" core_version="2.22"
+from ansible.module_utils.common.warnings import deprecate as _deprecate
+
+
+_deprecate(
+    msg="The `ansible.module_utils.six` module is deprecated.",
+    help_text="Use the Python standard library equivalent instead.",
+    version="2.24",
+)
+
 
 # The following makes it easier for us to script updates of the bundled code. It is not part of
 # upstream six

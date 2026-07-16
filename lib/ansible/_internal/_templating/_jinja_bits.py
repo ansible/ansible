@@ -34,6 +34,7 @@ from ansible.module_utils._internal._datatag import (
     AnsibleTagHelper,
 )
 
+from ansible._internal._errors import _error_utils
 from ansible._internal._errors._handler import ErrorAction
 from ansible._internal._datatag._tags import Origin, TrustedAsTemplate
 
@@ -69,6 +70,7 @@ from ansible.module_utils import _internal
 from ansible.module_utils._internal import _ambient_context, _dataclass_validation
 from ansible.plugins.loader import filter_loader, test_loader
 from ansible.vars.hostvars import HostVars, HostVarsVars
+from .._errors import _attribute_unavailable
 from ...module_utils.datatag import native_type_name
 
 JINJA2_OVERRIDE = '#jinja2:'
@@ -331,6 +333,9 @@ class AnsibleTemplate(Template):
 
     def __call__(self, jinja_vars: c.Mapping[str, t.Any]) -> t.Any:
         return self.render(ArgSmuggler.package_jinja_vars(jinja_vars))
+
+    def __deepcopy__(self, memo):
+        return self  # templates are immutable, so a deep copy is not needed (it would also fail if not implemented here)
 
     # noinspection PyShadowingBuiltins
     def new_context(
@@ -790,7 +795,10 @@ class AnsibleEnvironment(SandboxedEnvironment):
         return result
 
     def getitem(self, obj: t.Any, argument: t.Any) -> t.Any:
-        value = super().getitem(obj, argument)
+        try:
+            value = super().getitem(obj, argument)
+        except _attribute_unavailable.AttributeUnavailableError as ex:
+            value = self.undefined(obj=obj, name=str(argument), hint=_error_utils.format_exception_message(ex))
 
         AnsibleAccessContext.current().access(value)
 
@@ -809,6 +817,8 @@ class AnsibleEnvironment(SandboxedEnvironment):
 
         try:
             value = getattr(obj, attribute)
+        except _attribute_unavailable.AttributeUnavailableError as ex:
+            value = self.undefined(obj=obj, name=attribute, hint=_error_utils.format_exception_message(ex))
         except AttributeError:
             value = _sentinel
         else:

@@ -1,0 +1,2 @@
+removed_features:
+  - url/uri - remove deprecated use of ``yes``/``no`` values for the ``follow_redirects`` option (https://github.com/ansible/ansible/issues/86790)

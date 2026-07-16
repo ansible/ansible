@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from ansible._internal._errors._task_timeout import TaskTimeoutError
+from ansible._internal._task import UnifiedTaskResult
 from ansible.module_utils._internal._datatag._tags import Deprecated
 
 
@@ -9,7 +10,8 @@ def test_task_timeout_result_contribution() -> None:
     try:
         raise TaskTimeoutError(99)
     except TaskTimeoutError as tte:
-        contrib = tte.result_contribution
+        utr = UnifiedTaskResult(is_module=False)
+        contrib = tte.as_task_result(utr).as_result_dict()
 
         assert isinstance(contrib, dict)
 

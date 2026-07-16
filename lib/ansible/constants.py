@@ -33,7 +33,6 @@ _ACTION_IMPORT_TASKS = add_internal_fqcns(('import_tasks', ))
 _ACTION_INCLUDE_ROLE = add_internal_fqcns(('include_role', ))
 _ACTION_INCLUDE_TASKS = add_internal_fqcns(('include_tasks', ))
 _ACTION_INCLUDE_VARS = add_internal_fqcns(('include_vars', ))
-_ACTION_INVENTORY_TASKS = add_internal_fqcns(('add_host', 'group_by'))
 _ACTION_META = add_internal_fqcns(('meta', ))
 _ACTION_SET_FACT = add_internal_fqcns(('set_fact', ))
 _ACTION_SETUP = add_internal_fqcns(('setup', ))
@@ -77,7 +76,6 @@ CONFIGURABLE_PLUGINS = ('become', 'cache', 'callback', 'cliconf', 'connection', 
 # NOTE: always update the docs/docsite/Makefile to match
 DOCUMENTABLE_PLUGINS = CONFIGURABLE_PLUGINS + ('module', 'strategy', 'test', 'filter')
 IGNORE_FILES = ("COPYING", "CONTRIBUTING", "LICENSE", "README", "VERSION", "GUIDELINES", "MANIFEST", "Makefile")  # ignore during module search
-INTERNAL_RESULT_KEYS = ('add_host', 'add_group')
 INTERNAL_STATIC_VARS = frozenset(
     [
         "ansible_async_path",
@@ -122,7 +120,7 @@ WIN_MOVED = ['ansible.windows.win_command', 'ansible.windows.win_shell']
 MODULE_REQUIRE_ARGS_SIMPLE = ['command', 'raw', 'script', 'shell', 'win_command', 'win_shell']
 MODULE_REQUIRE_ARGS = tuple(add_internal_fqcns(MODULE_REQUIRE_ARGS_SIMPLE) + WIN_MOVED)
 MODULE_NO_JSON = tuple(add_internal_fqcns(('command', 'win_command', 'shell', 'win_shell', 'raw')) + WIN_MOVED)
-RESTRICTED_RESULT_KEYS = ('ansible_rsync_path', 'ansible_playbook_python', 'ansible_facts')
+RESTRICTED_RESULT_KEYS = ('ansible_playbook_python', 'ansible_facts')
 SYNTHETIC_COLLECTIONS = ('ansible.builtin', 'ansible.legacy')
 TREE_DIR = None
 VAULT_VERSION_MIN = 1.0

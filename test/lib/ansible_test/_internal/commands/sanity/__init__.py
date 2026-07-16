@@ -864,6 +864,7 @@ class SanityScript(SanityTest, metaclass=abc.ABCMeta):
 
             self.output: t.Optional[str] = self.config.get('output')
             self.extensions: list[str] = self.config.get('extensions')
+            self.exclude_extensions: list[str] = self.config.get('exclude_extensions')
             self.prefixes: list[str] = self.config.get('prefixes')
             self.files: list[str] = self.config.get('files')
             self.text: t.Optional[bool] = self.config.get('text')
@@ -882,6 +883,7 @@ class SanityScript(SanityTest, metaclass=abc.ABCMeta):
         else:
             self.output = None
             self.extensions = []
+            self.exclude_extensions = []
             self.prefixes = []
             self.files = []
             self.text = None
@@ -978,6 +980,9 @@ class SanityScript(SanityTest, metaclass=abc.ABCMeta):
         if self.extensions:
             targets = [target for target in targets if os.path.splitext(target.path)[1] in self.extensions
                        or (is_subdir(target.path, 'bin') and '.py' in self.extensions)]
+
+        if self.exclude_extensions:
+            targets = [target for target in targets if os.path.splitext(target.path)[1] not in self.exclude_extensions]
 
         if self.prefixes:
             targets = [target for target in targets if any(target.path.startswith(pre) for pre in self.prefixes)]

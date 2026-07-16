@@ -55,12 +55,12 @@ body:
       [communication]:
       https://docs.ansible.com/ansible/devel/community/communication.html
 
-      [issue search]: ../search?q=is%3Aissue&type=issues
+      [issue search]: https://github.com/ansible/ansible/search?q=is%3Aissue&type=issues
 
       [forum help]:
       https://forum.ansible.com/c/help/6
 
-      [new proposal]: ../../proposals/issues/new
+      [new proposal]: https://github.com/ansible/proposals/issues/new
 
 
 - type: textarea
@@ -90,7 +90,7 @@ body:
       instead outlining your research and implementation considerations.
 
 
-      [new proposal]: ../../proposals/issues/new
+      [new proposal]: https://github.com/ansible/proposals/issues/new
     placeholder: >-
       I am trying to do X with ansible-core from the devel branch on GitHub and
       I think that implementing a feature Y would be very helpful for me and

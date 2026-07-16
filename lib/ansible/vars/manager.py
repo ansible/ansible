@@ -71,6 +71,18 @@ def _deprecate_top_level_fact(value: t.Any) -> t.Any:
     return _DEPRECATE_TOP_LEVEL_FACT_TAG.tag(value)
 
 
+_INJECT_FACTS, _INJECT_FACTS_ORIGIN = C.config.get_config_value_and_origin('INJECT_FACTS_AS_VARS')
+
+
+def _clean_and_deprecate_top_level_facts(facts: Mapping[str, object]) -> dict[str, object]:
+    if _INJECT_FACTS_ORIGIN == 'default':
+        cleaned_facts = {k: _deprecate_top_level_fact(v) if k != 'ansible_local' else v for k, v in clean_facts(facts).items()}
+    else:
+        cleaned_facts = clean_facts(facts)
+
+    return cleaned_facts
+
+
 def preprocess_vars(a):
     """
     Ensures that vars contained in the parameter passed in are
@@ -295,13 +307,9 @@ class VariableManager:
 
                 all_vars |= namespace_facts(facts)
 
-                inject, origin = C.config.get_config_value_and_origin('INJECT_FACTS_AS_VARS')
                 # push facts to main namespace
-                if inject:
-                    if origin == 'default':
-                        clean_top = {k: _deprecate_top_level_fact(v) for k, v in clean_facts(facts).items()}
-                    else:
-                        clean_top = clean_facts(facts)
+                if _INJECT_FACTS:
+                    clean_top = _clean_and_deprecate_top_level_facts(facts)
                     all_vars = _combine_and_track(all_vars, clean_top, "facts")
                 else:
                     # always 'promote' ansible_local, even if empty
@@ -349,18 +357,16 @@ class VariableManager:
                             data = preprocess_vars(self._loader.load_from_file(found_file, unsafe=True, cache='vaulted', trusted_as_template=True))
                             if data is not None:
                                 for item in data:
-                                    all_vars = _combine_and_track(all_vars, item, "play vars_files from '%s'" % vars_file)
+                                    all_vars = _combine_and_track(all_vars, item, f"play vars_files from {vars_file!r}")
                             display.vvv(f"Read `vars_file` {found_file!r}.")
                             break
                         except AnsibleFileNotFound:
                             # we continue on loader failures
                             continue
-                        except AnsibleParserError:
+                        except (AnsibleParserError, AnsibleUndefinedVariable):
                             raise
-                        except AnsibleUndefinedVariable:
-                            raise
-                        except Exception as ex:
-                            raise AnsibleParserError(f"Error reading `vars_files` file {vars_file!r}.", obj=vars_file) from ex
+                        except AnsibleError as e:
+                            raise AnsibleError(f"Invalid vars_files file {found_file!r}.") from e
 
                 except AnsibleUndefinedVariable as ex:
                     if host is not None:
@@ -373,7 +379,7 @@ class VariableManager:
                                 raise AnsibleUndefinedVariable("an undefined variable was found when attempting to template the vars_files item '%s'"
                                                                % vars_file_item, obj=vars_file_item) from ex
 
-                    display.warning("skipping vars_file item due to an undefined variable", obj=vars_file_item)
+                    display.warning("skipping vars_files item due to an undefined variable", obj=vars_file_item)
                     continue
 
             # We now merge in all exported vars from all roles in the play (very high precedence)
@@ -395,7 +401,7 @@ class VariableManager:
         if host:
             # include_vars non-persistent cache
             all_vars = _combine_and_track(all_vars, self._vars_cache.get(host.get_name(), dict()), "include_vars")
-            # fact non-persistent cache
+            # fact non-persistent cache (this also includes registered variables and host variables set at runtime)
             all_vars = _combine_and_track(all_vars, self._nonpersistent_fact_cache.get(host.name, dict()), "set_fact")
 
         # next, we merge in role params and task include params

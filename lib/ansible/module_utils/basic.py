@@ -220,7 +220,7 @@ def get_platform():
     the result of calling :py:func:`platform.system`.
     """
     deprecate(
-        msg="The `get_platfrom()` function from `ansible.module_utils.basic` is deprecated.",
+        msg="The `get_platform()` function from `ansible.module_utils.basic` is deprecated.",
         version="2.24",
         help_text="Use `platform.system()` from the Python standard library instead.",
     )
@@ -1443,8 +1443,11 @@ class AnsibleModule(object):
 
         self.add_path_info(kwargs)
 
-        if 'invocation' not in kwargs:
-            kwargs['invocation'] = {'module_args': self.params}
+        if _PARSED_MODULE_ARGS.get('_ansible_inject_invocation', False):
+            if 'invocation' not in kwargs:
+                kwargs['invocation'] = {'module_args': self.params}
+        else:
+            kwargs.pop('invocation', None)
 
         if 'warnings' in kwargs:
             self.deprecate(  # pylint: disable=ansible-deprecated-unnecessary-collection-name
@@ -2089,7 +2092,13 @@ class AnsibleModule(object):
                 stdout_changed = False
                 for key, event in events:
                     b_chunk = key.fileobj.read(32768)
-                    if not b_chunk and b_chunk is not None:
+                    if b_chunk is None:
+                        # Non-blocking read returned None (no data currently available).
+                        # This can happen with certain file-like objects or in edge cases.
+                        # Skip this chunk and try again on next select iteration.
+                        continue
+                    if not b_chunk:
+                        # Empty bytes received, EOF reached
                         selector.unregister(key.fileobj)
                     elif key.fileobj == cmd.stdout:
                         stdout += b_chunk

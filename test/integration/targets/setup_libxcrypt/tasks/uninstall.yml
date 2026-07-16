@@ -32,5 +32,8 @@
       command: brew uninstall libxcrypt
       become: yes
       become_user: "{{ brew_stat.stat.pw_name }}"
+      vars:
+        # Avoid using the current interpreter, which may be from a venv that the become user has no access to.
+        ansible_python_interpreter: "{{ lookup('env', 'ANSIBLE_TEST_PYTHON_INTERPRETER') }}"
       environment:
         HOMEBREW_NO_AUTO_UPDATE: True

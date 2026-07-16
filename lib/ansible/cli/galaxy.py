@@ -78,8 +78,10 @@ def with_collection_artifacts_manager(wrapped_method):
         if 'artifacts_manager' in kwargs:
             return wrapped_method(*args, **kwargs)
 
-        # FIXME: use validate_certs context from Galaxy servers when downloading collections
-        # .get used here for when this is used in a non-CLI context
+        # configures validate_certs for type 'url' only
+        # type 'galaxy' inherits and overrides resolved_validate_certs
+        # type 'git' recalculates resolved_validate_certs
+        # NOTE: .get used here for when this is used in a non-CLI context
         artifacts_manager_kwargs = {'validate_certs': context.CLIARGS.get('resolved_validate_certs', True)}
 
         keyring = context.CLIARGS.get('keyring', None)
@@ -1138,7 +1140,18 @@ class GalaxyCLI(CLI):
             skeleton_ignore_expressions = ['^.*/.git_keep$']
 
         obj_skeleton = os.path.expanduser(obj_skeleton)
-        skeleton_ignore_re = [re.compile(x) for x in skeleton_ignore_expressions]
+        failed_re_expressions = ""
+        skeleton_ignore_re = []
+        for x in skeleton_ignore_expressions:
+            try:
+                skeleton_ignore_re.append(re.compile(x))
+            except re.error as e:
+                failed_re_expressions += f"- {x}: {str(e)}\n"
+                continue
+        if failed_re_expressions:
+            raise AnsibleError(
+                f"Failed to compile regular expressions for skeleton ignore: \n{failed_re_expressions}"
+            )
 
         if not os.path.exists(obj_skeleton):
             raise AnsibleError("- the skeleton path '{0}' does not exist, cannot init {1}".format(
@@ -1610,8 +1623,8 @@ class GalaxyCLI(CLI):
             display.warning(w)
 
         if not path_found:
-            raise AnsibleOptionsError(
-                "- None of the provided paths were usable. Please specify a valid path with --{0}s-path".format(context.CLIARGS['type'])
+            display.warning(
+                "None of the provided paths were usable. Please specify a valid path with --{0}s-path.".format(context.CLIARGS['type'])
             )
 
         return 0
@@ -1695,8 +1708,8 @@ class GalaxyCLI(CLI):
             display.warning(w)
 
         if not collections and not path_found:
-            raise AnsibleOptionsError(
-                "- None of the provided paths were usable. Please specify a valid path with --{0}s-path".format(context.CLIARGS['type'])
+            display.warning(
+                "None of the provided paths were usable. Please specify a valid path with --{0}s-path.".format(context.CLIARGS['type'])
             )
 
         if output_format == 'json':

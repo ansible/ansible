@@ -101,6 +101,17 @@ class BecomeModule(BecomeBase):
     fail = ('Sorry, try again.',)
     missing = ('Sorry, a password is required to run sudo', 'sudo: a password is required')
 
+    def check_password_prompt(self, b_output):
+        matched = super().check_password_prompt(b_output)
+        if not matched:
+            # might be using sudo-rs, which is not backwards compatible
+            prompt = self.prompt
+            self.prompt = f"[sudo: {prompt}] Password:"  # handle extra text from sudo-rs
+            matched = super().check_password_prompt(b_output)
+            self.prompt = prompt
+
+        return matched
+
     def build_become_command(self, cmd, shell):
         super(BecomeModule, self).build_become_command(cmd, shell)
 
@@ -112,7 +123,7 @@ class BecomeModule(BecomeBase):
         flags = self.get_option('become_flags') or ''
         prompt = ''
         if self.get_option('become_pass'):
-            self.prompt = '[sudo via ansible, key=%s] password:' % self._id
+            self.prompt = f'[sudo via ansible, key={self._id}] password:'
             if flags:  # this could be simplified, but kept as is for now for backwards string matching
                 reflag = []
                 for flag in shlex.split(flags):
@@ -124,11 +135,11 @@ class BecomeModule(BecomeBase):
                     reflag.append(flag)
                 flags = shlex.join(reflag)
 
-            prompt = '-p "%s"' % (self.prompt)
+            prompt = f'-p "{self.prompt}"'
 
         user = self.get_option('become_user') or ''
         if user:
-            user = '-u %s' % (user)
+            user = f'-u {user}'
 
         if chdir := self.get_option('sudo_chdir'):
             try:

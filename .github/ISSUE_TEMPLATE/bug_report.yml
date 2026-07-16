@@ -28,7 +28,7 @@ body:
       [communication]:
       https://docs.ansible.com/ansible/devel/community/communication.html
 
-      [issue search]: ../search?q=is%3Aissue&type=issues
+      [issue search]: https://github.com/ansible/ansible/search?q=is%3Aissue&type=issues
 
       [XKCD 1172]: https://xkcd.com/1172/
 

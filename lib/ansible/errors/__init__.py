@@ -18,6 +18,7 @@ from ansible.module_utils._internal import _text_utils
 
 if t.TYPE_CHECKING:
     from ansible.plugins import loader as _t_loader
+    from .._internal import _task as _t_task
 
 
 class ExitCode(enum.IntEnum):
@@ -242,9 +243,10 @@ class AnsibleConnectionFailure(AnsibleRuntimeError, _error_utils.ContributesToTa
     This exception provides a result dictionary via the ContributesToTaskResult mixin.
     """
 
-    @property
-    def result_contribution(self) -> t.Mapping[str, object]:
-        return dict(unreachable=True)
+    def as_task_result(self, utr: _t_task.UnifiedTaskResult) -> _t_task.UnifiedTaskResult:
+        utr.unreachable = True
+
+        return utr
 
     @property
     def omit_failed_key(self) -> bool:
@@ -316,13 +318,16 @@ AnsibleLookupError = AnsibleTemplatePluginError
 class AnsibleFileNotFound(AnsibleRuntimeError):
     """A file missing failure."""
 
+    _default_help_text = "If you are using a module and expect the file to exist on the remote, see the remote_src option."
+
     def __init__(self, message="", obj=None, show_content=True, suppress_extended_error=..., orig_exc=None, paths=None, file_name=None):
 
         self.file_name = file_name
         self.paths = paths
 
         if message:
-            message += "\n"
+            message += " "
+
         if self.file_name:
             message += "Could not find or access '%s'" % to_text(self.file_name)
         else:
@@ -334,7 +339,7 @@ class AnsibleFileNotFound(AnsibleRuntimeError):
                 message += "\n"
             message += "Searched in:\n\t%s" % searched
 
-        message += " on the Ansible Controller.\nIf you are using a module and expect the file to exist on the remote, see the remote_src option"
+        message += " on the Ansible Controller."
 
         super(AnsibleFileNotFound, self).__init__(message=message, obj=obj, show_content=show_content,
                                                   suppress_extended_error=suppress_extended_error, orig_exc=orig_exc)
@@ -348,14 +353,15 @@ class AnsibleAction(AnsibleRuntimeError, _error_utils.ContributesToTaskResult):
 
         self._result = result or {}
 
-    @property
-    def result_contribution(self) -> _c.Mapping[str, object]:
-        return self._result
+    def as_task_result(self, utr: _t_task.UnifiedTaskResult) -> _t_task.UnifiedTaskResult:
+        utr.result_data.update(self._result)
+
+        return utr
 
     @property
     def result(self) -> dict[str, object]:
         """Backward compatibility property returning a mutable dictionary."""
-        return dict(self.result_contribution)
+        return self._result
 
 
 class AnsibleActionSkip(AnsibleAction):
@@ -365,12 +371,12 @@ class AnsibleActionSkip(AnsibleAction):
     This exception provides a result dictionary via the ContributesToTaskResult mixin.
     """
 
-    @property
-    def result_contribution(self) -> _c.Mapping[str, object]:
-        return self._result | dict(
-            skipped=True,
-            msg=self.message,
-        )
+    def as_task_result(self, utr: _t_task.UnifiedTaskResult) -> _t_task.UnifiedTaskResult:
+        utr = super().as_task_result(utr)
+        utr.skipped = True
+        utr.msg = self.message
+
+        return utr
 
     @property
     def omit_failed_key(self) -> bool:
@@ -388,12 +394,12 @@ class AnsibleActionFail(AnsibleAction):
     This exception provides a result dictionary via the ContributesToTaskResult mixin.
     """
 
-    @property
-    def result_contribution(self) -> _c.Mapping[str, object]:
-        return self._result | dict(
-            failed=True,
-            msg=self.message,
-        )
+    def as_task_result(self, utr: _t_task.UnifiedTaskResult) -> _t_task.UnifiedTaskResult:
+        utr = super().as_task_result(utr)
+        utr.failed = True
+        utr.msg = self.message
+
+        return utr
 
 
 class _ActionDone(AnsibleAction):

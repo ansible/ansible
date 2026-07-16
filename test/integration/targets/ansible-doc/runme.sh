@@ -59,6 +59,16 @@ current_out="$(ansible-doc --playbook-dir ./ testns.testcol.yolo --type test | s
 expected_out="$(sed '1 s/\(^> TEST testns\.testcol\.yolo\).*(.*)$/\1/' yolo-text.output)"
 test "$current_out" == "$expected_out"
 
+# PAGER is set to less by default, so we need to test with other pagers
+for pager in more cat; do
+    echo "testing with pager $pager"
+    PAGER=$pager ansible-doc --list testns.testcol --playbook-dir ./ 2>&1 | grep "${GREP_OPTS[@]}" -v "Invalid collection name"
+done
+
+# set pager to empty string
+echo "testing with pager empty"
+PAGER="" ansible-doc --list testns.testcol --playbook-dir ./ 2>&1 | grep "${GREP_OPTS[@]}" -v "Invalid collection name"
+
 # ensure we do work with valid collection name for list
 ansible-doc --list testns.testcol --playbook-dir ./ 2>&1 | grep -v "Invalid collection name"
 
@@ -272,7 +282,7 @@ echo "testing no duplicates for plugins that only exist in ansible.builtin when 
 [ "$(ansible-doc -l -t filter --playbook-dir ./ |grep -c 'b64encode')" -eq "1" ]
 
 echo "testing with playbook dir, legacy should override"
-ansible-doc -t filter split --playbook-dir ./ -v|grep "${GREP_OPTS[@]}" histerical
+ansible-doc -t filter split --playbook-dir ./ -v|grep "${GREP_OPTS[@]}" hysterical
 
 pyc_src="$(pwd)/filter_plugins/other.py"
 pyc_1="$(pwd)/filter_plugins/split.pyc"
@@ -281,14 +291,14 @@ trap 'rm -rf "$pyc_1" "$pyc_2"' EXIT
 
 echo "testing pyc files are not used as adjacent documentation"
 python -c "import py_compile; py_compile.compile('$pyc_src', cfile='$pyc_1')"
-ansible-doc -t filter split --playbook-dir ./ -v|grep "${GREP_OPTS[@]}" histerical
+ansible-doc -t filter split --playbook-dir ./ -v|grep "${GREP_OPTS[@]}" hysterical
 
 echo "testing pyc files are not listed as plugins"
 python -c "import py_compile; py_compile.compile('$pyc_src', cfile='$pyc_2')"
 test "$(ansible-doc -l -t module --playbook-dir ./ 2>&1 1>/dev/null |grep -c "notaplugin")" == 0
 
 echo "testing without playbook dir, builtin should return"
-ansible-doc -t filter split -v 2>&1 |grep "${GREP_OPTS[@]}" -v histerical
+ansible-doc -t filter split -v 2>&1 |grep "${GREP_OPTS[@]}" -v hysterical
 
 echo "test 'sidecar' for no extension module  with .py doc"
 [ "$(ansible-doc -M ./library -l ansible.legacy |grep -v 'UNDOCUMENTED' |grep -c bogus_facts)" == "1" ]

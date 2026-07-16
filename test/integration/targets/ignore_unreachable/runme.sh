@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-set -eux
+
+set -eux -o pipefail
 
 export ANSIBLE_TIMEOUT=1
 
@@ -10,15 +11,11 @@ unset ANSIBLE_CONNECTION_PLUGINS
 
 ansible-playbook test_cannot_connect.yml -i inventory -v "$@"
 
-if ansible-playbook test_base_cannot_connect.yml -i inventory -v "$@"; then
-    echo "Playbook intended to fail succeeded. Connection succeeded to nonexistent host"
-    exit 99
-else
-    echo "Connection to nonexistent hosts failed without using ignore_unreachable. Success!"
-fi
+(ansible-playbook test_base_cannot_connect.yml -i inventory -v "$@" || true) | tee out.txt
 
-if ansible-playbook test_base_loop_cannot_connect.yml -i inventory -v "$@" > out.txt; then
-    echo "Playbook intended to fail succeeded. Connection succeeded to nonexistent host"
-    exit 1
-fi
-grep out.txt -e 'ignored=1' | grep 'unreachable=2' | grep 'ok=1'
+grep PASSED out.txt
+
+ansible-playbook test_base_loop_cannot_connect.yml -i inventory -v "$@" | tee out.txt
+
+grep 'nonexistent.*unreachable=1' out.txt
+grep PASSED out.txt

@@ -34,3 +34,28 @@
     - async_result is changed
     - async_result is successful
     - async_result.msg is search('succeeded')
+
+- name: run an action with async that fails to return a job id
+  no_jid:
+  async: 10
+  poll: 1
+  register: no_jid
+  ignore_errors: yes
+
+- name: validate the missing jid was handled properly
+  assert:
+    that:
+      - no_jid is failed
+      - no_jid.msg == "No job id was returned by the async task"
+
+- name: run slow action with async timeout
+  command: sleep 3
+  async: 1
+  poll: 1
+  register: timeout_jid
+  ignore_errors: yes
+
+- assert:
+    that:
+      - timeout_jid is failed
+      - timeout_jid.msg == "async task did not complete within the requested time - 1s"

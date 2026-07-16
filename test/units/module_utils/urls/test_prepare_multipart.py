@@ -52,18 +52,23 @@ def test_prepare_multipart():
         'file4': {
             'filename': client_cert,
             'mime_type': 'text/plain',
+            'multipart_encoding': 'base64',
         },
         'file5': {
             'filename': client_key,
-            'mime_type': 'application/octet-stream'
+            'mime_type': 'application/octet-stream',
+            'multipart_encoding': 'base64',
         },
         'file6': {
             'filename': client_txt,
-            'multipart_encoding': 'base64'
+            'multipart_encoding': 'base64',
         },
         'file7': {
             'filename': client_txt,
-            'multipart_encoding': '7or8bit'
+            'multipart_encoding': '7or8bit',
+        },
+        'file8': {
+            'filename': client_txt,
         },
     }
 

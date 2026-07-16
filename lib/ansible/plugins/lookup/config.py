@@ -12,6 +12,7 @@ DOCUMENTATION = """
         CLI, and variables, but not keywords.
       - The values returned assume the context of the current host or C(inventory_hostname).
       - You can use C(ansible-config list) to see the global available settings, add C(-t all) to also show plugin options.
+    positional: _terms
     options:
       _terms:
         description: The option(s) to look up.
@@ -80,6 +81,8 @@ _raw:
   type: raw
 """
 
+from collections import ChainMap
+
 import ansible.plugins.loader as plugin_loader
 
 from ansible import constants as C
@@ -104,6 +107,9 @@ class LookupModule(LookupBase):
 
         ret = []
 
+        # primarily use task vars, but fallback to existing constants when needed
+        var_context = ChainMap(variables, vars(C))
+
         for term in terms:
             if not isinstance(term, str):
                 raise AnsibleError(f'Invalid setting identifier, {term!r} is not a {str}, its a {type(term)}.')
@@ -119,7 +125,7 @@ class LookupModule(LookupBase):
                 if p is None:
                     raise AnsibleError(f"Unable to load {ptype} plugin {pname!r}.")
             try:
-                result, origin = C.config.get_config_value_and_origin(term, plugin_type=ptype, plugin_name=pname, variables=variables)
+                result, origin = C.config.get_config_value_and_origin(term, plugin_type=ptype, plugin_name=pname, variables=var_context)
             except AnsibleUndefinedConfigEntry as e:
                 match missing:
                     case 'error':

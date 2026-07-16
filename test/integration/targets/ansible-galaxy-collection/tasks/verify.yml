@@ -293,8 +293,9 @@
 
 # TODO: add a test for offline Galaxy signature metadata
 
+# These steps use secondary (amanda) as it has no signatures provided
 - name: install a collection that was signed by setup_collections
-  command: ansible-galaxy collection install namespace1.name1:1.0.0
+  command: ansible-galaxy collection install -s secondary namespace1.name1:1.0.0
 
 - name: verify the installed collection with a detached signature
   command: ansible-galaxy collection verify namespace1.name1:1.0.0 {{ galaxy_verbosity }} {{ signature_options }}
@@ -320,6 +321,7 @@
   environment:
     ANSIBLE_NOCOLOR: True
     ANSIBLE_FORCE_COLOR: False
+    ANSIBLE_GALAXY_REQUIRED_VALID_SIGNATURE_COUNT: all
 
 - assert:
     that:
@@ -346,6 +348,7 @@
   environment:
     ANSIBLE_NOCOLOR: True
     ANSIBLE_FORCE_COLOR: False
+    ANSIBLE_GALAXY_REQUIRED_VALID_SIGNATURE_COUNT: all
 
 - assert:
     that:
@@ -450,7 +453,7 @@
     verify_stdout: "{{ verify.stdout | regex_replace('\"') | regex_replace('\\n') | regex_replace('      ', ' ') }}"
 
 - name: use lenient signature verification (default) without providing signatures
-  command: ansible-galaxy collection verify namespace1.name1:1.0.0 -vvvv --keyring {{ gpg_homedir }}/pubring.kbx
+  command: ansible-galaxy collection verify namespace1.name1:1.0.0 -s secondary -vvvv --keyring {{ gpg_homedir }}/pubring.kbx
   environment:
     ANSIBLE_GALAXY_REQUIRED_VALID_SIGNATURE_COUNT: "1"
   register: verify
@@ -481,6 +484,43 @@
       - verify is failed
       - verify.rc == 1
       - '"Signature verification failed for ''namespace1.name1'': no successful signatures" in verify.stdout'
+
+- name: check ansible-galaxy verify is using folder names not collection names
+  vars:
+    wrong_namespace: notmynamespace
+    wrong_name: notmyname
+  block:
+    - name: Give namespace1.name1 an incorrect namespace dir
+      command: mv {{ galaxy_dir }}/ansible_collections/namespace1 {{ galaxy_dir }}/ansible_collections/{{ wrong_namespace }}
+
+    - name: Give namespace1.name1 an incorrect collection name dir
+      command: mv {{ galaxy_dir }}/ansible_collections/{{ wrong_namespace }}/name1 {{ galaxy_dir }}/ansible_collections/{{ wrong_namespace }}/{{ wrong_name }}
+
+    - name: Verify namespace1.name after moving the incorrect collection name
+      command: ansible-galaxy collection verify namespace1.name1 --offline
+      register: verify_metadata_name
+      ignore_errors: true
+
+    - assert:
+        that:
+          - verify_metadata_name is failed
+          - verify_metadata_name.rc != 0
+          - error_message in verify_metadata_name.stderr
+      vars:
+        error_message: Collection namespace1.name1 is not installed in any of the collection paths
+
+    - name: Verify {{ wrong_namespace }}.{{ wrong_name }} after moving the incorrect collection name
+      command: ansible-galaxy collection verify {{ wrong_namespace }}.{{ wrong_name }} --offline
+      register: verify_folder_name
+      ignore_errors: true
+
+    - assert:
+        that:
+          - verify_metadata_name is failed
+          - verify_metadata_name.rc != 0
+          - error_message in verify_folder_name.stderr
+      vars:
+        error_message: Collection at '{{ galaxy_dir }}/ansible_collections/{{ wrong_namespace }}/{{ wrong_name }}' documents incorrect FQCN 'namespace1.name1'
 
 - name: empty installed collections
   file:

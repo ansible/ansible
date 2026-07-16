@@ -13,7 +13,7 @@
       assert:
         that:
           - bad_input is failed
-          - '"Invalid value " in bad_input.msg'
+          - '"invalid value" in bad_input.msg'
 
     - name: test config option casting
       set_fact:

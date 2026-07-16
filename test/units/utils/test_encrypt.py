@@ -3,8 +3,6 @@
 
 from __future__ import annotations
 
-import warnings
-
 import pytest
 
 from pytest_mock import MockerFixture
@@ -228,11 +226,7 @@ def test_random_salt():
 
 
 def test_passlib_bcrypt_salt(recwarn):
-    # deprecated: description='warning suppression only required for Python 3.12 and earlier' python_version='3.12'
-    with warnings.catch_warnings():
-        warnings.filterwarnings('ignore', message="'crypt' is deprecated and slated for removal in Python 3.13", category=DeprecationWarning)
-
-        passlib_exc = pytest.importorskip("passlib.exc")
+    passlib_exc = pytest.importorskip("passlib.exc")
 
     secret = 'foo'
     salt = '1234567890123456789012'
@@ -293,6 +287,16 @@ class TestCryptHash:
 
         with pytest.raises(AnsibleError, match=r"crypt does not support 'sha256_crypt' algorithm"):
             crypt_hash.hash("123", salt="12345678")
+
+    def test_build_saltstring_bcrypt_cost_padding(self, mocker: MockerFixture) -> None:
+        """musl libc requires a 2-digit bcrypt cost in the salt string."""
+        mocker.patch('ansible.utils.encrypt.HAS_CRYPT', True)
+        mocker.patch('ansible._internal._encryption._crypt.CryptFacade.has_crypt_gensalt', False)
+
+        crypt_hash = encrypt.CryptHash("bcrypt")
+        saltstring = crypt_hash._build_saltstring('2b', 5, '1234567890123456789012', None)
+
+        assert saltstring == '$2b$05$1234567890123456789012'
 
 
 class TestPasslibHash:

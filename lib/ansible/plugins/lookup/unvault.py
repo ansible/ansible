@@ -9,6 +9,7 @@ DOCUMENTATION = """
     short_description: read vaulted file(s) contents
     description:
         - This lookup returns the contents from vaulted (or not) file(s) on the Ansible controller's file system.
+    positional: _terms
     options:
       _terms:
         description: path(s) of files to read

@@ -1,2 +1,0 @@
-removed_features:
-  - Removed deprecated ability to import ``datetime``, ``signal``, ``types``, ``chain``, ``repeat``, ``map`` and ``shlex_quote`` from ``ansible.module_utils.basic``.

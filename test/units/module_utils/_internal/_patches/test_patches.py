@@ -10,7 +10,7 @@ import typing as t
 import pytest
 
 from ansible.module_utils._internal import _patches
-from ansible.module_utils._internal._patches import _socket_patch
+from ansible.module_utils._internal._patches import _socket_patch, _dataclass_annotation_patch
 from ansible.module_utils.common._utils import get_all_subclasses
 
 module_to_patch = sys.modules[__name__]
@@ -38,6 +38,7 @@ def get_patch_required_test_cases() -> list:
         # Example:
         # _patches._some_patch_module.SomePatchClass: sys.version_info >= (3, 13),
         _socket_patch.GetAddrInfoPatch: sys.version_info >= (3, 14),
+        _dataclass_annotation_patch.DataclassesIsTypePatch: sys.version_info >= (3, 15, 0, 'beta', 1),
     }
 
     patches = sorted(get_all_subclasses(_patches.CallablePatch), key=lambda item: item.__name__)

@@ -13,20 +13,15 @@ using System.Runtime.InteropServices;
 using System.Security.AccessControl;
 using System.Security.Principal;
 #if CORECLR
-using Newtonsoft.Json;
+using System.Text.Json;
 #else
 using System.Web.Script.Serialization;
 #endif
-
-// Newtonsoft.Json may reference a different System.Runtime version (6.x) than loaded by PowerShell 7.3 (7.x).
-// Ignore CS1701 so the code can be compiled when warnings are reported as errors.
-//NoWarn -Name CS1701 -CLR Core
 
 // System.Diagnostics.EventLog.dll reference different versioned dlls that are
 // loaded in PSCore, ignore CS1702 so the code will ignore this warning
 //NoWarn -Name CS1702 -CLR Core
 
-//AssemblyReference -Type Newtonsoft.Json.JsonConvert -CLR Core
 //AssemblyReference -Type System.Diagnostics.EventLog -CLR Core
 //AssemblyReference -Type System.Security.AccessControl.NativeObjectSecurity -CLR Core
 //AssemblyReference -Type System.Security.AccessControl.DirectorySecurity -CLR Core
@@ -61,6 +56,8 @@ namespace Ansible.Basic
         private List<string> warnings = new List<string>();
         private List<Dictionary<string, string>> deprecations = new List<Dictionary<string, string>>();
         private List<string> cleanupFiles = new List<string>();
+        private string[] _tracebacksFor = new string[0];
+        private bool injectInvocation = false;
 
         private Dictionary<string, string> passVars = new Dictionary<string, string>()
         {
@@ -71,6 +68,7 @@ namespace Ansible.Basic
             { "diff", "DiffMode" },
             { "keep_remote_files", "KeepRemoteFiles" },
             { "ignore_unknown_opts", "ignoreUnknownOpts" },
+            { "inject_invocation", "injectInvocation" },
             { "module_name", "ModuleName" },
             { "no_log", "NoLog" },
             { "remote_tmp", "remoteTmp" },
@@ -78,14 +76,15 @@ namespace Ansible.Basic
             { "shell_executable", null },
             { "socket", null },
             { "syslog_facility", null },
-            { "target_log_info", "TargetLogInfo"},
-            { "tracebacks_for", null},
+            { "target_log_info", "TargetLogInfo" },
+            { "tracebacks_for", "_tracebacksFor" },
             { "tmpdir", "tmpdir" },
             { "verbosity", "Verbosity" },
             { "version", "AnsibleVersion" },
         };
-        private List<string> passBools = new List<string>() { "check_mode", "debug", "diff", "keep_remote_files", "ignore_unknown_opts", "no_log" };
+        private List<string> passBools = new List<string>() { "check_mode", "debug", "diff", "keep_remote_files", "ignore_unknown_opts", "inject_invocation", "no_log" };
         private List<string> passInts = new List<string>() { "verbosity" };
+        private string[] passStringArrays = new string[] { "tracebacks_for" };
         private Dictionary<string, List<object>> specDefaults = new Dictionary<string, List<object>>()
         {
             // key - (default, type) - null is freeform
@@ -136,6 +135,7 @@ namespace Ansible.Basic
         public string TargetLogInfo { get; private set; }
         public int Verbosity { get; private set; }
         public string AnsibleVersion { get; private set; }
+        public string[] TracebacksFor { get { return _tracebacksFor; } }
 
         public string Tmpdir
         {
@@ -152,6 +152,9 @@ namespace Ansible.Basic
                         InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit,
                         PropagationFlags.None, AccessControlType.Allow);
                     dirSecurity.AddAccessRule(ace);
+#else
+                    UnixFileMode userMode = UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute;
+#endif
 
                     string baseDir = Path.GetFullPath(Environment.ExpandEnvironmentVariables(remoteTmp));
                     if (!Directory.Exists(baseDir))
@@ -159,11 +162,14 @@ namespace Ansible.Basic
                         string failedMsg = null;
                         try
                         {
+#if WINDOWS
 #if CORECLR
-                            DirectoryInfo createdDir = Directory.CreateDirectory(baseDir);
-                            FileSystemAclExtensions.SetAccessControl(createdDir, dirSecurity);
+                            FileSystemAclExtensions.CreateDirectory(dirSecurity, baseDir);
 #else
                             Directory.CreateDirectory(baseDir, dirSecurity);
+#endif
+#else
+                            Directory.CreateDirectory(baseDir, userMode);
 #endif
                         }
                         catch (Exception e)
@@ -179,8 +185,8 @@ namespace Ansible.Basic
                         }
                         else
                         {
-                            NTAccount currentUser = (NTAccount)user.Translate(typeof(NTAccount));
-                            string warnMsg = String.Format("Module remote_tmp {0} did not exist and was created with FullControl to {1}, ", baseDir, currentUser.ToString());
+                            string currentUser = Environment.UserName;
+                            string warnMsg = String.Format("Module remote_tmp {0} did not exist and was created with FullControl to {1}, ", baseDir, currentUser);
                             warnMsg += "this may cause issues when running as another user. To avoid this, create the remote_tmp dir with the correct permissions manually";
                             Warn(warnMsg);
                         }
@@ -190,19 +196,19 @@ namespace Ansible.Basic
                     string dirName = String.Format("ansible-moduletmp-{0}-{1}-{2}", dateTime, System.Diagnostics.Process.GetCurrentProcess().Id,
                         new Random().Next(0, int.MaxValue));
                     string newTmpdir = Path.Combine(baseDir, dirName);
+#if WINDOWS
 #if CORECLR
-                    DirectoryInfo tmpdirInfo = Directory.CreateDirectory(newTmpdir);
-                    FileSystemAclExtensions.SetAccessControl(tmpdirInfo, dirSecurity);
+                    FileSystemAclExtensions.CreateDirectory(dirSecurity, newTmpdir);
 #else
                     Directory.CreateDirectory(newTmpdir, dirSecurity);
+#endif
+#else
+                    Directory.CreateDirectory(newTmpdir, userMode);
 #endif
                     tmpdir = newTmpdir;
 
                     if (!KeepRemoteFiles)
                         cleanupFiles.Add(tmpdir);
-#else
-                    throw new NotImplementedException("Tmpdir is only supported on Windows");
-#endif
                 }
                 return tmpdir;
             }
@@ -277,8 +283,10 @@ namespace Ansible.Basic
             CheckArguments(argumentSpec, Params, legalInputs);
 
             // Set a Ansible friendly invocation value in the result object
-            Dictionary<string, object> invocation = new Dictionary<string, object>() { { "module_args", Params } };
-            Result["invocation"] = RemoveNoLogValues(invocation, noLogValues);
+            if (injectInvocation) {
+                Dictionary<string, object> invocation = new Dictionary<string, object>() { { "module_args", Params } };
+                Result["invocation"] = RemoveNoLogValues(invocation, noLogValues);
+            }
 
             if (!NoLog)
                 LogEvent(String.Format("Invoked with:\r\n  {0}", FormatLogData(Params, 2)), sanitise: false);
@@ -427,7 +435,23 @@ namespace Ansible.Basic
         public static T FromJson<T>(string json)
         {
 #if CORECLR
-            return JsonConvert.DeserializeObject<T>(json);
+            try
+            {
+                if (typeof(T) == typeof(object) || typeof(T) == typeof(Dictionary<string, object>))
+                {
+                    using (JsonDocument doc = JsonDocument.Parse(json))
+                    {
+                        return (T)(object)ConvertJsonElement(doc.RootElement);
+                    }
+                }
+                return JsonSerializer.Deserialize<T>(json);
+            }
+            catch (JsonException e)
+            {
+                // For backwards compatibility with JavaScriptSerializer, we
+                // use ArgumentException instead.
+                throw new ArgumentException(String.Format("Failed to parse JSON: {0}", e.Message), e);
+            }
 #else
             JavaScriptSerializer jss = new JavaScriptSerializer();
             jss.MaxJsonLength = int.MaxValue;
@@ -435,6 +459,46 @@ namespace Ansible.Basic
             return jss.Deserialize<T>(json);
 #endif
         }
+
+#if CORECLR
+        private static object ConvertJsonElement(JsonElement element)
+        {
+            switch (element.ValueKind)
+            {
+                case JsonValueKind.Object:
+                    var dict = new Dictionary<string, object>();
+                    foreach (JsonProperty prop in element.EnumerateObject())
+                    {
+                        dict[prop.Name] = ConvertJsonElement(prop.Value);
+                    }
+                    return dict;
+                case JsonValueKind.Array:
+                    // We use ArrayList to copy JavaScriptSerializer behavior
+                    var list = new ArrayList();
+                    foreach (JsonElement item in element.EnumerateArray())
+                    {
+                        list.Add(ConvertJsonElement(item));
+                    }
+                    return list;
+                case JsonValueKind.String:
+                    return element.GetString();
+                case JsonValueKind.Number:
+                    if (element.TryGetInt32(out int i))
+                        return i;
+                    else if (element.TryGetInt64(out long l))
+                        return l;
+                    return element.GetDecimal();
+                case JsonValueKind.True:
+                    return true;
+                case JsonValueKind.False:
+                    return false;
+                case JsonValueKind.Null:
+                    return null;
+                default:
+                    throw new ArgumentException($"Unsupported JsonElement type: {element.ValueKind}");
+            }
+        }
+#endif
 
         public static string ToJson(object obj)
         {
@@ -449,7 +513,7 @@ namespace Ansible.Basic
             else
             {
 #if CORECLR
-                return JsonConvert.SerializeObject(obj);
+                return JsonSerializer.Serialize(obj);
 #else
                 JavaScriptSerializer jss = new JavaScriptSerializer();
                 jss.MaxJsonLength = int.MaxValue;
@@ -599,7 +663,7 @@ namespace Ansible.Basic
                 return ((object[])value).ToList();
             else if (valueType == typeof(string))
                 return ((string)value).Split(',').Select(s => s.Trim()).ToList<object>();
-            else if (valueType == typeof(int))
+            else if (valueType == typeof(int) || valueType == typeof(long))
                 return new List<object>() { value };
             else
                 throw new ArgumentException(String.Format("{0} cannot be converted to a list", valueType.FullName));
@@ -1049,6 +1113,10 @@ namespace Ansible.Basic
                         value = ParseBool(value);
                     else if (passInts.Contains(key))
                         value = ParseInt(value);
+                    else if (passStringArrays.Contains(key))
+                    {
+                        value = Array.ConvertAll((object[])value, ParseStr);
+                    }
 
                     string propertyName = passVars[key];
                     PropertyInfo property = typeof(AnsibleModule).GetProperty(propertyName);
@@ -1067,8 +1135,10 @@ namespace Ansible.Basic
             if (unsupportedParameters.Count > 0 && !ignoreUnknownOpts)
             {
                 legalInputs.RemoveAll(x => passVars.Keys.Contains(x.Replace("_ansible_", "")));
-                string msg = String.Format("Unsupported parameters for ({0}) module: {1}", ModuleName, String.Join(", ", unsupportedParameters));
-                msg = String.Format("{0}. Supported parameters include: {1}", FormatOptionsContext(msg), String.Join(", ", legalInputs));
+                IEnumerable<string> unsupportedSorted = unsupportedParameters.OrderBy(s => s, StringComparer.Ordinal);
+                IEnumerable<string> legalInputsSorted = legalInputs.OrderBy(s => s, StringComparer.Ordinal);
+                string msg = String.Format("Unsupported parameters for ({0}) module: {1}", ModuleName, String.Join(", ", unsupportedSorted));
+                msg = String.Format("{0}. Supported parameters include: {1}", FormatOptionsContext(msg), String.Join(", ", legalInputsSorted));
                 FailJson(msg);
             }
 
@@ -1335,7 +1405,7 @@ namespace Ansible.Basic
 
         private string GetFormattedResults(Dictionary<string, object> result)
         {
-            if (!result.ContainsKey("invocation"))
+            if (injectInvocation && !result.ContainsKey("invocation"))
                 result["invocation"] = new Dictionary<string, object>() { { "module_args", RemoveNoLogValues(Params, noLogValues) } };
 
             if (_WrapperWarnings != null)
@@ -1546,6 +1616,13 @@ namespace Ansible.Basic
 
         private static bool? _supportsPosixDelete = null;
 
+        [StructLayout(LayoutKind.Sequential)]
+        public struct IO_STATUS_BLOCK
+        {
+            public int Status;
+            public IntPtr Information;
+        }
+
         [Flags()]
         public enum DispositionFlags : uint
         {
@@ -1603,7 +1680,7 @@ namespace Ansible.Basic
         [DllImport("Ntdll.dll")]
         private static extern int NtSetInformationFile(
             SafeFileHandle FileHandle,
-            out IntPtr IoStatusBlock,
+            ref IO_STATUS_BLOCK IoStatusBlock,
             ref int FileInformation,
             int Length,
             int FileInformationClass);
@@ -1743,9 +1820,9 @@ namespace Ansible.Basic
 
         private static void SetInformationFile(SafeFileHandle handle, int infoClass, int value)
         {
-            IntPtr ioStatusBlock = IntPtr.Zero;
+            IO_STATUS_BLOCK ioStatusBlock = new IO_STATUS_BLOCK();
 
-            int ntStatus = NtSetInformationFile(handle, out ioStatusBlock, ref value,
+            int ntStatus = NtSetInformationFile(handle, ref ioStatusBlock, ref value,
                 Marshal.SizeOf(typeof(int)), infoClass);
 
             if (ntStatus != 0)

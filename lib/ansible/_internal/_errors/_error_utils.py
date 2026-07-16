@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import abc
-import collections.abc as _c
 import dataclasses
 import itertools
 import pathlib
@@ -12,13 +11,15 @@ from ansible._internal._datatag._tags import Origin
 from ansible._internal._errors import _error_factory
 from ansible.module_utils._internal import _ambient_context, _event_utils, _messages, _traceback
 
+if t.TYPE_CHECKING:
+    from ansible._internal import _task
+
 
 class ContributesToTaskResult(metaclass=abc.ABCMeta):
     """Exceptions may include this mixin to contribute task result dictionary data directly to the final result."""
 
-    @property
     @abc.abstractmethod
-    def result_contribution(self) -> _c.Mapping[str, object]:
+    def as_task_result(self, utr: _task.UnifiedTaskResult) -> _task.UnifiedTaskResult:
         """Mapping of results to apply to the task result."""
 
     @property
@@ -28,7 +29,7 @@ class ContributesToTaskResult(metaclass=abc.ABCMeta):
 
     @property
     def omit_failed_key(self) -> bool:
-        """Exceptions representing non-failure scenarios (e.g., `skipped`, `unreachable`) must return `True` to ensure omisson of the `failed` key."""
+        """Exceptions representing non-failure scenarios (e.g., `skipped`, `unreachable`) must return `True` to ensure omission of the `failed` key."""
         return False
 
 
@@ -178,41 +179,6 @@ class SourceContext:
 def format_exception_message(exception: BaseException) -> str:
     """Return the full chain of exception messages by concatenating the cause(s) until all are exhausted."""
     return _event_utils.format_event_brief_message(_error_factory.ControllerEventFactory.from_exception(exception, False))
-
-
-def result_dict_from_exception(exception: BaseException, accept_result_contribution: bool = False) -> dict[str, object]:
-    """Return a failed task result dict from the given exception."""
-    event = _error_factory.ControllerEventFactory.from_exception(exception, _traceback.is_traceback_enabled(_traceback.TracebackEvent.ERROR))
-
-    result: dict[str, object] = {}
-    omit_failed_key = False
-    omit_exception_key = False
-
-    if accept_result_contribution:
-        while exception:
-            if isinstance(exception, ContributesToTaskResult):
-                result = dict(exception.result_contribution)
-                omit_failed_key = exception.omit_failed_key
-                omit_exception_key = exception.omit_exception_key
-                break
-
-            exception = exception.__cause__
-
-    if omit_failed_key:
-        result.pop('failed', None)
-    else:
-        result.update(failed=True)
-
-    if omit_exception_key:
-        result.pop('exception', None)
-    else:
-        result.update(exception=_messages.ErrorSummary(event=event))
-
-    if 'msg' not in result:
-        # if nothing contributed `msg`, generate one from the exception messages
-        result.update(msg=_event_utils.format_event_brief_message(event))
-
-    return result
 
 
 def result_dict_from_captured_errors(

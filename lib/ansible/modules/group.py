@@ -38,6 +38,7 @@ options:
         description:
             - Whether to delete a group even if it is the primary group of a user.
             - Only applicable on platforms which implement a C(--force) flag on the group deletion command.
+            - Not applicable on macOS, *BSD and BusyBox based distros.
         type: bool
         default: false
         version_added: "2.15"
@@ -400,6 +401,8 @@ class FreeBsdGroup(Group):
     GROUPFILE = '/etc/group'
 
     def group_del(self):
+        if self.module.params['force']:
+            self.module.fail_json(msg='The force option is not supported for group deletion on this platform.')
         cmd = [self.module.get_bin_path('pw', True), 'groupdel', self.name]
         return self.execute_command(cmd)
 
@@ -476,6 +479,8 @@ class DarwinGroup(Group):
         return (rc, out, err)
 
     def group_del(self):
+        if self.module.params['force']:
+            self.module.fail_json(msg='The force option is not supported for group deletion on this platform.')
         cmd = [self.module.get_bin_path('dseditgroup', True)]
         cmd += ['-o', 'delete']
         cmd += ['-L', self.name]
@@ -530,6 +535,8 @@ class OpenBsdGroup(Group):
     GROUPFILE = '/etc/group'
 
     def group_del(self):
+        if self.module.params['force']:
+            self.module.fail_json(msg='The force option is not supported for group deletion on this platform.')
         cmd = [self.module.get_bin_path('groupdel', True), self.name]
         return self.execute_command(cmd)
 
@@ -582,6 +589,8 @@ class NetBsdGroup(Group):
     GROUPFILE = '/etc/group'
 
     def group_del(self):
+        if self.module.params['force']:
+            self.module.fail_json(msg='The force option is not supported for group deletion on this platform.')
         cmd = [self.module.get_bin_path('groupdel', True), self.name]
         return self.execute_command(cmd)
 
@@ -651,6 +660,9 @@ class BusyBoxGroup(Group):
         return self.execute_command(cmd)
 
     def group_del(self):
+        if self.module.params['force']:
+            self.module.fail_json(msg='The force option is not supported for group deletion on this platform.')
+
         cmd = [self.module.get_bin_path('delgroup', True), self.name]
         return self.execute_command(cmd)
 

@@ -22,6 +22,7 @@ import ast
 import base64
 import dataclasses
 import datetime
+import importlib.util as _importlib_util
 import json
 import os
 import pathlib
@@ -33,18 +34,21 @@ import pkgutil
 import types
 import typing as t
 
-from ast import AST, Import, ImportFrom
+from ast import Assign, Constant, Import, ImportFrom, Name, Call, Attribute
+from importlib.resources import files as ir_files
 from io import BytesIO
 
 from ansible._internal import _locking
 from ansible._internal._ansiballz import _builder
 from ansible._internal import _ansiballz
 from ansible._internal._datatag import _utils
+from ansible._internal._powershell import _clixml, _script as _ps_script
 from ansible.module_utils._internal import _dataclass_validation
 from ansible.module_utils.common.yaml import yaml_load
 from ansible.module_utils.datatag import deprecator_from_collection_name
 from ansible._internal._datatag._tags import Origin
 from ansible.module_utils.common.json import Direction, get_module_encoder
+from ansible.module_utils.embed import EmbeddedResource
 from ansible.release import __version__, __author__
 from ansible import constants as C
 from ansible.errors import AnsibleError
@@ -170,7 +174,7 @@ NEW_STYLE_PYTHON_MODULE_RE = re.compile(
 
 class ModuleDepFinder(ast.NodeVisitor):
     # DTFIX-FUTURE: add support for ignoring imports with a "controller only" comment, this will allow replacing import_controller_module with standard imports
-    def __init__(self, module_fqn, tree, is_pkg_init=False, *args, **kwargs):
+    def __init__(self, module_fqn: str, module_data: bytes, is_pkg_init=False, *args, **kwargs):
         """
         Walk the ast tree for the python module.
         :arg module_fqn: The fully qualified name to reach this module in dotted notation.
@@ -194,34 +198,53 @@ class ModuleDepFinder(ast.NodeVisitor):
         .. seealso:: :python3:class:`ast.NodeVisitor`
         """
         super(ModuleDepFinder, self).__init__(*args, **kwargs)
-        self._tree = tree  # squirrel this away so we can compare node parents to it
-        self.submodules = set()
-        self.optional_imports = set()
+        self.submodules: set[tuple[str, ...]] = set()
+        self.optional_imports: set[tuple[str, ...]] = set()
+        self.embeds: set[EmbeddedResource] = set()
         self.module_fqn = module_fqn
         self.is_pkg_init = is_pkg_init
+        self._depth = -1
+        self._origin = Origin.get_tag(module_data) or Origin.UNKNOWN
+        self.tree = _compile_module_ast(module_fqn, module_data)
 
-        self._visit_map = {
-            Import: self.visit_Import,
-            ImportFrom: self.visit_ImportFrom,
-        }
+        self._embed_sniffing = False
+        self._embed_module_name = None
+        self._embedmanager_type_name = None
+        self._embed_import_origin: Origin | None = None
 
-        self.visit(tree)
+        self.visit(self.tree)
+
+        if self._embed_sniffing and not self.embeds:
+            raise AnsibleError("Module embedding support was imported, but no EmbedManager.embed calls were found.", obj=self._embed_import_origin)
 
     def generic_visit(self, node):
         """Overridden ``generic_visit`` that makes some assumptions about our
         use case, and improves performance by calling visitors directly instead
         of calling ``visit`` to offload calling visitors.
         """
+        self._depth += 1
+        depth = self._depth
         generic_visit = self.generic_visit
-        visit_map = self._visit_map
+        visit_Assign = self.visit_Assign
+        visit_Import = self.visit_Import
+        visit_ImportFrom = self.visit_ImportFrom
         for field, value in ast.iter_fields(node):
-            if isinstance(value, list):
+            if value.__class__ is list:
                 for item in value:
-                    if isinstance(item, (Import, ImportFrom)):
-                        item.parent = node
-                        visit_map[item.__class__](item)
-                    elif isinstance(item, AST):
+                    item_class = item.__class__
+                    if item_class is Import:
+                        visit_Import(item)
+                    elif item_class is ImportFrom:
+                        visit_ImportFrom(item)
+                    elif not depth and item_class is Assign:
+                        if not self._embed_sniffing:
+                            continue  # if the module hasn't imported the `embed` module_utils module, skip assignment analysis
+
+                        visit_Assign(item)
+                    elif hasattr(item, 'end_col_offset'):
+                        # ASTish without the hit of isinstance
                         generic_visit(item)
+        self._depth -= 1
 
     visit = generic_visit
 
@@ -232,53 +255,65 @@ class ModuleDepFinder(ast.NodeVisitor):
         We save these as interesting submodules when the imported library is in ansible.module_utils
         or ansible.collections
         """
+        depth = self._depth
+        submodules_add = self.submodules.add
+        optional_imports_add = self.optional_imports.add
         for alias in node.names:
-            if (alias.name.startswith('ansible.module_utils.') or
-                    alias.name.startswith('ansible_collections.')):
-                py_mod = tuple(alias.name.split('.'))
-                self.submodules.add(py_mod)
+            aname = alias.name
+            if aname.startswith(('ansible.module_utils.', 'ansible_collections.')):
+                py_mod = tuple(aname.split('.'))
+                submodules_add(py_mod)
                 # if the import's parent is the root document, it's a required import, otherwise it's optional
-                if node.parent != self._tree:
-                    self.optional_imports.add(py_mod)
-        self.generic_visit(node)
+                if depth:
+                    optional_imports_add(py_mod)
 
     def visit_ImportFrom(self, node):
         """
         Handle from ansible.module_utils.MODLIB import [.MODLIBn] [as asname]
 
-        Also has to handle relative imports
+        Also has to handle relative imports.
 
         We save these as interesting submodules when the imported library is in ansible.module_utils
-        or ansible.collections
-        """
+        or ansible.collections.
 
+        If the module imports `ansible.module_utils.embed`, assignment analysis is enabled for static resource embedding via EmbedManager.embed().
+        """
         # FIXME: These should all get skipped:
         # from ansible.executor import module_common
         # from ...executor import module_common
         # from ... import executor (Currently it gives a non-helpful error)
-        if node.level > 0:
+
+        depth = self._depth
+        module_fqn = self.module_fqn
+        submodules_add = self.submodules.add
+        optional_imports_add = self.optional_imports.add
+
+        node_level = node.level
+        module = node.module
+
+        if node_level > 0:
             # if we're in a package init, we have to add one to the node level (and make it none if 0 to preserve the right slicing behavior)
-            level_slice_offset = -node.level + 1 or None if self.is_pkg_init else -node.level
-            if self.module_fqn:
-                parts = tuple(self.module_fqn.split('.'))
-                if node.module:
+            level_slice_offset = -node_level + 1 or None if self.is_pkg_init else -node_level
+            if module_fqn:
+                parts = tuple(module_fqn.split('.'))
+                if module:
                     # relative import: from .module import x
-                    node_module = '.'.join(parts[:level_slice_offset] + (node.module,))
+                    node_module = '.'.join(parts[:level_slice_offset] + (module,))
                 else:
                     # relative import: from . import x
                     node_module = '.'.join(parts[:level_slice_offset])
             else:
                 # fall back to an absolute import
-                node_module = node.module
+                node_module = module
         else:
             # absolute import: from module import x
-            node_module = node.module
+            node_module = module
 
         # Specialcase: six is a special case because of its
         # import logic
         py_mod = None
         if node.names[0].name == '_six':
-            self.submodules.add(('_six',))
+            submodules_add(('_six',))
         elif node_module.startswith('ansible.module_utils'):
             # from ansible.module_utils.MODULE1[.MODULEn] import IDENTIFIER [as asname]
             # from ansible.module_utils.MODULE1[.MODULEn] import MODULEn+1 [as asname]
@@ -300,12 +335,73 @@ class ModuleDepFinder(ast.NodeVisitor):
 
         if py_mod:
             for alias in node.names:
-                self.submodules.add(py_mod + (alias.name,))
+                submodules_add(a_py_mod := py_mod + (alias.name,))
                 # if the import's parent is the root document, it's a required import, otherwise it's optional
-                if node.parent != self._tree:
-                    self.optional_imports.add(py_mod + (alias.name,))
+                if depth:
+                    optional_imports_add(a_py_mod)
+                elif alias.name == 'embed' and node_module == 'ansible.module_utils':
+                    self._visit_embed_import(node_module, node, alias)
+                elif alias.name == 'EmbedManager' and node_module == 'ansible.module_utils.embed':
+                    self._visit_embed_import(node_module, node, alias)
 
-        self.generic_visit(node)
+    def _visit_embed_import(self, node_module_name: str, node: ast.ImportFrom, alias: ast.alias) -> None:
+        self._embed_sniffing = True
+
+        if node_module_name == 'ansible.module_utils':
+            # from ansible.module_utils import embed (as modulealias)
+            self._embed_module_name = alias.asname or alias.name
+            self._embedmanager_type_name = 'EmbedManager'
+        elif node_module_name == 'ansible.module_utils.embed':
+            # from ansible.module_utils.embed import EmbedManager as EmbedManagerAlias
+            self._embed_module_name = None
+            self._embedmanager_type_name = alias.asname or alias.name
+
+        self._embed_import_origin = self._origin.replace(line_num=node.lineno, col_num=node.col_offset + 1)
+
+    def _assert_embed(self, assertion: bool, message: str, node: ast.stmt | ast.expr) -> None:
+        """
+        If the required `EmbedManager` pre-condition `assertion` is False, raise an `AnsibleError` that includes the specified `message`
+        and the most-specific `obj` context available from `node`.
+        """
+        if not assertion:
+            raise AnsibleError(
+                message=f"Invalid EmbedManager request: {message}.",
+                obj=self._origin.replace(line_num=node.lineno, col_num=node.col_offset + 1)
+            )
+
+    def visit_Assign(self, node: ast.Assign) -> None:
+        """
+        Validate top-level calls to `EmbedManager.embed` to include the requested resources and collect them in `embeds`.
+
+        All calls must be of the form `var = (embed.)EmbedManager.embed(...)`.
+        Optional import-time aliases for the `embed` module or `EmbedManager` type are supported.
+
+        The `embed` callsite requires exactly two inline literal string posargs; any other form will fail the module build.
+        If the `package` argument starts with `.`, it is assumed to be a relative import path from the calling Python module.
+        """
+        if not isinstance(call := node.value, Call) or not isinstance(func := call.func, Attribute) or func.attr != 'embed':
+            return  # bail - an assignment whose RHS is not a function call to (something).embed()
+
+        match func.value:
+            case Attribute(attr=self._embedmanager_type_name, value=Name(id=self._embed_module_name)):
+                pass  # keep going - embed_module_or_alias.EmbedManagerOrAlias.embed()
+            case Name(id=self._embedmanager_type_name):
+                pass  # keep going - EmbedManagerOrAlias.embed()
+            case _:
+                return  # bail - an embed() call we're not interested in
+
+        # origin-tag the args with this callsite location so a later failure can point here
+        embed_origin = self._origin.replace(line_num=call.lineno, col_num=call.col_offset + 1)
+        call_posargs: list[str] = [embed_origin.tag(a.value) for a in call.args if isinstance(a, Constant) and isinstance(a.value, str)]
+
+        self._assert_embed(len(call_posargs) == len(call.args) == 2, message="Embed requires exactly two inline literal strings", node=call)
+        self._assert_embed(not call.keywords, message="Embed does not support keyword args", node=call)
+
+        if call_posargs[0].startswith('.'):
+            # resolve relative anchor reference
+            call_posargs[0] = embed_origin.tag(_importlib_util.resolve_name(call_posargs[0], self.module_fqn.rpartition('.')[0]))
+
+        self.embeds.add(EmbeddedResource(*call_posargs))
 
 
 def _slurp(path):
@@ -316,20 +412,32 @@ def _slurp(path):
     return data
 
 
-def _get_shebang(interpreter, task_vars, templar: _template.Templar, args=tuple(), remote_is_local=False):
+def _get_shebang(
+    interpreter: str,
+    task_vars: dict[str, t.Any],
+    templar: _template.Templar,
+    args: tuple[str, ...] = tuple(),
+    remote_is_local: bool = False,
+    default_interpreters: dict[str, str] | None = None,
+) -> tuple[str, str]:
     """
       Handles the different ways ansible allows overriding the shebang target for a module.
     """
     # FUTURE: add logical equivalence for python3 in the case of py3-only modules
 
-    interpreter_name = os.path.basename(interpreter).strip()
+    # For backwards compatibility we can adjust #!powershell using the pwsh
+    # interpreter vars.
+    if interpreter == 'powershell':
+        interpreter_name = 'pwsh'
+    else:
+        interpreter_name = os.path.basename(interpreter).strip()
 
     # name for interpreter var
     interpreter_config = u'ansible_%s_interpreter' % interpreter_name
     # key for config
     interpreter_config_key = "INTERPRETER_%s" % interpreter_name.upper()
 
-    interpreter_out = None
+    interpreter_out: str | None = None
 
     # looking for python, rest rely on matching vars
     if interpreter_name == 'python':
@@ -365,7 +473,8 @@ def _get_shebang(interpreter, task_vars, templar: _template.Templar, args=tuple(
 
     if not interpreter_out:
         # nothing matched(None) or in case someone configures empty string or empty interpreter
-        interpreter_out = interpreter
+        default_interpreters = default_interpreters or {}
+        interpreter_out = default_interpreters.get(interpreter, interpreter)
 
     # set shebang
     shebang = u'#!{0}'.format(interpreter_out)
@@ -386,7 +495,7 @@ class ModuleUtilLocatorBase:
         self.found = False
         self.redirected = False
         self.fq_name_parts = fq_name_parts
-        self.source_code = ''
+        self.source_code = b''
         self.output_path = ''
         self.is_package = False
         self._collection_name = None
@@ -491,7 +600,7 @@ class ModuleUtilLocatorBase:
         else:  # didn't find what we were looking for- last chance for packages whose parents were redirected
             if self._child_is_redirected:  # make fake packages
                 self.is_package = True
-                self.source_code = ''
+                self.source_code = b''
             else:  # nope, just bail
                 return
 
@@ -503,13 +612,13 @@ class ModuleUtilLocatorBase:
         self.output_path = os.path.join(*path_parts) + '.py'
         self.fq_name_parts = candidate_name_parts
 
-    def _generate_redirect_shim_source(self, fq_source_module, fq_target_module):
+    def _generate_redirect_shim_source(self, fq_source_module, fq_target_module) -> bytes:
         return """
 import sys
 import {1} as mod
 
 sys.modules['{0}'] = mod
-""".format(fq_source_module, fq_target_module)
+""".format(fq_source_module, fq_target_module).encode()
 
         # FIXME: add __repr__ impl
 
@@ -574,7 +683,7 @@ class CollectionModuleUtilLocator(ModuleUtilLocatorBase):
         # synthesize empty inits for packages down through module_utils- we don't want to allow those to be shipped over, but the
         # package hierarchy needs to exist
         if len(name_parts) < 6:
-            self.source_code = ''
+            self.source_code = b''
             self.is_package = True
             return True
 
@@ -718,7 +827,7 @@ def _get_module_metadata(module: ast.Module) -> ModuleMetadata:
 def recursive_finder(
     name: str,
     module_fqn: str,
-    module_data: str | bytes,
+    module_data: bytes,
     zf: zipfile.ZipFile,
     date_time: datetime.datetime,
     extension_manager: _builder.ExtensionManager,
@@ -753,9 +862,10 @@ def recursive_finder(
     module_utils_paths = [p for p in module_utils_loader._get_paths(subdirs=False) if os.path.isdir(p)]
     module_utils_paths.append(_MODULE_UTILS_PATH)
 
-    tree = _compile_module_ast(name, module_data)
-    module_metadata = _get_module_metadata(tree)
-    finder = ModuleDepFinder(module_fqn, tree)
+    finder = ModuleDepFinder(module_fqn, module_data)
+    module_metadata = _get_module_metadata(finder.tree)
+
+    embeds = finder.embeds.copy()
 
     if not isinstance(module_metadata, ModuleMetadataV1):
         raise NotImplementedError()
@@ -813,8 +923,8 @@ def recursive_finder(
         if module_info.fq_name_parts in py_module_cache:
             continue
 
-        tree = _compile_module_ast('.'.join(module_info.fq_name_parts), module_info.source_code)
-        finder = ModuleDepFinder('.'.join(module_info.fq_name_parts), tree, module_info.is_package)
+        finder = ModuleDepFinder('.'.join(module_info.fq_name_parts), module_info.source_code, is_pkg_init=module_info.is_package)
+        embeds.update(finder.embeds)
         modules_to_process.extend(_ModuleUtilsProcessEntry(m, True, False, is_optional=m in finder.optional_imports)
                                   for m in finder.submodules if m not in py_module_cache)
 
@@ -829,16 +939,58 @@ def recursive_finder(
             if normalized_name not in py_module_cache:
                 modules_to_process.append(_ModuleUtilsProcessEntry(normalized_name, False, module_info.redirected, is_optional=entry.is_optional))
 
+    written_files = set()
     for py_module_name in py_module_cache:
         source_code, py_module_file_name = py_module_cache[py_module_name]
 
+        mu_file = to_text(py_module_file_name, errors='surrogate_or_strict')
+        display.vvvvv("Including module_utils file %s" % mu_file)
+
         zf.writestr(_make_zinfo(py_module_file_name, date_time, zf=zf), source_code)
+        written_files.add(py_module_file_name)
 
         if extension_manager.debugger_enabled and (origin := Origin.get_tag(source_code)) and origin.path:
             extension_manager.source_mapping[origin.path] = py_module_file_name
 
-        mu_file = to_text(py_module_file_name, errors='surrogate_or_strict')
-        display.vvvvv("Including module_utils file %s" % mu_file)
+    anchor_cache: dict[str, pathlib.Path] = {}
+    for embed in embeds:
+        try:
+            embed_path_cm = embed.path_context_manager
+        except ModuleNotFoundError as e:
+            # the source exception message includes the package name, no need to repeat
+            raise AnsibleError('Embed package not found while packaging module.', obj=embed.package) from e
+
+        with embed_path_cm as path:
+            if not path.is_file():
+                raise AnsibleError(f'Embed resource {embed.resource!r} not found while packaging module.', obj=embed.resource)
+            anchor_parts = embed.package.split('.')
+            if anchor_parts[0] == 'ansible':
+                try:
+                    root = anchor_cache['ansible']
+                except KeyError:
+                    root = anchor_cache['ansible'] = ir_files('ansible').parent
+                rel_path = path.relative_to(root)
+            elif anchor_parts[0] == 'ansible_collections':
+                pkg = '.'.join(anchor_parts[:3])
+                try:
+                    root = anchor_cache[pkg]
+                except KeyError:
+                    root = anchor_cache[pkg] = ir_files(pkg).parents[2]
+                rel_path = path.relative_to(root)
+            else:
+                raise AnsibleError('Embed must be an ansible/ansible_collections resource.', obj=embed.resource)
+
+            display.vvvvv(f"Including embed file {rel_path}")
+            zf.writestr(_make_zinfo(str_path := str(rel_path), date_time, zf=zf), path.read_bytes())
+            written_files.add(str_path)
+            for parent in rel_path.parents:
+                if not parent.name:
+                    continue
+                p_init = str(parent / '__init__.py')
+                if p_init not in written_files:
+                    display.vvvvv(f"Including parent init file {p_init}")
+                    zf.writestr(_make_zinfo(p_init, date_time, zf=zf), b'')
+                    written_files.add(p_init)
 
     return module_metadata
 
@@ -941,6 +1093,24 @@ def _add_module_to_zip(
         )
 
 
+class _GetCommandArgs(t.Protocol):
+    def __call__(
+        self,
+        module_path: str | None,
+    ) -> tuple[list[str], bytes | None] | None:
+        ...
+
+
+class _ProcessResult(t.Protocol):
+    def __call__(
+        self,
+        rc: int,
+        stdout: bytes,
+        stderr: bytes,
+    ) -> tuple[int, bytes, bytes]:
+        ...
+
+
 @dataclasses.dataclass(kw_only=True, slots=True, frozen=True)
 class _BuiltModule:
     """Payload required to execute an Ansible module, along with information required to do so."""
@@ -948,6 +1118,31 @@ class _BuiltModule:
     module_style: t.Literal['binary', 'new', 'non_native_want_json', 'old']
     shebang: str | None
     serialization_profile: str
+    has_async: bool = False
+    has_become: bool = False
+    has_environment: bool = False
+    command_lookup: _GetCommandArgs | None = None
+    process_result: _ProcessResult | None = None
+
+    def get_command_args(
+        self,
+        module_path: str | None,
+    ) -> tuple[list[str], bytes | None] | None:
+        if self.command_lookup:
+            return self.command_lookup(module_path=module_path)
+        else:
+            return None
+
+    def process_module_result(
+        self,
+        rc: int,
+        stdout: bytes,
+        stderr: bytes,
+    ) -> tuple[int, bytes, bytes]:
+        if self.process_result:
+            return self.process_result(rc, stdout, stderr)
+        else:
+            return rc, stdout, stderr
 
 
 @dataclasses.dataclass(kw_only=True, slots=True, frozen=True)
@@ -987,7 +1182,9 @@ def _find_module_utils(
         async_timeout: int,
         become_plugin: BecomeBase | None,
         environment: dict[str, str],
-        remote_is_local: bool = False
+        remote_is_local: bool = False,
+        platform: t.Literal["posix", "windows"] = "posix",
+        default_interpreters: dict[str, str] | None = None,
 ) -> _BuiltModule:
     """
     Given the source of the module, convert it to a Jinja2 template to insert
@@ -1034,7 +1231,7 @@ def _find_module_utils(
     # except for the shebang line (Done by modify_module)
     if module_style in ('old', 'non_native_want_json', 'binary'):
         return _BuiltModule(
-            b_module_data=b_module_data,
+            b_module_data=b"",  # Marker to indicate the original file should be used without modification.
             module_style=module_style,
             shebang=shebang,
             serialization_profile='legacy',
@@ -1054,6 +1251,12 @@ def _find_module_utils(
         # FIXME: add integration test to validate that builtins and legacy modules with the same name are tracked separately by the caching mechanism
         # FIXME: surrogate FQN should be unique per source path- role-packaged modules with name collisions can still be aliased
         remote_module_fqn = 'ansible.legacy.%s' % module_name
+
+    has_async = False
+    has_become = False
+    has_environment = False
+    command_lookup: _GetCommandArgs | None = None
+    process_result: _ProcessResult | None = None
 
     if module_substyle == 'python':
         date_time = datetime.datetime.now(datetime.timezone.utc)
@@ -1133,7 +1336,14 @@ def _find_module_utils(
         if o_interpreter is None:
             o_interpreter = u'/usr/bin/python'
 
-        shebang, interpreter = _get_shebang(o_interpreter, task_vars, templar, o_args, remote_is_local=remote_is_local)
+        shebang, dummy = _get_shebang(
+            o_interpreter,
+            task_vars,
+            templar,
+            o_args,
+            remote_is_local=remote_is_local,
+            default_interpreters=default_interpreters,
+        )
 
         # FUTURE: the module cache entry should be invalidated if we got this value from a host-dependent source
         rlimit_nofile = C.config.get_config_value('PYTHON_MODULE_RLIMIT_NOFILE', variables=task_vars)
@@ -1185,11 +1395,34 @@ if __name__ == "__main__":
     elif module_substyle == 'powershell':
         module_metadata = ModuleMetadataV1(serialization_profile='legacy')  # DTFIX-FUTURE: support serialization profiles for PowerShell modules
 
-        # Powershell/winrm don't actually make use of shebang so we can
-        # safely set this here.  If we let the fallback code handle this
-        # it can fail in the presence of the UTF8 BOM commonly added by
-        # Windows text editors
-        shebang = '#!powershell'
+        wrapper_environment = {}
+        wrapper_async_timeout = 0
+        wrapper_become = None
+
+        if platform == "windows":
+            # Async, become, and environment support in the wrapper is Windows only.
+            wrapper_environment = environment
+            wrapper_async_timeout = async_timeout
+            wrapper_become = become_plugin
+            has_async = True
+            has_become = True
+            has_environment = True
+
+        module_interpreter, dummy = _extract_interpreter(b_module_data)
+        if not module_interpreter:
+            module_interpreter = 'powershell'
+
+        shebang, dummy = _get_shebang(
+            module_interpreter,
+            task_vars,
+            templar,
+            default_interpreters=default_interpreters,
+        )
+
+        # We pass the interpreter to the exec wrapper in case the connection
+        # plugin (psrp) is unable to control what interpreter to use.
+        pwsh_interpreter = shebang[2:]  # Drop the #!
+
         # create the common exec wrapper payload and set that as the module_data
         # bytes
         b_module_data = ps_manifest._create_powershell_wrapper(
@@ -1197,13 +1430,49 @@ if __name__ == "__main__":
             module_data=b_module_data,
             module_path=module_path,
             module_args=module_args,
-            environment=environment,
-            async_timeout=async_timeout,
-            become_plugin=become_plugin,
+            environment=wrapper_environment,
+            async_timeout=wrapper_async_timeout,
+            become_plugin=wrapper_become,
             substyle=module_substyle,
             task_vars=task_vars,
             profile=module_metadata.serialization_profile,
+            pwsh_interpreter=pwsh_interpreter,
         )
+
+        def get_module_command_args(
+            module_path: str | None,
+        ) -> tuple[list[str], bytes | None] | None:
+            bootstrap_wrapper = ps_manifest._get_powershell_script("bootstrap_wrapper.ps1").decode('utf-8')
+
+            module_data = None
+            bootstrap_args = []
+            disable_input = False
+            if not module_path:
+                # We are pipelining
+                module_data = b_module_data
+            else:
+                # Running powershell without any input might hang the process
+                # if the parent spawns powershell with a redirected stdin but
+                # never closes it. By explicitly disabling the input,
+                # powershell never attempts to wait for stdin to close.
+                disable_input = True
+                bootstrap_args = [module_path]
+
+            interpreter_args = _ps_script.get_pwsh_encoded_cmdline(
+                script=bootstrap_wrapper,
+                args=bootstrap_args,
+                pwsh_path=pwsh_interpreter,
+                disable_input=disable_input,
+                override_execution_policy=platform == "windows",
+            )
+
+            return interpreter_args, module_data
+
+        def parse_clixml_stderr(rc: int, stdout: bytes, stderr: bytes) -> tuple[int, bytes, bytes]:
+            return (rc, stdout, _clixml.replace_stderr_clixml(stderr))
+
+        command_lookup = get_module_command_args
+        process_result = parse_clixml_stderr
 
     elif module_substyle == 'jsonargs':
         encoder = get_module_encoder('legacy', Direction.CONTROLLER_TO_MODULE)
@@ -1242,6 +1511,11 @@ if __name__ == "__main__":
         module_style=module_style,
         shebang=shebang,
         serialization_profile=module_metadata.serialization_profile,
+        has_async=has_async,
+        has_become=has_become,
+        has_environment=has_environment,
+        command_lookup=command_lookup,
+        process_result=process_result,
     )
 
 
@@ -1280,6 +1554,7 @@ def modify_module(
         become_plugin=None,
         environment=None,
         remote_is_local=False,
+        shell_plugin=None,
 ) -> _BuiltModule:
     """
     Used to insert chunks of code into modules before transfer rather than
@@ -1303,6 +1578,16 @@ def modify_module(
     """
     task_vars = {} if task_vars is None else task_vars
     environment = {} if environment is None else environment
+    platform: t.Literal["posix", "windows"] = "windows" if getattr(shell_plugin, "_IS_WINDOWS", False) else "posix"
+
+    # For backwards compatibility and to make it easy for module authors to
+    # distinguish between pwsh versions for 5.1 or 7.x we default #!powershell
+    # to be powershell and #!/usr/bin/pwsh to pwsh on Windows. Linux only has
+    # pwsh 7 and the shebang path works as normal.
+    default_interpreters = {
+        'powershell': 'powershell' if platform == "windows" else '/usr/bin/pwsh',
+        '/usr/bin/pwsh': 'pwsh' if platform == "windows" else '/usr/bin/pwsh',
+    }
 
     with open(module_path, 'rb') as f:
 
@@ -1321,24 +1606,27 @@ def modify_module(
         become_plugin=become_plugin,
         environment=environment,
         remote_is_local=remote_is_local,
+        platform=platform,
+        default_interpreters=default_interpreters,
     )
 
-    b_module_data = module_bits.b_module_data
+    if module_bits.b_module_data:
+        b_module_data = module_bits.b_module_data
     shebang = module_bits.shebang
 
-    if module_bits.module_style == 'binary':
-        return _BuiltModule(
-            b_module_data=module_bits.b_module_data,
-            module_style=module_bits.module_style,
-            shebang=to_text(module_bits.shebang, nonstring='passthru'),
-            serialization_profile=module_bits.serialization_profile,
-        )
-    elif shebang is None:
+    if shebang is None and module_bits.module_style != 'binary':
         interpreter, args = _extract_interpreter(b_module_data)
         # No interpreter/shebang, assume a binary module?
         if interpreter is not None:
 
-            shebang, new_interpreter = _get_shebang(interpreter, task_vars, templar, args, remote_is_local=remote_is_local)
+            shebang, new_interpreter = _get_shebang(
+                interpreter,
+                task_vars,
+                templar,
+                args,
+                remote_is_local=remote_is_local,
+                default_interpreters=default_interpreters,
+            )
 
             # update shebang
             b_lines = b_module_data.split(b"\n", 1)
@@ -1348,15 +1636,15 @@ def modify_module(
 
             b_module_data = b"\n".join(b_lines)
 
-    return _BuiltModule(
-        b_module_data=b_module_data,
-        module_style=module_bits.module_style,
-        shebang=shebang,
-        serialization_profile=module_bits.serialization_profile,
-    )
+            module_bits = dataclasses.replace(module_bits, b_module_data=b_module_data, shebang=shebang)
+
+    return module_bits
 
 
 def _get_action_arg_defaults(action: str, task: Task, templar: TemplateEngine) -> dict[str, t.Any]:
+    """
+    Get module_defaults that match or contain a fully qualified action/module name.
+    """
     action_groups = task._parent._play._action_groups
     defaults = task.module_defaults
 
@@ -1393,7 +1681,14 @@ def _get_action_arg_defaults(action: str, task: Task, templar: TemplateEngine) -
 
 
 def _apply_action_arg_defaults(action: str, task: Task, action_args: dict[str, t.Any], templar: Templar) -> dict[str, t.Any]:
+    """
+    Finalize arguments from module_defaults and update with action_args.
+
+    This is used by action plugins like gather_facts, package, and service,
+    which select modules to execute after normal task argument finalization.
+    """
     args = _get_action_arg_defaults(action, task, templar._engine)
+    args = templar.template({k: v for k, v in args.items() if k not in action_args})
     args.update(action_args)
 
     return args

@@ -1,3 +1,0 @@
----
-minor_changes:
-  - generator - add support for extra vars (https://github.com/ansible/ansible/issues/83270).

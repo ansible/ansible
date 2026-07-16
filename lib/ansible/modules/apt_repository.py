@@ -16,6 +16,10 @@ short_description: Add and remove APT repositories
 description:
     - Add or remove an APT repositories in Ubuntu and Debian.
 extends_documentation_fragment: action_common_attributes
+deprecated:
+    alternative: ansible.builtin.deb822_repository
+    why: The M(ansible.builtin.apt_repository) module is deprecated in favor of the M(ansible.builtin.deb822_repository) module.
+    removed_in: "2.25"
 attributes:
     check_mode:
         support: full
@@ -182,7 +186,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.file import S_IRWU_RG_RO as DEFAULT_SOURCES_PERM
 from ansible.module_utils.common.respawn import has_respawned, probe_interpreters_for_module, respawn_module
 from ansible.module_utils.common.text.converters import to_native
-from ansible.module_utils.urls import fetch_url
+from ansible.module_utils.urls import fetch_url, is_fetch_success
 
 from ansible.module_utils.common.locale import get_best_parsable_locale
 
@@ -282,6 +286,58 @@ class SourcesList(object):
 
         return '%s.list' % _cleanup_filename(' '.join(parts[:1]))
 
+    @staticmethod
+    def _validate_source(source: str) -> bool:
+        """
+        Validate a source string according to the SOURCES.LIST(5).
+        See: https://manpages.debian.org/trixie/apt/sources.list.5.en.html#ONE-LINE-STYLE_FORMAT
+        """
+        parts = source.split()
+
+        if not parts:
+            return False
+
+        # Extract the type and handle options
+        if parts[0] not in VALID_SOURCE_TYPES:
+            return False
+
+        # Check for options enclosed in square brackets
+        # The first element after the type might be the start of options
+        if len(parts) > 1 and parts[1].startswith('['):
+            if parts[1].endswith(']'):
+                # For single-word options
+                remaining_parts = parts[2:]
+            else:
+                # For multi-word options
+                end_bracket_index = -1
+                for i, part in enumerate(parts[2:], start=2):
+                    if part.endswith(']'):
+                        end_bracket_index = i
+                        break
+
+                if end_bracket_index != -1:
+                    remaining_parts = parts[end_bracket_index + 1:]
+                else:
+                    # Malformed options, treat the whole thing as a single part for now.
+                    remaining_parts = parts[1:]
+                    return False
+        else:
+            remaining_parts = parts[1:]
+
+        # According to `sources.list(5)` man pages, only four fields are mandatory:
+        # * `Types` either `deb` or/and `deb-src`
+        # * `URIs` to repositories holding valid APT structure (unclear if multiple are allowed)
+        # * `Suites` usually being distribution codenames
+        # * `Component` most of the time `main`, but it's a section of the repository
+        if remaining_parts[1].endswith('/') and len(remaining_parts) > 2:
+            # Suites with trailing slash makes component optional
+            return False
+        if not remaining_parts[1].endswith('/') and len(remaining_parts) < 3:
+            # Invalid line format
+            return False
+
+        return True
+
     def _parse(self, line, raise_if_invalid_or_disabled=False):
         valid = False
         enabled = True
@@ -303,10 +359,7 @@ class SourcesList(object):
         # Duplicated whitespaces in a valid source spec will be removed.
         source = line.strip()
         if source:
-            chunks = source.split()
-            if chunks[0] in VALID_SOURCE_TYPES:
-                valid = True
-                source = ' '.join(chunks)
+            valid = self._validate_source(source)
 
         if raise_if_invalid_or_disabled and (not valid or not enabled):
             raise InvalidSource(line)
@@ -315,10 +368,10 @@ class SourcesList(object):
 
     def load(self, file):
         group = []
-        f = open(file, 'r')
-        for n, line in enumerate(f):
-            valid, enabled, source, comment = self._parse(line)
-            group.append((n, valid, enabled, source, comment))
+        with open(file, 'r') as f:
+            for n, line in enumerate(f):
+                valid, enabled, source, comment = self._parse(line)
+                group.append((n, valid, enabled, source, comment))
         self.files[file] = group
 
     def save(self):
@@ -466,7 +519,7 @@ class UbuntuSourcesList(SourcesList):
 
         headers = dict(Accept='application/json')
         response, info = fetch_url(self.module, lp_api, headers=headers)
-        if info['status'] != 200:
+        if not is_fetch_success(info):
             self.module.fail_json(msg="failed to fetch PPA information, error was: %s" % info['msg'])
         return json.loads(to_native(response.read()))
 

@@ -116,6 +116,14 @@
       loop:
         - inventory/foo.py
         - galaxy.yml
+        - CLAUDE.md
+
+    - name: create a valid skeleton ignore expression in ansible.cfg
+      copy:
+        content: |
+          [galaxy]
+          collection_skeleton_ignore=^\./CLAUDE.md$
+        dest: "{{ galaxy_dir }}/scratch/skeleton/ansible.cfg"
 
     - name: create symlinks
       file:
@@ -151,6 +159,7 @@
         - galaxy.yml
         - plugins/inventory/foo.py
         - README
+        - CLAUDE.md
 
     - assert:
         that:
@@ -159,6 +168,7 @@
           - stat_result.results[2].stat.islnk
           - stat_result.results[3].stat.isreg
           - stat_result.results[4].stat.isreg
+          - not stat_result.results[5].stat.exists
 
     - name: Verify the README was templated successfully
       copy:
@@ -170,11 +180,43 @@
     - assert:
         that:
           - not validate_readme_content.changed
+
+    - name: create a skeleton directory
+      file:
+        path: "{{ galaxy_dir }}/scratch/{{ item }}"
+        state: directory
+      loop:
+        - "invalid_skeleton"
+        - "invalid_skeleton/custom_skeleton"
+
+    - name: create an invalid skeleton ignore expression in ansible.cfg
+      copy:
+        content: |
+          [galaxy]
+          collection_skeleton_ignore=[^.*/.git_keep$
+        dest: "{{ galaxy_dir }}/scratch/invalid_skeleton/ansible.cfg"
+
+    - name: create a collection using the invalid skeleton
+      command: ansible-galaxy collection init ansible_test.my_collection --init-path {{ galaxy_dir }}/scratch/invalid_skeleton --collection-skeleton {{ galaxy_dir }}/scratch/invalid_skeleton/custom_skeleton
+      register: init_invalid_ignore_expression
+      environment:
+        ANSIBLE_CONFIG: "{{ galaxy_dir }}/scratch/invalid_skeleton/ansible.cfg"
+      ignore_errors: true
+
+    - name: assert create collection with invalid skeleton ignore expression
+      assert:
+        that:
+          - "init_invalid_ignore_expression.failed"
+          - "'Failed to compile regular expressions for skeleton ignore' in init_invalid_ignore_expression.stderr"
+
   always:
     - name: cleanup
       file:
-        path: "{{ galaxy_dir }}/scratch/skeleton"
+        path: "{{ galaxy_dir }}/scratch/{{ item }}"
         state: absent
+      loop:
+        - "skeleton"
+        - "invalid_skeleton"
 
 - name: create collection for ignored files and folders
   command: ansible-galaxy collection init ansible_test.ignore

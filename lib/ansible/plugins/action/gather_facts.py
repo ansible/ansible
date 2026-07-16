@@ -106,8 +106,8 @@ class ActionModule(ActionBase):
 
         parallel = task_vars.pop('ansible_facts_parallel', self._task.args.pop('parallel', None))
 
-        failed = {}
-        skipped = {}
+        failed: dict[str, t.Any] = {}
+        skipped: dict[str, t.Any] = {}
 
         if parallel is None:
             if len(modules) > 1:
@@ -137,7 +137,7 @@ class ActionModule(ActionBase):
             self._remove_tmp_path(self._connection._shell.tmpdir)
         else:
             # do it async, aka parallel
-            jobs = {}
+            jobs: dict[str, t.Any] = {}
 
             for fact_module in modules:
                 mod_args = self._get_module_args(fact_module, task_vars)

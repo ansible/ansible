@@ -52,7 +52,7 @@ some tests above about group order.  Here are a few more.
    * -e variables always win
    * then comes "most everything else"
    * then comes variables defined in inventory
-   * then "role defaults", which are the most "defaulty" and lose in priority to everything.
+   * then "role defaults", which are the most "default-like" and lose in priority to everything.
 
 Given the above rules, here's a test that a -e variable overrides inventory, 
 and also defaults, and role vars.

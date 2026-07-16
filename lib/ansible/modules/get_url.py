@@ -94,11 +94,11 @@ options:
       - The Python C(hashlib) module is responsible for providing the available algorithms.
         The choices vary based on Python version and OpenSSL version.
       - On systems running in FIPS compliant mode, the C(md5) algorithm may be unavailable.
-      - Additionally, if a checksum is passed to this parameter, and the file exist under
-        the O(dest) location, the C(destination_checksum) would be calculated, and if
+      - Additionally, if a checksum is supplied to this parameter, and the file exists under
+        the O(dest) location, the C(destination_checksum) would be calculated; and if
         checksum equals C(destination_checksum), the file download would be skipped
         (unless O(force=true)). If the checksum does not equal C(destination_checksum),
-        the destination file is deleted.
+        the destination file is replaced with the newly downloaded file.
       - If the checksum URL requires username and password, O(url_username) and O(url_password) are used
         to download the checksum file.
     type: str
@@ -378,7 +378,7 @@ from urllib.parse import urlsplit
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.text.converters import to_native
-from ansible.module_utils.urls import fetch_url, url_argument_spec
+from ansible.module_utils.urls import fetch_url, is_fetch_success, url_argument_spec
 
 # ==============================================================
 # url handling
@@ -407,12 +407,8 @@ def url_get(module, url, dest, use_proxy, last_mod_time, force, timeout=10, head
     if info['status'] == 304:
         module.exit_json(url=url, dest=dest, changed=False, msg=info.get('msg', ''), status_code=info['status'], elapsed=elapsed)
 
-    # Exceptions in fetch_url may result in a status -1, the ensures a proper error to the user in all cases
-    if info['status'] == -1:
-        module.fail_json(msg=info['msg'], url=url, dest=dest, elapsed=elapsed)
-
-    if info['status'] != 200 and not url.startswith('file:/') and not (url.startswith('ftp:/') and info.get('msg', '').startswith('OK')):
-        module.fail_json(msg="Request failed", status_code=info['status'], response=info['msg'], url=url, dest=dest, elapsed=elapsed)
+    if not is_fetch_success(info) and not url.startswith('file:/'):
+        module.fail_json(msg=f"Request failed with msg {info['msg']}", status_code=info['status'], response=info['msg'], url=url, dest=dest, elapsed=elapsed)
 
     # create a temporary file and copy content to do checksum-based replacement
     if tmp_dest:

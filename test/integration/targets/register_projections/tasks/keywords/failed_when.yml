@@ -1,0 +1,69 @@
+- name: Use register projections in 'failed_when' without a loop
+  debug:
+  failed_when: failed_when_rp
+  ignore_errors: yes
+  register:
+    failed_when_rp: failed_when_three - failed_when_two == 1
+    failed_when_three: 1 + 2
+    failed_when_two: 1 + 1
+    failed_when_result: _task.result
+
+- name: Verify results
+  assert:
+    that:
+      - failed_when_result is failed
+
+- name: Use register projections in 'failed_when' with a loop
+  debug:
+  loop: [1, 2, 3, 4, 5, 6]
+  failed_when: failed_when_loop_rp in (1, 3)
+  ignore_errors: yes
+  register:
+    failed_when_loop_rp: _task.loop_result.results | length
+    failed_when_loop_rp_results: _task.loop_result.results
+    failed_when_loop_rp_item: item
+
+- name: Verify results
+  assert:
+    that:
+      - failed_when_loop_rp == 6
+      - failed_when_loop_rp_item == 6
+      - failed_when_loop_rp_results[0] is failed
+      - failed_when_loop_rp_results[1] is not failed
+      - failed_when_loop_rp_results[2] is failed
+      - failed_when_loop_rp_results[3] is not failed
+      - failed_when_loop_rp_results[4] is not failed
+      - failed_when_loop_rp_results[5] is not failed
+
+- name: Use '_task.result' in 'failed_when' with a loop on the first item
+  debug:
+    msg: "Hello {{ item }}"
+  loop: [1, 2, 3]
+  failed_when: _task.result.msg == "Hello 1"
+  ignore_errors: yes
+  register: result
+
+- name: Verify the result
+  assert:
+    that:
+      - result.results | length == 3
+      - result.results[0] is failed
+      - result.results[1] is not failed
+      - result.results[2] is not failed
+
+- name: Use '_task.loop_result' in 'failed_when' with a loop to access the previous item
+  debug:
+  loop: [1, 2, 3, 4, 5]
+  failed_when: _task.loop_result.results | length > 1 and _task.loop_result.results[-2] is not failed
+  ignore_errors: yes
+  register: result
+
+- name: Verify the result
+  assert:
+    that:
+      - result.results | length == 5
+      - result.results[0] is not failed
+      - result.results[1] is failed
+      - result.results[2] is not failed
+      - result.results[3] is failed
+      - result.results[4] is not failed

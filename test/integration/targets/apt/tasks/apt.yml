@@ -385,11 +385,17 @@
   ignore_errors: yes
   register: apt_result
 
+- name: hello-traditional was removed in newer versions, but we can build if needed.
+  include_tasks: hello-traditional.yml
+  when:
+    - apt_result is failed
+    - '"No package matching" in apt_result.msg'
+
 - name: verify failure of installing hello-traditional, because it is required to remove hello to install.
   assert:
     that:
       - apt_result is failed
-      - '"Packages need to be removed but remove is disabled." in apt_result.msg'
+      - '"Packages need to be removed but remove is disabled." in apt_result.msg or "Conflicts with the installed package" in apt_result.msg'
 
 - name: uninstall hello with apt
   apt:
@@ -712,7 +718,7 @@
   register: dpkg_result
   ignore_errors: true
 
-- name: Verify that package removal was succesfull
+- name: Verify that package removal was successful
   assert:
     that:
     - package_removed is success
