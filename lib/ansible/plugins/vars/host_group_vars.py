@@ -29,6 +29,9 @@ DOCUMENTATION = """
         - Hidden (starting with '.') and backup (ending with '~') files and directories are ignored.
         - Only applies to inventory sources that are existing paths.
         - Starting in 2.10, this plugin requires enabling and is enabled by default.
+    notes:
+        - This plugin caches applicable paths and file content, so creating, modifying, or removing C(host_vars) and C(group_vars) files mid-play
+          for hosts or groups that have already been targeted has no effect on the current or any subsequent plays.
     options:
       stage:
         ini:
