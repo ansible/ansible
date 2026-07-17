@@ -3,14 +3,11 @@
 set -eux
 
 
-SCRIPT_PATH=$(realpath "$ANSIBLE_TEST_ANSIBLE_LIB_ROOT/../../test/sanity/code-smell/trailing-newline.py")
+SCRIPT_PATH="$ANSIBLE_TEST_ANSIBLE_LIB_ROOT/../../test/sanity/code-smell/trailing-newline.py"
 
-TEST_DIR=$(mktemp -d)
-RESULTS="$TEST_DIR/results.txt"
-HAS_NEWLINE="$TEST_DIR/has_newline.py"
-NO_NEWLINE="$TEST_DIR/no_newline.py"
-
-trap 'rm -rf "$TEST_DIR"' EXIT
+RESULTS="$OUTPUT_DIR/results.txt"
+HAS_NEWLINE="$OUTPUT_DIR/has_newline.py"
+NO_NEWLINE="$OUTPUT_DIR/no_newline.py"
 
 echo "# test" > "$HAS_NEWLINE"
 echo -n "# test" > "$NO_NEWLINE"
