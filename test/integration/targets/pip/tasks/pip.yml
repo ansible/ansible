@@ -707,3 +707,27 @@
     that:
       - pip_relative_chdir_virtualenv is successful
       - pip_relative_chdir_virtualenv.virtualenv is search('/checkout-dir/venv$')
+
+# https://github.com/ansible/ansible/issues/84905
+- name: remove stale relative virtualenv without chdir
+  file:
+    state: absent
+    path: relative-test-venv
+
+- name: create virtualenv with relative path and no chdir
+  pip:
+    name: setuptools
+    virtualenv: relative-test-venv
+    state: present
+  register: pip_relative_venv_no_chdir
+
+- name: assert relative virtualenv without chdir succeeds
+  assert:
+    that:
+      - pip_relative_venv_no_chdir is successful
+      - pip_relative_venv_no_chdir.virtualenv is search('/relative-test-venv$')
+
+- name: cleanup relative virtualenv without chdir
+  file:
+    state: absent
+    path: "{{ pip_relative_venv_no_chdir.virtualenv }}"
