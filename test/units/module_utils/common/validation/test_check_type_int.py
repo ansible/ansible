@@ -26,6 +26,10 @@ def test_check_type_int_fail():
         (b'1', 1),
         (3.14159, 3),
         'b',
+        'inf',
+        '-inf',
+        'Infinity',
+        'nan',
     )
     for case in test_cases:
         with pytest.raises(TypeError) as e:

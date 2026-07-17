@@ -1,0 +1,5 @@
+bugfixes:
+  - module_utils - ``check_type_int`` now raises the documented ``TypeError``
+    (instead of an uncaught ``OverflowError``) for the string values ``inf``,
+    ``-inf`` and ``Infinity``, which ``decimal.Decimal`` accepts but cannot be
+    converted to an ``int``.
