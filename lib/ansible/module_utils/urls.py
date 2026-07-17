@@ -45,6 +45,7 @@ import traceback
 import types  # pylint: disable=unused-import
 import urllib.error
 import urllib.request
+
 from contextlib import contextmanager
 from functools import partial
 from http import cookiejar
@@ -312,6 +313,24 @@ class ParseResultDottedDict(dict):
         Generate a list from this dict, that looks like the ParseResult named tuple
         """
         return [self.get(k, None) for k in ('scheme', 'netloc', 'path', 'params', 'query', 'fragment')]
+
+
+def mask_url(url: str) -> str:
+    """
+    Safely display a url by masking confidential data
+    from a string or the result from urlparse/split
+    """
+    if (parsed_url := urlparse(url)) and not parsed_url.username:
+        return url
+
+    netloc: str
+    mask = '****'
+    if parsed_url.password:
+        netloc = parsed_url.netloc.replace(f'{parsed_url.username}:{parsed_url.password}@', f'{mask}:{mask}@')
+    else:
+        netloc = parsed_url.netloc.replace(f'{parsed_url.username}@', f'{mask}@')
+
+    return urlunparse(parsed_url._replace(netloc=netloc))
 
 
 def generic_urlparse(parts):
