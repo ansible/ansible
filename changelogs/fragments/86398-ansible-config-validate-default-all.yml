@@ -1,0 +1,6 @@
+breaking_changes:
+  - >-
+    ansible-config - all actions now default to ``-t all``, so configuration files using sections
+    owned by plugins (for example, ``[ssh_connection]``) are no longer reported as unknown sections,
+    and keys within those sections are actually validated. Use ``-t base`` to retain the previous
+    behavior (https://github.com/ansible/ansible/issues/86398).

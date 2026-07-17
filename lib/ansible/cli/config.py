@@ -103,8 +103,9 @@ class ConfigCLI(CLI):
         opt_help.add_verbosity_options(common)
         common.add_argument('-c', '--config', dest='config_file',
                             help="path to configuration file, defaults to first file found in precedence.")
-        common.add_argument("-t", "--type", action="store", default='base', dest='type', choices=['all', 'base'] + list(C.CONFIGURABLE_PLUGINS),
-                            help="Filter down to a specific plugin type.")
+        common.add_argument("-t", "--type", action="store", default='all', dest='type',
+                            choices=['all', 'base'] + list(C.CONFIGURABLE_PLUGINS),
+                            help="Filter down to a specific plugin type. Defaults to 'all'; use 'base' for the previous behavior.")
         common.add_argument('args', help='Specific plugin to target, requires type of plugin to be set', nargs='*')
 
         subparsers = self.parser.add_subparsers(dest='action')
@@ -134,7 +135,7 @@ class ConfigCLI(CLI):
 
         validate_parser = subparsers.add_parser('validate',
                                                 help='Validate the configuration file and environment variables. '
-                                                     'By default it only checks the base settings without accounting for plugins (see -t).',
+                                                     'By default it checks the base settings and all installed plugins (use -t to narrow down).',
                                                 parents=[common])
         validate_parser.set_defaults(func=self.execute_validate)
         validate_parser.add_argument('--format', '-f', dest='format', action='store', choices=['ini', 'env'] , default='ini',
