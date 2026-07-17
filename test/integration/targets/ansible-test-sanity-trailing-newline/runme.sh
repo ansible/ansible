@@ -5,12 +5,17 @@ set -eux
 
 SCRIPT_PATH="$ANSIBLE_TEST_ANSIBLE_LIB_ROOT/../../test/sanity/code-smell/trailing-newline.py"
 
-RESULTS="$OUTPUT_DIR/results.txt"
-HAS_NEWLINE="$OUTPUT_DIR/has_newline.py"
-NO_NEWLINE="$OUTPUT_DIR/no_newline.py"
+TEST_DIR="$OUTPUT_DIR/trailing_newline_sanity_test"
+RESULTS="$TEST_DIR/results.txt"
+HAS_NEWLINE="$TEST_DIR/has_newline.py"
+NO_NEWLINE="$TEST_DIR/no_newline.py"
+
+mkdir "$TEST_DIR"
 
 echo "# test" > "$HAS_NEWLINE"
 echo -n "# test" > "$NO_NEWLINE"
+
+trap 'rm -rf "$TEST_DIR"' EXIT
 
 export ANSIBLE_TEST_FIX_MODE=0
 
