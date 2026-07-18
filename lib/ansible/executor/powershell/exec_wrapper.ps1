@@ -82,7 +82,8 @@ begin {
         $null = $PSBoundParameters.Remove('PwshPath')
 
         $targetPwsh = Get-Command -Name $PwshPath -CommandType Application -ErrorAction Ignore |
-            ForEach-Object { [Path]::GetFullPath($_.Path) }
+            ForEach-Object { [Path]::GetFullPath($_.Path) } |
+            Select-Object -First 1
         if (-not $targetPwsh) {
             @{
                 failed = $true

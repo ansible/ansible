@@ -1,0 +1,6 @@
+bugfixes:
+  - >-
+    powershell exec_wrapper - Select only the first match when resolving the
+    PowerShell interpreter so that multiple ``powershell.exe`` entries in PATH
+    (for example System32 and SysWOW64) no longer produce an array that breaks
+    the rest of the script.
