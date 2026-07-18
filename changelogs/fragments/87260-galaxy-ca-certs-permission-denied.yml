@@ -1,0 +1,2 @@
+bugfixes:
+  - module_utils.urls - Skip CA cert paths that exist but cannot be read (e.g. an inaccessible ``/etc/ansible`` symlink) instead of failing with a permission error. This could prevent ``ansible-galaxy`` from installing collections on hosts where a standard CA search path was present but not readable by the current user (https://github.com/ansible/ansible/issues/87260).

@@ -584,7 +584,16 @@ def get_ca_certs(cafile=None, capath=None):
         if not path or path == default_capath or not os.path.isdir(path):
             continue
 
-        for f in os.listdir(path):
+        try:
+            entries = os.listdir(path)
+        except OSError:
+            # The path may exist (so isdir() is True) but be unreadable, e.g.
+            # /etc/ansible symlinked to a directory the current user cannot
+            # access. Skipping it matches the handling of unreadable files
+            # below and avoids aborting the whole CA scan.
+            continue
+
+        for f in entries:
             full_path = os.path.join(path, f)
             if os.path.isfile(full_path) and os.path.splitext(f)[1] in {'.pem', '.cer', '.crt'}:
                 try:
