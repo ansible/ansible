@@ -193,7 +193,75 @@ def test_compare_old_new_ifconfig(mocker):
                 },
                 {'all_ipv4_addresses': ['10.109.188.206']},
             ),
-            id="ifconfig-output-2",
+            id="point-to-point-hex-netmask",
+        ),
+        pytest.param(
+            "inet 192.0.2.1 --> 192.0.2.2/24",
+            (
+                {
+                    'ipv4': [
+                        {
+                            'address': '192.0.2.1',
+                            'netmask': '255.255.255.0',
+                            'network': '192.0.2.0',
+                            'broadcast': '192.0.2.255',
+                        }
+                    ]
+                },
+                {'all_ipv4_addresses': ['192.0.2.1']},
+            ),
+            id="point-to-point-peer-cidr",
+        ),
+        pytest.param(
+            "inet 192.0.2.1 --> 192.0.2.2 netmask 255.255.255.0",
+            (
+                {
+                    'ipv4': [
+                        {
+                            'address': '192.0.2.1',
+                            'netmask': '255.255.255.0',
+                            'network': '192.0.2.0',
+                            'broadcast': '192.0.2.255',
+                        }
+                    ]
+                },
+                {'all_ipv4_addresses': ['192.0.2.1']},
+            ),
+            id="point-to-point-dotted-netmask",
+        ),
+        pytest.param(
+            "inet 192.0.2.1 --> 192.0.2.2/32",
+            (
+                {
+                    'ipv4': [
+                        {
+                            'address': '192.0.2.1',
+                            'netmask': '255.255.255.255',
+                            'network': '192.0.2.1',
+                            'broadcast': '192.0.2.1',
+                        }
+                    ]
+                },
+                {'all_ipv4_addresses': ['192.0.2.1']},
+            ),
+            id="point-to-point-peer-host-cidr",
+        ),
+        pytest.param(
+            "inet 192.0.2.1/24 broadcast 192.0.2.255 flags 0x0",
+            (
+                {
+                    'ipv4': [
+                        {
+                            'address': '192.0.2.1',
+                            'netmask': '255.255.255.0',
+                            'network': '192.0.2.0',
+                            'broadcast': '192.0.2.255',
+                        }
+                    ]
+                },
+                {'all_ipv4_addresses': ['192.0.2.1']},
+            ),
+            id="local-address-cidr",
         ),
     ],
 )
