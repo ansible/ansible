@@ -520,16 +520,13 @@ class VariableManager:
         Not used directly be VariableManager, but used primarily within TaskExecutor
         """
         delegated_vars = {}
-        delegated_host_name = ...  # sentinel value distinct from empty/None, which are errors
 
-        if task.delegate_to:
-            try:
-                delegated_host_name = templar.template(task.delegate_to)
-            except AnsibleValueOmittedError:
-                pass
+        if task.delegate_to is None:
+            return delegated_vars, None
 
-        # bypass for unspecified value/omit
-        if delegated_host_name is ...:
+        try:
+            delegated_host_name = templar.template(task.delegate_to)
+        except AnsibleValueOmittedError:
             return delegated_vars, None
 
         if not delegated_host_name:

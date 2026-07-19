@@ -18,12 +18,17 @@
 from __future__ import annotations
 
 import os
-
 import unittest
 from unittest.mock import MagicMock, patch
+
+import pytest
+
+from ansible._internal._templating._engine import TemplateEngine
+from ansible.errors import AnsibleError
 from ansible.inventory.manager import InventoryManager
 from ansible.module_utils._internal._datatag import AnsibleTagHelper
 from ansible.playbook.play import Play
+from ansible.template import trust_as_template
 
 
 from units.mock.loader import DictDataLoader
@@ -165,3 +170,41 @@ class TestVariableManager(unittest.TestCase):
             task = blocks[2].block[0]
             res = v.get_vars(play=play1, task=task)
             self.assertEqual(res['role_var'], 'role_var_from_role2')
+
+
+@pytest.mark.parametrize(
+    ("delegate_to", "variables", "expected_hostname"),
+    [
+        pytest.param(None, {}, None, id="unspecified"),
+        pytest.param(trust_as_template("{{ omit }}"), {}, None, id="omit"),
+        pytest.param("delegate.example", {}, "delegate.example", id="valid-host"),
+    ],
+)
+def test_get_delegated_vars_and_hostname(delegate_to, variables, expected_hostname):
+    inventory = InventoryManager(loader=DictDataLoader({}))
+    variable_manager = VariableManager(loader=DictDataLoader({}), inventory=inventory)
+    task = MagicMock(delegate_to=delegate_to)
+
+    with patch.object(variable_manager, "get_vars", return_value={}):
+        delegated_vars, delegated_host_name = variable_manager.get_delegated_vars_and_hostname(TemplateEngine(variables=variables), task, {})
+
+    assert delegated_host_name == expected_hostname
+    if expected_hostname is None:
+        assert delegated_vars == {}
+    else:
+        assert delegated_vars["ansible_delegated_vars"][expected_hostname]["inventory_hostname"] is None
+
+
+@pytest.mark.parametrize(
+    ("delegate_to", "variables"),
+    [
+        pytest.param("", {}, id="literal-empty"),
+        pytest.param(trust_as_template("{{ delegate_host }}"), {"delegate_host": ""}, id="templated-empty"),
+    ],
+)
+def test_get_delegated_vars_and_hostname_rejects_empty(delegate_to, variables):
+    variable_manager = VariableManager(loader=DictDataLoader({}), inventory=InventoryManager(loader=DictDataLoader({})))
+    task = MagicMock(delegate_to=delegate_to)
+
+    with pytest.raises(AnsibleError, match="Empty hostname produced from delegate_to"):
+        variable_manager.get_delegated_vars_and_hostname(TemplateEngine(variables=variables), task, {})
