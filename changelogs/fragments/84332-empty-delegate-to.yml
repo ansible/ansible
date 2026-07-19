@@ -1,0 +1,2 @@
+bugfixes:
+  - delegation - reject a literal empty ``delegate_to`` value consistently with an empty value produced by templating (https://github.com/ansible/ansible/issues/84332).
