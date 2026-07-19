@@ -226,11 +226,14 @@ class GenericBsdIfconfigNetwork(Network):
             except ValueError:
                 netmask_idx = 3
 
+            netmask = words[netmask_idx]
+            if words[2] == '-->' and '/' in netmask:
+                netmask_length = int(netmask.rsplit('/', 1)[1])
+                netmask_bin = (1 << 32) - (1 << 32 >> netmask_length)
+                netmask = socket.inet_ntoa(struct.pack('!L', netmask_bin))
             # deal with hex netmask
-            if re.match('([0-9a-f]){8}$', words[netmask_idx]):
+            elif re.match('([0-9a-f]){8}$', netmask):
                 netmask = '0x' + words[netmask_idx]
-            else:
-                netmask = words[netmask_idx]
 
             if netmask.startswith('0x'):
                 address['netmask'] = socket.inet_ntoa(struct.pack('!L', int(netmask, base=16)))
