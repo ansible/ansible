@@ -15,8 +15,6 @@ mkdir "$TEST_DIR"
 echo "# test" > "$HAS_NEWLINE"
 echo -n "# test" > "$NO_NEWLINE"
 
-trap 'rm -rf "$TEST_DIR"' EXIT
-
 export ANSIBLE_TEST_FIX_MODE=0
 
 # Check that sanity fails NO_NEWLINE, and succeeds on HAS_NEWLINE
