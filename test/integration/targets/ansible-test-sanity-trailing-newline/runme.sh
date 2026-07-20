@@ -1,16 +1,13 @@
 #!/usr/bin/env bash
 
-set -eux
 
+set -e
 
 SCRIPT_PATH="$ANSIBLE_TEST_ANSIBLE_LIB_ROOT/../../test/sanity/code-smell/trailing-newline.py"
 
-TEST_DIR="$OUTPUT_DIR/trailing_newline_sanity_test"
-RESULTS="$TEST_DIR/results.txt"
-HAS_NEWLINE="$TEST_DIR/has_newline.py"
-NO_NEWLINE="$TEST_DIR/no_newline.py"
-
-mkdir "$TEST_DIR"
+RESULTS="$OUTPUT_DIR/trailing_newline_results.txt"
+HAS_NEWLINE="$OUTPUT_DIR/has_newline.py"
+NO_NEWLINE="$OUTPUT_DIR/no_newline.py"
 
 echo "# test" > "$HAS_NEWLINE"
 echo -n "# test" > "$NO_NEWLINE"
@@ -19,7 +16,6 @@ export ANSIBLE_TEST_FIX_MODE=0
 
 # Check that sanity fails NO_NEWLINE, and succeeds on HAS_NEWLINE
 python "$SCRIPT_PATH" "$HAS_NEWLINE" "$NO_NEWLINE" | tee "$RESULTS"
-cat "$RESULTS"
 if grep -q "$HAS_NEWLINE: text files should end with a newline character" "$RESULTS"; then
     exit 1
 fi
@@ -27,7 +23,6 @@ grep -q "$NO_NEWLINE: text files should end with a newline character" "$RESULTS"
 
 # Fix file, check no errors
 ANSIBLE_TEST_FIX_MODE=1 python "$SCRIPT_PATH" "$NO_NEWLINE" "$HAS_NEWLINE" | tee "$RESULTS"
-cat "$RESULTS"
 if grep -q "$NO_NEWLINE: text files should end with a newline character" "$RESULTS"; then
     exit 1
 fi
@@ -37,7 +32,6 @@ fi
 
 # Check again for no errors after fix
 python "$SCRIPT_PATH" "$HAS_NEWLINE" "$NO_NEWLINE" | tee "$RESULTS"
-cat "$RESULTS"
 if grep -q "$NO_NEWLINE: text files should end with a newline character" "$RESULTS"; then
     exit 1
 fi
