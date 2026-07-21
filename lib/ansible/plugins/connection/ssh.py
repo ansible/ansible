@@ -1160,12 +1160,12 @@ class Connection(ConnectionBase):
             'awaiting_prompt', 'awaiting_escalation', 'ready_to_send', 'awaiting_exit'
         ]
 
-        # Are we requesting privilege escalation? Right now, we may be invoked
-        # to execute sftp/scp with sudoable=True, but we can request escalation
-        # only when using ssh. Otherwise, we can send initial data straight away.
+        # Are we requesting privilege escalation? Callers that cannot escalate
+        # (e.g. sftp/scp file transfers) must pass sudoable=False. Otherwise,
+        # we can send initial data straight away.
 
         state = states.index('ready_to_send')
-        if to_bytes(self.get_option('ssh_executable')) in cmd and sudoable:
+        if sudoable:
             prompt = getattr(self.become, 'prompt', None)
             if prompt:
                 # We're requesting escalation with a password, so we have to
@@ -1425,7 +1425,7 @@ class Connection(ConnectionBase):
                     cmd = self._build_command(self.get_option('sftp_executable'), method, to_bytes(host))
                     in_data = f"{sftp_action} {shlex.quote(in_path)} {shlex.quote(out_path)}\n"
                     in_data = to_bytes(in_data, nonstring='passthru')
-                    (returncode, stdout, stderr) = self._bare_run(cmd, in_data, checkrc=False)
+                    (returncode, stdout, stderr) = self._bare_run(cmd, in_data, sudoable=False, checkrc=False)
                 case 'scp':
                     scp = self.get_option('scp_executable')
                     if sftp_action == 'get':
@@ -1433,7 +1433,7 @@ class Connection(ConnectionBase):
                     else:
                         cmd = self._build_command(scp, method, in_path, f'{host}:{self._shell.quote(out_path)}')
                     in_data = None
-                    (returncode, stdout, stderr) = self._bare_run(cmd, in_data, checkrc=False)
+                    (returncode, stdout, stderr) = self._bare_run(cmd, in_data, sudoable=False, checkrc=False)
                 case 'piped':
                     if sftp_action == 'get':
                         # we pass sudoable=False to disable pty allocation, which

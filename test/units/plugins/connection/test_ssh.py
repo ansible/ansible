@@ -218,19 +218,19 @@ class TestConnectionBaseClass(unittest.TestCase):
         # Test when SFTP works
         expected_in_data = b' '.join((b'put', to_bytes(shlex.quote('/path/to/in/file')), to_bytes(shlex.quote('/path/to/dest/file')))) + b'\n'
         conn.put_file('/path/to/in/file', '/path/to/dest/file')
-        conn._bare_run.assert_called_with('some command to run', expected_in_data, checkrc=False)
+        conn._bare_run.assert_called_with('some command to run', expected_in_data, sudoable=False, checkrc=False)
 
         # Test filenames with unicode
         expected_in_data = b' '.join((b'put',
                                       to_bytes(shlex.quote('/path/to/in/file/with/unicode-fö〩')),
                                       to_bytes(shlex.quote('/path/to/dest/file/with/unicode-fö〩')))) + b'\n'
         conn.put_file(u'/path/to/in/file/with/unicode-fö〩', u'/path/to/dest/file/with/unicode-fö〩')
-        conn._bare_run.assert_called_with('some command to run', expected_in_data, checkrc=False)
+        conn._bare_run.assert_called_with('some command to run', expected_in_data, sudoable=False, checkrc=False)
 
         # Test when SFTP doesn't work but SCP does
         conn._bare_run.side_effect = [(1, 'stdout', 'some errors'), (0, '', '')]
         conn.put_file('/path/to/in/file', '/path/to/dest/file')
-        conn._bare_run.assert_called_with('some command to run', None, checkrc=False)
+        conn._bare_run.assert_called_with('some command to run', None, sudoable=False, checkrc=False)
         conn._bare_run.side_effect = None
 
         # Test that a non-zero rc raises an error
@@ -270,12 +270,12 @@ class TestConnectionBaseClass(unittest.TestCase):
         expected_in_data = b' '.join((b'get', to_bytes(shlex.quote('/path/to/in/file')), to_bytes(shlex.quote('/path/to/dest/file')))) + b'\n'
         conn.set_options({})
         conn.fetch_file('/path/to/in/file', '/path/to/dest/file')
-        conn._bare_run.assert_called_with('some command to run', expected_in_data, checkrc=False)
+        conn._bare_run.assert_called_with('some command to run', expected_in_data, sudoable=False, checkrc=False)
 
         # Test when SFTP doesn't work but SCP does
         conn._bare_run.side_effect = [(1, 'stdout', 'some errors'), (0, '', '')]
         conn.fetch_file('/path/to/in/file', '/path/to/dest/file')
-        conn._bare_run.assert_called_with('some command to run', None, checkrc=False)
+        conn._bare_run.assert_called_with('some command to run', None, sudoable=False, checkrc=False)
         conn._bare_run.side_effect = None
 
         # Test when filename is unicode
@@ -283,7 +283,7 @@ class TestConnectionBaseClass(unittest.TestCase):
                                       to_bytes(shlex.quote('/path/to/in/file/with/unicode-fö〩')),
                                       to_bytes(shlex.quote('/path/to/dest/file/with/unicode-fö〩')))) + b'\n'
         conn.fetch_file(u'/path/to/in/file/with/unicode-fö〩', u'/path/to/dest/file/with/unicode-fö〩')
-        conn._bare_run.assert_called_with('some command to run', expected_in_data, checkrc=False)
+        conn._bare_run.assert_called_with('some command to run', expected_in_data, sudoable=False, checkrc=False)
         conn._bare_run.side_effect = None
 
         # Test that a non-zero rc raises an error

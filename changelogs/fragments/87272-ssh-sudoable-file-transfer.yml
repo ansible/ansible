@@ -1,0 +1,2 @@
+bugfixes:
+  - ssh connection plugin - file transfers (sftp/scp) no longer guess whether privilege escalation applies by searching for the ``ssh_executable`` string inside the command; escalation state is now determined explicitly, fixing hangs when the executable path appeared in sftp/scp arguments (https://github.com/ansible/ansible/issues/87272).
