@@ -1,0 +1,2 @@
+bugfixes:
+  - ssh connection - fix an issue with become when ``sftp_extra_args``/``scp_extra_args`` would contain the value of ``ssh_executable`` (https://github.com/ansible/ansible/issues/87272)

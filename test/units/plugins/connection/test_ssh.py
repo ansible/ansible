@@ -372,7 +372,7 @@ class TestSSHConnectionRun(object):
             []]
         self.mock_selector.get_map.side_effect = lambda: True
 
-        return_code, b_stdout, b_stderr = self.conn._run("ssh", "this is input data")
+        return_code, b_stdout, b_stderr = self.conn._run([b"ssh"], b"this is input data")
         assert return_code == 0
         assert b_stdout == b'my_stdout\nsecond_line'
         assert b_stderr == b'my_stderr'
@@ -380,7 +380,7 @@ class TestSSHConnectionRun(object):
         assert self.mock_selector.register.call_count == 2
         assert self.conn._send_initial_data.called is True
         assert self.conn._send_initial_data.call_count == 1
-        assert self.conn._send_initial_data.call_args[0][1] == 'this is input data'
+        assert self.conn._send_initial_data.call_args[0][1] == b'this is input data'
 
     def _password_with_prompt_examine_output(self, sourice, state, b_chunk, sudoable):
         if state == 'awaiting_prompt':
@@ -405,7 +405,7 @@ class TestSSHConnectionRun(object):
             []]
         self.mock_selector.get_map.side_effect = lambda: True
 
-        return_code, b_stdout, b_stderr = self.conn._run("ssh", "this is input data")
+        return_code, b_stdout, b_stderr = self.conn._run([b"ssh"], b"this is input data")
         assert return_code == 0
         assert b_stdout == b''
         assert b_stderr == b''
@@ -413,7 +413,7 @@ class TestSSHConnectionRun(object):
         assert self.mock_selector.register.call_count == 2
         assert self.conn._send_initial_data.called is True
         assert self.conn._send_initial_data.call_count == 1
-        assert self.conn._send_initial_data.call_args[0][1] == 'this is input data'
+        assert self.conn._send_initial_data.call_args[0][1] == b'this is input data'
 
     def test_password_with_become(self):
         # test with some become settings
@@ -433,7 +433,7 @@ class TestSSHConnectionRun(object):
             []]
         self.mock_selector.get_map.side_effect = lambda: True
 
-        return_code, b_stdout, b_stderr = self.conn._run("ssh", "this is input data")
+        return_code, b_stdout, b_stderr = self.conn._run([b"ssh"], b"this is input data")
         self.mock_popen_res.stdin.flush.assert_called_once_with()
         assert return_code == 0
         assert b_stdout == b'abc'
@@ -442,7 +442,7 @@ class TestSSHConnectionRun(object):
         assert self.mock_selector.register.call_count == 2
         assert self.conn._send_initial_data.called is True
         assert self.conn._send_initial_data.call_count == 1
-        assert self.conn._send_initial_data.call_args[0][1] == 'this is input data'
+        assert self.conn._send_initial_data.call_args[0][1] == b'this is input data'
 
     def test_password_without_data(self):
         # simulate no data input but Popen using new pty's fails
@@ -461,7 +461,7 @@ class TestSSHConnectionRun(object):
             []]
         self.mock_selector.get_map.side_effect = lambda: True
 
-        return_code, b_stdout, b_stderr = self.conn._run("ssh", "")
+        return_code, b_stdout, b_stderr = self.conn._run([b"ssh"], b"")
         assert return_code == 0
         assert b_stdout == b'some data'
         assert b_stderr == b''
