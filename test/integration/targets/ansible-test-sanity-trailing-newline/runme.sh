@@ -2,7 +2,6 @@
 
 
 set -e
-
 SCRIPT_PATH="$ANSIBLE_TEST_ANSIBLE_LIB_ROOT/../../test/sanity/code-smell/trailing-newline.py"
 
 RESULTS="$OUTPUT_DIR/trailing_newline_results.txt"
