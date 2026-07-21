@@ -1,5 +1,3 @@
-"""Gather and format 'deprecated' comments"""
-
 from __future__ import annotations
 
 import os
@@ -141,9 +139,7 @@ def process_deprecations(stream: Iterator[DeprecationComment]) -> None:
                 if LooseVersion(deprecation.min_py) > LooseVersion(python_version):
                     print(f"{err_prefix}: ansible-deprecated-python-version-comment: Deprecated python version ('{python_version}') found: {description}")
             except (ValueError, TypeError) as exc:
-                print(
-                    f"{err_prefix}: ansible-deprecated-version-comment-invalid-version: Deprecated comment contains invalid version {python_version}: {exc}"
-                )
+                print(f"{err_prefix}: ansible-deprecated-version-comment-invalid-version: Deprecated comment contains invalid version {python_version}: {exc}")
 
 
 def main():
