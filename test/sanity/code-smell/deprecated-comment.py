@@ -127,21 +127,22 @@ def process_deprecations(stream: Iterator[DeprecationComment]) -> None:
         description = deprecation.parsed_deprecation['description']
         core_version = deprecation.parsed_deprecation['core_version']
         python_version = deprecation.parsed_deprecation['python_version']
+        err_prefix = deprecation.prefix
 
         if core_version:
             try:
                 if LooseVersion(ANSIBLE_VERSION) >= LooseVersion(core_version):
-                    print(f"{deprecation.prefix}: ansible-deprecated-version-comment: Deprecated core version ('{core_version}') found: {description}")
+                    print(f"{err_prefix}: ansible-deprecated-version-comment: Deprecated core version ('{core_version}') found: {description}")
             except (ValueError, TypeError) as exc:
-                print(f"{deprecation.prefix}: ansible-deprecated-version-comment-invalid-version: Deprecated comment contains invalid version {core_version}: {exc}")
+                print(f"{err_prefix}: ansible-deprecated-version-comment-invalid-version: Deprecated comment contains invalid version {core_version}: {exc}")
 
         if python_version:
             try:
                 if LooseVersion(deprecation.min_py) > LooseVersion(python_version):
-                    print(f"{deprecation.prefix}: ansible-deprecated-python-version-comment: Deprecated python version ('{python_version}') found: {description}")
+                    print(f"{err_prefix}: ansible-deprecated-python-version-comment: Deprecated python version ('{python_version}') found: {description}")
             except (ValueError, TypeError) as exc:
                 print(
-                    f"{deprecation.prefix}: ansible-deprecated-version-comment-invalid-version: Deprecated comment contains invalid version {python_version}: {exc}"
+                    f"{err_prefix}: ansible-deprecated-version-comment-invalid-version: Deprecated comment contains invalid version {python_version}: {exc}"
                 )
 
 
