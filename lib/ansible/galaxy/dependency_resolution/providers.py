@@ -250,6 +250,12 @@ class CollectionDependencyProvider(AbstractProvider):
             and not first_req.is_concrete_artifact
             and all(r._parent is None for r in requirements)
         ):
+            # coll_versions is fetched directly from the Galaxy API and is not
+            # filtered by pre-release status (that filtering happens later,
+            # per-candidate, below). An empty coll_versions here therefore
+            # means no versions of any kind -- including pre-releases --
+            # exist for this collection on any configured server, so the
+            # generic pre-release hint would not be applicable/helpful.
             server_names = ', '.join(
                 api.api_server for api in self._api_proxy._apis
             ) or 'the configured Galaxy server(s)'
