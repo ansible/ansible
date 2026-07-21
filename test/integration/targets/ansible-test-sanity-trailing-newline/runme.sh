@@ -18,7 +18,9 @@ python "$SCRIPT_PATH" "$HAS_NEWLINE" "$NO_NEWLINE" | tee "$RESULTS"
 if grep -q "$HAS_NEWLINE: text files should end with a newline character" "$RESULTS"; then
     exit 1
 fi
-grep -q "$NO_NEWLINE: text files should end with a newline character" "$RESULTS"
+if ! grep -q "$NO_NEWLINE: text files should end with a newline character" "$RESULTS"; then
+    exit 1
+fi
 
 # Fix file, check no errors
 ANSIBLE_TEST_FIX_MODE=1 python "$SCRIPT_PATH" "$NO_NEWLINE" "$HAS_NEWLINE" | tee "$RESULTS"
@@ -39,4 +41,6 @@ if grep -q "$HAS_NEWLINE: text files should end with a newline character" "$RESU
 fi
 
 # Manual check for sanity (count newlines in last byte of file)
-[[ $(tail -c1 "$NO_NEWLINE" | wc -l) -gt 0 ]]
+if [[ $(tail -c1 "$NO_NEWLINE" | wc -l) -eq 0 ]]; then
+    exit 1
+fi
