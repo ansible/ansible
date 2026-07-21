@@ -248,6 +248,7 @@ class CollectionDependencyProvider(AbstractProvider):
             and not coll_versions
             and first_req.type == 'galaxy'
             and not first_req.is_concrete_artifact
+            and all(r._parent is None for r in requirements)
         ):
             server_names = ', '.join(
                 api.api_server for api in self._api_proxy._apis
