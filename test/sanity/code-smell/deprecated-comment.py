@@ -78,25 +78,25 @@ def classify_files(min_controller_py: str, controller_files: list[str], min_targ
 
 def match_deprecations(stream: Iterator[DeprecationComment]) -> Iterator[DeprecationComment]:
     """Scan each file for lines containing a deprecation comment."""
-    for state in stream:
-        regex = COMMENT_REGEXES[state.path.suffix]
-        with open(state.path, "r", encoding="utf-8", errors="ignore") as file:
+    for deprecation_file in stream:
+        regex = COMMENT_REGEXES[deprecation_file.path.suffix]
+        with open(deprecation_file.path, "r", encoding="utf-8", errors="ignore") as file:
             for linenum, full_line in enumerate(file, start=1):
                 match = regex.search(full_line)
                 if match:
                     col = match.start()
-                    yield state.with_deprecation(linenum, col, match.group(1))
+                    yield deprecation_file.with_deprecation(linenum, col, match.group(1))
 
 
 def parse_deprecations(stream: Iterator[DeprecationComment]) -> Iterator[DeprecationComment]:
     """Parse the deprecation comment into a dict."""
     valid_keys = {'description', 'core_version', 'python_version'}
-    for state in stream:
+    for deprecation in stream:
         data = dict.fromkeys(valid_keys)
         try:
-            options = shlex.split(state.deprecation_comment)
+            options = shlex.split(deprecation.deprecation_comment)
         except ValueError as exc:
-            print(f"{state.prefix}: ansible-deprecated-version-comment-invalid-syntax: Deprecation comment has invalid syntax: {exc}")
+            print(f"{deprecation.prefix}: ansible-deprecated-version-comment-invalid-syntax: Deprecation comment has invalid syntax: {exc}")
             continue
         for opt in options:
             if '=' not in opt:
@@ -116,32 +116,32 @@ def parse_deprecations(stream: Iterator[DeprecationComment]) -> Iterator[Depreca
 
         if errors:
             for error in errors:
-                print(f"{state.prefix}: {error}")
+                print(f"{deprecation.prefix}: {error}")
         else:
-            yield replace(state, parsed_deprecation=data)
+            yield replace(deprecation, parsed_deprecation=data)
 
 
 def process_deprecations(stream: Iterator[DeprecationComment]) -> None:
     """Report deprecations whose version has been reached or passed."""
-    for state in stream:
-        description = state.parsed_deprecation['description']
-        core_version = state.parsed_deprecation['core_version']
-        python_version = state.parsed_deprecation['python_version']
+    for deprecation in stream:
+        description = deprecation.parsed_deprecation['description']
+        core_version = deprecation.parsed_deprecation['core_version']
+        python_version = deprecation.parsed_deprecation['python_version']
 
         if core_version:
             try:
                 if LooseVersion(ANSIBLE_VERSION) >= LooseVersion(core_version):
-                    print(f"{state.prefix}: ansible-deprecated-version-comment: Deprecated core version ('{core_version}') found: {description}")
+                    print(f"{deprecation.prefix}: ansible-deprecated-version-comment: Deprecated core version ('{core_version}') found: {description}")
             except (ValueError, TypeError) as exc:
-                print(f"{state.prefix}: ansible-deprecated-version-comment-invalid-version: Deprecated comment contains invalid version {core_version}: {exc}")
+                print(f"{deprecation.prefix}: ansible-deprecated-version-comment-invalid-version: Deprecated comment contains invalid version {core_version}: {exc}")
 
         if python_version:
             try:
-                if LooseVersion(state.min_py) > LooseVersion(python_version):
-                    print(f"{state.prefix}: ansible-deprecated-python-version-comment: Deprecated python version ('{python_version}') found: {description}")
+                if LooseVersion(deprecation.min_py) > LooseVersion(python_version):
+                    print(f"{deprecation.prefix}: ansible-deprecated-python-version-comment: Deprecated python version ('{python_version}') found: {description}")
             except (ValueError, TypeError) as exc:
                 print(
-                    f"{state.prefix}: ansible-deprecated-version-comment-invalid-version: Deprecated comment contains invalid version {python_version}: {exc}"
+                    f"{deprecation.prefix}: ansible-deprecated-version-comment-invalid-version: Deprecated comment contains invalid version {python_version}: {exc}"
                 )
 
 
