@@ -1,0 +1,4 @@
+security_fixes:
+  - ansible-galaxy - validate that directory entries in a collection artifact resolve inside the
+    collection directory before creating them, so a crafted artifact can no longer create
+    directories or plant symlinks elsewhere on the filesystem.
