@@ -230,6 +230,23 @@ def test_compare_old_new_ifconfig(mocker):
             id="point-to-point-dotted-netmask",
         ),
         pytest.param(
+            "inet 192.0.2.1 --> 192.0.2.2 netmask 0xffffff00",
+            (
+                {
+                    'ipv4': [
+                        {
+                            'address': '192.0.2.1',
+                            'netmask': '255.255.255.0',
+                            'network': '192.0.2.0',
+                            'broadcast': '192.0.2.255',
+                        }
+                    ]
+                },
+                {'all_ipv4_addresses': ['192.0.2.1']},
+            ),
+            id="point-to-point-explicit-hex-netmask",
+        ),
+        pytest.param(
             "inet 192.0.2.1 --> 192.0.2.2/32",
             (
                 {
