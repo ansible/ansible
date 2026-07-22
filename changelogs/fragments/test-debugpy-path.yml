@@ -1,0 +1,4 @@
+bugfixes:
+  - >-
+    ansible-test - Ensure the bundled debugpy module from VSCode is available in the ``--dev-debug-on-demand``
+    environment.
