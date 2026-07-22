@@ -17,6 +17,12 @@ def test_check_type_dict():
         ('k1=v1,     k2=v2,  k3=v3', {'k1': 'v1', 'k2': 'v2', 'k3': 'v3'}),
         ('{"key": "value", "list": ["one", "two"]}', {'key': 'value', 'list': ['one', 'two']}),
         ('k1=v1 k2=v2', {'k1': 'v1', 'k2': 'v2'}),
+        ('k1="v1,v2",k2=v3', {'k1': 'v1,v2', 'k2': 'v3'}),
+        ("k1='v1 v2'", {'k1': 'v1 v2'}),
+        ('k1=a\\,b', {'k1': 'a,b'}),
+        ('k1=a\\ b', {'k1': 'a b'}),
+        ('k1=v1,', {'k1': 'v1'}),
+        ("{'k1': 'v1'}", {'k1': 'v1'}),
     )
     for case in test_cases:
         assert case[1] == check_type_dict(case[0])
@@ -28,6 +34,7 @@ def test_check_type_dict_fail():
         3.14159,
         [1, 2],
         'a',
+        '{',
         '{1}',
         'k1=v1 k2'
     )

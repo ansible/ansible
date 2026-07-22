@@ -38,3 +38,17 @@ def test_junk_values_non_strict(value: object) -> None:
 def test_junk_values_strict(value: object) -> None:
     with pytest.raises(TypeError, match=f"^The value '{value}' is not"):
         boolean(value, strict=True)
+
+
+unhashable_values = ([1, 2], {"k": "v"}, {1, 2})
+
+
+@pytest.mark.parametrize("value", unhashable_values)
+def test_unhashable_values_non_strict(value: object) -> None:
+    assert boolean(value, strict=False) is False
+
+
+@pytest.mark.parametrize("value", unhashable_values)
+def test_unhashable_values_strict(value: object) -> None:
+    with pytest.raises(TypeError, match="is not a valid boolean"):
+        boolean(value, strict=True)
