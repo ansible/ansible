@@ -241,3 +241,60 @@
 - assert:
     that:
       - ansible_test_http_agent is changed
+
+# The setup_deb_repo dependency builds a local repo at /tmp/repo (not added,
+# install_repo=false) carrying the dummy package 'foobar'. Its visibility in
+# apt-cache proves the module refreshed the cache itself.
+- name: Add local repo with update_cache
+  deb822_repository:
+    name: ansible-test-update-cache
+    uris: file:///tmp/repo
+    suites: stable
+    components: main
+    architectures: all
+    trusted: true
+    update_cache: true
+  register: update_cache_add
+
+- name: Query foobar package after add
+  command: apt-cache policy foobar
+  register: update_cache_policy_after_add
+
+- name: Add local repo with update_cache idempotency
+  deb822_repository:
+    name: ansible-test-update-cache
+    uris: file:///tmp/repo
+    suites: stable
+    components: main
+    architectures: all
+    trusted: true
+    update_cache: true
+  register: update_cache_idem
+
+- assert:
+    that:
+      - update_cache_add is changed
+      # update_cache must not leak into the repository definition
+      - >
+        'Update-Cache' not in update_cache_add.repo
+      # apt-cache prints file: URIs with the empty authority collapsed
+      - >
+        'file:/tmp/repo' in update_cache_policy_after_add.stdout
+      - update_cache_idem is not changed
+
+- name: Remove local repo with update_cache
+  deb822_repository:
+    name: ansible-test-update-cache
+    state: absent
+    update_cache: true
+  register: update_cache_remove
+
+- name: Query foobar package after remove
+  command: apt-cache policy foobar
+  register: update_cache_policy_after_remove
+
+- assert:
+    that:
+      - update_cache_remove is changed
+      - >
+        'file:/tmp/repo' not in update_cache_policy_after_remove.stdout

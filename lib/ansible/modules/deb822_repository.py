@@ -11,8 +11,8 @@ description:
 - 'Add and remove deb822 formatted repositories in Debian based distributions.'
 module: deb822_repository
 notes:
-- This module will not automatically update caches, call the M(ansible.builtin.apt) module based
-  on the changed state.
+- By default this module will not update caches. Either set O(update_cache=true), or call
+  the M(ansible.builtin.apt) module based on the changed state.
 options:
     allow_downgrade_to_insecure:
         description:
@@ -150,6 +150,16 @@ options:
         description:
         - Which types of packages to look for from a given source; either
           binary V(deb) or source code V(deb-src).
+    update_cache:
+        description:
+        - Run the equivalent of C(apt-get update) after a change to the
+          repository or its signing key.
+        - Nothing is run when the module reports no change, or in check mode.
+        - Defaults to V(false), unlike M(ansible.builtin.apt_repository),
+          to preserve the behaviour of earlier versions of this module.
+        type: bool
+        default: false
+        version_added: '2.22'
     uris:
         description:
         - The URIs must specify the base of the Debian distribution archive,
@@ -216,6 +226,16 @@ EXAMPLES = """
     components: stable
     architectures: amd64
     signed_by: https://download.example.com/linux/ubuntu/gpg
+
+- name: Add repo and update the apt cache when the repo changed
+  deb822_repository:
+    name: example
+    types: deb
+    uris: https://download.example.com/linux/ubuntu
+    suites: '{{ ansible_distribution_release }}'
+    components: stable
+    signed_by: https://download.example.com/linux/ubuntu/gpg
+    update_cache: true
 """
 
 RETURN = """
@@ -385,6 +405,13 @@ def write_signed_by_key(module, v, slug):
     return changed, filename, None
 
 
+def update_apt_cache(module):
+    apt_get_path = module.get_bin_path('apt-get', required=True)
+    rc, stdout, stderr = module.run_command([apt_get_path, 'update'])
+    if rc != 0:
+        module.fail_json(msg=f"Failed to update apt cache: '{stderr.strip() or stdout.strip()}'")
+
+
 def install_python_debian(module, deb_pkg_name):
 
     if not module.check_mode:
@@ -503,6 +530,10 @@ def main():
                 ],
                 'default': 'present',
             },
+            'update_cache': {
+                'type': 'bool',
+                'default': False,
+            },
         },
         mutually_exclusive=[
             ['exclude', 'include']
@@ -569,6 +600,7 @@ def main():
     # popped non-deb822 args
     mode = params.pop('mode')
     state = params.pop('state')
+    update_cache = params.pop('update_cache')
     params.pop('install_python_debian')
 
     name = params['name']
@@ -599,6 +631,8 @@ def main():
                 if not check_mode:
                     os.unlink(signed_by_filename)
                 changed = True
+        if changed and update_cache and not check_mode:
+            update_apt_cache(module)
         module.exit_json(
             repo=None,
             changed=changed,
@@ -644,6 +678,9 @@ def main():
         changed |= True
 
     changed |= module.set_mode_if_different(sources_filename, mode, False)
+
+    if changed and update_cache and not check_mode:
+        update_apt_cache(module)
 
     module.exit_json(
         repo=repo,

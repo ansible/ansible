@@ -1,0 +1,4 @@
+minor_changes:
+  - deb822_repository - add ``update_cache`` option to run the equivalent of ``apt-get update``
+    after the repository or its signing key changed, matching ``apt_repository``. It defaults
+    to ``false`` to preserve the module's previous behaviour.
