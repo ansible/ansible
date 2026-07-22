@@ -1,4 +1,4 @@
-alpine/3.23 python=3.12 become=doas_sudo provider=aws arch=x86_64 alias=alpine/3,alpine/latest
+alpine/3.24 python=3.14 become=doas_sudo provider=aws arch=x86_64 alias=alpine/3,alpine/latest
 alpine become=doas_sudo provider=aws arch=x86_64
 fedora/44 python=3.14 become=sudo provider=aws arch=x86_64 alias=fedora/latest
 fedora become=sudo provider=aws arch=x86_64
