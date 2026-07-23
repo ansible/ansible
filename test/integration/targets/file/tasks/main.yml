@@ -89,6 +89,23 @@
       - ghost_file_result.state == 'absent'
       - "'cannot continue' in ghost_file_result.msg"
 
+- name: create a regular file to use as a non-directory parent
+  file:
+    path: '{{ remote_tmp_dir_test }}/notadir'
+    state: touch
+
+- name: Target a path whose parent component is not a directory
+  file:
+    path: '{{ remote_tmp_dir_test }}/notadir/child'
+  ignore_errors: yes
+  register: notadir_result
+
+- name: Validate path-under-file is treated as absent, not a traceback
+  assert:
+    that:
+      - notadir_result is failed
+      - notadir_result.state == 'absent'
+
 - name: verify that we are checking an absent file
   file: path={{remote_tmp_dir_test}}/bar.txt state=absent
   register: file2_result
