@@ -100,11 +100,11 @@
   ignore_errors: yes
   register: notadir_result
 
-- name: Validate path-under-file is treated as absent, not a traceback
+- name: Validate path-under-file fails with a clear error, not a traceback
   assert:
     that:
       - notadir_result is failed
-      - notadir_result.state == 'absent'
+      - "'parent of the path is not a directory' in notadir_result.msg"
 
 - name: verify that we are checking an absent file
   file: path={{remote_tmp_dir_test}}/bar.txt state=absent
