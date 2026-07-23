@@ -1,0 +1,6 @@
+security_fixes:
+  - >-
+    ansible.module_utils.urls - strip the ``Authorization`` header when a request is redirected to a
+    different host, so credentials from ``force_basic_auth`` or ``.netrc`` are not sent to a
+    server-chosen redirect target (affects the ``uri``, ``get_url`` and other modules that use
+    ``open_url``/``fetch_url``).

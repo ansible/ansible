@@ -427,6 +427,18 @@ class HTTPRedirectHandler(urllib.request.HTTPRedirectHandler):
         # deprecated: description='urllib http 308 support' python_version='3.11'
         http_error_308 = urllib.request.HTTPRedirectHandler.http_error_302
 
+    @staticmethod
+    def _should_strip_auth(old_url, new_url):
+        old_parsed = urlparse(old_url)
+        new_parsed = urlparse(new_url)
+        if old_parsed.hostname != new_parsed.hostname:
+            return True
+        # Allow http -> https on the standard ports, matching browsers.
+        if (old_parsed.scheme == 'http' and old_parsed.port in (80, None) and
+                new_parsed.scheme == 'https' and new_parsed.port in (443, None)):
+            return False
+        return old_parsed.port != new_parsed.port or old_parsed.scheme != new_parsed.scheme
+
     def redirect_request(self, req, fp, code, msg, headers, newurl):
         follow_redirects = self.follow_redirects
 
@@ -478,6 +490,14 @@ class HTTPRedirectHandler(urllib.request.HTTPRedirectHandler):
             # Second, if a POST is responded to with a 301, turn it into a GET.
             if code == 301 and method == 'POST':
                 method = 'GET'
+
+        # The Authorization header is added with add_header, so urllib keeps it
+        # on the redirected request. Drop it when the target is a different host
+        # so credentials set via force_basic_auth/netrc are not handed to a
+        # server-chosen redirect location.
+        if self._should_strip_auth(req.get_full_url(), newurl):
+            req_headers = {k: v for k, v in req_headers.items()
+                           if k.lower() != 'authorization'}
 
         return urllib.request.Request(
             newurl,
