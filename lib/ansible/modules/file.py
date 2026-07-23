@@ -28,23 +28,23 @@ options:
     aliases: [ dest, name ]
   state:
     description:
-    - If V(absent), directories will be recursively deleted, and files or symlinks will
-      be unlinked. In the case of a directory, if C(diff) is declared, you will see the files and folders deleted listed
-      under C(path_contents). Note that V(absent) will not cause M(ansible.builtin.file) to fail if the O(path) does
-      not exist as the state did not change.
-    - If V(directory), all intermediate subdirectories will be created if they
-      do not exist. Since Ansible 1.7 they will be created with the supplied permissions.
-    - If V(file), with no other options, returns the current state of C(path).
-    - If V(file), even with other options (such as O(mode)), the file will be modified if it exists but will NOT be created if it does not exist.
-      Set to V(touch) or use the M(ansible.builtin.copy) or M(ansible.builtin.template) module if you want to create the file if it does not exist.
-    - If V(hard), the hard link will be created or changed.
-    - If V(link), the symbolic link will be created or changed.
-    - If V(touch) (new in 1.4), an empty file will be created if the file does not
-      exist, while an existing file or directory will receive updated file access and
-      modification times (similar to the way V(touch) works from the command line).
-    - Default is the current state of the file if it exists, V(directory) if O(recurse=yes), or V(file) otherwise.
+    - Defines the expectation for the file/path, see the choice values for details.
+    - All values, except V(absent), are expected to enforce the other options, like O(mode), O(owner) and O(access_time) as appropriate.
+    - When unspecified (default), the current state of the file on the target, is assumed to be the desired state.
     type: str
-    choices: [ absent, directory, file, hard, link, touch ]
+    choices:
+        absent: The O(path) should not exist, As needed, files, hard links and symlinks will be unlinked, directories will be recursively deleted.
+                In the case of a directory, if C(diff) is declared, you will see the files and folders deleted listed under C(path_contents).
+                The actoin will not fail if the O(path) does not exist as the state did not change.
+        directory: The target is a directory. If needed, all intermediate subdirectories will be created,
+                   using the supplied permissions.
+        file: The O(path) is a file, if no other options were specified, it can be used to query the current information of the O(path).
+        hard: The O(path) is a hard link to the specified O(src).
+        link: The O(path) is a symbolic link to the specified O(srC). Other options can be applied depending on O(follow) setting,
+              depending on filesystem support. For example, O(mode) and O(owner) are often not applicable on the link itself.
+        touch: If the O(path) does not exist, an empty file will be created.  Otherwise, an existing file or directory will
+               receive updated file access and modification times (similar to the way V(touch) works from the command line).
+               As such, this will always result in a V(changed) state.
   src:
     description:
     - Path of the file to link to.
@@ -231,6 +231,21 @@ path:
     returned: O(state=absent), O(state=directory), O(state=file)
     type: str
     sample: /path/to/file.txt
+src:
+    description: Source path of the symlink or hardlink.
+    returned: O(state=link), O(state=hard)
+    type: str
+    sample: /file/to/link/to
+state:
+    description:
+      - State of the target after module execution.
+      - For O(state=absent), this is always V(absent).
+      - For every other state, the value is derived from the resulting path on the
+        filesystem. It is only returned when that path exists, so it may be omitted
+        (for example, a dangling symlink) or differ from the requested O(state).
+    returned: always for O(state=absent), otherwise when the target path exists
+    type: str
+    sample: absent
 """
 
 import errno
