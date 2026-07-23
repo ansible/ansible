@@ -320,7 +320,7 @@ def mask_url(url: str) -> str:
     Safely display a url by masking confidential data
     from a string or the result from urlparse/split
     """
-    if (parsed_url := urlparse(url)) and not parsed_url.username:
+    if (parsed_url := urlparse(url)) and not parsed_url.username and not parsed_url.password:
         return url
 
     netloc: str

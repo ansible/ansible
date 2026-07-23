@@ -25,6 +25,8 @@ from ansible.module_utils.urls import mask_url
         ('ftps://secretuser:secretpass@file.secure/yolo.asc', ('yolo.asc', 'file.secure')),
         ('ftps://file.server/yolo.asc', ('yolo.asc')),
         ('ftps://secretuser:secretsecret@file.server/yolo.asc', ('file.server/yolo.asc')),
+        ('redis://:secretpass@cache.internal:6379/0', ('cache.internal', '6379', 'redis')),
+        ('amqp://:secretpw@rabbit.internal:5672/vhost', ('rabbit.internal', '5672', 'vhost')),
     )
 )
 def test_mask_url(url, wanted):
