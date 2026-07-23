@@ -320,6 +320,9 @@ def get_state(path):
         st = os.lstat(b_path)
     except FileNotFoundError:
         return 'absent'
+    except NotADirectoryError:
+        # a parent component of the path is not a directory, so the path cannot exist
+        return 'absent'
     except PermissionError:
         module.warn(f"Insufficient permissions to access {to_native(b_path)}. Treating as absent")
         return 'absent'
