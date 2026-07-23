@@ -1,0 +1,2 @@
+bugfixes:
+  - file - treat a path whose parent component is not a directory as ``absent`` in ``get_state()`` instead of raising ``NotADirectoryError`` (https://github.com/ansible/ansible/pull/87289).
