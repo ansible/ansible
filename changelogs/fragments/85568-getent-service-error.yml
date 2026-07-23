@@ -1,0 +1,2 @@
+bugfixes:
+  - getent - fail with error when service is provided on platforms using busybox like alpine (https://github.com/ansible/ansible/issues/85568).

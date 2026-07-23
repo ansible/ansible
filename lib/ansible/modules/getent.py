@@ -115,6 +115,7 @@ ansible_facts:
       type: list
 """
 
+import platform
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.text.converters import to_native
 
@@ -147,6 +148,8 @@ def main():
         cmd = [getent_bin, database]
 
     if service is not None:
+        if platform.libc_ver()[0] not in ('glibc',):
+            module.fail_json(msg=f"Specifying service `{service}` not supported on this platform.")
         cmd.extend(['-s', service])
 
     if not split and split is not None:

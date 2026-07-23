@@ -6,45 +6,58 @@
   shell: which getent
   failed_when: False
   register: getent_check
-##
-## getent
-##
-- block:
-    - name: run getent with specified service
-      getent:
-          database: passwd
-          key: root
-          service: files
-      register: getent_test0
-      when: ansible_system != 'FreeBSD' and ansible_distribution != 'Alpine'
 
-    - name: run getent w/o specified service (FreeBSD)
-      getent:
-          database: passwd
-          key: root
-      register: getent_test0
-      when: ansible_system == 'FreeBSD' or ansible_distribution == 'Alpine'
+- name: skip test on unsupported platforms
+  meta: end_play
+  when: getent_check.rc != 0
 
-    - debug: var=getent_test0
+- name: run getent with specified service
+  getent:
+      database: passwd
+      key: root
+      service: files
+  register: getent_test0
+  when: ansible_system != 'FreeBSD' and ansible_distribution != 'Alpine'
 
-    - name: validate results
-      assert:
-          that:
-              - 'getent_passwd is defined'
-              - 'getent_passwd.root is defined'
-              - 'getent_passwd.root|length == 6'
+- name: run getent w/o specified service (FreeBSD)
+  getent:
+      database: passwd
+      key: root
+  register: getent_test0
+  when: ansible_system == 'FreeBSD' or ansible_distribution == 'Alpine'
 
-    - name: run getent with invalid split value
-      getent:
-        database: group
-        split: ""
-      register: getent_test1
-      ignore_errors: True
+- name: validate results
+  assert:
+      that:
+          - 'getent_test0 is success'
+          - 'getent_passwd is defined'
+          - 'getent_passwd.root is defined'
+          - 'getent_passwd.root|length == 6'
 
-    - name: validate results
-      assert:
-        that:
+- name: run getent with invalid split value
+  getent:
+      database: group
+      split: ""
+  register: getent_test1
+  ignore_errors: True
+
+- name: validate results
+  assert:
+      that:
           - 'getent_test1 is failed'
           - 'getent_test1.msg is contains "Invalid split value. The value must be a non-empty string"'
 
-  when: getent_check.rc == 0
+- name: run getent with specified service on Alpine (expected failure)
+  getent:
+      database: passwd
+      service: files
+  register: getent_service_unsupported
+  ignore_errors: true
+  when: ansible_distribution == 'Alpine'
+
+- name: validate unsupported service result on Alpine (expected failure)
+  assert:
+      that:
+          - 'getent_service_unsupported is failed'
+          - 'getent_service_unsupported.msg is contains "Specifying service `files` not supported on this platform."'
+  when: ansible_distribution == 'Alpine'
