@@ -7,6 +7,7 @@ import dataclasses
 import importlib
 import json
 import os
+import pathlib
 import re
 import sys
 import typing as t
@@ -255,6 +256,11 @@ class DebugpySettings(DebuggerSettings):
     The `--connect`, `--adapter-access-token`, and `--parent-session-pid` options will be provided by ansible-test.
     """
 
+    debugpy_package_path: str | None = None
+    """
+    The path to the debugpy package to add to PYTHONPATH.
+    """
+
     @classmethod
     def is_active(cls) -> bool:
         return detect_debugpy_options() is not None
@@ -262,7 +268,7 @@ class DebugpySettings(DebuggerSettings):
     @classmethod
     def apply_defaults(cls, settings: t.Self) -> t.Self:
         if options := detect_debugpy_options():
-            settings = dataclasses.replace(settings, port=options.port)
+            settings = dataclasses.replace(settings, port=options.port, debugpy_package_path=options.debugpy_package_path)
             settings.connect.update(
                 access_token=options.adapter_access_token,
                 parent_session_pid=os.getpid(),
@@ -303,10 +309,21 @@ class DebugpySettings(DebuggerSettings):
         return cli_args
 
     def get_environment_variables(self, profile: DebuggerProfile) -> dict[str, str]:
-        return dict(
+        env = dict(
             PATHS_FROM_ECLIPSE_TO_PYTHON=json.dumps(list(profile.get_source_mapping().items())),
             PYDEVD_DISABLE_FILE_VALIDATION="1",
         )
+
+        if self.debugpy_package_path:
+            python_path = os.environ.get('PYTHONPATH', '')
+            if python_path:
+                python_path = f"{self.debugpy_package_path}{os.pathsep}{python_path}"
+            else:
+                python_path = self.debugpy_package_path
+
+            env['PYTHONPATH'] = python_path
+
+        return env
 
 
 def initialize_debugger(args: CommonConfig) -> None:
@@ -420,6 +437,7 @@ class DebugpyOptions:
 
     port: int
     adapter_access_token: str | None
+    debugpy_package_path: str
 
 
 @cache
@@ -451,4 +469,5 @@ def detect_debugpy_options() -> DebugpyOptions | None:
     return DebugpyOptions(
         port=port,
         adapter_access_token=opts.adapter_access_token,
+        debugpy_package_path=str(pathlib.Path(debugpy.__file__).resolve().parent.parent),
     )
