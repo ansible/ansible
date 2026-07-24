@@ -5,6 +5,7 @@ using namespace System.Collections
 using namespace System.Collections.Generic
 using namespace System.Diagnostics.CodeAnalysis
 using namespace System.IO
+using namespace System.IO.Compression
 using namespace System.Linq
 using namespace System.Management.Automation
 using namespace System.Management.Automation.Language
@@ -47,6 +48,10 @@ param (
     [Parameter()]
     [string]
     $PwshPath,
+
+    [Parameter()]
+    [switch]
+    $DecompressInput,
 
     [Parameter()]
     [PSObject]
@@ -737,6 +742,7 @@ process {
         return
     }
 
+    $inputStream = $outputStream = $gzipStream = $null
     try {
         if ($actionPipeline) {
             # We received our manifest and started the action pipeline, redirect
@@ -753,6 +759,14 @@ process {
             if ($EncodeInputOutput) {
                 $jsonPipeline.Process([Encoding]::UTF8.GetString([Convert]::FromBase64String($InputObject)))
             }
+            elseif ($DecompressInput) {
+                $inputStream = [MemoryStream]::new([Convert]::FromBase64String($InputObject))
+                $gzipStream = [GZipStream]::new($inputStream, [CompressionMode]::Decompress)
+                $outputStream = [MemoryStream]::new()
+                $gzipStream.CopyTo($outputStream)
+
+                $jsonPipeline.Process([Encoding]::UTF8.GetString($outputStream.ToArray()))
+            }
             else {
                 $jsonPipeline.Process($InputObject)
             }
@@ -760,6 +774,11 @@ process {
     }
     catch {
         Write-AnsibleErrorJson -ErrorRecord $_
+    }
+    finally {
+        if ($inputStream) { $inputStream.Dispose() }
+        if ($outputStream) { $outputStream.Dispose() }
+        if ($gzipStream) { $gzipStream.Dispose() }
     }
 }
 
