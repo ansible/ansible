@@ -4,7 +4,7 @@ echo "Testing that ansible-test sanity actually ignores files when passed with t
 TESTFILE="./no_trailing_newline.txt"
 RESULTFILE="$OUTPUT_DIR/fix_filter_results.txt"
 
-trap "echo -n 'no trailing newline' > $TESTFILE" EXIT
+trap 'echo -n "no trailing newline" > $TESTFILE' EXIT
 
 ansible-test sanity --test trailing-newline --fix &> "$RESULTFILE"
 
