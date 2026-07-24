@@ -1,0 +1,4 @@
+bugfixes:
+  - apt_repository - treat a source line whose type is valid but which has fewer
+    than two following fields (for example a bare ``deb``) as invalid instead of
+    raising an ``IndexError`` while parsing sources.list files.
