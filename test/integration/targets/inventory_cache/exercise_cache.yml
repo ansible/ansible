@@ -1,4 +1,4 @@
 plugin: exercise_cache
 cache: true
-cache_plugin: jsonfile
+cache_plugin: ansible.builtin.jsonfile
 cache_connection: ./cache
