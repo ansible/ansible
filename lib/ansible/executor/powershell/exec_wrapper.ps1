@@ -144,6 +144,10 @@ begin {
                 $encCommand
             )
 
+            # Switch parameters need to be converted to a boolean so they
+            # serialized properly in JSON
+            $PSBoundParameters['DecompressInput'] = $PSBoundParameters['DecompressInput'].IsPresent
+
             $execManifest = @{
                 name = 'exec_wrapper-respawn.ps1'
                 params = $PSBoundParameters
