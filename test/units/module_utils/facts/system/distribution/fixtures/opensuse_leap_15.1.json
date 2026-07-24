@@ -27,6 +27,7 @@
     },
     "platform.dist": ["opensuse-leap", "15.1", ""],
     "result": {
+        "distribution_cpe_name": "cpe:/o:opensuse:leap:15.1",
         "distribution": "openSUSE Leap",
         "distribution_version": "15.1",
         "distribution_release": "1",

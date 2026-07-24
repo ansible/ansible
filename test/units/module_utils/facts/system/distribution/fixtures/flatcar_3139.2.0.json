@@ -33,6 +33,7 @@
         ""
     ],
     "result": {
+        "distribution_cpe_name": "cpe:2.3:o:flatcar-linux:flatcar_linux:3139.2.0:*:*:*:*:*:*:*",
         "distribution": "Flatcar",
         "distribution_version": "3139.2.0",
         "distribution_release": "NA",

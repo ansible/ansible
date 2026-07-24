@@ -2,6 +2,7 @@
     "name": "Amazon 2018.03",
     "platform.release": "4.14.94-73.73.amzn1.x86_64",
     "result": {
+        "distribution_cpe_name": "cpe:/o:amazon:linux:2018.03:ga",
         "distribution_release": "NA",
         "distribution": "Amazon",
         "distribution_major_version": "2018",

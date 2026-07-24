@@ -46,6 +46,7 @@
     },
     "platform.dist": ["fedora", "31", ""],
     "result": {
+        "distribution_cpe_name": "cpe:/o:fedoraproject:fedora:31",
         "distribution": "Fedora",
         "distribution_version": "31",
         "distribution_release": "",

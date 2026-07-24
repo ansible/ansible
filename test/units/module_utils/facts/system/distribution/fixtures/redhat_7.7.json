@@ -34,6 +34,7 @@
     },
     "platform.dist": ["rhel", "7.7", "Maipo"],
     "result": {
+        "distribution_cpe_name": "cpe:/o:redhat:enterprise_linux:7.7:GA:server",
         "distribution": "RedHat",
         "distribution_version": "7.7",
         "distribution_release": "Maipo",

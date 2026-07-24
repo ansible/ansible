@@ -35,6 +35,7 @@
         ""
     ],
     "result": {
+        "distribution_cpe_name": "cpe:/o:suse:sles:16:16.0",
         "distribution": "SLES_SAP",
         "distribution_version": "16.0",
         "distribution_release": "0",
