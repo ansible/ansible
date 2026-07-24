@@ -298,7 +298,6 @@ class CachePluginAdjudicator(c.MutableMapping):
     def __init__(self, plugin_name='memory', **kwargs):
         self._cache = {}
         self._retrieved = {}
-        self.plugin_name = plugin_name
         self._plugin = cache_loader.get(plugin_name, **kwargs)
 
     def update_cache_if_changed(self):

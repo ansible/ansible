@@ -98,7 +98,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
             raise
 
     def test_plugin_name(self):
-        self.test_equal(self.cache.plugin_name, self.get_option('cache_plugin'))
+        self.test_equal(self.cache._plugin.ansible_name, self.get_option('cache_plugin'))
 
     def test_update_cache_if_changed(self):
         self.cache._retrieved = {}
