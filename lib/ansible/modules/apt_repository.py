@@ -324,6 +324,9 @@ class SourcesList(object):
         else:
             remaining_parts = parts[1:]
 
+        if len(remaining_parts) < 2:
+            return False
+
         # According to `sources.list(5)` man pages, only four fields are mandatory:
         # * `Types` either `deb` or/and `deb-src`
         # * `URIs` to repositories holding valid APT structure (unclear if multiple are allowed)

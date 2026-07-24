@@ -25,6 +25,11 @@ from ansible.modules.apt_repository import SourcesList
             True,
             id="comment_at_end_line"
         ),
+        pytest.param("deb", False, id="type_only"),
+        pytest.param("deb https://example.com/debian", False, id="uri_without_suite"),
+        pytest.param("deb [arch=amd64] https://example.com/debian", False, id="option_uri_without_suite"),
+        pytest.param("", False, id="empty_source"),
+        pytest.param("deb [arch=amd64 http://example.com/debian focal main", False, id="unclosed_option_bracket"),
     ]
 )
 def test_validate(line, expected):
