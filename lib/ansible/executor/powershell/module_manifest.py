@@ -578,6 +578,7 @@ def _get_bootstrap_input(
     }
 
     bootstrap_input = json.dumps(bootstrap_manifest, ensure_ascii=True)
+
     exec_input = json.dumps(dataclasses.asdict(manifest))
     return f"{bootstrap_input}\n\0\0\0\0\n{exec_input}".encode()
 
