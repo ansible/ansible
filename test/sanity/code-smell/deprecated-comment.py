@@ -22,7 +22,7 @@ class DeprecationComment:
     linenum: int
     col: int
     deprecation_comment: str
-    description: str = "description not provided"
+    description: str = ""
     python_version: str = ""
     core_version: str = ""
 
@@ -61,6 +61,9 @@ def parse_deprecations(deprecations: Iterator[DeprecationComment]) -> Iterator[D
                 continue
             key, _sep, value = opt.partition('=')
             data[key.strip(',')] = value.strip(',')
+
+        if not data['description']:
+            data['description'] = 'description not provided'
 
         errors = []
         if not any((data['core_version'], data['python_version'])):
