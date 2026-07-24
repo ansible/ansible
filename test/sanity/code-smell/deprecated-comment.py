@@ -5,91 +5,50 @@ import re
 import shlex
 import sys
 
-from dataclasses import dataclass, field, replace
-from pathlib import Path
-from typing import Iterator
+from dataclasses import dataclass, replace
+from collections.abc import Iterator
 
 import ansible.release
 from ansible.module_utils.compat.version import LooseVersion
 
 ANSIBLE_VERSION = '.'.join(ansible.release.__version__.split('.')[:3])
 
-_COMMENT_PREFIXES = {
-    ".bash": r"#",
-    ".bat": r"\bREM\b",
-    ".cs": r"//",
-    ".fish": r"#",
-    ".ini": r";",
-    ".ps1": r"#",
-    ".psm1": r"#",
-    ".py": r"#",
-    ".pyi": r"#",
-    ".sh": r"#",
-    ".yml": r"#",
-    ".yaml": r"#",
-}
-
-
-def compile_comment_regexes():
-    regexes = {}
-    for filetype, prefix in _COMMENT_PREFIXES.items():
-        regex = re.compile(fr"{prefix}\s+deprecated: (.*)$")
-        regexes[filetype] = regex
-    return regexes
-
-
-COMMENT_REGEXES = compile_comment_regexes()
+COMMENT_REGEX = re.compile("(//|#|;) deprecated: (.*)")
 
 
 @dataclass(slots=True)
 class DeprecationComment:
-    path: Path
-
-    min_py: str
-
-    linenum: int = -1
-    col: int = 0
-    deprecation_comment: str = ""
-
-    parsed_deprecation: dict[str, str | None] = field(default_factory=dict)
+    path: str
+    linenum: int
+    col: int
+    deprecation_comment: str
+    description: str = "description not provided"
+    python_version: str = ""
+    core_version: str = ""
 
     @property
     def prefix(self) -> str:
         return f"{self.path}:{self.linenum}:{self.col}"
 
-    def with_deprecation(self, linenum: int, col: int, deprecation_comment: str) -> DeprecationComment:
-        return replace(self, linenum=linenum, col=col, deprecation_comment=deprecation_comment)
 
-
-def classify_files(min_controller_py: str, controller_files: list[str], min_target_py: str, target_files: list[str]) -> Iterator[DeprecationComment]:
-    """Yield a DeprecationComment per file whose extension supports deprecation comments."""
-    for raw_path in controller_files:
-        path = Path(raw_path)
-        if path.suffix in COMMENT_REGEXES:
-            yield DeprecationComment(path=path, min_py=min_controller_py)
-
-    for raw_path in target_files:
-        path = Path(raw_path)
-        if path.suffix in COMMENT_REGEXES:
-            yield DeprecationComment(path=path, min_py=min_target_py)
-
-
-def match_deprecations(stream: Iterator[DeprecationComment]) -> Iterator[DeprecationComment]:
+def match_deprecations(paths: list[str]) -> Iterator[DeprecationComment]:
     """Scan each file for lines containing a deprecation comment."""
-    for deprecation_file in stream:
-        regex = COMMENT_REGEXES[deprecation_file.path.suffix]
-        with open(deprecation_file.path, "r", encoding="utf-8", errors="ignore") as file:
+    for file_path in paths:
+        with open(file_path, "r", errors="ignore") as file:
             for linenum, full_line in enumerate(file, start=1):
-                match = regex.search(full_line)
+                match = COMMENT_REGEX.search(full_line)
                 if match:
-                    col = match.start()
-                    yield deprecation_file.with_deprecation(linenum, col, match.group(1))
+                    yield DeprecationComment(
+                        path=file_path,
+                        linenum=linenum,
+                        col=match.start(),
+                        deprecation_comment=match.group(2))
 
 
-def parse_deprecations(stream: Iterator[DeprecationComment]) -> Iterator[DeprecationComment]:
-    """Parse the deprecation comment into a dict."""
+def parse_deprecations(deprecations: Iterator[DeprecationComment]) -> Iterator[DeprecationComment]:
+    """Parse the deprecation comment."""
     valid_keys = {'description', 'core_version', 'python_version'}
-    for deprecation in stream:
+    for deprecation in deprecations:
         data = dict.fromkeys(valid_keys)
         try:
             options = shlex.split(deprecation.deprecation_comment)
@@ -103,9 +62,6 @@ def parse_deprecations(stream: Iterator[DeprecationComment]) -> Iterator[Depreca
             key, _sep, value = opt.partition('=')
             data[key.strip(',')] = value.strip(',')
 
-        if not data['description']:
-            data['description'] = 'description not provided'
-
         errors = []
         if not any((data['core_version'], data['python_version'])):
             errors.append("ansible-deprecated-version-comment-missing-version: Deprecated comment missing version")
@@ -116,15 +72,15 @@ def parse_deprecations(stream: Iterator[DeprecationComment]) -> Iterator[Depreca
             for error in errors:
                 print(f"{deprecation.prefix}: {error}")
         else:
-            yield replace(deprecation, parsed_deprecation=data)
+            yield replace(deprecation, **data)
 
 
-def process_deprecations(stream: Iterator[DeprecationComment]) -> None:
+def process_deprecations(stream: Iterator[DeprecationComment], min_py: str) -> None:
     """Report deprecations whose version has been reached or passed."""
     for deprecation in stream:
-        description = deprecation.parsed_deprecation['description']
-        core_version = deprecation.parsed_deprecation['core_version']
-        python_version = deprecation.parsed_deprecation['python_version']
+        description = deprecation.description
+        core_version = deprecation.core_version
+        python_version = deprecation.python_version
         err_prefix = deprecation.prefix
 
         if core_version:
@@ -136,7 +92,7 @@ def process_deprecations(stream: Iterator[DeprecationComment]) -> None:
 
         if python_version:
             try:
-                if LooseVersion(deprecation.min_py) > LooseVersion(python_version):
+                if LooseVersion(min_py) > LooseVersion(python_version):
                     print(f"{err_prefix}: ansible-deprecated-python-version-comment: Deprecated python version ('{python_version}') found: {description}")
             except (ValueError, TypeError) as exc:
                 print(f"{err_prefix}: ansible-deprecated-version-comment-invalid-version: Deprecated comment contains invalid version {python_version}: {exc}")
@@ -146,16 +102,16 @@ def main():
     """Main entry point."""
     raw_paths = sys.argv[1:] or sys.stdin.read().splitlines()
     separator_idx = raw_paths.index('--')
-    controller_paths = raw_paths[:separator_idx]
-    target_paths = raw_paths[separator_idx + 1 :]
+    controller_paths: list[str] = raw_paths[:separator_idx]
+    target_paths: list[str] = raw_paths[separator_idx + 1 :]
     min_controller_py = os.environ['ANSIBLE_TEST_CONTROLLER_PYTHON_VERSIONS'].split(',')[0]
     min_target_py = os.environ['ANSIBLE_TEST_REMOTE_ONLY_PYTHON_VERSIONS'].split(',')[0]
 
-    # Each stage yields valid states to the next; invalid ones are printed as errors and dropped.
-    classified_files: Iterator[DeprecationComment] = classify_files(min_controller_py, controller_paths, min_target_py, target_paths)
-    matched_deprecations: Iterator[DeprecationComment] = match_deprecations(classified_files)
-    parsed_deprecations: Iterator[DeprecationComment] = parse_deprecations(matched_deprecations)
-    process_deprecations(parsed_deprecations)
+    for (paths, min_python_version) in ((controller_paths, min_controller_py),
+                                        (target_paths, min_target_py)):
+        raw_deprecations = match_deprecations(paths)
+        deprecations = parse_deprecations(raw_deprecations)
+        process_deprecations(deprecations, min_python_version)
 
 
 if __name__ == '__main__':

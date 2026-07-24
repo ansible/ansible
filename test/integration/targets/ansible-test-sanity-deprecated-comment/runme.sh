@@ -9,8 +9,7 @@ export ANSIBLE_TEST_CONTROLLER_PYTHON_VERSIONS="3.13,3.14"
 export ANSIBLE_TEST_REMOTE_ONLY_PYTHON_VERSIONS="3.9,3.10"
 
 python "$SCRIPT_PATH" \
-    test_cases.py test_cases.sh test_cases.bash test_cases.bat test_cases.cs \
-    test_cases.fish test_cases.ini test_cases.ps1 test_cases.psm1 test_cases.pyi \
+    test_cases.py test_cases.sh test_cases.cs test_cases.ps1 \
     test_cases.yml test_cases.yaml \
     -- test_cases_target.py | tee "$RESULTS"
 
@@ -76,29 +75,11 @@ fi
 # Target file: python_version='3.8' IS expired for target (min 3.9)
 grep -q "test_cases_target.py:2:0: ansible-deprecated-python-version-comment:" "$RESULTS"
 
-# .bash file
-grep -q "test_cases.bash:1:0: ansible-deprecated-version-comment:" "$RESULTS"
-
-# .bat file: REM comment prefix
-grep -q "test_cases.bat:1:0: ansible-deprecated-version-comment:" "$RESULTS"
-
 # .cs file: // comment prefix
 grep -q "test_cases.cs:1:0: ansible-deprecated-version-comment:" "$RESULTS"
 
-# .fish file
-grep -q "test_cases.fish:1:0: ansible-deprecated-version-comment:" "$RESULTS"
-
-# .ini file: ; comment prefix
-grep -q "test_cases.ini:1:0: ansible-deprecated-version-comment:" "$RESULTS"
-
 # .ps1 file
 grep -q "test_cases.ps1:1:0: ansible-deprecated-version-comment:" "$RESULTS"
-
-# .psm1 file
-grep -q "test_cases.psm1:1:0: ansible-deprecated-version-comment:" "$RESULTS"
-
-# .pyi file
-grep -q "test_cases.pyi:1:0: ansible-deprecated-version-comment:" "$RESULTS"
 
 # .yml file: comment at root level
 grep -q "test_cases.yml:1:0: ansible-deprecated-version-comment:" "$RESULTS"
