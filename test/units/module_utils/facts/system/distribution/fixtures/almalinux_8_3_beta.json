@@ -43,6 +43,7 @@
         "Purple Manul"
     ],
     "result": {
+        "distribution_cpe_name": "cpe:/o:almalinux:almalinux:8.3:beta",
         "distribution": "AlmaLinux",
         "distribution_version": "8.3",
         "distribution_release": "Purple Manul",

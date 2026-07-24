@@ -36,6 +36,7 @@
         "Tirana"
     ],
     "result": {
+        "distribution_cpe_name": "cpe:/o:eurolinux:eurolinux:8",
         "distribution": "EuroLinux",
         "distribution_version": "8.5",
         "distribution_release": "Tirana",
