@@ -38,11 +38,7 @@ def match_deprecations(paths: list[str]) -> Iterator[DeprecationComment]:
             for linenum, full_line in enumerate(file, start=1):
                 match = COMMENT_REGEX.search(full_line)
                 if match:
-                    yield DeprecationComment(
-                        path=file_path,
-                        linenum=linenum,
-                        col=match.start(),
-                        deprecation_comment=match.group(2))
+                    yield DeprecationComment(path=file_path, linenum=linenum, col=match.start(), deprecation_comment=match.group(2))
 
 
 def parse_deprecations(deprecations: Iterator[DeprecationComment]) -> Iterator[DeprecationComment]:
@@ -110,8 +106,7 @@ def main():
     min_controller_py = os.environ['ANSIBLE_TEST_CONTROLLER_PYTHON_VERSIONS'].split(',')[0]
     min_target_py = os.environ['ANSIBLE_TEST_REMOTE_ONLY_PYTHON_VERSIONS'].split(',')[0]
 
-    for (paths, min_python_version) in ((controller_paths, min_controller_py),
-                                        (target_paths, min_target_py)):
+    for paths, min_python_version in ((controller_paths, min_controller_py), (target_paths, min_target_py)):
         raw_deprecations = match_deprecations(paths)
         deprecations = parse_deprecations(raw_deprecations)
         process_deprecations(deprecations, min_python_version)
