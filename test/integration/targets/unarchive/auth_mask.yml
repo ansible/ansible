@@ -1,0 +1,18 @@
+- hosts: testhost
+  gather_facts: false
+  tasks:
+  - name: unarchive auth fail a tar from an URL download from remote
+    unarchive: src="https://secretuser:secretpassword@localhost/nothere" dest="/tmp/" remote_src=no
+    ignore_errors: true
+    register: auth1
+  
+  - name: unarchive auth fail a tar from an URL download from controller
+    unarchive: src="https://secretuser:secretpassword@localhost/nothere" dest="/tmp/" remote_src=yes
+    ignore_errors: true
+    register: auth2
+  
+  - name: ensure not disclosure
+    assert:
+      that:
+        - "'secret' not in auth1|to_json"
+        - "'secret' not in auth2|to_json"

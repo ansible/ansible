@@ -448,6 +448,7 @@ from ansible.module_utils.urls import (
     create_multipart,
     fetch_url,
     get_response_filename,
+    mask_url,
     parse_content_type,
     url_argument_spec,
     url_redirect_argument_spec,
@@ -660,14 +661,14 @@ def main():
         # and the filename already exists.  This allows idempotence
         # of uri executions.
         if os.path.exists(creates):
-            module.exit_json(stdout="skipped, since '%s' exists" % creates, changed=False)
+            module.exit_json(stdout="No changes attempted, since '%s' exists" % creates, changed=False)
 
     if removes is not None:
         # do not run the command if the line contains removes=filename
         # and the filename does not exist.  This allows idempotence
         # of uri executions.
         if not os.path.exists(removes):
-            module.exit_json(stdout="skipped, since '%s' does not exist" % removes, changed=False)
+            module.exit_json(stdout="No changes attempted, since '%s' does not exist" % removes, changed=False)
 
     # Make the request
     start = datetime.now(timezone.utc)
@@ -712,7 +713,7 @@ def main():
             # may have been stored in the info as 'body'
             content = info.pop('body', b'')
         except http.client.HTTPException as http_err:
-            module.fail_json(msg=f"HTTP Error while fetching {url}: {to_native(http_err)}")
+            module.fail_json(msg=f"HTTP Error while fetching {mask_url(url)}: {to_native(http_err)}")
     elif r:
         content = r
     else:
@@ -721,6 +722,8 @@ def main():
     resp = {}
     resp['redirected'] = info['url'] != url
     resp.update(info)
+    if 'url' in resp:
+        resp['url'] = mask_url(resp['url'])
 
     resp['elapsed'] = elapsed
     resp['status'] = int(resp['status'])
@@ -747,7 +750,7 @@ def main():
         uresp[ukey] = value
 
     if 'location' in uresp:
-        uresp['location'] = urljoin(url, uresp['location'])
+        uresp['location'] = urljoin(mask_url(url), uresp['location'])
 
     # Default content_encoding to try
     if isinstance(content, bytes):
