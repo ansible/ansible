@@ -643,6 +643,17 @@ class AnsibleModule(object):
         context = self.selinux_initial_context()
         if not self.selinux_enabled():
             return context
+        # matchpathcon() uses the mode argument to disambiguate between fcontext
+        # rules that target different file types for the same path (e.g. a regular
+        # file vs a symbolic link). A mode of 0 means "unknown" and causes libselinux
+        # to pick whichever rule sorts first rather than the one matching the actual
+        # file type, so files end up mislabeled. When the caller did not pass an
+        # explicit mode and the path already exists, stat it and pass the real mode.
+        if mode == 0:
+            try:
+                mode = os.lstat(to_bytes(path, errors='surrogate_or_strict')).st_mode
+            except OSError:
+                pass
         try:
             ret = selinux.matchpathcon(to_native(path, errors='surrogate_or_strict'), mode)
         except OSError:

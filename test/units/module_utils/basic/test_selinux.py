@@ -97,6 +97,45 @@ class TestSELinuxMU:
             selinux.matchpathcon.side_effect = OSError
             assert am.selinux_default_context(path='/foo/bar') == [None, None, None, None]
 
+    def test_selinux_default_context_passes_st_mode_for_existing_path(self):
+        # When the path exists and the caller omits mode, selinux_default_context must
+        # stat the path and forward the real st_mode to matchpathcon so that fcontext
+        # rules keyed on file type (regular file vs symlink, etc.) resolve correctly.
+        am = no_args_module(selinux_enabled=True, selinux_mls_enabled=True)
+
+        fake_stat = type('st', (), {'st_mode': 0o100644})()  # S_IFREG | 0644
+        with patch.object(basic, 'selinux', create=True) as selinux, \
+                patch('os.lstat', return_value=fake_stat) as lstat:
+            selinux.matchpathcon.return_value = [0, 'system_u:object_r:httpd_config_t:s0']
+            assert am.selinux_default_context(path='/etc/httpd/conf.d/test.conf') == \
+                ['system_u', 'object_r', 'httpd_config_t', 's0']
+            lstat.assert_called_once_with(b'/etc/httpd/conf.d/test.conf')
+            assert selinux.matchpathcon.call_args[0][1] == 0o100644
+
+    def test_selinux_default_context_keeps_mode_zero_for_missing_path(self):
+        # A non-existent path cannot be stat-ed; mode must stay 0 (unknown) so
+        # behaviour for files created fresh matches libselinux's default lookup.
+        am = no_args_module(selinux_enabled=True, selinux_mls_enabled=True)
+
+        with patch.object(basic, 'selinux', create=True) as selinux, \
+                patch('os.lstat', side_effect=OSError) as lstat:
+            selinux.matchpathcon.return_value = [0, 'system_u:object_r:etc_t:s0']
+            assert am.selinux_default_context(path='/nonexistent/path') == \
+                ['system_u', 'object_r', 'etc_t', 's0']
+            lstat.assert_called_once_with(b'/nonexistent/path')
+            assert selinux.matchpathcon.call_args[0][1] == 0
+
+    def test_selinux_default_context_respects_explicit_mode(self):
+        # An explicit mode argument must be forwarded as-is; the path must not be stat-ed.
+        am = no_args_module(selinux_enabled=True, selinux_mls_enabled=True)
+
+        with patch.object(basic, 'selinux', create=True) as selinux, \
+                patch('os.lstat', side_effect=AssertionError('should not stat when mode is explicit')) as lstat:
+            selinux.matchpathcon.return_value = [0, 'system_u:object_r:httpd_config_t:s0']
+            assert am.selinux_default_context(path='/foo/bar', mode=0o120644) == \
+                ['system_u', 'object_r', 'httpd_config_t', 's0']
+            assert selinux.matchpathcon.call_args[0][1] == 0o120644
+
     def test_selinux_context(self):
         # selinux unavailable
         with patch.object(basic, 'HAVE_SELINUX', False):
