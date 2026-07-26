@@ -81,6 +81,14 @@ begin {
     if ($PwshPath) {
         $null = $PSBoundParameters.Remove('PwshPath')
 
+        if ($PwshPath -eq 'powershell') {
+            # The default shebang for PowerShell modules is #!powershell which
+            # on Windows means to use the builtin powershell. We hardcode the
+            # path to the known location for the current process arch's
+            # powershell.exe.
+            $PwshPath = 'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe'
+        }
+
         $targetPwsh = Get-Command -Name $PwshPath -CommandType Application -ErrorAction Ignore |
             Select-Object -First 1 |
             ForEach-Object { [Path]::GetFullPath($_.Path) }
