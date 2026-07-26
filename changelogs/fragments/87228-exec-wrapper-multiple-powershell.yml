@@ -1,0 +1,2 @@
+bugfixes:
+  - powershell exec_wrapper - handle multiple powershell.exe entries found in PATH by selecting the first match instead of producing an array that broke downstream path resolution (https://github.com/ansible/ansible/issues/87228).

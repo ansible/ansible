@@ -81,7 +81,12 @@ begin {
     if ($PwshPath) {
         $null = $PSBoundParameters.Remove('PwshPath')
 
+        # Select the first match so $targetPwsh stays a single string even when
+        # multiple powershell.exe entries are reachable through PATH (e.g. both
+        # System32 and SysWOW64 WindowsPowerShell directories). Without this,
+        # Get-Command returns an array and the downstream path operations fail.
         $targetPwsh = Get-Command -Name $PwshPath -CommandType Application -ErrorAction Ignore |
+            Select-Object -First 1 |
             ForEach-Object { [Path]::GetFullPath($_.Path) }
         if (-not $targetPwsh) {
             @{
