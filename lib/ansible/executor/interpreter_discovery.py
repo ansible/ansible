@@ -25,7 +25,12 @@ class InterpreterDiscoveryRequiredError(Exception):
 
 def discover_interpreter(action, interpreter_name, discovery_mode, task_vars):
     """Probe the target host for a Python interpreter from the `INTERPRETER_PYTHON_FALLBACK` list, returning the first found or `/usr/bin/python3` if none."""
-    host = task_vars.get('inventory_hostname', 'unknown')
+    # When a task is delegated, the discovery probe runs against the delegated
+    # host, but task_vars['inventory_hostname'] still names the original play
+    # host (see VariableManager.get_delegated_vars_and_hostname). Use the
+    # delegated host name so warning/debug messages match the probed target.
+    delegate_to = getattr(getattr(action, '_task', None), 'delegate_to', None)
+    host = delegate_to or task_vars.get('inventory_hostname', 'unknown')
     res = None
     found_interpreters = [_FALLBACK_INTERPRETER]  # fallback value
     is_silent = discovery_mode.endswith('_silent')

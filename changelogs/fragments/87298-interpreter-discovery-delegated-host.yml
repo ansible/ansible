@@ -1,0 +1,2 @@
+bugfixes:
+  - interpreter_discovery - fix warning and debug messages to name the delegated host when ``delegate_to`` is used, instead of the original inventory host (https://github.com/ansible/ansible/issues/87298)
