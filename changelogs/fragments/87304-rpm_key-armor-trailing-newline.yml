@@ -1,0 +1,4 @@
+bugfixes:
+  - rpm_key - ensure a trailing newline is present on PGP armor data before
+    passing it to librpm for parsing, fixing failures on systems where
+    ``pgpParsePkts`` requires it (https://github.com/ansible/ansible/issues/87303).

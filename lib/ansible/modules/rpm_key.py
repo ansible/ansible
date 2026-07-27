@@ -161,6 +161,9 @@ class LibRPM:
         pkt = ctypes.POINTER(ctypes.c_uint8)()
         pktlen = ctypes.c_size_t()
 
+        if not armor.endswith("\n"):
+            armor += "\n"
+
         armor_bytes = armor.encode()
         result = self._lib.pgpParsePkts(armor_bytes, ctypes.byref(pkt), ctypes.byref(pktlen))
 
