@@ -1,2 +1,2 @@
 bugfixes:
-  - Role argument spec validation - the implicit validation task now respects role tags instead of always running, matching the behavior of implicit fact gathering (https://github.com/ansible/ansible/issues/82505).
+  - Role argument spec validation - the implicit validation task no longer runs for roles that have no tasks selected by tags (https://github.com/ansible/ansible/issues/82505).

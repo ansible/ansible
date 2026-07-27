@@ -1,0 +1,21 @@
+---
+# Role tagged foo with an inner task tagged bar (mkrizek's review case).
+# --tags bar must still run validation because a role task executes.
+- hosts: localhost
+  gather_facts: false
+  roles:
+    - role: mixed_tags
+      tags: foo
+      mixed_str: "roles keyword mixed tags"
+
+# Same scenario via import_role.
+- hosts: localhost
+  gather_facts: false
+  tasks:
+      - name: "import_role with role-level tags and mixed task tags"
+        import_role:
+            name: mixed_tags
+        vars:
+            mixed_str: "import_role mixed tags"
+        tags:
+            - foo

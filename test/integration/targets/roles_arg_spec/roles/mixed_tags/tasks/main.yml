@@ -1,0 +1,8 @@
+---
+- debug:
+    msg: "untagged task in mixed_tags with {{ mixed_str }}"
+
+- debug:
+    msg: "bar-tagged task in mixed_tags with {{ mixed_str }}"
+  tags:
+    - bar
