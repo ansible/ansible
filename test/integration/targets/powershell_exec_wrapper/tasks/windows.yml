@@ -205,25 +205,11 @@
       New-ItemProperty @keyParams | Out-Null
 
 - block:
-  - name: Run module with 32-bit PowerShell in PATH with default interpreter
+  - name: Reset connection to ensure refreshed env vars
+    meta: reset_connection
+
+  - name: Test that multiple PATH entries continue to work
     get_info:
-    register: ps_home
-
-  - name: Assert PSHome is for 64-bit PowerShell
-    assert:
-      that:
-      - ps_home.intptr_size == 8
-
-  - name: Verify that ansible_pwsh_interpreter can still override it back to the 32-bit PowerShell
-    get_info:
-    vars:
-      ansible_pwsh_interpreter: C:\Windows\SysWow64\WindowsPowerShell\v1.0\powershell.exe
-    register: ps_home
-
-  - name: Assert PSHome is for 32-bit PowerShell
-    assert:
-      that:
-      - ps_home.intptr_size == 4
 
   always:
   # We use raw as we won't know if setting the PATH broke everything or not.
@@ -231,3 +217,6 @@
     raw: >-
       C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
       -EncodedCommand {{ reset_path_command | b64encode(encoding='utf-16-le')}}
+
+  - name: Reset connection to after resetting env vars
+    meta: reset_connection

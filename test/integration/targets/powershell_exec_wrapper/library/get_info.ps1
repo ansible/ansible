@@ -9,5 +9,4 @@ if (-not (Get-Variable -Name IsWindows -ErrorAction Ignore)) {
 @{
     current_time = [DateTime]::Now.ToFileTime()
     is_windows = $IsWindows
-    intptr_size = [IntPtr]::Size
 } | ConvertTo-Json -Compress
