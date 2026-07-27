@@ -159,3 +159,64 @@
   failed_when: >-
     iso8601_date.value != '2040-10-27T14:30:00' or
     iso8601_date.value_type != 'System.String'
+
+# https://github.com/ansible/ansible/issues/87228
+- name: Prepend 32-bit PATH for interpreter check
+  ansible.windows.win_powershell:
+    script: |
+      $ErrorActionPreference = 'Stop'
+
+      $keyPath = 'HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Environment'
+      $sysWowPowerShell = 'C:\Windows\SysWow64\WindowsPowerShell\v1.0'
+
+      $key = Get-Item -LiteralPath $keyPath
+      $rawPath = $key.GetValue('PATH', '', 'DoNotExpandEnvironmentNames')
+      $key.Dispose()
+
+      [System.Management.Automation.Language.CodeGeneration]::EscapeSingleQuotedStringContent($rawPath)
+
+      $keyParams = @{
+          Path = $keyPath
+          Name = 'PATH'
+          Value = "$sysWowPowerShell;$rawPath"
+          PropertyType = 'ExpandString'
+          Force = $true
+          Confirm = $false
+      }
+      New-ItemProperty @keyParams | Out-Null
+  register: path_info
+
+- name: Set reset PowerShell script to restore PATH to original value
+  set_fact:
+    reset_path_command: |
+      $ErrorActionPreference = 'Stop'
+
+      $keyPath = 'HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Environment'
+      $rawPath = '{{ path_info.output[0] }}'
+
+      $keyParams = @{
+          Path = $keyPath
+          Name = 'PATH'
+          Value = $rawPath
+          PropertyType = 'ExpandString'
+          Force = $true
+          Confirm = $false
+      }
+      New-ItemProperty @keyParams | Out-Null
+
+- block:
+  - name: Reset connection to ensure refreshed env vars
+    meta: reset_connection
+
+  - name: Test that multiple PATH entries continue to work
+    get_info:
+
+  always:
+  # We use raw as we won't know if setting the PATH broke everything or not.
+  - name: Reset PATH back to the original value
+    raw: >-
+      C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
+      -EncodedCommand {{ reset_path_command | b64encode(encoding='utf-16-le')}}
+
+  - name: Reset connection to after resetting env vars
+    meta: reset_connection
