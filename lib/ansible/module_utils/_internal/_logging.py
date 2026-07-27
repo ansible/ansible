@@ -55,7 +55,7 @@ def log_to_system(
         msg = " ".join([target_log_info, msg])
 
     if has_journal:
-        journal_args = [("MODULE", os.path.basename(__file__))]
+        journal_args = [("MODULE", module_name)]
         for arg in log_args:
             name, value = (arg.upper(), str(log_args[arg]))
             if name in (
