@@ -70,6 +70,8 @@ except ImportError:
 NoneType = type(None)
 
 from ._internal import _traceback, _errors, _debugging, _deprecator, _messages, _logging
+# Re-export logging capability flags as public API for backward compatibility
+from ._internal._logging import HAS_SYSLOG, has_journal
 
 from .common.text.converters import (
     to_native,
