@@ -49,8 +49,11 @@ from ansible.utils.vars import combine_vars
 #       * https://stackoverflow.com/q/39740632/199513
 #       * https://peps.python.org/pep-0484/#forward-references
 if _t.TYPE_CHECKING:
+    from collections.abc import Callable
+
     from ansible.playbook.block import Block
     from ansible.playbook.play import Play
+    from ansible.playbook.task import Task
 
 __all__ = ['Role', 'hash_params', 'prune_orphaned_role_argspec_validation']
 
@@ -679,7 +682,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
             dep.set_loader(loader)
 
 
-def _is_role_argspec_validation_task(task) -> bool:
+def _is_role_argspec_validation_task(task: Task) -> bool:
     """Return True if task is the implicit role argument-spec validation task."""
     if task.action not in _VALIDATE_ARGUMENT_SPEC_ACTIONS:
         return False
@@ -687,7 +690,7 @@ def _is_role_argspec_validation_task(task) -> bool:
     return isinstance(context, Mapping) and context.get('type') == 'role'
 
 
-def _is_role_complete_task(task) -> bool:
+def _is_role_complete_task(task: Task) -> bool:
     """Return True if task is the implicit meta: role_complete marker."""
     return (
         task.action in C._ACTION_META
@@ -705,7 +708,12 @@ def _role_had_user_tasks(role: Role) -> bool:
     return False
 
 
-def _evaluate_tags_without_always(task, only_tags, skip_tags, all_vars) -> bool:
+def _evaluate_tags_without_always(
+    task: Task,
+    only_tags: _t.AbstractSet[str],
+    skip_tags: _t.AbstractSet[str],
+    all_vars: dict[str, _t.Any],
+) -> bool:
     """Evaluate tags as if the task did not have the special ``always`` tag."""
     saved_tags = task._tags
     # Clear the task-local tags (``always``) so only inherited role/import tags apply.
@@ -716,7 +724,7 @@ def _evaluate_tags_without_always(task, only_tags, skip_tags, all_vars) -> bool:
         task._tags = saved_tags
 
 
-def _walk_block_tasks(block, callback) -> None:
+def _walk_block_tasks(block: Block, callback: Callable[[Task], None]) -> None:
     """Invoke callback for every Task in a block tree (including nested blocks)."""
     from ansible.playbook.block import Block
 
@@ -734,7 +742,7 @@ def _walk_block_tasks(block, callback) -> None:
     _walk(block.always)
 
 
-def _remove_validation_tasks(block, roles_to_prune: set[int]):
+def _remove_validation_tasks(block: Block, roles_to_prune: set[int]) -> Block:
     """Return a copy of block without argspec validation for roles in roles_to_prune."""
     from ansible.playbook.block import Block
 
@@ -764,7 +772,10 @@ def _remove_validation_tasks(block, roles_to_prune: set[int]):
     return new_block
 
 
-def prune_orphaned_role_argspec_validation(blocks, all_vars):
+def prune_orphaned_role_argspec_validation(
+    blocks: Sequence[Block],
+    all_vars: dict[str, _t.Any],
+) -> Sequence[Block]:
     """Drop role argspec validation when the role has no runnable tagged tasks.
 
     The validation task is tagged ``always`` so it survives ``filter_tagged_tasks``.
@@ -782,7 +793,7 @@ def prune_orphaned_role_argspec_validation(blocks, all_vars):
 
     role_info: dict[int, dict] = {}
 
-    def _collect(task) -> None:
+    def _collect(task: Task) -> None:
         role = getattr(task, '_role', None)
         if role is None:
             return
