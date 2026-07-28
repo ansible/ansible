@@ -1,5 +1,5 @@
 minor_changes:
   - >-
-    System logging (syslog/journald) is now available as a standalone
+    logging - System logging (syslog/journald) is now available as a standalone
     ``log_to_system()`` function in ``ansible.module_utils._internal._logging``,
-    decoupled from ``AnsibleModule``.
+    decoupled from ``AnsibleModule`` (https://github.com/ansible/ansible/pull/87250).
