@@ -773,9 +773,9 @@ def _remove_validation_tasks(block: Block, roles_to_prune: set[int]) -> Block:
 
 
 def prune_orphaned_role_argspec_validation(
-    blocks: Sequence[Block],
+    blocks: list[Block],
     all_vars: dict[str, _t.Any],
-) -> Sequence[Block]:
+) -> list[Block]:
     """Drop role argspec validation when the role has no runnable tagged tasks.
 
     The validation task is tagged ``always`` so it survives ``filter_tagged_tasks``.
