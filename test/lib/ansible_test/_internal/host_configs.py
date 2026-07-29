@@ -421,7 +421,7 @@ class PosixRemoteConfig(RemoteConfig, ControllerHostConfig, PosixConfig):
 
         self.become = self.become or defaults.become
 
-        if self.version in ('latest', ''):
+        if not defaults.is_default:
             self.name = defaults.name
 
     @property
@@ -454,7 +454,7 @@ class WindowsRemoteConfig(RemoteConfig, WindowsConfig):
 
         self.connection = self.connection or defaults.connection
 
-        if self.version in ('latest', ''):
+        if not defaults.is_default:
             self.name = defaults.name
 
 
