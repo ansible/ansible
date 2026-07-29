@@ -212,7 +212,7 @@ def main():
                    "Humans, do not call directly!"
         }, 1)
 
-    jid = "%s.%d" % (sys.argv[1], os.getpid())
+    jid = "%s.%d" % (os.path.basename(sys.argv[1]), os.getpid())
     time_limit = sys.argv[2]
     preserve_tmp = sys.argv[3].lower() == 'true'
     wrapped_module = sys.argv[4]
