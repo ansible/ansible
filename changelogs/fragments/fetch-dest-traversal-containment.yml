@@ -1,0 +1,6 @@
+security_fixes:
+  - >-
+    fetch - validate the assembled destination path after it is built so a crafted
+    inventory hostname or remote source path can no longer place the fetched file
+    outside the requested ``dest`` directory on the controller (the previous check
+    ran before the path was assembled and never triggered).
