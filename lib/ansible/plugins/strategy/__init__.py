@@ -579,17 +579,35 @@ class StrategyBase:
                     # we save the failed task in a special var for use
                     # within the rescue/always
                     if iterator.is_any_block_rescuing(state_when_failed):
-                        self._tqm._stats.increment('rescued', original_host.name)
+                        if original_task.run_once:
+                            # When run_once, failure was propagated to all hosts,
+                            # so rescue should also be propagated to all hosts.
+                            for h in self._inventory.get_hosts(iterator._play.hosts):
+                                if h.name not in self._tqm._unreachable_hosts:
+                                    self._tqm._stats.increment('rescued', h.name)
+                                    try:
+                                        iterator._play._removed_hosts.remove(h.name)
+                                    except ValueError:
+                                        pass
+                                    self._variable_manager.set_nonpersistent_facts(
+                                        h.name,
+                                        dict(
+                                            ansible_failed_task=original_task.dump_attrs(),
+                                            ansible_failed_result=task_result.utr.as_result_dict(),
+                                        ),
+                                    )
+                        else:
+                            self._tqm._stats.increment('rescued', original_host.name)
 
-                        iterator._play._removed_hosts.remove(original_host.name)
+                            iterator._play._removed_hosts.remove(original_host.name)
 
-                        self._variable_manager.set_nonpersistent_facts(
-                            original_host.name,
-                            dict(
-                                ansible_failed_task=original_task.dump_attrs(),
-                                ansible_failed_result=task_result.utr.as_result_dict(),
-                            ),
-                        )
+                            self._variable_manager.set_nonpersistent_facts(
+                                original_host.name,
+                                dict(
+                                    ansible_failed_task=original_task.dump_attrs(),
+                                    ansible_failed_result=task_result.utr.as_result_dict(),
+                                ),
+                            )
                     else:
                         self._tqm._stats.increment('failures', original_host.name)
                 else:
