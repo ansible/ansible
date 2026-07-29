@@ -208,17 +208,10 @@ class GenericBsdIfconfigNetwork(Network):
         # cidr style ip address (eg, 127.0.0.1/24) in inet line
         # used in netbsd ifconfig -e output after 7.1
         if '/' in address['address']:
-            ip_address, cidr_mask = address['address'].split('/')
-
-            address['address'] = ip_address
-
-            netmask_length = int(cidr_mask)
-            netmask_bin = (1 << 32) - (1 << 32 >> int(netmask_length))
-            address['netmask'] = socket.inet_ntoa(struct.pack('!L', netmask_bin))
+            address['address'], netmask = address['address'].split('/')
 
             if len(words) > 5:
                 address['broadcast'] = words[3]
-
         else:
             # Don't just assume columns, use "netmask" as the index for the prior column
             try:
@@ -227,19 +220,21 @@ class GenericBsdIfconfigNetwork(Network):
                 netmask_idx = 3
 
             netmask = words[netmask_idx]
-            if '/' in netmask:
-                netmask_length = int(netmask.rsplit('/', 1)[1])
-                netmask_bin = (1 << 32) - (1 << 32 >> netmask_length)
-                netmask = socket.inet_ntoa(struct.pack('!L', netmask_bin))
-            # deal with hex netmask
-            if re.match('([0-9a-f]){8}$', netmask):
-                netmask = '0x' + netmask
 
-            if netmask.startswith('0x'):
-                address['netmask'] = socket.inet_ntoa(struct.pack('!L', int(netmask, base=16)))
-            else:
-                # otherwise assume this is a dotted quad
-                address['netmask'] = netmask
+        if '/' in netmask:
+            netmask = netmask.rsplit('/', 1)[1]
+        if netmask.isdigit():
+            netmask_length = int(netmask)
+            netmask_bin = (1 << 32) - (1 << 32 >> netmask_length)
+            netmask = socket.inet_ntoa(struct.pack('!L', netmask_bin))
+        # deal with hex netmask
+        if re.match('([0-9a-f]){8}$', netmask):
+            netmask = '0x' + netmask
+        if netmask.startswith('0x'):
+            address['netmask'] = socket.inet_ntoa(struct.pack('!L', int(netmask, base=16)))
+        else:
+            # otherwise assume this is a dotted quad
+            address['netmask'] = netmask
         # calculate the network
         address_bin = struct.unpack('!L', socket.inet_aton(address['address']))[0]
         netmask_bin = struct.unpack('!L', socket.inet_aton(address['netmask']))[0]
