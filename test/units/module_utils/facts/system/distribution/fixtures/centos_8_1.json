@@ -44,6 +44,7 @@
         "Core"
     ],
     "result": {
+        "distribution_cpe_name": "cpe:/o:centos:centos:8",
         "distribution": "CentOS",
         "distribution_version": "8.1",
         "distribution_release": "Core",

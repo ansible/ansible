@@ -41,6 +41,7 @@
         "bookworm"
     ],
     "result": {
+        "distribution_cpe_name": "cpe:/o:univention:univention_corporate_server:5.2",
         "distribution": "Univention Corporate Server",
         "distribution_version": "5.2",
         "distribution_release": "bookworm",

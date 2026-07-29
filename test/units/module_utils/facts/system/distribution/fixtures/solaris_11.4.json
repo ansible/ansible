@@ -26,6 +26,7 @@
     },
     "platform.system": "SunOS",
     "result": {
+        "distribution_cpe_name": "cpe:/o:oracle:solaris:11:4",
         "distribution_release": "Oracle Solaris 11.4 SPARC",
         "distribution": "Solaris",
         "os_family": "Solaris",
