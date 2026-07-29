@@ -171,8 +171,8 @@ def inject_post_init_validation(cls: type, allow_subclasses=False) -> None:
 
     code = compile(source, filename, 'exec')
 
-    exec(code, exec_globals)
-    setattr(cls, method_name, exec_globals[method_name])
+    func_code = next(c for c in code.co_consts if isinstance(c, types.CodeType) and c.co_name == method_name)
+    setattr(cls, method_name, types.FunctionType(func_code, exec_globals))
 
 
 @functools.lru_cache(maxsize=1)
