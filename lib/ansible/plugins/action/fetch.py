@@ -134,11 +134,6 @@ class ActionModule(ActionBase):
             else:
                 source_local = source
 
-            # ensure we only use file name, avoid relative paths
-            if not is_subpath(dest, original_dest):
-                # TODO: ? dest = os.path.expanduser(dest.replace(('../','')))
-                raise AnsibleActionFail("Detected directory traversal, expected to be contained in '%s' but got '%s'" % (original_dest, dest))
-
             if flat:
                 if os.path.isdir(to_bytes(dest, errors='surrogate_or_strict')) and not dest.endswith(os.sep):
                     raise AnsibleActionFail("dest is an existing directory, use a trailing slash if you want to fetch src into that directory")
@@ -163,6 +158,11 @@ class ActionModule(ActionBase):
                 dest = "%s/%s/%s" % (self._loader.path_dwim(dest), target_name, source_local)
 
             dest = os.path.normpath(dest)
+
+            # the assembled dest embeds the inventory hostname and the (remote) source path,
+            # so validate the final path stays inside the requested destination before writing
+            if not is_subpath(dest, self._loader.path_dwim(original_dest)):
+                raise AnsibleActionFail("Detected directory traversal, expected to be contained in '%s' but got '%s'" % (original_dest, dest))
 
             # calculate checksum for the local file
             local_checksum = checksum(dest)
