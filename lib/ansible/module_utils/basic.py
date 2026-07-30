@@ -395,6 +395,7 @@ class AnsibleModule(object):
         self._socket_path = None
         self._shell = None
         self._syslog_facility = 'LOG_USER'
+        self._target_log_severity = 'LOG_INFO'
         self._verbosity = 0
         # May be used to set modifications to the environment for any
         # run_command invocation
@@ -1255,8 +1256,9 @@ class AnsibleModule(object):
             try:
                 module = 'ansible-%s' % self._name
                 facility = getattr(syslog, self._syslog_facility, syslog.LOG_USER)
+                level = getattr(syslog, self._target_log_severity, syslog.LOG_INFO)
                 syslog.openlog(str(module), 0, facility)
-                syslog.syslog(syslog.LOG_INFO, msg)
+                syslog.syslog(level, msg)
             except (TypeError, ValueError) as e:
                 self.fail_json(
                     msg='Failed to log to syslog (%s). To proceed anyway, '
@@ -1311,6 +1313,8 @@ class AnsibleModule(object):
                         name = "_%s" % name
                     journal_args.append((name, value))
 
+                priority = getattr(syslog, self._target_log_severity, syslog.LOG_INFO)
+
                 try:
                     if HAS_SYSLOG:
                         # If syslog_facility specified, it needs to convert
@@ -1321,9 +1325,11 @@ class AnsibleModule(object):
                                            syslog.LOG_USER) >> 3
                         journal.send(MESSAGE=u"%s %s" % (module, journal_msg),
                                      SYSLOG_FACILITY=facility,
+                                     PRIORITY=priority,
                                      **dict(journal_args))
                     else:
                         journal.send(MESSAGE=u"%s %s" % (module, journal_msg),
+                                     PRIORITY=priority,
                                      **dict(journal_args))
                 except OSError:
                     # fall back to syslog since logging to journal failed

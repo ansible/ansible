@@ -1085,6 +1085,9 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         # allow user to insert string to add context to remote logging
         module_args['_ansible_target_log_info'] = C.config.get_config_value('TARGET_LOG_INFO', variables=task_vars)
 
+        # set the syslog-style severity to be used in the module
+        module_args['_ansible_target_log_severity'] = C.config.get_config_value('TARGET_LOG_SEVERITY', variables=task_vars)
+
         module_args['_ansible_tracebacks_for'] = _traceback.traceback_for()
 
         module_args['_ansible_inject_invocation'] = C.config.get_config_value('INJECT_INVOCATION', variables=task_vars)

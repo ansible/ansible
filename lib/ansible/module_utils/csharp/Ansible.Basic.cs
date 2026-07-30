@@ -77,6 +77,7 @@ namespace Ansible.Basic
             { "socket", null },
             { "syslog_facility", null },
             { "target_log_info", "TargetLogInfo" },
+            { "target_log_severity", null },
             { "tracebacks_for", "_tracebacksFor" },
             { "tmpdir", "tmpdir" },
             { "verbosity", "Verbosity" },

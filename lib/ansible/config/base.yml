@@ -2033,6 +2033,14 @@ TARGET_LOG_INFO:
   vars:
   - name: ansible_target_log_info
   version_added: "2.17"
+TARGET_LOG_SEVERITY:
+  name: logging severity
+  default: LOG_INFO
+  description: Default syslog-style log level to use when Ansible logs to the remote target.
+  env: [{name: ANSIBLE_TARGET_LOG_SEVERITY}]
+  ini:
+  - {key: target_log_severity, section: defaults}
+
 TASK_TIMEOUT:
   name: Task Timeout
   default: 0
