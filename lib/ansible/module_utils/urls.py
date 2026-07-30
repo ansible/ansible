@@ -40,6 +40,7 @@ import os
 import platform
 import re
 import socket
+import sys
 import tempfile
 import traceback
 import types  # pylint: disable=unused-import
@@ -233,8 +234,9 @@ if HAS_SSL:
         http.client.HTTPConnection.connect = _connect
 
     class UnixHTTPSConnection(http.client.HTTPSConnection):  # type: ignore[no-redef]
-        def __init__(self, unix_socket):
+        def __init__(self, unix_socket, max_response_headers=None):
             self._unix_socket = unix_socket
+            self._max_response_headers = max_response_headers
 
         def connect(self):
             # This method exists simply to ensure we monkeypatch
@@ -246,13 +248,16 @@ if HAS_SSL:
                 super().connect()
 
         def __call__(self, *args, **kwargs):
+            if self._max_response_headers is not None and sys.version_info >= (3, 15):
+                kwargs['max_response_headers'] = self._max_response_headers
             super().__init__(*args, **kwargs)
             return self
 
     class UnixHTTPSHandler(urllib.request.HTTPSHandler):  # type: ignore[no-redef]
-        def __init__(self, unix_socket, **kwargs):
+        def __init__(self, unix_socket, max_response_headers=None, **kwargs):
             super().__init__(**kwargs)
             self._unix_socket = unix_socket
+            self._max_response_headers = max_response_headers
 
         def https_open(self, req):
             kwargs = {}
@@ -262,7 +267,7 @@ if HAS_SSL:
             except AttributeError:
                 pass
             return self.do_open(
-                UnixHTTPSConnection(self._unix_socket),
+                UnixHTTPSConnection(self._unix_socket, max_response_headers=self._max_response_headers),
                 req,
                 context=self._context,
                 **kwargs
@@ -272,8 +277,9 @@ if HAS_SSL:
 class UnixHTTPConnection(http.client.HTTPConnection):
     """Handles http requests to a unix socket file"""
 
-    def __init__(self, unix_socket):
+    def __init__(self, unix_socket, max_response_headers=None):
         self._unix_socket = unix_socket
+        self._max_response_headers = max_response_headers
 
     def connect(self):
         self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
@@ -285,6 +291,8 @@ class UnixHTTPConnection(http.client.HTTPConnection):
             self.sock.settimeout(self.timeout)
 
     def __call__(self, *args, **kwargs):
+        if self._max_response_headers is not None and sys.version_info >= (3, 15):
+            kwargs['max_response_headers'] = self._max_response_headers
         super().__init__(*args, **kwargs)
         return self
 
@@ -292,12 +300,13 @@ class UnixHTTPConnection(http.client.HTTPConnection):
 class UnixHTTPHandler(urllib.request.HTTPHandler):
     """Handler for Unix urls"""
 
-    def __init__(self, unix_socket, **kwargs):
+    def __init__(self, unix_socket, max_response_headers=None, **kwargs):
         super().__init__(**kwargs)
         self._unix_socket = unix_socket
+        self._max_response_headers = max_response_headers
 
     def http_open(self, req):
-        return self.do_open(UnixHTTPConnection(self._unix_socket), req)
+        return self.do_open(UnixHTTPConnection(self._unix_socket, max_response_headers=self._max_response_headers), req)
 
 
 class ParseResultDottedDict(dict):
@@ -726,7 +735,7 @@ class Request:
                  url_username=None, url_password=None, http_agent=None, force_basic_auth=False,
                  follow_redirects='urllib2', client_cert=None, client_key=None, cookies=None, unix_socket=None,
                  ca_path=None, unredirected_headers=None, decompress=True, ciphers=None, use_netrc=True,
-                 context=None):
+                 context=None, max_response_headers=None):
         """This class works somewhat similarly to the ``Session`` class of from requests
         by defining a cookiejar that can be used across requests as well as cascaded defaults that
         can apply to repeated requests
@@ -766,6 +775,7 @@ class Request:
         self.ciphers = ciphers
         self.use_netrc = use_netrc
         self.context = context
+        self.max_response_headers = max_response_headers
         if isinstance(cookies, cookiejar.CookieJar):
             self.cookies = cookies
         else:
@@ -782,7 +792,7 @@ class Request:
              force_basic_auth=None, follow_redirects=None,
              client_cert=None, client_key=None, cookies=None, use_gssapi=False,
              unix_socket=None, ca_path=None, unredirected_headers=None, decompress=None,
-             ciphers=None, use_netrc=None, context=None):
+             ciphers=None, use_netrc=None, context=None, max_response_headers=None):
         """
         Sends a request via HTTP(S) or FTP using urllib (Python3)
 
@@ -854,11 +864,12 @@ class Request:
         ciphers = self._fallback(ciphers, self.ciphers)
         use_netrc = self._fallback(use_netrc, self.use_netrc)
         context = self._fallback(context, self.context)
+        max_response_headers = self._fallback(max_response_headers, self.max_response_headers)
 
         handlers = []
 
         if unix_socket:
-            handlers.append(UnixHTTPHandler(unix_socket))
+            handlers.append(UnixHTTPHandler(unix_socket, max_response_headers=max_response_headers))
 
         url, auth_headers, auth_handlers = _configure_auth(url, url_username, url_password, use_gssapi, force_basic_auth, use_netrc)
         headers.update(auth_headers)
@@ -877,7 +888,7 @@ class Request:
                 client_key=client_key,
             )
         if unix_socket:
-            ssl_handler = UnixHTTPSHandler(unix_socket=unix_socket, context=context)
+            ssl_handler = UnixHTTPSHandler(unix_socket=unix_socket, max_response_headers=max_response_headers, context=context)
         else:
             ssl_handler = urllib.request.HTTPSHandler(context=context)
         handlers.append(ssl_handler)
@@ -1005,7 +1016,8 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
              force_basic_auth=False, follow_redirects='urllib2',
              client_cert=None, client_key=None, cookies=None,
              use_gssapi=False, unix_socket=None, ca_path=None,
-             unredirected_headers=None, decompress=True, ciphers=None, use_netrc=True):
+             unredirected_headers=None, decompress=True, ciphers=None, use_netrc=True,
+             max_response_headers=None):
     """
     Sends a request via HTTP(S) or FTP using urllib (Python3)
 
@@ -1018,7 +1030,8 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
                           force_basic_auth=force_basic_auth, follow_redirects=follow_redirects,
                           client_cert=client_cert, client_key=client_key, cookies=cookies,
                           use_gssapi=use_gssapi, unix_socket=unix_socket, ca_path=ca_path,
-                          unredirected_headers=unredirected_headers, decompress=decompress, ciphers=ciphers, use_netrc=use_netrc)
+                          unredirected_headers=unredirected_headers, decompress=decompress, ciphers=ciphers, use_netrc=use_netrc,
+                          max_response_headers=max_response_headers)
 
 
 # deprecated: description='TypedDict Required/NotRequired' python_version='3.11'
