@@ -33,17 +33,17 @@ class TestImports(unittest.TestCase):
             return realimport(name, *args, **kwargs)
 
         with patch.object(builtins, '__import__', _mock_import):
-            self.clear_modules(['syslog', 'ansible.module_utils.basic'])
-            mod = builtins.__import__('ansible.module_utils.basic')
-            self.assertTrue(mod.module_utils.basic.HAS_SYSLOG)
+            self.clear_modules(['syslog', 'ansible.module_utils._internal._logging', 'ansible.module_utils.basic'])
+            mod = builtins.__import__('ansible.module_utils._internal._logging')
+            self.assertTrue(mod.module_utils._internal._logging.HAS_SYSLOG)
 
             present = False
 
-            self.clear_modules(['syslog', 'ansible.module_utils.basic'])
-            mod = builtins.__import__('ansible.module_utils.basic')
-            self.assertFalse(mod.module_utils.basic.HAS_SYSLOG)
+            self.clear_modules(['syslog', 'ansible.module_utils._internal._logging', 'ansible.module_utils.basic'])
+            mod = builtins.__import__('ansible.module_utils._internal._logging')
+            self.assertFalse(mod.module_utils._internal._logging.HAS_SYSLOG)
 
-            self.clear_modules(['syslog', 'ansible.module_utils.basic'])
+            self.clear_modules(['syslog', 'ansible.module_utils._internal._logging', 'ansible.module_utils.basic'])
 
     def test_module_utils_basic_import_selinux(self):
         present = True
@@ -89,14 +89,14 @@ class TestImports(unittest.TestCase):
             return realimport(name, *args, **kwargs)
 
         with patch.object(builtins, '__import__', _mock_import):
-            self.clear_modules(['systemd', 'ansible.module_utils.basic'])
-            mod = builtins.__import__('ansible.module_utils.basic')
-            self.assertTrue(mod.module_utils.basic.has_journal)
+            self.clear_modules(['systemd', 'ansible.module_utils._internal._logging', 'ansible.module_utils.basic'])
+            mod = builtins.__import__('ansible.module_utils._internal._logging')
+            self.assertTrue(mod.module_utils._internal._logging.has_journal)
 
             present = False
 
-            self.clear_modules(['systemd', 'ansible.module_utils.basic'])
-            mod = builtins.__import__('ansible.module_utils.basic')
-            self.assertFalse(mod.module_utils.basic.has_journal)
+            self.clear_modules(['systemd', 'ansible.module_utils._internal._logging', 'ansible.module_utils.basic'])
+            mod = builtins.__import__('ansible.module_utils._internal._logging')
+            self.assertFalse(mod.module_utils._internal._logging.has_journal)
 
-            self.clear_modules(['systemd', 'ansible.module_utils.basic'])
+            self.clear_modules(['systemd', 'ansible.module_utils._internal._logging', 'ansible.module_utils.basic'])
