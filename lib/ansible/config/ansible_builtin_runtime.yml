@@ -9140,6 +9140,14 @@ plugin_routing:
     mongodb:
       redirect: community.mongodb.mongodb
   callback:
+    tree:
+      deprecation:
+        removal_version: "2.23"
+        warning_text: "Use another callback plugin, or vendor and/or move the tree callback to a collection."
+    oneline:
+      deprecation:
+        removal_version: "2.23"
+        warning_text: "Use another callback plugin, or vendor and/or move the oneline callback to a collection."
     actionable:
       redirect: community.general.actionable
     cgroup_memory_recap:
