@@ -201,7 +201,7 @@ class GalaxyCLI(CLI):
             if args[1:3] == ['role', 'login']:
                 display.error(
                     "The login command was removed in late 2020. An API key is now required to publish roles or collections "
-                    "to Galaxy. The key can be found at https://galaxy.ansible.com/me/preferences, and passed to the "
+                    "to Galaxy. The key can be found at https://galaxy.ansible.com/ui/token, and passed to the "
                     "ansible-galaxy CLI via a file at {0} or (insecurely) via the `--token` "
                     "command-line argument.".format(to_text(C.GALAXY_TOKEN_PATH)))
                 sys.exit(1)
@@ -224,7 +224,7 @@ class GalaxyCLI(CLI):
         common.add_argument('--api-version', type=int, choices=[2, 3], help=argparse.SUPPRESS)  # Hidden argument that should only be used in our tests
         common.add_argument('--token', '--api-key', dest='api_key',
                             help='The Ansible Galaxy API key which can be found at '
-                                 'https://galaxy.ansible.com/me/preferences.')
+                                 'https://galaxy.ansible.com/ui/token.')
         common.add_argument('-c', '--ignore-certs', action='store_true', dest='ignore_certs', help='Ignore SSL certificate validation errors.', default=None)
 
         # --timeout uses the default None to handle two different scenarios.
