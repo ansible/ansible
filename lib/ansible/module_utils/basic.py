@@ -212,7 +212,7 @@ USERS_RE = re.compile(r'^[ugo]+$')
 PERMS_RE = re.compile(r'^[rwxXstugo]*$')
 
 
-def get_platform():
+def get_platform() -> str:
     """
     :returns: Name of the platform the module is running on in a native string
 
@@ -349,7 +349,7 @@ def _load_params():
     return ansible_module_args
 
 
-def missing_required_lib(library, reason=None, url=None):
+def missing_required_lib(library: str, reason: str | None = None, url: str | None = None) -> str:
     hostname = platform.node()
     msg = "Failed to import the required Python library (%s) on %s's Python %s." % (library, hostname, sys.executable)
     if reason:
@@ -364,10 +364,20 @@ def missing_required_lib(library, reason=None, url=None):
 
 
 class AnsibleModule(object):
-    def __init__(self, argument_spec, bypass_checks=False, no_log=False,
+    # The following properties come from PASS_VARS, but aren't set directly in the constructor.
+    _keep_remote_files: bool
+    _ignore_unknown_opts: bool
+    _remote_tmp: str | None
+    _target_log_info: str | None
+    _selinux_special_fs: list[str]
+    _tmpdir: str | None
+    _tracebacks_for: frozenset
+    ansible_version: str
+
+    def __init__(self, argument_spec, bypass_checks: bool = False, no_log: bool = False,
                  mutually_exclusive=None, required_together=None,
-                 required_one_of=None, add_file_common_args=False,
-                 supports_check_mode=False, required_if=None, required_by=None):
+                 required_one_of=None, add_file_common_args: bool = False,
+                 supports_check_mode: bool = False, required_if=None, required_by=None):
 
         """
         Common code for quickly building an ansible module in Python
@@ -389,21 +399,21 @@ class AnsibleModule(object):
         self.required_one_of = required_one_of
         self.required_if = required_if
         self.required_by = required_by
-        self.cleanup_files = []
+        self.cleanup_files: list[str | bytes | os.PathLike] = []
         self._debug = False
         self._diff = False
-        self._socket_path = None
-        self._shell = None
+        self._socket_path: str | None = None
+        self._shell: str | None = None
         self._syslog_facility = 'LOG_USER'
         self._verbosity = 0
         # May be used to set modifications to the environment for any
         # run_command invocation
-        self.run_command_environ_update = {}
-        self._clean = {}
+        self.run_command_environ_update: dict[str, str] = {}
+        self._clean: dict | str | None = {}
 
         self.aliases = {}
-        self._legal_inputs = []
-        self._options_context = list()
+        self._legal_inputs: list = []  # no longer used?
+        self._options_context: list = list()  # no longer used?
         self._tmpdir = None
 
         if add_file_common_args:
@@ -459,15 +469,15 @@ class AnsibleModule(object):
             self._log_invocation()
 
         # selinux state caching
-        self._selinux_enabled = None
-        self._selinux_mls_enabled = None
-        self._selinux_initial_context = None
+        self._selinux_enabled: bool | None = None
+        self._selinux_mls_enabled: bool | None = None
+        self._selinux_initial_context: list[None] | None = None
 
         # finally, make sure we're in a logical working dir
         self._set_cwd()
 
     @property
-    def tmpdir(self):
+    def tmpdir(self) -> str:
         # if _ansible_tmpdir was not set and we have a remote_tmp,
         # the module needs to create it and clean it up once finished.
         # otherwise we create our own module tmp dir from the system defaults
@@ -617,20 +627,20 @@ class AnsibleModule(object):
     # will get the selevel as part of the context returned
     # by selinux.lgetfilecon().
 
-    def selinux_mls_enabled(self):
+    def selinux_mls_enabled(self) -> bool:
         if self._selinux_mls_enabled is None:
             self._selinux_mls_enabled = HAVE_SELINUX and selinux.is_selinux_mls_enabled() == 1
 
         return self._selinux_mls_enabled
 
-    def selinux_enabled(self):
+    def selinux_enabled(self) -> bool:
         if self._selinux_enabled is None:
             self._selinux_enabled = HAVE_SELINUX and selinux.is_selinux_enabled() == 1
 
         return self._selinux_enabled
 
     # Determine whether we need a placeholder for selevel/mls
-    def selinux_initial_context(self):
+    def selinux_initial_context(self) -> list[None]:
         if self._selinux_initial_context is None:
             self._selinux_initial_context = [None, None, None]
             if self.selinux_mls_enabled():
@@ -1224,22 +1234,22 @@ class AnsibleModule(object):
         if module_parameters is None:
             module_parameters = self.params
 
-        for k in PASS_VARS:
+        for k, (attr_name, default_value) in PASS_VARS.items():
             # handle setting internal properties from internal ansible vars
             param_key = '_ansible_%s' % k
             if param_key in module_parameters:
                 if k in PASS_BOOLS:
-                    setattr(self, PASS_VARS[k][0], self.boolean(module_parameters[param_key]))
+                    setattr(self, attr_name, self.boolean(module_parameters[param_key]))
                 else:
-                    setattr(self, PASS_VARS[k][0], module_parameters[param_key])
+                    setattr(self, attr_name, module_parameters[param_key])
 
                 # clean up internal top level params:
                 if param_key in self.params:
                     del self.params[param_key]
             else:
                 # use defaults if not already set
-                if not hasattr(self, PASS_VARS[k][0]):
-                    setattr(self, PASS_VARS[k][0], PASS_VARS[k][1])
+                if not hasattr(self, attr_name):
+                    setattr(self, attr_name, default_value)
 
     def _load_params(self):
         """ read the input and set the params attribute.
@@ -1265,11 +1275,11 @@ class AnsibleModule(object):
                     msg_to_log=msg,
                 )
 
-    def debug(self, msg):
+    def debug(self, msg: str) -> None:
         if self._debug:
             self.log('[debug] %s' % msg)
 
-    def log(self, msg, log_args=None):
+    def log(self, msg: str, log_args=None) -> None:
 
         if not self.no_log:
 
@@ -1331,7 +1341,7 @@ class AnsibleModule(object):
             else:
                 self._log_to_syslog(journal_msg)
 
-    def _log_invocation(self):
+    def _log_invocation(self) -> None:
         """ log that ansible ran the module """
         # TODO: generalize a separate log function and make log_invocation use it
         # Sanitize possible password argument when logging.
@@ -1356,15 +1366,15 @@ class AnsibleModule(object):
                     param_val = param_val.encode('utf-8')
                 log_args[param] = heuristic_log_sanitize(param_val, self.no_log_values)
 
-        msg = ['%s=%s' % (to_native(arg), to_native(val)) for arg, val in log_args.items()]
-        if msg:
-            msg = 'Invoked with %s' % ' '.join(msg)
+        msg_list = ['%s=%s' % (to_native(arg), to_native(val)) for arg, val in log_args.items()]
+        if msg_list:
+            msg = 'Invoked with %s' % ' '.join(msg_list)
         else:
             msg = 'Invoked'
 
         self.log(msg, log_args=log_args)
 
-    def _set_cwd(self):
+    def _set_cwd(self) -> str | None:
         try:
             cwd = os.getcwd()
             if not os.access(cwd, os.F_OK | os.R_OK):
@@ -1384,7 +1394,15 @@ class AnsibleModule(object):
         # and we don't want to break modules unnecessarily
         return None
 
-    def get_bin_path(self, arg, required=False, opt_dirs=None):
+    @t.overload
+    def get_bin_path(self, arg: str, required: t.Literal[True], opt_dirs: list[str] = None) -> str:
+        ...
+
+    @t.overload
+    def get_bin_path(self, arg: str, required: bool = False, opt_dirs: list[str] = None) -> str | None:
+        ...
+
+    def get_bin_path(self, arg: str, required: bool = False, opt_dirs: list[str] = None) -> str | None:
         """
         Find system executable in PATH.
 
@@ -1404,7 +1422,7 @@ class AnsibleModule(object):
 
         return bin_path
 
-    def boolean(self, arg):
+    def boolean(self, arg: object) -> bool:
         """Convert the argument to a boolean"""
         if arg is None:
             return arg
@@ -1414,7 +1432,7 @@ class AnsibleModule(object):
         except TypeError as e:
             self.fail_json(msg=to_native(e))
 
-    def jsonify(self, data):
+    def jsonify(self, data: object) -> str:
         # deprecated: description='deprecate AnsibleModule.jsonify()' core_version='2.23'
         # deprecate(
         #     msg="The `AnsibleModule.jsonify' method is deprecated.",
@@ -1427,7 +1445,7 @@ class AnsibleModule(object):
         except UnicodeError as e:
             self.fail_json(msg=to_text(e))
 
-    def from_json(self, data):
+    def from_json(self, data: str) -> object:
         return json.loads(data)
 
     def add_cleanup_file(self, path):
@@ -1655,7 +1673,7 @@ class AnsibleModule(object):
         """ Return SHA-256 hex digest of local file using digest_from_file(). """
         return self.digest_from_file(filename, 'sha256')
 
-    def backup_local(self, fn):
+    def backup_local(self, fn: str | os.PathLike[str]) -> str:
         """make a date-marked backup of the specified file, return True or False on success or failure"""
 
         backupdest = ''
@@ -2191,7 +2209,7 @@ class AnsibleModule(object):
         return buffer_size
 
 
-def get_module_path():
+def get_module_path() -> str:
     return os.path.dirname(os.path.realpath(__file__))
 
 

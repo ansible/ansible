@@ -1632,7 +1632,7 @@ def modify_module(
             b_lines = b_module_data.split(b"\n", 1)
 
             if interpreter != new_interpreter:
-                b_lines[0] = to_bytes(shebang, errors='surrogate_or_strict', nonstring='passthru')
+                b_lines[0] = to_bytes(shebang, errors='surrogate_or_strict', nonstring='strict')
 
             b_module_data = b"\n".join(b_lines)
 

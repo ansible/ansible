@@ -131,23 +131,23 @@ class DataLoader:
         else:
             return copy.deepcopy(parsed_data)
 
-    def path_exists(self, path: str) -> bool:
+    def path_exists(self, path: str | bytes) -> bool:
         path = self.path_dwim(path)
         return os.path.exists(path)
 
-    def is_file(self, path: str) -> bool:
+    def is_file(self, path: str | bytes) -> bool:
         path = self.path_dwim(path)
         return os.path.isfile(path) or path == os.devnull
 
-    def is_directory(self, path: str) -> bool:
+    def is_directory(self, path: str | bytes) -> bool:
         path = self.path_dwim(path)
         return os.path.isdir(path)
 
-    def list_directory(self, path: str) -> list[str]:
+    def list_directory(self, path: str | bytes) -> list[str]:
         path = self.path_dwim(path)
         return os.listdir(path)
 
-    def is_executable(self, path: str) -> bool:
+    def is_executable(self, path: str) -> int:
         """is the given path executable?"""
         path = self.path_dwim(path)
         return is_executable(path)
@@ -229,7 +229,7 @@ class DataLoader:
         """ sets the base directory, used to find files when a relative path is given """
         self._basedir = os.path.abspath(basedir)
 
-    def path_dwim(self, given: str) -> str:
+    def path_dwim(self, given: str | bytes) -> str:
         """
         make relative paths work like folks expect.
         """
