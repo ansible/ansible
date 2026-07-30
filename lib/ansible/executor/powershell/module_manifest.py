@@ -575,7 +575,7 @@ def _get_bootstrap_input(
     decompress_input = False
     exec_input = json.dumps(dataclasses.asdict(manifest)).encode()
 
-    # We provide an opt-out config option in case there are unforseen issues
+    # We provide an opt-out config option in case there are unforeseen issues
     # with compression.
     if GZIP_AVAILABLE and C.config.get_config_value("_ANSIBALLZ_PWSH_COMPRESSION", variables={}):
         compressed_input = gzip.compress(exec_input)
