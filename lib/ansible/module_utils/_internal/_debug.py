@@ -14,6 +14,8 @@ import traceback
 
 from datetime import datetime
 
+from ansible.module_utils._internal._logging import log_to_system
+
 
 def _write_stacktraces(stacktrace_dir: str | None = None):
     """
@@ -31,12 +33,18 @@ def _write_stacktraces(stacktrace_dir: str | None = None):
         file = pathlib.Path(trace_dir) / f'ansible-{pid}.debug'
 
         with contextlib.suppress(Exception):
+            # Drop a breadcrumb to help identify where the stacktrace was saved.
+            log_to_system(f"Writing debug stacktrace to {file}", module_name="stacktrace", syslog_facility="LOG_USER")
+
             with file.open('a') as trace_file:
                 trace_file.write(f'=== {now.isoformat()} on {platform.node()} ===\n\n')
 
+                # The `faulthandler` output will also contain the main process stacktrace (as current thread),
+                # but it won't be as detailed as the `traceback` output.
                 trace_file.write(f'*** Process {pid} stacktrace\n\n')
                 traceback.print_stack(f=_frame, file=trace_file)
 
+                # Let `faulthandler` handle the threads since it can handle those more efficiently/correctly.
                 trace_file.write('\n\n*** Thread stacktraces\n\n')
                 faulthandler.dump_traceback(file=trace_file)
 
