@@ -46,6 +46,29 @@ display = Display()
 
 UUID_NAMESPACE_ANSIBLE = uuid.UUID('361E6D51-FAEC-444A-9079-341386DA8E2E')
 
+# Predefined comment types for the comment filter
+_COMMENT_STYLES = {
+    'plain': {
+        'decoration': '# '
+    },
+    'erlang': {
+        'decoration': '% '
+    },
+    'c': {
+        'decoration': '// '
+    },
+    'cblock': {
+        'beginning': '/*',
+        'decoration': ' * ',
+        'end': ' */'
+    },
+    'xml': {
+        'beginning': '<!--',
+        'decoration': ' - ',
+        'end': '-->'
+    }
+}
+
 
 @accept_lazy_markers
 def to_yaml(a, *_args, default_flow_style: bool | None = None, vault_behavior: str | None = None, **kwargs) -> str:
@@ -403,38 +426,15 @@ def combine(*terms, **kwargs):
 
 
 def comment(text, style='plain', **kw):
-    # Predefined comment types
-    comment_styles = {
-        'plain': {
-            'decoration': '# '
-        },
-        'erlang': {
-            'decoration': '% '
-        },
-        'c': {
-            'decoration': '// '
-        },
-        'cblock': {
-            'beginning': '/*',
-            'decoration': ' * ',
-            'end': ' */'
-        },
-        'xml': {
-            'beginning': '<!--',
-            'decoration': ' - ',
-            'end': '-->'
-        }
-    }
-
-    if style not in comment_styles:
+    if style not in _COMMENT_STYLES:
         raise AnsibleTemplatePluginError(
             message=f"Invalid style {style!r}.",
-            help_text=f"Available styles: {', '.join(comment_styles)}",
+            help_text=f"Available styles: {', '.join(_COMMENT_STYLES)}",
             obj=style,
         )
 
     # Pointer to the right comment type
-    style_params = comment_styles[style]
+    style_params = _COMMENT_STYLES[style]
 
     if 'decoration' in kw:
         prepostfix = kw['decoration']
@@ -458,38 +458,24 @@ def comment(text, style='plain', **kw):
     p.update(kw)
 
     # Compose substrings for the final string
-    str_beginning = ''
-    if p['beginning']:
-        str_beginning = "%s%s" % (p['beginning'], p['newline'])
+    nl = p['newline']
+    str_beginning = f"{p['beginning']}{nl}" if p['beginning'] else ''
     str_prefix = ''
     if p['prefix']:
-        if p['prefix'] != p['newline']:
-            str_prefix = str(
-                "%s%s" % (p['prefix'], p['newline'])) * int(p['prefix_count'])
+        if p['prefix'] != nl:
+            str_prefix = (f"{p['prefix']}{nl}") * int(p['prefix_count'])
         else:
-            str_prefix = str(
-                "%s" % (p['newline'])) * int(p['prefix_count'])
-    str_text = ("%s%s" % (
-        p['decoration'],
-        # Prepend each line of the text with the decorator
-        text.replace(
-            p['newline'], "%s%s" % (p['newline'], p['decoration'])))).replace(
-                # Remove trailing spaces when only decorator is on the line
-                "%s%s" % (p['decoration'], p['newline']),
-                "%s%s" % (p['decoration'].rstrip(), p['newline']))
-    str_postfix = p['newline'].join(
-        [''] + [p['postfix'] for x in range(p['postfix_count'])])
-    str_end = ''
-    if p['end']:
-        str_end = "%s%s" % (p['newline'], p['end'])
+            str_prefix = nl * int(p['prefix_count'])
+    dec = p['decoration']
+    str_text = (f"{dec}"
+                f"{text.replace(nl, f'{nl}{dec}')}").replace(
+                    f"{dec}{nl}",
+                    f"{dec.rstrip()}{nl}")
+    str_postfix = nl.join([''] + [p['postfix'] for x in range(p['postfix_count'])])
+    str_end = f"{nl}{p['end']}" if p['end'] else ''
 
     # Return the final string
-    return "%s%s%s%s%s" % (
-        str_beginning,
-        str_prefix,
-        str_text,
-        str_postfix,
-        str_end)
+    return f"{str_beginning}{str_prefix}{str_text}{str_postfix}{str_end}"
 
 
 @pass_environment
