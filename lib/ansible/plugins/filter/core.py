@@ -305,13 +305,14 @@ def rand(environment, end, start=None, step=None, seed=None):
 def randomize_list(mylist, seed=None):
     try:
         mylist = list(mylist)
-        if seed:
-            r = Random(seed)
-            r.shuffle(mylist)
-        else:
-            shuffle(mylist)
-    except Exception:
-        pass
+    except TypeError:
+        return mylist
+
+    if seed:
+        r = Random(seed)
+        r.shuffle(mylist)
+    else:
+        shuffle(mylist)
     return mylist
 
 

@@ -1,0 +1,4 @@
+bugfixes:
+  - randomize_list filter - fix bare ``except Exception`` that silently swallowed
+    all errors during list conversion and shuffling.
+    Only catch ``TypeError`` for non-iterable inputs.

@@ -8,7 +8,7 @@ import pytest
 
 from ansible._internal._datatag._tags import Origin
 from ansible.module_utils.common.text.converters import to_native
-from ansible.plugins.filter.core import to_bool, to_uuid
+from ansible.plugins.filter.core import to_bool, to_uuid, randomize_list
 from ansible.errors import AnsibleError
 from ansible.template import Templar, trust_as_template, is_trusted_as_template
 from ...test_utils.controller.display import emits_warnings
@@ -87,3 +87,26 @@ def test_from_yaml_origin() -> None:
         assert origin.description == "a unit test"
         assert origin.line_num == 44  # source string origin plus two blank lines
         assert origin.col_num == 6
+
+
+def test_randomize_list():
+    """Verify randomize_list handles various input types correctly."""
+    # Non-iterable input should be returned as-is without error
+    assert randomize_list(42) == 42
+    assert randomize_list(None) is None
+
+    # String input should be converted to list and shuffled
+    result = randomize_list("abc", seed=42)
+    assert sorted(result) == ['a', 'b', 'c']
+
+    # Empty list returns empty
+    assert randomize_list([]) == []
+
+    # Single element list returns same element
+    assert randomize_list([1]) == [1]
+
+    # Deterministic output with seed
+    result1 = randomize_list([1, 2, 3, 4, 5], seed=42)
+    result2 = randomize_list([1, 2, 3, 4, 5], seed=42)
+    assert result1 == result2
+    assert sorted(result1) == [1, 2, 3, 4, 5]
