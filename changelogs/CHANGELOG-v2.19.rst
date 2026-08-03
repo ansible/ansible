@@ -4,6 +4,26 @@ ansible-core 2.19 "What Is and What Should Never Be" Release Notes
 
 .. contents:: Topics
 
+v2.19.12rc1
+===========
+
+Release Summary
+---------------
+
+| Release Date: 2026-08-03
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.19/porting_guides/porting_guide_core_2.19.html>`__
+
+Minor Changes
+-------------
+
+- parallel fact gathering - the async wrapper now considers the timeout when determining whether to kill the process running the module. Previously, a 5 second sleep occurred twice before checking if the job had remaining time.
+
+Bugfixes
+--------
+
+- ansible-test - Fix target filtering to preserve user-specified versions that are not in the completion configuration.
+- parallel fact gathering - fix hang caused by corrupt async job files.
+
 v2.19.11
 ========
 
