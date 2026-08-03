@@ -19,11 +19,8 @@ from ansible.module_utils._internal._logging import log_to_system
 
 def _write_stacktraces(stacktrace_dir: str | None = None):
     """
-    Signal handler to write debug stacktrace information to a file located in `stacktrace_dir` or the system's temp directory.
-
-    In theory, the system temp directory should never be needed since the current practice is to use either
-    $ANSIBLE_HOME on the controller and `remote_tmp` on the target as the location for these files. Problems
-    accessing those locations should surface long before here, but this will remain a fallback just in case.
+    Signal handler to write debug stacktrace information to a file located in `stacktrace_dir` or to the
+    system's temp directory (the default).
     """
 
     def inner(_signum, _frame):

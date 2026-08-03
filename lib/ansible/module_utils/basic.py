@@ -454,17 +454,9 @@ class AnsibleModule(object):
         # finally, make sure we're in a logical working dir
         self._set_cwd()
 
-        # Register the stacktrace dump signal handler, using a path under remote_tmp as the location for the files.
-        # Note that since self.tmpdir is accessed here, this needs to occur after self._tmpdir is defined.
-        self._trace_dir = os.path.abspath(os.path.join(self.tmpdir, '../debug'))
-        try:
-            os.makedirs(self._trace_dir, mode=0o700, exist_ok=True)
-        except OSError as ex:
-            self.error_as_warning(
-                msg=f"Unable to create stacktrace dump directory {self._trace_dir!r}, falling back to system default.",
-            )
-            self._trace_dir = None
-        _debug.register_for_stacktrace(self._trace_dir)
+        # Use system temp dir for module-level stacktraces. Using remote_tmp gets complicated with tasks
+        # as different or unprivileged users.
+        _debug.register_for_stacktrace()
 
     @property
     def tmpdir(self):
