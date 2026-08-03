@@ -1,0 +1,2 @@
+bugfixes:
+  - combine filter - do not short-circuit merging two equal hashes when ``list_merge`` is ``append`` or ``prepend`` so that the equal lists are correctly appended or prepended to each other instead of being returned unchanged (https://github.com/ansible/ansible/issues/79293).

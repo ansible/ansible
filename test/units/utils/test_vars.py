@@ -279,6 +279,31 @@ class TestVariableUtils(unittest.TestCase):
         }
         self.assertEqual(merge_hash(low, high, True, 'prepend_rp'), expected)
 
+    def test_merge_hash_equal_hashes_and_list_append(self):
+        # merging two equal hashes with list_merge='append' must still append
+        # the (equal) lists to each other instead of short-circuiting to a
+        # single copy of one of them
+        # (https://github.com/ansible/ansible/issues/79293)
+        low = {"a": {"a'": {"list": ["v"]}}, "b": [1, 2]}
+        high = {"a": {"a'": {"list": ["v"]}}, "b": [1, 2]}
+        expected = {"a": {"a'": {"list": ["v", "v"]}}, "b": [1, 2, 1, 2]}
+        self.assertEqual(merge_hash(low, high, True, 'append'), expected)
+
+    def test_merge_hash_equal_hashes_and_list_prepend(self):
+        # same as above but for list_merge='prepend'
+        low = {"a": {"a'": {"list": ["v"]}}, "b": [1, 2]}
+        high = {"a": {"a'": {"list": ["v"]}}, "b": [1, 2]}
+        expected = {"a": {"a'": {"list": ["v", "v"]}}, "b": [1, 2, 1, 2]}
+        self.assertEqual(merge_hash(low, high, True, 'prepend'), expected)
+
+    def test_merge_hash_equal_hashes_shortcut_modes(self):
+        # for the modes where merging two equal hashes yields that same hash,
+        # the x == y shortcut must keep returning it unchanged
+        for list_merge in ('replace', 'keep', 'append_rp', 'prepend_rp'):
+            low = {"a": {"a'": {"list": ["v"]}}, "b": [1, 2]}
+            high = {"a": {"a'": {"list": ["v"]}}, "b": [1, 2]}
+            self.assertEqual(merge_hash(low, high, True, list_merge), low)
+
 
 def test_transform_to_native_types() -> None:
     """Verify that transform_to_native_types results in native types for both keys and values, with default redaction."""
