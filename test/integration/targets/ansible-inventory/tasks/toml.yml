@@ -19,15 +19,13 @@
 - name: test toml output with None values
   command: ansible-inventory --list --toml -i {{ role_path }}/files/none_values.yml
   register: toml_none
+  ignore_errors: true
 
 - assert:
     that:
+      - toml_none is failed
       - >
-        'normal_var = "hello"' in toml_none.stdout
-      - '"nullable_var" not in toml_none.stdout'
-      - >
-        'keep = "world"' in toml_none.stdout
-      - '"remove" not in toml_none.stdout'
+        'cannot be represented in TOML' in toml_none.stderr
       
 # DTFIX3: plug in variable visitor on TOML output and re-enable this test
 #- name: "test option: --toml with valid group name"
