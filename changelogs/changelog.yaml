@@ -690,3 +690,38 @@ releases:
     - fix-cloning-malformed-role-requirements.yml
     - sort_obfuscation.yml
     release_date: '2026-06-11'
+  2.20.8rc1:
+    changes:
+      bugfixes:
+      - ansible-test - Fix target filtering to preserve user-specified versions that
+        are not in the completion configuration.
+      - collection loader - Fix the collection loader logic to correctly return Python
+        module when calling ``pkgutil.iter_modules`` with a package that is inside
+        a collection path and contains compiled Python extension modules.
+      - parallel fact gathering - fix hang caused by corrupt async job files.
+      - rpm_key - ensure a trailing newline is present on PGP armor data before passing
+        it to librpm for parsing, fixing failures on systems where ``pgpParsePkts``
+        requires it (https://github.com/ansible/ansible/issues/87303).
+      minor_changes:
+      - ansible-test - Added a timeout callback that dumps thread stacks when the
+        test execution deadline defined by ``ansible-test env --timeout`` is approaching.
+      - ansible-test - Support automatic loading of test collections in core integration
+        tests.
+      - parallel fact gathering - the async wrapper now considers the timeout when
+        determining whether to kill the process running the module. Previously, a
+        5 second sleep occurred twice before checking if the job had remaining time.
+      release_summary: '| Release Date: 2026-08-03
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.20/porting_guides/porting_guide_core_2.20.html>`__
+
+        '
+    codename: Good Times Bad Times
+    fragments:
+    - 2.20.8rc1_summary.yaml
+    - 87304-rpm_key-armor-trailing-newline.yml
+    - ansible-test-auto-collection-loading.yml
+    - ansible-test-target-filtering.yml
+    - ansible-test-timeout-callback.yml
+    - collection-loader-extensions.yml
+    - fix-short-timeout-async-wrapper.yml
+    release_date: '2026-08-03'

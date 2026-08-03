@@ -4,6 +4,30 @@ ansible-core 2.20 "Good Times Bad Times" Release Notes
 
 .. contents:: Topics
 
+v2.20.8rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2026-08-03
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.20/porting_guides/porting_guide_core_2.20.html>`__
+
+Minor Changes
+-------------
+
+- ansible-test - Added a timeout callback that dumps thread stacks when the test execution deadline defined by ``ansible-test env --timeout`` is approaching.
+- ansible-test - Support automatic loading of test collections in core integration tests.
+- parallel fact gathering - the async wrapper now considers the timeout when determining whether to kill the process running the module. Previously, a 5 second sleep occurred twice before checking if the job had remaining time.
+
+Bugfixes
+--------
+
+- ansible-test - Fix target filtering to preserve user-specified versions that are not in the completion configuration.
+- collection loader - Fix the collection loader logic to correctly return Python module when calling ``pkgutil.iter_modules`` with a package that is inside a collection path and contains compiled Python extension modules.
+- parallel fact gathering - fix hang caused by corrupt async job files.
+- rpm_key - ensure a trailing newline is present on PGP armor data before passing it to librpm for parsing, fixing failures on systems where ``pgpParsePkts`` requires it (https://github.com/ansible/ansible/issues/87303).
+
 v2.20.7
 =======
 
