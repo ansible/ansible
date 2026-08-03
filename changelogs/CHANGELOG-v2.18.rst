@@ -4,6 +4,26 @@ ansible-core 2.18 "Fool in the Rain" Release Notes
 
 .. contents:: Topics
 
+v2.18.19rc1
+===========
+
+Release Summary
+---------------
+
+| Release Date: 2026-08-03
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.18/porting_guides/porting_guide_core_2.18.html>`__
+
+Minor Changes
+-------------
+
+- parallel fact gathering - the async wrapper now considers the timeout when determining whether to kill the process running the module. Previously, a 5 second sleep occurred twice before checking if the job had remaining time.
+
+Bugfixes
+--------
+
+- ansible-test - Fix target filtering to preserve user-specified versions that are not in the completion configuration.
+- parallel fact gathering - fix hang caused by corrupt async job files.
+
 v2.18.18
 ========
 
