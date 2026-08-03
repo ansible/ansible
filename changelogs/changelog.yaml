@@ -896,6 +896,27 @@ releases:
     - 2.18.18rc1_summary.yaml
     - fix-cloning-malformed-role-requirements.yml
     release_date: '2026-06-11'
+  2.18.19rc1:
+    changes:
+      bugfixes:
+      - ansible-test - Fix target filtering to preserve user-specified versions that
+        are not in the completion configuration.
+      - parallel fact gathering - fix hang caused by corrupt async job files.
+      minor_changes:
+      - parallel fact gathering - the async wrapper now considers the timeout when
+        determining whether to kill the process running the module. Previously, a
+        5 second sleep occurred twice before checking if the job had remaining time.
+      release_summary: '| Release Date: 2026-08-03
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.18/porting_guides/porting_guide_core_2.18.html>`__
+
+        '
+    codename: Fool in the Rain
+    fragments:
+    - 2.18.19rc1_summary.yaml
+    - ansible-test-target-filtering.yml
+    - fix-short-timeout-async-wrapper.yml
+    release_date: '2026-08-03'
   2.18.1rc1:
     changes:
       bugfixes:
