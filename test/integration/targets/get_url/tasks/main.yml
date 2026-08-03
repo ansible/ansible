@@ -229,6 +229,7 @@
   get_url:
     url: 'https://{{ httpbin_host }}/status/304'
     dest: '{{ remote_tmp_dir }}/test'
+    force: yes
   register: result
 
 - name: Assert that we get the appropriate status_code
