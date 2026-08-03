@@ -4,6 +4,25 @@ ansible-core 2.21 "The Rain Song" Release Notes
 
 .. contents:: Topics
 
+v2.21.3rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2026-08-03
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.21/porting_guides/porting_guide_core_2.21.html>`__
+
+Bugfixes
+--------
+
+- Add deprecation status to the tree and oneline callback DOCUMENTATION. (https://github.com/ansible/ansible/issues/87020)
+- ansible-galaxy - Fix attempting to download the collection again if the response from the server is shorter than expected, instead of failing due to the mismatched artifact hash on the first attempt. (https://github.com/ansible/ansible/pull/86025)
+- ansible-test - Fix target filtering to preserve user-specified versions that are not in the completion configuration.
+- collection loader - Fix the collection loader logic to correctly return Python module when calling ``pkgutil.iter_modules`` with a package that is inside a collection path and contains compiled Python extension modules.
+- powershell exec_wrapper - fix handling when multiple pwsh executables match by selecting the first result (https://github.com/ansible/ansible/issues/87228).
+- rpm_key - ensure a trailing newline is present on PGP armor data before passing it to librpm for parsing, fixing failures on systems where ``pgpParsePkts`` requires it (https://github.com/ansible/ansible/issues/87303).
+
 v2.21.2
 =======
 
