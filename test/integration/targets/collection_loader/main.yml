@@ -1,0 +1,11 @@
+- name: run collection loader tests
+  hosts: localhost
+  tasks:
+  - name: run module which imports Python library inside collection dir
+    ns.col.test_collection_loader:
+    register: result
+
+  - name: assert module loader results
+    assert:
+      that:
+      - result.modules == ['foo']
