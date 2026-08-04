@@ -468,6 +468,17 @@
     path: "{{ remote_tmp_dir }}/27617sha256_with_dot.txt"
   register: stat_result_sha256_with_file_scheme
 
+- name: download src file again with force=no and no checksum
+  get_url:
+    url: 'http://localhost:{{ http_port }}/27617.txt'
+    dest: '{{ remote_tmp_dir }}/27617sha256_with_file_scheme.txt'
+    force: no
+  register: result_sha256_with_force_no
+
+- stat:
+    path: '{{ remote_tmp_dir }}/27617sha256_with_file_scheme.txt'
+  register: stat_result_sha256_with_force_no
+
 - name: download src with sha256 checksum url with BSD style checksum
   get_url:
     url: 'http://localhost:{{ http_port }}/27617.txt'
@@ -638,6 +649,7 @@
       - "stat_result_sha256_with_asterisk_86132.stat.exists == true"
       - result_sha256_86132_single_space is changed
       - "stat_result_sha256_86132_single_space.stat.exists == true"
+      - not result_sha256_with_force_no is changed
 
 - name: Test for incomplete data read (issue 85164)
   get_url:
