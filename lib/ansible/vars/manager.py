@@ -522,7 +522,7 @@ class VariableManager:
         delegated_vars = {}
         delegated_host_name = ...  # sentinel value distinct from empty/None, which are errors
 
-        if task.delegate_to:
+        if task.delegate_to is not None:
             try:
                 delegated_host_name = templar.template(task.delegate_to)
             except AnsibleValueOmittedError:
