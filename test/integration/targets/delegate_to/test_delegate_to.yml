@@ -62,20 +62,30 @@
       delegate_to: "{{ jenkins_install_key_on|default(omit) }}"
       register: d_omitted
 
+    - name: Use literal empty delegation should fail
+      ping:
+      delegate_to: ""
+      when: false
+      ignore_errors: true
+      register: d_literal_empty
+
     - name: Use empty to thwart delegation should fail
       ping:
       delegate_to: "{{ jenkins_install_key_on }}"
-      when: jenkins_install_key_on != ""
+      when: false
       vars:
         jenkins_install_key_on: ''
       ignore_errors: true
       register: d_empty
 
-    - name: Ensure previous 2 tests actually did what was expected
+    - name: Ensure delegation validation behaved as expected
       assert:
         that:
           - d_omitted is success
+          - d_literal_empty is failed
+          - d_literal_empty.msg is contains('Empty hostname produced from delegate_to')
           - d_empty is failed
+          - d_empty.msg is contains('Empty hostname produced from delegate_to')
 
 - name: verify delegation with per host vars
   hosts: testhost6
