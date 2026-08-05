@@ -90,6 +90,35 @@ run_83292_nested_case() {
 
 run_83292_nested_case "$@"
 
+run_83292_outer_fallback_case() {
+  local playbook="$1"
+  local rescue_marker="$2"
+  local recovered_marker="$3"
+  shift 3
+
+  for max_fail_pct in default 0; do
+    extra_args=()
+    if [ "$max_fail_pct" != default ]; then
+      extra_args=(-e max_fail_pct="$max_fail_pct")
+    fi
+
+    set +e
+    output="$(ansible-playbook -i inventory "$@" "${extra_args[@]}" "$playbook" 2>&1)"
+    status=$?
+    set -e
+    printf '%s\n' "$output"
+    [ "$status" -eq 0 ]
+    [ "$(grep -c 'SHOULD NOT HAPPEN' <<< "$output")" -eq 0 ]
+    for host in testhost testhost2; do
+      [ "$(grep -cF "\"$rescue_marker $host\"" <<< "$output")" -eq 1 ]
+      [ "$(grep -cF "\"$recovered_marker $host\"" <<< "$output")" -eq 1 ]
+    done
+  done
+}
+
+run_83292_outer_fallback_case 83292_outer_fallback.yml '83292 outer fallback rescue' '83292 outer fallback recovered' "$@"
+run_83292_outer_fallback_case 83292_outer_fallback_always.yml '83292 outer fallback always rescue' '83292 outer fallback always recovered' "$@"
+
 run_83292_max_fail_case() {
   local playbook="$1"
   local rescue_marker="$2"
