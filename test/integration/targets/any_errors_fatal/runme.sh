@@ -119,6 +119,7 @@ run_83292_outer_fallback_case() {
 
 run_83292_outer_fallback_case 83292_outer_fallback.yml '83292 outer fallback rescue' '83292 outer fallback recovered' 'Do not continue inside the failed inner block' "$@"
 run_83292_outer_fallback_case 83292_outer_fallback_always.yml '83292 outer fallback always rescue' '83292 outer fallback always recovered' 'Do not continue inside the failed inner block' "$@"
+run_83292_outer_fallback_case 83292_inner_always_run_once.yml '83292 inner always run_once rescue' '83292 inner always run_once recovered' 'A task that must not run' "$@"
 
 run_83292_max_fail_case() {
   local playbook="$1"

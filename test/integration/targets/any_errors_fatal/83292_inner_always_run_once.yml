@@ -1,0 +1,31 @@
+---
+- name: Outer rescue catches a run_once failure in inner always
+  hosts: testhost,testhost2
+  gather_facts: false
+  max_fail_percentage: '{{ max_fail_pct | default(100) }}'
+  tasks:
+    - name: Outer block with rescue fallback
+      block:
+        - name: Inner block with a failing always task
+          block:
+            - name: Complete the inner block body
+              ansible.builtin.debug:
+                msg: 83292 inner always body {{ inventory_hostname }}
+          always:
+            - name: Fail once in inner always
+              ansible.builtin.fail:
+              run_once: true
+      rescue:
+        - name: Rescue both hosts after inner always run_once failure
+          ansible.builtin.assert:
+            that:
+              - ansible_play_hosts | sort == ['testhost', 'testhost2']
+              - ansible_play_batch | sort == ['testhost', 'testhost2']
+            success_msg: 83292 inner always run_once rescue {{ inventory_hostname }}
+
+    - name: Continue both hosts after outer rescue
+      ansible.builtin.assert:
+        that:
+          - ansible_play_hosts | sort == ['testhost', 'testhost2']
+          - ansible_play_batch | sort == ['testhost', 'testhost2']
+        success_msg: 83292 inner always run_once recovered {{ inventory_hostname }}
