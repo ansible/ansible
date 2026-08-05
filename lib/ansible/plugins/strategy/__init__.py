@@ -168,7 +168,12 @@ def debug_closure(func):
                 if next_action.result == NextAction.REDO:
                     # rollback host state
                     self._tqm.clear_failed_hosts()
-                    if task.run_once and iterator._play.strategy in add_internal_fqcns(('linear',)) and result.utr.failed:
+                    if (
+                        task.run_once
+                        and iterator._play.strategy in add_internal_fqcns(('linear',))
+                        and self.ALLOW_BASE_RUN_ONCE_FAILURE_PROPAGATION
+                        and result.utr.failed
+                    ):
                         for host_name, state in prev_host_states.items():
                             if host_name == host.name:
                                 continue
