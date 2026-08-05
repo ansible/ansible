@@ -13,9 +13,15 @@
             msg: SHOULD NOT HAPPEN
       rescue:
         - name: Rescue both hosts
-          debug:
-            msg: 83292 bypass rescue
+          ansible.builtin.assert:
+            that:
+              - ansible_play_hosts | sort == ['testhost', 'testhost2']
+              - ansible_play_batch | sort == ['testhost', 'testhost2']
+            success_msg: 83292 bypass rescue {{ inventory_hostname }}
 
     - name: Continue both hosts after rescue
-      debug:
-        msg: 83292 bypass recovered
+      ansible.builtin.assert:
+        that:
+          - ansible_play_hosts | sort == ['testhost', 'testhost2']
+          - ansible_play_batch | sort == ['testhost', 'testhost2']
+        success_msg: 83292 bypass recovered {{ inventory_hostname }}

@@ -15,9 +15,15 @@
             msg: SHOULD NOT HAPPEN
       rescue:
         - name: Rescue both hosts after max-fail threshold
-          debug:
-            msg: 83292 maxfail implicit rescue
+          ansible.builtin.assert:
+            that:
+              - ansible_play_hosts | sort == ['testhost', 'testhost2']
+              - ansible_play_batch | sort == ['testhost', 'testhost2']
+            success_msg: 83292 maxfail implicit rescue {{ inventory_hostname }}
 
     - name: Continue both hosts after max-fail rescue
-      debug:
-        msg: 83292 maxfail implicit recovered
+      ansible.builtin.assert:
+        that:
+          - ansible_play_hosts | sort == ['testhost', 'testhost2']
+          - ansible_play_batch | sort == ['testhost', 'testhost2']
+        success_msg: 83292 maxfail implicit recovered {{ inventory_hostname }}

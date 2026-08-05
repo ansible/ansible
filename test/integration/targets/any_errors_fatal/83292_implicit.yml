@@ -14,9 +14,15 @@
             msg: SHOULD NOT HAPPEN
       rescue:
         - name: Rescue both hosts
-          debug:
-            msg: 83292 implicit rescue
+          ansible.builtin.assert:
+            that:
+              - ansible_play_hosts | sort == ['testhost', 'testhost2']
+              - ansible_play_batch | sort == ['testhost', 'testhost2']
+            success_msg: 83292 implicit rescue {{ inventory_hostname }}
 
     - name: Continue both hosts after rescue
-      debug:
-        msg: 83292 implicit recovered
+      ansible.builtin.assert:
+        that:
+          - ansible_play_hosts | sort == ['testhost', 'testhost2']
+          - ansible_play_batch | sort == ['testhost', 'testhost2']
+        success_msg: 83292 implicit recovered {{ inventory_hostname }}
