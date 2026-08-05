@@ -49,6 +49,9 @@ display = Display()
 
 class StrategyModule(StrategyBase):
 
+    # ``linear.run`` propagates failed ``run_once`` tasks after processing results.
+    ALLOW_BASE_RUN_ONCE_FAILURE_PROPAGATION = False
+
     def _get_next_task_lockstep(self, hosts: list[Host], iterator: PlayIterator) -> list[tuple[Host, Task]]:
         """
         Returns a list of (host, task) tuples, where the task may

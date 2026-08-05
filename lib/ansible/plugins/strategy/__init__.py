@@ -229,6 +229,10 @@ class StrategyBase:
     # the throttling internally (as `free` does)
     ALLOW_BASE_THROTTLING = True
 
+    # Strategies that propagate failed ``run_once`` tasks themselves can disable
+    # the base implementation to avoid marking hosts twice.
+    ALLOW_BASE_RUN_ONCE_FAILURE_PROPAGATION = True
+
     def __init__(self, tqm: TaskQueueManager) -> None:
         self._tqm = tqm
         self._inventory = tqm.get_inventory()
@@ -562,7 +566,7 @@ class StrategyBase:
                     state_when_failed = iterator.get_state_for_host(original_host.name)
                     display.debug("marking %s as failed" % original_host.name)
 
-                    if original_task.run_once:
+                    if original_task.run_once and self.ALLOW_BASE_RUN_ONCE_FAILURE_PROPAGATION:
                         # if we're using run_once, we have to fail every host here
                         for h in self._inventory.get_hosts(iterator._play.hosts):
                             if h.name not in self._tqm._unreachable_hosts:
