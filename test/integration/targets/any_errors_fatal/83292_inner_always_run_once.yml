@@ -15,6 +15,9 @@
             - name: Fail once in inner always
               ansible.builtin.fail:
               run_once: true
+        - name: A task that must not run
+          ansible.builtin.debug:
+            msg: 83292 forbidden outer task executed
       rescue:
         - name: Rescue both hosts after inner always run_once failure
           ansible.builtin.assert:
