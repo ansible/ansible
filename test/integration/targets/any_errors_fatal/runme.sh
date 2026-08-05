@@ -90,3 +90,11 @@ run_83292_max_fail_case() {
 
 run_83292_max_fail_case 83292_max_fail_explicit.yml '83292 maxfail explicit rescue' '83292 maxfail explicit recovered' "$@"
 run_83292_max_fail_case 83292_max_fail_implicit.yml '83292 maxfail implicit rescue' '83292 maxfail implicit recovered' "$@"
+
+set +e
+output="$(ansible-playbook -i inventory "$@" 83292_max_fail_control.yml 2>&1)"
+status=$?
+set -e
+printf '%s\n' "$output"
+[ "$status" -ne 0 ]
+[ "$(grep -c 'SHOULD NOT HAPPEN' <<< "$output")" -eq 0 ]
