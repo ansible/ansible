@@ -48,16 +48,23 @@ ansible-playbook -i inventory "$@" 80981.yml | tee out.txt
 [ "$(grep -c 'rescuedd' out.txt)" -eq 2 ]
 [ "$(grep -c 'recovered' out.txt)" -eq 2 ]
 
-set +e
-output="$(ansible-playbook -i inventory "$@" 83292.yml 2>&1)"
-status=$?
-set -e
-printf '%s\n' "$output"
-[ "$status" -eq 0 ]
-[ "$(grep -c 'SHOULD NOT HAPPEN' <<< "$output")" -eq 0 ]
-[ "$(grep -c '83292 explicit rescue' <<< "$output")" -eq 2 ]
-[ "$(grep -c '83292 explicit recovered' <<< "$output")" -eq 2 ]
-[ "$(grep -c '83292 implicit rescue' <<< "$output")" -eq 2 ]
-[ "$(grep -c '83292 implicit recovered' <<< "$output")" -eq 2 ]
-[ "$(grep -c '83292 bypass rescue' <<< "$output")" -eq 2 ]
-[ "$(grep -c '83292 bypass recovered' <<< "$output")" -eq 2 ]
+run_83292_case() {
+  local playbook="$1"
+  local rescue_marker="$2"
+  local recovered_marker="$3"
+  shift 3
+
+  set +e
+  output="$(ansible-playbook -i inventory "$@" "$playbook" 2>&1)"
+  status=$?
+  set -e
+  printf '%s\n' "$output"
+  [ "$status" -eq 0 ]
+  [ "$(grep -c 'SHOULD NOT HAPPEN' <<< "$output")" -eq 0 ]
+  [ "$(grep -c "$rescue_marker" <<< "$output")" -eq 2 ]
+  [ "$(grep -c "$recovered_marker" <<< "$output")" -eq 2 ]
+}
+
+run_83292_case 83292_explicit.yml '83292 explicit rescue' '83292 explicit recovered' "$@"
+run_83292_case 83292_implicit.yml '83292 implicit rescue' '83292 implicit recovered' "$@"
+run_83292_case 83292_bypass.yml '83292 bypass rescue' '83292 bypass recovered' "$@"

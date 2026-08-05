@@ -1,0 +1,21 @@
+---
+- name: Rescued failure from an action that bypasses the host loop
+  hosts: testhost,testhost2
+  gather_facts: false
+  tasks:
+    - name: Exercise implicit run_once behavior of the action
+      block:
+        - name: Fail because the required host name is missing
+          add_host:
+
+        - name: Do not continue inside a failed block
+          debug:
+            msg: SHOULD NOT HAPPEN
+      rescue:
+        - name: Rescue both hosts
+          debug:
+            msg: 83292 bypass rescue
+
+    - name: Continue both hosts after rescue
+      debug:
+        msg: 83292 bypass recovered

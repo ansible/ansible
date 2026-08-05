@@ -1,0 +1,23 @@
+---
+- name: Rescued run_once failure with explicit any_errors_fatal
+  hosts: testhost,testhost2
+  gather_facts: false
+  any_errors_fatal: true
+  tasks:
+    - name: Exercise explicit run_once failure
+      block:
+        - name: Fail once
+          fail:
+          run_once: true
+
+        - name: Do not continue inside a failed block
+          debug:
+            msg: SHOULD NOT HAPPEN
+      rescue:
+        - name: Rescue both hosts
+          debug:
+            msg: 83292 explicit rescue
+
+    - name: Continue both hosts after rescue
+      debug:
+        msg: 83292 explicit recovered
