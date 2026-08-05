@@ -94,7 +94,8 @@ run_83292_outer_fallback_case() {
   local playbook="$1"
   local rescue_marker="$2"
   local recovered_marker="$3"
-  shift 3
+  local forbidden_task="$4"
+  shift 4
 
   for max_fail_pct in default 0; do
     extra_args=()
@@ -108,7 +109,7 @@ run_83292_outer_fallback_case() {
     set -e
     printf '%s\n' "$output"
     [ "$status" -eq 0 ]
-    [ "$(grep -c 'SHOULD NOT HAPPEN' <<< "$output")" -eq 0 ]
+    [ "$(grep -cF "TASK [$forbidden_task]" <<< "$output")" -eq 0 ]
     for host in testhost testhost2; do
       [ "$(grep -cF "\"$rescue_marker $host\"" <<< "$output")" -eq 1 ]
       [ "$(grep -cF "\"$recovered_marker $host\"" <<< "$output")" -eq 1 ]
@@ -116,8 +117,8 @@ run_83292_outer_fallback_case() {
   done
 }
 
-run_83292_outer_fallback_case 83292_outer_fallback.yml '83292 outer fallback rescue' '83292 outer fallback recovered' "$@"
-run_83292_outer_fallback_case 83292_outer_fallback_always.yml '83292 outer fallback always rescue' '83292 outer fallback always recovered' "$@"
+run_83292_outer_fallback_case 83292_outer_fallback.yml '83292 outer fallback rescue' '83292 outer fallback recovered' 'Do not continue inside the failed inner block' "$@"
+run_83292_outer_fallback_case 83292_outer_fallback_always.yml '83292 outer fallback always rescue' '83292 outer fallback always recovered' 'Do not continue inside the failed inner block' "$@"
 
 run_83292_max_fail_case() {
   local playbook="$1"
