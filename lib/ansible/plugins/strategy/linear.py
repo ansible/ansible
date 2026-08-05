@@ -41,7 +41,7 @@ from ansible._internal._templating._engine import TemplateEngine
 from ansible.utils.display import Display
 from ansible.inventory.host import Host
 from ansible.playbook.task import Task
-from ansible.executor.play_iterator import IteratingStates, PlayIterator
+from ansible.executor.play_iterator import PlayIterator
 from ansible.playbook.play_context import PlayContext
 
 display = Display()
@@ -358,13 +358,10 @@ class StrategyModule(StrategyBase):
                     for host in hosts_left:
                         if host.name not in failed_hosts:
                             state_when_failed = iterator.get_host_state(host)
-                            active_state_when_failed = iterator.get_active_state(state_when_failed)
-                            was_in_tasks = active_state_when_failed.run_state == IteratingStates.TASKS
                             has_rescue_path = iterator.is_any_block_rescuing(state_when_failed)
                             iterator.mark_host_failed(host)
                             if (
                                 run_once
-                                and was_in_tasks
                                 and has_rescue_path
                             ):
                                 # ``mark_host_failed`` appends every host it moves out of
