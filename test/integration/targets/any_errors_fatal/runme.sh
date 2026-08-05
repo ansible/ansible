@@ -71,6 +71,23 @@ run_83292_case 83292_explicit.yml '83292 explicit rescue' '83292 explicit recove
 run_83292_case 83292_implicit.yml '83292 implicit rescue' '83292 implicit recovered' "$@"
 run_83292_case 83292_bypass.yml '83292 bypass rescue' '83292 bypass recovered' "$@"
 
+run_83292_nested_case() {
+  set +e
+  output="$(ansible-playbook -i inventory "$@" 83292_nested.yml 2>&1)"
+  status=$?
+  set -e
+  printf '%s\n' "$output"
+  [ "$status" -eq 0 ]
+  [ "$(grep -c 'SHOULD NOT HAPPEN' <<< "$output")" -eq 0 ]
+  for host in testhost testhost2; do
+    [ "$(grep -cF '"83292 nested rescue '$host'"' <<< "$output")" -eq 1 ]
+    [ "$(grep -cF '"83292 nested recovered '$host'"' <<< "$output")" -eq 1 ]
+    [ "$(grep -cF '"83292 nested post '$host'"' <<< "$output")" -eq 1 ]
+  done
+}
+
+run_83292_nested_case "$@"
+
 run_83292_max_fail_case() {
   local playbook="$1"
   local rescue_marker="$2"
