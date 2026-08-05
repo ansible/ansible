@@ -362,12 +362,10 @@ class StrategyModule(StrategyBase):
                             was_in_tasks = active_state_when_failed.run_state == IteratingStates.TASKS
                             has_rescue_path = iterator.is_any_block_rescuing(state_when_failed)
                             iterator.mark_host_failed(host)
-                            active_state_after_failure = iterator.get_active_state(iterator.get_state_for_host(host.name))
                             if (
                                 run_once
                                 and was_in_tasks
                                 and has_rescue_path
-                                and active_state_after_failure.run_state == IteratingStates.RESCUE
                             ):
                                 # ``mark_host_failed`` appends every host it moves out of
                                 # the active task state.  A synthetic run_once host must be
