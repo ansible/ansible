@@ -41,7 +41,7 @@ from ansible._internal._templating._engine import TemplateEngine
 from ansible.utils.display import Display
 from ansible.inventory.host import Host
 from ansible.playbook.task import Task
-from ansible.executor.play_iterator import PlayIterator
+from ansible.executor.play_iterator import IteratingStates, PlayIterator
 from ansible.playbook.play_context import PlayContext
 
 display = Display()
@@ -357,7 +357,18 @@ class StrategyModule(StrategyBase):
                 if mark_hosts_failed and (failed_hosts or unreachable_hosts):
                     for host in hosts_left:
                         if host.name not in failed_hosts:
+                            entered_rescue = iterator.get_host_state(host).run_state == IteratingStates.TASKS
                             iterator.mark_host_failed(host)
+                            if (
+                                run_once
+                                and entered_rescue
+                                and iterator.get_state_for_host(host.name).run_state == IteratingStates.RESCUE
+                            ):
+                                # ``mark_host_failed`` appends every host it moves out of
+                                # the active task state.  A synthetic run_once host must be
+                                # visible to rescue/always task variables, just like the
+                                # executing host restored by StrategyBase result handling.
+                                iterator._play._removed_hosts.remove(host.name)
                             # A failed ``run_once`` task can move a host that did not
                             # execute the task into RESCUE.  Keep it out of the TQM
                             # failed-host set until the iterator reaches a terminal
