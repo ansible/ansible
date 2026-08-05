@@ -255,7 +255,7 @@ class LookupModule(LookupBase):
             except SSLValidationError as e:
                 raise AnsibleError(f"Error validating the server's certificate for {mask_url(term)}") from e
             except ConnectionError as e:
-                raise AnsibleError(f"Error connecting to  {mask_url(term)}") from e
+                raise AnsibleError(f"Error connecting to {mask_url(term)}") from e
 
             if self.get_option('split_lines'):
                 for line in response.read().splitlines():

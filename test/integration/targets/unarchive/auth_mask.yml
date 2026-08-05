@@ -2,12 +2,12 @@
   gather_facts: false
   tasks:
   - name: unarchive auth fail a tar from an URL download from remote
-    unarchive: src="https://secretuser:secretpassword@localhost/nothere" dest="/tmp/" remote_src=no
+    unarchive: src="http://secretuser:secretpassword@localhost/nothere" dest="/tmp/" remote_src=no
     ignore_errors: true
     register: auth1
   
   - name: unarchive auth fail a tar from an URL download from controller
-    unarchive: src="https://secretuser:secretpassword@localhost/nothere" dest="/tmp/" remote_src=yes
+    unarchive: src="http://secretuser:secretpassword@localhost/nothere" dest="/tmp/" remote_src=yes
     ignore_errors: true
     register: auth2
   
