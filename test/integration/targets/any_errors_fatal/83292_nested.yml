@@ -2,6 +2,7 @@
 - name: Rescued run_once failure in an inner block
   hosts: testhost,testhost2
   gather_facts: false
+  max_fail_percentage: '{{ max_fail_pct | default(100) }}'
   tasks:
     - name: Wrap the run_once block
       block:
