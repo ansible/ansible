@@ -68,3 +68,25 @@ run_83292_case() {
 run_83292_case 83292_explicit.yml '83292 explicit rescue' '83292 explicit recovered' "$@"
 run_83292_case 83292_implicit.yml '83292 implicit rescue' '83292 implicit recovered' "$@"
 run_83292_case 83292_bypass.yml '83292 bypass rescue' '83292 bypass recovered' "$@"
+
+run_83292_max_fail_case() {
+  local playbook="$1"
+  local rescue_marker="$2"
+  local recovered_marker="$3"
+  shift 3
+
+  for max_fail_pct in 0 1 50 100; do
+    set +e
+    output="$(ansible-playbook -i inventory "$@" -e max_fail_pct="$max_fail_pct" "$playbook" 2>&1)"
+    status=$?
+    set -e
+    printf '%s\n' "$output"
+    [ "$status" -eq 0 ]
+    [ "$(grep -c 'SHOULD NOT HAPPEN' <<< "$output")" -eq 0 ]
+    [ "$(grep -c "$rescue_marker" <<< "$output")" -eq 2 ]
+    [ "$(grep -c "$recovered_marker" <<< "$output")" -eq 2 ]
+  done
+}
+
+run_83292_max_fail_case 83292_max_fail_explicit.yml '83292 maxfail explicit rescue' '83292 maxfail explicit recovered' "$@"
+run_83292_max_fail_case 83292_max_fail_implicit.yml '83292 maxfail implicit rescue' '83292 maxfail implicit recovered' "$@"

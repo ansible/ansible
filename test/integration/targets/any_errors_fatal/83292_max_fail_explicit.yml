@@ -1,0 +1,24 @@
+---
+- name: Rescued run_once failure with explicit any_errors_fatal and max-fail threshold
+  hosts: testhost,testhost2
+  gather_facts: false
+  any_errors_fatal: true
+  max_fail_percentage: '{{ max_fail_pct }}'
+  tasks:
+    - name: Exercise explicit run_once failure with max-fail threshold
+      block:
+        - name: Fail once
+          command: /bin/false
+          run_once: true
+
+        - name: Do not continue inside a failed block
+          debug:
+            msg: SHOULD NOT HAPPEN
+      rescue:
+        - name: Rescue both hosts after max-fail threshold
+          debug:
+            msg: 83292 maxfail explicit rescue
+
+    - name: Continue both hosts after max-fail rescue
+      debug:
+        msg: 83292 maxfail explicit recovered
