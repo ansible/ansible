@@ -61,8 +61,10 @@ run_83292_case() {
   printf '%s\n' "$output"
   [ "$status" -eq 0 ]
   [ "$(grep -c 'SHOULD NOT HAPPEN' <<< "$output")" -eq 0 ]
-  [ "$(grep -c "$rescue_marker" <<< "$output")" -eq 2 ]
-  [ "$(grep -c "$recovered_marker" <<< "$output")" -eq 2 ]
+  for host in testhost testhost2; do
+    [ "$(grep -cF "\"$rescue_marker $host\"" <<< "$output")" -eq 1 ]
+    [ "$(grep -cF "\"$recovered_marker $host\"" <<< "$output")" -eq 1 ]
+  done
 }
 
 run_83292_case 83292_explicit.yml '83292 explicit rescue' '83292 explicit recovered' "$@"
@@ -83,8 +85,10 @@ run_83292_max_fail_case() {
     printf '%s\n' "$output"
     [ "$status" -eq 0 ]
     [ "$(grep -c 'SHOULD NOT HAPPEN' <<< "$output")" -eq 0 ]
-    [ "$(grep -c "$rescue_marker" <<< "$output")" -eq 2 ]
-    [ "$(grep -c "$recovered_marker" <<< "$output")" -eq 2 ]
+    for host in testhost testhost2; do
+      [ "$(grep -cF "\"$rescue_marker $host\"" <<< "$output")" -eq 1 ]
+      [ "$(grep -cF "\"$recovered_marker $host\"" <<< "$output")" -eq 1 ]
+    done
   done
 }
 
@@ -98,3 +102,27 @@ set -e
 printf '%s\n' "$output"
 [ "$status" -ne 0 ]
 [ "$(grep -c 'SHOULD NOT HAPPEN' <<< "$output")" -eq 0 ]
+
+run_83292_terminal_case() {
+  local playbook="$1"
+  local rescue_marker="$2"
+  local terminal_marker="$3"
+  shift 3
+
+  set +e
+  output="$(ansible-playbook -i inventory "$@" "$playbook" 2>&1)"
+  status=$?
+  set -e
+  printf '%s\n' "$output"
+  [ "$status" -ne 0 ]
+  [ "$(grep -c 'SHOULD NOT HAPPEN' <<< "$output")" -eq 0 ]
+  for host in testhost testhost2; do
+    [ "$(grep -cF "\"$rescue_marker $host\"" <<< "$output")" -eq 1 ]
+    if [ -n "$terminal_marker" ]; then
+      [ "$(grep -cF "\"$terminal_marker $host\"" <<< "$output")" -eq 1 ]
+    fi
+  done
+}
+
+run_83292_terminal_case 83292_rescue_failure.yml '83292 rescue failure' '' "$@"
+run_83292_terminal_case 83292_always_failure.yml '83292 always failure rescue' '83292 always failure always' "$@"
