@@ -47,3 +47,17 @@ ansible-playbook -i inventory "$@" 80981.yml | tee out.txt
 [ "$(grep -c 'SHOULD NOT HAPPEN' out.txt)" -eq 0 ]
 [ "$(grep -c 'rescuedd' out.txt)" -eq 2 ]
 [ "$(grep -c 'recovered' out.txt)" -eq 2 ]
+
+set +e
+output="$(ansible-playbook -i inventory "$@" 83292.yml 2>&1)"
+status=$?
+set -e
+printf '%s\n' "$output"
+[ "$status" -eq 0 ]
+[ "$(grep -c 'SHOULD NOT HAPPEN' <<< "$output")" -eq 0 ]
+[ "$(grep -c '83292 explicit rescue' <<< "$output")" -eq 2 ]
+[ "$(grep -c '83292 explicit recovered' <<< "$output")" -eq 2 ]
+[ "$(grep -c '83292 implicit rescue' <<< "$output")" -eq 2 ]
+[ "$(grep -c '83292 implicit recovered' <<< "$output")" -eq 2 ]
+[ "$(grep -c '83292 bypass rescue' <<< "$output")" -eq 2 ]
+[ "$(grep -c '83292 bypass recovered' <<< "$output")" -eq 2 ]
