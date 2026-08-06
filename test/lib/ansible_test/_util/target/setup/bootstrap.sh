@@ -302,7 +302,7 @@ bootstrap_remote_freebsd()
                 cryptography_pkg=""  # not available
                 pyyaml_pkg=""  # not available
                 ;;
-            "15.0/3.12")
+            "15.1/3.14")
                 jinja2_pkg=""  # not available
                 cryptography_pkg=""  # not available
                 pyyaml_pkg=""  # not available
