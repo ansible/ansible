@@ -427,7 +427,7 @@ class FieldAttributeBase:
         nd = new_me.__dict__
         for name in self.fattributes:
             n = f'_{name}'
-            if (v := nd.get(n)) is not None and isinstance(v, (list, dict)):
+            if isinstance(v := nd.get(n), (list, dict)):
                 nd[n] = v.copy()
         return new_me
 
