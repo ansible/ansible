@@ -1,0 +1,10 @@
+- name: Test that delegate_to shows ansible_host for all loop items
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+    - name: Delegated task in a loop with multiple hosts
+      ansible.builtin.debug:
+        msg: test
+      delegate_to: "{{ item }}"
+      loop: "{{ groups['targets'] }}"
