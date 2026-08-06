@@ -98,13 +98,13 @@ run_83292_outer_fallback_case() {
   shift 4
 
   for max_fail_pct in default 0; do
-    extra_args=()
+    playbook_args=("$playbook")
     if [ "$max_fail_pct" != default ]; then
-      extra_args=(-e max_fail_pct="$max_fail_pct")
+      playbook_args=(-e max_fail_pct="$max_fail_pct" "$playbook")
     fi
 
     set +e
-    output="$(ansible-playbook -i inventory "$@" "${extra_args[@]}" "$playbook" 2>&1)"
+    output="$(ansible-playbook -i inventory "$@" "${playbook_args[@]}" 2>&1)"
     status=$?
     set -e
     printf '%s\n' "$output"
