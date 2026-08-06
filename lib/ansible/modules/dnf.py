@@ -464,6 +464,23 @@ class DnfModule(YumDnf):
 
         return interpreter
 
+
+    @staticmethod
+    def _extract_json_from_stdout(stdout):
+        """Extract JSON from stdout that may contain DNF plugin informational output."""
+        # DNF plugins (e.g. kpatch-dnf) may write informational text to stdout before
+        # the JSON response. Try to find the JSON portion by looking for the first '{'.
+        json_start = stdout.find('{')
+        if json_start > 0:
+            # Only strip leading non-JSON text; the JSON should be the last line(s)
+            candidate = stdout[json_start:]
+            try:
+                return json.loads(candidate)
+            except json.JSONDecodeError:
+                pass
+        # If no JSON found or extraction failed, let the original error handling take over
+        return json.loads(stdout)
+
     def _execute_dnf_script(self, command, config, params=None):
         """Execute the dnf module_utils script via subprocess with JSON RPC."""
         request = {'command': command, 'config': config}
@@ -484,7 +501,7 @@ class DnfModule(YumDnf):
             )
 
             if stdout:
-                return json.loads(stdout)
+                return self._extract_json_from_stdout(stdout)
             else:
                 return {
                     'failed': True,
