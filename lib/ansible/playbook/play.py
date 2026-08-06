@@ -384,11 +384,6 @@ class Play(Base, Taggable, CollectionSearch):
                 tasklist.append(task)
         return tasklist
 
-    def copy(self):
-        new_me = super().copy()
-        new_me.role_cache = self.role_cache.copy()
-        return new_me
-
     def _post_validate_validate_argspec(self, attr: NonInheritableFieldAttribute, value: object, templar: _TE) -> str | None:
         """Validate user input is a bool or string, and return the corresponding argument spec name."""
 
