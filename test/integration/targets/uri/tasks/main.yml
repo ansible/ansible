@@ -778,3 +778,24 @@
   assert:
     that:
       - uri_check.msg == "This action (uri) does not support check mode."
+
+# https://github.com/ansible/ansible/issues/85780
+- name: Test if cookies are returned when follow_redirects is none
+  ansible.builtin.uri:
+    method: POST
+    url: "http://localhost:{{ http_port }}/login"
+    follow_redirects: none
+    body_format: form-urlencoded
+    body:
+      username: user
+      password: pass
+    status_code: [302]
+  register: cookies_return
+
+- name: Check if cookies are returned if follow_redirects is None
+  assert:
+    that:
+      - cookies_return.cookies_string is defined
+      - cookies_return.cookies is defined
+      - cookies_return.cookies_string != ''
+      - cookies_return['cookies']['session_id'] == 'secure_session_token_123'

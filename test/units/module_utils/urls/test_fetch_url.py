@@ -170,7 +170,8 @@ def test_fetch_url_httperror(open_url_mock, fake_ansible_module):
     r, info = fetch_url(fake_ansible_module, BASE_URL)
 
     assert info == {'msg': 'HTTP Error 500: Internal Server Error', 'body': 'TESTS',
-                    'status': 500, 'url': BASE_URL, 'content-type': 'application/json'}
+                    'status': 500, 'url': BASE_URL, 'content-type': 'application/json',
+                    'cookies': {}, 'cookies_string': ''}
 
 
 def test_fetch_url_urlerror(open_url_mock, fake_ansible_module):

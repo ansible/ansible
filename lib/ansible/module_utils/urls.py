@@ -1387,6 +1387,25 @@ def url_redirect_argument_spec():
     )
 
 
+def _process_cookies(cookies: cookiejar.CookieJar) -> tuple[dict[str, str], str]:
+    """
+    Parse the cookies into a nice dictionary and string representation of the cookies
+    :arg cookies: a CookieJar object
+    :return: a dictionary of cookies and a string representation of the cookies
+    """
+    cookie_list = []
+    cookie_dict = {}
+    # Python sorts cookies in order of most specific (ie. longest) path first. See ``CookieJar._cookie_attrs``
+    # Cookies with the same path are reversed from response order.
+    # This code makes no assumptions about that, and accepts the order given by python
+    for cookie in cookies:
+        cookie_dict[cookie.name] = cookie.value
+        cookie_list.append((cookie.name, cookie.value))
+    cookies_string = '; '.join('%s=%s' % c for c in cookie_list)
+
+    return cookie_dict, cookies_string
+
+
 def fetch_url(module, url, data=None, headers=None, method=None,
               use_proxy=None, force=False, last_mod_time=None, timeout=10,
               use_gssapi=False, unix_socket=None, ca_path=None, cookies=None, unredirected_headers=None,
@@ -1482,19 +1501,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
             else:
                 temp_headers[name] = value
         info.update(temp_headers)
-
-        # parse the cookies into a nice dictionary
-        cookie_list = []
-        cookie_dict = {}
-        # Python sorts cookies in order of most specific (ie. longest) path first. See ``CookieJar._cookie_attrs``
-        # Cookies with the same path are reversed from response order.
-        # This code makes no assumptions about that, and accepts the order given by python
-        for cookie in cookies:
-            cookie_dict[cookie.name] = cookie.value
-            cookie_list.append((cookie.name, cookie.value))
-        info['cookies_string'] = '; '.join('%s=%s' % c for c in cookie_list)
-
-        info['cookies'] = cookie_dict
+        info['cookies'], info['cookies_string'] = _process_cookies(cookies)
         # finally update the result with a message about the fetch
         info.update(dict(msg="OK (%s bytes)" % r.headers.get('Content-Length', 'unknown'), url=r.geturl(), status=r.code))
     except (ConnectionError, ValueError) as e:
@@ -1519,6 +1526,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
         try:
             # Lowercase keys, to conform to py2 behavior, so that py3 and py2 are predictable
             info.update({k.lower(): v for k, v in e.info().items()})
+            info['cookies'], info['cookies_string'] = _process_cookies(cookies)
         except Exception:
             pass
 
