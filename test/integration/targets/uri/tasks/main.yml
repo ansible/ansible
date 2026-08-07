@@ -778,3 +778,29 @@
   assert:
     that:
       - uri_check.msg == "This action (uri) does not support check mode."
+
+- name: URI decrypts Vault file via src
+  ansible.builtin.uri:
+    url: "https://{{ httpbin_host }}/post"
+    method: POST
+    src: encrypted0.json
+    decrypt: true
+    body_format: json
+    return_content: yes
+  register: success_result
+
+- name: Debug uri decrypt POST response
+  ansible.builtin.debug:
+    msg:
+      status: "{{ success_result.status }}"
+      content_type: "{{ success_result.content_type | default('n/a') }}"
+      json: "{{ success_result.json | default('n/a') }}"
+      json_data: "{{ success_result.json.json | default('n/a') }}"
+      data: "{{ success_result.json.data | default('n/a') }}"
+      content: "{{ success_result.content | default('n/a') }}"
+
+- name: Verify successful decryption
+  ansible.builtin.assert:
+    that:
+      - success_result.status == 200
+      - success_result.json.json.test_key == "test_value"

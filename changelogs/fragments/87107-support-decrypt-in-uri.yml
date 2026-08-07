@@ -1,0 +1,2 @@
+minor_changes:
+  - uri - Support decrypt(default=false) parameter in uri. Add get_real_file to support decrypt(https://github.com/ansible/ansible/pull/87107).
