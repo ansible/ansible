@@ -630,6 +630,9 @@ def main():
     ciphers = module.params['ciphers']
     use_netrc = module.params['use_netrc']
 
+    # for errors and to compare to fetched responses
+    masked_url = mask_url(url)
+
     if not re.match('^[A-Z]+$', method):
         module.fail_json(msg="Parameter 'method' needs to be a single word in uppercase, like GET or POST.")
 
@@ -713,17 +716,15 @@ def main():
             # may have been stored in the info as 'body'
             content = info.pop('body', b'')
         except http.client.HTTPException as http_err:
-            module.fail_json(msg=f"HTTP Error while fetching {mask_url(url)}: {to_native(http_err)}")
+            module.fail_json(msg=f"HTTP Error while fetching {masked_url}: {to_native(http_err)}")
     elif r:
         content = r
     else:
         content = None
 
     resp = {}
-    resp['redirected'] = info['url'] != url
+    resp['redirected'] = info['url'] != masked_url
     resp.update(info)
-    if 'url' in resp:
-        resp['url'] = mask_url(resp['url'])
 
     resp['elapsed'] = elapsed
     resp['status'] = int(resp['status'])
@@ -750,7 +751,7 @@ def main():
         uresp[ukey] = value
 
     if 'location' in uresp:
-        uresp['location'] = urljoin(mask_url(url), uresp['location'])
+        uresp['location'] = urljoin(masked_url, uresp['location'])
 
     # Default content_encoding to try
     if isinstance(content, bytes):
