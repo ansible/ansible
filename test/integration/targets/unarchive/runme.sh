@@ -9,5 +9,5 @@ ANSIBLE_REMOTE_TMP=./ansible ansible-playbook -i ../../inventory test_relative_t
 
 # ensure uri inline secrets are masked
 ULOG="${OUTPUT_DIR}/$$-unarchive.log"
-ansible-playbook auth_mask.yml -i ../../inventory "$@" | tee 2&1 >"${ULOG}"
+ansible-playbook auth_mask.yml -i ../../inventory "$@" 2>&1 | tee "${ULOG}"
 [ "$(grep -Ec 'secret' "${ULOG}")" = "0" ]
