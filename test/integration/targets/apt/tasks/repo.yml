@@ -181,6 +181,42 @@
         - item.item.3 is not string or "Inst foo [1.0.0] (" + item.item.3 + " localhost [all])" in item.stdout_lines
     loop: '{{ apt_result.results }}'
 
+  - name: Uninstall foo before testing high pin priorities
+    apt:
+      name: foo
+      state: absent
+
+  - name: Pin all foo versions above the former exact-version priority
+    copy:
+      content: |-
+        Package: foo
+        Pin: version *
+        Pin-Priority: 1002
+      dest: /etc/apt/preferences.d/foo
+
+  - name: Run high priority pinning version test matrix
+    apt:
+      name: foo{{ item.0 }}
+      state: latest
+    check_mode: true
+    ignore_errors: true
+    register: apt_result
+    loop:
+      # [filter, expected] # expected=False to assert an error
+      - ["=1.0.0", "1.0.0"]
+      - ["=1.0.*", "1.0.1"]
+      - ["", "2.0.1"]
+      - [">=1.0.0", "2.0.1"]
+      - ["=99", False]
+
+  - name: Validate high priority pinning version test matrix
+    assert:
+      that:
+        - (item.item.1 != False) or (item.item.1 == False and item is failed)
+        - (item.item.1 is string) == (item.stdout is defined)
+        - item.item.1 is not string or "(" + item.item.1 + " localhost [all])" in item.stdout
+    loop: '{{ apt_result.results }}'
+
   always:
     - name: Uninstall foo
       apt:
