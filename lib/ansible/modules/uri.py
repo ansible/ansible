@@ -664,14 +664,14 @@ def main():
         # and the filename already exists.  This allows idempotence
         # of uri executions.
         if os.path.exists(creates):
-            module.exit_json(stdout="No changes attempted, since '%s' exists" % creates, changed=False)
+            module.exit_json(stdout="skipped, since '%s' exists" % creates, changed=False)
 
     if removes is not None:
         # do not run the command if the line contains removes=filename
         # and the filename does not exist.  This allows idempotence
         # of uri executions.
         if not os.path.exists(removes):
-            module.exit_json(stdout="skipped, since '%s' exists" % removes, changed=False)
+            module.exit_json(stdout="skipped, since '%s' does not exist" % removes, changed=False)
 
     # Make the request
     start = datetime.now(timezone.utc)
