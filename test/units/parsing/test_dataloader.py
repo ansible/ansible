@@ -173,6 +173,26 @@ class TestPathDwimRelativeStackDataLoader(unittest.TestCase):
     def test_empty_lists(self):
         self.assertEqual(self._loader.path_dwim_relative_stack([], '', '~/'), os.path.expanduser('~'))
 
+    def test_none_dirname_finds_source_from_basedir(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            source = 'included.yml'
+            expected = os.path.join(tmpdir, source)
+            pathlib.Path(expected).touch()
+            self._loader.set_basedir(tmpdir)
+
+            self.assertEqual(self._loader.path_dwim_relative_stack([], None, source), expected)
+
+    def test_none_source_warns_and_raises(self):
+        with emits_warnings('Invalid request to find a file that matches a "null" value'):
+            self.assertRaisesRegex(
+                AnsibleFileNotFound,
+                'on the Ansible Controller',
+                self._loader.path_dwim_relative_stack,
+                [],
+                'tasks',
+                None,
+            )
+
     def test_all_slash(self):
         self.assertEqual(self._loader.path_dwim_relative_stack('/', '/', '/'), '/')
 
