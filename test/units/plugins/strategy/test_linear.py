@@ -4,20 +4,71 @@
 from __future__ import annotations
 
 
+from collections import deque
 import unittest
 from unittest.mock import patch, MagicMock
 
 from ansible.executor.play_iterator import PlayIterator
 from ansible.playbook import Playbook
 from ansible.playbook.play_context import PlayContext
+from ansible.plugins.strategy import StrategyBase
 from ansible.plugins.strategy.linear import StrategyModule
 from ansible.executor.task_queue_manager import TaskQueueManager
+from ansible.inventory.host import Host
+from ansible._internal import _task
 
 from units.mock.loader import DictDataLoader
 from units.mock.path import mock_unfrackpath_noop
 
 
 class TestStrategyLinear(unittest.TestCase):
+
+    def test_run_once_registered_host_variables_are_isolated_per_host(self):
+        strategy = StrategyBase.__new__(StrategyBase)
+        strategy._results_lock = MagicMock()
+        strategy._results = deque()
+        strategy._pending_results = 1
+        strategy._blocked_hosts = {}
+        strategy._queued_task_cache = {('host00', 'task-uuid'): dict(task_vars={}, play_context=MagicMock())}
+        strategy._hosts_cache = ['host00', 'host01']
+        strategy._diff = False
+        strategy.debugger_active = False
+        strategy._inventory = MagicMock()
+        strategy._inventory.get_hosts.return_value = [Host('host00'), Host('host01')]
+        strategy._process_rpc_queue = MagicMock()
+        strategy._tqm = MagicMock()
+        strategy._tqm._unreachable_hosts = {}
+        strategy._tqm._failed_hosts = {}
+        strategy._tqm._stats = MagicMock()
+        strategy._tqm.send_callback = MagicMock()
+        strategy._variable_manager = MagicMock()
+
+        task = MagicMock()
+        task.run_once = True
+        task.loop = None
+        task.delegate_to = None
+        task.delegate_facts = False
+        task._uuid = 'task-uuid'
+        task.debugger = 'never'
+
+        utr = _task.UnifiedTaskResult(is_module=False)
+        shared_facts = {'nested': {'marker': 'before'}}
+        utr.pending_changes.register_host_variables[_task.VariableLayer.EPHEMERAL_FACT] = shared_facts
+
+        strategy._results.append(_task.HostTaskResult(host=Host('host00'), task=task, utr=utr))
+
+        iterator = MagicMock()
+        iterator.host_states = {}
+
+        strategy._process_pending_results(iterator)
+
+        first_call, second_call = strategy._variable_manager.set_nonpersistent_facts.call_args_list
+        first_facts = first_call.args[1]
+        second_facts = second_call.args[1]
+
+        first_facts['nested']['marker'] = 'after'
+
+        self.assertEqual(second_facts['nested']['marker'], 'before')
 
     @patch('ansible.playbook.role.definition.unfrackpath', mock_unfrackpath_noop)
     def test_noop(self):

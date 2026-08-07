@@ -18,6 +18,7 @@
 from __future__ import annotations
 
 import cmd
+import copy
 import functools
 import os
 import pprint
@@ -674,16 +675,16 @@ class StrategyBase:
                             match variable_layer:
                                 case _task.VariableLayer.REGISTER_VARS:
                                     for target_host in original_host_list:
-                                        self._variable_manager.set_nonpersistent_facts(target_host, variables)
+                                        self._variable_manager.set_nonpersistent_facts(target_host, copy.deepcopy(variables))
                                 case _task.VariableLayer.CACHEABLE_FACT:
                                     for target_host in potentially_delegated_host_list:
-                                        self._variable_manager.set_host_facts(target_host, variables)
+                                        self._variable_manager.set_host_facts(target_host, copy.deepcopy(variables))
                                 case _task.VariableLayer.EPHEMERAL_FACT:
                                     for target_host in potentially_delegated_host_list:
-                                        self._variable_manager.set_nonpersistent_facts(target_host, variables)
+                                        self._variable_manager.set_nonpersistent_facts(target_host, copy.deepcopy(variables))
                                 case _task.VariableLayer.INCLUDE_VARS:
                                     for target_host in potentially_delegated_host_list:
-                                        for var_name, var_value in variables.items():
+                                        for var_name, var_value in copy.deepcopy(variables).items():
                                             self._variable_manager.set_host_variable(target_host, var_name, var_value)
                                 case _:
                                     raise NotImplementedError(f"Unsupported variable layer: {variable_layer}")
