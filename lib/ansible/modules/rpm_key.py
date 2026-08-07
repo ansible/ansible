@@ -96,7 +96,7 @@ import typing as _t
 
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.urls import fetch_url
+from ansible.module_utils.urls import fetch_url, mask_url
 from ansible.module_utils.compat.version import LooseVersion
 from ansible.module_utils.common.text.converters import to_native
 
@@ -475,11 +475,11 @@ class RpmKey(object):
         """Downloads a key from url, returns a valid path to a gpg key"""
         rsp, info = fetch_url(self.module, url)
         if info['status'] != 200:
-            self.module.fail_json(msg="failed to fetch key at %s , error was: %s" % (url, info['msg']))
+            self.module.fail_json(msg="failed to fetch key at %s , error was: %s" % (mask_url(url), info['msg']))
 
         key = rsp.read()
         if not is_pubkey(key):
-            self.module.fail_json(msg="Not a public key: %s" % url)
+            self.module.fail_json(msg="Not a public key: %s" % mask_url(url))
         tmpfd, tmpname = tempfile.mkstemp()
         self.module.add_cleanup_file(tmpname)
         with os.fdopen(tmpfd, "w+b") as tmpfile:
