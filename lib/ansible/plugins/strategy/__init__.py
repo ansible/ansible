@@ -168,12 +168,6 @@ def debug_closure(func):
                 if next_action.result == NextAction.REDO:
                     # rollback host state
                     self._tqm.clear_failed_hosts()
-                    if task.run_once and iterator._play.strategy in add_internal_fqcns(('linear',)) and result.utr.failed:
-                        for host_name, state in prev_host_states.items():
-                            if host_name == host.name:
-                                continue
-                            iterator.set_state_for_host(host_name, state)
-                            iterator._play._removed_hosts.remove(host_name)
                     iterator.set_state_for_host(host.name, prev_host_state)
                     for attr, what in status_to_stats_map:
                         if getattr(result.utr, attr):
@@ -562,13 +556,7 @@ class StrategyBase:
                     state_when_failed = iterator.get_state_for_host(original_host.name)
                     display.debug("marking %s as failed" % original_host.name)
 
-                    if original_task.run_once:
-                        # if we're using run_once, we have to fail every host here
-                        for h in self._inventory.get_hosts(iterator._play.hosts):
-                            if h.name not in self._tqm._unreachable_hosts:
-                                iterator.mark_host_failed(h)
-                    else:
-                        iterator.mark_host_failed(original_host)
+                    iterator.mark_host_failed(original_host)
 
                     state, dummy = iterator.get_next_task_for_host(original_host, peek=True)
 
