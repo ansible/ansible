@@ -378,7 +378,7 @@ from urllib.parse import urlsplit
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.text.converters import to_native
-from ansible.module_utils.urls import fetch_url, is_fetch_success, url_argument_spec
+from ansible.module_utils.urls import fetch_url, is_fetch_success, mask_url, url_argument_spec
 
 # ==============================================================
 # url handling
@@ -405,10 +405,11 @@ def url_get(module, url, dest, use_proxy, last_mod_time, force, timeout=10, head
     elapsed = (datetime.now(timezone.utc) - start).seconds
 
     if info['status'] == 304:
-        module.exit_json(url=url, dest=dest, changed=False, msg=info.get('msg', ''), status_code=info['status'], elapsed=elapsed)
+        module.exit_json(url=mask_url(url), dest=dest, changed=False, msg=info.get('msg', ''), status_code=info['status'], elapsed=elapsed)
 
     if not is_fetch_success(info) and not url.startswith('file:/'):
-        module.fail_json(msg=f"Request failed with msg {info['msg']}", status_code=info['status'], response=info['msg'], url=url, dest=dest, elapsed=elapsed)
+        module.fail_json(msg=f"Request failed with msg {info['msg']}", status_code=info['status'], response=info['msg'], url=mask_url(url),
+                         dest=dest, elapsed=elapsed)
 
     # create a temporary file and copy content to do checksum-based replacement
     if tmp_dest:
@@ -551,7 +552,7 @@ def main():
         checksum_src=None,
         dest=dest,
         elapsed=0,
-        url=url,
+        url=mask_url(url),
     )
 
     dest_is_dir = os.path.isdir(dest)
@@ -583,7 +584,7 @@ def main():
                 checksum = None
 
             if checksum is None:
-                module.fail_json(msg="Unable to find a checksum for file '%s' in '%s'" % (filename, checksum_url))
+                module.fail_json(msg="Unable to find a checksum for file '%s' in '%s'" % (filename, mask_url(checksum_url)))
         # Remove any non-alphanumeric characters, including the infamous
         # Unicode zero-width space
         checksum = re.sub(r'\W+', '', checksum).lower()

@@ -448,6 +448,7 @@ from ansible.module_utils.urls import (
     create_multipart,
     fetch_url,
     get_response_filename,
+    mask_url,
     parse_content_type,
     url_argument_spec,
     url_redirect_argument_spec,
@@ -629,6 +630,9 @@ def main():
     ciphers = module.params['ciphers']
     use_netrc = module.params['use_netrc']
 
+    # for errors and to compare to fetched responses
+    masked_url = mask_url(url)
+
     if not re.match('^[A-Z]+$', method):
         module.fail_json(msg="Parameter 'method' needs to be a single word in uppercase, like GET or POST.")
 
@@ -712,14 +716,14 @@ def main():
             # may have been stored in the info as 'body'
             content = info.pop('body', b'')
         except http.client.HTTPException as http_err:
-            module.fail_json(msg=f"HTTP Error while fetching {url}: {to_native(http_err)}")
+            module.fail_json(msg=f"HTTP Error while fetching {masked_url}: {to_native(http_err)}")
     elif r:
         content = r
     else:
         content = None
 
     resp = {}
-    resp['redirected'] = info['url'] != url
+    resp['redirected'] = info['url'] != masked_url
     resp.update(info)
 
     resp['elapsed'] = elapsed
@@ -747,7 +751,7 @@ def main():
         uresp[ukey] = value
 
     if 'location' in uresp:
-        uresp['location'] = urljoin(url, uresp['location'])
+        uresp['location'] = urljoin(masked_url, uresp['location'])
 
     # Default content_encoding to try
     if isinstance(content, bytes):

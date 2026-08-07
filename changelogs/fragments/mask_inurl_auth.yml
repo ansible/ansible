@@ -1,0 +1,7 @@
+bugfixes:
+  - module_utils.urls now all errors mask in line url authentication information.
+  - apt_key module now masks authentication information in all displays and returns of uri information.
+  - get_url module now masks authentication information in all displays and returns of uri information.
+  - rpm_key module now masks authentication information in all displays and returns of uri information.
+  - uri module now masks authentication information in all displays and returns of uri information.
+  - url lookup now masks authentication information in all displays and returns of uri information.

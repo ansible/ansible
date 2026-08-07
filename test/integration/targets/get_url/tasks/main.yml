@@ -835,3 +835,15 @@
 - assert:
     that:
       - get_dir_filename.dest == remote_tmp_dir ~ "/filename.json"
+
+- name: Test auth fail downloading to dir
+  get_url:
+    url: 'https://secretuser:secretpassword@{{ httpbin_host }}/nonexistant'
+    dest: "{{ remote_tmp_dir }}"
+  ignore_errors: true
+  register: auth_error
+
+- name: Ensure secret is not visible
+  assert:
+    that:
+      - "'secret' not in auth_error|to_json"
