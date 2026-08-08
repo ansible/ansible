@@ -49,8 +49,9 @@
     - name: precreate public .ssh
       file: path={{home ~ '.ssh'}} state=directory
 
-    - name: setup public key linked to flag file
-      file: path={{home ~ pub_file}} src={{flagfile.path}} state=link
+    - name: setup keys linked to flag file
+      file: path={{home ~ item}} src={{flagfile.path}} state=link
+      loop: '{{key_files}}'
 
     - name: Create user with ssh key
       user:
@@ -61,12 +62,18 @@
       ignore_errors: true
       register: user_no_force
 
+    - stat: path={{home ~ ssh_key_file}}
+      register: check_priv
+
     - stat: path={{home ~ pub_file}}
       register: check_pub
 
     - name: ensure we didn't overwrite
       assert:
         that:
+          - check_priv.stat.exists
+          - check_priv.stat.islnk
+          - check_priv.stat.uid == 0
           - check_pub.stat.exists
           - check_pub.stat.islnk
           - check_pub.stat.uid == 0
@@ -81,6 +88,9 @@
       ignore_errors: true
       register: user_force
 
+    - stat: path={{home ~ ssh_key_file}}
+      register: check_priv2
+
     - stat: path={{home ~ pub_file}}
       register: check_pub2
 
@@ -88,6 +98,8 @@
       assert:
         that:
           - user_force is success
+          - check_priv2.stat.exists
+          - not check_priv2.stat.islnk
           - check_pub2.stat.exists
           - not check_pub2.stat.islnk
           - check_pub2.stat.uid != 0
