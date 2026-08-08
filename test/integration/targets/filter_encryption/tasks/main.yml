@@ -50,7 +50,7 @@
 - name: check round-trip without salt
   assert:
     that:
-      - data2_plaintext|vault(data2_password, vault_id=data2_vault_id)|unvault(data2_password, vault_id=data2_vault_id) == data2_plaintext
+      - data2_plaintext|vault(data2_password, vault_id=data2_vault_id, method_name='aes256')|unvault(data2_password, vault_id=data2_vault_id) == data2_plaintext
 
 - name: check unvaulting
   assert:

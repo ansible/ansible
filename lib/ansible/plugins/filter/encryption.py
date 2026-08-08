@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.module_utils.common.text.converters import to_native, to_bytes, to_text
 from ansible.module_utils.secrets import register_secret
@@ -14,7 +15,7 @@ from ansible.utils.display import Display
 display = Display()
 
 
-def do_vault(data, secret, salt=None, vault_id='filter_default', wrap_object=False):
+def do_vault(data, secret, salt=None, vault_id='filter_default', wrap_object=False, vaultid=None, method_name=None):
     if not isinstance(secret, (str, bytes)):
         raise TypeError(f"Secret passed is required to be a string, instead we got {type(secret)}.")
 
@@ -24,10 +25,15 @@ def do_vault(data, secret, salt=None, vault_id='filter_default', wrap_object=Fal
     if not isinstance(data, (str, bytes)):
         raise TypeError(f"Can only vault strings, instead we got {type(data)}.")
 
+    if method_name is not None:
+        choices = C.config.get_config_choices('VAULT_METHOD')
+        if method_name not in choices:
+            raise TypeError(f"Invalid vault encryption method {method_name!r}, valid choices are: {', '.join(choices)}")
+
     vs = VaultSecret(to_bytes(secret))
     vl = VaultLib()
     try:
-        vault = vl.encrypt(to_bytes(data), vs, vault_id, salt)
+        vault = vl.encrypt(to_bytes(data), vs, vault_id, salt, method_name=method_name)
     except Exception as ex:
         raise AnsibleError("Unable to encrypt.") from ex
 
