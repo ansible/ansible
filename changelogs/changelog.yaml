@@ -1280,6 +1280,17 @@ releases:
     - fix-cloning-malformed-role-requirements.yml
     - sort_obfuscation.yml
     release_date: '2026-06-11'
+  2.19.12:
+    changes:
+      release_summary: '| Release Date: 2026-08-10
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.19/porting_guides/porting_guide_core_2.19.html>`__
+
+        '
+    codename: What Is and What Should Never Be
+    fragments:
+    - 2.19.12_summary.yaml
+    release_date: '2026-08-10'
   2.19.12rc1:
     changes:
       bugfixes:
