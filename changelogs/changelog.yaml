@@ -896,6 +896,17 @@ releases:
     - 2.18.18rc1_summary.yaml
     - fix-cloning-malformed-role-requirements.yml
     release_date: '2026-06-11'
+  2.18.19:
+    changes:
+      release_summary: '| Release Date: 2026-08-10
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.18/porting_guides/porting_guide_core_2.18.html>`__
+
+        '
+    codename: Fool in the Rain
+    fragments:
+    - 2.18.19_summary.yaml
+    release_date: '2026-08-10'
   2.18.19rc1:
     changes:
       bugfixes:
