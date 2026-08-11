@@ -45,6 +45,8 @@ from .methods.rot13 import patch_rot13_import
 from units.mock.loader import DictDataLoader
 from units.mock.vault_helper import TextVaultSecret
 
+if t.TYPE_CHECKING:
+    from units.mock.vault_helper import VaultTestHelper
 
 from ansible.parsing.vault import AnsibleVaultFormatError, AnsibleVaultError
 

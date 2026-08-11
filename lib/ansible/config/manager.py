@@ -750,8 +750,6 @@ class ConfigManager:
                         f'Config {_get_config_label(plugin_type, plugin_name, config)} from {origin!r} has an invalid value {value!r}.',
                         help_text=f'Valid values are: {choices}.',
                     )
-                    raise AnsibleOptionsError('Invalid value "%s" for configuration option "%s", valid values are: %s' %
-                                              (value, to_native(_get_entry(plugin_type, plugin_name, config)), ','.join(choices)))
 
             # deal with deprecation of the setting
             if 'deprecated' in defs[config] and origin != 'default':

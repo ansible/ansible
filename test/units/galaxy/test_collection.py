@@ -973,6 +973,7 @@ def test_download_file_incomplete_read(
     # Test retries succeed
     responses = [(incomplete_data, len(data)), (data, len(data))]
     mock_open = MagicMock(return_value=MockHTTPResponses(responses))
+    monkeypatch.setattr('time.sleep', lambda _: None)
     monkeypatch.setattr(collection.concrete_artifact_manager, 'open_url', mock_open)
 
     collection._download_file('http://google.com/file', temp_dir, sha256_hash.hexdigest(), True)

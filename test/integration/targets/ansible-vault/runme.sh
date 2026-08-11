@@ -551,8 +551,8 @@ EXPECTED_ERROR='no vault secrets were found'
 # shellcheck disable=SC2016
 echo '$ANSIBLE_VAULT;1.1;AES256' | ANSIBLE_VAULT_IDENTITY='' ansible-vault decrypt --vault-password-file vault-password 2>&1 | grep "${EXPECTED_ERROR}"
 
-# make the script with no shebang executable at runtime to avoid angering shebang sanity tests
-chmod a+x script-noshebang
+# make the scripts with no shebang executable at runtime to avoid angering shebang sanity tests
+chmod a+x script-noshebang*
 
 # executable without shebang
 EXPECTED_ERROR='Problem running vault password script'

@@ -214,6 +214,7 @@ def test_ensure_type_vaulted(_vault_secrets_context: VaultTestHelper) -> None:
     assert VaultedValue.is_tagged_on(result)
     assert Origin.get_tag(result) is origin
 
+
 choice_test_data = [
     ('TEST_1', {'description': 'test_1', 'choices': ['a', 'b', 'c']}, ['a', 'b', 'c']),
     ('TEST_2', {'description': 'test_2', 'choices': {'x': 1, 'y': 2, 'z': 3}}, ['x', 'y', 'z']),

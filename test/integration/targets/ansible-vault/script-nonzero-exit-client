@@ -1,1 +1,2 @@
-script-nonzero-exit
+#!/usr/bin/env bash
+script-nonzero-

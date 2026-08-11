@@ -24,7 +24,7 @@ class Params:
     length: int = 32
     n: int = 2**14  # iterations (cpu + mem)
     r: int = 8  # block size (mem)
-    p: int = 1  # paralelism (cpu + mem)
+    p: int = 1  # parallelism (cpu + mem)
 
 
 class VaultMethod(VaultMethodBase):

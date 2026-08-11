@@ -45,7 +45,7 @@ class VaultMethod(VaultMethodBase):
             algorithm=hashes.SHA256(),
             length=key_length * 2 + iv_length,
             salt=salt,
-            iterations=10000,  # considred weak as of 2024
+            iterations=10000,  # considered weak as of 2024
             backend=CRYPTOGRAPHY_BACKEND,
         )
 

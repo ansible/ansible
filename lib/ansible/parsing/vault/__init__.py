@@ -31,6 +31,9 @@ from ansible.module_utils.common.text.converters import to_bytes, to_text, to_na
 from ansible.utils.display import Display
 from ansible.utils.path import makedirs_safe, unfrackpath
 
+if t.TYPE_CHECKING:
+    from .methods import VaultMethodBase
+
 display = Display()
 
 
@@ -38,6 +41,7 @@ b_HEADER = b'$ANSIBLE_VAULT'
 _SUPPORTED_ENVELOPE_VERSIONS = ('1.1', '1.2')
 
 _VAULT_METHOD_CONFIG_KEY: t.Final[str] = 'VAULT_METHOD'
+
 
 class AnsibleVaultError(AnsibleError):
     pass
@@ -230,12 +234,8 @@ class VaultSecret:
         """
         return self._bytes
 
-    @abc.abstractmethod
     def load(self) -> None:
         pass
-
-    def load(self):
-        return self._bytes
 
 
 class PromptVaultSecret(VaultSecret):
@@ -600,7 +600,7 @@ class VaultLib:
         """
         origin = Origin.get_tag(vaulttext)
 
-        b_vaulttext = to_bytes(vaulttext, nonstring='error')  # enforce vaulttext is str/bytes, keep type check if removing type conversion
+        b_vaulttext = to_bytes(vaulttext, nonstring='strict')  # enforce vaulttext is str/bytes, keep type check if removing type conversion
 
         if not self.secrets:
             raise AnsibleVaultError("A vault password must be specified to decrypt data.", obj=vaulttext)

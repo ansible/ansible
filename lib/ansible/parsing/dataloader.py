@@ -21,7 +21,7 @@ from ansible.module_utils._internal._datatag import AnsibleTagHelper
 from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.parsing.quoting import unquote
 from ansible.parsing.utils.yaml import from_yaml
-from ansible.parsing.vault import VaultLib, is_encrypted, is_encrypted_file, PromptVaultSecret
+from ansible.parsing.vault import VaultLib, is_encrypted, is_encrypted_file, VaultSecret
 from ansible.utils.path import unfrackpath
 from ansible.utils.display import Display
 
@@ -72,8 +72,8 @@ class DataLoader:
         self.set_vault_secrets(None)
 
     # TODO: since we can query vault_secrets late, we could provide this to DataLoader init
-    def set_vault_secrets(self, vault_secrets: list[tuple[str, PromptVaultSecret]] | None) -> None:
-        self._vault.secrets = vault_secrets
+    def set_vault_secrets(self, vault_secrets: list[tuple[str, VaultSecret]] | None) -> None:
+        self._vault.secrets = vault_secrets or []
 
     def load(
             self,

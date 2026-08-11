@@ -17,7 +17,7 @@ from ansible.parsing.vault.methods import VaultMethodBase
 
 
 @pytest.fixture
-def patch_rot13_import(mocker: pytest_mock.MockerFixture) -> None:
+def patch_rot13_import(mocker: pytest_mock.MockerFixture) -> t.Generator:
     """Stuff a reference to this test module into runtime sys.modules to make it accessible to tests."""
     import sys
 
