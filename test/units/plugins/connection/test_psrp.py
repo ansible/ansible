@@ -191,8 +191,7 @@ class TestConnectionPSRP(object):
         ),
     )
 
-    @pytest.mark.parametrize('options, expected',
-                             ((o, e) for o, e in OPTIONS_DATA))
+    @pytest.mark.parametrize('options, expected', list(OPTIONS_DATA))
     def test_set_options(self, options, expected):
         pc = PlayContext()
 

@@ -35,7 +35,7 @@ class TestAnsibleModuleExitJson:
          {'msg': 'message', 'datetime': DATETIME.isoformat(), 'invocation': EMPTY_INVOCATION}),
     )
 
-    @pytest.mark.parametrize('args, expected, stdin', ((a, e, {}) for a, e in DATA), indirect=['stdin'])
+    @pytest.mark.parametrize('args, expected, stdin', [(a, e, {}) for a, e in DATA], indirect=['stdin'])
     def test_exit_json_exits(self, am, capfd, args, expected):
         with pytest.raises(SystemExit) as ctx:
             am.exit_json(**args)
@@ -46,7 +46,7 @@ class TestAnsibleModuleExitJson:
         assert return_val == expected
 
     @pytest.mark.parametrize('args, expected, stdin',
-                             ((a, e, {}) for a, e in DATA if 'msg' in a),
+                             [(a, e, {}) for a, e in DATA if 'msg' in a],
                              indirect=['stdin'])
     def test_fail_json_exits(self, am, capfd, args, expected):
         with pytest.raises(SystemExit) as ctx:
@@ -132,8 +132,8 @@ class TestAnsibleModuleExitValuesRemoved:
     )
 
     @pytest.mark.parametrize('am, stdin, return_val, expected',
-                             (({'username': {}, 'password': {'no_log': True}, 'token': {'no_log': True}}, s, r, e)
-                              for s, r, e in DATA),
+                             [({'username': {}, 'password': {'no_log': True}, 'token': {'no_log': True}}, s, r, e)
+                              for s, r, e in DATA],
                              indirect=['am', 'stdin'])
     def test_exit_json_removes_values(self, am, capfd, return_val, expected):
         with pytest.raises(SystemExit):
@@ -143,8 +143,8 @@ class TestAnsibleModuleExitValuesRemoved:
         assert json.loads(out) == expected
 
     @pytest.mark.parametrize('am, stdin, return_val, expected',
-                             (({'username': {}, 'password': {'no_log': True}, 'token': {'no_log': True}}, s, r, e)
-                              for s, r, e in DATA),
+                             [({'username': {}, 'password': {'no_log': True}, 'token': {'no_log': True}}, s, r, e)
+                              for s, r, e in DATA],
                              indirect=['am', 'stdin'])
     def test_fail_json_removes_values(self, am, capfd, return_val, expected):
         expected['failed'] = True

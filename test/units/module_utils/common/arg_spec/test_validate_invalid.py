@@ -112,7 +112,7 @@ INVALID_SPECS = [
 
 @pytest.mark.parametrize(
     ('arg_spec', 'parameters', 'expected', 'unsupported', 'error'),
-    (i[1:] for i in INVALID_SPECS),
+    [i[1:] for i in INVALID_SPECS],
     ids=[i[0] for i in INVALID_SPECS]
 )
 def test_invalid_spec(arg_spec, parameters, expected, unsupported, error):
