@@ -97,28 +97,28 @@ ONE_DIR_DATA: tuple[tuple[str, tuple[str, list[str]] | None, tuple[str, list[str
 ONE_DIR_DATA += tuple(item[:3] for item in TWO_DIRS_DATA)
 
 
-@pytest.mark.parametrize('directory, expected', ((d[0], d[4]) for d in THREE_DIRS_DATA))
+@pytest.mark.parametrize('directory, expected', [(d[0], d[4]) for d in THREE_DIRS_DATA])
 @pytest.mark.xfail(reason='broken test and/or code, original test missing assert', strict=False)
 def test_split_pre_existing_dir_three_levels_exist(directory, expected):
     with unittest.mock.patch('os.path.exists', side_effect=[True, True, True]):
         assert split_pre_existing_dir(directory) == expected
 
 
-@pytest.mark.parametrize('directory, expected', ((d[0], d[3]) for d in TWO_DIRS_DATA))
+@pytest.mark.parametrize('directory, expected', [(d[0], d[3]) for d in TWO_DIRS_DATA])
 @pytest.mark.xfail(reason='broken test and/or code, original test missing assert', strict=False)
 def test_split_pre_existing_dir_two_levels_exist(directory, expected):
     with unittest.mock.patch('os.path.exists', side_effect=[True, True, False]):
         assert split_pre_existing_dir(directory) == expected
 
 
-@pytest.mark.parametrize('directory, expected', ((d[0], d[2]) for d in ONE_DIR_DATA))
+@pytest.mark.parametrize('directory, expected', [(d[0], d[2]) for d in ONE_DIR_DATA])
 @pytest.mark.xfail(reason='broken test and/or code, original test missing assert', strict=False)
 def test_split_pre_existing_dir_one_level_exists(directory, expected):
     with unittest.mock.patch('os.path.exists', side_effect=[True, False, False]):
         assert split_pre_existing_dir(directory) == expected
 
 
-@pytest.mark.parametrize('directory', (d[0] for d in ONE_DIR_DATA if d[1] is None))
+@pytest.mark.parametrize('directory', [d[0] for d in ONE_DIR_DATA if d[1] is None])
 def test_split_pre_existing_dir_root_does_not_exist(directory):
     with unittest.mock.patch('os.path.exists', return_value=False):
         with pytest.raises(AnsibleModuleError) as excinfo:
@@ -126,7 +126,7 @@ def test_split_pre_existing_dir_root_does_not_exist(directory):
     assert excinfo.value.results['msg'].startswith("The '/' directory doesn't exist on this machine.")
 
 
-@pytest.mark.parametrize('directory, expected', ((d[0], d[1]) for d in ONE_DIR_DATA if not d[0].startswith('/')))
+@pytest.mark.parametrize('directory, expected', [(d[0], d[1]) for d in ONE_DIR_DATA if not d[0].startswith('/')])
 @pytest.mark.xfail(reason='broken test and/or code, original test missing assert', strict=False)
 def test_split_pre_existing_dir_working_dir_exists(directory, expected):
     with unittest.mock.patch('os.path.exists', return_value=False):

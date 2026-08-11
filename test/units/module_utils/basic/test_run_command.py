@@ -127,8 +127,8 @@ class TestRunCommandArgs:
     )
 
     @pytest.mark.parametrize('cmd, expected, shell, stdin',
-                             ((arg, cmd_str if sh else cmd_lst, sh, {})
-                              for (arg, cmd_lst, cmd_str), sh in product(ARGS_DATA, (True, False))),
+                             [(arg, cmd_str if sh else cmd_lst, sh, {})
+                              for (arg, cmd_lst, cmd_str), sh in product(ARGS_DATA, (True, False))],
                              indirect=['stdin'])
     def test_args(self, cmd, expected, shell, rc_am):
         rc_am.run_command(cmd, use_unsafe_shell=shell)

@@ -199,7 +199,7 @@ class TestConnectionWinRM(object):
     )
 
     @pytest.mark.parametrize('options, direct, expected, kerb',
-                             ((o, d, e, k) for o, d, e, k in OPTIONS_DATA))
+                             list(OPTIONS_DATA))
     def test_set_options(self, options, direct, expected, kerb):
         winrm.HAVE_KERBEROS = kerb
 

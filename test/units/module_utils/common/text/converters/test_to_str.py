@@ -23,25 +23,43 @@ VALID_STRINGS = (
 )
 
 
-@pytest.mark.parametrize('in_string, encoding, expected',
-                         itertools.chain(((d[0], d[2], d[1]) for d in VALID_STRINGS),
-                                         ((d[1], d[2], d[1]) for d in VALID_STRINGS)))
+@pytest.mark.parametrize(
+    'in_string, encoding, expected',
+    list(
+        itertools.chain(
+            ((d[0], d[2], d[1]) for d in VALID_STRINGS),
+            ((d[1], d[2], d[1]) for d in VALID_STRINGS)
+        )
+    )
+)
 def test_to_text(in_string, encoding, expected):
     """test happy path of decoding to text"""
     assert to_text(in_string, encoding) == expected
 
 
-@pytest.mark.parametrize('in_string, encoding, expected',
-                         itertools.chain(((d[0], d[2], d[0]) for d in VALID_STRINGS),
-                                         ((d[1], d[2], d[0]) for d in VALID_STRINGS)))
+@pytest.mark.parametrize(
+    'in_string, encoding, expected',
+    list(
+        itertools.chain(
+            ((d[0], d[2], d[0]) for d in VALID_STRINGS),
+            ((d[1], d[2], d[0]) for d in VALID_STRINGS)
+        )
+    )
+)
 def test_to_bytes(in_string, encoding, expected):
     """test happy path of encoding to bytes"""
     assert to_bytes(in_string, encoding) == expected
 
 
-@pytest.mark.parametrize('in_string, encoding, expected',
-                         itertools.chain(((d[0], d[2], d[1]) for d in VALID_STRINGS),
-                                         ((d[1], d[2], d[1]) for d in VALID_STRINGS)))
+@pytest.mark.parametrize(
+    'in_string, encoding, expected',
+    list(
+        itertools.chain(
+            ((d[0], d[2], d[1]) for d in VALID_STRINGS),
+            ((d[1], d[2], d[1]) for d in VALID_STRINGS)
+        )
+    )
+)
 def test_to_native(in_string, encoding, expected):
     """test happy path of encoding to native strings"""
     assert to_native(in_string, encoding) == expected

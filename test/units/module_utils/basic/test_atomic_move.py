@@ -72,7 +72,7 @@ def fake_stat(mocker):
     yield stat1
 
 
-@pytest.mark.parametrize('stdin, selinux', product([{}], (True, False)), indirect=['stdin'])
+@pytest.mark.parametrize('stdin, selinux', list(product([{}], (True, False))), indirect=['stdin'])
 def test_new_file(atomic_am, atomic_mocks, mocker, selinux):
     # test destination does not exist, login name = 'root', no environment, os.rename() succeeds
     mock_context = atomic_am.selinux_default_context.return_value
@@ -92,7 +92,7 @@ def test_new_file(atomic_am, atomic_mocks, mocker, selinux):
         assert not atomic_am.set_context_if_different.called
 
 
-@pytest.mark.parametrize('stdin, selinux', product([{}], (True, False)), indirect=['stdin'])
+@pytest.mark.parametrize('stdin, selinux', list(product([{}], (True, False))), indirect=['stdin'])
 def test_existing_file(atomic_am, atomic_mocks, fake_stat, mocker, selinux):
     # Test destination already present
     mock_context = atomic_am.selinux_context.return_value
@@ -190,7 +190,7 @@ def test_rename_perms_fail_temp_creation_fails(atomic_am, atomic_mocks, mocker, 
         atomic_am.atomic_move('/path/to/src', '/path/to/dest')
 
 
-@pytest.mark.parametrize('stdin, selinux', product([{}], (True, False)), indirect=['stdin'])
+@pytest.mark.parametrize('stdin, selinux', list(product([{}], (True, False))), indirect=['stdin'])
 def test_rename_perms_fail_temp_succeeds(atomic_am, atomic_mocks, fake_stat, mocker, selinux):
     """Test os.rename raising an error but fallback to using mkstemp works"""
     mock_context = atomic_am.selinux_default_context.return_value
