@@ -113,6 +113,44 @@ class TestVariableUtils(unittest.TestCase):
         }
     }
 
+    def test_merge_hash_returns_new_dict(self):
+        """merge_hash must never hand back one of the dictionaries it was given."""
+        # every combination of empty/non-empty and equal/unequal operands hits a different early return
+        for x, y in (
+            ({'a': 1}, {}),                    # y empty
+            ({}, {'a': 1}),                    # x empty
+            ({'a': 1}, {'a': 1}),              # x == y
+            ({'a': 1}, {'b': 2}),              # general merge
+            ({}, {}),                          # both empty
+        ):
+            original_x = x.copy()
+            original_y = y.copy()
+
+            result = merge_hash(x, y)
+
+            self.assertIsNot(result, x, f'result is the x operand for {x=} {y=}')
+            self.assertIsNot(result, y, f'result is the y operand for {x=} {y=}')
+
+            # adding a key to the result must not leak into either operand
+            result['injected_by_test'] = True
+            self.assertEqual(x, original_x, f'x was modified for {x=} {y=}')
+            self.assertEqual(y, original_y, f'y was modified for {x=} {y=}')
+
+    def test_combine_vars_returns_new_dict(self):
+        """combine_vars inherits the guarantee from merge_hash under both hash behaviours."""
+        for behaviour in ('merge', 'replace'):
+            with mock.patch('ansible.constants.DEFAULT_HASH_BEHAVIOUR', behaviour):
+                a = {'a': 1}
+                b = {}
+
+                result = combine_vars(a, b)
+
+                self.assertIsNot(result, a, f'result is the a operand for {behaviour=}')
+                self.assertIsNot(result, b, f'result is the b operand for {behaviour=}')
+
+                result['injected_by_test'] = True
+                self.assertEqual(a, {'a': 1}, f'a was modified for {behaviour=}')
+
     def test_merge_hash_simple(self):
         for test in self.combine_vars_merge_data:
             self.assertEqual(merge_hash(test['a'], test['b']), test['result'])

@@ -94,6 +94,11 @@ def merge_hash(x, y, recursive=True, list_merge='replace'):
     Return a new dictionary result of the merges of y into x,
     so that keys from y take precedence over keys from x.
     (x and y aren't modified)
+
+    The returned dictionary is always a new top-level dictionary, so adding or removing keys on it never
+    affects x or y.
+    Nested containers may still be shared with x and y, so callers must not mutate values reached through
+    the result.
     """
     if list_merge not in ('replace', 'keep', 'append', 'prepend', 'append_rp', 'prepend_rp'):
         raise AnsibleError("merge_hash: 'list_merge' argument can only be equal to 'replace', 'keep', 'append', 'prepend', 'append_rp' or 'prepend_rp'")
@@ -107,7 +112,8 @@ def merge_hash(x, y, recursive=True, list_merge='replace'):
     if x == {} or x == y:
         return y.copy()
     if y == {}:
-        return x
+        # a copy, so the caller never receives the dictionary it passed in
+        return x.copy()
 
     # in the following we will copy elements from y to x, but
     # we don't want to modify x, so we create a copy of it

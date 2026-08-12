@@ -1,0 +1,4 @@
+bugfixes:
+  - "``merge_hash`` now always returns a new dictionary, as documented.
+    Previously it returned the first operand itself when the second was empty, so callers that modified the result -- including
+    users of ``combine_vars`` and the ``combine`` filter -- could modify the dictionary they passed in."
