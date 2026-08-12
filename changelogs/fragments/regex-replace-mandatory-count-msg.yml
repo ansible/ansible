@@ -1,0 +1,5 @@
+bugfixes:
+  - regex_replace filter - the error raised when ``mandatory_count`` is not met now reports how many substitutions were actually
+    made.
+    It previously reported the value of the ``count`` argument, which defaults to ``0``, so the message usually claimed the pattern
+    matched zero times.

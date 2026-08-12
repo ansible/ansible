@@ -415,6 +415,19 @@
     that:
       - "incorrect_mandatory_count is failed"
       - "' times, but matches ' in incorrect_mandatory_count.msg"
+      # the reported number is the substitutions actually made, not the value of `count`
+      - "'should match 1 times, but matches 2 times' in incorrect_mandatory_count.msg"
+
+- name: Verify regex_replace reports the real match count when count is also set
+  debug:
+    msg: "{{ 'aaa'|regex_replace('a', 'b', mandatory_count=1, count=2) }}"
+  ignore_errors: yes
+  register: mandatory_count_with_count
+
+- assert:
+    that:
+      - "mandatory_count_with_count is failed"
+      - "'should match 1 times, but matches 2 times' in mandatory_count_with_count.msg"
 
 - name: Verify case-insensitive regex_findall
   assert:

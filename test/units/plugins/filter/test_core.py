@@ -8,8 +8,8 @@ import pytest
 
 from ansible._internal._datatag._tags import Origin
 from ansible.module_utils.common.text.converters import to_native
-from ansible.plugins.filter.core import to_bool, to_uuid
-from ansible.errors import AnsibleError
+from ansible.plugins.filter.core import regex_replace, to_bool, to_uuid
+from ansible.errors import AnsibleError, AnsibleFilterError
 from ansible.template import Templar, trust_as_template, is_trusted_as_template
 from ...test_utils.controller.display import emits_warnings
 
@@ -68,6 +68,30 @@ def test_from_yaml_trust(trust: bool) -> None:
 
     assert result == [dict(a='b')]
     assert is_trusted_as_template(result[0]['a']) is trust
+
+
+def test_regex_replace_mandatory_count_met() -> None:
+    assert regex_replace('foo=bar=baz', '=', ':', mandatory_count=2) == 'foo:bar:baz'
+
+
+@pytest.mark.parametrize(
+    'value, pattern, kwargs, expected_subs',
+    (
+        # `count` defaults to 0 (unlimited), so the reported number must come from the substitutions actually made
+        ('aaa', 'a', dict(mandatory_count=1), 3),
+        ('foo=bar=baz', '=', dict(mandatory_count=1), 2),
+        ('aaa', 'a', dict(mandatory_count=2, count=3), 3),
+        # no match at all
+        ('foo', 'z', dict(mandatory_count=1), 0),
+    )
+)
+def test_regex_replace_mandatory_count_reports_actual_subs(value, pattern, kwargs, expected_subs) -> None:
+    """The error message reports how many substitutions were made, not the value of `count`."""
+    with pytest.raises(AnsibleFilterError) as exc_info:
+        regex_replace(value, pattern, ':', **kwargs)
+
+    assert f'but matches {expected_subs} times' in str(exc_info.value)
+    assert f"should match {kwargs['mandatory_count']} times" in str(exc_info.value)
 
 
 def test_from_yaml_origin() -> None:

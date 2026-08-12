@@ -181,7 +181,7 @@ def regex_replace(value='', pattern='', replacement='', ignorecase=False, multil
     (output, subs) = _re.subn(replacement, value, count=count)
     if mandatory_count and mandatory_count != subs:
         raise AnsibleFilterError("'%s' should match %d times, but matches %d times in '%s'"
-                                 % (pattern, mandatory_count, count, value))
+                                 % (pattern, mandatory_count, subs, value))
     return output
 
 
