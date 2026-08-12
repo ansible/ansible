@@ -420,7 +420,9 @@ def mode_filter(st, mode, exact, module):
     if exact:
         return st_mode == mode
 
-    return bool(st_mode & mode)
+    # An inexact match treats `mode` as a minimum set of permissions, so every requested bit must be present.
+    # Testing `st_mode & mode` alone matches when only one of the requested bits overlaps.
+    return st_mode & mode == mode
 
 
 def statinfo(st):

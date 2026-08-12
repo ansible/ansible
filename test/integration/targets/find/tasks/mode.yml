@@ -58,6 +58,30 @@
     exact_mode: false
   register: other_readable_symbolic
 
+- name: multi-bit mask, all user permissions octal
+  find:
+    path: '{{ remote_tmp_dir_test }}'
+    pattern: 'mode_*'
+    mode: '0700'
+    exact_mode: false
+  register: user_rwx_octal
+
+- name: multi-bit mask, all user permissions symbolic
+  find:
+    path: '{{ remote_tmp_dir_test }}'
+    pattern: 'mode_*'
+    mode: 'u=rwx'
+    exact_mode: false
+  register: user_rwx_symbolic
+
+- name: multi-bit mask, user and other read-write octal
+  find:
+    path: '{{ remote_tmp_dir_test }}'
+    pattern: 'mode_*'
+    mode: '0606'
+    exact_mode: false
+  register: user_other_rw_octal
+
 - assert:
     that:
       - exact_mode_0644.files == exact_mode_0644_symbolic.files
@@ -66,3 +90,13 @@
       - user_readable_octal.files|map(attribute='path')|map('basename')|sort == ['mode_0400', 'mode_0444', 'mode_0644', 'mode_0666', 'mode_0700']
       - other_readable_octal.files == other_readable_symbolic.files
       - other_readable_octal.files|map(attribute='path')|map('basename')|sort == ['mode_0444', 'mode_0644', 'mode_0666']
+
+# A mask with more than one bit set is a minimum set of permissions: every requested bit must be present.
+# Fixtures are mode_0644, mode_0444, mode_0400, mode_0700 and mode_0666.
+- assert:
+    that:
+      # only mode_0700 has all of u=rwx; 0400/0444/0644/0666 each overlap but do not satisfy the full set
+      - user_rwx_octal.files == user_rwx_symbolic.files
+      - user_rwx_octal.files|map(attribute='path')|map('basename')|sort == ['mode_0700']
+      # only mode_0666 has both u=rw and o=rw; mode_0644 overlaps on u=rw and o=r only
+      - user_other_rw_octal.files|map(attribute='path')|map('basename')|sort == ['mode_0666']

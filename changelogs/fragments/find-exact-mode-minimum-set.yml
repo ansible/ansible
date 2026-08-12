@@ -1,0 +1,5 @@
+bugfixes:
+  - find - ``exact_mode=false`` now treats ``mode`` as a minimum set of permissions, as documented, so every requested permission
+    bit must be present on a file for it to match.
+    Previously a file matched when any single requested bit was present, so ``mode=0700`` with ``exact_mode=false`` also matched
+    a file with mode ``0400``.
