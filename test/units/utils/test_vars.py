@@ -279,6 +279,47 @@ class TestVariableUtils(unittest.TestCase):
         }
         self.assertEqual(merge_hash(low, high, True, 'prepend_rp'), expected)
 
+    def test_merge_hash_equal_dicts_with_list_append_and_prepend(self):
+        left_item = mock.MagicMock(name="left")
+        right_item = mock.MagicMock(name="right")
+        left_item.__eq__.return_value = True
+        low = {"list": [left_item]}
+        high = {"list": [right_item]}
+
+        self.assertEqual(low, high)
+        appended = merge_hash(low, high, list_merge='append')["list"]
+        prepended = merge_hash(low, high, list_merge='prepend')["list"]
+        self.assertEqual(len(appended), 2)
+        self.assertIs(appended[0], left_item)
+        self.assertIs(appended[1], right_item)
+        self.assertEqual(len(prepended), 2)
+        self.assertIs(prepended[0], right_item)
+        self.assertIs(prepended[1], left_item)
+
+    def test_merge_hash_equal_dicts_with_nested_list_append_and_prepend(self):
+        left_item = mock.MagicMock(name="left")
+        right_item = mock.MagicMock(name="right")
+        left_item.__eq__.return_value = True
+        low = {"nested": {"list": [left_item]}}
+        high = {"nested": {"list": [right_item]}}
+
+        self.assertEqual(low, high)
+        appended = merge_hash(low, high, list_merge='append')["nested"]["list"]
+        prepended = merge_hash(low, high, list_merge='prepend')["nested"]["list"]
+        self.assertEqual(len(appended), 2)
+        self.assertIs(appended[0], left_item)
+        self.assertIs(appended[1], right_item)
+        self.assertEqual(len(prepended), 2)
+        self.assertIs(prepended[0], right_item)
+        self.assertIs(prepended[1], left_item)
+
+    def test_merge_hash_equal_dicts_preserve_other_list_merge_modes(self):
+        value = {"list": [1, 1]}
+
+        for list_merge in ('replace', 'keep', 'append_rp', 'prepend_rp'):
+            with self.subTest(list_merge=list_merge):
+                self.assertEqual(merge_hash(value, value, list_merge=list_merge), value)
+
 
 def test_transform_to_native_types() -> None:
     """Verify that transform_to_native_types results in native types for both keys and values, with default redaction."""

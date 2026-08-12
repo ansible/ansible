@@ -1,0 +1,4 @@
+bugfixes:
+  - >-
+    combine filter - Preserve duplicate list entries when merging equivalent dictionaries with ``list_merge='append'`` or ``list_merge='prepend'``
+    (https://github.com/ansible/ansible/issues/79293).

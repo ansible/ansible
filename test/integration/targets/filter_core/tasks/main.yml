@@ -280,6 +280,7 @@
       # more advanced dict combination tests are done in the "merge_hash" function unit tests
       # but even though it's redundant with those unit tests, we do at least the most complicated example of the documentation here
       - "(default | combine(patch, recursive=True, list_merge='append_rp')) == result"
+      - "({'profile_list': ['test']} | combine({'profile_list': ['test']}, recursive=True, list_merge='append')) == {'profile_list': ['test', 'test']}"
       - combine_fail is failed
       - |
           "'recursive' and 'list_merge' are the only valid keyword arguments" is in combine_fail.msg

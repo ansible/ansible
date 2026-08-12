@@ -102,9 +102,9 @@ def merge_hash(x, y, recursive=True, list_merge='replace'):
     _validate_mutable_mappings(x, y)
 
     # to speed things up: if x is empty or equal to y, return y
-    # (this `if` can be remove without impact on the function
+    # (this `if` can be removed without impact on the function
     #  except performance)
-    if x == {} or x == y:
+    if x == {} or (x == y and list_merge not in ('append', 'prepend')):
         return y.copy()
     if y == {}:
         return x
