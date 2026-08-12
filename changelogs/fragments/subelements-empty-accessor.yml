@@ -1,0 +1,5 @@
+bugfixes:
+  - subelements filter - an empty accessor such as ``{{ data | subelements([]) }}`` now reports a filter error instead of raising
+    ``UnboundLocalError``.
+    The error message for a key that does not point to a list referenced the inner loop variable, which is never bound when the
+    accessor is empty.

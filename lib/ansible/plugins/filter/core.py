@@ -570,6 +570,10 @@ def subelements(obj, subelements, skip_missing=False):
     else:
         raise AnsibleTypeError('subelements must be a list or a string')
 
+    # An empty accessor would skip the loop below, leaving its `subelement` variable unbound for the error message.
+    if not subelement_list:
+        raise AnsibleFilterError('subelements must not be empty')
+
     results = []
 
     for element in element_list:

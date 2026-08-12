@@ -696,6 +696,12 @@
   ignore_errors: yes
   register: subelements_5
 
+- name: Verify subelements throws on empty subelements arg
+  set_fact:
+    foo: '{{subelements_demo | subelements([])}}'
+  ignore_errors: yes
+  register: subelements_6
+
 - name: Verify subelements
   assert:
     that:
@@ -703,6 +709,8 @@
       - '"obj must be a list of dicts or a nested dict" is in subelements_1.msg'
       - subelements_2 is failed
       - '"subelements must be a list or a string" is in subelements_2.msg'
+      - subelements_6 is failed
+      - '"subelements must not be empty" in subelements_6.msg'
       - 'subelements_demo|subelements("does not compute", skip_missing=True) == []'
       - subelements_3 is failed
       - '"could not find" in subelements_3.msg'

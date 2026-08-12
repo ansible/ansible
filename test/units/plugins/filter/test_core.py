@@ -8,8 +8,8 @@ import pytest
 
 from ansible._internal._datatag._tags import Origin
 from ansible.module_utils.common.text.converters import to_native
-from ansible.plugins.filter.core import to_bool, to_uuid
-from ansible.errors import AnsibleError
+from ansible.plugins.filter.core import subelements, to_bool, to_uuid
+from ansible.errors import AnsibleError, AnsibleFilterError, AnsibleTypeError
 from ansible.template import Templar, trust_as_template, is_trusted_as_template
 from ...test_utils.controller.display import emits_warnings
 
@@ -68,6 +68,36 @@ def test_from_yaml_trust(trust: bool) -> None:
 
     assert result == [dict(a='b')]
     assert is_trusted_as_template(result[0]['a']) is trust
+
+
+SUBELEMENTS_DEMO = [{'name': 'alice', 'groups': ['wheel'], 'authorized': ['/tmp/alice/onekey.pub']}]
+
+
+def test_subelements() -> None:
+    assert subelements(SUBELEMENTS_DEMO, 'groups') == [(SUBELEMENTS_DEMO[0], 'wheel')]
+
+
+def test_subelements_empty_accessor() -> None:
+    """An empty accessor reports a filter error rather than crashing on an unbound loop variable."""
+    with pytest.raises(AnsibleFilterError, match='subelements must not be empty'):
+        subelements(SUBELEMENTS_DEMO, [])
+
+
+def test_subelements_empty_accessor_on_empty_obj() -> None:
+    """The accessor is validated up front, so an empty obj does not mask the problem."""
+    with pytest.raises(AnsibleFilterError, match='subelements must not be empty'):
+        subelements([], [])
+
+
+def test_subelements_invalid_accessor_type() -> None:
+    with pytest.raises(AnsibleTypeError, match='subelements must be a list or a string'):
+        subelements(SUBELEMENTS_DEMO, 17)
+
+
+def test_subelements_value_not_a_list() -> None:
+    """The pre-existing error for a non-list target still names the offending key."""
+    with pytest.raises(AnsibleTypeError, match="should point to a list"):
+        subelements(SUBELEMENTS_DEMO, 'name')
 
 
 def test_from_yaml_origin() -> None:
