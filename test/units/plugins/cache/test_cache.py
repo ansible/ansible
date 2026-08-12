@@ -18,6 +18,7 @@
 from __future__ import annotations
 
 
+import os
 import shutil
 import tempfile
 
@@ -147,6 +148,40 @@ class TestJsonFileCachePrefix(TestJsonFileCache):
         assert 'special_test' not in self.cache
         assert 'test' in self.cache
         assert self.cache['test'] == dict(b=2)
+
+
+class TestJsonFileCacheUnsetPrefix(unittest.TestCase):
+    """The prefix is an optional option, so every code path must tolerate it being unset."""
+
+    def setUp(self):
+        self.cache_dir = tempfile.mkdtemp(prefix='ansible-plugins-cache-')
+        # no _prefix passed, so the plugin's own option default applies
+        self.cache = cache_loader.get('jsonfile', _uri=self.cache_dir, _timeout=0)
+
+    def tearDown(self):
+        shutil.rmtree(self.cache_dir)
+
+    def test_prefix_default_is_a_string(self):
+        assert self.cache.__wrapped__._get_prefix() == ''
+
+    def test_keys_with_unset_prefix(self):
+        self.cache.set('host_a', {'a': 1})
+        self.cache.set('host_b', {'b': 2})
+
+        assert sorted(self.cache.keys()) == ['host_a', 'host_b']
+
+    def test_contains_and_get_with_unset_prefix(self):
+        self.cache.set('host_a', {'a': 1})
+
+        assert self.cache.contains('host_a')
+        assert self.cache.get('host_a') == {'a': 1}
+
+    def test_flush_with_unset_prefix(self):
+        self.cache.set('host_a', {'a': 1})
+        self.cache.__wrapped__.flush()
+
+        assert self.cache.keys() == []
+        assert os.listdir(self.cache_dir) == []
 
 
 class TestCachePlugin(unittest.TestCase):

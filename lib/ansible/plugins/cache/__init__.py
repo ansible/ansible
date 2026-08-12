@@ -133,13 +133,14 @@ class BaseFileCacheModule(BaseCacheModule):
                     raise AnsibleError(f"'{self.plugin_name!r}' cache, configured path ({self._cache_dir}) does not have necessary permissions (rwx),"
                                        " disabling plugin")
 
+    def _get_prefix(self) -> str:
+        """Return the configured file name prefix, which is optional and may be unset."""
+        return self.get_option('_prefix') or ''
+
     def _get_cache_file_name(self, key: str) -> str:
         if key not in self._files:
             safe = self._sanitize_key(key)  # use key or filesystem safe hash of key
-            prefix = self.get_option('_prefix')
-            if not prefix:
-                prefix = ''
-            self._files[key] = os.path.join(self._cache_dir, prefix + safe)
+            self._files[key] = os.path.join(self._cache_dir, self._get_prefix() + safe)
         return self._files[key]
 
     def get(self, key):
@@ -218,7 +219,7 @@ class BaseFileCacheModule(BaseCacheModule):
         # When using a prefix we must remove it from the key name before
         # checking the expiry and returning it to the caller. Keys that do not
         # share the same prefix cannot be fetched from the cache.
-        prefix = self.get_option('_prefix')
+        prefix = self._get_prefix()
         prefix_length = len(prefix)
         keys = []
         for k in os.listdir(self._cache_dir):

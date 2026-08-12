@@ -1,0 +1,4 @@
+bugfixes:
+  - jsonfile cache plugin - ``keys()`` and ``flush()`` no longer raise ``TypeError`` when ``fact_caching_prefix`` is unset.
+    The ``_prefix`` option had no default, so it resolved to ``None`` and only some of the code paths that use it guarded against
+    that.

@@ -23,12 +23,14 @@ DOCUMENTATION = """
             section: defaults
         type: path
       _prefix:
+        default: ''
         description: User defined prefix to use when creating the JSON files
         env:
           - name: ANSIBLE_CACHE_PLUGIN_PREFIX
         ini:
           - key: fact_caching_prefix
             section: defaults
+        type: str
       _timeout:
         default: 86400
         description: Expiration timeout for the cache plugin data
