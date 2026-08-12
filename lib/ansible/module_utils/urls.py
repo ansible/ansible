@@ -320,17 +320,20 @@ def mask_url(url: str) -> str:
     Safely display a url by masking confidential data
     from a string or the result from urlparse/split
     """
-    if (parsed_url := urlparse(url)) and not parsed_url.username and not parsed_url.password:
+    parsed_url = urlparse(url)
+
+    # `username`/`password` are only None when the netloc carries no userinfo at all.
+    # Either can be an empty string when the userinfo is present but blank, which still needs masking.
+    if parsed_url.username is None and parsed_url.password is None:
         return url
 
-    netloc: str
     mask = '****'
-    if parsed_url.password:
-        netloc = parsed_url.netloc.replace(f'{parsed_url.username}:{parsed_url.password}@', f'{mask}:{mask}@')
-    else:
-        netloc = parsed_url.netloc.replace(f'{parsed_url.username}@', f'{mask}@')
+    userinfo = mask if parsed_url.password is None else f'{mask}:{mask}'
+    # rebuild the netloc rather than substring-replacing the userinfo out of it,
+    # since a blank username or password leaves nothing reliable to match on
+    host = parsed_url.netloc.rpartition('@')[2]
 
-    return urlunparse(parsed_url._replace(netloc=netloc))
+    return urlunparse(parsed_url._replace(netloc=f'{userinfo}@{host}'))
 
 
 def generic_urlparse(parts):

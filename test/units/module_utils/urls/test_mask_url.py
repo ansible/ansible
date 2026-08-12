@@ -27,6 +27,14 @@ from ansible.module_utils.urls import mask_url
         ('ftps://secretuser:secretsecret@file.server/yolo.asc', ('file.server/yolo.asc')),
         ('redis://:secretpass@cache.internal:6379/0', ('cache.internal', '6379', 'redis')),
         ('amqp://:secretpw@rabbit.internal:5672/vhost', ('rabbit.internal', '5672', 'vhost')),
+        # a blank password still means userinfo is present, so it must be masked
+        ('https://secretuser:@hideme.com/index.html', ('hideme.com', 'index.html', '****')),
+        ('https://secretuser:@hideme.com:8443/index.html', ('hideme.com', '8443', '****')),
+        ('ftp://secretuser:@files.insecure/pub/file.txt', ('files.insecure', 'pub/file.txt', '****')),
+        # blank on both sides of the delimiter
+        ('https://:@hideme.com/index.html', ('hideme.com', 'index.html', '****')),
+        # a password containing '@' must not confuse host detection
+        ('https://secretuser:secret@pass@hideme.com/index.html', ('hideme.com', 'index.html', '****')),
     )
 )
 def test_mask_url(url, wanted):
@@ -36,3 +44,31 @@ def test_mask_url(url, wanted):
 
     for notmasked in wanted:
         assert notmasked in masked
+
+
+@pytest.mark.parametrize(
+    'url',
+    (
+        'https://nocreds.example.com/index.html',
+        'https://nocreds.example.com:8443/index.html?token=notuserinfo',
+        'http://nocreds.example.com',
+    )
+)
+def test_mask_url_without_userinfo_is_unchanged(url):
+    """A URL carrying no userinfo is returned untouched."""
+    assert mask_url(url) == url
+
+
+@pytest.mark.parametrize(
+    'url, expected',
+    (
+        ('https://secretuser@hideme.com/x', 'https://****@hideme.com/x'),
+        ('https://secretuser:secretpass@hideme.com/x', 'https://****:****@hideme.com/x'),
+        ('https://secretuser:@hideme.com/x', 'https://****:****@hideme.com/x'),
+        ('https://:secretpass@hideme.com/x', 'https://****:****@hideme.com/x'),
+        ('https://secretuser:secretpass@[::1]:8443/x', 'https://****:****@[::1]:8443/x'),
+    )
+)
+def test_mask_url_exact_output(url, expected):
+    """Everything except the userinfo survives masking intact."""
+    assert mask_url(url) == expected
