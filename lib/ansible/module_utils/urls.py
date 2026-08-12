@@ -315,12 +315,23 @@ class ParseResultDottedDict(dict):
         return [self.get(k, None) for k in ('scheme', 'netloc', 'path', 'params', 'query', 'fragment')]
 
 
+_UNPARSABLE_USERINFO = re.compile(r'(?P<prefix>^[^:/?#]*://)[^/?#]*@')
+
+
 def mask_url(url: str) -> str:
     """
     Safely display a url by masking confidential data
     from a string or the result from urlparse/split
     """
-    if (parsed_url := urlparse(url)) and not parsed_url.username and not parsed_url.password:
+    try:
+        parsed_url = urlparse(url)
+    except ValueError:
+        # `urlparse` rejects some malformed URLs outright, such as one with an unterminated IPv6 literal.
+        # The authority cannot be parsed in that case, so mask any userinfo textually instead.
+        # Returning the value unchanged would risk echoing credentials back to the caller.
+        return _UNPARSABLE_USERINFO.sub(r'\g<prefix>****:****@', url)
+
+    if not parsed_url.username and not parsed_url.password:
         return url
 
     netloc: str

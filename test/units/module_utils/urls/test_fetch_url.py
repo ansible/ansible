@@ -158,6 +158,19 @@ def test_fetch_url_connectionerror(open_url_mock, fake_ansible_module):
     assert excinfo.value.kwargs['status'] == -1
 
 
+def test_fetch_url_unparsable_url(open_url_mock, fake_ansible_module):
+    """A URL that `urlparse` rejects fails cleanly instead of escaping as a traceback."""
+    unparsable = 'https://secretuser:secretpass@[::1/index.html'
+    open_url_mock.side_effect = ValueError('Invalid IPv6 URL')
+
+    with pytest.raises(FailJson) as excinfo:
+        fetch_url(fake_ansible_module, unparsable)
+
+    assert excinfo.value.kwargs['msg'] == 'Invalid IPv6 URL'
+    assert excinfo.value.kwargs['status'] == -1
+    assert 'secret' not in excinfo.value.kwargs['url']
+
+
 def test_fetch_url_httperror(open_url_mock, fake_ansible_module):
     open_url_mock.side_effect = urllib.error.HTTPError(
         BASE_URL,

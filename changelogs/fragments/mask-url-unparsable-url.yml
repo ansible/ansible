@@ -1,0 +1,6 @@
+bugfixes:
+  - module_utils.urls - ``mask_url`` no longer raises ``ValueError`` for a URL that ``urlparse`` rejects, such as one containing
+    an unterminated IPv6 literal.
+    ``fetch_url`` calls it before entering its exception handler, so modules including ``uri`` and ``get_url`` reported a traceback
+    instead of a clean failure for such a URL.
+    The userinfo of an unparsable URL is now masked on a best-effort basis so credentials are still not echoed back.
