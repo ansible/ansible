@@ -1,0 +1,5 @@
+bugfixes:
+  - file based cache plugins - a cache write that fails part way through no longer replaces the existing cache entry with a
+    partially written file.
+    Previously the error was only reported as a warning and the truncated temporary file was still renamed over the valid entry,
+    so a transient failure such as a full disk permanently destroyed the cached data for that key.

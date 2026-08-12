@@ -180,8 +180,13 @@ class BaseFileCacheModule(BaseCacheModule):
                 self._dump(value, tmpfile_path)
             except OSError as ex:
                 display.error_as_warning(f"Error in {self.plugin_name!r} cache plugin while trying to write to {tmpfile_path!r}.", exception=ex)
-            try:
+                # A failed dump can leave a partially written temp file behind, so do not promote it over `cachefile`.
+                # Returning here leaves any existing cache entry intact instead of replacing it with corrupt data.
+                return
+            finally:
                 os.close(tmpfile_handle)  # os.rename fails if handle is still open in WSL
+
+            try:
                 os.rename(tmpfile_path, cachefile)
                 os.chmod(cachefile, mode=S_IRWU_RG_RO)
             except OSError as ex:

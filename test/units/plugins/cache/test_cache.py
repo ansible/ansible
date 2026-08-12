@@ -18,6 +18,9 @@
 from __future__ import annotations
 
 
+import errno
+import os
+import pathlib
 import shutil
 import tempfile
 
@@ -147,6 +150,43 @@ class TestJsonFileCachePrefix(TestJsonFileCache):
         assert 'special_test' not in self.cache
         assert 'test' in self.cache
         assert self.cache['test'] == dict(b=2)
+
+
+class TestJsonFileCacheFailedWrite(unittest.TestCase):
+    """A cache write that fails part way through must not destroy the entry already on disk."""
+
+    def setUp(self):
+        self.cache_dir = tempfile.mkdtemp(prefix='ansible-plugins-cache-')
+        self.cache = cache_loader.get('jsonfile', _uri=self.cache_dir, _timeout=0, _prefix='ansible_facts')
+
+    def tearDown(self):
+        shutil.rmtree(self.cache_dir)
+
+    def test_failed_dump_keeps_existing_entry(self):
+        self.cache.set('host', {'ansible_os_family': 'RedHat'})
+        assert self.cache.get('host') == {'ansible_os_family': 'RedHat'}
+
+        def failing_dump(value, filepath):
+            # `_dump` implementations are not atomic, so a failure can leave a truncated file behind.
+            pathlib.Path(filepath).write_text('{"__payload__": "{\\"truncated')
+            raise OSError(errno.ENOSPC, 'No space left on device')
+
+        # bypass the schema-qualifying interposer to reach the file cache plugin itself
+        self.cache.__wrapped__._dump = failing_dump
+        self.cache.set('host', {'ansible_os_family': 'Debian'})
+
+        # a later run must still be able to read the previously cached facts
+        reader = cache_loader.get('jsonfile', _uri=self.cache_dir, _timeout=0, _prefix='ansible_facts')
+        assert reader.get('host') == {'ansible_os_family': 'RedHat'}
+
+    def test_failed_dump_leaves_no_temp_file(self):
+        def failing_dump(value, filepath):
+            raise OSError(errno.ENOSPC, 'No space left on device')
+
+        self.cache.__wrapped__._dump = failing_dump
+        self.cache.set('host', {'ansible_os_family': 'Debian'})
+
+        assert os.listdir(self.cache_dir) == []
 
 
 class TestCachePlugin(unittest.TestCase):
