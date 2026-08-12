@@ -1,0 +1,5 @@
+bugfixes:
+  - module_utils.common.collections - ``ImmutableDict`` equality now compares contents instead of hashes.
+    An ``ImmutableDict`` previously compared equal to any object with a colliding hash, including a ``frozenset`` of its own items,
+    while comparing unequal to a ``dict`` with the same contents because a ``dict`` is unhashable.
+    Contents are now also comparable when a value makes the ``ImmutableDict`` unhashable.

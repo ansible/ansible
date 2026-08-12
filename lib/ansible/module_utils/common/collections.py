@@ -40,13 +40,13 @@ class ImmutableDict(_c.Hashable, _c.Mapping[_KT, _VT], _t.Generic[_KT, _VT]):
         return hash(frozenset(self.items()))
 
     def __eq__(self, other: object) -> bool:
-        try:
-            if self.__hash__() == hash(other):
-                return True
-        except TypeError:
-            pass
+        # Compare contents rather than hashes. Comparing hashes made an ImmutableDict equal to any object with a
+        # colliding hash -- including a frozenset of its own items -- while making it unequal to an equal mapping,
+        # since a mapping is generally unhashable.
+        if isinstance(other, _c.Mapping):
+            return dict(self._store) == dict(other)
 
-        return False
+        return NotImplemented
 
     def __repr__(self) -> str:
         return 'ImmutableDict({0})'.format(repr(self._store))

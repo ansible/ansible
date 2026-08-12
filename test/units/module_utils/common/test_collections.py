@@ -147,6 +147,48 @@ class TestImmutableDict:
         expected_repr = "ImmutableDict({0})".format(initial_data_repr)
         assert actual_repr == expected_repr
 
+    def test_eq_immutabledict(self):
+        assert ImmutableDict(a=1, b=2) == ImmutableDict(a=1, b=2)
+        assert ImmutableDict(a=1, b=2) != ImmutableDict(a=1, b=3)
+        assert ImmutableDict(a=1, b=2) != ImmutableDict(a=1)
+
+    def test_eq_mapping(self):
+        """An ImmutableDict equals any mapping with the same contents."""
+        assert ImmutableDict(a=1, b=2) == {'a': 1, 'b': 2}
+        assert {'a': 1, 'b': 2} == ImmutableDict(a=1, b=2)
+        assert ImmutableDict(a=1, b=2) != {'a': 1, 'b': 3}
+        assert {'a': 1} != ImmutableDict(a=1, b=2)
+
+    def test_eq_not_a_mapping(self):
+        """A non-mapping is never equal, even when its hash collides with the ImmutableDict's."""
+        imdict = ImmutableDict(a=1, b=2)
+
+        # a frozenset of the items hashes identically, since __hash__ is defined as hash(frozenset(self.items()))
+        items = frozenset(imdict.items())
+        assert hash(imdict) == hash(items)
+        assert imdict != items
+        assert items != imdict
+
+        assert imdict != ('a', 1)
+        assert imdict != 'a=1,b=2'
+        assert imdict != 42
+        assert imdict != [('a', 1), ('b', 2)]
+
+    def test_eq_unhashable_values(self):
+        """Contents are comparable even when they make the ImmutableDict unhashable."""
+        assert ImmutableDict(a=[1, 2]) == ImmutableDict(a=[1, 2])
+        assert ImmutableDict(a=[1, 2]) == {'a': [1, 2]}
+        assert ImmutableDict(a=[1, 2]) != ImmutableDict(a=[1, 3])
+
+    def test_hash_eq_consistency(self):
+        """Equal, hashable ImmutableDicts hash equally, so they collapse in a set."""
+        first = ImmutableDict(a=1, b=2)
+        second = ImmutableDict(b=2, a=1)
+
+        assert first == second
+        assert hash(first) == hash(second)
+        assert len({first, second}) == 1
+
 
 class TestOrderedSet:
     def test_init_empty(self):
