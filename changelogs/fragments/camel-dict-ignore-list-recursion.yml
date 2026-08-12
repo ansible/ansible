@@ -1,0 +1,5 @@
+bugfixes:
+  - module_utils.common.dict_transformations - ``camel_dict_to_snake_dict`` now honours ``ignore_list`` at every depth, including
+    for dicts nested inside lists.
+    Previously the argument was dropped on each recursive call, so only top level keys were protected and case-sensitive keys in a
+    nested sub-tree such as ``Tags`` were still converted.

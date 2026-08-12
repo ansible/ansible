@@ -66,6 +66,36 @@ class TestCaseCamelDictToSnakeDict:
         assert snake_dict['hello'] == dict(one='one', two='two')
         assert snake_dict['world'] == dict(Three='three', Four='four')
 
+    def test_ignore_list_nested_in_dict(self):
+        """An ignored key is honoured at any depth, not just at the top level."""
+        camel_dict = dict(Instance=dict(InstanceId='i-123', Tags=dict(MyKey='v', AnotherKey='v')))
+        snake_dict = camel_dict_to_snake_dict(camel_dict, ignore_list=('Tags',))
+        assert snake_dict['instance']['instance_id'] == 'i-123'
+        assert snake_dict['instance']['tags'] == dict(MyKey='v', AnotherKey='v')
+
+    def test_ignore_list_nested_in_list(self):
+        """An ignored key is honoured for dicts reached through a list."""
+        camel_dict = dict(Instances=[dict(InstanceId='i-123', Tags=dict(MyKey='v'))])
+        snake_dict = camel_dict_to_snake_dict(camel_dict, ignore_list=('Tags',))
+        assert snake_dict['instances'][0]['instance_id'] == 'i-123'
+        assert snake_dict['instances'][0]['tags'] == dict(MyKey='v')
+
+    def test_ignore_list_deeply_nested(self):
+        """An ignored key is honoured through alternating dict and list nesting."""
+        camel_dict = dict(Reservations=[dict(Instances=[dict(Tags=dict(CamelKey='v'), BlockDevices=[dict(DeviceName='xvda')])])])
+        snake_dict = camel_dict_to_snake_dict(camel_dict, ignore_list=('Tags',))
+        instance = snake_dict['reservations'][0]['instances'][0]
+        assert instance['tags'] == dict(CamelKey='v')
+        # keys outside the ignored sub-tree are still converted at that depth
+        assert instance['block_devices'][0]['device_name'] == 'xvda'
+
+    def test_ignore_list_multiple_keys(self):
+        camel_dict = dict(Outer=dict(Tags=dict(AKey='a'), Metadata=dict(BKey='b'), Other=dict(CKey='c')))
+        snake_dict = camel_dict_to_snake_dict(camel_dict, ignore_list=('Tags', 'Metadata'))
+        assert snake_dict['outer']['tags'] == dict(AKey='a')
+        assert snake_dict['outer']['metadata'] == dict(BKey='b')
+        assert snake_dict['outer']['other'] == dict(c_key='c')
+
 
 class TestCaseDictMerge:
     def test_dict_merge(self):
