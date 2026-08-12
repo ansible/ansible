@@ -315,7 +315,28 @@ class ParseResultDottedDict(dict):
         return [self.get(k, None) for k in ('scheme', 'netloc', 'path', 'params', 'query', 'fragment')]
 
 
-_UNPARSABLE_USERINFO = re.compile(r'(?P<prefix>^[^:/?#]*://)[^/?#]*@')
+def _mask_unparsable_url(url: str) -> str:
+    """
+    Mask the userinfo of a url that `urlparse` refuses to parse, on a best-effort basis.
+
+    Only `/` is treated as ending the authority, since a malformed userinfo may contain any other
+    character. That can over-mask a url whose authority holds an `@` for some other reason, which is
+    preferred over risking a credential being echoed back to the caller.
+    """
+    before_authority, separator, remainder = url.partition('//')
+
+    if not separator:
+        return url  # no authority to hold a userinfo
+
+    authority, path_separator, path = remainder.partition('/')
+
+    if '@' not in authority:
+        return url
+
+    # `rpartition` matches how `urlparse` itself splits the userinfo from the host
+    host = authority.rpartition('@')[2]
+
+    return f'{before_authority}{separator}****:****@{host}{path_separator}{path}'
 
 
 def mask_url(url: str) -> str:
@@ -326,10 +347,10 @@ def mask_url(url: str) -> str:
     try:
         parsed_url = urlparse(url)
     except ValueError:
-        # `urlparse` rejects some malformed URLs outright, such as one with an unterminated IPv6 literal.
+        # `urlparse` rejects some malformed urls outright, such as one with an unterminated IPv6 literal.
         # The authority cannot be parsed in that case, so mask any userinfo textually instead.
         # Returning the value unchanged would risk echoing credentials back to the caller.
-        return _UNPARSABLE_USERINFO.sub(r'\g<prefix>****:****@', url)
+        return _mask_unparsable_url(url)
 
     if not parsed_url.username and not parsed_url.password:
         return url
