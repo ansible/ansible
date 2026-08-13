@@ -581,7 +581,7 @@ class VariableManager:
             host_cache = self._fact_cache.get(host)
         except KeyError:
             # We get to set this as new
-            host_cache = facts
+            host_cache = dict(facts)  # copy to avoid aliasing shared facts dicts across hosts
         else:
             if not isinstance(host_cache, MutableMapping):
                 raise TypeError('The object retrieved for {0} must be a MutableMapping but was'
@@ -605,7 +605,7 @@ class VariableManager:
         try:
             self._nonpersistent_fact_cache[host] |= facts
         except KeyError:
-            self._nonpersistent_fact_cache[host] = facts
+            self._nonpersistent_fact_cache[host] = dict(facts)  # copy to avoid aliasing shared facts dicts across hosts
 
     def set_host_variable(self, host, varname, value):
         """
