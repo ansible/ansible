@@ -696,6 +696,12 @@
   ignore_errors: yes
   register: subelements_5
 
+- name: Verify subelements throws on empty list
+  set_fact:
+    foo: '{{subelements_demo | subelements([])}}'
+  ignore_errors: yes
+  register: subelements_6
+
 - name: Verify subelements
   assert:
     that:
@@ -712,7 +718,8 @@
       - '"should point to a dictionary" in subelements_5.msg'
       - 'subelements_demo|subelements("groups") == [({"name": "alice", "groups": ["wheel"], "authorized": ["/tmp/alice/onekey.pub"]}, "wheel")]'
       - 'subelements_demo|subelements(["groups"]) == [({"name": "alice", "groups": ["wheel"], "authorized": ["/tmp/alice/onekey.pub"]}, "wheel")]'
-
+      - subelements_6 is failed
+      - '"subelements must not be empty" in subelements_6.msg'
 
 - name: Verify dict2items throws on non-Mapping
   set_fact:

@@ -570,6 +570,9 @@ def subelements(obj, subelements, skip_missing=False):
     else:
         raise AnsibleTypeError('subelements must be a list or a string')
 
+    if not subelement_list:
+        raise AnsibleFilterError('subelements must not be empty')
+
     results = []
 
     for element in element_list:
