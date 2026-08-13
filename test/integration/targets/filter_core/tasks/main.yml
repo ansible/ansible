@@ -702,6 +702,18 @@
   ignore_errors: yes
   register: subelements_6
 
+- name: Verify subelements throws on empty subelements
+  set_fact:
+    foo: '{{subelements_demo | subelements("")}}'
+  ignore_errors: yes
+  register: subelements_7
+
+- name: Verify subelements throws on empty obj
+  set_fact:
+    foo: '{{[] | subelements("groups")}}'
+  ignore_errors: yes
+  register: subelements_8
+
 - name: Verify subelements
   assert:
     that:
@@ -720,6 +732,9 @@
       - 'subelements_demo|subelements(["groups"]) == [({"name": "alice", "groups": ["wheel"], "authorized": ["/tmp/alice/onekey.pub"]}, "wheel")]'
       - subelements_6 is failed
       - '"subelements must not be empty" in subelements_6.msg'
+      - subelements_7 is failed
+      - '"subelements must not be empty" in subelements_7.msg'
+      - not subelements_8.failed
 
 - name: Verify dict2items throws on non-Mapping
   set_fact:

@@ -563,15 +563,15 @@ def subelements(obj, subelements, skip_missing=False):
     else:
         raise AnsibleFilterError('obj must be a list of dicts or a nested dict')
 
+    if not subelements:
+        raise AnsibleFilterError('subelements must not be empty')
+
     if isinstance(subelements, list):
         subelement_list = subelements[:]
     elif isinstance(subelements, str):
         subelement_list = subelements.split('.')
     else:
         raise AnsibleTypeError('subelements must be a list or a string')
-
-    if not subelement_list:
-        raise AnsibleFilterError('subelements must not be empty')
 
     results = []
 
