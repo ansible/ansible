@@ -203,7 +203,6 @@ def test_timeout_seconds_echo_false_does_not_append_hidden_suffix(mocker, action
     assert prompt_mock.call_args.kwargs.get('private') is False
 
 
-
 @pytest.mark.parametrize('task_args', [{'seconds': 10, 'timeout_seconds': 5}], indirect=True)
 def test_seconds_and_timeout_seconds_mutually_exclusive(mocker, action_plugin):
     """seconds and timeout_seconds must not be used together."""

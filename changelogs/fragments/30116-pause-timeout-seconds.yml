@@ -1,8 +1,8 @@
 minor_changes:
-  - pause - add ``timeout_seconds`` parameter that allows an interactive prompt to accept
+  - "pause - add ``timeout_seconds`` parameter that allows an interactive prompt to accept
     user input while enforcing a hard deadline, and ``timeout_action`` parameter (``continue``
     or ``abort``) that controls what happens when the deadline expires.
     When ``timeout_seconds`` is set, ``timed_out`` is always present in the result (``false``
     when the user responds in time, ``true`` when the timer fires); ``timeout_action: abort``
     raises a fatal error, while the default ``timeout_action: continue`` resumes the play
-    with an empty ``user_input`` (https://github.com/ansible/ansible/issues/30116).
+    with an empty ``user_input`` (https://github.com/ansible/ansible/issues/30116)."
