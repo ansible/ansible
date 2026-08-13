@@ -512,6 +512,14 @@ class CallbackBase(AnsiblePlugin):
             item = result.get('_ansible_item_label', result.get('item'))  # RPFIX-9: FUTURE: this default shouldn't be here
         return item
 
+    def _get_item_loop_var(self, result: _c.Mapping[str, t.Any]) -> t.Any:
+        """ retrieves the value to be displayed as a loop var for an item entry from a result object"""
+        if result.get('_ansible_no_log', False):
+            item = "(censored due to no_log)"
+        else:
+            item = result.get('ansible_loop_var', result.get('item'))
+        return item
+
     def _process_items(self, result: CallbackTaskResult) -> None:
         # just remove them as now they get handled by individual callbacks
         del result.result['results']
