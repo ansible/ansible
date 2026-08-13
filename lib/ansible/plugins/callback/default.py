@@ -261,7 +261,7 @@ class CallbackModule(CallbackBase):
 
         self._handle_warnings_and_exception(result)
 
-        msg = "%s: [%s] => (item=%s)" % (msg, host_label, self._get_item_label(result.result))
+        msg = "%s: [%s] => (%s = %s)" % (msg, host_label, self._get_item_loop_var(result.result), self._get_item_label(result.result))
         self._clean_results(result.result, result.task.action)
         if self._run_is_verbose(result):
             msg += " => %s" % self._dump_results(result.result)
@@ -278,7 +278,7 @@ class CallbackModule(CallbackBase):
         msg = "failed: [%s]" % (host_label,)
         self._clean_results(result.result, result.task.action)
         self._display.display(
-            msg + " (item=%s) => %s" % (self._get_item_label(result.result), self._dump_results(result.result)),
+            msg + " (%s = %s) => %s" % (self._get_item_loop_var(result.result), self._get_item_label(result.result), self._dump_results(result.result)),
             color=C.COLOR_ERROR,
             stderr=self.get_option('display_failed_stderr')
         )
