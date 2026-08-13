@@ -1,0 +1,22 @@
+- name: Test pause module with timeout_seconds and timeout_action=abort - abort on expiry
+  hosts: localhost
+  become: no
+  gather_facts: no
+
+  tasks:
+    - name: Prompt that will abort on timeout (this task is expected to fail)
+      pause:
+        prompt: Enter a value or the play will abort
+        timeout_seconds: 2
+        timeout_action: abort
+      register: abort_pause
+      ignore_errors: yes
+
+    - name: Verify the task failed with a timeout message
+      assert:
+        that:
+          - abort_pause is failed
+          - "'Timed out waiting for user input' in abort_pause.msg"
+
+    - debug:
+        msg: Task after abort pause

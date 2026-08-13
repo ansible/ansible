@@ -46,9 +46,13 @@ class ActionModule(ActionBase):
                 'minutes': {'type': int},  # Don't break backwards compat, allow floats, by using int callable
                 'seconds': {'type': int},  # Don't break backwards compat, allow floats, by using int callable
                 'prompt': {'type': 'str'},
+                'timeout_seconds': {'type': 'int'},
+                'timeout_action': {'type': 'str', 'default': 'continue', 'choices': ['continue', 'abort']},
             },
             mutually_exclusive=(
                 ('minutes', 'seconds'),
+                ('minutes', 'timeout_seconds'),
+                ('seconds', 'timeout_seconds'),
             ),
         )
 
@@ -57,6 +61,8 @@ class ActionModule(ActionBase):
         seconds = None
         echo = new_module_args['echo']
         echo_prompt = ''
+        timeout_seconds = new_module_args['timeout_seconds']
+        timeout_action = new_module_args['timeout_action']
         result.update(dict(
             changed=False,
             rc=0,
@@ -68,8 +74,9 @@ class ActionModule(ActionBase):
             echo=echo
         ))
 
-        # Add a note saying the output is hidden if echo is disabled
-        if not echo:
+        # Add a note saying the output is hidden if echo is disabled.
+        # timeout_seconds always echoes input, so the suffix is suppressed in that path.
+        if not echo and new_module_args['timeout_seconds'] is None:
             echo_prompt = ' (output is hidden)'
 
         if new_module_args['prompt']:
@@ -89,7 +96,7 @@ class ActionModule(ActionBase):
 
         start = time.time()
         result['start'] = to_text(datetime.datetime.now())
-        result['user_input'] = b''
+        result['user_input'] = ''
 
         default_input_complete = None
         if seconds is not None:
@@ -109,23 +116,46 @@ class ActionModule(ActionBase):
             # don't complete on LF/CR; we expect a timeout/interrupt and ignore user input when a pause duration is specified
             default_input_complete = tuple()
 
-        # Only echo input if no timeout is specified
+        # Only echo input if no timed countdown is specified (seconds/minutes path).
+        # timeout_seconds always echoes input regardless of the echo task arg.
         echo = seconds is None and echo
 
+        # user_input is bytes here because prompt_until returns bytes; to_text() at line 176
+        # converts it to str before it reaches the result dict.
         user_input = b''
-        try:
-            _user_input = display.prompt_until(prompt, private=not echo, seconds=seconds, complete_input=default_input_complete)
-        except AnsiblePromptInterrupt:
-            user_input = None
-        except AnsiblePromptNoninteractive:
-            if seconds is None:
-                display.warning("Not waiting for response to prompt as stdin is not interactive")
-            else:
-                # wait specified duration
-                time.sleep(seconds)
-        else:
-            if seconds is None:
+        timed_out = False
+        if timeout_seconds is not None:
+            # Hard-deadline interactive prompt: accept user input and return it, expiring after timeout_seconds.
+            if timeout_seconds < 1:
+                timeout_seconds = 1
+            try:
+                _prompt_start = time.time()
+                # timeout_seconds always echoes input (private=False), regardless of the echo task arg.
+                _user_input = display.prompt_until(prompt, private=False, seconds=timeout_seconds)
+                # Disambiguate empty-input-on-timeout from the user pressing Enter immediately:
+                # both return b'', but a genuine timeout takes at least timeout_seconds to elapse.
+                if _user_input == b'' and (time.time() - _prompt_start) >= timeout_seconds:
+                    timed_out = True
                 user_input = _user_input
+            except AnsiblePromptInterrupt:
+                user_input = None
+            except AnsiblePromptNoninteractive:
+                display.warning("Not waiting for response to prompt as stdin is not interactive")
+        else:
+            try:
+                _user_input = display.prompt_until(prompt, private=not echo, seconds=seconds, complete_input=default_input_complete)
+            except AnsiblePromptInterrupt:
+                user_input = None
+            except AnsiblePromptNoninteractive:
+                if seconds is None:
+                    display.warning("Not waiting for response to prompt as stdin is not interactive")
+                else:
+                    # wait specified duration
+                    time.sleep(seconds)
+            else:
+                if seconds is None:
+                    user_input = _user_input
+
         # user interrupt
         if user_input is None:
             prompt = "Press 'C' to continue the play or 'A' to abort \r"
@@ -133,6 +163,11 @@ class ActionModule(ActionBase):
                 user_input = display.prompt_until(prompt, private=not echo, interrupt_input=(b'a',), complete_input=(b'c',))
             except AnsiblePromptInterrupt:
                 raise AnsibleError('user requested abort!')
+            # timed_out is False here: an interrupt means the user was present, not that the timer fired.
+
+        # Abort the play if the timeout fired and the task is configured to abort.
+        if timed_out and timeout_action == 'abort':
+            raise AnsibleError('Timed out waiting for user input after %d seconds' % timeout_seconds)
 
         duration = time.time() - start
         result['stop'] = to_text(datetime.datetime.now())
@@ -144,4 +179,6 @@ class ActionModule(ActionBase):
             duration = round(duration, 2)
         result['stdout'] = "Paused for %s %s" % (duration, duration_unit)
         result['user_input'] = to_text(user_input, errors='surrogate_or_strict')
+        if timeout_seconds is not None:
+            result['timed_out'] = timed_out
         return result

@@ -1,0 +1,20 @@
+- name: Test pause module with timeout_seconds - timeout fires with no input
+  hosts: localhost
+  become: no
+  gather_facts: no
+
+  tasks:
+    - name: Prompt that will time out (very short deadline, no input sent)
+      pause:
+        prompt: Enter a value or wait for timeout
+        timeout_seconds: 2
+      register: timeout_pause
+
+    - name: Verify timed_out is True and user_input is empty
+      assert:
+        that:
+          - timeout_pause.timed_out is true
+          - timeout_pause.user_input == ''
+
+    - debug:
+        msg: Task after timeout pause

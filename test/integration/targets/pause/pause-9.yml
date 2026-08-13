@@ -1,0 +1,20 @@
+- name: Test pause module with timeout_seconds - user presses Enter immediately (not a timeout)
+  hosts: localhost
+  become: no
+  gather_facts: no
+
+  tasks:
+    - name: Prompt with long timeout, user presses Enter immediately
+      pause:
+        prompt: Press Enter to continue
+        timeout_seconds: 30
+      register: enter_pause
+
+    - name: Verify timed_out is False when user pressed Enter with empty input
+      assert:
+        that:
+          - enter_pause.timed_out is false
+          - enter_pause.user_input == ''
+
+    - debug:
+        msg: Task after enter pause

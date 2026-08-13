@@ -306,3 +306,130 @@ pause_test.expect(r"\(ctrl\+C then 'C' = continue early, ctrl\+C then 'A' = abor
 pause_test.send('\r')
 pause_test.expect(pexpect.EOF)
 pause_test.close()
+
+
+# -- timeout_seconds: timeout fires with no input (timed_out=True) --
+
+playbook = 'pause-8.yml'
+
+# Case 1 - Wait for the 2-second deadline to expire (send nothing)
+pause_test = pexpect.spawn(
+    'ansible-playbook',
+    args=[playbook] + args,
+    timeout=15,
+    env=os.environ
+)
+
+pause_test.logfile = sys.stdout.buffer
+pause_test.expect(r'Enter a value or wait for timeout:')
+# Do not send any input; let the 2-second timeout fire naturally
+pause_test.expect('Task after timeout pause', timeout=15)
+pause_test.expect(pexpect.EOF)
+pause_test.close()
+assert pause_test.exitstatus == 0
+
+
+# -- timeout_seconds: user answers before expiry (timed_out=False) --
+
+playbook = 'pause-7.yml'
+
+# Case 1 - User sends input before the 30-second deadline
+pause_test = pexpect.spawn(
+    'ansible-playbook',
+    args=[playbook] + args,
+    timeout=15,
+    env=os.environ
+)
+
+pause_test.logfile = sys.stdout.buffer
+pause_test.expect(r'Enter a value with timeout:')
+pause_test.send('hello timeout')
+pause_test.send('\r')
+pause_test.expect('Task after pause', timeout=10)
+pause_test.expect(pexpect.EOF)
+pause_test.close()
+assert pause_test.exitstatus == 0
+
+
+# -- timeout_seconds: user presses Enter immediately (empty input, timed_out=False) --
+
+playbook = 'pause-9.yml'
+
+# Case 1 - User presses Enter right away; this must NOT set timed_out=True
+pause_test = pexpect.spawn(
+    'ansible-playbook',
+    args=[playbook] + args,
+    timeout=10,
+    env=os.environ
+)
+
+pause_test.logfile = sys.stdout.buffer
+pause_test.expect(r'Press Enter to continue:')
+pause_test.send('\r')
+pause_test.expect('Task after enter pause', timeout=10)
+pause_test.expect(pexpect.EOF)
+pause_test.close()
+assert pause_test.exitstatus == 0
+
+
+# -- timeout_seconds + timeout_action=abort: abort on expiry --
+
+playbook = 'pause-10.yml'
+
+# Case 1 - Let the 2-second deadline fire; the ignored error is caught and asserted in the playbook.
+# ignore_errors: yes on the pause task catches the AnsibleError raised by the action plugin,
+# allowing the subsequent assert and debug tasks to run and the play to exit 0.
+pause_test = pexpect.spawn(
+    'ansible-playbook',
+    args=[playbook] + args,
+    timeout=15,
+    env=os.environ
+)
+
+pause_test.logfile = sys.stdout.buffer
+pause_test.expect(r'Enter a value or the play will abort:')
+# Do not send any input; let the timeout fire
+pause_test.expect('Task after abort pause', timeout=15)
+pause_test.expect(pexpect.EOF)
+pause_test.close()
+assert pause_test.exitstatus == 0
+
+
+# -- timeout_seconds: Ctrl+C then Continue --
+
+# Case 1 - Ctrl+C during timeout_seconds prompt, then press C to continue
+pause_test = pexpect.spawn(
+    'ansible-playbook',
+    args=['pause-11.yml'] + args,
+    timeout=10,
+    env=os.environ
+)
+
+pause_test.logfile = sys.stdout.buffer
+pause_test.expect(r'Enter a value with timeout:')
+pause_test.send('\x03')
+pause_test.expect("Press 'C' to continue the play or 'A' to abort")
+pause_test.send('C')
+pause_test.expect('Task after pause')
+pause_test.expect(pexpect.EOF)
+pause_test.close()
+assert pause_test.exitstatus == 0
+
+
+# Case 2 - Ctrl+C during timeout_seconds prompt, then press A to abort
+pause_test = pexpect.spawn(
+    'ansible-playbook',
+    args=['pause-11.yml'] + args,
+    timeout=10,
+    env=os.environ
+)
+
+pause_test.logfile = sys.stdout.buffer
+pause_test.expect(r'Enter a value with timeout:')
+pause_test.send('\x03')
+pause_test.expect("Press 'C' to continue the play or 'A' to abort")
+pause_test.send('A')
+pause_test.expect('user requested abort!')
+pause_test.expect(pexpect.EOF)
+pause_test.close()
+assert pause_test.exitstatus != 0

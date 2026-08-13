@@ -1,0 +1,20 @@
+- name: Test pause module with timeout_seconds - user answers in time
+  hosts: localhost
+  become: no
+  gather_facts: no
+
+  tasks:
+    - name: Prompt with a long timeout (user will answer before expiry)
+      pause:
+        prompt: Enter a value with timeout
+        timeout_seconds: 30
+      register: timeout_pause
+
+    - name: Verify timed_out is False when user answered
+      assert:
+        that:
+          - timeout_pause.timed_out is false
+          - timeout_pause.user_input == 'hello timeout'
+
+    - debug:
+        msg: Task after pause

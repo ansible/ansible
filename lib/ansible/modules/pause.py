@@ -35,14 +35,33 @@ options:
     description:
       - Controls whether or not keyboard input is shown when typing.
       - Only has effect if neither O(seconds) nor O(minutes) are set.
+        When O(timeout_seconds) is used, input is always echoed regardless of this setting.
     type: bool
     default: 'yes'
     version_added: 2.5
+  timeout_seconds:
+    description:
+      - Maximum number of seconds to wait for user input at an interactive prompt.
+      - When the timeout expires with no input, the action specified by O(timeout_action) is taken.
+      - User input is still accepted and returned during the countdown, unlike O(seconds) and O(minutes) which discard all key presses.
+      - Mutually exclusive with O(seconds) and O(minutes).
+    type: int
+    version_added: "2.22"
+  timeout_action:
+    description:
+      - The action to take when O(timeout_seconds) elapses before the user presses Enter.
+      - V(continue) resumes playbook execution with an empty RV(user_input).
+      - V(abort) raises a fatal error and stops the playbook run.
+      - Only meaningful when O(timeout_seconds) is set.
+    type: str
+    choices: ['continue', 'abort']
+    default: 'continue'
+    version_added: "2.22"
 author: "Tim Bielawa (@tbielawa)"
 extends_documentation_fragment:
-  -  action_common_attributes
-  -  action_common_attributes.conn
-  -  action_common_attributes.flow
+  - action_common_attributes
+  - action_common_attributes.conn
+  - action_common_attributes.flow
 attributes:
     action:
         support: full
@@ -64,7 +83,8 @@ attributes:
         platforms: all
 notes:
       - Starting in 2.2, if you specify 0 or negative for minutes or seconds, it will wait for 1 second, previously it would wait indefinitely.
-      - User input is not captured or echoed, regardless of echo setting, when minutes or seconds is specified.
+      - User input is not captured or echoed, regardless of echo setting, when O(minutes) or O(seconds) is specified.
+        This does not apply to O(timeout_seconds), where input is always captured and echoed.
 """
 
 EXAMPLES = """
@@ -83,14 +103,30 @@ EXAMPLES = """
   ansible.builtin.pause:
     prompt: "Enter a secret"
     echo: no
+
+- name: Pause for user input with a 30-second timeout, continuing automatically on expiry
+  ansible.builtin.pause:
+    prompt: "Enter the target hostname (auto-continues in 30s)"
+    timeout_seconds: 30
+
+- name: Pause for user input with a 60-second timeout, aborting the run on expiry
+  ansible.builtin.pause:
+    prompt: "Confirm deployment target (abort if no answer in 60s)"
+    timeout_seconds: 60
+    timeout_action: abort
 """
 
 RETURN = """
 user_input:
-  description: User input from interactive console
-  returned: if no waiting time set
+  description: User input from interactive console. Empty string when O(timeout_seconds) elapses with no input.
+  returned: when neither O(seconds) nor O(minutes) is specified, or when O(timeout_seconds) is used
   type: str
   sample: Example user input
+timed_out:
+  description: Whether the prompt timed out before the user pressed Enter.
+  returned: when O(timeout_seconds) is set
+  type: bool
+  sample: false
 start:
   description: Time when started pausing
   returned: always

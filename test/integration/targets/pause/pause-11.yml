@@ -1,0 +1,14 @@
+- name: Test pause module with timeout_seconds - ctrl+c handling
+  hosts: localhost
+  become: no
+  gather_facts: no
+
+  tasks:
+    - name: Prompt with a long timeout (used for ctrl+c tests)
+      pause:
+        prompt: Enter a value with timeout
+        timeout_seconds: 30
+      register: timeout_pause
+
+    - debug:
+        msg: Task after pause
