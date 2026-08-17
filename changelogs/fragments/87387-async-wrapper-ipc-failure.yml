@@ -1,0 +1,7 @@
+bugfixes:
+  - async_wrapper - record a failure result when the parent process exits before
+    the worker signals task start over the IPC pipe (a ``BrokenPipeError`` that
+    previously crashed the worker and left the job file at ``finished: false``,
+    making ``async_status`` poll until the async timeout), and when the worker
+    exits without writing a result
+    (https://github.com/ansible/ansible/issues/87387).

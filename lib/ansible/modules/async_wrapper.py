@@ -139,8 +139,30 @@ def _run_module(jid, *module_args):
 
     # signal grandchild process started and isolated from being terminated
     # by the connection being closed sending a signal to the job group
-    ipc_notifier.send(True)
-    ipc_notifier.close()
+    try:
+        ipc_notifier.send(True)
+    except OSError:
+        # The parent wrapper process has already exited, so the other end of
+        # the pipe is closed and the start signal can no longer be delivered.
+        # This happens when starting the module takes longer than the 2.5
+        # second IPC wait (for example on a heavily loaded or slow-I/O host).
+        # Nobody is left listening, so record a failure for the poller to
+        # find; otherwise the job file would be left at ``finished: false``
+        # and async_status would keep polling until the async timeout.
+        notice("Failed to signal task start over the IPC pipe; recording failure result")
+        jwrite({
+            "started": True,
+            "finished": True,
+            "failed": True,
+            "ansible_job_id": jid,
+            "msg": "The async task did not start in time: the wrapper could not signal task "
+                   "start over the IPC pipe before the controller stopped listening. This is "
+                   "usually caused by an overloaded host or slow I/O delaying module startup "
+                   "past the 2.5 second startup window.",
+        })
+        return
+    finally:
+        ipc_notifier.close()
 
     outdata = ''
     filtered_outdata = ''
@@ -202,6 +224,32 @@ def _run_module(jid, *module_args):
         }
         result['ansible_job_id'] = jid
         jwrite(result)
+
+
+def _record_failure_if_incomplete(jid, sub_pid):
+    """Record a failed job result if the worker exited without writing one.
+
+    Called by the supervisory process after the worker has exited. The job file
+    normally ends up with the worker's final result; when the worker is killed
+    or crashes before writing one, the file still only contains the initial
+    ``started`` marker and async_status would keep polling until the async
+    timeout. In that case write a failure result so polling stops.
+    """
+    try:
+        with open(job_path) as f:
+            jobresult = json.load(f)
+    except (OSError, ValueError):
+        jobresult = None
+
+    if jobresult is None or (jobresult.get('started') and not jobresult.get('finished')):
+        notice("Worker %s exited without a result; recording failure" % sub_pid)
+        jwrite({
+            'msg': 'The async task exited unexpectedly before writing a result',
+            'failed': True,
+            'finished': True,
+            'ansible_job_id': jid,
+            'child_pid': sub_pid,
+        })
 
 
 def main():
@@ -317,6 +365,11 @@ def main():
 
                     time.sleep(step)
                 notice("Done in kid B.")
+                # The worker exited; if it did not leave a finished result
+                # behind (for example it was killed by a signal before writing
+                # one), record a failure so async_status stops polling instead
+                # of waiting out the async timeout.
+                _record_failure_if_incomplete(jid, sub_pid)
                 if not preserve_tmp:
                     shutil.rmtree(os.path.dirname(wrapped_module), True)
                 end()
