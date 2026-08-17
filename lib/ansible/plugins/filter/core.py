@@ -563,9 +563,6 @@ def subelements(obj, subelements, skip_missing=False):
     else:
         raise AnsibleFilterError('obj must be a list of dicts or a nested dict')
 
-    if not subelements:
-        raise AnsibleFilterError('subelements must not be empty')
-
     if isinstance(subelements, list):
         subelement_list = subelements[:]
     elif isinstance(subelements, str):
@@ -586,9 +583,13 @@ def subelements(obj, subelements, skip_missing=False):
                     break
                 raise AnsibleFilterError("could not find %r key in iterated item %r" % (subelement, values))
             except TypeError as ex:
-                raise AnsibleTypeError("the key %s should point to a dictionary, got '%s'" % (subelement, values)) from ex
+                raise AnsibleTypeError("the key '%s' should point to a dictionary, got '%s'" % (subelement, values)) from ex
         if not isinstance(values, list):
-            raise AnsibleTypeError("the key %r should point to a list, got %r" % (subelement, values))
+            if subelement_list:
+                raise AnsibleTypeError("the key %r should point to a list, got %r" % (subelement, values))
+            else:
+                raise AnsibleTypeError("The subelement is empty")
+
 
         for value in values:
             results.append((element, value))
