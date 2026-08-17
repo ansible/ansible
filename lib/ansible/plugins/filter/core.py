@@ -590,7 +590,6 @@ def subelements(obj, subelements, skip_missing=False):
             else:
                 raise AnsibleTypeError("The subelement is empty")
 
-
         for value in values:
             results.append((element, value))
 
