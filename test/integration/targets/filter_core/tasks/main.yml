@@ -725,7 +725,7 @@
       - 'subelements_demo|subelements("groups") == [({"name": "alice", "groups": ["wheel"], "authorized": ["/tmp/alice/onekey.pub"]}, "wheel")]'
       - 'subelements_demo|subelements(["groups"]) == [({"name": "alice", "groups": ["wheel"], "authorized": ["/tmp/alice/onekey.pub"]}, "wheel")]'
       - subelements_6 is failed
-      - '"The subelement is empty" in subelements_6.msg'
+      - '"subelements is empty" in subelements_6.msg'
       - subelements_7 is failed
       - '"could not find" in subelements_7.msg'
       - '[] | subelements("groups") == []'
