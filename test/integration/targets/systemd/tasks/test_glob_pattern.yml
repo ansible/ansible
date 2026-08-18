@@ -1,0 +1,158 @@
+# Test glob pattern support for systemd_service module
+
+- name: Start sleeper@200 for glob test
+  systemd:
+    name: sleeper@200.service
+    state: started
+  register: glob_setup_200
+
+- name: Start sleeper@201 for glob test
+  systemd:
+    name: sleeper@201.service
+    state: started
+  register: glob_setup_201
+
+- assert:
+    that:
+      - glob_setup_200 is success
+      - glob_setup_201 is success
+
+# Test restarting with glob pattern
+- name: Restart all sleeper instances using glob pattern
+  systemd:
+    name: 'sleeper@*.service'
+    state: restarted
+  register: glob_restart
+
+- assert:
+    that:
+      - glob_restart is changed
+      - glob_restart is success
+      - glob_restart.state == 'started'
+
+# Test check mode with glob pattern
+- name: Restart all sleeper instances using glob pattern (check mode)
+  systemd:
+    name: 'sleeper@*.service'
+    state: restarted
+  register: glob_restart_check
+  check_mode: true
+
+- assert:
+    that:
+      - glob_restart_check is changed
+      - glob_restart_check is success
+
+# Test stopping with glob pattern
+- name: Stop all sleeper instances using glob pattern
+  systemd:
+    name: 'sleeper@*.service'
+    state: stopped
+  register: glob_stop
+
+- assert:
+    that:
+      - glob_stop is changed
+      - glob_stop is success
+      - glob_stop.state == 'stopped'
+
+# Verify services actually stopped
+- name: Check sleeper@200 is stopped
+  systemd:
+    name: sleeper@200.service
+    state: stopped
+  register: verify_200_stopped
+
+- name: Check sleeper@201 is stopped
+  systemd:
+    name: sleeper@201.service
+    state: stopped
+  register: verify_201_stopped
+
+- assert:
+    that:
+      - verify_200_stopped is not changed
+      - verify_201_stopped is not changed
+
+# Test ? glob pattern
+- name: Restart sleeper instances matching ? pattern
+  systemd:
+    name: 'sleeper@20?.service'
+    state: restarted
+  register: glob_question
+
+- assert:
+    that:
+      - glob_question is changed
+      - glob_question is success
+      - glob_question.state == 'started'
+
+# Test [...] bracket glob pattern
+- name: Stop sleeper instances matching bracket pattern
+  systemd:
+    name: 'sleeper@20[01].service'
+    state: stopped
+  register: glob_bracket
+
+- assert:
+    that:
+      - glob_bracket is changed
+      - glob_bracket is success
+      - glob_bracket.state == 'stopped'
+
+# Verify bracket pattern actually stopped both instances
+- name: Check sleeper@200 is stopped after bracket glob
+  systemd:
+    name: sleeper@200.service
+    state: stopped
+  register: verify_200_bracket
+
+- name: Check sleeper@201 is stopped after bracket glob
+  systemd:
+    name: sleeper@201.service
+    state: stopped
+  register: verify_201_bracket
+
+- assert:
+    that:
+      - verify_200_bracket is not changed
+      - verify_201_bracket is not changed
+
+# Test that enabled with glob fails
+- name: Try to enable with glob pattern (should fail)
+  systemd:
+    name: 'sleeper@*.service'
+    enabled: true
+  register: glob_enable
+  ignore_errors: true
+
+- assert:
+    that:
+      - glob_enable is failed
+      - glob_enable.msg is search('enabled')
+
+# Test that masked with glob fails
+- name: Try to mask with glob pattern (should fail)
+  systemd:
+    name: 'sleeper@*.service'
+    masked: true
+  register: glob_mask
+  ignore_errors: true
+
+- assert:
+    that:
+      - glob_mask is failed
+      - glob_mask.msg is search('masked')
+
+# Cleanup
+- name: Stop sleeper@200
+  systemd:
+    name: sleeper@200.service
+    state: stopped
+  ignore_errors: true
+
+- name: Stop sleeper@201
+  systemd:
+    name: sleeper@201.service
+    state: stopped
+  ignore_errors: true

@@ -22,6 +22,10 @@ options:
             - Name of the unit. This parameter takes the name of exactly one unit to work with.
             - When no extension is given, it is implied to a C(.service) as systemd.
             - When using in a chroot environment you always need to specify the name of the unit with the extension. For example, C(crond.service).
+            - Glob patterns (C(*), C(?), C([)) may be used with O(state) to act on multiple matching units.
+              This is useful for instantiated template services such as C(app@*.service).
+              When using glob patterns, the O(enabled) and O(masked) options are not supported,
+              and the task always reports changed since idempotency checks are skipped.
         type: str
         aliases: [ service, unit ]
     state:
@@ -92,7 +96,7 @@ attributes:
 notes:
     - O(state), O(enabled), O(masked) requires O(name).
     - Before 2.4 you always required O(name).
-    - Globs are not supported in name, in other words, C(postgres*.service).
+    - Glob patterns in O(name) are supported for O(state) operations but not with O(enabled) or O(masked).
     - The service names might vary by specific OS/distribution.
     - The order of execution when having multiple properties is to first enable/disable, then mask/unmask and then deal with the service state.
       It has been reported that C(systemctl) can behave differently depending on the order of operations if you do the same manually.
@@ -149,6 +153,16 @@ EXAMPLES = """
     scope: user
   environment:
     XDG_RUNTIME_DIR: "/run/user/{{ myuid }}"
+
+- name: Restart all instances of a template service
+  ansible.builtin.systemd_service:
+    name: 'app@*.service'
+    state: restarted
+
+- name: Stop all instances of a template service
+  ansible.builtin.systemd_service:
+    name: 'app@*.service'
+    state: stopped
 """
 
 RETURN = """
@@ -363,10 +377,6 @@ def main():
     )
 
     unit = module.params['name']
-    if unit is not None:
-        for globpattern in (r"*", r"?", r"["):
-            if globpattern in unit:
-                module.fail_json(msg="This module does not currently support using glob patterns, found '%s' in service name: %s" % (globpattern, unit))
 
     systemctl = module.get_bin_path('systemctl', True)
 
@@ -411,7 +421,32 @@ def main():
             else:
                 module.fail_json(msg='failure %d during daemon-reexec: %s' % (rc, err))
 
-    if unit:
+    is_glob = unit is not None and any(c in unit for c in ('*', '?', '['))
+
+    if is_glob:
+        if module.params['enabled'] is not None:
+            module.fail_json(msg="Glob patterns in service name are not supported with the 'enabled' option.")
+        if module.params['masked'] is not None:
+            module.fail_json(msg="Glob patterns in service name are not supported with the 'masked' option.")
+
+        if module.params['state'] is not None:
+            result['state'] = module.params['state']
+
+            if module.params['state'] == 'started':
+                action = 'start'
+            elif module.params['state'] == 'stopped':
+                action = 'stop'
+            else:
+                action = module.params['state'][:-2]
+                result['state'] = 'started'
+
+            result['changed'] = True
+            if not module.check_mode:
+                (rc, out, err) = module.run_command("%s --all %s '%s'" % (systemctl, action, unit))
+                if rc != 0:
+                    module.fail_json(msg="Unable to %s service %s: %s" % (action, unit, err))
+
+    elif unit:
         found = False
         is_initd = sysv_exists(unit)
         is_systemd = False

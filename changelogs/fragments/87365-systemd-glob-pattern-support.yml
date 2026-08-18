@@ -1,0 +1,2 @@
+minor_changes:
+  - systemd_service - allow glob patterns in the ``name`` option for ``state`` operations, enabling actions on multiple matching units at once. This is useful for managing instantiated template services such as ``app@*.service`` (https://github.com/ansible/ansible/issues/87365).
