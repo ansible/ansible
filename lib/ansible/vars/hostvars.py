@@ -54,7 +54,7 @@ class HostVars(c.Mapping):
 
             return _jinja_bits._undef(f"hostvars[{host_name!r}]")
 
-        return self._variable_manager.get_vars(host=host, include_hostvars=False)
+        return self._variable_manager.get_vars(host=host, include_hostvars=True)
 
     def __getitem__(self, key: str) -> HostVarsVars | Marker:
         data = self.raw_get(key)
