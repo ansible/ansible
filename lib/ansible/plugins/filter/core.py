@@ -564,7 +564,7 @@ def subelements(obj, subelement_obj, skip_missing=False):
         raise AnsibleFilterError('obj must be a list of dicts or a nested dict')
 
     if isinstance(subelement_obj, list):
-        subelement_list = subelements[:]
+        subelement_list = subelement_obj[:]
     elif isinstance(subelement_obj, str):
         subelement_list = subelement_obj.split('.')
     else:
