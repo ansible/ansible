@@ -287,7 +287,7 @@ def additional_parameter_handling(params):
 
     # state should default to file, but since that creates many conflicts,
     # default state to 'current' when it exists.
-    prev_state = get_state(to_bytes(params['path'], errors='surrogate_or_strict'))
+    prev_state = get_state(params['path'])
 
     if params['state'] is None:
         if prev_state != 'absent':
@@ -515,7 +515,7 @@ def execute_diff_peek(path):
 
 def ensure_absent(path):
     b_path = to_bytes(path, errors='surrogate_or_strict')
-    prev_state = get_state(b_path)
+    prev_state = get_state(path)
     result = {}
 
     if prev_state != 'absent':
@@ -550,7 +550,7 @@ def ensure_absent(path):
 
 def execute_touch(path, follow, timestamps):
     b_path = to_bytes(path, errors='surrogate_or_strict')
-    prev_state = get_state(b_path)
+    prev_state = get_state(path)
     changed = False
     result = {'dest': path}
     mtime = get_timestamp_for_time(timestamps['modification_time'], timestamps['modification_time_format'])
@@ -595,7 +595,7 @@ def execute_touch(path, follow, timestamps):
 
 def ensure_file_attributes(path, follow, timestamps):
     b_path = to_bytes(path, errors='surrogate_or_strict')
-    prev_state = get_state(b_path)
+    prev_state = get_state(path)
     file_args = module.load_file_common_arguments(module.params)
     mtime = get_timestamp_for_time(timestamps['modification_time'], timestamps['modification_time_format'])
     atime = get_timestamp_for_time(timestamps['access_time'], timestamps['access_time_format'])
@@ -624,7 +624,7 @@ def ensure_file_attributes(path, follow, timestamps):
 
 def ensure_directory(path, follow, recurse, timestamps):
     b_path = to_bytes(path, errors='surrogate_or_strict')
-    prev_state = get_state(b_path)
+    prev_state = get_state(path)
     file_args = module.load_file_common_arguments(module.params)
     mtime = get_timestamp_for_time(timestamps['modification_time'], timestamps['modification_time_format'])
     atime = get_timestamp_for_time(timestamps['access_time'], timestamps['access_time_format'])
@@ -699,7 +699,7 @@ def ensure_directory(path, follow, recurse, timestamps):
 def ensure_symlink(path, src, follow, force, timestamps):
     b_path = to_bytes(path, errors='surrogate_or_strict')
     b_src = to_bytes(src, errors='surrogate_or_strict')
-    prev_state = get_state(b_path)
+    prev_state = get_state(path)
     mtime = get_timestamp_for_time(timestamps['modification_time'], timestamps['modification_time_format'])
     atime = get_timestamp_for_time(timestamps['access_time'], timestamps['access_time_format'])
     # source is both the source of a symlink or an informational passing of the src for a template module
@@ -775,8 +775,8 @@ def ensure_symlink(path, src, follow, force, timestamps):
     if changed and not module.check_mode:
         if prev_state != 'absent':
             # try to replace atomically
-            b_tmppath = to_bytes(os.path.sep).join(
-                [os.path.dirname(b_path), to_bytes(".%s.%s.tmp" % (os.getpid(), time.time()))]
+            b_tmppath = os.path.join(
+                os.path.dirname(b_path), to_bytes(".%s.%s.tmp" % (os.getpid(), time.time()))
             )
             try:
                 if prev_state == 'directory':
@@ -824,7 +824,7 @@ def ensure_symlink(path, src, follow, force, timestamps):
 def ensure_hardlink(path, src, follow, force, timestamps):
     b_path = to_bytes(path, errors='surrogate_or_strict')
     b_src = to_bytes(src, errors='surrogate_or_strict')
-    prev_state = get_state(b_path)
+    prev_state = get_state(path)
     file_args = module.load_file_common_arguments(module.params)
     mtime = get_timestamp_for_time(timestamps['modification_time'], timestamps['modification_time_format'])
     atime = get_timestamp_for_time(timestamps['access_time'], timestamps['access_time_format'])
@@ -894,8 +894,8 @@ def ensure_hardlink(path, src, follow, force, timestamps):
     if changed and not module.check_mode:
         if prev_state != 'absent':
             # try to replace atomically
-            b_tmppath = to_bytes(os.path.sep).join(
-                [os.path.dirname(b_path), to_bytes(".%s.%s.tmp" % (os.getpid(), time.time()))]
+            b_tmppath = os.path.join(
+                os.path.dirname(b_path), to_bytes(".%s.%s.tmp" % (os.getpid(), time.time()))
             )
             try:
                 if prev_state == 'directory':
