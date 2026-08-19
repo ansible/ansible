@@ -1,0 +1,2 @@
+bugfixes:
+  - pause action now respects the task's timeout setting.

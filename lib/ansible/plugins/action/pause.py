@@ -114,7 +114,16 @@ class ActionModule(ActionBase):
 
         user_input = b''
         try:
-            _user_input = display.prompt_until(prompt, private=not echo, seconds=seconds, complete_input=default_input_complete)
+            expire = None
+            if seconds is not None:
+                if self._task.timeout is not None:
+                    expire = min(seconds, self._task.timeout)
+                else:
+                    expire = seconds
+            elif self._task.timeout is not None:
+                expire = self._task.timeout
+
+            _user_input = display.prompt_until(prompt, private=not echo, seconds=expire, complete_input=default_input_complete)
         except AnsiblePromptInterrupt:
             user_input = None
         except AnsiblePromptNoninteractive:
@@ -130,7 +139,8 @@ class ActionModule(ActionBase):
         if user_input is None:
             prompt = "Press 'C' to continue the play or 'A' to abort \r"
             try:
-                user_input = display.prompt_until(prompt, private=not echo, interrupt_input=(b'a',), complete_input=(b'c',))
+                expire = (self._task.timeout - int(time.time() - start)) if self._task.timeout is not None else None
+                user_input = display.prompt_until(prompt, private=not echo, seconds=expire, interrupt_input=(b'a',), complete_input=(b'c',))
             except AnsiblePromptInterrupt:
                 raise AnsibleError('user requested abort!')
 
