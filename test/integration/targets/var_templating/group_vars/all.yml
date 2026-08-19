@@ -5,3 +5,7 @@ nested_x:
   value:
     x: 100
 nested_y: "{{ nested_x }}"
+test1: "{{ inventory_hostname }}"
+test3: '{{ hostvars["host1"].test1 }}'
+test4: "{{ hostvars[inventory_hostname].test1 }}"
+test6: "{{ test3 }}"

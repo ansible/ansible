@@ -34,6 +34,16 @@
           - y_1 == y_2
           - x_1 == y_1
 
+    - name: Verify hostvars templates use the referenced host's context
+      assert:
+        that:
+          - hostvars[inventory_hostname].test1 == inventory_hostname
+          - hostvars[inventory_hostname].test3 == 'host1'
+          - hostvars[inventory_hostname].test4 == inventory_hostname
+          - hostvars[inventory_hostname].test6 == 'host1'
+          - hostvars['missing'] is undefined
+          - hostvars[inventory_hostname].missing is undefined
+
     - debug:
         msg: "{{ hostvars['host1']['nested_x']['value'] }}"
       register: x_1

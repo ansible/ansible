@@ -1,0 +1,2 @@
+bugfixes:
+  - hostvars - resolve chained variable references that access ``hostvars`` (https://github.com/ansible/ansible/issues/17806)

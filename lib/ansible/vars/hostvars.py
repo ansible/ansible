@@ -17,7 +17,7 @@
 
 from __future__ import annotations
 
-import collections.abc as c
+import collections as _collections
 import typing as t
 
 from ansible.module_utils._internal import _datatag
@@ -32,7 +32,7 @@ if t.TYPE_CHECKING:
 __all__ = ['HostVars', 'HostVarsVars']
 
 
-class HostVars(c.Mapping):
+class HostVars(_collections.abc.Mapping):
     """A read-only wrapper to enable on-demand templating of a specific host's variables under that host's variable context."""
     def __init__(self, inventory: InventoryManager, variable_manager: VariableManager, loader: DataLoader) -> None:
         self._inventory = inventory
@@ -64,7 +64,7 @@ class HostVars(c.Mapping):
         if isinstance(data, _jinja_bits.Marker):
             return data
 
-        return HostVarsVars(data, loader=self._loader, host=key)
+        return HostVarsVars(data, loader=self._loader, host=key, hostvars=self)
 
     def __contains__(self, item: object) -> bool:
         # does not use inventory.hosts, so it can create localhost on demand
@@ -82,14 +82,15 @@ class HostVars(c.Mapping):
         return self
 
 
-class HostVarsVars(c.Mapping):
+class HostVarsVars(_collections.abc.Mapping):
     """A read-only view of a specific host's vars that will template on access under that host's variable context."""
 
-    def __init__(self, variables: dict[str, t.Any], loader: DataLoader | None, host: str) -> None:
+    def __init__(self, variables: dict[str, t.Any], loader: DataLoader | None, host: str, hostvars: HostVars | None = None) -> None:
         from ansible._internal._templating import _engine
 
         self._vars = variables
-        self._templar = _engine.TemplateEngine(variables=variables, loader=loader)
+        templar_variables = _collections.ChainMap({'hostvars': hostvars}, variables) if hostvars is not None else variables
+        self._templar = _engine.TemplateEngine(variables=templar_variables, loader=loader)
         self._host = host
 
     def __getitem__(self, key: str) -> t.Any:
