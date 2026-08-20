@@ -35,7 +35,9 @@ from ansible import context
 from ansible.errors import AnsibleError, AnsibleTemplateError
 from ansible.executor.play_iterator import IteratingStates, PlayIterator
 from ansible.executor.process.worker import WorkerProcess
+from ansible._internal import _task, _rpc_host
 from ansible._internal._task import WireTaskResult, HostTaskResult
+from ansible._internal._templating._engine import TemplateEngine
 from ansible.executor.task_queue_manager import CallbackSend, DisplaySend, PromptSend, TaskQueueManager
 from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.connection import Connection, ConnectionError
@@ -46,11 +48,10 @@ from ansible.playbook.play_context import PlayContext
 from ansible.playbook.task import Task
 from ansible.playbook.task_include import TaskInclude
 from ansible.plugins import loader as plugin_loader
-from ansible._internal._templating._engine import TemplateEngine
 from ansible.utils.display import Display
 from ansible.utils.fqcn import add_internal_fqcns
 from ansible.utils.sentinel import Sentinel
-from ansible._internal import _task, _rpc_host
+from ansible.vars.manager import V
 
 if t.TYPE_CHECKING:
     from ansible.playbook.role_include import IncludeRole
@@ -472,7 +473,7 @@ class StrategyBase:
                 continue
 
             if not handler.cached_name:
-                def variables_factory() -> dict[str, t.Any]:
+                def variables_factory() -> V:
                     return self._variable_manager.get_vars(
                         play=iterator._play,
                         task=handler,
