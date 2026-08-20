@@ -98,3 +98,50 @@
 
     - name: Ensure clean/non existing ansibulluser
       user: name=ansibulluser state=absent
+
+  - name: Ensure a private key symlink is not followed
+    block:
+    - name: flag file for test
+      tempfile:
+      register: privflagfile
+
+    - name: give the flag file known content
+      copy:
+        content: 'do not overwrite me'
+        dest: '{{ privflagfile.path }}'
+
+    - name: precreate .ssh
+      file: path={{home ~ '.ssh'}} state=directory
+
+    - name: setup private key linked to flag file
+      file: path={{home ~ ssh_key_file}} src={{privflagfile.path}} state=link
+
+    - name: Create user with ssh key, forcing overwrite
+      user:
+        name: ansibulluser
+        state: present
+        generate_ssh_key: yes
+        ssh_key_file: '{{ ssh_key_file }}'
+        force: true
+      register: user_force_priv
+
+    - stat: path={{home ~ ssh_key_file}}
+      register: check_priv
+
+    - slurp: path={{ privflagfile.path }}
+      register: flag_contents
+
+    - name: ensure the key replaced the link and its target was left alone
+      assert:
+        that:
+          - user_force_priv is success
+          - check_priv.stat.exists
+          - not check_priv.stat.islnk
+          - (flag_contents.content | b64decode) == 'do not overwrite me'
+    always:
+    - name: Clean up files
+      file: path={{ home ~ item }} state=absent
+      loop: '{{ key_files + [privflagfile.path] }}'
+
+    - name: Ensure clean/non existing ansibulluser
+      user: name=ansibulluser state=absent

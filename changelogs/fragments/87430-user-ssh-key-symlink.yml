@@ -1,0 +1,2 @@
+bugfixes:
+  - user - do not follow a symlink at the SSH private key path when ``force`` is set. ``ssh-keygen`` overwrote in place, so a symlink under the target user's control redirected the generated private key to wherever it pointed. The path is now removed first, as the public key path already was, and both are checked with ``os.path.lexists`` so a symlink whose target does not exist yet is caught too (https://github.com/ansible/ansible/issues/87430).

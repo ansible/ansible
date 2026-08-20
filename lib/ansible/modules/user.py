@@ -1257,15 +1257,22 @@ class User(object):
             except OSError as e:
                 return (1, '', 'Failed to create %s: %s' % (ssh_dir, to_native(e)))
 
-        if os.path.exists(ssh_key_file):
+        # lexists, not exists: a symlink whose target does not exist yet is still
+        # a symlink ssh-keygen would follow, creating the key at its target.
+        if os.path.lexists(ssh_key_file):
             if self.force:
                 self.module.warn(f'Overwriting existing ssh key private file "{ssh_key_file}"')
+                # Remove it instead of letting ssh-keygen overwrite in place. The
+                # path is under the target user's control, so if it is a symlink
+                # ssh-keygen would follow it and write the private key wherever it
+                # points. This is what the public key below already does.
+                os.unlink(ssh_key_file)
                 overwrite = 'y'
             else:
                 self.module.warn(f'Found existing ssh key private file "{ssh_key_file}", no force, so skipping ssh-keygen generation')
                 return (None, 'Key already exists, use "force: yes" to overwrite', '')
 
-        if os.path.exists(pub_file):
+        if os.path.lexists(pub_file):
             if self.force:
                 self.module.warn(f'Overwriting existing ssh key public file "{pub_file}"')
                 os.unlink(pub_file)
