@@ -568,7 +568,7 @@ def subelements(obj, subelement_obj, skip_missing=False):
     elif isinstance(subelement_obj, str):
         subelement_list = subelement_obj.split('.')
     else:
-        raise AnsibleTypeError('subelements must be a list or a string, got {type(subelement_obj)}')
+        raise AnsibleTypeError(f'subelements must be a list or a string, got {type(subelement_obj)}')
 
     results = []
 
@@ -588,7 +588,7 @@ def subelements(obj, subelement_obj, skip_missing=False):
             if subelement_list:
                 raise AnsibleTypeError(f"the key {subelement!r} should point to a list, got {values!r}")
             else:
-                raise AnsibleTypeError(f"Subelements in the object must be a list, got {type(values)}."
+                raise AnsibleTypeError(f"Subelements in the object must be a list, got {type(values)}. "
                                        "A list cannot be extracted, because subelements is empty.")
 
         for value in values:
