@@ -140,16 +140,17 @@ if ($ArgumentJSON) {
         # want to preserve the original string we tell it using the DateKind param.
         $jsonParams.DateKind = 'String'
     }
-    $parsedArgs = $ArgumentJSON | ConvertFrom-Json @jsonParams| Convert-JsonObject
+    $parsedArgs = $ArgumentJSON | ConvertFrom-Json @jsonParams | Convert-JsonObject
 
     # FUTURE: Deprecate complex_args and move parsing logic into module_utils.
     # Deprecation requires exec_wrapper warning system to be implemented. We
     # can use Set-PSBreakPoint to fire an action on variable reads.
-    $null = $ps.AddCommand("Set-Variable").AddParameters(@{
-        Name = 'complex_args'
-        Value = $parsedArgs
-        Scope = 'Global'
-    }).AddStatement()
+    $null = $ps.AddCommand("Set-Variable").AddParameters(
+        @{
+            Name = 'complex_args'
+            Value = $parsedArgs
+            Scope = 'Global'
+        }).AddStatement()
 }
 
 # env vars are process side so we can just set them here.
