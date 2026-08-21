@@ -1,4 +1,3 @@
 bugfixes:
   - user module will now unlink target ssh key files if they are symlinks to avoid overwriting their sources.
   - user module fixed issue with removing existing public key files in check mode.
-  - user module will error when encountering a symlink target ssh directory when generating keys, but removing it on force if it is a broken link.
