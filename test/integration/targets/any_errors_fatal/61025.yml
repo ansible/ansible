@@ -1,0 +1,12 @@
+- hosts: testhost,testhost2
+  gather_facts: false
+  any_errors_fatal: "{{ False }}"
+  tasks:
+    - name: EXPECTED FAILURE
+      fail:
+        msg: triggering a failure
+      when: "inventory_hostname == 'testhost'"
+
+    - name: Run on otherhost
+      debug:
+      failed_when: inventory_hostname == 'testhost'
