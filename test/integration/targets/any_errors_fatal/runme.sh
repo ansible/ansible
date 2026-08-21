@@ -50,3 +50,6 @@ ansible-playbook -i inventory "$@" 80981.yml | tee out.txt
 
 ansible-playbook -i inventory "$@" 61025.yml | tee out.txt
 [ "$(grep -c 'Run on otherhost' out.txt)" -eq 1 ]
+
+ANSIBLE_STRATEGY=free ansible-playbook -i inventory "$@" 61025.yml 2>&1 | tee out.txt
+[ "$(grep -c 'Using any_errors_fatal with the free strategy is not supported' out.txt)" -eq 0 ]
