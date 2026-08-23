@@ -1,37 +1,68 @@
-- hosts: localhost
+- name: Test include_role error handling
+  hosts: localhost
   gather_facts: false
+  strategy: "{{ strategy | default('linear') }}"
+  vars:
+    error_type: missing_role
+    rescue_1: false
+    rescue_2: false
   tasks:
-    - name: test missing role rescue
-      vars:
-        rescue_1: false
+    - name: Test missing role rescue
+      when: error_type == 'missing_role'
       block:
         - name: Include a role that doesn't exist
           include_role:
             name: missing_role
-            rescuable: '{{ rescueme | default(omit) }}'
-
+            rescuable: "{{ rescueme | default(omit) }}"
       rescue:
-        - set_fact: 
-              rescue_1: true
-      always:
-        - assert:
+        - name: Rescue missing role include
+          ansible.builtin.set_fact:
+            rescue_1: true
+        - name: Verify missing role failure details
+          ansible.builtin.assert:
             that:
-              - rescue_1 == rescueme|default(True)
+              - ansible_failed_task.name == "Include a role that doesn't exist"
+              - ansible_failed_result.failed
 
-    - name: Test _from rescue
-      vars:
-        rescue_2: false
+    - name: Test tasks_from rescue
+      when: error_type == 'missing_tasks_from'
       block:
         - name: Include a task file that doesn't exist, but role exists
           include_role:
             name: include_roles
             tasks_from: missing_task_list
-            rescuable: '{{ rescueme | default(omit) }}'
-
+            rescuable: "{{ rescueme | default(omit) }}"
       rescue:
-        - set_fact: 
-              rescue_2: true
-      always:
-        - assert:
+        - name: Rescue missing tasks_from include
+          ansible.builtin.set_fact:
+            rescue_2: true
+        - name: Verify missing tasks_from failure details
+          ansible.builtin.assert:
             that:
-              - rescue_2 == rescueme|default(True)
+              - ansible_failed_task.name == "Include a task file that doesn't exist, but role exists"
+              - ansible_failed_result.failed
+
+    - name: Include a missing role outside a rescuing block
+      when: error_type == 'unrescued'
+      include_role:
+        name: missing_role
+
+    - name: Continue after include_role error handling
+      ansible.builtin.set_fact:
+        continued_after_rescue: true
+
+- name: Verify host state in a later play
+  hosts: localhost
+  gather_facts: false
+  strategy: "{{ strategy | default('linear') }}"
+  vars:
+    error_type: missing_role
+    rescue_1: false
+    rescue_2: false
+  tasks:
+    - name: Verify host is available in later play
+      ansible.builtin.assert:
+        that:
+          - continued_after_rescue
+          - rescue_1 == (error_type == 'missing_role')
+          - rescue_2 == (error_type == 'missing_tasks_from')

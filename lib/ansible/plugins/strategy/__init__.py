@@ -527,6 +527,56 @@ class StrategyBase:
         except queue.Empty:
             pass
 
+    def _process_failed_result(self, iterator: PlayIterator, task_result: HostTaskResult) -> None:
+        """Update play state and statistics for a failed task result."""
+        original_host = task_result.host
+        original_task = task_result.task
+        ignore_errors = task_result.utr.ignore_errors
+
+        if not ignore_errors:
+            # save the current state before failing it for later inspection
+            state_when_failed = iterator.get_state_for_host(original_host.name)
+            display.debug("marking %s as failed" % original_host.name)
+
+            if original_task.run_once:
+                # if we're using run_once, we have to fail every host here
+                for host in self._inventory.get_hosts(iterator._play.hosts):
+                    if host.name not in self._tqm._unreachable_hosts:
+                        iterator.mark_host_failed(host)
+            else:
+                iterator.mark_host_failed(original_host)
+
+            state, dummy = iterator.get_next_task_for_host(original_host, peek=True)
+
+            if iterator.is_failed(original_host) and state and state.run_state == IteratingStates.COMPLETE:
+                self._tqm._failed_hosts[original_host.name] = True
+
+            # if we're iterating on the rescue portion of a block then
+            # we save the failed task in a special var for use
+            # within the rescue/always
+            if iterator.is_any_block_rescuing(state_when_failed):
+                self._tqm._stats.increment('rescued', original_host.name)
+
+                iterator._play._removed_hosts.remove(original_host.name)
+
+                self._variable_manager.set_nonpersistent_facts(
+                    original_host.name,
+                    dict(
+                        ansible_failed_task=original_task.dump_attrs(),
+                        ansible_failed_result=task_result.utr.as_result_dict(),
+                    ),
+                )
+            else:
+                self._tqm._stats.increment('failures', original_host.name)
+        else:
+            self._tqm._stats.increment('ok', original_host.name)
+            self._tqm._stats.increment('ignored', original_host.name)
+
+            if task_result.utr.changed:
+                self._tqm._stats.increment('changed', original_host.name)
+
+        self._tqm.send_callback('v2_runner_on_failed', task_result, ignore_errors=ignore_errors)
+
     @debug_closure
     def _process_pending_results(self, iterator: PlayIterator, one_pass: bool = False, max_passes: int | None = None) -> list[HostTaskResult]:
         """
@@ -555,51 +605,7 @@ class StrategyBase:
 
             if task_result.utr.failed:
                 role_ran = True
-                ignore_errors = task_result.utr.ignore_errors
-
-                if not ignore_errors:
-                    # save the current state before failing it for later inspection
-                    state_when_failed = iterator.get_state_for_host(original_host.name)
-                    display.debug("marking %s as failed" % original_host.name)
-
-                    if original_task.run_once:
-                        # if we're using run_once, we have to fail every host here
-                        for h in self._inventory.get_hosts(iterator._play.hosts):
-                            if h.name not in self._tqm._unreachable_hosts:
-                                iterator.mark_host_failed(h)
-                    else:
-                        iterator.mark_host_failed(original_host)
-
-                    state, dummy = iterator.get_next_task_for_host(original_host, peek=True)
-
-                    if iterator.is_failed(original_host) and state and state.run_state == IteratingStates.COMPLETE:
-                        self._tqm._failed_hosts[original_host.name] = True
-
-                    # if we're iterating on the rescue portion of a block then
-                    # we save the failed task in a special var for use
-                    # within the rescue/always
-                    if iterator.is_any_block_rescuing(state_when_failed):
-                        self._tqm._stats.increment('rescued', original_host.name)
-
-                        iterator._play._removed_hosts.remove(original_host.name)
-
-                        self._variable_manager.set_nonpersistent_facts(
-                            original_host.name,
-                            dict(
-                                ansible_failed_task=original_task.dump_attrs(),
-                                ansible_failed_result=task_result.utr.as_result_dict(),
-                            ),
-                        )
-                    else:
-                        self._tqm._stats.increment('failures', original_host.name)
-                else:
-                    self._tqm._stats.increment('ok', original_host.name)
-                    self._tqm._stats.increment('ignored', original_host.name)
-
-                    if task_result.utr.changed:
-                        self._tqm._stats.increment('changed', original_host.name)
-
-                self._tqm.send_callback('v2_runner_on_failed', task_result, ignore_errors=ignore_errors)
+                self._process_failed_result(iterator, task_result)
             elif task_result.utr.unreachable:
                 if not task_result.utr.ignore_unreachable:
                     self._tqm._unreachable_hosts[original_host.name] = True

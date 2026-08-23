@@ -226,7 +226,6 @@ class StrategyModule(StrategyBase):
 
             if len(included_files) > 0:
                 all_blocks = dict((host, []) for host in hosts_left)
-                failed_includes_hosts = set()
                 for included_file in included_files:
                     display.debug("collecting new blocks for %s" % included_file)
                     is_handler = False
@@ -261,9 +260,7 @@ class StrategyModule(StrategyBase):
                             r.utr.exception = utr.exception
                             r.utr.msg = utr.msg
 
-                            self._tqm._stats.increment('failures', r.host.name)
-                            self._tqm.send_callback('v2_runner_on_failed', r)
-                            failed_includes_hosts.add(r.host)
+                            self._process_failed_result(iterator, r)
                         continue
                     else:
                         # since we skip incrementing the stats when the task result is
@@ -289,10 +286,6 @@ class StrategyModule(StrategyBase):
                             if host in included_file._hosts:
                                 all_blocks[host].append(final_block)
                     display.debug("done collecting new blocks for %s" % included_file)
-
-                for host in failed_includes_hosts:
-                    self._tqm._failed_hosts[host.name] = True
-                    iterator.mark_host_failed(host)
 
                 display.debug("adding all collected blocks from %d included file(s) to iterator" % len(included_files))
                 for host in hosts_left:

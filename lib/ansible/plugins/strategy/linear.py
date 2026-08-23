@@ -249,7 +249,6 @@ class StrategyModule(StrategyBase):
                     all_blocks = dict((host, []) for host in hosts_left)
                     display.debug("done generating all_blocks data")
                     included_tasks = []
-                    failed_includes_hosts = set()
                     for included_file in included_files:
                         display.debug("processing included file: %s" % included_file._filename)
                         is_handler = False
@@ -309,19 +308,13 @@ class StrategyModule(StrategyBase):
                                 r.utr.exception = utr.exception
                                 r.utr.msg = utr.msg
 
-                                self._tqm._stats.increment('failures', r.host.name)
-                                self._tqm.send_callback('v2_runner_on_failed', r)
-                                failed_includes_hosts.add(r.host)
+                                self._process_failed_result(iterator, r)
                         else:
                             # since we skip incrementing the stats when the task result is
                             # first processed, we do so now for each host in the list
                             for host in included_file._hosts:
                                 self._tqm._stats.increment('ok', host.name)
                             self._tqm.send_callback('v2_playbook_on_include', included_file)
-
-                    for host in failed_includes_hosts:
-                        self._tqm._failed_hosts[host.name] = True
-                        iterator.mark_host_failed(host)
 
                     # finally go through all of the hosts and append the
                     # accumulated blocks to their list of tasks

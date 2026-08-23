@@ -1,0 +1,4 @@
+bugfixes:
+  - >-
+    include_role - Reconcile rescued role-loading failures with normal task failure handling so they do not remain in
+    failure statistics or prevent the host from running later plays (https://github.com/ansible/ansible/issues/86721).
