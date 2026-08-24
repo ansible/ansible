@@ -1,0 +1,2 @@
+minor_changes:
+  - config - document supported server options (including ``validate_certs``, ``auth_url``, and ``client_id``) under ``GALAXY_SERVER_LIST`` (https://github.com/ansible/ansible/issues/87425).
