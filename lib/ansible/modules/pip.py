@@ -878,8 +878,41 @@ def main():
             module.exit_json(changed=False)
 
         if module.check_mode:
-            if extra_args or requirements or state == 'latest' or not name:
+            if extra_args or state == 'latest' or not name:
                 module.exit_json(changed=True)
+            if requirements:
+                # Fix for #62826: don't always report changed for requirements in check_mode
+                # Check if virtualenv would be created and if requirements already satisfied
+                # If virtualenv doesn't exist, it would be created -> changed
+                if env and not os.path.exists(os.path.join(env, 'bin', 'activate')):
+                    module.exit_json(changed=True)
+                # Check if packages from requirements file are already installed
+                try:
+                    with open(requirements, 'r') as f:
+                        req_packages = [line.strip() for line in f if line.strip() and not line.strip().startswith('#')]
+                    # Filter out options like --find-links, -i, etc.
+                    req_packages = [p for p in req_packages if not p.startswith('-')]
+                    if not req_packages:
+                        module.exit_json(changed=False)
+                    # Get current installed packages
+                    pkg_cmd_r, out_r, err_r = _get_packages(module, pip, chdir)
+                    out += out_r
+                    err += err_r
+                    pkg_list_r = [p for p in out_r.split('\n') if not p.startswith('You are using') and not p.startswith('You should consider') and p]
+                    # Check each requirement
+                    changed_r = False
+                    for req in req_packages:
+                        # Handle version specifiers and extras
+                        pkg = Package(req)
+                        # Use _is_present to check
+                        is_present = _is_present(module, pkg, pkg_list_r, pkg_cmd_r)
+                        if (state == 'present' and not is_present) or (state == 'absent' and is_present):
+                            changed_r = True
+                            break
+                    module.exit_json(changed=changed_r, cmd=pkg_cmd_r, stdout=out, stderr=err)
+                except Exception:
+                    # Fallback to always changed if we can't determine
+                    module.exit_json(changed=True)
 
             pkg_cmd, out_pip, err_pip = _get_packages(module, pip, chdir)
 
