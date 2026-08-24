@@ -1,0 +1,2 @@
+bugfixes:
+  - copy - Clarify that owner and group do not preserve previous ownership by default (https://github.com/ansible/ansible/issues/84732).
