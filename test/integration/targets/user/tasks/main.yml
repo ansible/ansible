@@ -9,6 +9,7 @@
 - include_tasks: test_create_user_home.yml
   when: ansible_distribution != 'Alpine'
 - import_tasks: test_remove_user.yml
+- import_tasks: test_remove_user_selinux.yml
 - import_tasks: test_no_home_fallback.yml
 - include_tasks: test_expires.yml
   when: ansible_distribution != 'Alpine'

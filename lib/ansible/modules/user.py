@@ -321,6 +321,8 @@ notes:
     C(/Library/Preferences/com.apple.loginwindow.plist).
   - On FreeBSD, this module uses C(pw useradd) and C(chpass) to create, C(pw usermod) and C(chpass) to modify,
     C(pw userdel) remove, C(pw lock) to lock, and C(pw unlock) to unlock accounts.
+  - On SELinux enabled systems, removing a user with O(state=absent) also removes any SELinux user
+    mapping for the user, matching the behavior of C(userdel --selinux-user).
   - On distributions using BusyBox, this module uses C(adduser), C(chpasswd), C(deluser), and C(delgroup).
     The C(/etc/passwd) file is modified directly by this module and is backed up before modification.
   - On distributions using BusyBox, O(move_home) is supported only if C(shadow) package is installed.
@@ -721,6 +723,9 @@ class User(object):
             command_name = 'userdel'
 
         cmd = [self.module.get_bin_path(command_name, True)]
+        if not self.local and self.module.selinux_enabled():
+            # remove any SELinux user mapping for the user's login
+            cmd.append('-Z')
         if self.force and not self.local:
             cmd.append('-f')
         if self.remove:
