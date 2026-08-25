@@ -33,7 +33,8 @@ Earlier versions may receive critical fixes on a best-effort basis.
 
 ## Ansible Security Policy
 
-For the complete Ansible Security Policy, including what qualifies as a reportable vulnerability, severity classification, the response process, coordinated disclosure, and the vulnerability management process, see [ansible.com/security](https://ansible.com/security).
+For the complete Ansible Security Policy, including what qualifies as a reportable vulnerability, severity classification, the response process,
+coordinated disclosure, and the vulnerability management process, see [ansible.com/security](https://ansible.com/security).
 
 ## EU Cyber Resilience Act: Open-Source Steward Statement
 
