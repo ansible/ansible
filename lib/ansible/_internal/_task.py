@@ -949,7 +949,6 @@ class UnifiedTaskResult:
                 #     display.deprecated(
                 #         msg="Returning 'skipped' from a module or action plugin is deprecated.",
                 #         version="2.25",
-                #         help_text="Check for `is success` and/or `not changed` and the `msg` text instead.",
                 #     )
                 if resolved_field is DROP_AND_WARN:
                     display.warning(f"Removed reserved key {key!r} from module result.", obj=value)
