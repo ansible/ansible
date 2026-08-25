@@ -145,6 +145,12 @@ notes:
       are not touched. This is the same behavior as a normal archive extraction.
     - Existing files/directories in the destination which are not in the archive
       are ignored for purposes of deciding if the archive should be unpacked or not.
+    - When O(mode) is not specified, the permissions of extracted files are preserved
+      from the archive. For zip archives, the original permissions stored in the
+      zip file are used. For tar archives, the effective permissions depend on the
+      extraction flags and whether the extraction is performed as root (GNU tar
+      defaults to C(--same-permissions) for root and C(--no-same-permissions) for
+      ordinary users, where C(--no-same-permissions) applies the user's umask).
 seealso:
 - module: community.general.archive
 - module: community.general.iso_extract
