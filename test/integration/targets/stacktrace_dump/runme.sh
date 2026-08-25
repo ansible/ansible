@@ -136,8 +136,59 @@ test_multiple_signals_append() {
     echo "Test PASSED"
 }
 
+test_symlink_not_followed() {
+    echo "=== Test: Symlink at stacktrace path is not followed ==="
+
+    # Start ansible-playbook in background
+    ansible-playbook -i inventory playbook.yml &
+    local ANSIBLE_PID
+    ANSIBLE_PID=$!
+
+    # Give it time to start executing and pre-create the debug directory
+    sleep 2
+
+    # Pre-plant a symlink at the predictable stacktrace path pointing at a canary
+    # file. A correct handler must refuse to follow it (O_NOFOLLOW).
+    local CANARY
+    CANARY=$(mktemp)
+    rm -f "$CANARY"
+    local SYMLINK="$DEBUG_DIR/ansible-${ANSIBLE_PID}.debug"
+    rm -f "$SYMLINK"
+    ln -s "$CANARY" "$SYMLINK"
+
+    # Signal the process to trigger the stacktrace write
+    kill -SIGUSR1 $ANSIBLE_PID
+    sleep 1
+
+    # The canary must NOT have been created/written through the symlink
+    if [[ -e "$CANARY" ]]; then
+        echo "FAIL: stacktrace write followed the symlink and wrote to $CANARY"
+        kill $ANSIBLE_PID 2>/dev/null || true
+        rm -f "$CANARY" "$SYMLINK"
+        exit 1
+    fi
+
+    # The planted symlink should remain a symlink (open failed, nothing replaced it)
+    if [[ ! -L "$SYMLINK" ]]; then
+        echo "FAIL: expected the planted symlink to remain untouched at $SYMLINK"
+        kill $ANSIBLE_PID 2>/dev/null || true
+        rm -f "$CANARY" "$SYMLINK"
+        exit 1
+    fi
+
+    echo "Symlink was not followed and canary was not written"
+
+    # Clean up
+    kill $ANSIBLE_PID 2>/dev/null || true
+    wait $ANSIBLE_PID 2>/dev/null || true
+    rm -f "$CANARY" "$SYMLINK"
+
+    echo "Test PASSED"
+}
+
 # Run all tests
 test_controller_debug_directory
 test_multiple_signals_append
+test_symlink_not_followed
 
 echo "=== All tests PASSED ==="

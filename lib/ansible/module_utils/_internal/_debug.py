@@ -33,7 +33,12 @@ def _write_stacktraces(stacktrace_dir: str | None = None):
             # Drop a breadcrumb to help identify where the stacktrace was saved.
             log_to_system(f"Writing debug stacktrace to {file}", module_name="stacktrace", syslog_facility="LOG_USER")
 
-            with file.open('a') as trace_file:
+            # Use O_NOFOLLOW to prevent following a pre-planted symlink at this predictable
+            # path (e.g. in a world-writable temp dir), which would otherwise let a local
+            # attacker redirect the append to an arbitrary file.
+            flags = os.O_WRONLY | os.O_CREAT | os.O_APPEND | os.O_NOFOLLOW
+            fd = os.open(file, flags, 0o600)
+            with os.fdopen(fd, 'a') as trace_file:
                 trace_file.write(f'=== {now.isoformat()} on {platform.node()} ===\n\n')
 
                 # The `faulthandler` output will also contain the main process stacktrace (as current thread),
