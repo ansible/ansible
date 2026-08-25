@@ -53,7 +53,26 @@ if C.ANSIBLE_FORCE_COLOR:
 
 
 def parsecolor(color):
-    """SGR parameter string for the specified color name."""
+    """Return SGR parameter string for the specified color.
+
+    Valid color values are:
+
+    * Named colors from :data:`ansible.constants.COLOR_CODES`: ``black``,
+      ``bright gray``, ``blue``, ``white``, ``green``, ``bright blue``, ``cyan``,
+      ``bright green``, ``red``, ``bright cyan``, ``purple``, ``bright red``,
+      ``yellow``, ``bright purple``, ``dark gray``, ``bright yellow``, ``magenta``,
+      ``bright magenta``, ``normal``.
+    * 256-color palette: ``color0`` through ``color255`` (e.g. ``color196``
+      for bright red, ``color240`` for dark gray). See
+      https://en.wikipedia.org/wiki/ANSI_escape_code#8-bit for the chart.
+    * RGB cube: ``rgb<red><green><blue>`` where each component is ``0``–``5``
+      (e.g. ``rgb500`` is red, ``rgb050`` is green, ``rgb005`` is blue,
+      ``rgb555`` is white). Maps to 256-color codes 16–231.
+    * Grayscale ramp: ``gray0`` through ``gray23`` (maps to 232–255).
+
+    :param color: color name or 256-color/RGB/gray specifier
+    :returns: SGR parameter string for use in ANSI escape sequences
+    """
     matches = re.match(r"color(?P<color>[0-9]+)"
                        r"|(?P<rgb>rgb(?P<red>[0-5])(?P<green>[0-5])(?P<blue>[0-5]))"
                        r"|gray(?P<gray>[0-9]+)", color)
