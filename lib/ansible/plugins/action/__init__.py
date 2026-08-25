@@ -810,9 +810,11 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         # using either setfacl or chmod, and compatibility depends on filesystem.
         # It should be possible to debug this branch by installing OpenIndiana
         # (use ZFS) and going unpriv -> unpriv.
-        res = self._remote_chmod(remote_paths, posix_acl_mode)
-        if res['rc'] == 0:
-            return remote_paths
+        # Only try this on SunOS; on Linux this mode is invalid (e.g. 'A+user:...')
+        if platform.system() == 'SunOS':
+            res = self._remote_chmod(remote_paths, posix_acl_mode)
+            if res['rc'] == 0:
+                return remote_paths
 
         # we'll need this down here
         become_link = get_versioned_doclink('playbook_guide/playbooks_privilege_escalation.html')
