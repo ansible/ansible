@@ -37,7 +37,7 @@ from ansible._internal._templating._engine import TemplateEngine
 from ansible.plugins.loader import cache_loader
 from ansible.utils.display import Display
 from ansible.utils.vars import combine_vars, load_extra_vars, load_options_vars
-from ansible.vars.clean import namespace_facts, clean_facts
+from ansible.vars.clean import clean_facts, module_response_deepcopy, namespace_facts
 from ansible.vars.hostvars import HostVars
 from ansible.vars.plugins import get_vars_from_inventory_sources, get_vars_from_path
 from ansible.vars.reserved import warn_if_reserved
@@ -581,13 +581,13 @@ class VariableManager:
             host_cache = self._fact_cache.get(host)
         except KeyError:
             # We get to set this as new
-            host_cache = facts
+            host_cache = module_response_deepcopy(facts)
         else:
             if not isinstance(host_cache, MutableMapping):
                 raise TypeError('The object retrieved for {0} must be a MutableMapping but was'
                                 ' a {1}'.format(host, type(host_cache)))
             # Update the existing facts
-            host_cache |= facts
+            host_cache |= module_response_deepcopy(facts)
 
         # Save the facts back to the backing store
         self._fact_cache.set(host, host_cache)

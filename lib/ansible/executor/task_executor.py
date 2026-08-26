@@ -40,7 +40,7 @@ from ansible.template import Templar
 from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.utils.display import Display
 from ansible.utils.vars import combine_vars
-from ansible.vars.clean import namespace_facts
+from ansible.vars.clean import module_response_deepcopy, namespace_facts
 from ansible.vars.manager import _clean_and_deprecate_top_level_facts, _INJECT_FACTS
 from ansible._internal._errors import _task_timeout
 from ansible._internal import _task
@@ -555,7 +555,7 @@ class TaskExecutor:
 
             if utr.ansible_facts and _task.VariableLayer.CACHEABLE_FACT not in utr.pending_changes.register_host_variables:
                 # For backward compatibility, if the action provided ansible_facts, use that as the CACHEABLE_FACT layer if the action did not provide one.
-                utr.pending_changes.register_host_variables[_task.VariableLayer.CACHEABLE_FACT] = utr.ansible_facts
+                utr.pending_changes.register_host_variables[_task.VariableLayer.CACHEABLE_FACT] = module_response_deepcopy(utr.ansible_facts)
 
             # Variable layers should be reflected on task vars in the same way they will be handled by variable manager.
             # What occurs below is a partial re-implementation of variable manager, and thus does not fully reflect its behavior.
