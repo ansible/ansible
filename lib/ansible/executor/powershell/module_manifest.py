@@ -437,14 +437,13 @@ def _create_powershell_wrapper(
             else:
                 ps_deps.append(dep)
 
+        encoder = get_module_encoder(profile, Direction.CONTROLLER_TO_MODULE)
+        module_arg_json = json.dumps(module_args, cls=encoder)
+
         module_params |= {
-            'Variables': [
-                {
-                    'Name': 'complex_args',
-                    'Value': _prepare_module_args(module_args, profile),
-                    'Scope': 'Global',
-                },
-            ],
+            'ArgumentJSON': module_arg_json,
+            # FUTURE: Provide the profile to the module wrapper.
+            # 'ArgumentProfile': profile,
             'CSharpModules': cs_deps,
             'PowerShellModules': ps_deps,
             'ForModule': True,
