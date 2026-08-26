@@ -28,6 +28,8 @@ import time
 import typing as t
 import multiprocessing.queues
 
+from pathlib import Path
+
 from ansible import constants as C
 from ansible import context
 from ansible.errors import AnsibleError, ExitCode, AnsibleCallbackError
@@ -37,6 +39,7 @@ from ansible.executor.play_iterator import PlayIterator
 from ansible.executor.stats import AggregateStats
 from ansible.executor.task_result import CallbackTaskResult
 from ansible.inventory.manager import InventoryManager
+from ansible.module_utils._internal import _debug
 from ansible.module_utils.common.text.converters import to_native
 from ansible.parsing.dataloader import DataLoader
 from ansible.playbook.play_context import PlayContext
@@ -208,6 +211,18 @@ class TaskQueueManager:
         # signal handlers to propagate signals to workers
         signal.signal(signal.SIGTERM, self._signal_handler)
         signal.signal(signal.SIGINT, self._signal_handler)
+
+        # Location of our stacktrace dump directory. Pre-create so Workers don't have to.
+        trace_dir = Path(C.ANSIBLE_HOME).expanduser() / 'debug'
+        try:
+            trace_dir.mkdir(parents=True, exist_ok=True, mode=0o700)
+        except Exception as e:
+            display.warning(f"Unable to create debug directory {trace_dir}: {e}")
+            self.stacktrace_dir = None
+        else:
+            display.debug(f"Using stacktrace dump directory {trace_dir}")
+            self.stacktrace_dir = str(trace_dir)
+        _debug.register_for_stacktrace(self.stacktrace_dir)
 
     def _initialize_processes(self, num: int) -> None:
         # mutable update to ensure the reference stays the same

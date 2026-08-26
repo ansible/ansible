@@ -1,0 +1,2 @@
+minor_changes:
+- debugging - Add signal (``USR1``) handler to provide insight into executing code stacks (https://github.com/ansible/ansible/issues/84451)
