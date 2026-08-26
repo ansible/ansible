@@ -31,6 +31,16 @@ _ANSIBALLZ_PYDEVD_CONFIG:
   vars:
   - {name: _ansible_ansiballz_pydevd_config}
   version_added: '2.20'
+_ANSIBALLZ_PWSH_DEBUGGER_CONFIG:
+  name: Configure the AnsiballZ PowerShell remote debugging extensions.
+  description:
+    - Enables and configures the AnsiballZ PowerShell remote debugging extensions.
+    - This is for internal use only.
+  env:
+  - {name: _ANSIBLE_ANSIBALLZ_PWSH_DEBUGGER_CONFIG}
+  vars:
+  - {name: _ansible_ansiballz_pwsh_debugger_config}
+  version_added: '2.21'
 _ANSIBLE_CONNECTION_PATH:
   env:
   - name: _ANSIBLE_CONNECTION_PATH
@@ -1663,7 +1673,7 @@ INTERPRETER_PYTHON:
   description:
   - Path to the Python interpreter to be used for module execution on remote targets, or an automatic discovery mode.
     Supported discovery modes are ``auto`` (the default), and ``auto_silent``.
-    All discovery modes match against an ordered list of well-known Python interpreter locations. 
+    All discovery modes match against an ordered list of well-known Python interpreter locations.
     The fallback behavior will issue a warning that the interpreter should be set explicitly (since interpreters
     installed later may change which one is used). This warning behavior can be disabled by setting ``auto_silent``.
     The ``auto_legacy*`` modes are removed.

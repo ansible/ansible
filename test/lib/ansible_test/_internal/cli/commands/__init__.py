@@ -43,6 +43,10 @@ from .units import (
     do_units,
 )
 
+from .debug import (
+    do_debug,
+)
+
 
 def do_commands(
     parent: argparse.ArgumentParser,
@@ -228,6 +232,7 @@ def do_commands(
     do_env(subparsers, common, completer)
     do_shell(subparsers, common, completer)
 
+    do_debug(subparsers, common, completer)
     do_integration(subparsers, test, completer)
     do_sanity(subparsers, test, completer)
     do_units(subparsers, test, completer)

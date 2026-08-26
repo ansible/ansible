@@ -39,7 +39,15 @@ param(
 
     [Parameter()]
     [switch]
-    $ForModule
+    $ForModule,
+
+    [Parameter()]
+    [switch]
+    $WaitForDebugger,
+
+    [Parameter()]
+    [IDictionary]
+    $DebugParam = @{}
 )
 
 Function Write-AnsibleErrorDetail {
@@ -99,16 +107,16 @@ $ps = [PowerShell]::Create([InitialSessionState]::CreateDefault2())
 
 if ($ForModule) {
     $ps.Runspace.SessionStateProxy.SetVariable("ErrorActionPreference", "Stop")
+
+    foreach ($variable in $Variables) {
+        $null = $ps.AddCommand("Set-Variable").AddParameters($variable).AddStatement()
+    }
 }
 else {
     # For script files we want to ensure we load it as UTF-8. We don't set this
     # for modules as they are loaded from memory whereas a script is loaded
     # from disk as part of the script being run than by us.
     Set-WinPSDefaultFileEncoding
-}
-
-foreach ($variable in $Variables) {
-    $null = $ps.AddCommand("Set-Variable").AddParameters($variable).AddStatement()
 }
 
 # env vars are process side so we can just set them here.
@@ -151,11 +159,24 @@ $parseScriptWithName = {
 }
 
 $scriptInfo = Get-AnsibleScript -Name $Script
+$pwshUtilInfo = @(
+    if ($PowerShellModules) {
+        foreach ($utilName in $PowerShellModules) {
+            Get-AnsibleScript -Name $utilName
+        }
+    }
+)
+
+$debugger = $null
 if ($scriptInfo.ShouldConstrain) {
     # Fail if there are any module utils, in the future we may allow unsigned
     # PowerShell utils in CLM but for now we don't.
     if ($PowerShellModules -or $CSharpModules) {
         throw "Cannot run untrusted PowerShell script '$Script' in ConstrainedLanguage mode with module util imports."
+    }
+
+    if ($DebugParam.Count) {
+        throw "Cannot run untrusted PowerShell script '$Script' in ConstrainedLanguage mode with a debugger."
     }
 
     # If the module is marked as needing to be constrained then we set the
@@ -168,22 +189,19 @@ if ($scriptInfo.ShouldConstrain) {
     $null = $ps.AddCommand($scriptPath, $false).AddStatement()
 }
 else {
-    if ($PowerShellModules) {
-        foreach ($utilName in $PowerShellModules) {
-            $utilInfo = Get-AnsibleScript -Name $utilName
-            if ($utilInfo.ShouldConstrain) {
-                throw "PowerShell module util '$utilName' is not trusted and cannot be loaded."
-            }
+    foreach ($utilInfo in $pwshUtilInfo) {
+        if ($utilInfo.ShouldConstrain) {
+            throw "PowerShell module util '$($utilInfo.Name)' is not trusted and cannot be loaded."
+        }
 
-            $null = $ps.AddScript($parseScriptWithName).AddParameters(@{
-                    Name = $utilName
-                    Script = $utilInfo.Script
-                })
-            $null = $ps.AddScript(@'
+        $null = $ps.AddScript($parseScriptWithName).AddParameters(@{
+                Name = $utilInfo.Name
+                Script = $utilInfo.Script
+            })
+        $null = $ps.AddScript(@'
 New-Module -Name $args[0] -ScriptBlock @($input)[0] |
     Import-Module -WarningAction SilentlyContinue -Scope Global
-'@).AddArgument([Path]::GetFileNameWithoutExtension($utilName)).AddStatement()
-        }
+'@).AddArgument([Path]::GetFileNameWithoutExtension($utilInfo.Name)).AddStatement()
     }
 
     if ($CSharpModules) {
@@ -201,6 +219,75 @@ New-Module -Name $args[0] -ScriptBlock @($input)[0] |
         }).AddScript(@'
 ${function:<AnsibleModule>} = @($input)[0]
 '@).AddStatement()
+
+    # Invoke what we have already so it is loaded in the runspace before we
+    # attach the debugger. This ensures that on WinPS the debugger attaches
+    # on the Wait-Debugger command and not some random line it doesn't have
+    # access to on the debug client.
+    $null = $ps.Invoke()
+    if ($ps.Streams.Error.Count) {
+        Write-AnsibleErrorDetail -ErrorRecord $ps.Streams.Error[0] -ForModule:$ForModule
+        if ($ForModule) {
+            $host.SetShouldExit(1)
+            return
+        }
+    }
+    $ps.Commands.Clear()
+    $ps.Streams.ClearStreams()
+
+    if ($DebugParam.Count) {
+        # Get a more friendly name for debug session but fallback to the original
+        # name if using an unexpected format.
+        $extraMappings = @()
+        $DebugParam.Name = if ($scriptInfo.Name.StartsWith('ansible.builtin.script.')) {
+            "script: $($scriptInfo.Name.Substring(23))"
+
+            # We want to set the local root to the actual script path rather than
+            # the stub invoker script. The script action plugin sets this variable
+            # for us so we can use it here to get the correct path.
+            $extraMappings = @(
+                @{
+                    localRoot = $scriptInfo.Path
+                    remoteRoot = $Variables[0].Value.script_path
+                }
+            )
+        }
+        elseif ($scriptInfo.Name -match 'ansible_collections\.(.+?)\.plugins\.modules\.(.+)') {
+            "$($matches[1]).$($matches[2])"
+        }
+        else {
+            $scriptInfo.Name
+        }
+
+        $DebugParam.Pipeline = $ps
+        $DebugParam.PathMapping = @(
+            # It is important the path mappings are set before to ensure
+            # script paths take priority over the stub name.
+            $extraMappings
+
+            @{
+                localRoot = $scriptInfo.Path
+                remoteRoot = $scriptInfo.Name
+            }
+            foreach ($utilInfo in $pwshUtilInfo) {
+                @{
+                    localRoot = $utilInfo.Path
+                    remoteRoot = $utilInfo.Name
+                }
+            }
+        )
+        $debugWrapper = Get-AnsibleScript -Name 'debug_wrapper.ps1' -IncludeScriptBlock
+        $debugger = & $debugWrapper.ScriptBlock @DebugParam
+
+        if ($WaitForDebugger -or $PSVersionTable.PSVersion -lt '6.0') {
+            # The debugger is set to stop on the next command which is the module
+            # code. PowerShell 5.1 must have this or else it'll never receive the
+            # breakpoint information as the debugger never has a chance to run any
+            # commands.
+            $null = $ps.AddCommand('Wait-Debugger').AddStatement()
+        }
+    }
+
     $null = $ps.AddCommand('<AnsibleModule>', $false).AddStatement()
 }
 
@@ -256,4 +343,9 @@ foreach ($err in $ps.Streams.Error) {
         }
         return
     }
+}
+
+if ($debugger) {
+    $debugger.WaitForExit()
+    $debugger.Dispose()
 }
