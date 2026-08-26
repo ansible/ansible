@@ -205,9 +205,10 @@ def test_concrete_artifact_manager_scm_cmd_validate_certs(ignore_certs_cli, igno
     assert mock_subprocess_check_call.call_count == 2
 
     git_executable = get_bin_path('git')
-    clone_cmd = [git_executable, 'clone', '--depth=1', '--', url, '']
+    clone_cmd = [git_executable, 'clone', '--depth=1']
     if expected_ignore_certs:
         clone_cmd.extend(['-c', 'http.sslVerify=false'])
+    clone_cmd.extend(['--', url, ''])
 
     assert mock_subprocess_check_call.call_args_list[0].args[0] == clone_cmd
     assert mock_subprocess_check_call.call_args_list[1].args[0] == (git_executable, 'checkout', 'HEAD')
