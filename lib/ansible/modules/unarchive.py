@@ -809,7 +809,10 @@ class TgzArchive(object):
         self.opts = module.params['extra_opts']
         self.module = module
         if self.module.check_mode:
-            self.module.exit_json(skipped=True, msg="remote module (%s) does not support check mode when using gtar" % self.module._name)
+            self.module.exit_json(
+                skipped=True,  # deprecated: description='remove this skipped return', core_version='2.25'
+                msg="remote module (%s) does not support check mode when using gtar" % self.module._name,
+            )
         self.excludes = [path.rstrip('/') for path in self.module.params['exclude']]
         self.include_files = self.module.params['include']
         self.cmd_path = None

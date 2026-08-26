@@ -24,7 +24,7 @@ class ContributesToTaskResult(metaclass=abc.ABCMeta):
 
     @property
     def omit_exception_key(self) -> bool:
-        """Non-error exceptions (e.g., `AnsibleActionSkip`) must return `True` to ensure omission of the `exception` key."""
+        """Non-error exceptions (e.g., `AnsibleActionNoCheckMode`) must return `True` to ensure omission of the `exception` key."""
         return False
 
     @property
