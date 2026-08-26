@@ -32,7 +32,7 @@ from ansible.utils.display import Display
 from ansible.utils.path import makedirs_safe, unfrackpath
 
 if t.TYPE_CHECKING:
-    from .methods import VaultMethodBase
+    from ._methods import VaultMethodBase
 
 display = Display()
 
@@ -204,7 +204,7 @@ def load_vault_method(method_name: str | None) -> type[VaultMethodBase]:
     except AnsibleOptionsError as e:
         raise AnsibleVaultError(f'Unsupported vault method {method_name!r}') from e
 
-    vault_module = importlib.import_module('.'.join((__name__, 'methods', method_name)))
+    vault_module = importlib.import_module('.'.join((__name__, '_methods', method_name)))
     return vault_module.VaultMethod
 
 

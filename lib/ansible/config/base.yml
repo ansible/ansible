@@ -1278,6 +1278,7 @@ VAULT_METHOD:
     v2b: Fernet encryption (AES 128 CBC) with scrypt key derivation and base64 byte shield
     v2c: Fernet encryption (AES 128 CBC) with scrypt key derivation and base64 byte shield
     v2d: Dual fernet encryption (AES 128 CBC) with scrypt key derivation and base64 byte shield
+    v2e: Cobblestone256 encryption (AES 256 GCM / SHA512) with scrypt key derivation and base64 byte shield
   description:
     - Vault method to use for encryption.
   env: [{name: ANSIBLE_VAULT_METHOD}]

@@ -9,7 +9,6 @@ import os
 import typing as t
 
 from cryptography.exceptions import InvalidSignature
-from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, padding
 from cryptography.hazmat.primitives.ciphers import Cipher as C_Cipher, algorithms, modes
 from cryptography.hazmat.primitives.hmac import HMAC
@@ -19,9 +18,7 @@ from ansible import constants
 from ansible.utils.display import Display
 
 from ansible.parsing.vault import VaultSecret, AnsibleVaultSecretError
-from ansible.parsing.vault.methods import VaultMethodBase
-
-CRYPTOGRAPHY_BACKEND = default_backend()
+from ansible.parsing.vault._methods import VaultMethodBase
 
 
 @dataclasses.dataclass(frozen=True, kw_only=True, slots=True)
@@ -46,7 +43,6 @@ class VaultMethod(VaultMethodBase):
             length=key_length * 2 + iv_length,
             salt=salt,
             iterations=10000,  # considered weak as of 2024
-            backend=CRYPTOGRAPHY_BACKEND,
         )
 
         derived_key = kdf.derive(secret)
@@ -70,13 +66,13 @@ class VaultMethod(VaultMethodBase):
 
         key1, key2, iv = cls._generate_keys_and_iv(secret.bytes, salt)
 
-        cipher = C_Cipher(algorithms.AES(key1), modes.CTR(iv), CRYPTOGRAPHY_BACKEND)
+        cipher = C_Cipher(algorithms.AES(key1), modes.CTR(iv))
         encryptor = cipher.encryptor()
         padder = padding.PKCS7(algorithms.AES.block_size).padder()
 
         ciphertext = encryptor.update(padder.update(plaintext) + padder.finalize()) + encryptor.finalize()
 
-        hmac = HMAC(key2, hashes.SHA256(), CRYPTOGRAPHY_BACKEND)
+        hmac = HMAC(key2, hashes.SHA256())
         hmac.update(ciphertext)
         signature = hmac.finalize()
 
@@ -88,7 +84,7 @@ class VaultMethod(VaultMethodBase):
         salt, signature, ciphertext = map(binascii.unhexlify, binascii.unhexlify(vaulttext).split(b'\n', 2))
         key1, key2, iv = cls._generate_keys_and_iv(secret.bytes, salt)
 
-        hmac = HMAC(key2, hashes.SHA256(), CRYPTOGRAPHY_BACKEND)
+        hmac = HMAC(key2, hashes.SHA256())
         hmac.update(ciphertext)
 
         try:
@@ -96,7 +92,7 @@ class VaultMethod(VaultMethodBase):
         except InvalidSignature as ex:
             raise AnsibleVaultSecretError() from ex
 
-        cipher = C_Cipher(algorithms.AES(key1), modes.CTR(iv), CRYPTOGRAPHY_BACKEND)
+        cipher = C_Cipher(algorithms.AES(key1), modes.CTR(iv))
         decryptor = cipher.decryptor()
         unpadder = padding.PKCS7(algorithms.AES.block_size).unpadder()
 

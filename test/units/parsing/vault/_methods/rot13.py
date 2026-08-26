@@ -13,7 +13,7 @@ import pytest
 import pytest_mock
 
 from ansible.parsing.vault import VaultSecret, AnsibleVaultSecretError
-from ansible.parsing.vault.methods import VaultMethodBase
+from ansible.parsing.vault._methods import VaultMethodBase
 
 
 @pytest.fixture
@@ -21,11 +21,11 @@ def patch_rot13_import(mocker: pytest_mock.MockerFixture) -> t.Generator:
     """Stuff a reference to this test module into runtime sys.modules to make it accessible to tests."""
     import sys
 
-    from ansible.parsing.vault import methods
+    from ansible.parsing.vault import _methods
     from ansible import constants as C
 
     # insert rot13 encryption method
-    patched_name = '.'.join((methods.__name__, __name__.rsplit('.', 1)[-1]))
+    patched_name = '.'.join((_methods.__name__, __name__.rsplit('.', 1)[-1]))
 
     # patch/revert manually- patch.dict restores original state, fatally trashing stored module references loaded since patch
     sys.modules[patched_name] = sys.modules[__name__]

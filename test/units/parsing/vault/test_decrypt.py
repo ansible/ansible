@@ -12,15 +12,15 @@ import re
 
 import pytest
 
-from ansible.parsing.vault import methods, VaultLib, VaultSecret, parse_vaulttext_envelope
+from ansible.parsing.vault import _methods, VaultLib, VaultSecret, parse_vaulttext_envelope
 
 from . import decrypt_test_data
 
-from .methods.rot13 import patch_rot13_import
+from ._methods.rot13 import patch_rot13_import
 
 
 def get_method_names() -> list[str]:
-    with importlib.resources.as_file(importlib.resources.files(methods)) as path:
+    with importlib.resources.as_file(importlib.resources.files(_methods)) as path:
         # this is roughly pkgutil.iter_modules, but ...
         method_names = [modname.with_suffix("").name for modname in path.glob("*.py") if not modname.name.startswith("__")]
         method_names.append("rot13")  # this exposes the rot13 method -- the patch_rot13_import test fixture must also be used to make it available

@@ -9,7 +9,7 @@ import pathlib
 
 from ansible.parsing.vault import format_vaulttext_envelope
 
-method_name = 'v2c'
+method_name = 'v2e'
 
 
 def main() -> None:
@@ -21,7 +21,7 @@ def main() -> None:
     dict_orig = json.loads(json_orig)
 
     dict_orig['bogus_key'] = "nope"
-    # dict_orig.pop('salt')
+    #dict_orig.pop('salt')
 
     raw_out = format_vaulttext_envelope(base64.b64encode(json.dumps(dict_orig).encode()), method_name).decode()
     print(raw_out)

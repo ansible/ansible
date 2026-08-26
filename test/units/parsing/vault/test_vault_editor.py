@@ -26,7 +26,7 @@ import pytest
 
 from io import BytesIO, StringIO
 from units.mock.vault_helper import TextVaultSecret
-from units.parsing.vault.methods.rot13 import patch_rot13_import
+from units.parsing.vault._methods.rot13 import patch_rot13_import
 from unittest.mock import patch
 
 from ansible import errors

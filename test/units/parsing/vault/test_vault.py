@@ -41,7 +41,7 @@ from ansible._internal._templating._utils import TemplateContext
 from ansible._internal._datatag._tags import VaultedValue, Origin, TrustedAsTemplate
 from ansible.utils.collection_loader import _EncryptedStringProtocol
 
-from .methods.rot13 import patch_rot13_import
+from ._methods.rot13 import patch_rot13_import
 from units.mock.loader import DictDataLoader
 from units.mock.vault_helper import TextVaultSecret
 
