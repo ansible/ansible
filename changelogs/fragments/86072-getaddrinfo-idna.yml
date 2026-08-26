@@ -1,0 +1,2 @@
+bugfixes:
+  - "module_utils - do not fail module import with ``LookupError: unknown encoding: idna`` when the idna codec is missing."
