@@ -1,0 +1,3 @@
+breaking_changes:
+  - |
+    `fqdn` and `domain` facts have moved from `platform` category to `fqdn`.
