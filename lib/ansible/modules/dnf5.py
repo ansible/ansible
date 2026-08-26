@@ -335,15 +335,27 @@ msg:
   type: str
   sample: "Nothing to do"
 results:
+  description: A list of the dnf transaction results (deprecated for removal in 2.25. Use RV(transactions) instead)
+  returned: success
+  type: list
+  sample: ["Installed: lsof-4.94.0-4.fc37.x86_64"]
+transactions:
   description: A list of the dnf transaction results
   returned: success
   type: list
   sample: ["Installed: lsof-4.94.0-4.fc37.x86_64"]
+  version_added: 2.22
 failures:
+  description: A list of the dnf transaction failures (deprecated for removal in 2.25. Use RV(transaction_errors) instead)
+  returned: failure
+  type: list
+  sample: ["Argument 'lsof' matches only excluded packages."]
+transaction_errors:
   description: A list of the dnf transaction failures
   returned: failure
   type: list
   sample: ["Argument 'lsof' matches only excluded packages."]
+  version_added: 2.22
 rc:
   description: For compatibility, 0 for success, 1 for failure
   returned: always
@@ -357,6 +369,7 @@ import sys
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.locale import get_best_parsable_locale
 from ansible.module_utils.common.respawn import has_respawned, probe_interpreters_for_module, respawn_module
+from ansible.module_utils.datatag import deprecate_value
 from ansible.module_utils.yumdnf import YumDnf, yumdnf_argument_spec
 
 libdnf5 = None
@@ -549,14 +562,22 @@ class Dnf5Module(YumDnf):
             msg=f"Could not import the libdnf5 python module using {sys.executable} ({py_version}). "
             "Ensure python3-libdnf5 package is installed (either manually or via the auto_install_module_deps option) "
             f"or that you have specified the correct ansible_python_interpreter. (attempted {system_interpreters}).",
-            failures=[],
+            failures=deprecate_value([],
+                                     msg="dnf result `failures` is deprecated",
+                                     help_text="Use `transaction_errors` instead.",
+                                     version="2.25"),
+            transaction_errors=[],
         )
 
     def run(self):
         if not self.list and not self.download_only and os.geteuid() != 0:
             self.module.fail_json(
                 msg="This command has to be run under the root user.",
-                failures=[],
+                failures=deprecate_value([],
+                                         msg="dnf result `failures` is deprecated",
+                                         help_text="Use `transaction_errors` instead.",
+                                         version="2.25"),
+                transaction_errors=[],
                 rc=1,
             )
 
@@ -661,7 +682,11 @@ class Dnf5Module(YumDnf):
             self.module.exit_json(
                 msg="Cache updated",
                 changed=False,
-                results=[],
+                results=deprecate_value([],
+                                        msg='dnf result `results` is deprecated',
+                                        help_text='Use `transactions` instead',
+                                        version='2.25'),
+                transactions=[],
                 rc=0
             )
 
@@ -684,7 +709,13 @@ class Dnf5Module(YumDnf):
                 query.resolve_pkg_spec(command, resolve_spec_settings, True)
                 results = [package_to_dict(package) for package in query]
 
-            self.module.exit_json(msg="", results=results, rc=0)
+            self.module.exit_json(msg="",
+                                  results=deprecate_value(results,
+                                                          msg='dnf result `results` is deprecated',
+                                                          help_text='Use `transactions` instead',
+                                                          version='2.25'),
+                                  transactions=results,
+                                  rc=0)
 
         settings = libdnf5.base.GoalJobSettings()
         try:
@@ -767,7 +798,11 @@ class Dnf5Module(YumDnf):
                 msg = "Failed to install some of the specified packages"
             self.module.fail_json(
                 msg=msg,
-                failures=failures,
+                failures=deprecate_value(failures,
+                                         msg="dnf result `failures` is deprecated",
+                                         help_text="Use `transaction_errors` instead.",
+                                         version="2.25"),
+                transaction_errors=failures,
                 rc=1,
             )
 
@@ -799,7 +834,11 @@ class Dnf5Module(YumDnf):
                 if result == libdnf5.base.Transaction.TransactionRunResult_ERROR_GPG_CHECK:
                     self.module.fail_json(
                         msg="Failed to validate GPG signatures: {}".format(",".join(transaction.get_gpg_signature_problems())),
-                        failures=[],
+                        failures=deprecate_value([],
+                                                 msg="dnf result `failures` is deprecated",
+                                                 help_text="Use `transaction_errors` instead.",
+                                                 version="2.25"),
+                        transaction_errors=[],
                         rc=1,
                     )
                 elif result != libdnf5.base.Transaction.TransactionRunResult_SUCCESS:
@@ -815,7 +854,11 @@ class Dnf5Module(YumDnf):
 
                     self.module.fail_json(
                         msg="Failed to install some of the specified packages",
-                        failures=failures,
+                        failures=deprecate_value(failures,
+                                                 msg="dnf result `failures` is deprecated",
+                                                 help_text="Use `transaction_errors` instead.",
+                                                 version="2.25"),
+                        transaction_errors=failures,
                         rc=1,
                     )
 
@@ -823,7 +866,11 @@ class Dnf5Module(YumDnf):
             msg = "Nothing to do"
 
         self.module.exit_json(
-            results=results,
+            results=deprecate_value(results,
+                                    msg='dnf result `results` is deprecated',
+                                    help_text='Use `transactions` instead',
+                                    version='2.25'),
+            transactions=results,
             changed=changed,
             msg=msg,
             rc=0,
@@ -840,7 +887,13 @@ def main():
     try:
         Dnf5Module(module).run()
     except LIBDNF5_ERRORS as e:
-        module.fail_json(msg=str(e), failures=[], rc=1)
+        module.fail_json(msg=str(e),
+                         failures=deprecate_value([],
+                                                  msg="dnf result `failures` is deprecated",
+                                                  help_text="Use `transaction_errors` instead.",
+                                                  version="2.25"),
+                         transaction_errors=[],
+                         rc=1)
 
 
 if __name__ == "__main__":

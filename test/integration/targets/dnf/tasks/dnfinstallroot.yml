@@ -27,7 +27,7 @@
   assert:
     that:
         - "'changed' in dnf_result"
-        - "'results' in dnf_result"
+        - "'transactions' in dnf_result"
 
 - name: cleanup installroot
   file:
