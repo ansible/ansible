@@ -15,12 +15,7 @@ param(
     $Script,
 
     [Parameter()]
-    [IDictionary[]]
-    [AllowEmptyCollection()]
-    $Variables = @(),
-
-    [Parameter()]
-    [IDictionary]
+    [PSObject]
     $Environment,
 
     [Parameter()]
@@ -38,9 +33,40 @@ param(
     $Breakpoints,
 
     [Parameter()]
+    [string]
+    $ArgumentJSON,
+
+    [Parameter()]
     [switch]
     $ForModule
 )
+
+Function Convert-JsonObject {
+    param (
+        [Parameter(Mandatory, ValueFromPipeline)]
+        [AllowNull()]
+        [object]
+        $InputObject
+    )
+
+    process {
+        # Using the full type name is important as [PSCustomObject] is an
+        # alias for [PSObject] which all piped objects are.
+        if ($InputObject -is [System.Management.Automation.PSCustomObject]) {
+            $value = @{}
+            foreach ($prop in $InputObject.PSObject.Properties) {
+                $value[$prop.Name] = Convert-JsonObject -InputObject $prop.Value
+            }
+            $value
+        }
+        elseif ($InputObject -is [Array]) {
+            , @($InputObject | Convert-JsonObject)
+        }
+        else {
+            $InputObject
+        }
+    }
+}
 
 Function Write-AnsibleErrorDetail {
     [CmdletBinding()]
@@ -107,13 +133,29 @@ else {
     Set-WinPSDefaultFileEncoding
 }
 
-foreach ($variable in $Variables) {
-    $null = $ps.AddCommand("Set-Variable").AddParameters($variable).AddStatement()
+if ($ArgumentJSON) {
+    $jsonParams = @{}
+    if ($IsCoreCLR) {
+        # PowerShell 7 parses an ISO 8601 date string into a DateTime object. As we
+        # want to preserve the original string we tell it using the DateKind param.
+        $jsonParams.DateKind = 'String'
+    }
+    $parsedArgs = $ArgumentJSON | ConvertFrom-Json @jsonParams | Convert-JsonObject
+
+    # FUTURE: Deprecate complex_args and move parsing logic into module_utils.
+    # Deprecation requires exec_wrapper warning system to be implemented. We
+    # can use Set-PSBreakPoint to fire an action on variable reads.
+    $null = $ps.AddCommand("Set-Variable").AddParameters(
+        @{
+            Name = 'complex_args'
+            Value = $parsedArgs
+            Scope = 'Global'
+        }).AddStatement()
 }
 
 # env vars are process side so we can just set them here.
-foreach ($env in $Environment.GetEnumerator()) {
-    [Environment]::SetEnvironmentVariable($env.Key, $env.Value)
+foreach ($env in $Environment.PSObject.Properties) {
+    [Environment]::SetEnvironmentVariable($env.Name, $env.Value)
 }
 
 # Redefine Write-Host to dump to output instead of failing, lots of scripts

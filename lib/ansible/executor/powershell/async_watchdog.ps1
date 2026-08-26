@@ -26,7 +26,14 @@ param (
 if (-not (Test-Path -LiteralPath $ResultPath)) {
     throw "async result file at '$ResultPath' does not exist"
 }
-$result = Get-Content -LiteralPath $ResultPath | ConvertFrom-Json | Convert-JsonObject
+$rawResult = Get-Content -LiteralPath $ResultPath | ConvertFrom-Json
+
+# We ensure the outer PSObject is a hashtable to make it easier to add/merge
+# additional keys.
+$result = @{}
+foreach ($prop in $rawResult.PSObject.Properties) {
+    $result[$prop.Name] = $prop.Value
+}
 
 # The intermediate script is used so that things are set up like it normally
 # is. The new Runspace is used to ensure we can stop it once the async time is
@@ -85,9 +92,11 @@ try {
 
         $trailingJunk = $moduleResultJson.Substring($endJsonChar + 1).Trim()
         $moduleResultJson = $moduleResultJson.Substring(0, $endJsonChar + 1)
-        $moduleResult = $moduleResultJson | ConvertFrom-Json | Convert-JsonObject
+        $moduleResult = $moduleResultJson | ConvertFrom-Json
         # TODO: check for conflicting keys
-        $result = $result + $moduleResult
+        foreach ($prop in $moduleResult.PSObject.Properties) {
+            $result[$prop.Name] = $prop.Value
+        }
 
         if ($trailingJunk) {
             if (-not $result.warnings) {
