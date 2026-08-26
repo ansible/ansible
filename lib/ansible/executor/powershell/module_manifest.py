@@ -26,6 +26,13 @@ from ansible.plugins.become.runas import BecomeModule as RunasBecomeModule
 from ansible.plugins.loader import ps_module_utils_loader
 
 
+GZIP_AVAILABLE = True
+try:
+    import gzip
+except ImportError:
+    GZIP_AVAILABLE = False
+
+
 @dataclasses.dataclass(frozen=True)
 class _ExecManifest:
     scripts: dict[str, _ScriptInfo] = dataclasses.field(default_factory=dict)
@@ -565,6 +572,18 @@ def _get_bootstrap_input(
     :param temp_path: The temporary path to use for the scripts if needed.
     :return: The input for bootstrap_wrapper.ps1 as a byte string.
     """
+    decompress_input = False
+    exec_input = json.dumps(dataclasses.asdict(manifest)).encode()
+
+    # We provide an opt-out config option in case there are unforeseen issues
+    # with compression.
+    if GZIP_AVAILABLE and C.config.get_config_value("_ANSIBALLZ_PWSH_COMPRESSION", variables={}):
+        compressed_input = gzip.compress(exec_input)
+        compressed_b64 = base64.b64encode(compressed_input)
+        if len(compressed_b64) < len(exec_input):
+            exec_input = compressed_b64
+            decompress_input = True
+
     bootstrap_manifest = {
         'name': 'exec_wrapper',
         'script': _get_powershell_script("exec_wrapper.ps1").decode(),
@@ -573,12 +592,13 @@ def _get_bootstrap_input(
             'MinPSVersion': min_ps_version,
             'TempPath': temp_path,
             'PwshPath': pwsh_interpreter,
+            'DecompressInput': decompress_input,
         },
     }
 
-    bootstrap_input = json.dumps(bootstrap_manifest, ensure_ascii=True)
-    exec_input = json.dumps(dataclasses.asdict(manifest))
-    return f"{bootstrap_input}\n\0\0\0\0\n{exec_input}".encode()
+    bootstrap_input = json.dumps(bootstrap_manifest, ensure_ascii=True).encode()
+
+    return bootstrap_input + b"\n\0\0\0\0\n" + exec_input
 
 
 def _prepare_module_args(module_args: dict[str, t.Any], profile: str) -> dict[str, t.Any]:
