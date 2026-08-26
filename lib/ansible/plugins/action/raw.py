@@ -33,8 +33,10 @@ class ActionModule(ActionBase):
         del tmp  # tmp no longer has any effect
 
         if self._task.check_mode:
-            # in --check mode, always skip this module execution
-            result['skipped'] = True
+            # in --check mode, always indicate raw didn't run
+            result['skipped'] = True  # deprecated: description='returning skipped from actions/modules' core_version='2.25'
+            result['changed'] = False
+            result['msg'] = "Task `raw` did not execute due to check_mode"
             return result
 
         executable = self._task.args.get('executable', False)

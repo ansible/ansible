@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import os
 
-from ansible.errors import AnsibleActionFail, AnsibleActionSkip
+from ansible.errors import AnsibleActionFail
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.urls import mask_url
 from ansible.plugins.action import ActionBase
@@ -62,7 +62,11 @@ class ActionModule(ActionBase):
                 # of command executions.
                 creates = self._remote_expand_user(creates)
                 if self._remote_file_exists(creates):
-                    raise AnsibleActionSkip("skipped, since %s exists" % creates)
+                    return dict(
+                        msg=f'skipped, since {creates} exists',
+                        changed=False,
+                        skipped=True,  # deprecated: description='remove this skipped return', core_version='2.25'
+                    )
 
             dest = self._remote_expand_user(dest)  # CCTODO: Fix path for Windows hosts.
 

@@ -180,7 +180,8 @@ class ActionModule(ActionBase):
             result['msg'] = f"The following modules were skipped: {', '.join(skipped.keys())}."
             result['skipped_modules'] = skipped
             if len(skipped) == len(modules):
-                result['skipped'] = True
+                result['skipped'] = True  # deprecated: description='returning skipped from actions/modules' core_version='2.25'
+                result['changed'] = False
 
         if failed:
             result['failed_modules'] = failed

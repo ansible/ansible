@@ -324,7 +324,7 @@ Function Parse-Args {
     $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
     If ($check_mode -and -not $supports_check_mode) {
         Exit-Json @{
-            skipped = $true
+            skipped = $true  # deprecated: description='remove this skipped return', core_version='2.25'
             changed = $false
             msg = "remote module does not support check mode"
         }
