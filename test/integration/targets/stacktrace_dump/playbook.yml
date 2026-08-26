@@ -1,0 +1,7 @@
+---
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Long-running task to allow signal testing
+      ansible.builtin.debug:
+        msg: "{{ lookup('pipe', 'sleep 30') }}"
