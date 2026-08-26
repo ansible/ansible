@@ -26,10 +26,26 @@
       register: stat_keys
       loop: '{{ key_files }}'
 
-    - name: ensure they exist
+    - name: Create user with ssh key (not really)
+      check_mode: True
+      user:
+        name: ansibulluser
+        state: present
+        generate_ssh_key: yes
+        ssh_key_file: '{{ ssh_key_file}}'
+
+    - name: check files again, in case of deletion/overwrite in check mode
+      stat:
+        path: '{{home ~ item}}'
+      register: stat_keys2
+      loop: '{{ key_files }}'
+
+    - name: ensure they exist and were not changed in check mode
       assert:
         that:
           - stat_keys.results[item].stat.exists
+          - stat_keys2.results[item].stat.exists
+          - stat_keys.results[item].stat.checksum == stat_keys2.results[item].stat.checksum
       loop: [0, 1]
 
     always:
