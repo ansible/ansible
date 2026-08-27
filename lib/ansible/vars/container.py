@@ -14,8 +14,6 @@ class VarsContainer(ChainMap):
     """
     ChainMap wrapper class, that handles particular needs of Ansible Variables
     """
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
 
     def __delitem__(self, item: str) -> None:
         """
