@@ -21,6 +21,7 @@ import os
 
 from ansible.errors import AnsibleActionFail, AnsibleActionSkip
 from ansible.module_utils.parsing.convert_bool import boolean
+from ansible.module_utils.urls import mask_url
 from ansible.plugins.action import ActionBase
 
 
@@ -64,10 +65,15 @@ class ActionModule(ActionBase):
                     raise AnsibleActionSkip("skipped, since %s exists" % creates)
 
             dest = self._remote_expand_user(dest)  # CCTODO: Fix path for Windows hosts.
-            source = os.path.expanduser(source)
 
+            # if not remote, we need to get source at controller
             if not remote_src:
-                source = self._loader.get_real_file(self._find_needle('files', source), decrypt=decrypt)
+                if '://' in source:
+                    # TODO: implement using open_url?
+                    raise AnsibleActionFail(f"Unsupported option, an URI src ({mask_url(source)}) is only supported when remote_src is True")
+                else:
+                    source = os.path.expanduser(source)
+                    source = self._loader.get_real_file(self._find_needle('files', source), decrypt=decrypt)
 
             remote_stat = self._execute_remote_stat(dest, all_vars=task_vars, follow=True)
 

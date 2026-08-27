@@ -49,6 +49,7 @@ import traceback
 import types  # pylint: disable=unused-import
 import urllib.error
 import urllib.request
+
 from contextlib import contextmanager
 from http import cookiejar
 from urllib.parse import unquote, urlparse, urlunparse
@@ -314,6 +315,24 @@ class ParseResultDottedDict(dict):
         Generate a list from this dict, that looks like the ParseResult named tuple
         """
         return [self.get(k, None) for k in ('scheme', 'netloc', 'path', 'params', 'query', 'fragment')]
+
+
+def mask_url(url: str) -> str:
+    """
+    Safely display a url by masking confidential data
+    from a string or the result from urlparse/split
+    """
+    if (parsed_url := urlparse(url)) and not parsed_url.username and not parsed_url.password:
+        return url
+
+    netloc: str
+    mask = '****'
+    if parsed_url.password:
+        netloc = parsed_url.netloc.replace(f'{parsed_url.username}:{parsed_url.password}@', f'{mask}:{mask}@')
+    else:
+        netloc = parsed_url.netloc.replace(f'{parsed_url.username}@', f'{mask}@')
+
+    return urlunparse(parsed_url._replace(netloc=netloc))
 
 
 def generic_urlparse(parts):
@@ -1235,7 +1254,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
         cookies = cookiejar.CookieJar()
 
     r = None
-    info = dict(url=url, status=-1)
+    info = dict(url=mask_url(url), status=-1)
     try:
         r = open_url(url, data=data, headers=headers, method=method,
                      use_proxy=use_proxy, force=force, last_mod_time=last_mod_time, timeout=timeout,
@@ -1272,7 +1291,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
 
         info['cookies'] = cookie_dict
         # finally update the result with a message about the fetch
-        info.update(dict(msg="OK (%s bytes)" % r.headers.get('Content-Length', 'unknown'), url=r.geturl(), status=r.code))
+        info.update(dict(msg="OK (%s bytes)" % r.headers.get('Content-Length', 'unknown'), url=mask_url(r.geturl()), status=r.code))
     except (ConnectionError, ValueError) as e:
         module.fail_json(msg=to_native(e), **info)
     except MissingModuleError as e:
@@ -1392,14 +1411,14 @@ def fetch_file(module, url, data=None, headers=None, method=None,
                               unredirected_headers=unredirected_headers, decompress=decompress, ciphers=ciphers,
                               ca_path=ca_path, cookies=cookies)
         if not rsp or (rsp.code and rsp.code >= 400):
-            module.fail_json(msg="Failure downloading %s, %s" % (url, info['msg']))
+            module.fail_json(msg="Failure downloading %s, %s" % (mask_url(url), info['msg']))
         data = rsp.read(bufsize)
         while data:
             fetch_temp_file.write(data)
             data = rsp.read(bufsize)
         fetch_temp_file.close()
     except Exception as e:
-        module.fail_json(msg="Failure downloading %s, %s" % (url, to_native(e)))
+        module.fail_json(msg="Failure downloading %s, %s" % (mask_url(url), to_native(e)))
     return fetch_temp_file.name
 
 
