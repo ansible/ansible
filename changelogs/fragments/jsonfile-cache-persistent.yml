@@ -1,0 +1,2 @@
+minor_changes:
+  - jsonfile - add a ``persistent`` option to configure the cache format. Setting the option to ``False`` restores the filename and lossy cache format used before ansible-core 2.19.

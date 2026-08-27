@@ -44,3 +44,11 @@ export ANSIBLE_CACHE_PLUGIN_PREFIX="YOLO"
 ansible-playbook -i chroot_inventory_config.yml invalid_hostname_file_caches.yml "$@"
 
 ANSIBLE_CACHE_PLUGIN=dummy_file_cache_persistent ansible-playbook -i chroot_inventory_config.yml invalid_hostname_file_caches.yml "$@"
+
+# test using the legacy cache filename and format
+echo '{"TEST_FACT": "DEFINED"}' > "$OUTPUT_DIR/legacy_localhost"
+ANSIBLE_CACHE_PLUGIN=ansible.builtin.jsonfile \
+    ANSIBLE_CACHE_PLUGIN_CONNECTION="${OUTPUT_DIR}" \
+    ANSIBLE_CACHE_PLUGIN_PREFIX=legacy_ \
+    ANSIBLE_CACHE_JSONFILE_PERSISTENT=false \
+    ansible localhost -m assert -a "that='TEST_FACT is defined'"

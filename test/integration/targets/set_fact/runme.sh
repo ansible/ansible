@@ -27,6 +27,21 @@ fi
 
 ansible-playbook -i inventory --flush-cache "$@" set_fact_no_cache.yml
 
+# repeat cache tests using non-persistent jsonfile format
+export ANSIBLE_CACHE_JSONFILE_PERSISTENT=false
+
+ansible-playbook -i inventory "$@" set_fact_cached_1.yml
+ansible-playbook -i inventory "$@" set_fact_cached_2.yml
+
+# check contents of the fact cache before flushing it
+if [[ ! -f "$MYTMPDIR/prefix_localhost" ]]; then
+    echo "Missing expected cache file"
+    exit 1
+fi
+
+ansible-playbook -i inventory --flush-cache "$@" set_fact_no_cache.yml
+unset ANSIBLE_CACHE_JSONFILE_PERSISTENT
+
 # Test boolean conversions in set_fact
 ansible-playbook -v set_fact_bool_conv_jinja2_native.yml
 
