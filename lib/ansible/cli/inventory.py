@@ -9,10 +9,11 @@ from __future__ import annotations
 # ansible.cli needs to be imported first, to ensure the source bin/* scripts run that code first
 from ansible.cli import CLI
 
-import argparse
 import json
 import sys
 import typing as t
+
+import argparse
 
 from ansible import constants as C
 from ansible import context
