@@ -1,0 +1,2 @@
+minor_changes:
+ - mask_url function in module_utils to allow for masking of auth data embedded in urls.
