@@ -15,7 +15,7 @@ class VarsContainer(ChainMap):
     ChainMap wrapper class, that handles particular needs of Ansible Variables
     """
 
-    def __delitem__(self, item: str) -> None:
+    def __delitem__(self, item):
         """
         Override ChainMap to behave more like a dictionary
         and ensure that the key is deleted
@@ -66,3 +66,19 @@ class VarsContainer(ChainMap):
 
         if kwargs:
             self.combine(kwargs)
+
+    def _versions(self, item):
+        """
+        Debug method to dump all existing values and origin of a key
+        """
+        from ansible._internal._datatag._tags import Origin
+
+        found = []
+        for m in self.maps:
+            if item in m:
+                found.append((m[item], Origin.get_tag(m[item])))
+
+        if not found:
+            raise KeyError
+
+        return found
