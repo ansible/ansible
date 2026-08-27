@@ -33,6 +33,7 @@
         state: present
         generate_ssh_key: yes
         ssh_key_file: '{{ ssh_key_file}}'
+        force: yes
 
     - name: check files again, in case of deletion/overwrite in check mode
       stat:
