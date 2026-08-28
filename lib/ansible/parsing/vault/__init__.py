@@ -315,7 +315,7 @@ class PromptVaultSecret(VaultSecret):
 
             verify_secret_is_not_empty(vault_pass)
 
-            b_vault_pass = to_bytes(vault_pass, errors='strict', nonstring='simplerepr').strip()
+            b_vault_pass = to_bytes(vault_pass, errors='strict', nonstring='simplerepr').strip(b'\r\n')
             b_vault_passwords.append(b_vault_pass)
 
         # Make sure the passwords match by comparing them all to the first password
@@ -411,7 +411,7 @@ class FileVaultSecret(VaultSecret):
         # TODO: replace with use of self.loader
         try:
             with open(filename, "rb") as f:
-                vault_pass = f.read().strip()
+                vault_pass = f.read().strip(b'\r\n')
         except OSError as ex:
             raise AnsibleError(f"Could not read vault password file {filename!r}.") from ex
 
