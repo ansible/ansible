@@ -578,7 +578,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
                     self._all_dependencies.remove(child_dep)
                 self._all_dependencies.append(child_dep)
             if dep in self._all_dependencies:
-                self._all_dependencies.remove(child_dep)
+                self._all_dependencies.remove(dep)
             self._all_dependencies.append(dep)
 
         return self._all_dependencies
