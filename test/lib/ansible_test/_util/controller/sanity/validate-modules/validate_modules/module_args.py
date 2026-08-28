@@ -111,6 +111,7 @@ def get_ps_argument_spec(filename, collection):
     ps_dep_finder = PSModuleDepFinder()
     module_deps = ps_dep_finder.scan_module(b_module_data, fqn=fqc_name)
     ansible_basic = ''
+    ansible_secrets = ''
     ps_utils = {}
     for dep in module_deps:
         dep_info = ps_dep_finder.scripts[dep]
@@ -118,12 +119,16 @@ def get_ps_argument_spec(filename, collection):
         if dep == 'Ansible.Basic.cs':
             ansible_basic = dep_info.path
 
+        elif dep == 'Ansible.Secrets.cs':
+            ansible_secrets = dep_info.path
+
         elif dep.endswith('.psm1'):
             ps_utils[dep] = dep_info.path
 
     util_manifest = json.dumps({
         'module_path': to_text(module_path, errors='surrogate_or_strict'),
         'ansible_basic': ansible_basic,
+        'ansible_secrets': ansible_secrets,
         'ps_utils': ps_utils,
     })
 

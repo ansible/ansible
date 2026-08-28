@@ -17,8 +17,10 @@ from ansible._internal._worker import _inventory_rpc
 from ansible._internal._datatag import _tags
 from ansible.errors import AnsibleError, AnsibleTemplateError
 from ansible.module_utils._internal._ambient_context import AmbientContextBase
-from ansible.module_utils._internal import _dataclass_validation, _event_utils, _messages, _traceback
+from ansible.module_utils._internal import _dataclass_validation, _event_utils, _messages, _secrets, _traceback
+from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.datatag import native_type_name, deprecator_from_collection_name, deprecate_value
+from ansible.module_utils.secrets import register_secrets
 from ansible.parsing import vault as _vault
 from ansible.template import trust_as_template
 from ansible.utils.display import Display
@@ -193,6 +195,10 @@ class TaskContext(AmbientContextBase):
     _templar: _engine.TemplateEngine | None = None
     _break_when_triggered: bool = False
     _inventory_rpc_client: _inventory_rpc.InventoryRPC | None = None
+    _new_secrets: _secrets.NewSecretTracker = dataclasses.field(default_factory=_secrets._secret_masker.track_new_secrets)
+
+    def flush_new_secrets(self) -> frozenset[str]:
+        return self._new_secrets.flush()
 
     pending_changes: PendingChanges | None = None
     """Pending changes which will be applied only if the current task succeeds."""
@@ -936,6 +942,9 @@ class UnifiedTaskResult:
         if not isinstance(result, dict):
             raise TypeError(f'Malformed result. Received {type(result)} instead of {dict}.')
 
+        if source_is_module and (new_secrets := result.pop('_ansible_new_secrets', None)):
+            register_secrets([to_text(s) for s in new_secrets])
+
         fields = cls.get_result_key_to_resolved_field_mapping(source_is_module=source_is_module)
         result_data: dict[str, object] = {}
         kwargs: dict[str, t.Any] = dict(
@@ -972,7 +981,14 @@ class UnifiedTaskResult:
             case _:
                 return key
 
-    def as_result_dict(self, *, for_callback: bool = False, for_round_trip: bool = False, censor_callback_result: bool = False) -> dict[str, object]:
+    def as_result_dict(
+        self,
+        *,
+        for_callback: bool = False,
+        for_round_trip: bool = False,
+        censor_callback_result: bool = False,
+        mask_callback_result: bool = False,
+    ) -> dict[str, object]:
         result: dict[str, t.Any] = {
             self._result_key_magic(result_key): value
             for field_name, result_key in self._get_field_name_to_result_key_mapping(for_callback=for_callback, for_round_trip=for_round_trip).items()
@@ -1007,13 +1023,14 @@ class UnifiedTaskResult:
                         for_callback=for_callback,
                         for_round_trip=for_round_trip,
                         censor_callback_result=censor_callback_result or loop_result.no_log,
+                        mask_callback_result=mask_callback_result,
                     )
                     for loop_result in self.loop_results
                 ]
             )
 
         if for_callback:
-            result = _vars.transform_to_native_types(result)
+            result = _vars._transform_to_native_types_for_callback(result, mask_values=mask_callback_result)
 
         return result
 

@@ -6,6 +6,7 @@ def _respawn_main(
     profile: str,
     module_fqn: str,
     modlib_path: str,
+    secrets: frozenset[str],
 ) -> None:
     import sys
 
@@ -19,5 +20,6 @@ def _respawn_main(
         module_fqn=module_fqn,
         modlib_path=modlib_path,
         extensions={},
+        secrets=secrets,
         init_globals=dict(_respawned=True),
     )

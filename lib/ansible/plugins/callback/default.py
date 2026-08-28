@@ -43,6 +43,8 @@ class CallbackModule(CallbackBase):
     CALLBACK_TYPE = 'stdout'
     CALLBACK_NAME = 'default'
 
+    ANSIBLE_SUPPORTS_MASKING = True
+
     def __init__(self):
 
         self._play = None

@@ -31,6 +31,7 @@ from ansible.module_utils.datatag import native_type_name
 from ansible.module_utils.common.json import get_encoder, get_decoder
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.module_utils.common.collections import is_sequence
+from ansible.module_utils import secrets
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.template import accept_args_markers, accept_lazy_markers
 from ansible._internal._templating._jinja_common import MarkerError, UndefinedMarker, validate_arg_type
@@ -45,6 +46,20 @@ from ansible.utils.vars import merge_hash
 display = Display()
 
 UUID_NAMESPACE_ANSIBLE = uuid.UUID('361E6D51-FAEC-444A-9079-341386DA8E2E')
+
+
+def register_secret(secret: str) -> str:
+    if not isinstance(secret, str):
+        raise ValueError("Secret must be a string")
+
+    # FUTURE: any easy trickery to de-template-ify this case once the secret is registered?
+    secrets.register_secret(secret)
+
+    return secret
+
+
+def mask_secrets(value: str, mask_placeholder='$REDACTED$') -> str:
+    return secrets.mask_secrets(value, mask_placeholder=mask_placeholder)
 
 
 @accept_lazy_markers
@@ -737,6 +752,9 @@ class FilterModule(object):
 
     def filters(self):
         return {
+            'register_secret': register_secret,
+            'mask_secrets': mask_secrets,
+
             # base 64
             'b64decode': b64decode,
             'b64encode': b64encode,

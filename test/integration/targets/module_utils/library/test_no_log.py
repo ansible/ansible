@@ -13,14 +13,14 @@ def main():
         argument_spec=dict(
             explicit_pass=dict(type='str', no_log=True),
             fallback_pass=dict(type='str', no_log=True, fallback=(env_fallback, ['SECRET_ENV'])),
-            default_pass=dict(type='str', no_log=True, default='zyx'),
+            default_pass=dict(type='str', no_log=True, default='default_password'),
             normal=dict(type='str', default='plaintext'),
             suboption=dict(
                 type='dict',
                 options=dict(
                     explicit_sub_pass=dict(type='str', no_log=True),
                     fallback_sub_pass=dict(type='str', no_log=True, fallback=(env_fallback, ['SECRET_SUB_ENV'])),
-                    default_sub_pass=dict(type='str', no_log=True, default='xvu'),
+                    default_sub_pass=dict(type='str', no_log=True, default='default_sub_password'),
                     normal=dict(type='str', default='plaintext'),
                 ),
             ),

@@ -12,6 +12,7 @@ from ansible._internal import _json
 from ansible._internal._datatag import _tags
 from ansible.module_utils._internal import _datatag
 from ansible.module_utils._internal._json import _profiles
+from ansible.module_utils.secrets import register_secret
 from ansible.parsing import vault as _vault
 
 
@@ -36,6 +37,7 @@ class _LegacyVariableVisitor(_json.AnsibleVariableVisitor):
         *,
         trusted_as_template: bool = False,
         invert_trust: bool = False,
+        sensitive_source_data: bool = False,
         origin: _tags.Origin | None = None,
         convert_mapping_to_dict: bool = False,
         convert_sequence_to_list: bool = False,
@@ -51,6 +53,7 @@ class _LegacyVariableVisitor(_json.AnsibleVariableVisitor):
         )
 
         self.invert_trust = invert_trust
+        self.sensitive_source_data = sensitive_source_data
 
         if trusted_as_template and invert_trust:
             raise ValueError('trusted_as_template is mutually exclusive with invert_trust')
@@ -73,9 +76,14 @@ class _LegacyVariableVisitor(_json.AnsibleVariableVisitor):
                 result = _Untrusted(value)
             else:
                 result = value
+
+            if self.sensitive_source_data:
+                register_secret(value)
         elif value_type is _Untrusted:
             result = value.value
         else:
+            if self.sensitive_source_data and isinstance(value, (int, float)) and not isinstance(value, bool):
+                register_secret(str(value))
             result = _json._sentinel
 
         return result
@@ -163,7 +171,11 @@ class _Profile(_profiles._JSONSerializationProfile["Encoder", "Decoder"]):
 
     @classmethod
     def post_deserialize(cls, decoder: Decoder, o: _t.Any) -> _t.Any:
-        avv = cls.visitor_type(trusted_as_template=decoder._trusted_as_template, origin=decoder._origin)
+        avv = cls.visitor_type(
+            trusted_as_template=decoder._trusted_as_template,
+            origin=decoder._origin,
+            sensitive_source_data=decoder._sensitive_source_data,
+        )
 
         return avv.visit(o)
 
@@ -181,9 +193,11 @@ class Decoder(_profiles.AnsibleProfileJSONDecoder):
         # NB: these can only be sampled properly when loading strings, eg, `json.loads`; the global `json.load` function does not expose the file-like to us
         self._origin: _tags.Origin | None = None
         self._trusted_as_template: bool = False
+        self._sensitive_source_data: bool = False
 
     def raw_decode(self, s: str, idx: int = 0) -> tuple[_t.Any, int]:
         self._origin = _tags.Origin.get_tag(s)
         self._trusted_as_template = _tags.TrustedAsTemplate.is_tagged_on(s)
+        self._sensitive_source_data = _tags.SourceWasEncrypted.is_tagged_on(s)
 
         return super().raw_decode(s, idx)

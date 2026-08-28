@@ -670,6 +670,7 @@ def list_dict_option_schema(for_collection, plugin_type):
             'cli': [cli_schema],
             'keyword': [keyword_schema],
             'deprecated': deprecated_schema,
+            'secret': bool,
         })
 
     suboption_schema = dict(basic_option_schema)

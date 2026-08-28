@@ -63,6 +63,7 @@ from ansible.utils.collection_loader._collection_finder import _get_collection_m
 from ansible.module_utils._internal import _json
 from ansible.module_utils._internal._ansiballz import _loader
 from ansible.module_utils import basic as _basic
+from ansible.module_utils import secrets as _secrets
 
 if t.TYPE_CHECKING:
     from ansible import template as _template
@@ -1373,6 +1374,7 @@ def _find_module_utils(
             rlimit_nofile=rlimit_nofile,
             params=encoded_params,
             extensions=extension_manager.get_extensions(),
+            secrets=_secrets._secret_masker.secrets_in(encoded_params),
             zip_data=to_text(cached_module.zip_data),
         )
 

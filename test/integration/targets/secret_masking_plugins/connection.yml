@@ -1,0 +1,16 @@
+---
+- name: connection plugin secret registration
+  hosts: localhost
+  gather_facts: false
+  connection: connection_test
+  tasks:
+    - name: establishing the connection_test connection registers and masks secrets in a forked worker
+      raw: run the probe
+
+    - name: a new worker must still mask secrets the previous task registered on the controller
+      mask_check:
+        label: connection
+        secrets:
+          - ConnectionSecret1
+          - ConnectionSecret2
+          - ConnectionSecret3

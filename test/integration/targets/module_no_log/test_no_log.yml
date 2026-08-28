@@ -1,0 +1,58 @@
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Ensure we do not obscure what we should not
+      block:
+        - module_that_has_secret:
+            secret: something_dangerous
+            notsecret: something_dangerous
+          register: ouch
+          ignore_errors: true
+
+        - name: no log won't obscure booleans when True
+          assert:
+            that:
+              - ouch['changed'] is boolean
+
+        - module_that_has_secret:
+            secret: something_dangerous
+            notsecret: notsecret
+          register: ouch
+          ignore_errors: true
+
+        - name: no log won't obscure booleans when False
+          assert:
+            that:
+              - ouch['changed'] is boolean
+
+        - module_that_has_secret:
+            secret: True
+            notsecret: False
+          register: ouch
+          ignore_errors: true
+
+        - name: no log does not hide bool values
+          assert:
+            that:
+              - ouch['changed'] is boolean
+
+    - name: Ensure exact matches for no log values are masked in module results (non-substring checking)
+      module_that_has_secret:
+        secret: "{{ item }}"
+        notsecret: "{{ item }}"
+      loop:
+        - 1234567
+        - 123456.789
+        - something_dangerous
+
+    - name: Ensure partial value matches for no log values are masked in module results
+      module_that_has_secret:
+        secret: "{{ item.secret }}"
+        notsecret: "{{ item.notsecret }}"
+      loop:
+        - secret: 1234567
+          notsecret: 912345679
+        - secret: 123456.789
+          notsecret: 9123456.7899
+        - secret: something_dangerous
+          notsecret: xsomething_dangerousx
