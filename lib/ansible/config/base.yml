@@ -70,6 +70,23 @@ _MODULE_METADATA:
   default: false
   env: [ { name: _ANSIBLE_MODULE_METADATA } ]
   version_added: '2.19'
+_SECRETS_INPUT_FILES:
+  name: Files used to pre-seed secrets for output masking
+  default: []
+  description:
+    - A list of files used to pre-seed the values that Ansible masks from its output.
+    - >-
+      Each file is either YAML or JSON and must be a mapping with a ``version`` key (currently only ``1`` is supported)
+      and a ``secrets`` key containing a list of strings. Every value in ``secrets`` is registered so that it is
+      redacted wherever it would otherwise appear in Ansible output.
+    - >-
+      A file with the executable bit set is run instead of read, and its stdout is parsed as the YAML or JSON
+      document.
+    # Used for runner/AAP, we can make it more public if there is a need.
+    - This is for internal use only and may change or be removed without notice.
+  env: [{name: _ANSIBLE_SECRETS_INPUT_FILES}]
+  type: pathlist
+  version_added: "2.22"
 ALLOW_BROKEN_CONDITIONALS:
   # This config option will be deprecated once it no longer has any effect (2.23).
   name: Allow broken conditionals

@@ -1,0 +1,3 @@
+deprecated_features:
+  - module_utils - the ``heuristic_log_sanitize()`` function in ``ansible.module_utils.basic`` is deprecated and will be removed in ansible-core 2.25. Secret values are now masked automatically, use functions from the ``ansible.module_utils.secrets`` module to handle secrets manually.
+  - module_utils - the ``remove_values()`` and ``sanitize_keys()`` functions in ``ansible.module_utils.common.parameters`` are deprecated and will be removed in ansible-core 2.25. Secret values are now masked automatically, use functions from the ``ansible.module_utils.secrets`` module to handle secrets manually.

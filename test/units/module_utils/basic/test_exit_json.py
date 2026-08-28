@@ -98,36 +98,38 @@ class TestAnsibleModuleExitJson:
         assert ctx.value.args[0] == error_msg
 
 
-class TestAnsibleModuleExitValuesRemoved:
+class TestAnsibleModuleExitNewSecretsProvided:
     """
-    Test that ExitJson and FailJson remove password-like values
+    Test that ExitJson and FailJson provide the newly registered secrets
     """
-    OMIT = 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER'
 
     DATA = (
         (
             dict(username='person', password='$secret k3y'),
             dict(one=1, pwd='$secret k3y', url='https://username:password12345@foo.com/login/',
                  not_secret='following the leader', msg='here'),
-            dict(one=1, pwd=OMIT, url='https://username:password12345@foo.com/login/',
+            dict(one=1, pwd='$secret k3y', url='https://username:password12345@foo.com/login/',
                  not_secret='following the leader', msg='here',
-                 invocation=dict(module_args=dict(password=OMIT, token=None, username='person'))),
+                 invocation=dict(module_args=dict(password='$secret k3y', token=None, username='person')),
+                 _ansible_new_secrets=['$secret k3y']),
         ),
         (
             dict(username='person', password='password12345'),
             dict(one=1, pwd='$secret k3y', url='https://username:password12345@foo.com/login/',
                  not_secret='following the leader', msg='here'),
-            dict(one=1, pwd='$secret k3y', url='https://username:********@foo.com/login/',
+            dict(one=1, pwd='$secret k3y', url='https://username:password12345@foo.com/login/',
                  not_secret='following the leader', msg='here',
-                 invocation=dict(module_args=dict(password=OMIT, token=None, username='person'))),
+                 invocation=dict(module_args=dict(password='password12345', token=None, username='person')),
+                 _ansible_new_secrets=['password12345']),
         ),
         (
             dict(username='person', password='$secret k3y'),
             dict(one=1, pwd='$secret k3y', url='https://username:$secret k3y@foo.com/login/',
                  not_secret='following the leader', msg='here'),
-            dict(one=1, pwd=OMIT, url='https://username:********@foo.com/login/',
+            dict(one=1, pwd='$secret k3y', url='https://username:$secret k3y@foo.com/login/',
                  not_secret='following the leader', msg='here',
-                 invocation=dict(module_args=dict(password=OMIT, token=None, username='person'))),
+                 invocation=dict(module_args=dict(password='$secret k3y', token=None, username='person')),
+                 _ansible_new_secrets=['$secret k3y']),
         ),
     )
 

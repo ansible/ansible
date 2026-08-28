@@ -57,6 +57,7 @@ DOCUMENTATION = """
       password:
           description: Authentication password for the O(remote_user). Can be supplied as CLI option.
           type: string
+          secret: true
           vars:
               - name: ansible_password
               - name: ansible_ssh_pass
@@ -285,6 +286,7 @@ DOCUMENTATION = """
           description:
             - Private key contents in PEM format. Requires the C(SSH_AGENT) configuration to be enabled.
           type: string
+          secret: true
           env:
             - name: ANSIBLE_PRIVATE_KEY
           vars:
@@ -296,6 +298,7 @@ DOCUMENTATION = """
             - Private key passphrase, dependent on O(private_key).
             - This does NOT have any effect when used with O(private_key_file).
           type: string
+          secret: true
           env:
             - name: ANSIBLE_PRIVATE_KEY_PASSPHRASE
           vars:

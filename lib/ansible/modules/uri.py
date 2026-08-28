@@ -442,7 +442,7 @@ from collections.abc import Mapping, Sequence
 from datetime import datetime, timezone
 from urllib.parse import urlencode, urljoin
 
-from ansible.module_utils.basic import AnsibleModule, sanitize_keys
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.text.converters import to_native, to_text
 from ansible.module_utils.urls import (
     create_multipart,
@@ -455,13 +455,6 @@ from ansible.module_utils.urls import (
 )
 
 JSON_CANDIDATES = {'json', 'javascript'}
-
-# List of response key names we do not want sanitize_keys() to change.
-NO_MODIFY_KEYS = frozenset(
-    ('msg', 'exception', 'warnings', 'deprecations', 'failed', 'skipped',
-     'changed', 'rc', 'stdout', 'stderr', 'elapsed', 'path', 'location',
-     'content_type')
-)
 
 
 def format_message(err, resp):
@@ -764,9 +757,6 @@ def main():
                 ...
     else:
         u_content = None
-
-    if module.no_log_values:
-        uresp = sanitize_keys(uresp, module.no_log_values, NO_MODIFY_KEYS)
 
     if resp['status'] not in status_code:
         uresp['msg'] = 'Status code was %s and not %s: %s' % (resp['status'], status_code, uresp.get('msg', ''))

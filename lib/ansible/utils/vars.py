@@ -298,6 +298,16 @@ def transform_to_native_types(
     Which values are considered potentially sensitive may change in future releases.
     Types which cannot be converted to Python native types will result in an error.
     """
+    return _transform_to_native_types_for_callback(value=value, redact=redact, mask_values=False)
+
+
+# deprecated: description='Remove and use transform_to_native_types once implicit callback is removed.' core_version='2.27'
+def _transform_to_native_types_for_callback(
+    value: object,
+    redact: bool = True,
+    mask_values: bool = False,
+) -> t.Any:
+    """Temp function to transform values to native types with explicit masking for callback plugins."""
     avv = _json.AnsibleVariableVisitor(
         convert_mapping_to_dict=True,
         convert_sequence_to_list=True,
@@ -306,6 +316,7 @@ def transform_to_native_types(
         apply_transforms=True,
         visit_keys=True,  # ensure that keys are also converted
         encrypted_string_behavior=_json.EncryptedStringBehavior.REDACT if redact else _json.EncryptedStringBehavior.DECRYPT,
+        mask_secret_values=mask_values,
     )
 
     return avv.visit(value)

@@ -24,6 +24,7 @@ from ansible.module_utils.common.sentinel import Sentinel
 from ansible.module_utils.common.text.converters import to_text, to_bytes, to_native
 from ansible.module_utils.common.yaml import yaml_load
 from ansible.module_utils.parsing.convert_bool import boolean
+from ansible.module_utils.secrets import register_secrets
 from ansible.parsing.quoting import unquote
 from ansible.utils.path import cleanup_tmp_file, makedirs_safe, unfrackpath
 
@@ -53,6 +54,11 @@ GALAXY_SERVER_ADDITIONAL = {
 }
 
 
+# Config types eligible for `secret`; all resolve to a `str` or a sequence of `str`.
+# Numeric/bool/dict types are excluded to avoid over-masking and unsupported source representations.
+_SECRET_ALLOWED_TYPES = frozenset({'str', 'string', 'list'})
+
+
 @t.runtime_checkable
 class _EncryptedStringProtocol(t.Protocol):
     """Protocol representing an `EncryptedString`, since it cannot be imported here."""
@@ -74,6 +80,25 @@ def _get_config_label(plugin_type: str, plugin_name: str, config: str) -> str:
         entry += f' {plugin_type} plugin'
 
     return entry
+
+
+def _validate_secret_config_defs(
+    defs: Mapping[str, object],
+    plugin_type: str | None = None,
+    plugin_name: str | None = None,
+) -> None:
+    """Ensure any config definition marked `secret` uses a supported (string-producing) type."""
+    for config, cdef in defs.items():
+        if not isinstance(cdef, Mapping) or not cdef.get('secret'):
+            continue
+
+        value_type = cdef.get('type')
+
+        if not isinstance(value_type, str) or value_type.lower() not in _SECRET_ALLOWED_TYPES:
+            raise AnsibleOptionsError(
+                f"Config {_get_config_label(plugin_type, plugin_name, config)} cannot enable 'secret' with type {value_type!r}.",
+                help_text=f"'secret' is only supported for the following types: {', '.join(sorted(_SECRET_ALLOWED_TYPES))}.",
+            )
 
 
 def ensure_type(value: object, value_type: str | None, origin: str | None = None, origin_ftype: str | None = None) -> t.Any:
@@ -345,6 +370,7 @@ class ConfigManager:
 
         self._base_defs = self._read_config_yaml_file(defs_file or ('%s/base.yml' % os.path.dirname(__file__)))
         _add_base_defs_deprecations(self._base_defs)
+        _validate_secret_config_defs(self._base_defs)
 
         if self._config_file is None:
             # set config using ini
@@ -736,6 +762,19 @@ class ConfigManager:
             # deal with deprecation of the setting
             if 'deprecated' in defs[config] and origin != 'default':
                 self.DEPRECATED.append((config, defs[config].get('deprecated')))
+
+            # register the resolved value for masking if the config is marked secret
+            if value is not None and defs[config].get('secret'):
+                secrets: list[str] = []
+                secret_queue: list[object] = [value]
+                while secret_queue:
+                    item = secret_queue.pop()
+                    if isinstance(item, str):
+                        secrets.append(item)
+                    elif isinstance(item, (list, tuple)):
+                        secret_queue.extend(item)
+
+                register_secrets(secrets)
         else:
             raise AnsibleUndefinedConfigEntry(f'No config definition exists for {_get_config_label(plugin_type, plugin_name, config)}.')
 
@@ -745,6 +784,8 @@ class ConfigManager:
         return value, origin
 
     def initialize_plugin_configuration_definitions(self, plugin_type, name, defs):
+
+        _validate_secret_config_defs(defs, plugin_type=plugin_type, plugin_name=name)
 
         if plugin_type not in self._plugins:
             self._plugins[plugin_type] = {}

@@ -46,6 +46,8 @@ import tempfile
 import time
 import traceback
 
+from . import secrets as _secrets
+
 from collections.abc import (
     KeysView,
     Mapping,
@@ -236,6 +238,11 @@ def get_all_subclasses(cls):
 
 def heuristic_log_sanitize(data, no_log_values=None):
     """ Remove strings that look like passwords from log messages """
+    deprecate(
+        msg="The `heuristic_log_sanitize()` function from `ansible.module_utils.basic` is deprecated.",
+        version="2.25",
+        help_text="Secret values are now masked automatically. Use functions from `ansible.module_utils.secrets` if you need to handle secrets manually.",
+    )
     # Currently filters:
     # user:pass@foo/whatever and http://username:pass@wherever/foo
     # This code has false positives and consumes parts of logs that are
@@ -393,6 +400,7 @@ class AnsibleModule(object):
         self._legal_inputs = []
         self._options_context = list()
         self._tmpdir = None
+        self._new_secrets = _secrets._secret_masker.track_new_secrets()
 
         if add_file_common_args:
             for k, v in FILE_COMMON_ARGUMENTS.items():
@@ -1260,7 +1268,10 @@ class AnsibleModule(object):
         if isinstance(msg, bytes):
             msg = msg.decode('utf-8', 'replace')
 
-        msg = remove_values(msg, self.no_log_values)
+        if log_args:
+            log_args = {k: _secrets.mask_secrets(str(v)) for k, v in log_args.items()}
+
+        msg = _secrets.mask_secrets(msg)
 
         try:
             _logging.log_to_system(
@@ -1291,17 +1302,22 @@ class AnsibleModule(object):
 
             # try to proactively capture password/passphrase fields
             if no_log is None and PASSWORD_MATCH.search(param):
-                log_args[param] = 'NOT_LOGGING_PASSWORD'
+                log_args[param] = '$REDACTED$'
                 self.warn('Module did not set no_log for %s' % param)
             elif self.boolean(no_log):
-                log_args[param] = 'NOT_LOGGING_PARAMETER'
+                # We don't rely on the secret masker here because the value
+                # may have been set to anything (non-string/too short, etc) and
+                # historically we've always just blocked it out.
+                log_args[param] = '$REDACTED$'
             else:
                 param_val = self.params[param]
                 if not isinstance(param_val, (str, bytes)):
                     param_val = str(param_val)
-                elif isinstance(param_val, str):
-                    param_val = param_val.encode('utf-8')
-                log_args[param] = heuristic_log_sanitize(param_val, self.no_log_values)
+                elif isinstance(param_val, bytes):
+                    param_val = param_val.decode('utf-8')
+
+                # These log args will be masked in log() if they contain any secrets.
+                log_args[param] = param_val
 
         msg = ['%s=%s' % (to_native(arg), to_native(val)) for arg, val in log_args.items()]
         if msg:
@@ -1388,6 +1404,9 @@ class AnsibleModule(object):
     def _return_formatted(self, kwargs):
         _skip_stackwalk = True
 
+        if flushed := self._new_secrets.flush():
+            kwargs['_ansible_new_secrets'] = list(flushed)
+
         self.add_path_info(kwargs)
 
         if _PARSED_MODULE_ARGS.get('_ansible_inject_invocation', False):
@@ -1451,15 +1470,6 @@ class AnsibleModule(object):
         deprecations = get_deprecations()
         if deprecations:
             kwargs['deprecations'] = deprecations
-
-        # preserve bools/none from no_log
-        preserved = {k: v for k, v in kwargs.items() if v is None or isinstance(v, bool)}
-
-        # strip no_log collisions
-        kwargs = remove_values(kwargs, self.no_log_values)
-
-        # graft preserved values back on
-        kwargs.update(preserved)
 
         self._record_module_result(kwargs)
 
@@ -1789,37 +1799,6 @@ class AnsibleModule(object):
         except (shutil.Error, OSError) as ex:
             raise Exception(f'Could not write data to file {dest!r} from {src!r}.') from ex
 
-    def _clean_args(self, args):
-
-        if not self._clean:
-            # create a printable version of the command for use in reporting later,
-            # which strips out things like passwords from the args list
-            to_clean_args = args
-            if isinstance(args, bytes):
-                to_clean_args = to_text(args)
-            if isinstance(args, (str, bytes)):
-                to_clean_args = shlex.split(to_clean_args)
-
-            clean_args = []
-            is_passwd = False
-            for arg in (to_native(a) for a in to_clean_args):
-                if is_passwd:
-                    is_passwd = False
-                    clean_args.append('********')
-                    continue
-                if PASSWD_ARG_RE.match(arg):
-                    sep_idx = arg.find('=')
-                    if sep_idx > -1:
-                        clean_args.append('%s=********' % arg[:sep_idx])
-                        continue
-                    else:
-                        is_passwd = True
-                arg = heuristic_log_sanitize(arg, self.no_log_values)
-                clean_args.append(arg)
-            self._clean = ' '.join(shlex.quote(arg) for arg in clean_args)
-
-        return self._clean
-
     def run_command(self, args, check_rc=False, close_fds=True, executable=None, data=None, binary_data=False, path_prefix=None, cwd=None,
                     use_unsafe_shell=False, prompt_regex=None, environ_update=None, umask=None, encoding='utf-8', errors='surrogate_or_strict',
                     expand_user_and_vars=True, pass_fds=None, before_communicate_callback=None, ignore_invalid_cwd=True, handle_exceptions=True):
@@ -1996,7 +1975,7 @@ class AnsibleModule(object):
 
         try:
             if self._debug:
-                self.log('Executing: ' + self._clean_args(args))
+                self.log('Executing: ' + args)
             cmd = subprocess.Popen(args, **kwargs)
             if before_communicate_callback:
                 before_communicate_callback(cmd)
@@ -2081,18 +2060,17 @@ class AnsibleModule(object):
             rc = cmd.returncode
         except OSError as ex:
             if handle_exceptions:
-                self.fail_json(rc=ex.errno, stdout='', stderr='', msg="Error executing command.", cmd=self._clean_args(args), exception=ex)
+                self.fail_json(rc=ex.errno, stdout='', stderr='', msg="Error executing command.", cmd=args, exception=ex)
             else:
                 raise
         except Exception as ex:
             if handle_exceptions:
-                self.fail_json(rc=257, stdout='', stderr='', msg="Error executing command.", cmd=self._clean_args(args), exception=ex)
+                self.fail_json(rc=257, stdout='', stderr='', msg="Error executing command.", cmd=args, exception=ex)
             else:
                 raise
 
         if rc != 0 and check_rc:
-            msg = heuristic_log_sanitize(stderr.rstrip(), self.no_log_values)
-            self.fail_json(cmd=self._clean_args(args), rc=rc, stdout=stdout, stderr=stderr, msg=msg)
+            self.fail_json(cmd=args, rc=rc, stdout=stdout, stderr=stderr, msg=stderr.rstrip().decode())
 
         if encoding is not None:
             return (rc, to_native(stdout, encoding=encoding, errors=errors),

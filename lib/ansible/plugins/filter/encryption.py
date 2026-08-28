@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 from ansible.errors import AnsibleError
-from ansible.module_utils.common.text.converters import to_native, to_bytes
+from ansible.module_utils.common.text.converters import to_native, to_bytes, to_text
+from ansible.module_utils.secrets import register_secret
 from ansible._internal._templating._jinja_common import VaultExceptionMarker
 from ansible._internal._datatag._tags import VaultedValue
 from ansible.parsing.vault import is_encrypted, VaultSecret, VaultLib, VaultHelper
@@ -16,6 +17,8 @@ display = Display()
 def do_vault(data, secret, salt=None, vault_id='filter_default', wrap_object=False):
     if not isinstance(secret, (str, bytes)):
         raise TypeError(f"Secret passed is required to be a string, instead we got {type(secret)}.")
+
+    register_secret(to_text(secret))
 
     if not isinstance(data, (str, bytes)):
         raise TypeError(f"Can only vault strings, instead we got {type(data)}.")
@@ -45,6 +48,8 @@ def do_unvault(vault, secret, vault_id='filter_default'):
 
     if not isinstance(secret, (str, bytes)):
         raise TypeError(f"Secret passed is required to be as string, instead we got {type(secret)}.")
+
+    register_secret(to_text(secret))
 
     if not isinstance(vault, (str, bytes)):
         raise TypeError(f"Vault should be in the form of a string, instead we got {type(vault)}.")

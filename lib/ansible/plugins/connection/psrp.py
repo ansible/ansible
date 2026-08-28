@@ -45,6 +45,7 @@ options:
     - name: ansible_winrm_password
     aliases:
     - password  # Needed for --ask-pass to come through on delegation
+    secret: true
   port:
     description:
     - The port for PSRP to connect on the remote target.
@@ -208,6 +209,7 @@ options:
     - The password for the O(certificate_key_pem) key file if it is encrypted.
     - This option requires pypsrp >= 0.9.0 to be installed.
     type: str
+    secret: true
     vars:
     - name: ansible_psrp_certificate_key_password
     version_added: '2.21'

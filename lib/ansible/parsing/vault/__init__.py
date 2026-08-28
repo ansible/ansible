@@ -36,6 +36,7 @@ from binascii import Error as BinasciiError
 from ansible.module_utils._internal._datatag import (
     AnsibleTagHelper, AnsibleTaggedObject, _AnsibleTagsMapping, _EmptyROInternalTagsMapping, _EMPTY_INTERNAL_TAGS_MAPPING,
 )
+from ansible.module_utils.secrets import register_secret
 from ansible._internal._templating import _jinja_common
 from ansible._internal._datatag._tags import Origin, VaultedValue, TrustedAsTemplate
 
@@ -1448,6 +1449,8 @@ class EncryptedString(AnsibleTaggedObject):
             plaintext = AnsibleTagHelper.tag(plaintext, AnsibleTagHelper.tags(self) | {VaultedValue(ciphertext=self._ciphertext)})
 
             object.__setattr__(self, '_plaintext', plaintext)
+
+            register_secret(plaintext)
 
         return self._plaintext
 

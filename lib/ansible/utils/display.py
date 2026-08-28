@@ -19,6 +19,8 @@ from __future__ import annotations
 
 import contextlib
 
+from ansible.module_utils.secrets import register_secret, mask_secrets
+
 try:
     import curses
 except ImportError:
@@ -454,6 +456,8 @@ class Display(metaclass=Singleton):
 
         if not isinstance(msg, str):
             raise TypeError(f'Display message must be str, not: {msg.__class__.__name__}')
+
+        msg = mask_secrets(msg)
 
         # Convert Windows newlines to Unix newlines.
         # Some environments, such as Azure Pipelines, render `\r` as an additional `\n`.
@@ -963,7 +967,7 @@ class Display(metaclass=Singleton):
             # to maintain backward compatibility, assume these values are safe to template
             result = TrustedAsTemplate().tag(result)
 
-        return result
+        return register_secret(result)
 
     def _set_column_width(self) -> None:
         if os.isatty(1):

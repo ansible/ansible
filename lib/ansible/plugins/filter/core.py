@@ -47,6 +47,23 @@ display = Display()
 UUID_NAMESPACE_ANSIBLE = uuid.UUID('361E6D51-FAEC-444A-9079-341386DA8E2E')
 
 
+from ansible.module_utils import secrets
+
+
+def register_secret(secret: str) -> str:
+    if not isinstance(secret, str):
+        raise ValueError("Secret must be a string")
+
+    # FUTURE: any easy trickery to de-template-ify this case once the secret is registered?
+    secrets.register_secret(secret)
+
+    return secret
+
+
+def mask_secrets(value: str, mask_placeholder='$REDACTED$') -> str:
+    return secrets.mask_secrets(value, mask_placeholder=mask_placeholder)
+
+
 @accept_lazy_markers
 def to_yaml(a, *_args, default_flow_style: bool | None = None, vault_behavior: str | None = None, **kwargs) -> str:
     """Serialize input as terse flow-style YAML."""
@@ -737,6 +754,9 @@ class FilterModule(object):
 
     def filters(self):
         return {
+            'register_secret': register_secret,
+            'mask_secrets': mask_secrets,
+
             # base 64
             'b64decode': b64decode,
             'b64encode': b64encode,

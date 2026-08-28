@@ -46,6 +46,7 @@ DOCUMENTATION = """
             - name: ansible_winrm_pass
             - name: ansible_winrm_password
         type: str
+        secret: true
         aliases:
         - password  # Needed for --ask-pass to come through on delegation
       port:
