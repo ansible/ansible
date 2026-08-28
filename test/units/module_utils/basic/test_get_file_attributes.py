@@ -53,7 +53,7 @@ NO_VERSION_DATA = (
 )
 
 
-@pytest.mark.parametrize('stdin, data', product(({},), DATA), indirect=['stdin'])
+@pytest.mark.parametrize('stdin, data', list(product(({},), DATA)), indirect=['stdin'])
 def test_get_file_attributes(am, stdin, mocker, data):
     # Test #18731
     mocker.patch.object(AnsibleModule, 'get_bin_path', return_value=(0, '/usr/bin/lsattr', ''))
@@ -63,7 +63,7 @@ def test_get_file_attributes(am, stdin, mocker, data):
         assert key in result and result[key] == value
 
 
-@pytest.mark.parametrize('stdin, data', product(({},), NO_VERSION_DATA), indirect=['stdin'])
+@pytest.mark.parametrize('stdin, data', list(product(({},), NO_VERSION_DATA)), indirect=['stdin'])
 def test_get_file_attributes_no_version(am, stdin, mocker, data):
     # Test #18731
     mocker.patch.object(AnsibleModule, 'get_bin_path', return_value=(0, '/usr/bin/lsattr', ''))

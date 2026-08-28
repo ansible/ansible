@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - Upgrade the distro-specific test containers.

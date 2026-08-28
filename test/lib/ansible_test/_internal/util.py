@@ -55,9 +55,11 @@ from .thread import (
 
 from .constants import (
     SUPPORTED_PYTHON_VERSIONS,
+    SUPPORTED_POWERSHELL_VERSIONS,
 )
 
 PYTHON_PATHS: dict[str, str] = {}
+POWERSHELL_PATHS: dict[str, str] = {}
 
 COVERAGE_CONFIG_NAME = 'coveragerc'
 
@@ -1236,6 +1238,16 @@ def type_guard[C](sequence: c.Sequence[t.Any], guard_type: t.Type[C]) -> t.TypeG
     invalid_type_names = sorted(str(item) for item in invalid_types)
 
     raise Exception(f'Sequence required to contain only {guard_type} includes: {", ".join(invalid_type_names)}')
+
+
+def get_powershell_version_map() -> dict[str, str]:
+    """Return a mapping of PowerShell {major}.{minor} version to full PowerShell version."""
+    return {version_to_str(tuple((int(v) for v in version.split('.')[:2]))): version for version in SUPPORTED_POWERSHELL_VERSIONS}
+
+
+def get_supported_powershell_versions() -> list[str]:
+    """Return a list of supported PowerShell versions."""
+    return list(get_powershell_version_map())
 
 
 display = Display()  # pylint: disable=locally-disabled, invalid-name

@@ -1,0 +1,4 @@
+context/target
+gather_facts/no
+shippable/posix/group2
+shippable/generic/group1  # runs in the default test container

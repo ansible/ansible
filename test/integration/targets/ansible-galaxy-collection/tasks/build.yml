@@ -69,13 +69,54 @@
   command: ansible-galaxy collection build scratch/ansible_test/my_collection --force {{ galaxy_verbosity }}
   args:
     chdir: '{{ galaxy_dir }}'
-  register: build_existing_force
+  register:
+    build_existing_force: _task.result
+    artifact_path: build_existing_force.stdout_lines | select('search', 'Created collection for ansible_test.my_collection at ') | map('regex_replace', '.* at (.*)$', '\\1') | first
 
 - name: assert build existing collection
   assert:
     that:
     - '"use --force to re-create the collection artifact" in build_existing_no_force.stderr'
     - '"Created collection for ansible_test.my_collection" in build_existing_force.stdout'
+
+- name: Define extraction path
+  set_fact:
+    extraction_path: "{{ remote_tmp_dir }}/new_ansible_collections_extraction"
+
+- name: Ensure extraction directory exists
+  file:
+    path: "{{ extraction_path }}"
+    state: directory
+    mode: '0755'
+
+- name: Extract collection artifact
+  unarchive:
+    src: "{{ artifact_path }}"
+    dest: "{{ extraction_path }}"
+    remote_src: yes
+
+- name: Slurp FILES.json content
+  slurp:
+    src: "{{ extraction_path }}/FILES.json"
+  register:
+    decoded_files_json: _task.result.content | b64decode | from_json
+    files_names: decoded_files_json.files | map(attribute='name') | list
+
+- name: Assert that files are sorted in the predefined ASCII order
+  assert:
+    that:
+      - files_names == expected_files_order
+  vars:
+    expected_files_order: [
+      ".",
+      "README.md",
+      "docs",
+      "meta",
+      "meta/runtime.yml",
+      "plugins",
+      "plugins/README.md",
+      "roles"
+    ]
 
 - name: build collection containing ignored files
   command: ansible-galaxy collection build
@@ -97,3 +138,114 @@
     that:
     - item not in tar_output.stdout_lines
   loop: '{{ collection_ignored_directories }}'
+
+# Additional comprehensive tests for FILES.json sorting robustness
+- name: Clean up previous extraction for new tests
+  file:
+    path: "{{ extraction_path }}"
+    state: absent
+
+- name: Test multiple builds produce identical FILES.json - Build 1
+  command: ansible-galaxy collection build scratch/ansible_test/my_collection --force {{ galaxy_verbosity }}
+  args:
+    chdir: '{{ galaxy_dir }}'
+  register:
+    first_artifact: _task.result.stdout_lines | select('search', 'Created collection for ansible_test.my_collection at ') | map('regex_replace', '.* at (.*)$', '\\1') | first
+
+- name: Create directory for first extraction
+  file:
+    path: "{{ extraction_path }}_1"
+    state: directory
+    mode: '0755'
+
+- name: Extract first build
+  unarchive:
+    src: "{{ first_artifact }}"
+    dest: "{{ extraction_path }}_1"
+    remote_src: yes
+
+- name: Read FILES.json from first build
+  slurp:
+    src: "{{ extraction_path }}_1/FILES.json"
+  register:
+    first_files_content: _task.result.content | b64decode | from_json
+    first_order: first_files_content.files | map(attribute='name') | list
+
+- name: Remove first build artifact to ensure clean build
+  file:
+    path: "{{ first_artifact }}"
+    state: absent
+
+- name: Test multiple builds produce identical FILES.json - Build 2
+  command: ansible-galaxy collection build scratch/ansible_test/my_collection --force {{ galaxy_verbosity }}
+  args:
+    chdir: '{{ galaxy_dir }}'
+  register:
+    second_artifact: _task.result.stdout_lines | select('search', 'Created collection for ansible_test.my_collection at ') | map('regex_replace', '.* at (.*)$', '\\1') | first
+
+- name: Create directory for second extraction
+  file:
+    path: "{{ extraction_path }}_2"
+    state: directory
+    mode: '0755'
+
+- name: Extract second build
+  unarchive:
+    src: "{{ second_artifact }}"
+    dest: "{{ extraction_path }}_2"
+    remote_src: yes
+
+- name: Read FILES.json from second build
+  slurp:
+    src: "{{ extraction_path }}_2/FILES.json"
+  register:
+    second_files_content: _task.result.content | b64decode | from_json
+    second_order: second_files_content.files | map(attribute='name') | list
+
+- name: Verify FILES.json is reproducible across builds
+  assert:
+    that:
+      - first_files_content == second_files_content
+      - first_order == second_order
+
+- debug: var=first_order
+- debug:
+    var: "{{ item }}"
+  loop:
+    - first_order
+    - first_order | sort(case_sensitive=True)
+
+- name: Verify all files in order are ASCII sorted
+  assert:
+    that:
+      - first_order == (first_order | sort(case_sensitive=True))
+      - second_order == (second_order | sort(case_sensitive=True))
+
+- name: Validate FILES.json format and keys
+  assert:
+    that:
+      - first_files_content['format'] == 1
+      - second_files_content['format'] == 1
+      - first_files_content['files'] | length > 0
+      - second_files_content['files'] | length > 0
+
+- name: Verify each file entry has required fields
+  assert:
+    that:
+      - item | dict2items | map(attribute='key') | list | sort == [
+        'chksum_sha256',
+        'chksum_type',
+        'ftype',
+        'format',
+        'name'] | sort
+  loop: "{{ first_files_content['files'][1:] }}"  # Skip root directory entry
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Clean up extraction directories
+  file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - "{{ extraction_path }}_1"
+    - "{{ extraction_path }}_2"

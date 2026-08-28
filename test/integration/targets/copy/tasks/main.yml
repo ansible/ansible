@@ -21,6 +21,8 @@
     - file: path={{local_temp_dir}} state=directory
       name: ensure temp dir exists
 
+    - import_tasks: invocation.yml
+
     # file cannot do this properly, use command instead
     - name: Create symbolic link
       command: "ln -s '{{ item.value }}' '{{ item.key }}'"

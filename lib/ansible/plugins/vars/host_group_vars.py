@@ -29,6 +29,9 @@ DOCUMENTATION = """
         - Hidden (starting with '.') and backup (ending with '~') files and directories are ignored.
         - Only applies to inventory sources that are existing paths.
         - Starting in 2.10, this plugin requires enabling and is enabled by default.
+    notes:
+        - This plugin caches applicable paths and file content, so creating, modifying, or removing C(host_vars) and C(group_vars) files mid-play
+          for hosts or groups that have already been targeted has no effect on the current or any subsequent plays.
     options:
       stage:
         ini:
@@ -53,7 +56,7 @@ DOCUMENTATION = """
 """
 
 import os
-from ansible.errors import AnsibleParserError
+from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.module_utils.common.text.converters import to_native
 from ansible.plugins.vars import BaseVarsPlugin
 from ansible.utils.path import basedir
@@ -74,7 +77,10 @@ class VarsModule(BaseVarsPlugin):
         for found in found_files:
             new_data = loader.load_from_file(found, cache='all', unsafe=True, trusted_as_template=True)
             if new_data:  # ignore empty files
-                data = combine_vars(data, new_data)
+                try:
+                    data = combine_vars(data, new_data)
+                except AnsibleError as e:
+                    raise AnsibleParserError(f"Could not process {found!r}.") from e
         return data
 
     def get_vars(self, loader, path, entities, cache=True):

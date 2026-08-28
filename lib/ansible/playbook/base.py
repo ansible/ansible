@@ -23,12 +23,13 @@ from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.common.sentinel import Sentinel
 from ansible.module_utils.common.text.converters import to_text
 from ansible.parsing.dataloader import DataLoader
-from ansible.playbook.attribute import Attribute, FieldAttribute, ConnectionFieldAttribute, NonInheritableFieldAttribute
+from ansible.playbook.attribute import Attribute, FieldAttribute, NonInheritableFieldAttribute
 from ansible.plugins.loader import module_loader, action_loader
 from ansible.utils.collection_loader._collection_finder import _get_collection_metadata, AnsibleCollectionRef
 from ansible.utils.display import Display
 from ansible.utils.vars import combine_vars, get_unique_id, validate_variable_name
 from ansible._internal._templating._engine import TemplateEngine
+from ansible._internal import _task
 
 display = Display()
 
@@ -186,7 +187,7 @@ class FieldAttributeBase:
 
     def get_ds(self):
         try:
-            return getattr(self, '_ds')
+            return self._ds
         except AttributeError:
             return None
 
@@ -234,7 +235,7 @@ class FieldAttributeBase:
                         if attribute.isa == 'string' and isinstance(value, (list, dict)):
                             raise AnsibleParserError(
                                 "The field '%s' is supposed to be a string type,"
-                                " however the incoming data structure is a %s" % (name, type(value)), obj=self.get_ds()
+                                " however the incoming data structure is a %s" % (name, type(value)), obj=value
                             )
 
         self._validated = True
@@ -524,7 +525,7 @@ class FieldAttributeBase:
         setattr(self, name, value)
         return value
 
-    def post_validate(self, templar):
+    def post_validate(self, templar: TemplateEngine) -> None:
         """
         we can't tell that everything is of the right type until we have
         all the variables.  Run basic types (from isa) as well as
@@ -659,8 +660,8 @@ class FieldAttributeBase:
         attrs = {}
         for (name, attribute) in self.fattributes.items():
             attr = getattr(self, name)
-            if attribute.isa == 'class' and hasattr(attr, 'serialize'):
-                attrs[name] = attr.serialize()
+            if attribute.isa == 'class':
+                attrs[name] = attr.dump_attrs()
             else:
                 attrs[name] = attr
         return attrs
@@ -674,59 +675,12 @@ class FieldAttributeBase:
                 attribute = self.fattributes[attr]
                 if attribute.isa == 'class' and isinstance(value, dict):
                     obj = attribute.class_type()
-                    obj.deserialize(value)
+                    obj.from_attrs(value)
                     setattr(self, attr, obj)
                 else:
                     setattr(self, attr, value)
             else:
                 setattr(self, attr, value)  # overridden dump_attrs in derived types may dump attributes which are not field attributes
-
-        # from_attrs is only used to create a finalized task
-        # from attrs from the Worker/TaskExecutor
-        # Those attrs are finalized and squashed in the TE
-        # and controller side use needs to reflect that
-        self._finalized = True
-        self._squashed = True
-
-    def serialize(self):
-        """
-        Serializes the object derived from the base object into
-        a dictionary of values. This only serializes the field
-        attributes for the object, so this may need to be overridden
-        for any classes which wish to add additional items not stored
-        as field attributes.
-        """
-
-        repr = self.dump_attrs()
-
-        # serialize the uuid field
-        repr['uuid'] = self._uuid
-        repr['finalized'] = self._finalized
-        repr['squashed'] = self._squashed
-
-        return repr
-
-    def deserialize(self, data):
-        """
-        Given a dictionary of values, load up the field attributes for
-        this object. As with serialize(), if there are any non-field
-        attribute data members, this method will need to be overridden
-        and extended.
-        """
-
-        if not isinstance(data, dict):
-            raise AnsibleAssertionError('data (%s) should be a dict but is a %s' % (data, type(data)))
-
-        for (name, attribute) in self.fattributes.items():
-            if name in data:
-                setattr(self, name, data[name])
-            else:
-                self.set_to_context(name)
-
-        # restore the UUID field
-        setattr(self, '_uuid', data.get('uuid'))
-        self._finalized = data.get('finalized', False)
-        self._squashed = data.get('squashed', False)
 
 
 class Base(FieldAttributeBase):
@@ -734,7 +688,7 @@ class Base(FieldAttributeBase):
     name = NonInheritableFieldAttribute(isa='string', default='', always_post_validate=True)
 
     # connection/transport
-    connection = ConnectionFieldAttribute(isa='string', default=context.cliargs_deferred_get('connection'))
+    connection = FieldAttribute(isa='string', default=context.cliargs_deferred_get('connection'))
     port = FieldAttribute(isa='int')
     remote_user = FieldAttribute(isa='string', default=context.cliargs_deferred_get('remote_user'))
 
@@ -769,8 +723,9 @@ class Base(FieldAttributeBase):
     # used to hold sudo/su stuff
     DEPRECATED_ATTRIBUTES = []  # type: list[str]
 
-    def update_result_no_log(self, templar: TemplateEngine, result: dict[str, t.Any]) -> None:
+    def update_result_no_log(self, templar: TemplateEngine, utr: _task.UnifiedTaskResult) -> None:
         """Set the post-validated no_log value for the result, falling back to a default on validation/templating failure with a warning."""
+        # RPFIX-9: FUTURE: consolidate this into UTR
 
         if self.finalized:
             no_log = self.no_log
@@ -781,15 +736,9 @@ class Base(FieldAttributeBase):
                 display.error_as_warning('Invalid no_log value for task, output will be masked.', exception=ex)
                 no_log = True
 
-        result_no_log = result.get('_ansible_no_log', False)
+        result_no_log = utr.no_log
 
-        if not isinstance(result_no_log, bool):
-            display.warning(f'Invalid _ansible_no_log value of type {type(result_no_log).__name__!r} in task result, output will be masked.')
-            no_log = True
-
-        no_log = no_log or result_no_log
-
-        result.update(_ansible_no_log=no_log)
+        utr.no_log = no_log or result_no_log
 
     def get_path(self) -> str:
         """ return the absolute path of the playbook object and its line number """

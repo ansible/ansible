@@ -103,7 +103,7 @@ notes:
     -  O(creates), O(removes), and O(chdir) can be specified after the command.
        For instance, if you only want to run a command if a certain file does not exist, use this.
     -  Check mode is supported when passing O(creates) or O(removes). If running in check mode and either of these are specified, the module will
-       check for the existence of the file and report the correct changed status. If these are not supplied, the task will be skipped.
+       check for the existence of the file and report the correct changed status. If these are not supplied, the task will return RV(ignore:changed=False).
     -  The O(ignore:executable) parameter is removed since version 2.4. If you have a need for this parameter, use the M(ansible.builtin.shell) module instead.
     -  For Windows targets, use the M(ansible.windows.win_command) module instead.
     -  For rebooting systems, use the M(ansible.builtin.reboot) or M(ansible.windows.win_reboot) module.
@@ -341,7 +341,7 @@ def main():
         r['rc'] = 0
         r['msg'] = "Command would have run if not in check mode"
         if creates is None and removes is None:
-            r['skipped'] = True
+            r['skipped'] = True  # deprecated: description='remove this skipped value return' core_version='2.25'
             # skipped=True and changed=True are mutually exclusive
             r['changed'] = False
 
@@ -357,7 +357,7 @@ def main():
         r['stderr'] = to_text(r['stderr']).rstrip("\r\n")
 
     if r['rc'] != 0:
-        r['msg'] = 'non-zero return code'
+        r['msg'] = 'The command exited with a non-zero return code.'
         module.fail_json(**r)
 
     module.exit_json(**r)

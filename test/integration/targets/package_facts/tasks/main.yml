@@ -16,8 +16,8 @@
 
     - name: Now try again but installing misleading rpm
       block:
-        - name: install misleading rpm api
-          package: name="python3-rpm" state=present
+        - name: install misleading rpm
+          package: name="rpm" state=present
 
         - name: prep outputdir
           tempfile: path=~ state=directory
@@ -127,3 +127,16 @@
         - name: restore previous flags for the selected package
           command: 'pkg set --yes -v 0 -A 0 {{ pkg_name }}'
   when: ansible_os_family == "FreeBSD"
+
+- name: Run package_fact tests - Alpine
+  block:
+    - name: Gather package facts
+      package_facts:
+        manager: apk
+
+    - name: check for ansible_facts.packages exists
+      assert:
+        that:
+          - ansible_facts.packages is defined
+          - (ansible_facts.packages | length) >= 1
+  when: ansible_distribution == "Alpine"

@@ -19,7 +19,8 @@ from __future__ import annotations
 
 from ansible.errors import AnsibleValueOmittedError, AnsibleError
 from ansible.module_utils.common.validation import _check_type_str_no_conversion
-from ansible.plugins.action import ActionBase
+from ansible.module_utils.datatag import deprecate_value
+from ansible.plugins.action import ActionBase, VariableLayer
 from ansible._internal._templating._jinja_common import UndefinedMarker, TruncationMarker
 from ansible._internal._templating._utils import Omit
 from ansible._internal._templating._marker_behaviors import ReplacingMarkerBehavior, RoutingMarkerBehavior
@@ -83,9 +84,19 @@ class ActionModule(ActionBase):
             replacing_behavior.emit_warnings()
 
         else:
-            result['skipped_reason'] = "Verbosity threshold not met."
-            result['skipped'] = True
+            result['skipped_reason'] = deprecate_value(
+                'Verbosity threshold not met.',
+                msg='modules returning `skipped_reason` is deprecated.',
+                version='2.25',
+                help_text='Use the `msg` return value instead.`'
+            )
+            result['skipped'] = True  # deprecated: description='returning skipped from actions/modules' core_version='2.25'
+            result['changed'] = False
+            result['msg'] = 'Verbosity threshold not met.'
 
         result['failed'] = False
+
+        # RPFIX-5: DEPRECATION: add deferred deprecation to remove this when INJECT_FACTS_AS_VARS is gone
+        self.register_host_variables({}, VariableLayer.CACHEABLE_FACT)  # ensure that legacy ansible_facts behavior is not triggered
 
         return result

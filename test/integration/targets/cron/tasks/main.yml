@@ -164,7 +164,7 @@
       name: "integration test cron"
       state: absent
 
-  - name: Check file succesfull deletion
+  - name: Check file successful deletion
     stat:
       path: /etc/cron.d/cron_remove_name
     register: cron_file_stats
@@ -200,7 +200,7 @@
       name: "integration test cron"
       state: absent
 
-  - name: Check file succesfull deletion
+  - name: Check file successful deletion
     stat:
       path: /etc/cron.d/cron_remove_whitespace
     register: cron_file_stats
@@ -280,7 +280,7 @@
       name: "cron job that contain non-ascii chars in job (これは日本語です; This is Japanese)"
       state: absent
 
-  - name: Check file succesfull deletion
+  - name: Check file successful deletion
     stat:
       path: /etc/cron.d/cron_nonascii
     register: cron_file_stats
@@ -312,7 +312,7 @@
       name: "integration test cron"
       state: absent
 
-  - name: Check file succesfull deletion
+  - name: Check file successful deletion
     stat:
       path: "/etc/cron.d/なせば大抵なんとかなる👊"
     register: cron_file_stats

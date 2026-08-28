@@ -3,13 +3,13 @@ from __future__ import annotations
 import tempfile
 
 try:
-    import urllib2  # intentionally trigger pylint ansible-bad-import error  # pylint: disable=unused-import
+    import ansible.module_utils.six  # intentionally trigger pylint ansible-bad-import error  # pylint: disable=unused-import
 except ImportError:
-    urllib2 = None
+    pass
 
 try:
-    from urllib2 import Request  # intentionally trigger pylint ansible-bad-import-from error  # pylint: disable=unused-import
+    from ansible.module_utils.six import PY3  # intentionally trigger pylint ansible-bad-import-from error  # pylint: disable=unused-import
 except ImportError:
-    Request = None
+    pass
 
 tempfile.mktemp()  # intentionally trigger pylint ansible-bad-function error

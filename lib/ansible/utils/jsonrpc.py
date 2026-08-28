@@ -11,6 +11,7 @@ from ansible.module_utils._internal import _no_six
 from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.connection import ConnectionError
 from ansible.utils.display import Display
+from ansible.utils.vars import transform_to_native_types
 
 display = Display()
 
@@ -83,7 +84,8 @@ class JsonRpcServer(object):
             result = to_text(result)
         if not isinstance(result, str):
             response["result_type"] = "pickle"
-            result = to_text(pickle.dumps(result), errors='surrogateescape')
+            # typically consumed in a module context; transform custom types (e.g. tagged/vaulted values) to native to prevent unpickling failures
+            result = to_text(pickle.dumps(transform_to_native_types(result, redact=False)))
         response['result'] = result
         return response
 

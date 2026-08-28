@@ -445,10 +445,11 @@ from urllib.parse import urlencode, urljoin
 from ansible.module_utils.basic import AnsibleModule, sanitize_keys
 from ansible.module_utils.common.text.converters import to_native, to_text
 from ansible.module_utils.urls import (
+    create_multipart,
     fetch_url,
     get_response_filename,
+    mask_url,
     parse_content_type,
-    prepare_multipart,
     url_argument_spec,
     url_redirect_argument_spec,
 )
@@ -562,12 +563,6 @@ def uri(module, url, dest, body, body_format, method, headers, socket_timeout, c
             tz=timezone.utc,
         )
 
-    if module.params.get('follow_redirects') in ('no', 'yes'):
-        module.deprecate(
-            "Using 'yes' or 'no' for 'follow_redirects' parameter is deprecated.",
-            version='2.22'
-        )
-
     resp, info = fetch_url(module, url, data=data, headers=headers,
                            method=method, timeout=socket_timeout, unix_socket=module.params['unix_socket'],
                            ca_path=ca_path, unredirected_headers=unredirected_headers,
@@ -597,7 +592,7 @@ def main():
         src=dict(type='path'),
         method=dict(type='str', default='GET'),
         return_content=dict(type='bool', default=False),
-        follow_redirects=dict(type='str', default='safe', choices=['all', 'no', 'none', 'safe', 'urllib2', 'yes']),
+        follow_redirects=dict(type='str', default='safe', choices=['all', 'none', 'safe', 'urllib2']),
         creates=dict(type='path'),
         removes=dict(type='path'),
         status_code=dict(type='list', elements='int', default=[200]),
@@ -635,6 +630,9 @@ def main():
     ciphers = module.params['ciphers']
     use_netrc = module.params['use_netrc']
 
+    # for errors and to compare to fetched responses
+    masked_url = mask_url(url)
+
     if not re.match('^[A-Z]+$', method):
         module.fail_json(msg="Parameter 'method' needs to be a single word in uppercase, like GET or POST.")
 
@@ -654,7 +652,9 @@ def main():
             dict_headers['Content-Type'] = 'application/x-www-form-urlencoded'
     elif body_format == 'form-multipart':
         try:
-            content_type, body = prepare_multipart(body)
+            multipart = create_multipart(body)
+            content_type = multipart.content_type
+            body = multipart.as_fp()
         except (TypeError, ValueError) as e:
             module.fail_json(msg='failed to parse body as form-multipart: %s' % to_native(e))
         dict_headers['Content-Type'] = content_type
@@ -716,14 +716,14 @@ def main():
             # may have been stored in the info as 'body'
             content = info.pop('body', b'')
         except http.client.HTTPException as http_err:
-            module.fail_json(msg=f"HTTP Error while fetching {url}: {to_native(http_err)}")
+            module.fail_json(msg=f"HTTP Error while fetching {masked_url}: {to_native(http_err)}")
     elif r:
         content = r
     else:
         content = None
 
     resp = {}
-    resp['redirected'] = info['url'] != url
+    resp['redirected'] = info['url'] != masked_url
     resp.update(info)
 
     resp['elapsed'] = elapsed
@@ -751,7 +751,7 @@ def main():
         uresp[ukey] = value
 
     if 'location' in uresp:
-        uresp['location'] = urljoin(url, uresp['location'])
+        uresp['location'] = urljoin(masked_url, uresp['location'])
 
     # Default content_encoding to try
     if isinstance(content, bytes):

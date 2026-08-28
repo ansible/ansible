@@ -26,6 +26,13 @@ from ansible.plugins.become.runas import BecomeModule as RunasBecomeModule
 from ansible.plugins.loader import ps_module_utils_loader
 
 
+GZIP_AVAILABLE = True
+try:
+    import gzip
+except ImportError:
+    GZIP_AVAILABLE = False
+
+
 @dataclasses.dataclass(frozen=True)
 class _ExecManifest:
     scripts: dict[str, _ScriptInfo] = dataclasses.field(default_factory=dict)
@@ -358,6 +365,12 @@ def _get_powershell_script(
     if code is None:
         raise AnsibleFileNotFound(f"Could not find powershell script '{package_name}.{name}'")
 
+    if name == 'bootstrap_wrapper.ps1':
+        # bootstrap_wrapper is special in that it is never signed and we want
+        # it as small as possible for command line length limits.
+        code = _strip_comments_and_whitespace(code)
+        return code
+
     try:
         sig_data = pkgutil.get_data(package_name, f"{name}.authenticode")
     except FileNotFoundError:
@@ -381,6 +394,7 @@ def _create_powershell_wrapper(
     substyle: t.Literal["powershell", "script"],
     task_vars: dict[str, t.Any],
     profile: str,
+    pwsh_interpreter: str | None = None,
 ) -> bytes:
     """Creates module or script wrapper for PowerShell.
 
@@ -396,6 +410,7 @@ def _create_powershell_wrapper(
     :param become_plugin: The become plugin to use for privilege escalation or None for no become.
     :param substyle: The substyle of the module or script to run [powershell or script].
     :param task_vars: The task variables used on the task.
+    :param pwsh_interpreter: The pwsh interpreter to use.
 
     :return: The input data for bootstrap_wrapper.ps1 as a byte string.
     """
@@ -429,14 +444,13 @@ def _create_powershell_wrapper(
             else:
                 ps_deps.append(dep)
 
+        encoder = get_module_encoder(profile, Direction.CONTROLLER_TO_MODULE)
+        module_arg_json = json.dumps(module_args, cls=encoder)
+
         module_params |= {
-            'Variables': [
-                {
-                    'Name': 'complex_args',
-                    'Value': _prepare_module_args(module_args, profile),
-                    'Scope': 'Global',
-                },
-            ],
+            'ArgumentJSON': module_arg_json,
+            # FUTURE: Provide the profile to the module wrapper.
+            # 'ArgumentProfile': profile,
             'CSharpModules': cs_deps,
             'PowerShellModules': ps_deps,
             'ForModule': True,
@@ -536,6 +550,7 @@ def _create_powershell_wrapper(
         min_os_version=finder.os_version,
         min_ps_version=finder.ps_version,
         temp_path=temp_path,
+        pwsh_interpreter=pwsh_interpreter,
     )
 
 
@@ -544,6 +559,7 @@ def _get_bootstrap_input(
     min_os_version: str | None = None,
     min_ps_version: str | None = None,
     temp_path: str | None = None,
+    pwsh_interpreter: str | None = None,
 ) -> bytes:
     """Gets the input for bootstrap_wrapper.ps1
 
@@ -556,6 +572,18 @@ def _get_bootstrap_input(
     :param temp_path: The temporary path to use for the scripts if needed.
     :return: The input for bootstrap_wrapper.ps1 as a byte string.
     """
+    decompress_input = False
+    exec_input = json.dumps(dataclasses.asdict(manifest)).encode()
+
+    # We provide an opt-out config option in case there are unforeseen issues
+    # with compression.
+    if GZIP_AVAILABLE and C.config.get_config_value("_ANSIBALLZ_PWSH_COMPRESSION", variables={}):
+        compressed_input = gzip.compress(exec_input)
+        compressed_b64 = base64.b64encode(compressed_input)
+        if len(compressed_b64) < len(exec_input):
+            exec_input = compressed_b64
+            decompress_input = True
+
     bootstrap_manifest = {
         'name': 'exec_wrapper',
         'script': _get_powershell_script("exec_wrapper.ps1").decode(),
@@ -563,12 +591,14 @@ def _get_bootstrap_input(
             'MinOSVersion': min_os_version,
             'MinPSVersion': min_ps_version,
             'TempPath': temp_path,
+            'PwshPath': pwsh_interpreter,
+            'DecompressInput': decompress_input,
         },
     }
 
-    bootstrap_input = json.dumps(bootstrap_manifest, ensure_ascii=True)
-    exec_input = json.dumps(dataclasses.asdict(manifest))
-    return f"{bootstrap_input}\n\0\0\0\0\n{exec_input}".encode()
+    bootstrap_input = json.dumps(bootstrap_manifest, ensure_ascii=True).encode()
+
+    return bootstrap_input + b"\n\0\0\0\0\n" + exec_input
 
 
 def _prepare_module_args(module_args: dict[str, t.Any], profile: str) -> dict[str, t.Any]:
@@ -603,3 +633,15 @@ def _get_powershell_signed_hashlist(
         return _ScriptInfo(content=sig_data, path=resource_path)
 
     return None
+
+
+def _strip_comments_and_whitespace(source: bytes) -> bytes:
+    """Removes comments and whitespace from the source string to save space."""
+    buf = []
+    for line in source.splitlines():
+        l = line.strip()
+        if l.startswith(b'#'):
+            line = b''
+        buf.append(line)
+
+    return b'\n'.join(buf)

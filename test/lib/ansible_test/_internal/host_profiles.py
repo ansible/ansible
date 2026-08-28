@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import abc
+import base64
 import dataclasses
 import json
 import os
@@ -40,6 +41,7 @@ from .host_configs import (
     VirtualPythonConfig,
     WindowsInventoryConfig,
     WindowsRemoteConfig,
+    PowerShellConfig,
 )
 
 from .core_ci import (
@@ -63,6 +65,8 @@ from .util import (
     ANSIBLE_SOURCE_ROOT,
     ANSIBLE_LIB_ROOT,
     ANSIBLE_TEST_ROOT,
+    Architecture,
+    get_powershell_version_map,
 )
 
 from .util_common import (
@@ -202,31 +206,24 @@ class Inventory:
     def write(self, args: CommonConfig, path: str) -> None:
         """Write the given inventory to the specified path on disk."""
 
-        # NOTE: Switching the inventory generation to write JSON would be nice, but is currently not possible due to the use of hard-coded inventory filenames.
-        #       The name `inventory` works for the POSIX integration tests, but `inventory.winrm` and `inventory.networking` will only parse in INI format.
-        #       If tests are updated to use the `INVENTORY_PATH` environment variable, then this could be changed.
-        #       Also, some tests detect the test type by inspecting the suffix on the inventory filename, which would break if it were changed.
-
-        inventory_text = ''
+        inventory_data: dict[str, dict[str, dict[str, dict[str, object]]]] = dict()
 
         for group, hosts in self.host_groups.items():
-            inventory_text += f'[{group}]\n'
+            group_data = inventory_data.setdefault(group, dict())
+            hosts_data = group_data.setdefault('hosts', dict())
 
             for host, variables in hosts.items():
-                kvp = ' '.join(f"{key}={value!r}" for key, value in variables.items())
-                inventory_text += f'{host} {kvp}\n'
-
-            inventory_text += '\n'
+                host_entry = hosts_data.setdefault(host, dict())
+                host_entry.update(variables)
 
         for group, children in (self.extra_groups or {}).items():
-            inventory_text += f'[{group}]\n'
+            group_data = inventory_data.setdefault(group, dict())
+            group_children = group_data.setdefault('children', dict())
 
             for child in children:
-                inventory_text += f'{child}\n'
+                group_children[child] = dict()
 
-            inventory_text += '\n'
-
-        inventory_text = inventory_text.strip()
+        inventory_text = json.dumps(inventory_data, indent=4)
 
         if not args.explain:
             write_text_file(path, inventory_text + '\n')
@@ -481,6 +478,45 @@ class PosixProfile[TPosixConfig: PosixConfig](HostProfile[TPosixConfig], metacla
 
         return python
 
+    @property
+    def powershell(self) -> PowerShellConfig:
+        """
+        The PowerShell to use for this profile.
+        """
+        powershell = self.state.get('powershell')
+
+        if not powershell:
+            powershell = self.config.powershell
+
+            self.state['powershell'] = powershell
+
+        return powershell
+
+    def get_python_interpreters(self) -> dict[str, str]:
+        """
+        Get a mapping of Python interpreter versions and paths to use.
+        A target uses a single Python version, but a controller may include additional versions for targets running on the controller.
+        """
+        python_interpreters = {self.python.version: self.python.path}
+        python_interpreters.update({target.python.version: target.python.path for target in self.targets if isinstance(target, ControllerConfig)})
+        python_interpreters = {version: python_interpreters[version] for version in sorted_versions(list(python_interpreters))}
+
+        return python_interpreters
+
+    def get_powershell_versions(self) -> list[str]:
+        """
+        Get a list of PowerShell versions to use.
+        A target uses a single PowerShell version, but a controller may include additional versions for targets running on the controller.
+        """
+        powershell_version_map = get_powershell_version_map()
+
+        powershell_versions = [self.powershell.version] if self.powershell.version else []
+        powershell_versions.extend(target.powershell.version for target in self.targets if isinstance(target, ControllerConfig) and target.powershell.version)
+        powershell_versions = sorted_versions(list(set(powershell_versions)))
+        powershell_versions = [powershell_version_map[version] for version in powershell_versions]
+
+        return powershell_versions
+
 
 class ControllerHostProfile[T: ControllerHostConfig](PosixProfile[T], DebuggableProfile[T], metaclass=abc.ABCMeta):
     """Base class for profiles usable as a controller."""
@@ -608,6 +644,7 @@ class ControllerProfile(SshTargetHostProfile[ControllerConfig], PosixProfile[Con
             user='root',
             identity_file=SshKey(self.args).key,
             python_interpreter=self.args.controller_python.path,
+            powershell_interpreter=self.args.controller_powershell.path,
         )
 
         return [SshConnection(self.args, settings)]
@@ -889,6 +926,11 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
         command_privileged = False
         expected_mounts: tuple[CGroupMount, ...]
 
+        docker_socket = '/var/run/docker.sock'
+
+        if get_docker_hostname() != 'localhost' or os.path.exists(docker_socket):
+            options.extend(['--volume', f'{docker_socket}:{docker_socket}'])
+
         cgroup_version = get_docker_info(self.args).cgroup_version
 
         if self.config.cgroup == CGroupVersion.NONE:
@@ -1167,7 +1209,8 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
         """Perform out-of-band setup before delegation."""
         bootstrapper = BootstrapDocker(
             controller=self.controller,
-            python_interpreters={self.python.version: self.python.path},
+            python_interpreters=self.get_python_interpreters(),
+            powershell_versions=self.get_powershell_versions(),
             ssh_key=SshKey(self.args),
         )
 
@@ -1252,6 +1295,7 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
             port=port,
             identity_file=SshKey(self.args).key,
             python_interpreter=self.python.path,
+            powershell_interpreter=self.powershell.path,
             # CentOS 6 uses OpenSSH 5.3, making it incompatible with the default configuration of OpenSSH 8.8 and later clients.
             # Since only CentOS 6 is affected, and it is only supported by ansible-core 2.12, support for RSA SHA-1 is simply hard-coded here.
             # A substring is used to allow custom containers to work, not just the one provided with ansible-test.
@@ -1321,11 +1365,6 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
         if self.config.seccomp != 'default':
             options.extend(['--security-opt', f'seccomp={self.config.seccomp}'])
 
-        docker_socket = '/var/run/docker.sock'
-
-        if get_docker_hostname() != 'localhost' or os.path.exists(docker_socket):
-            options.extend(['--volume', f'{docker_socket}:{docker_socket}'])
-
         return options
 
 
@@ -1380,7 +1419,7 @@ class NetworkRemoteProfile(RemoteProfile[NetworkRemoteConfig]):
         env = ansible_environment(self.args)
         module_name = f'{self.config.collection + "." if self.config.collection else ""}{self.config.platform}_command'
 
-        with tempfile.NamedTemporaryFile() as inventory_file:
+        with tempfile.NamedTemporaryFile(suffix='.json') as inventory_file:
             inventory.write(self.args, inventory_file.name)
 
             cmd = ['ansible', '-m', module_name, '-a', 'commands=?', '-i', inventory_file.name, 'all']
@@ -1446,11 +1485,6 @@ class PosixRemoteProfile(ControllerHostProfile[PosixRemoteConfig], RemoteProfile
 
     def configure(self) -> None:
         """Perform in-band configuration. Executed before delegation for the controller and after delegation for targets."""
-        # a target uses a single python version, but a controller may include additional versions for targets running on the controller
-        python_interpreters = {self.python.version: self.python.path}
-        python_interpreters.update({target.python.version: target.python.path for target in self.targets if isinstance(target, ControllerConfig)})
-        python_interpreters = {version: python_interpreters[version] for version in sorted_versions(list(python_interpreters.keys()))}
-
         core_ci = self.wait_for_instance()
         pwd = self.wait_until_ready()
 
@@ -1460,7 +1494,8 @@ class PosixRemoteProfile(ControllerHostProfile[PosixRemoteConfig], RemoteProfile
             controller=self.controller,
             platform=self.config.platform,
             platform_version=self.config.version,
-            python_interpreters=python_interpreters,
+            python_interpreters=self.get_python_interpreters(),
+            powershell_versions=self.get_powershell_versions(),
             ssh_key=core_ci.ssh_key,
         )
 
@@ -1481,6 +1516,7 @@ class PosixRemoteProfile(ControllerHostProfile[PosixRemoteConfig], RemoteProfile
             port=core_ci.connection.port,
             identity_file=core_ci.ssh_key.key,
             python_interpreter=self.python.path,
+            powershell_interpreter=self.powershell.path,
         )
 
         if settings.user == 'root':
@@ -1562,6 +1598,7 @@ class PosixSshProfile(SshTargetHostProfile[PosixSshConfig], PosixProfile[PosixSs
             port=self.config.port,
             identity_file=SshKey(self.args).key,
             python_interpreter=self.python.path,
+            powershell_interpreter=self.powershell.path,
         )
 
         return [SshConnection(self.args, settings)]
@@ -1600,9 +1637,63 @@ class WindowsInventoryProfile(SshTargetHostProfile[WindowsInventoryConfig]):
 class WindowsRemoteProfile(RemoteProfile[WindowsRemoteConfig]):
     """Host profile for a Windows remote instance."""
 
+    _ARCHES = {
+        Architecture.X86_64: 'x64',
+        Architecture.AARCH64: 'arm64',
+    }
+    """Mapping of ansible-test architecture to PowerShell release architecture label."""
+
+    def __init__(self, **kwargs) -> None:
+        super().__init__(**kwargs)
+
+        self.pwsh_interpreter_path: str | None = None
+
     def wait(self) -> None:
         """Wait for the instance to be ready. Executed before delegation for the controller and after delegation for targets."""
         self.wait_until_ready()
+
+    def configure(self) -> None:
+        """Perform in-band configuration. Executed before delegation for the controller and after delegation for targets."""
+        if not self.config.powershell:  # nothing to install
+            return
+
+        if self.config.powershell.version == '5.1':  # built-in version, nothing to install
+            return
+
+        self.wait_for_instance()
+        self.wait_until_ready()
+
+        full_version = get_powershell_version_map()[self.config.powershell.version]
+        arch = self._ARCHES[self.config.arch]
+        download_uri = f'https://github.com/PowerShell/PowerShell/releases/download/v{full_version}/PowerShell-{full_version}-win-{arch}.zip'
+        setup_path = pathlib.Path(ANSIBLE_TEST_TARGET_ROOT) / 'setup'
+        bootstrap_script_path = setup_path / 'bootstrap.ps1'
+        entrypoint_script_path = setup_path / 'entrypoint.ps1'
+
+        setup_manifest = dict(
+            script=bootstrap_script_path.read_text(),
+            path=str(bootstrap_script_path.resolve()),
+            params=dict(
+                PowerShellVersion=self.config.powershell.version,
+                PowerShellDownloadUri=download_uri,
+            ),
+        )
+
+        encoded_manifest = base64.b64encode(json.dumps(setup_manifest).encode()).decode()
+
+        # Passing a command through stdin requires newlines at the end of the input
+        # so it sees it as a complete statement rather than ignoring an incomplete one.
+        setup_entrypoint = entrypoint_script_path.read_text().replace('{{ MANIFEST }}', encoded_manifest).strip() + "\n\n"
+
+        ssh = self.get_controller_target_connections()[0]
+
+        stdout, dummy = ssh.run(
+            command=['powershell.exe', '-NoProfile', '-NonInteractive', '-Command', '-'],
+            data=setup_entrypoint,
+            capture=True,
+        )
+
+        self.pwsh_interpreter_path = stdout.strip()
 
     def get_inventory_variables(self) -> dict[str, t.Optional[t.Union[str, int]]]:
         """Return inventory variables for accessing this host."""
@@ -1620,6 +1711,9 @@ class WindowsRemoteProfile(RemoteProfile[WindowsRemoteConfig]):
         variables.update(ansible_connection=self.config.connection.split('+')[0])
         variables.update(WINDOWS_CONNECTION_VARIABLES[self.config.connection])
 
+        if self.pwsh_interpreter_path:
+            variables.update(ansible_pwsh_interpreter=self.pwsh_interpreter_path)
+
         if variables.pop('use_password'):
             variables.update(ansible_password=connection.password)
 
@@ -1636,7 +1730,7 @@ class WindowsRemoteProfile(RemoteProfile[WindowsRemoteConfig]):
         env = ansible_environment(self.args)
         module_name = 'ansible.windows.win_ping'
 
-        with tempfile.NamedTemporaryFile() as inventory_file:
+        with tempfile.NamedTemporaryFile(suffix='.json') as inventory_file:
             inventory.write(self.args, inventory_file.name)
 
             cmd = ['ansible', '-m', module_name, '-i', inventory_file.name, 'all']

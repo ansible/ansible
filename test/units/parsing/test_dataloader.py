@@ -17,6 +17,7 @@
 
 from __future__ import annotations
 
+import collections
 import os
 import pathlib
 import tempfile
@@ -45,7 +46,7 @@ class TestDataLoader(unittest.TestCase):
 
     @patch('os.path.exists')
     def test__is_role(self, p_exists):
-        p_exists.side_effect = lambda p: p == b'test_path/tasks/main.yml'
+        p_exists.side_effect = lambda p: p == 'test_path/tasks/main.yml'
         self.assertTrue(self._loader._is_role('test_path/tasks'))
         self.assertTrue(self._loader._is_role('test_path/'))
 
@@ -109,9 +110,9 @@ class TestDataLoader(unittest.TestCase):
             self.assertIn('/tmp/roles/testrole/tasks/included2.yml', called_args)
             self.assertIn('/tmp/roles/testrole/tasks/tasks/included2.yml', called_args)
 
-            # relative directories below are taken in account too:
-            self.assertIn('tasks/included2.yml', called_args)
-            self.assertIn('included2.yml', called_args)
+            c = collections.Counter(called_args)
+            assert c['/tmp/roles/testrole/tasks/included2.yml'] == 1
+            assert c['/tmp/roles/testrole/tasks/tasks/included2.yml'] == 2
 
     def test_path_dwim_root(self):
         self.assertEqual(self._loader.path_dwim('/'), '/')
@@ -167,7 +168,7 @@ class TestPathDwimRelativeStackDataLoader(unittest.TestCase):
         self.assertRaisesRegex(AnsibleFileNotFound, 'on the Ansible Controller', self._loader.path_dwim_relative_stack, None, None, None)
 
     def test_empty_strings(self):
-        self.assertEqual(self._loader.path_dwim_relative_stack('', '', ''), './')
+        self.assertEqual(self._loader.path_dwim_relative_stack('', '', ''), os.path.abspath('./') + '/')
 
     def test_empty_lists(self):
         self.assertEqual(self._loader.path_dwim_relative_stack([], '', '~/'), os.path.expanduser('~'))
@@ -221,9 +222,6 @@ class TestDataLoaderWithVault(unittest.TestCase):
         wrong_vault = [('default', TextVaultSecret('wrong_password'))]
         self._loader.set_vault_secrets(wrong_vault)
         self.assertRaises(AnsibleVaultError, self._loader.get_real_file, self.test_vault_data_path)
-
-    def test_get_real_file_not_a_path(self):
-        self.assertRaisesRegex(AnsibleParserError, 'Invalid filename', self._loader.get_real_file, None)
 
     def test_parse_from_vault_1_1_file(self):
         vaulted_data = """$ANSIBLE_VAULT;1.1;AES256

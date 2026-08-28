@@ -4,13 +4,20 @@ import abc
 import collections.abc as c
 import typing as t
 
+from enum import StrEnum, auto
 from yaml.nodes import ScalarNode, Node
 
+from ansible._internal._datatag._tags import VaultedValue
 from ansible._internal._templating import _jinja_common
+from ansible.errors import AnsibleVariableTypeError
 from ansible.module_utils import _internal
 from ansible.module_utils._internal._datatag import AnsibleTaggedObject, Tripwire, AnsibleTagHelper
-from ansible.parsing.vault import VaultHelper
+from ansible.module_utils._internal._ambient_context import AmbientContextBase
+from ansible.parsing.vault import VaultHelper, EncryptedString
 from ansible.module_utils.common.yaml import HAS_LIBYAML
+from ansible.utils.display import Display
+
+display = Display()
 
 if HAS_LIBYAML:
     from yaml.cyaml import CSafeDumper as SafeDumper
@@ -29,6 +36,20 @@ class _BaseDumper(SafeDumper, metaclass=abc.ABCMeta):
     def __init_subclass__(cls, **kwargs) -> None:
         """Initialization for derived types."""
         cls._register_representers()
+
+
+class VaultBehaviors(StrEnum):
+    decrypt = auto()
+    keep_encrypted = auto()
+    redact = auto()
+    fail = auto()
+
+
+class VaultDecryptionContext(AmbientContextBase):
+    """Ambient context that wraps to_yaml rendering, providing information to AnsibleDumper."""
+
+    def __init__(self, vault_behavior: VaultBehaviors):
+        self.vault_behavior = vault_behavior
 
 
 class AnsibleDumper(_BaseDumper):
@@ -54,6 +75,22 @@ class AnsibleDumper(_BaseDumper):
 
         data.trip()
 
+    def represent_vaulted_value(self, data: AnsibleTaggedObject) -> Node:
+        if vdc := VaultDecryptionContext.current(optional=True):
+            vault_behavior = vdc.vault_behavior
+        else:
+            vault_behavior = VaultBehaviors.keep_encrypted
+
+        match vault_behavior:
+            case VaultBehaviors.decrypt:
+                return self.represent_data(AnsibleTagHelper.as_native_type(data))
+            case VaultBehaviors.keep_encrypted:
+                return self.get_node_from_ciphertext(data)
+            case VaultBehaviors.redact:
+                return self.represent_data('<redacted>')
+            case VaultBehaviors.fail:
+                raise AnsibleVariableTypeError(message="Attempted to dump a vaulted value", obj=data)
+
     def represent_ansible_tagged_object(self, data: AnsibleTaggedObject) -> Node:
         if _internal.is_intermediate_mapping(data):
             return self.represent_dict(data)
@@ -61,8 +98,8 @@ class AnsibleDumper(_BaseDumper):
         if _internal.is_intermediate_iterable(data):
             return self.represent_list(data)
 
-        if node := self.get_node_from_ciphertext(data):
-            return node
+        if VaultedValue.is_tagged_on(data) or isinstance(data, EncryptedString):
+            return self.represent_vaulted_value(data)
 
         return self.represent_data(AnsibleTagHelper.as_native_type(data))  # automatically decrypts encrypted strings
 

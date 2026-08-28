@@ -18,10 +18,9 @@
 - import_tasks: test_expires_min_max.yml
 - import_tasks: test_expires_warn.yml
 - import_tasks: test_ssh_key_passphrase.yml
+- import_tasks: test_returned_groups.yml
 - include_tasks: test_password_lock.yml
-  when: ansible_distribution != 'Alpine'
 - include_tasks: test_password_lock_new_user.yml
-  when: ansible_distribution != 'Alpine'
 - include_tasks: test_local.yml
   when: ansible_distribution != 'Alpine'
 - include_tasks: test_umask.yml
@@ -33,4 +32,9 @@
   when:
     - ansible_facts.system == 'Linux'
     - ansible_distribution != 'Alpine'
+- include_tasks: test_freebsd_nonexistent.yml
+  when: ansible_facts.system == 'FreeBSD'
+- import_tasks: test_seuser_warning.yml
 - import_tasks: ssh_keygen.yml
+- include_tasks: test_modify_user_home.yml
+- include_tasks: test_invalid_shell.yml

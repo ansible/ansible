@@ -15,12 +15,7 @@ param(
     $Script,
 
     [Parameter()]
-    [IDictionary[]]
-    [AllowEmptyCollection()]
-    $Variables = @(),
-
-    [Parameter()]
-    [IDictionary]
+    [PSObject]
     $Environment,
 
     [Parameter()]
@@ -38,9 +33,40 @@ param(
     $Breakpoints,
 
     [Parameter()]
+    [string]
+    $ArgumentJSON,
+
+    [Parameter()]
     [switch]
     $ForModule
 )
+
+Function Convert-JsonObject {
+    param (
+        [Parameter(Mandatory, ValueFromPipeline)]
+        [AllowNull()]
+        [object]
+        $InputObject
+    )
+
+    process {
+        # Using the full type name is important as [PSCustomObject] is an
+        # alias for [PSObject] which all piped objects are.
+        if ($InputObject -is [System.Management.Automation.PSCustomObject]) {
+            $value = @{}
+            foreach ($prop in $InputObject.PSObject.Properties) {
+                $value[$prop.Name] = Convert-JsonObject -InputObject $prop.Value
+            }
+            $value
+        }
+        elseif ($InputObject -is [Array]) {
+            , @($InputObject | Convert-JsonObject)
+        }
+        else {
+            $InputObject
+        }
+    }
+}
 
 Function Write-AnsibleErrorDetail {
     [CmdletBinding()]
@@ -92,7 +118,10 @@ Function Write-AnsibleErrorDetail {
     }
 }
 
-$ps = [PowerShell]::Create()
+# It is important we use CreateDefault2 to ensure that builtin modules are
+# imported when requested. CreateDefault only imports the builtin modules
+# as snapins which miss things like ETS type definitions.
+$ps = [PowerShell]::Create([InitialSessionState]::CreateDefault2())
 
 if ($ForModule) {
     $ps.Runspace.SessionStateProxy.SetVariable("ErrorActionPreference", "Stop")
@@ -104,18 +133,64 @@ else {
     Set-WinPSDefaultFileEncoding
 }
 
-foreach ($variable in $Variables) {
-    $null = $ps.AddCommand("Set-Variable").AddParameters($variable).AddStatement()
+if ($ArgumentJSON) {
+    $jsonParams = @{}
+    if ($IsCoreCLR) {
+        # PowerShell 7 parses an ISO 8601 date string into a DateTime object. As we
+        # want to preserve the original string we tell it using the DateKind param.
+        $jsonParams.DateKind = 'String'
+    }
+    $parsedArgs = $ArgumentJSON | ConvertFrom-Json @jsonParams | Convert-JsonObject
+
+    # FUTURE: Deprecate complex_args and move parsing logic into module_utils.
+    # Deprecation requires exec_wrapper warning system to be implemented. We
+    # can use Set-PSBreakPoint to fire an action on variable reads.
+    $null = $ps.AddCommand("Set-Variable").AddParameters(
+        @{
+            Name = 'complex_args'
+            Value = $parsedArgs
+            Scope = 'Global'
+        }).AddStatement()
 }
 
 # env vars are process side so we can just set them here.
-foreach ($env in $Environment.GetEnumerator()) {
-    [Environment]::SetEnvironmentVariable($env.Key, $env.Value)
+foreach ($env in $Environment.PSObject.Properties) {
+    [Environment]::SetEnvironmentVariable($env.Name, $env.Value)
 }
 
 # Redefine Write-Host to dump to output instead of failing, lots of scripts
 # still use it.
 $null = $ps.AddScript('Function Write-Host($msg) { Write-Output -InputObject $msg }').AddStatement()
+
+# ParseInput doesn't throw on an invalid script, we need to check the errors
+# and throw ourselves. We use ParseInput so we can associate a filename with
+# the script making StackTraces and error messages much easier to understand.
+$parseScriptWithName = {
+    [OutputType([ScriptBlock])]
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory)]
+        [string]
+        $Name,
+
+        [Parameter(Mandatory)]
+        [string]
+        $Script
+    )
+
+    $err = @()
+    $ast = [System.Management.Automation.Language.Parser]::ParseInput(
+        $Script,
+        $Name,
+        [ref]$null,
+        [ref]$err)
+    if ($err) {
+        $parseErrors = $err -join "`n"
+        throw "Failed to parse script '$Name'`n$parseErrors"
+    }
+
+    $ast.GetScriptBlock()
+}
 
 $scriptInfo = Get-AnsibleScript -Name $Script
 if ($scriptInfo.ShouldConstrain) {
@@ -142,25 +217,14 @@ else {
                 throw "PowerShell module util '$utilName' is not trusted and cannot be loaded."
             }
 
-            $null = $ps.AddScript(@'
-param ($Name, $Script)
-
-$moduleName = [System.IO.Path]::GetFileNameWithoutExtension($Name)
-$sbk = [System.Management.Automation.Language.Parser]::ParseInput(
-    $Script,
-    $Name,
-    [ref]$null,
-    [ref]$null).GetScriptBlock()
-
-New-Module -Name $moduleName -ScriptBlock $sbk |
-    Import-Module -WarningAction SilentlyContinue -Scope Global
-'@, $true)
-            $null = $ps.AddParameters(
-                @{
+            $null = $ps.AddScript($parseScriptWithName).AddParameters(@{
                     Name = $utilName
                     Script = $utilInfo.Script
-                }
-            ).AddStatement()
+                })
+            $null = $ps.AddScript(@'
+New-Module -Name $args[0] -ScriptBlock @($input)[0] |
+    Import-Module -WarningAction SilentlyContinue -Scope Global
+'@).AddArgument([Path]::GetFileNameWithoutExtension($utilName)).AddStatement()
         }
     }
 
@@ -173,13 +237,12 @@ New-Module -Name $moduleName -ScriptBlock $sbk |
     # ensure the code runs with it's own $script: scope. It also
     # cleans up the StackTrace on errors by not showing the stub
     # execution line and starts immediately at the module "cmd".
-    $null = $ps.AddScript(@'
-${function:<AnsibleModule>} = [System.Management.Automation.Language.Parser]::ParseInput(
-    $args[0],
-    $args[1],
-    [ref]$null,
-    [ref]$null).GetScriptBlock()
-'@).AddArgument($scriptInfo.Script).AddArgument($Script).AddStatement()
+    $null = $ps.AddScript($parseScriptWithName).AddParameters(@{
+            Name = $Script
+            Script = $scriptInfo.Script
+        }).AddScript(@'
+${function:<AnsibleModule>} = @($input)[0]
+'@).AddStatement()
     $null = $ps.AddCommand('<AnsibleModule>', $false).AddStatement()
 }
 

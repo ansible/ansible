@@ -354,6 +354,20 @@
 - name: uninstall local-apt-repository with apt
   apt: pkg=local-apt-repository state=absent purge=yes
 
+# Invalid repo with no component
+- name: Add repo with empty component
+  ansible.builtin.apt_repository:
+    repo: "deb http://archive.canonical.com/ubuntu jammy"
+    state: present
+  register: emptycomp_result
+  ignore_errors: true
+
+- name: Assert that the repo was not added
+  assert:
+    that:
+      - emptycomp_result is failed
+      - "'Invalid repository string' in emptycomp_result.msg"
+
 #
 # TEST: PPA HTTPS URL
 #

@@ -366,6 +366,12 @@ stat:
             type: str
             sample: "381700746"
             version_added: 2.3
+        disk_usage_bytes:
+            description: The disk usage of a path in bytes
+            returned: success, path exists, user can execute the path, filesystem supports st_blocks
+            type: int
+            sample: 1024
+            version_added: '2.21'
 """
 
 import grp
@@ -436,6 +442,8 @@ def format_output(module, path, st):
     ]:
         if hasattr(st, other[0]):
             output[other[1]] = getattr(st, other[0])
+            if other[0] == 'st_blocks':
+                output['disk_usage_bytes'] = st.st_blocks * 512
 
     return output
 

@@ -1,0 +1,71 @@
+- name: to_yaml vault_behavior tests
+  block:
+    - name: "Direct render inline"
+      debug:
+        msg: "{{ inline_vaulted }}"
+
+    - name: "Direct render datastructure"
+      debug:
+        msg: "{{ housing_datastructure }}"
+
+    - name: "Render inline with to_yaml"
+      debug:
+        msg: "{{ inline_vaulted | to_yaml(vault_behavior=item) }}"
+      ignore_errors: true
+      loop:
+        - decrypt
+        - keep_encrypted
+        - redact
+        - fail
+        - other
+        - ~
+      register: inline_vaulted_with_to_yaml
+
+    - name: Validate inline_vaulted_with_to_yaml output
+      assert:
+        that:
+          - inline_vaulted_with_to_yaml.results[0] is success
+          - inline_vaulted_with_to_yaml.results[0].msg is contains expected_value_decrypted
+          - inline_vaulted_with_to_yaml.results[1] is success
+          - inline_vaulted_with_to_yaml.results[1].msg is contains vault_ciphertext
+          - inline_vaulted_with_to_yaml.results[2] is success
+          - inline_vaulted_with_to_yaml.results[2].msg is contains "<redacted>"
+          - inline_vaulted_with_to_yaml.results[3] is failed
+          - inline_vaulted_with_to_yaml.results[3].msg is contains "Attempted to dump a vaulted value"
+          - inline_vaulted_with_to_yaml.results[4] is failed
+          - inline_vaulted_with_to_yaml.results[4].msg is contains "The vault parameter must be one of"
+          - inline_vaulted_with_to_yaml.results[5] is success
+
+    - name: Render datastructure with to_yaml
+      debug:
+        msg: "{{ housing_datastructure | to_yaml(vault_behavior=item) }}"
+      loop:
+        - decrypt
+        - keep_encrypted
+        - redact
+        - fail
+        - other
+        - ~
+      ignore_errors: true
+      register: nested_vaulted_with_to_yaml
+
+    - name: Validate nested_vaulted_with_to_yaml output
+      assert:
+        that:
+          - nested_vaulted_with_to_yaml.results[0] is success
+          - nested_vaulted_with_to_yaml.results[0].msg is contains expected_value_decrypted
+          - nested_vaulted_with_to_yaml.results[0].msg is not contains vault_ciphertext
+          - nested_vaulted_with_to_yaml.results[1] is success
+          - nested_vaulted_with_to_yaml.results[1].msg is contains vault_ciphertext
+          - nested_vaulted_with_to_yaml.results[1].msg is not contains expected_value_decrypted
+          - nested_vaulted_with_to_yaml.results[2] is success
+          - nested_vaulted_with_to_yaml.results[2].msg is contains "<redacted>"
+          - nested_vaulted_with_to_yaml.results[2].msg is not contains expected_value_decrypted
+          - nested_vaulted_with_to_yaml.results[2].msg is not contains vault_ciphertext
+          - nested_vaulted_with_to_yaml.results[3] is failed
+          - nested_vaulted_with_to_yaml.results[3].msg is contains "Attempted to dump a vaulted value"
+          - nested_vaulted_with_to_yaml.results[4] is failed
+          - nested_vaulted_with_to_yaml.results[4].msg is contains "The vault parameter must be one of"
+          - nested_vaulted_with_to_yaml.results[5] is success
+          - nested_vaulted_with_to_yaml.results[5].msg is contains expected_value_decrypted
+          - nested_vaulted_with_to_yaml.results[5].msg is not contains vault_ciphertext

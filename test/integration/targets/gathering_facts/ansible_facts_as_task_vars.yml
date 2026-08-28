@@ -1,0 +1,40 @@
+- hosts: testhost
+  gather_facts: no
+  tasks:
+    - name: Verify ansible_facts is empty
+      assert:
+        that: ansible_facts == {}
+
+    - name: Set a fact
+      fact_setter:
+        key: k1
+        value: v1
+
+    - name: Verify the fact is visible in ansible_facts
+      assert:
+        that: ansible_facts.k1 == 'v1'
+
+    - name: Set facts during a loop
+      fact_setter:
+        key: "k{{ item }}"
+        value: "v{{ item }}"
+      loop: [10, 20]
+
+    - name: Verify the facts are visible in ansible_facts
+      assert:
+        that:
+          - ansible_facts.k10 == 'v10'
+          - ansible_facts.k20 == 'v20'
+
+    - name: Set facts during a loop which are dependent on previously set facts
+      fact_setter:
+        key: "k{{ item }}"
+        value: "k{{ (item - 1) }} is {{ ansible_facts['k' ~ (item - 1)] }}"
+      loop: [2, 3, 4]
+
+    - name: Verify the facts were properly derived
+      assert:
+        that:
+          - k2 == 'k1 is v1'
+          - k3 == 'k2 is k1 is v1'
+          - k4 == 'k3 is k2 is k1 is v1'

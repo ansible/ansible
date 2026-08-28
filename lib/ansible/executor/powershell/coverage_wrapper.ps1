@@ -113,9 +113,10 @@ try {
             $scriptInfo = Get-AnsibleScript -Name $scriptName
 
             if (Compare-PathFilterPattern -Patterns $coveragePathFilter -Path $scriptInfo.Path) {
+                $ast = [Parser]::ParseInput($scriptInfo.Script, [ref]$null, [ref]$null)
                 $covParams = @{
                     ScriptName = $scriptInfo.Name
-                    ScriptBlockAst = [ScriptBlock]::Create($scriptInfo.Script).Ast
+                    ScriptBlockAst = $ast
                     AnsiblePath = $scriptInfo.Path
                 }
                 New-CoverageBreakpointsForScriptBlock @covParams

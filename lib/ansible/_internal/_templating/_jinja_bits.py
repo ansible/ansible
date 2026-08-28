@@ -34,6 +34,7 @@ from ansible.module_utils._internal._datatag import (
     AnsibleTagHelper,
 )
 
+from ansible._internal._errors import _error_utils
 from ansible._internal._errors._handler import ErrorAction
 from ansible._internal._datatag._tags import Origin, TrustedAsTemplate
 
@@ -69,6 +70,7 @@ from ansible.module_utils import _internal
 from ansible.module_utils._internal import _ambient_context, _dataclass_validation
 from ansible.plugins.loader import filter_loader, test_loader
 from ansible.vars.hostvars import HostVars, HostVarsVars
+from .._errors import _attribute_unavailable
 from ...module_utils.datatag import native_type_name
 
 JINJA2_OVERRIDE = '#jinja2:'
@@ -332,6 +334,9 @@ class AnsibleTemplate(Template):
     def __call__(self, jinja_vars: c.Mapping[str, t.Any]) -> t.Any:
         return self.render(ArgSmuggler.package_jinja_vars(jinja_vars))
 
+    def __deepcopy__(self, memo):
+        return self  # templates are immutable, so a deep copy is not needed (it would also fail if not implemented here)
+
     # noinspection PyShadowingBuiltins
     def new_context(
         self,
@@ -496,6 +501,14 @@ def create_template_error(ex: Exception, variable: t.Any, is_expression: bool) -
         if isinstance(ex, RecursionError):
             msg = f"Recursive loop detected in {kind}."
         elif isinstance(ex, TemplateSyntaxError):
+            if (origin := Origin.get_tag(variable)) and origin.line_num is None and ex.lineno > 0:
+                # When there is an origin without a line number, use the line number provided by the Jinja syntax error.
+                # This should only occur on templates which represent the entire contents of a file.
+                # Templates loaded from within a file, such as YAML, will use the existing origin.
+                # It's not possible to combine origins here, due to potential layout differences between the original content and the parsed output.
+                # This can happen, for example, with YAML multi-line strings.
+                variable = origin.replace(line_num=ex.lineno, col_num=None).tag(variable)
+
             msg = f"Syntax error in {kind}."
 
             if is_expression and is_possibly_template(variable):
@@ -782,7 +795,10 @@ class AnsibleEnvironment(SandboxedEnvironment):
         return result
 
     def getitem(self, obj: t.Any, argument: t.Any) -> t.Any:
-        value = super().getitem(obj, argument)
+        try:
+            value = super().getitem(obj, argument)
+        except _attribute_unavailable.AttributeUnavailableError as ex:
+            value = self.undefined(obj=obj, name=str(argument), hint=_error_utils.format_exception_message(ex))
 
         AnsibleAccessContext.current().access(value)
 
@@ -801,6 +817,8 @@ class AnsibleEnvironment(SandboxedEnvironment):
 
         try:
             value = getattr(obj, attribute)
+        except _attribute_unavailable.AttributeUnavailableError as ex:
+            value = self.undefined(obj=obj, name=attribute, hint=_error_utils.format_exception_message(ex))
         except AttributeError:
             value = _sentinel
         else:

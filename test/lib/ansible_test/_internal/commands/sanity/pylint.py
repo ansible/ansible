@@ -13,6 +13,7 @@ from . import (
     SanitySingleVersion,
     SanityMessage,
     SanityFailure,
+    SanitySkipped,
     SanitySuccess,
     SanityTargets,
     SANITY_ROOT,
@@ -39,6 +40,7 @@ from ...util import (
     SubprocessError,
     display,
     is_subdir,
+    str_to_version,
 )
 
 from ...util_common import (
@@ -86,6 +88,12 @@ class PylintTest(SanitySingleVersion):
         return [target for target in targets if os.path.splitext(target.path)[1] == '.py' or is_subdir(target.path, 'bin')]
 
     def test(self, args: SanityConfig, targets: SanityTargets, python: PythonConfig) -> TestResult:
+        if str_to_version(python.version) >= (3, 15):
+            # see: https://github.com/uqfoundation/dill/issues/753
+            result = SanitySkipped(self.name, python.version)
+            result.reason = f'Skipping sanity test "{self.name}" due to lack of support for Python version {python.version} in the "dill" package.'
+            return result
+
         target_paths = set(target.path for target in self.filter_remote_targets(list(targets.targets)))
 
         plugin_dir = os.path.join(SANITY_ROOT, 'pylint', 'plugins')
@@ -300,5 +308,16 @@ class PylintTest(SanitySingleVersion):
             messages = json.loads(stdout)
         else:
             messages = []
+
+        expected_paths = set(paths)
+
+        unexpected_messages = [message for message in messages if message["path"] not in expected_paths]
+        messages = [message for message in messages if message["path"] in expected_paths]
+
+        for unexpected_message in unexpected_messages:
+            display.info(f"Unexpected message: {json.dumps(unexpected_message)}", verbosity=4)
+
+        if unexpected_messages:
+            display.notice(f"Discarded {len(unexpected_messages)} unexpected messages. Use -vvvv to display.")
 
         return messages

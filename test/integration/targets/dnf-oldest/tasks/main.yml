@@ -1,9 +1,9 @@
 - when: ansible_distribution == "Fedora"
   block:
-    - name: Ensure libdnf is not installed
-      command: dnf remove -y python3-libdnf5
+    - name: Downgrade the dnf5 stack to the original version
+      command: dnf distro-sync -y --disable-repo=* --enable-repo=fedora --allowerasing libdnf5* dnf5* python3-libdnf5
 
-    - name: Downgrade dnf to the original version
+    - name: Ensure the original python3-libdnf5 bindings are installed
       command: dnf install -y --disable-repo=* --enable-repo=fedora python3-libdnf5
 
     - name: Run DNF tests

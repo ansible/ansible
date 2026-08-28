@@ -1,13 +1,13 @@
 DOCUMENTATION:
   name: ultimatequestion
   author: Terry Prachet
-  version_added: 'histerical'
+  version_added: 'hysterical'
   short_description: Ask any question but it will only respond with the answer to the ultimate one
   description:
     - read the book
   options:
     _input:
-      description: Anything you want, goign to ignore it anywayss ...
+      description: Anything you want, going to ignore it anyways ...
       type: raw
       required: true
 

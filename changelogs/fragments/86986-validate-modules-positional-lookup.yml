@@ -1,0 +1,2 @@
+minor_changes:
+  - "validate-modules sanity test - allow lookups to use ``positional`` to mark which options are actually positional arguments, similar to test and filter plugins (https://github.com/ansible/ansible/pull/86986)."

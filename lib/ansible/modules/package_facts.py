@@ -251,6 +251,7 @@ ansible_facts:
 """
 
 import re
+import json
 
 from ansible.module_utils.common.text.converters import to_native, to_text
 from ansible.module_utils.basic import AnsibleModule
@@ -265,24 +266,37 @@ ALIASES = {
 }
 
 
-class RPM(RespawningLibMgr):
+class RPM(CLIMgr):
 
-    LIB = 'rpm'
-    CLI_BINARIES = ['rpm']
-    INTERPRETERS = [
-        '/usr/libexec/platform-python',
-        '/usr/bin/python3',
-    ]
+    CLI = 'rpm'
+
+    @staticmethod
+    def _none(v):
+        # When this class used the python3-rpm language bindings,
+        # `None` was converted to `str(None)` during output.
+        # The CLI does this conversion from `None` -> `(none)`,
+        # so this function is used to maintain the previous API output
+        # behavior.
+        return 'None' if v == '(none)' else v
 
     def list_installed(self):
-        return self._lib.TransactionSet().dbMatch()
+        rc, stdout, stderr = module.run_command(
+            ['rpm', '-qa', '--qf', '%{NAME}|%{VERSION}|%{RELEASE}|%{EPOCH}|%{ARCH}\n'],
+            handle_exceptions=False,
+        )
+        if rc != 0:
+            raise Exception("Unable to list packages rc=%s : %s" % (rc, stderr))
+        return stdout.strip().split('\n')
 
     def get_package_details(self, package):
-        return dict(name=package[self._lib.RPMTAG_NAME],
-                    version=package[self._lib.RPMTAG_VERSION],
-                    release=package[self._lib.RPMTAG_RELEASE],
-                    epoch=package[self._lib.RPMTAG_EPOCH],
-                    arch=package[self._lib.RPMTAG_ARCH],)
+        name, version, release, epoch, arch = package.split('|')
+        return {
+            'name': self._none(name),
+            'version': self._none(version),
+            'release': self._none(release),
+            'epoch': self._none(epoch),
+            'arch': self._none(arch),
+        }
 
 
 class APT(RespawningLibMgr):
@@ -318,7 +332,7 @@ class PACMAN(CLIMgr):
 
     def list_installed(self):
         locale = get_best_parsable_locale(module)
-        rc, out, err = module.run_command([self._cli, '-Qi'], environ_update=dict(LC_ALL=locale))
+        rc, out, err = module.run_command([self._cli, '-Qi'], environ_update=dict(LC_ALL=locale), handle_exceptions=False)
         if rc != 0 or err:
             raise Exception("Unable to list packages rc=%s : %s" % (rc, err))
         return out.split("\n\n")[:-1]
@@ -357,7 +371,7 @@ class PKG(CLIMgr):
     atoms = ['name', 'version', 'origin', 'installed', 'automatic', 'arch', 'category', 'prefix', 'vital']
 
     def list_installed(self):
-        rc, out, err = module.run_command([self._cli, 'query', "%%%s" % '\t%'.join(['n', 'v', 'R', 't', 'a', 'q', 'o', 'p', 'V'])])
+        rc, out, err = module.run_command([self._cli, 'query', "%%%s" % '\t%'.join(['n', 'v', 'R', 't', 'a', 'q', 'o', 'p', 'V'])], handle_exceptions=False)
         if rc != 0 or err:
             raise Exception("Unable to list packages rc=%s : %s" % (rc, err))
         return out.splitlines()
@@ -401,7 +415,7 @@ class PORTAGE(CLIMgr):
     atoms = ['category', 'name', 'version', 'ebuild_revision', 'slots', 'prefixes', 'sufixes']
 
     def list_installed(self):
-        rc, out, err = module.run_command(' '.join([self._cli, '-Iv', '|', 'xargs', '-n', '1024', 'qatom']), use_unsafe_shell=True)
+        rc, out, err = module.run_command(' '.join([self._cli, '-Iv', '|', 'xargs', '-n', '1024', 'qatom']), use_unsafe_shell=True, handle_exceptions=False)
         if rc != 0:
             raise RuntimeError("Unable to list packages rc=%s : %s" % (rc, to_native(err)))
         return out.splitlines()
@@ -415,22 +429,15 @@ class APK(CLIMgr):
     CLI = 'apk'
 
     def list_installed(self):
-        rc, out, err = module.run_command([self._cli, 'info', '-v'])
+        cmd = [self._cli, 'query', '--installed', '--fields', 'name,version', '--format', 'json', '*']
+        rc, out, err = module.run_command(cmd, handle_exceptions=False)
         if rc != 0:
-            raise Exception("Unable to list packages rc=%s : %s" % (rc, err))
-        return out.splitlines()
+            raise Exception(f"Unable to list packages rc={rc} : {err}")
+        return json.loads(out)
 
     def get_package_details(self, package):
-        raw_pkg_details = {'name': package, 'version': '', 'release': ''}
-        nvr = package.rsplit('-', 2)
-        try:
-            return {
-                'name': nvr[0],
-                'version': nvr[1],
-                'release': nvr[2],
-            }
-        except IndexError:
-            return raw_pkg_details
+        version, release = package.get('version', '').rsplit("-", 1)
+        return {'name': package.get('name', ''), 'version': version, 'release': release}
 
 
 class PKG_INFO(CLIMgr):
@@ -438,7 +445,7 @@ class PKG_INFO(CLIMgr):
     CLI = 'pkg_info'
 
     def list_installed(self):
-        rc, out, err = module.run_command([self._cli, '-a'])
+        rc, out, err = module.run_command([self._cli, '-a'], handle_exceptions=False)
         if rc != 0 or err:
             raise Exception("Unable to list packages rc=%s : %s" % (rc, err))
         return out.splitlines()

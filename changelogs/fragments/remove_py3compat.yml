@@ -1,3 +1,0 @@
----
-removed_features:
-    - py3compat - remove deprecated ``py3compat.environ`` call.

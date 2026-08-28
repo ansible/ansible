@@ -31,6 +31,8 @@ DOCUMENTATION = """
       remote_user:
         description:
             - The user to log in as to the Windows machine
+            - If O(transport) is not defined, the authentication used will be V(kerberos) if the user is in the UPN format V(user@domain),
+              otherwise it will be V(basic)
         vars:
             - name: ansible_user
             - name: ansible_winrm_user
@@ -75,7 +77,8 @@ DOCUMENTATION = """
       transport:
         description:
            - List of winrm transports to attempt to use (ssl, plaintext, kerberos, etc)
-           - If None (the default) the plugin will try to automatically guess the correct list
+           - If None (the default) the plugin will try to automatically guess the correct list. It will use
+             V(kerberos) if the username looks like a UPN V(user@domain), otherwise it will use V(basic).
            - The choices available depend on your version of pywinrm
         type: list
         elements: string
@@ -180,6 +183,7 @@ except ImportError:
     pass
 
 from ansible import constants as C
+from ansible._internal._powershell import _clixml, _script
 from ansible.errors import AnsibleError, AnsibleConnectionFailure
 from ansible.errors import AnsibleFileNotFound
 from ansible.executor.powershell.module_manifest import _bootstrap_powershell_script
@@ -187,8 +191,8 @@ from ansible.module_utils.json_utils import _filter_non_json_lines
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.plugins.connection import ConnectionBase
-from ansible.plugins.shell.powershell import _parse_clixml
-from ansible.plugins.shell.powershell import ShellBase as PowerShellBase
+from ansible.plugins.shell import ShellBase
+from ansible.plugins.shell.cmd import ShellModule as CmdShellModule
 from ansible.utils.hashing import secure_hash
 from ansible.utils.display import Display
 
@@ -241,16 +245,24 @@ class Connection(ConnectionBase):
 
     def __init__(self, *args: t.Any, **kwargs: t.Any) -> None:
 
-        self.always_pipeline_modules = True
-        self.has_native_async = True
-
         self.protocol: winrm.Protocol | None = None
         self.shell_id: str | None = None
         self.delegate = None
-        self._shell: PowerShellBase
-        self._shell_type = 'powershell'
+        self._shell: ShellBase
+        self._shell_type = 'cmd'  # Default shell for the WinRS protocol is always cmd
 
         super(Connection, self).__init__(*args, **kwargs)
+        if not isinstance(self._shell, CmdShellModule):
+            # This only happens if ansible_shell_type=powershell is set.
+            # It probably will work but edge cases like spaces in executables
+            # will most likely fail.
+            display.warning(
+                msg=(
+                    "The winrm connection plugin should have the shell type of cmd and not powershell. "
+                    "This may result in an error when attempting to run more complex commands."
+                ),
+                help_text="Unset ansible_shell_type or set to cmd to use the required cmd shell.",
+            )
 
         if not C.DEFAULT_DEBUG:
             logging.getLogger('requests_credssp').setLevel(logging.INFO)
@@ -288,12 +300,11 @@ class Connection(ConnectionBase):
         # calculate transport if needed
         if self._winrm_transport is None or self._winrm_transport[0] is None:
             # TODO: figure out what we want to do with auto-transport selection in the face of NTLM/Kerb/CredSSP/Cert/Basic
-            transport_selector = ['ssl'] if self._winrm_scheme == 'https' else ['plaintext']
-
-            if HAVE_KERBEROS and ((self._winrm_user and '@' in self._winrm_user)):
-                self._winrm_transport = ['kerberos'] + transport_selector
+            if self._winrm_user and '@' in self._winrm_user:
+                # A UPN must be a domain account and we always default to Kerberos for this.
+                self._winrm_transport = ['kerberos']
             else:
-                self._winrm_transport = transport_selector
+                self._winrm_transport = ['ssl'] if self._winrm_scheme == 'https' else ['plaintext']
 
         unsupported_transports = set(self._winrm_transport).difference(self._winrm_supported_authtypes)
 
@@ -418,7 +429,12 @@ class Connection(ConnectionBase):
         for transport in self._winrm_transport:
             if transport == 'kerberos':
                 if not HAVE_KERBEROS:
-                    errors.append('kerberos: the python kerberos library is not installed')
+                    kerb_msg = (
+                        'WinRM Kerberos authentication requested but the python kerberos library is not installed. '
+                        'Please install the pykerberos library, set a different authentication method with ansible_winrm_transport, '
+                        'or use a local user account to connect using basic authentication.'
+                    )
+                    errors.append(kerb_msg)
                     continue
                 if self._kerb_managed:
                     self._kerb_auth(self._winrm_user, self._winrm_pass)
@@ -604,7 +620,7 @@ class Connection(ConnectionBase):
                     self._winrm_write_stdin(command_id, stdin_iterator)
 
             except Exception as ex:
-                display.error_as_warning("ERROR DURING WINRM SEND INPUT. Attempting to recover.", ex)
+                display.error_as_warning(f"ERROR DURING WINRM SEND INPUT TO {self._winrm_host}. Attempting to recover.", ex)
                 stdin_push_failed = True
 
             # Even on a failure above we try at least once to get the output
@@ -618,17 +634,21 @@ class Connection(ConnectionBase):
             stdout = to_text(b_stdout)
             stderr = to_text(b_stderr)
 
+            log_stdout = stdout
+            log_stderr = stderr
+            if self._play_context.no_log:
+                log_stdout = log_stderr = '<censored due to no log>'
+
             if from_exec:
-                display.vvvvv('WINRM RESULT <Response code %d, out %r, err %r>' % (rc, stdout, stderr), host=self._winrm_host)
+                display.vvvvv(f'WINRM RESULT <Response code {rc}, out {log_stdout!r}, err {log_stderr!r}>', host=self._winrm_host)
             display.vvvvvv('WINRM RC %d' % rc, host=self._winrm_host)
-            display.vvvvvv('WINRM STDOUT %s' % stdout, host=self._winrm_host)
-            display.vvvvvv('WINRM STDERR %s' % stderr, host=self._winrm_host)
+            display.vvvvvv(f'WINRM STDOUT {log_stdout}', host=self._winrm_host)
+            display.vvvvvv(f'WINRM STDERR {log_stderr}', host=self._winrm_host)
 
             # This is done after logging so we can still see the raw stderr for
             # debugging purposes.
-            if b_stderr.startswith(b"#< CLIXML"):
-                b_stderr = _parse_clixml(b_stderr)
-                stderr = to_text(stderr)
+            b_stderr = _clixml.replace_stderr_clixml(b_stderr)
+            stderr = to_text(stderr)
 
             if stdin_push_failed:
                 # There are cases where the stdin input failed but the WinRM service still processed it. We attempt to
@@ -722,15 +742,20 @@ class Connection(ConnectionBase):
     def exec_command(self, cmd: str, in_data: bytes | None = None, sudoable: bool = True) -> tuple[int, bytes, bytes]:
         super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
 
-        encoded_prefix = self._shell._encode_script('', as_list=False, strict_mode=False, preserve_rc=False)
-        if cmd.startswith(encoded_prefix) or cmd.startswith("type "):
-            # Avoid double encoding the script, the first means we are already
-            # running the standard PowerShell command, the latter is used for
-            # the no pipeline case where it uses type to pipe the script into
-            # powershell which is known to work without re-encoding as pwsh.
-            cmd_parts = cmd.split(" ")
+        if cmd.find(" -EncodedCommand ") != -1:
+            # Avoid double encoding the script if we can help it. This is a
+            # rudimentary check but seeing -EncodedCommand as an argument most
+            # likely means we are running PowerShell or at least any executable
+            # with an argument rather than a shell command. While WinRM accepts
+            # a command and args separately it is just joined together with a
+            # space on the remote side and we expect cmd to already be safely
+            # escaped.
+            cmd_parts = [cmd]
         else:
-            cmd_parts = self._shell._encode_script(cmd, as_list=True, strict_mode=False, preserve_rc=False)
+            # For backwards compatibility winrm always wrapped every command
+            # within PowerShell. This makes raw not very raw but we can't
+            # change that now.
+            cmd_parts = _script.get_pwsh_encoded_cmdline(cmd, override_execution_policy=True)
 
         # TODO: display something meaningful here
         display.vvv("EXEC (via pipeline wrapper)")
@@ -775,7 +800,7 @@ class Connection(ConnectionBase):
         copy_script, copy_script_stdin = _bootstrap_powershell_script('winrm_put_file.ps1', {
             'Path': out_path,
         }, has_input=True)
-        cmd_parts = self._shell._encode_script(copy_script, as_list=True, strict_mode=False, preserve_rc=False)
+        cmd_parts = _script.get_pwsh_encoded_cmdline(copy_script, override_execution_policy=True)
 
         status_code, b_stdout, b_stderr = self._winrm_exec(
             cmd_parts[0],
@@ -820,7 +845,7 @@ class Connection(ConnectionBase):
                         'Offset': offset,
                     })
                     display.vvvvv('WINRM FETCH "%s" to "%s" (offset=%d)' % (in_path, out_path, offset), host=self._winrm_host)
-                    cmd_parts = self._shell._encode_script(script, as_list=True, preserve_rc=False)
+                    cmd_parts = _script.get_pwsh_encoded_cmdline(script, override_execution_policy=True)
                     status_code, b_stdout, b_stderr = self._winrm_exec(cmd_parts[0], cmd_parts[1:], stdin_iterator=self._wrapper_payload_stream(in_data))
                     stdout = to_text(b_stdout)
                     stderr = to_text(b_stderr)
@@ -844,7 +869,6 @@ class Connection(ConnectionBase):
                             break
                         offset += len(data)
                 except Exception:
-                    traceback.print_exc()
                     raise AnsibleError('failed to transfer file to "%s"' % to_native(out_path))
         finally:
             if out_file:
@@ -857,3 +881,6 @@ class Connection(ConnectionBase):
         self.shell_id = None
         self.protocol = None
         self._connected = False
+
+    def is_pipelining_enabled(self, wrap_async: bool = False) -> bool:
+        return True

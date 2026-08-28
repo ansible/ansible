@@ -18,6 +18,10 @@ short_description: Add or remove an apt key
 description:
     - Add or remove an I(apt) key, optionally downloading it.
 extends_documentation_fragment: action_common_attributes
+deprecated:
+    alternative: ansible.builtin.deb822_repository
+    why: The M(ansible.builtin.apt_key) module is deprecated in favor of the M(ansible.builtin.deb822_repository) module.
+    removed_in: "2.25"
 attributes:
     check_mode:
         support: full
@@ -144,7 +148,7 @@ after:
     type: list
     sample: ["D8576A8BA88D21E9", "3B4FE6ACC0B21F32", "D94AA3F0EFE21092", "871920D1991BC93C"]
 before:
-    description: List of apt key ids or fingprints before any modifications
+    description: List of apt key ids or fingerprints before any modifications
     returned: always
     type: list
     sample: ["3B4FE6ACC0B21F32", "D94AA3F0EFE21092", "871920D1991BC93C"]
@@ -175,7 +179,7 @@ import os
 from ansible.module_utils.common.text.converters import to_native
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.locale import get_best_parsable_locale
-from ansible.module_utils.urls import fetch_url
+from ansible.module_utils.urls import fetch_url, is_fetch_success, mask_url
 
 
 apt_key_bin = None
@@ -312,12 +316,12 @@ def download_key(module, url):
     try:
         # note: validate_certs and other args are pulled from module directly
         rsp, info = fetch_url(module, url, use_proxy=True)
-        if info['status'] != 200:
-            module.fail_json(msg="Failed to download key at %s: %s" % (url, info['msg']))
+        if not is_fetch_success(info):
+            module.fail_json(msg="Failed to download key at %s: %s" % (mask_url(url), info['msg']))
 
         return rsp.read()
     except Exception:
-        module.fail_json(msg=f"Error getting key id from url: {url}")
+        module.fail_json(msg=f"Error getting key id from url: {mask_url(url)}")
 
 
 def get_key_id_from_file(module, filename, data=None):

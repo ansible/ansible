@@ -961,3 +961,41 @@
         - hard_link_file.txt
 
 # END #55971
+
+- name: Regression test for https://github.com/ansible/ansible/issues/57573
+  block:
+    - name: Create directory
+      file:
+        path: "{{ remote_tmp_dir }}/foobar2"
+        state: directory
+        mode: 0700
+
+    - name: Touch file in directory
+      file:
+        path: "{{ remote_tmp_dir }}/foobar2/test.txt"
+        state: touch
+
+    - name: Change permissions on directory
+      file:
+        path: "{{ remote_tmp_dir }}/foobar2"
+        state: directory
+        mode: 0000
+
+    - name: Try to remove file from inaccessible directory
+      become: yes
+      become_user: nobody
+      file:
+        path: "{{ remote_tmp_dir }}/foobar2/test.txt"
+        state: absent
+      register: removal_result
+
+    - name: Verify that warning about inaccessible path has been displayed
+      assert:
+        that:
+          - >
+            removal_result.warnings
+            | select('match', '^Insufficient permissions to access .+ Treating as absent')
+            | list
+            | length >= 1
+
+# END #57573

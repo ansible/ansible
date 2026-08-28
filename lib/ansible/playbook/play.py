@@ -17,11 +17,15 @@
 
 from __future__ import annotations
 
+import functools as _functools
+import pathlib as _pathlib
+
 from ansible import constants as C
 from ansible import context
 from ansible.errors import AnsibleError
-from ansible.errors import AnsibleParserError, AnsibleAssertionError
+from ansible.errors import AnsibleParserError, AnsibleAssertionError, AnsibleValueOmittedError
 from ansible.module_utils.common.collections import is_sequence
+from ansible.module_utils.common.yaml import yaml_dump
 from ansible.playbook.attribute import NonInheritableFieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.block import Block
@@ -32,6 +36,8 @@ from ansible.playbook.task import Task
 from ansible.playbook.taggable import Taggable
 from ansible.parsing.vault import EncryptedString
 from ansible.utils.display import Display
+
+from ansible._internal._templating._engine import TemplateEngine as _TE
 
 display = Display()
 
@@ -63,6 +69,8 @@ class Play(Base, Taggable, CollectionSearch):
     # Variable Attributes
     vars_files = NonInheritableFieldAttribute(isa='list', default=list, priority=99)
     vars_prompt = NonInheritableFieldAttribute(isa='list', default=list, always_post_validate=False)
+
+    validate_argspec = NonInheritableFieldAttribute(isa='string', always_post_validate=True)
 
     # Role Attributes
     roles = NonInheritableFieldAttribute(isa='list', default=list, priority=90)
@@ -167,37 +175,24 @@ class Play(Base, Taggable, CollectionSearch):
 
         return super(Play, self).preprocess_data(ds)
 
-    # DTFIX-FUTURE: these do nothing but augment the exception message; DRY and nuke
+    def _load(self, attr: str, ds: object) -> list[Block]:
+        """
+        Loads a list of blocks from a list which may be mixed tasks/blocks.
+        Bare tasks outside of a block are given an implicit block.
+        """
+        try:
+            return load_list_of_blocks(ds=ds, play=self, variable_manager=self._variable_manager, loader=self._loader)
+        except AssertionError as ex:
+            raise AnsibleParserError(f"A malformed block was encountered while loading {attr}.", obj=self._ds) from ex
 
     def _load_tasks(self, attr, ds):
-        """
-        Loads a list of blocks from a list which may be mixed tasks/blocks.
-        Bare tasks outside of a block are given an implicit block.
-        """
-        try:
-            return load_list_of_blocks(ds=ds, play=self, variable_manager=self._variable_manager, loader=self._loader)
-        except AssertionError as ex:
-            raise AnsibleParserError("A malformed block was encountered while loading tasks.", obj=self._ds) from ex
+        return self._load(attr, ds)
 
     def _load_pre_tasks(self, attr, ds):
-        """
-        Loads a list of blocks from a list which may be mixed tasks/blocks.
-        Bare tasks outside of a block are given an implicit block.
-        """
-        try:
-            return load_list_of_blocks(ds=ds, play=self, variable_manager=self._variable_manager, loader=self._loader)
-        except AssertionError as ex:
-            raise AnsibleParserError("A malformed block was encountered while loading pre_tasks.", obj=self._ds) from ex
+        return self._load(attr, ds)
 
     def _load_post_tasks(self, attr, ds):
-        """
-        Loads a list of blocks from a list which may be mixed tasks/blocks.
-        Bare tasks outside of a block are given an implicit block.
-        """
-        try:
-            return load_list_of_blocks(ds=ds, play=self, variable_manager=self._variable_manager, loader=self._loader)
-        except AssertionError as ex:
-            raise AnsibleParserError("A malformed block was encountered while loading post_tasks.", obj=self._ds) from ex
+        return self._load(attr, ds)
 
     def _load_handlers(self, attr, ds):
         """
@@ -306,19 +301,9 @@ class Play(Base, Taggable, CollectionSearch):
         t.args['_raw_params'] = 'flush_handlers'
         t.implicit = True
         t.set_loader(self._loader)
+        t.tags = ['always']
 
-        if self.tags:
-            # Avoid calling flush_handlers in case the whole play is skipped on tags,
-            # this could be performance improvement since calling flush_handlers on
-            # large inventories could be expensive even if no hosts are notified
-            # since we call flush_handlers per host.
-            # Block.filter_tagged_tasks ignores evaluating tags on implicit meta
-            # tasks so we need to explicitly call Task.evaluate_tags here.
-            t.tags = self.tags
-            if t.evaluate_tags(self.only_tags, self.skip_tags, all_vars=self.vars):
-                flush_block.block = [t]
-        else:
-            flush_block.block = [t]
+        flush_block.block = [t]
 
         # NOTE keep flush_handlers tasks even if a section has no regular tasks,
         #      there may be notified handlers from the previous section
@@ -399,36 +384,6 @@ class Play(Base, Taggable, CollectionSearch):
                 tasklist.append(task)
         return tasklist
 
-    def serialize(self):
-        data = super(Play, self).serialize()
-
-        roles = []
-        for role in self.get_roles():
-            roles.append(role.serialize())
-        data['roles'] = roles
-        data['included_path'] = self._included_path
-        data['action_groups'] = self._action_groups
-        data['group_actions'] = self._group_actions
-
-        return data
-
-    def deserialize(self, data):
-        super(Play, self).deserialize(data)
-
-        self._included_path = data.get('included_path', None)
-        self._action_groups = data.get('action_groups', {})
-        self._group_actions = data.get('group_actions', {})
-        if 'roles' in data:
-            role_data = data.get('roles', [])
-            roles = []
-            for role in role_data:
-                r = Role()
-                r.deserialize(role)
-                roles.append(r)
-
-            setattr(self, 'roles', roles)
-            del data['roles']
-
     def copy(self):
         new_me = super(Play, self).copy()
         new_me.role_cache = self.role_cache.copy()
@@ -437,3 +392,92 @@ class Play(Base, Taggable, CollectionSearch):
         new_me._action_groups = self._action_groups
         new_me._group_actions = self._group_actions
         return new_me
+
+    def _post_validate_validate_argspec(self, attr: NonInheritableFieldAttribute, value: object, templar: _TE) -> str | None:
+        """Validate user input is a bool or string, and return the corresponding argument spec name."""
+
+        # Ensure the configuration is valid
+        if isinstance(value, str):
+            try:
+                value = templar.template(value)
+            except AnsibleValueOmittedError:
+                value = False
+
+        if not isinstance(value, (str, bool)):
+            raise AnsibleParserError(f"validate_argspec must be a boolean or string, not {type(value)}", obj=value)
+
+        # Short-circuit if configuration is turned off or inapplicable
+        if not value or self._origin is None:
+            return None
+
+        # Use the requested argument spec or fall back to the play name
+        argspec_name = None
+        if isinstance(value, str):
+            argspec_name = value
+        elif self._ds.get("name"):
+            argspec_name = self.name
+
+        metadata_err = argspec_err = ""
+        if not argspec_name:
+            argspec_err = (
+                "A play name is required when validate_argspec is True. "
+                "Alternatively, set validate_argspec to the name of an argument spec."
+            )
+        if self._metadata_path is None:
+            metadata_err = "A playbook meta file is required. Considered:\n  - "
+            metadata_err += "\n  - ".join([path.as_posix() for path in self._metadata_candidate_paths])
+
+        if metadata_err or argspec_err:
+            error = f"{argspec_err + (' ' if argspec_err else '')}{metadata_err}"
+            raise AnsibleParserError(error, obj=self._origin)
+
+        metadata = self._loader.load_from_file(self._metadata_path)
+
+        try:
+            metadata = metadata['argument_specs']
+            metadata = metadata[argspec_name]
+            options = metadata['options']
+        except (TypeError, KeyError):
+            options = None
+
+        if not isinstance(options, dict):
+            raise AnsibleParserError(
+                f"No argument spec named '{argspec_name}' in {self._metadata_path}. Minimally expected:\n"
+                + yaml_dump({"argument_specs": {f"{argspec_name!s}": {"options": {}}}}),
+                obj=metadata,
+            )
+
+        return argspec_name
+
+    @property
+    def _metadata_candidate_paths(self) -> list[_pathlib.Path]:
+        """A list of possible playbook.meta paths in configured order."""
+        extensions = C.config.get_config_value("YAML_FILENAME_EXTENSIONS")
+        if self._origin.path.endswith(tuple(extensions)):
+            playbook_without_ext = self._origin.path.rsplit('.', 1)[0]
+        else:
+            playbook_without_ext = self._origin.path
+
+        return [_pathlib.Path(playbook_without_ext + ".meta" + ext) for ext in extensions + ['']]
+
+    @_functools.cached_property
+    def _metadata_path(self) -> str | None:
+        """Locate playbook meta path:
+
+        playbook{ext?} -> playbook.meta{ext?}
+        """
+        if self._origin is None:
+            # adhoc, ansible-console don't have an associated playbook
+            return None
+        for candidate in self._metadata_candidate_paths:
+            if candidate.is_file():
+                return candidate.as_posix()
+        return None
+
+    @property
+    def argument_spec(self) -> dict:
+        """Retrieve the argument spec if one is configured."""
+        if not self.validate_argspec:
+            return {}
+
+        return self._loader.load_from_file(self._metadata_path)['argument_specs'][self.validate_argspec]['options']

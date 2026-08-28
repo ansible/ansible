@@ -94,6 +94,8 @@ Vagrantfile
 /lib/ansible_core.egg-info/
 # First used in the `devel` branch during Ansible 2.18 development.
 /ansible_core.egg-info/
+# First used in the `devel` branch during Ansible 2.21 development.
+lib/ansible_core-*.dist-info/
 # vendored lib dir
 lib/ansible/_vendor/*
 !lib/ansible/_vendor/__init__.py
@@ -127,3 +129,5 @@ test/units/.coverage.*
 /SYMLINK_CACHE.json
 changelogs/.plugin-cache.yaml
 .ansible-test-timeout.json
+# Agents
+CLAUDE.local.md

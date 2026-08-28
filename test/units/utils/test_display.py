@@ -16,8 +16,9 @@ import pytest
 
 from ansible.module_utils.datatag import deprecator_from_collection_name
 from ansible.module_utils._internal import _deprecator, _errors, _messages
-from ansible.utils.display import _LIBC, _MAX_INT, Display, get_text_width, _format_message
+from ansible.utils.display import _LIBC, _MAX_INT, Display, get_text_width
 from ansible.utils.multiprocessing import context as multiprocessing_context
+from ansible._internal import _display_utils
 
 
 @pytest.fixture
@@ -164,7 +165,7 @@ def test_format_message_deprecation_with_multiple_details() -> None:
         ),
     )
 
-    result = _format_message(_messages.DeprecationSummary(event=event), False)
+    result = _display_utils.format_message(_messages.DeprecationSummary(event=event), False)
 
     assert result == '''Ignoring ExceptionX. This feature will be removed in the future: Something went wrong.
 
@@ -236,7 +237,7 @@ def test_get_deprecation_message_with_plugin_info(kwargs: dict[str, t.Any], expe
     for kwarg in ('version', 'date', 'deprecator'):
         kwargs.setdefault(kwarg, None)
 
-    msg = Display()._get_deprecation_message_with_plugin_info(**kwargs)
+    msg = _display_utils.get_deprecation_message_with_plugin_info(**kwargs)
 
     assert msg == expected
 

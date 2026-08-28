@@ -63,7 +63,7 @@ class TestConnectionWinRM(object):
                 '_winrm_kwargs': {'username': 'user@domain.com',
                                   'password': None},
                 '_winrm_pass': None,
-                '_winrm_transport': ['kerberos', 'ssl'],
+                '_winrm_transport': ['kerberos'],
                 '_winrm_user': 'user@domain.com'
             },
             True
@@ -78,7 +78,7 @@ class TestConnectionWinRM(object):
                 '_winrm_kwargs': {'username': 'user@domain.com',
                                   'password': None},
                 '_winrm_pass': None,
-                '_winrm_transport': ['ssl'],
+                '_winrm_transport': ['kerberos'],
                 '_winrm_user': 'user@domain.com'
             },
             False
@@ -93,7 +93,7 @@ class TestConnectionWinRM(object):
                 '_winrm_kwargs': {'username': 'user@domain.com',
                                   'password': 'pass'},
                 '_winrm_pass': 'pass',
-                '_winrm_transport': ['kerberos', 'ssl'],
+                '_winrm_transport': ['kerberos'],
                 '_winrm_user': 'user@domain.com'
             },
             True
@@ -199,7 +199,7 @@ class TestConnectionWinRM(object):
     )
 
     @pytest.mark.parametrize('options, direct, expected, kerb',
-                             ((o, d, e, k) for o, d, e, k in OPTIONS_DATA))
+                             list(OPTIONS_DATA))
     def test_set_options(self, options, direct, expected, kerb):
         winrm.HAVE_KERBEROS = kerb
 

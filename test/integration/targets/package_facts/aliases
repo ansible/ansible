@@ -1,4 +1,5 @@
 destructive
 needs/root
 shippable/posix/group2
+shippable/targeted/rhel8
 skip/macos

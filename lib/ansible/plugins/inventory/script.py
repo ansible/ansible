@@ -256,9 +256,10 @@ class InventoryModule(BaseInventoryPlugin):
         group = self.inventory.add_group(group)
 
         if not isinstance(data, dict):
+            original_type = native_type_name(data)
             data = {'hosts': data}
             display.deprecated(
-                msg=f"Group {group!r} was converted to {native_type_name(dict)!r} from {native_type_name(data)!r}.",
+                msg=f"Group {group!r} was converted to {native_type_name(dict)!r} from {original_type!r}.",
                 version='2.23',
                 obj=origin,
             )

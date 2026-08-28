@@ -314,7 +314,7 @@ VALID_SPECS = [
 
 @pytest.mark.parametrize(
     ('arg_spec', 'parameters', 'expected', 'valid_params'),
-    (i[1:] for i in VALID_SPECS),
+    [i[1:] for i in VALID_SPECS],
     ids=[i[0] for i in VALID_SPECS]
 )
 def test_valid_spec(arg_spec, parameters, expected, valid_params, mocker):

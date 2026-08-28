@@ -12,6 +12,7 @@ DOCUMENTATION = """
       - "The ini lookup reads the contents of a file in INI format C(key1=value1).
         This plugin retrieves the value on the right side after the equal sign C('=') of a given section C([section])."
       - "You can also read a property file which - in this case - does not contain section."
+    positional: _terms
     options:
       _terms:
         description: The key(s) to look up.
@@ -58,6 +59,11 @@ DOCUMENTATION = """
     seealso:
       - ref: playbook_task_paths
         description: Search paths used for relative files.
+      - module: community.general.ini_file
+      - plugin: community.general.from_ini
+        plugin_type: filter
+      - plugin: community.general.to_ini
+        plugin_type: filter
 """
 
 EXAMPLES = """

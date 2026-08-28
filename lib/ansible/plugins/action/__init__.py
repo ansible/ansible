@@ -17,10 +17,9 @@ import tempfile
 import typing as t
 
 from abc import ABC, abstractmethod
-from collections.abc import Sequence
+from collections.abc import Callable
 
 from ansible import constants as C
-from ansible._internal._errors import _captured, _error_utils
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleActionSkip, AnsibleActionFail, AnsibleAuthenticationFailure
 from ansible.executor.module_common import modify_module, _BuiltModule
 from ansible.executor.interpreter_discovery import discover_interpreter, InterpreterDiscoveryRequiredError
@@ -29,15 +28,14 @@ from ansible.module_utils.common.arg_spec import ArgumentSpecValidator
 from ansible.module_utils.errors import UnsupportedError
 from ansible.module_utils.json_utils import _filter_non_json_lines
 from ansible.module_utils.common.json import Direction, get_module_encoder, get_module_decoder
-from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
+from ansible.module_utils.common.text.converters import to_native, to_text
 from ansible.release import __version__
 from ansible.utils.collection_loader import resource_from_fqcr
 from ansible.utils.display import Display
-from ansible.vars.clean import remove_internal_keys
 from ansible.utils.plugin_docs import get_versioned_doclink
 from ansible import _internal
 from ansible._internal._templating import _engine
-
+from ansible._internal import _task
 from .. import _AnsiblePluginInfoMixin
 
 display = Display()
@@ -48,6 +46,8 @@ if t.TYPE_CHECKING:
     from ansible.playbook.task import Task
     from ansible.plugins.connection import ConnectionBase
     from ansible.template import Templar
+
+VariableLayer = _task.VariableLayer  # public API
 
 
 def _validate_utf8_json(d):
@@ -60,6 +60,14 @@ def _validate_utf8_json(d):
     elif isinstance(d, (list, tuple)):
         for o in d:
             _validate_utf8_json(o)
+
+
+class LowLevelExecuteCommandResult(t.TypedDict):
+    rc: int
+    stdout: str
+    stdout_lines: list[str]
+    stderr: str
+    stderr_lines: list[str]
 
 
 class ActionBase(ABC, _AnsiblePluginInfoMixin):
@@ -130,7 +138,9 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         if self._task.async_val and not self._supports_async:
             raise AnsibleActionFail('This action (%s) does not support async.' % self._task.action)
         elif self._task.check_mode and not self._supports_check_mode:
-            raise AnsibleActionSkip('This action (%s) does not support check mode.' % self._task.action)
+            # deprecated: description='switch to AnsibleActionNoCheckMode' core_version='2.25'
+            raise AnsibleActionSkip(f'This action ({self._task.action}) does not support check mode.')
+            # raise AnsibleActionNoCheckMode(f'This action ({self._task.action}) does not support check mode.')
 
         # Error if invalid argument is passed
         if self._VALID_ARGS:
@@ -205,6 +215,56 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         """
         if force or not self._task.async_val:
             self._remove_tmp_path(self._connection._shell.tmpdir)
+
+    @_internal.experimental
+    def add_host(
+        self,
+        host_name: str,
+        *,
+        host_vars: dict[str, object] | None = None,
+        parent_group_names: list[str] | None = None,
+    ) -> bool:
+        """
+        EXPERIMENTAL: Unstable API subject to change at any time without notice.
+        Add the given host to inventory.
+        """
+        return _task.TaskContext.current().inventory_rpc_client.add_host(_task.AddHost(
+            host_name=host_name,
+            host_vars=host_vars,
+            parent_group_names=parent_group_names,
+        ))
+
+    @_internal.experimental
+    def add_group(
+        self,
+        group_name: str,
+        *,
+        parent_group_names: list[str] | None = None,
+    ) -> bool:
+        """
+        EXPERIMENTAL: Unstable API subject to change at any time without notice.
+        Add the given group to inventory.
+        """
+        task_ctx = _task.TaskContext.current()
+        host_name = task_ctx.host_name
+
+        return task_ctx.inventory_rpc_client.add_group(host_name, _task.AddGroup(
+            group_name=group_name,
+            parent_group_names=parent_group_names,
+        ))
+
+    def register_host_variables(self, variables: dict[str, object], layer: VariableLayer = VariableLayer.REGISTER_VARS) -> None:
+        """
+        Register the given variables for the current host at the specified variable precedence layer.
+        Calling this method more than once for the same layer will override any previous value for the currently executing action.
+        """
+        self.__get_pending_changes().register_host_variables[layer] = variables
+
+    def __get_pending_changes(self) -> _task.PendingChanges:
+        if self._supports_async:
+            raise RuntimeError('Actions that support async cannot record pending changes.')
+
+        return _task.TaskContext.current().pending_changes
 
     @classmethod
     @contextlib.contextmanager
@@ -320,6 +380,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
                     environment=final_environment,
                     remote_is_local=bool(getattr(self._connection, '_remote_is_local', False)),
                     become_plugin=self._connection.become,
+                    shell_plugin=self._connection._shell,
                 )
 
                 break
@@ -347,7 +408,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
 
         return module_bits, module_path
 
-    def _compute_environment_string(self, raw_environment_out=None):
+    def _compute_environment_string(self, raw_environment_out=None) -> str:
         """
         Builds the environment string to be used when executing the remote task.
         """
@@ -391,7 +452,15 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         """
         Determines if we are required and can do pipelining, only 'new' style modules can support pipelining
         """
-        return bool(module_style == 'new' and self._connection.is_pipelining_enabled(wrap_async))
+        # FUTURE: Move async checks from connection.is_pipelining_enabled here
+        # as async and pipelining is a property on the execution layer and not
+        # the capabilities of the connection itself.
+        conditions = [
+            module_style == 'new',
+            not C.DEFAULT_KEEP_REMOTE_FILES,                     # user doesn't want to keep remote files
+            self._connection.is_pipelining_enabled(wrap_async),  # connection/become supports pipelining and is enabled
+        ]
+        return all(conditions)
 
     def _get_admin_users(self):
         """
@@ -447,7 +516,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         become_user = self.get_become_option('become_user')
         return bool(become_user and become_user not in admin_users + [remote_user])
 
-    def _make_tmp_path(self, remote_user=None):
+    def _make_tmp_path(self, remote_user: str | None = None) -> str:
         """
         Create and return a temporary path on a remote box.
         """
@@ -464,8 +533,16 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
 
         become_unprivileged = self._is_become_unprivileged()
         basefile = self._connection._shell._generate_temp_dir_name()
-        cmd = self._connection._shell._mkdtemp2(basefile=basefile, system=become_unprivileged, tmpdir=tmpdir)
-        result = self._low_level_execute_command(cmd.command, in_data=cmd.input_data, sudoable=False)
+
+        cmd = None
+        in_data = None
+        if self._connection.is_pipelining_enabled(wrap_async=False):
+            cmd_details = self._connection._shell._mkdtemp2(basefile=basefile, system=become_unprivileged, tmpdir=tmpdir)
+            cmd = cmd_details.command
+            in_data = cmd_details.input_data
+        else:
+            cmd = self._connection._shell.mkdtemp(basefile=basefile, system=become_unprivileged, tmpdir=tmpdir)
+        result = self._low_level_execute_command(cmd, in_data=in_data, sudoable=False)
 
         # error handling on this seems a little aggressive?
         if result['rc'] != 0:
@@ -532,7 +609,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
             else:
                 self._connection._shell.tmpdir = None
 
-    def _transfer_file(self, local_path, remote_path):
+    def _transfer_file(self, local_path: str, remote_path: str) -> str:
         """
         Copy a file from the controller to a remote path
 
@@ -550,7 +627,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         self._connection.put_file(local_path, remote_path)
         return remote_path
 
-    def _transfer_data(self, remote_path: str | bytes, data: str | bytes) -> str | bytes:
+    def _transfer_data(self, remote_path: str, data: str | bytes) -> str:
         """
         Copies the module data out to the temporary module path.
         """
@@ -671,8 +748,18 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
             become_user,
             setfacl_mode)
 
-        if res['rc'] == 0:
-            return remote_paths
+        match res.get('rc'):
+            case 0:
+                return remote_paths
+            case 2:
+                # invalid syntax (for example, missing user, missing colon)
+                self._display.debug(f"setfacl command failed with an invalid syntax. Trying chmod instead. Err: {res!r}")
+            case 127:
+                # setfacl binary does not exists or we don't have permission to use it.
+                self._display.debug(f"setfacl binary does not exist or does not have permission to use it. Trying chmod instead. Err: {res!r}")
+            case _:
+                # generic debug message
+                self._display.debug(f'Failed to set facl {setfacl_mode}, got:{res!r}')
 
         # Step 3b: Set execute if we need to. We do this before anything else
         # because some of the methods below might work but not let us set
@@ -896,8 +983,15 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
                 expand_path = '~%s' % (self._get_remote_user() or '')
 
         # use shell to construct appropriate command and execute
-        cmd = self._connection._shell._expand_user2(expand_path)
-        data = self._low_level_execute_command(cmd.command, in_data=cmd.input_data, sudoable=False)
+        cmd = None
+        in_data = None
+        if self._connection.is_pipelining_enabled(wrap_async=False):
+            cmd_details = self._connection._shell._expand_user2(expand_path)
+            cmd = cmd_details.command
+            in_data = cmd_details.input_data
+        else:
+            cmd = self._connection._shell.expand_user(expand_path)
+        data = self._low_level_execute_command(cmd, in_data=in_data, sudoable=False)
 
         try:
             initial_fragment = data['stdout'].strip().splitlines()[-1]
@@ -995,8 +1089,19 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
 
         module_args['_ansible_tracebacks_for'] = _traceback.traceback_for()
 
-    def _execute_module(self, module_name=None, module_args=None, tmp=None, task_vars=None, persist_files=False, delete_remote_tmp=None, wrap_async=False,
-                        ignore_unknown_opts: bool = False):
+        module_args['_ansible_inject_invocation'] = C.config.get_config_value('INJECT_INVOCATION', variables=task_vars)
+
+    def _execute_module(
+        self,
+        module_name: str | None = None,
+        module_args: dict[str, object] | None = None,
+        tmp: str | None = None,
+        task_vars: dict[str, object] | None = None,
+        persist_files: bool = False,
+        delete_remote_tmp: bool | None = None,
+        wrap_async: bool = False,
+        ignore_unknown_opts: bool = False,
+    ) -> dict[str, object]:
         """
         Transfer and run a module along with its arguments.
         """
@@ -1018,7 +1123,11 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         # If the module_style turns out to not be new and we didn't create the
         # remote tmp here, it will still be created. This must be done before
         # calling self._update_module_args() so the module wrapper has the
-        # correct remote_tmp value set
+        # correct remote_tmp value set.
+        # FUTURE: Async shouldn't be part of a connection's capabilities but
+        # rather part of the module's exec/style caps. The current setup is
+        # hard to achieve this as we need to build the module_args before we
+        # can build the module so we keep this here for now.
         if not self._is_pipelining_enabled("new", wrap_async) and tmpdir is None:
             self._make_tmp_path()
             tmpdir = self._connection._shell.tmpdir
@@ -1042,104 +1151,134 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
 
         # FUTURE: refactor this along with module build process to better encapsulate "smart wrapper" functionality
         module_bits, module_path = self._configure_module(module_name=module_name, module_args=module_args, task_vars=task_vars)
-        (module_style, shebang, module_data) = (module_bits.module_style, module_bits.shebang, module_bits.b_module_data)
+        (module_style, module_shebang, module_data) = (module_bits.module_style, module_bits.shebang, module_bits.b_module_data)
         display.vvv("Using module file %s" % module_path)
-        if not shebang and module_style != 'binary':
+        if not module_shebang and module_style != 'binary':
             raise AnsibleError("module (%s) is missing interpreter line" % module_name)
 
-        self._used_interpreter = shebang
-        remote_module_path = None
+        # If the module payload has async builtin, e.g. pwsh exec_wrapper, then
+        # we can bypass the async_wrapper.py and pipelining checks done for
+        # async as it's treated like a normal module.
+        wrap_async = wrap_async and not module_bits.has_async
 
-        if not self._is_pipelining_enabled(module_style, wrap_async):
-            # we might need remote tmp dir
+        self._used_interpreter = module_shebang
+
+        # FUTURE: Instead of module_style we should add "capabilities" to the
+        # module_bits dataclass that indicate things like argument format.
+        # This will reduce the cognitive overload of trying to remember all the
+        # different styles and what they mean.
+        args_file_path = None
+        remote_module_path = None
+        remote_files = []
+        if not self._is_pipelining_enabled(module_style) or wrap_async:
             if tmpdir is None:
                 self._make_tmp_path()
                 tmpdir = self._connection._shell.tmpdir
 
+            remote_files.append(tmpdir)
+
+            if module_style != 'new':
+                # binary, old, and non_native_want_json module styles use an
+                # args file to store the module arguments.
+                args_file_path = self._connection._shell.join_path(tmpdir, 'args')
+                remote_files.append(args_file_path)
+
             remote_module_filename = self._connection._shell.get_remote_filename(module_path)
             remote_module_path = self._connection._shell.join_path(tmpdir, 'AnsiballZ_%s' % remote_module_filename)
+            remote_files.append(remote_module_path)
 
-        args_file_path = None
-        if module_style in ('old', 'non_native_want_json', 'binary'):
-            # we'll also need a tmp file to hold our module arguments
-            args_file_path = self._connection._shell.join_path(tmpdir, 'args')
-
-        if remote_module_path or module_style != 'new':
             display.debug("transferring module to remote %s" % remote_module_path)
-            if module_style == 'binary':
-                self._transfer_file(module_path, remote_module_path)
-            else:
+            if module_data:
+                # modify_module edited the data in some way, we cannot transfer
+                # from the existing path.
                 self._transfer_data(remote_module_path, module_data)
-            if module_style == 'old':
-                # we need to dump the module args to a k=v string in a file on
-                # the remote system, which can be read and parsed by the module
-                args_data = ""
-                for k, v in module_args.items():
-                    args_data += '%s=%s ' % (k, shlex.quote(str(v)))
-                self._transfer_data(args_file_path, args_data)
-            elif module_style in ('non_native_want_json', 'binary'):
-                profile_encoder = get_module_encoder(module_bits.serialization_profile, Direction.CONTROLLER_TO_MODULE)
-                self._transfer_data(args_file_path, json.dumps(module_args, cls=profile_encoder))
+            else:
+                self._transfer_file(module_path, remote_module_path)
+
+            if args_file_path:
+                if module_style == 'old':
+                    # we need to dump the module args to a k=v string in a file on
+                    # the remote system, which can be read and parsed by the module
+                    args_data = ""
+                    for k, v in module_args.items():
+                        args_data += '%s=%s ' % (k, shlex.quote(str(v)))
+                    self._transfer_data(args_file_path, args_data)
+                else:
+                    profile_encoder = get_module_encoder(module_bits.serialization_profile, Direction.CONTROLLER_TO_MODULE)
+                    self._transfer_data(args_file_path, json.dumps(module_args, cls=profile_encoder))
+
             display.debug("done transferring module to remote")
 
-        environment_string = self._compute_environment_string()
+        environment_string = ''
+        if not module_bits.has_environment:
+            environment_string = self._compute_environment_string()
 
         # remove the ANSIBLE_ASYNC_DIR env entry if we added a temporary one for
         # the async_wrapper task.
         if remove_async_dir is not None:
             del self._task.environment[remove_async_dir]
 
-        remote_files = []
-        if tmpdir and remote_module_path:
-            remote_files = [tmpdir, remote_module_path]
+        module_in_data: bytes | None = None
+        module_cmd = ''
+        module_cmd_args: list[str] = []
 
-        if args_file_path:
-            remote_files.append(args_file_path)
+        # FUTURE: If we can deprecated and remove shell.build_module_command()
+        # we can move all this logic into the get_command_args for all module
+        # types rather than it being opt in per exec style.
+        if cmd_args := module_bits.get_command_args(remote_module_path):
+            module_cmd_args, module_in_data = cmd_args
 
-        sudoable = True
-        in_data = None
-        cmd = ""
+        else:
+            if remote_module_path:
+                module_cmd_args = [remote_module_path]
+            else:
+                module_in_data = module_data
 
-        if wrap_async and not self._connection.always_pipeline_modules:
+            # We still skip build_module_command if using async as that always
+            # built its own command. The async_wrapper expects the full command
+            # to run so we need to add the shebang and args path (if set).
+            if wrap_async:
+                if module_shebang:
+                    module_interpreter = module_shebang.replace('#!', '').strip()
+                    module_cmd_args.insert(0, module_interpreter)
+
+                if args_file_path:
+                    module_cmd_args.append(args_file_path)
+
+            else:
+                module_cmd = self._connection._shell.build_module_command(
+                    environment_string,
+                    module_shebang,
+                    " ".join(module_cmd_args),
+                    arg_path=args_file_path,
+                ).strip()
+
+        if wrap_async:
             # configure, upload, and chmod the async_wrapper module
             (async_module_bits, async_module_path) = self._configure_module(module_name='ansible.legacy.async_wrapper', module_args=dict(), task_vars=task_vars)
-            (shebang, async_module_data) = (async_module_bits.shebang, async_module_bits.b_module_data)
+            (async_shebang, async_module_data) = (async_module_bits.shebang, async_module_bits.b_module_data)
             async_module_remote_filename = self._connection._shell.get_remote_filename(async_module_path)
             remote_async_module_path = self._connection._shell.join_path(tmpdir, async_module_remote_filename)
             self._transfer_data(remote_async_module_path, async_module_data)
             remote_files.append(remote_async_module_path)
 
-            async_limit = self._task.async_val
+            async_limit = str(self._task.async_val)
             async_jid = f'j{secrets.randbelow(999999999999)}'
 
             # call the interpreter for async_wrapper directly
             # this permits use of a script for an interpreter on non-Linux platforms
-            interpreter = shebang.replace('#!', '').strip()
-            async_cmd = [interpreter, remote_async_module_path, async_jid, async_limit, remote_module_path]
+            interpreter = async_shebang.replace('#!', '').strip()
 
+            preserve_tmp = str(not self._should_remove_tmp_path(tmpdir)).lower()
+            async_cmd = [interpreter, remote_async_module_path, async_jid, async_limit, preserve_tmp, remote_module_path]
+            async_cmd.extend(module_cmd_args)
+
+            module_cmd_args = async_cmd
+
+        if not module_cmd:
+            module_cmd = self._connection._shell.join(module_cmd_args)
             if environment_string:
-                async_cmd.insert(0, environment_string)
-
-            if args_file_path:
-                async_cmd.append(args_file_path)
-            else:
-                # maintain a fixed number of positional parameters for async_wrapper
-                async_cmd.append('_')
-
-            if not self._should_remove_tmp_path(tmpdir):
-                async_cmd.append("-preserve_tmp")
-
-            cmd = " ".join(to_text(x) for x in async_cmd)
-
-        else:
-
-            if self._is_pipelining_enabled(module_style):
-                in_data = module_data
-                display.vvv("Pipelining is enabled.")
-            else:
-                cmd = remote_module_path
-
-            cmd = self._connection._shell.build_module_command(environment_string, shebang, cmd, arg_path=args_file_path).strip()
+                module_cmd = f"{environment_string} {module_cmd}"
 
         # Fix permissions of the tmpdir path and tmpdir files. This should be called after all
         # files have been transferred.
@@ -1149,56 +1288,42 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
             self._fixup_perms2(remote_files, self._get_remote_user())
 
         # actually execute
-        res = self._low_level_execute_command(cmd, sudoable=sudoable, in_data=in_data)
+        res = self._low_level_execute_command(
+            module_cmd,
+            sudoable=not module_bits.has_become,
+            in_data=module_in_data,
+            process_result=module_bits.process_result,
+        )
 
         # parse the main result
-        data = self._parse_returned_data(res, module_bits.serialization_profile)
+        utr = self._parse_returned_data(res, module_bits.serialization_profile)
 
         # NOTE: INTERNAL KEYS ONLY ACCESSIBLE HERE
         # get internal info before cleaning
-        if data.pop("_ansible_suppress_tmpdir_delete", False):
+        if utr.suppress_tmpdir_delete:
             self._cleanup_remote_tmp = False
 
-        # NOTE: dnf returns results .. but that made it 'compatible' with squashing, so we allow mappings, for now
-        if 'results' in data and (not isinstance(data['results'], Sequence) or isinstance(data['results'], str)):
-            data['ansible_module_results'] = data['results']
-            del data['results']
-            display.warning("Found internal 'results' key in module return, renamed to 'ansible_module_results'.")
-
         # remove internal keys
-        remove_internal_keys(data)
+        utr.remove_internal_keys()
 
         if wrap_async:
             # async_wrapper will clean up its tmpdir on its own so we want the controller side to
             # forget about it now
             self._connection._shell.tmpdir = None
 
-            # FIXME: for backwards compat, figure out if still makes sense
-            data['changed'] = True
-
-        # pre-split stdout/stderr into lines if needed
-        if 'stdout' in data and 'stdout_lines' not in data:
-            # if the value is 'False', a default won't catch it.
-            txt = data.get('stdout', None) or u''
-            data['stdout_lines'] = txt.splitlines()
-        if 'stderr' in data and 'stderr_lines' not in data:
-            # if the value is 'False', a default won't catch it.
-            txt = data.get('stderr', None) or u''
-            data['stderr_lines'] = txt.splitlines()
+            # RPFIX-9: FUTURE: for backward compat (pre-RP), figure out if still makes sense
+            utr.changed = True
 
         # propagate interpreter discovery results back to the controller
         if self._discovered_interpreter_key:
-            if data.get('ansible_facts') is None:
-                data['ansible_facts'] = {}
-
-            data['ansible_facts'][self._discovered_interpreter_key] = self._discovered_interpreter
+            utr.set_fact(self._discovered_interpreter_key, self._discovered_interpreter)
 
         display.debug("done with _execute_module (%s, %s)" % (module_name, module_args))
-        return data
+        return utr.as_result_dict(for_round_trip=True)
 
-    def _parse_returned_data(self, res: dict[str, t.Any], profile: str) -> dict[str, t.Any]:
+    def _parse_returned_data(self, res: LowLevelExecuteCommandResult, profile: str) -> _task.UnifiedTaskResult:
         try:
-            filtered_output, warnings = _filter_non_json_lines(res.get('stdout', ''), objects_only=True)
+            filtered_output, warnings = _filter_non_json_lines(res['stdout'], objects_only=True)
 
             for w in warnings:
                 display.warning(w)
@@ -1207,9 +1332,8 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
 
             data = json.loads(filtered_output, cls=decoder)
 
-            _captured.AnsibleModuleCapturedError.normalize_result_exception(data)
-
-            data.update(_ansible_parsed=True)  # this must occur after normalize_result_exception, since it checks the type of data to ensure it's a dict
+            utr = _task.UnifiedTaskResult.from_module_result_dict(data)
+            utr.ansible_parsed = True  # this must occur after normalize_result_exception, since it checks the type of data to ensure it's a dict
         except ValueError as ex:
             message = "Module result deserialization failed."
             help_text = ""
@@ -1221,7 +1345,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
                 # see: https://github.com/ansible/ansible/pull/53534
                 not_found_err_re = re.compile(rf'{re.escape(interpreter)}: (?:No such file or directory|not found|command not found)')
 
-                if not_found_err_re.search(res.get('stderr', '')) or not_found_err_re.search(res.get('stdout', '')):
+                if not_found_err_re.search(res['stderr']) or not_found_err_re.search(res['stdout']):
                     message = f"The module interpreter {interpreter!r} was not found."
                     help_text = 'Consider overriding the configured interpreter path for this host. '
                     include_cause_message = False  # cause context *might* be useful in the traceback, but the JSON deserialization failure message is not
@@ -1241,22 +1365,25 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
 
                 raise error from ex
             except AnsibleError as ansible_ex:
-                sentinel = object()
+                utr = _task.UnifiedTaskResult.create_from_module_exception(ansible_ex)
+                utr.ansible_parsed = False
+                utr.module_stdout = res['stdout']
+                utr.module_stderr = res['stderr']
+                utr.rc = res['rc']
 
-                data = _error_utils.result_dict_from_exception(ansible_ex)
-                data.update(
-                    _ansible_parsed=False,
-                    module_stdout=res.get('stdout', ''),
-                    module_stderr=res.get('stderr', sentinel),
-                    rc=res.get('rc', sentinel),
-                )
-
-                data = {k: v for k, v in data.items() if v is not sentinel}
-
-        return data
+        return utr
 
     # FIXME: move to connection base
-    def _low_level_execute_command(self, cmd, sudoable=True, in_data=None, executable=None, encoding_errors='surrogate_then_replace', chdir=None):
+    def _low_level_execute_command(
+        self,
+        cmd: str,
+        sudoable: bool = True,
+        in_data: bytes | None = None,
+        executable: str | None = None,
+        encoding_errors: str = 'surrogate_then_replace',
+        chdir: str | None = None,
+        process_result: Callable[[int, bytes, bytes], tuple[int, bytes, bytes]] | None = None,
+    ) -> LowLevelExecuteCommandResult:
         """
         This is the function which executes the low level shell command, which
         may be commands to create/remove directories for temporary files, or to
@@ -1297,9 +1424,6 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         if self._connection.allow_executable:
             if executable is None:
                 executable = self._play_context.executable
-                # mitigation for SSH race which can drop stdout (https://github.com/ansible/ansible/issues/13876)
-                # only applied for the default executable to avoid interfering with the raw action
-                cmd = self._connection._shell.append_command(cmd, 'sleep 0')
             if executable:
                 cmd = executable + ' -c ' + shlex.quote(cmd)
 
@@ -1307,9 +1431,12 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
 
         # Change directory to basedir of task for command execution when connection is local
         if self._connection.transport == 'local':
-            self._connection.cwd = to_bytes(self._loader.get_basedir(), errors='surrogate_or_strict')
+            self._connection.cwd = self._loader.get_basedir()
 
         rc, stdout, stderr = self._connection.exec_command(cmd, in_data=in_data, sudoable=sudoable)
+
+        if process_result:
+            rc, stdout, stderr = process_result(rc, stdout, stderr)
 
         # stdout and stderr may be either a file-like or a bytes object.
         # Convert either one to a text type

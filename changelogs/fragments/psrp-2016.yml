@@ -1,0 +1,2 @@
+minor_changes:
+  - psrp connection plugin - Remove explicit error handling support for Windows Server 2016.

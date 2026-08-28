@@ -34,7 +34,7 @@ class MultiGalaxyAPIProxy:
         self._offline = offline  # Prevent all GalaxyAPI calls
 
     @property
-    def is_offline_mode_requested(self):
+    def is_offline_mode_requested(self) -> bool:
         return self._offline
 
     def _assert_that_offline_mode_is_not_requested(self) -> None:
@@ -117,7 +117,7 @@ class MultiGalaxyAPIProxy:
             else self._apis
         )
 
-        last_err: t.Optional[Exception]
+        last_err: Exception
 
         for api in api_lookup_order:
             try:
@@ -146,11 +146,8 @@ class MultiGalaxyAPIProxy:
             else:
                 self._concrete_art_mgr.save_collection_source(
                     collection_candidate,
-                    version_metadata.download_url,
-                    version_metadata.artifact_sha256,
-                    api.token,
-                    version_metadata.signatures_url,
-                    version_metadata.signatures,
+                    version_metadata,
+                    api
                 )
                 return version_metadata
 

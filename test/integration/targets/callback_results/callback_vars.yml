@@ -1,0 +1,2 @@
+indirect_extra: false
+ansible_display_skipped_hosts: "{{ indirect_extra }}"

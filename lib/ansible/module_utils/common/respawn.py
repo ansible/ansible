@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import collections.abc as _c
 import os
 import pathlib
 import subprocess
@@ -48,24 +49,54 @@ def respawn_module(interpreter_path) -> t.NoReturn:
     sys.exit(rc)  # pylint: disable=ansible-bad-function
 
 
-def probe_interpreters_for_module(interpreter_paths, module_name):
+def get_env_with_pythonpath() -> dict[str, str]:
     """
-    Probes a supplied list of Python interpreters, returning the first one capable of
-    importing the named module. This is useful when attempting to locate a "system
-    Python" where OS-packaged utility modules are located.
+    Get an environment dict with PYTHONPATH set for Ansible library imports.
 
-    :arg interpreter_paths: iterable of paths to Python interpreters. The paths will be probed
-    in order, and the first path that exists and can successfully import the named module will
-    be returned (or ``None`` if probing fails for all supplied paths).
-    :arg module_name: fully-qualified Python module name to probe for (for example, ``selinux``)
+    Sets PYTHONPATH to include the Ansible library root so modules can be
+    imported via 'python -m ansible.module_utils.X' even when running from
+    a zipfile (ansiballz).
+
+    :returns: dict suitable for passing to subprocess as env parameter
     """
-    PYTHONPATH = os.getenv('PYTHONPATH', '')
+    pythonpath = os.getenv('PYTHONPATH', '')
 
     env = os.environ.copy()
     env.update({
-        'PYTHONPATH': f'{_ANSIBLE_PARENT_PATH}:{PYTHONPATH}'.rstrip(': ')
+        'PYTHONPATH': f'{_ANSIBLE_PARENT_PATH}:{pythonpath}'.rstrip(': ')
     })
 
+    return env
+
+
+def probe_interpreters_for_module(
+    interpreter_paths: _c.Sequence[str],
+    module_name: str | None = None,
+    *,
+    module_names: list[str] | None = None,
+    env: dict[str, str] | None = None,
+) -> str | None:
+    """
+    Probes a supplied list of Python interpreters, returning the first one capable of
+    importing the named modules. This is useful when attempting to locate a "system
+    Python" where OS-packaged utility modules are located.
+
+    FIXME environment description (do we want the utility method and/or stored location?)
+    FIXME: describe module_name includes basic
+    """
+    if env is None:
+        env = get_env_with_pythonpath()  # compatibility behavior
+
+    if module_name is not None:
+        if module_names:
+            raise ValueError("The module_name and module_names arguments are mutually exclusive.")
+
+        module_names = [module_name, 'ansible.module_utils.basic']  # compatibility behavior
+
+    if not module_names:
+        raise ValueError("No module names were specified.")
+
+    modules_string = ", ".join(module_names)
     for interpreter_path in interpreter_paths:
         if not os.path.exists(interpreter_path):
             continue
@@ -74,7 +105,7 @@ def probe_interpreters_for_module(interpreter_paths, module_name):
                 [
                     interpreter_path,
                     '-c',
-                    f'import {module_name}, ansible.module_utils.basic',
+                    f'import {modules_string}',
                 ],
                 env=env,
             )

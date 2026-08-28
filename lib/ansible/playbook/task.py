@@ -36,7 +36,6 @@ from ansible.playbook.conditional import Conditional
 from ansible.playbook.delegatable import Delegatable
 from ansible.playbook.loop_control import LoopControl
 from ansible.playbook.notifiable import Notifiable
-from ansible.playbook.role import Role
 from ansible.playbook.taggable import Taggable
 from ansible._internal import _task
 from ansible._internal._templating import _marker_behaviors
@@ -87,7 +86,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
     loop = NonInheritableFieldAttribute(isa='list')
     loop_control = NonInheritableFieldAttribute(isa='class', class_type=LoopControl, default=LoopControl)
     poll = NonInheritableFieldAttribute(isa='int', default=C.DEFAULT_POLL_INTERVAL)
-    register = NonInheritableFieldAttribute(isa='string', static=True)
+    register = NonInheritableFieldAttribute(static=True)  # can be str or dict, manual validation required
     retries = NonInheritableFieldAttribute(isa='int')  # default is set in TaskExecutor
     until = NonInheritableFieldAttribute(isa='list', default=list)
 
@@ -361,20 +360,19 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
             e.message += '\nThis error can be suppressed as a warning using the "invalid_task_attribute_failed" configuration'
             raise e
 
-    def _validate_changed_when(self, attr, name, value):
-        if not isinstance(value, list):
-            setattr(self, name, [value])
-
-    def _validate_failed_when(self, attr, name, value):
-        if not isinstance(value, list):
-            setattr(self, name, [value])
-
     def _validate_register(self, attr, name, value):
-        if value is not None:
-            try:
+        if value is None:
+            return
+
+        try:
+            if isinstance(value, dict):
+                any(validate_variable_name(k) for k in value.keys())
+                # RPFIX-5: UX: we've validated the keys, but need validation to ensure that dict values are non-template strings
+            else:
                 validate_variable_name(value)
-            except Exception as ex:
-                raise AnsibleParserError("Invalid 'register' specified.", obj=value) from ex
+                setattr(self, name, {value: _task.POLYMORPHIC_RESULT_EXPRESSION})  # translate to a register projection
+        except Exception as ex:
+            raise AnsibleParserError("Invalid 'register' specified.", obj=value) from ex
 
     def post_validate(self, templar):
         """
@@ -504,53 +502,6 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
 
         return new_me
 
-    def serialize(self):
-        data = super(Task, self).serialize()
-
-        if not self._squashed and not self._finalized:
-            if self._parent:
-                data['parent'] = self._parent.serialize()
-                data['parent_type'] = self._parent.__class__.__name__
-
-            if self._role:
-                data['role'] = self._role.serialize()
-
-            data['implicit'] = self.implicit
-            data['_resolved_action'] = self._resolved_action
-
-        return data
-
-    def deserialize(self, data):
-
-        # import is here to avoid import loops
-        from ansible.playbook.task_include import TaskInclude
-        from ansible.playbook.handler_task_include import HandlerTaskInclude
-
-        parent_data = data.get('parent', None)
-        if parent_data:
-            parent_type = data.get('parent_type')
-            if parent_type == 'Block':
-                p = Block()
-            elif parent_type == 'TaskInclude':
-                p = TaskInclude()
-            elif parent_type == 'HandlerTaskInclude':
-                p = HandlerTaskInclude()
-            p.deserialize(parent_data)
-            self._parent = p
-            del data['parent']
-
-        role_data = data.get('role')
-        if role_data:
-            r = Role()
-            r.deserialize(role_data)
-            self._role = r
-            del data['role']
-
-        self.implicit = data.get('implicit', False)
-        self._resolved_action = data.get('_resolved_action')
-
-        super(Task, self).deserialize(data)
-
     def set_loader(self, loader):
         """
         Sets the loader on this object and recursively on parent, child objects.
@@ -628,21 +579,40 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
         attrs.update(_resolved_action=self._resolved_action)
         return attrs
 
+    def from_attrs(self, attrs):
+        super().from_attrs(attrs)
+
+        # from_attrs is only used to create a finalized task
+        # from attrs from the Worker/TaskExecutor
+        # Those attrs are finalized and squashed in the TE
+        # and controller side use needs to reflect that
+        self._finalized = True
+        self._squashed = True
+
     def _resolve_conditional(
         self,
         conditional: list[str | bool],
         variables: dict[str, t.Any],
-        *,
-        result_context: dict[str, t.Any] | None = None,
     ) -> bool:
+        """Loops through the conditionals set on this object, returning False if any of them evaluate as such."""
+
+        return self._resolve_conditional_with_item(conditional, variables)[0]
+
+    def _resolve_conditional_with_item(
+        self,
+        conditional: list[str | bool],
+        variables: dict[str, t.Any],
+    ) -> tuple[bool, object]:
         """Loops through the conditionals set on this object, returning False if any of them evaluate as such, as well as the condition that was False."""
+
+        # early bailout, True seems weird though...
+        if not conditional:
+            return True, None
+
         engine = TemplateEngine(self._loader, variables=variables)
 
         for item in conditional:
             if not engine.evaluate_conditional(item):
-                if result_context is not None:
-                    result_context.update(false_condition=item)
+                return False, item
 
-                return False
-
-        return True
+        return True, None

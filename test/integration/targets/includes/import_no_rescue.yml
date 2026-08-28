@@ -1,0 +1,6 @@
+- hosts: localhost
+  gather_facts: no
+  tasks:
+    - import_role: 
+        name: test_includes
+        rescuable: true

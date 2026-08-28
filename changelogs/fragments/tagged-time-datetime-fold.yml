@@ -1,0 +1,2 @@
+bugfixes:
+    - serialization - Preserve ``fold`` on tagged ``datetime.time`` and ``datetime.datetime`` instances.

@@ -108,6 +108,19 @@ def get_distribution_codename():
     return codename
 
 
+def get_distribution_cpe_name():
+    """
+    Return the CPE (Common Platform Enumeration) name for this OS distribution
+    as published in the ``CPE_NAME`` field of the os-release file, or None if
+    it is not available (the field is unset or there is no os-release file).
+
+    This reads the os-release file directly (via the bundled ``distro`` library)
+    so it works for any OS that ships one, including non-Linux systems such as
+    FreeBSD and Solaris.
+    """
+    return distro.os_release_info().get('cpe_name') or None
+
+
 def get_platform_subclass(cls):
     """
     Finds a subclass implementing desired functionality on the platform the code is running on

@@ -1,3 +1,5 @@
+- include_tasks: embed.yml
+
 - name: get the ansible-test imposed file descriptor limit
   check_rlimit_and_maxfd:
   register: rlimit_limited_return

@@ -26,6 +26,8 @@
             # these are true for linux, but maybe not for other os
           - 'ansible_system|default("UNDEF") != "UNDEF"'
           - 'ansible_distribution|default("UNDEF") != "UNDEF"'
+            # always emitted by the distribution collector (null when the distro has no CPE_NAME)
+          - 'ansible_distribution_cpe_name is defined'
             # we dont really require these but they are in the min set
             # - 'ansible_virtualization_role|default("UNDEF") == "UNDEF"'
             # - 'ansible_user_id|default("UNDEF") == "UNDEF"'
@@ -454,7 +456,7 @@
     - ohai
   gather_facts: yes
   tasks:
-    - name: Test that retrieving facter and ohai doesnt fail
+    - name: Test that retrieving facter and ohai doesn't fail
       assert:
         # not much to assert here, aside from not crashing, since test images dont have
         # facter/ohai

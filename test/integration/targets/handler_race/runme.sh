@@ -2,5 +2,4 @@
 
 set -eux
 
-ansible-playbook test_handler_race.yml -i inventory -v "$@"
-
+ansible-playbook test_handler_race.yml --forks 30 -i inventory -v "$@"

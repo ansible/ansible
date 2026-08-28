@@ -57,23 +57,7 @@ from collections.abc import (
 )
 from functools import reduce
 
-try:
-    import syslog
-    HAS_SYSLOG = True
-except ImportError:
-    HAS_SYSLOG = False
-
 _UNSET = t.cast(t.Any, object())
-
-try:
-    from systemd import journal, daemon as systemd_daemon
-    # Makes sure that systemd.journal has method sendv()
-    # Double check that journal has method sendv (some packages don't)
-    # check if the system is running under systemd
-    has_journal = hasattr(journal, 'sendv') and systemd_daemon.booted()
-except (ImportError, AttributeError):
-    # AttributeError would be caused from use of .booted() if wrong systemd
-    has_journal = False
 
 HAVE_SELINUX = False
 try:
@@ -85,7 +69,9 @@ except ImportError:
 # Python2 & 3 way to get NoneType
 NoneType = type(None)
 
-from ._internal import _traceback, _errors, _debugging, _deprecator, _messages
+from ._internal import _traceback, _errors, _debugging, _deprecator, _messages, _logging
+# Re-export logging capability flags as public API for backward compatibility
+from ._internal._logging import HAS_SYSLOG, has_journal
 
 from .common.text.converters import (
     to_native,
@@ -161,7 +147,6 @@ from ansible.module_utils.common.parameters import (
 from ansible.module_utils.errors import AnsibleFallbackNotFound, AnsibleValidationErrorMultiple, UnsupportedError
 from ansible.module_utils.common.validation import (
     check_missing_parameters,
-    safe_eval,
 )
 from ansible.module_utils.common._utils import get_all_subclasses as _get_all_subclasses
 from ansible.module_utils.parsing.convert_bool import BOOLEANS, BOOLEANS_FALSE, BOOLEANS_TRUE, boolean
@@ -172,6 +157,8 @@ from ansible.module_utils.common.warnings import (
     get_warnings,
     warn,
 )
+
+from ansible.module_utils._internal import _debug
 
 # Note: When getting Sequence from collections, it matches with strings. If
 # this matters, make sure to check for strings before checking for sequencetype
@@ -213,40 +200,38 @@ USERS_RE = re.compile(r'^[ugo]+$')
 PERMS_RE = re.compile(r'^[rwxXstugo]*$')
 
 
-#
-# Deprecated functions
-#
-
 def get_platform():
     """
-    **Deprecated** Use :py:func:`platform.system` directly.
-
     :returns: Name of the platform the module is running on in a native string
 
     Returns a native string that labels the platform ("Linux", "Solaris", etc). Currently, this is
     the result of calling :py:func:`platform.system`.
     """
+    deprecate(
+        msg="The `get_platform()` function from `ansible.module_utils.basic` is deprecated.",
+        version="2.24",
+        help_text="Use `platform.system()` from the Python standard library instead.",
+    )
     return platform.system()
 
-# End deprecated functions
-
-
-#
-# Compat shims
-#
 
 def load_platform_subclass(cls, *args, **kwargs):
-    """**Deprecated**: Use ansible.module_utils.common.sys_info.get_platform_subclass instead"""
+    deprecate(
+        msg="The `load_platform_subclass()` function from `ansible.module_utils.basic` is deprecated.",
+        version="2.24",
+        help_text="Use `get_platform_subclass()` from `ansible.module_utils.common.sys_info` instead.",
+    )
     platform_cls = get_platform_subclass(cls)
     return super(cls, platform_cls).__new__(platform_cls)
 
 
 def get_all_subclasses(cls):
-    """**Deprecated**: Use ansible.module_utils.common._utils.get_all_subclasses instead"""
+    deprecate(
+        msg="The `get_all_subclasses()` function from `ansible.module_utils.basic` is deprecated.",
+        version="2.24",
+        help_text="Use `get_all_subclasses()` from `ansible.module_utils.common._utils` instead.",
+    )
     return list(_get_all_subclasses(cls))
-
-
-# End compat shims
 
 
 def heuristic_log_sanitize(data, no_log_values=None):
@@ -453,7 +438,10 @@ class AnsibleModule(object):
             self.fail_json(msg=msg)
 
         if self.check_mode and not self.supports_check_mode:
-            self.exit_json(skipped=True, msg="remote module (%s) does not support check mode" % self._name)
+            self.exit_json(
+                skipped=True,  # deprecated: description='remove this skipped return', core_version='2.25'
+                msg="remote module (%s) does not support check mode" % self._name,
+            )
 
         # This is for backwards compatibility only.
         self._CHECK_ARGUMENT_TYPES_DISPATCHER = DEFAULT_TYPE_VALIDATORS
@@ -468,6 +456,10 @@ class AnsibleModule(object):
 
         # finally, make sure we're in a logical working dir
         self._set_cwd()
+
+        # Use system temp dir for module-level stacktraces. Using remote_tmp gets complicated with tasks
+        # as different or unprivileged users.
+        _debug.register_for_stacktrace()
 
     @property
     def tmpdir(self):
@@ -1244,10 +1236,6 @@ class AnsibleModule(object):
                 if not hasattr(self, PASS_VARS[k][0]):
                     setattr(self, PASS_VARS[k][0], PASS_VARS[k][1])
 
-    def safe_eval(self, value, locals=None, include_exceptions=False):
-        # deprecated: description='no longer used in the codebase' core_version='2.21'
-        return safe_eval(value, locals, include_exceptions)
-
     def _load_params(self):
         """ read the input and set the params attribute.
 
@@ -1257,86 +1245,38 @@ class AnsibleModule(object):
         # debug overrides to read args from file or cmdline
         self.params = _load_params()
 
-    def _log_to_syslog(self, msg):
-        if HAS_SYSLOG:
-            try:
-                module = 'ansible-%s' % self._name
-                facility = getattr(syslog, self._syslog_facility, syslog.LOG_USER)
-                syslog.openlog(str(module), 0, facility)
-                syslog.syslog(syslog.LOG_INFO, msg)
-            except (TypeError, ValueError) as e:
-                self.fail_json(
-                    msg='Failed to log to syslog (%s). To proceed anyway, '
-                        'disable syslog logging by setting no_target_syslog '
-                        'to True in your Ansible config.' % to_native(e),
-                    msg_to_log=msg,
-                )
-
     def debug(self, msg):
         if self._debug:
             self.log('[debug] %s' % msg)
 
     def log(self, msg, log_args=None):
 
-        if not self.no_log:
+        if self.no_log:
+            return
 
-            if log_args is None:
-                log_args = dict()
+        if not isinstance(msg, (bytes, str)):
+            raise TypeError("msg should be a string (got %s)" % type(msg))
 
-            module = 'ansible-%s' % self._name
-            if isinstance(module, bytes):
-                module = module.decode('utf-8', 'replace')
+        if isinstance(msg, bytes):
+            msg = msg.decode('utf-8', 'replace')
 
-            # 6655 - allow for accented characters
-            if not isinstance(msg, (bytes, str)):
-                raise TypeError("msg should be a string (got %s)" % type(msg))
+        msg = remove_values(msg, self.no_log_values)
 
-            # We want journal to always take text type
-            # syslog takes bytes on py2, text type on py3
-            if isinstance(msg, bytes):
-                journal_msg = msg.decode('utf-8', 'replace')
-            else:
-                # TODO: surrogateescape is a danger here on Py3
-                journal_msg = msg
-
-            if self._target_log_info:
-                journal_msg = ' '.join([self._target_log_info, journal_msg])
-
-            # ensure we clean up secrets!
-            journal_msg = remove_values(journal_msg, self.no_log_values)
-
-            if has_journal:
-                journal_args = [("MODULE", os.path.basename(__file__))]
-                for arg in log_args:
-                    name, value = (arg.upper(), str(log_args[arg]))
-                    if name in (
-                        'PRIORITY', 'MESSAGE', 'MESSAGE_ID',
-                        'CODE_FILE', 'CODE_LINE', 'CODE_FUNC',
-                        'SYSLOG_FACILITY', 'SYSLOG_IDENTIFIER',
-                        'SYSLOG_PID',
-                    ):
-                        name = "_%s" % name
-                    journal_args.append((name, value))
-
-                try:
-                    if HAS_SYSLOG:
-                        # If syslog_facility specified, it needs to convert
-                        #  from the facility name to the facility code, and
-                        #  set it as SYSLOG_FACILITY argument of journal.send()
-                        facility = getattr(syslog,
-                                           self._syslog_facility,
-                                           syslog.LOG_USER) >> 3
-                        journal.send(MESSAGE=u"%s %s" % (module, journal_msg),
-                                     SYSLOG_FACILITY=facility,
-                                     **dict(journal_args))
-                    else:
-                        journal.send(MESSAGE=u"%s %s" % (module, journal_msg),
-                                     **dict(journal_args))
-                except OSError:
-                    # fall back to syslog since logging to journal failed
-                    self._log_to_syslog(journal_msg)
-            else:
-                self._log_to_syslog(journal_msg)
+        try:
+            _logging.log_to_system(
+                msg,
+                module_name=self._name,
+                log_args=log_args,
+                syslog_facility=self._syslog_facility,
+                target_log_info=self._target_log_info,
+            )
+        except (TypeError, ValueError) as e:
+            self.fail_json(
+                msg='Failed to log to syslog (%s). To proceed anyway, '
+                    'disable syslog logging by setting no_target_syslog '
+                    'to True in your Ansible config.' % to_native(e),
+                msg_to_log=msg,
+            )
 
     def _log_invocation(self):
         """ log that ansible ran the module """
@@ -1450,8 +1390,11 @@ class AnsibleModule(object):
 
         self.add_path_info(kwargs)
 
-        if 'invocation' not in kwargs:
-            kwargs['invocation'] = {'module_args': self.params}
+        if _PARSED_MODULE_ARGS.get('_ansible_inject_invocation', False):
+            if 'invocation' not in kwargs:
+                kwargs['invocation'] = {'module_args': self.params}
+        else:
+            kwargs.pop('invocation', None)
 
         if 'warnings' in kwargs:
             self.deprecate(  # pylint: disable=ansible-deprecated-unnecessary-collection-name
@@ -1974,7 +1917,10 @@ class AnsibleModule(object):
         else:
             # ensure args are a list
             if isinstance(args, (bytes, str)):
-                args = shlex.split(to_text(args, errors='surrogateescape'))
+                try:
+                    args = shlex.split(to_text(args, errors='surrogateescape'))
+                except ValueError as e:
+                    self.fail_json(msg="Invalid command syntax in run_command", exception=e)
 
             # expand ``~`` in paths, and all environment vars
             if expand_user_and_vars:
@@ -2093,7 +2039,13 @@ class AnsibleModule(object):
                 stdout_changed = False
                 for key, event in events:
                     b_chunk = key.fileobj.read(32768)
+                    if b_chunk is None:
+                        # Non-blocking read returned None (no data currently available).
+                        # This can happen with certain file-like objects or in edge cases.
+                        # Skip this chunk and try again on next select iteration.
+                        continue
                     if not b_chunk:
+                        # Empty bytes received, EOF reached
                         selector.unregister(key.fileobj)
                     elif key.fileobj == cmd.stdout:
                         stdout += b_chunk
@@ -2153,14 +2105,16 @@ class AnsibleModule(object):
         with open(filename, 'a') as fh:
             fh.write(str)
 
-    def bytes_to_human(self, size):
+    @staticmethod
+    def bytes_to_human(size: int) -> str:
         return bytes_to_human(size)
 
     # for backwards compatibility
     pretty_bytes = bytes_to_human
 
-    def human_to_bytes(self, number, isbits=False):
-        return human_to_bytes(number, isbits)
+    @staticmethod
+    def human_to_bytes(number: str, isbits: bool = False) -> int:
+        return human_to_bytes(number, isbits=isbits)
 
     #
     # Backwards compat
@@ -2202,30 +2156,11 @@ _mini_six = {
 
 def __getattr__(importable_name):
     """Inject import-time deprecation warnings."""
-    if importable_name == 'datetime':
-        import datetime
-        importable = datetime
-    elif importable_name == 'signal':
-        import signal
-        importable = signal
-    elif importable_name == 'types':
-        import types
-        importable = types
-    elif importable_name == 'chain':
-        from itertools import chain
-        importable = chain
-    elif importable_name == 'repeat':
-        from itertools import repeat
-        importable = repeat
-    elif importable_name == 'map':
-        importable = map
-    elif importable_name == 'shlex_quote':
-        importable = shlex.quote
-    elif (importable := _mini_six.get(importable_name, ...)) is ...:
+    if (importable := _mini_six.get(importable_name, ...)) is ...:
         raise AttributeError(f"module {__name__!r} has no attribute {importable_name!r}")
 
     deprecate(
         msg=f"Importing '{importable_name}' from '{__name__}' is deprecated.",
-        version="2.21",
+        version="2.24",
     )
     return importable

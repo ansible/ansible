@@ -1,0 +1,2 @@
+security_fixes:
+  - ansible-galaxy install - Ensure role requirements are passed as positional arguments to :command:`git clone`. Previously, a malicious role author could inject arbitrary git configuration in role dependencies. (CVE-2026-11332)

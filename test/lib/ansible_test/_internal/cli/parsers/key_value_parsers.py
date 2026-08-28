@@ -43,6 +43,8 @@ from ..argparsing.parsers import (
 
 from .value_parsers import (
     PythonParser,
+    PowerShellParser,
+    PowerShellPathParser,
 )
 
 from .helpers import (
@@ -61,6 +63,7 @@ class OriginKeyValueParser(KeyValueParser):
 
         return dict(
             python=PythonParser(versions=versions, allow_venv=True, allow_default=True),
+            powershell=PowerShellParser(),
         )
 
     def document(self, state: DocumentationState) -> t.Optional[str]:
@@ -71,6 +74,7 @@ class OriginKeyValueParser(KeyValueParser):
 
         state.sections[f'controller {section_name} (comma separated):'] = '\n'.join([
             f'  python={python_parser.document(state)}',
+            f'  powershell={PowerShellParser().document(state)}',
         ])
 
         return f'{{{section_name}}}  # default'
@@ -87,6 +91,7 @@ class ControllerKeyValueParser(KeyValueParser):
 
         return dict(
             python=PythonParser(versions=versions, allow_venv=allow_venv, allow_default=allow_default),
+            powershell=PowerShellParser(),
         )
 
     def document(self, state: DocumentationState) -> t.Optional[str]:
@@ -96,6 +101,7 @@ class ControllerKeyValueParser(KeyValueParser):
         state.sections[f'target {section_name} (comma separated):'] = '\n'.join([
             f'  python={PythonParser(SUPPORTED_PYTHON_VERSIONS, allow_venv=False, allow_default=True).document(state)}  # non-origin controller',
             f'  python={PythonParser(SUPPORTED_PYTHON_VERSIONS, allow_venv=True, allow_default=True).document(state)}  # origin controller',
+            f'  powershell={PowerShellParser().document(state)}',
         ])
 
         return f'{{{section_name}}}  # default'
@@ -113,6 +119,7 @@ class DockerKeyValueParser(KeyValueParser):
         """Return a dictionary of key names and value parsers."""
         return dict(
             python=PythonParser(versions=self.versions, allow_venv=False, allow_default=self.allow_default),
+            powershell=PowerShellParser(),
             seccomp=ChoicesParser(SECCOMP_CHOICES),
             cgroup=EnumValueChoicesParser(CGroupVersion),
             audit=EnumValueChoicesParser(AuditMode),
@@ -128,6 +135,7 @@ class DockerKeyValueParser(KeyValueParser):
 
         state.sections[f'{"controller" if self.controller else "target"} {section_name} (comma separated):'] = '\n'.join([
             f'  python={python_parser.document(state)}',
+            f'  powershell={PowerShellParser().document(state)}',
             f'  seccomp={ChoicesParser(SECCOMP_CHOICES).document(state)}',
             f'  cgroup={EnumValueChoicesParser(CGroupVersion).document(state)}',
             f'  audit={EnumValueChoicesParser(AuditMode).document(state)}',
@@ -153,6 +161,7 @@ class PosixRemoteKeyValueParser(KeyValueParser):
             provider=ChoicesParser(REMOTE_PROVIDERS),
             arch=ChoicesParser(REMOTE_ARCHITECTURES),
             python=PythonParser(versions=self.versions, allow_venv=False, allow_default=self.allow_default),
+            powershell=PowerShellParser(),
         )
 
     def document(self, state: DocumentationState) -> t.Optional[str]:
@@ -166,6 +175,7 @@ class PosixRemoteKeyValueParser(KeyValueParser):
             f'  provider={ChoicesParser(REMOTE_PROVIDERS).document(state)}',
             f'  arch={ChoicesParser(REMOTE_ARCHITECTURES).document(state)}',
             f'  python={python_parser.document(state)}',
+            f'  powershell={PowerShellParser().document(state)}',
         ])
 
         return f'{{{section_name}}}'
@@ -180,6 +190,7 @@ class WindowsRemoteKeyValueParser(KeyValueParser):
             provider=ChoicesParser(REMOTE_PROVIDERS),
             arch=ChoicesParser(REMOTE_ARCHITECTURES),
             connection=ChoicesParser(WINDOWS_CONNECTIONS),
+            powershell=PowerShellParser(windows=True),
         )
 
     def document(self, state: DocumentationState) -> t.Optional[str]:
@@ -190,6 +201,7 @@ class WindowsRemoteKeyValueParser(KeyValueParser):
             f'  provider={ChoicesParser(REMOTE_PROVIDERS).document(state)}',
             f'  arch={ChoicesParser(REMOTE_ARCHITECTURES).document(state)}',
             f'  connection={ChoicesParser(WINDOWS_CONNECTIONS).document(state)}',
+            f'  powershell={PowerShellParser(windows=True).document(state)}',
         ])
 
         return f'{{{section_name}}}'
@@ -228,6 +240,7 @@ class PosixSshKeyValueParser(KeyValueParser):
         """Return a dictionary of key names and value parsers."""
         return dict(
             python=PythonParser(versions=list(SUPPORTED_PYTHON_VERSIONS), allow_venv=False, allow_default=False),
+            powershell=PowerShellPathParser(),
         )
 
     def document(self, state: DocumentationState) -> t.Optional[str]:
@@ -238,6 +251,7 @@ class PosixSshKeyValueParser(KeyValueParser):
 
         state.sections[f'target {section_name} (comma separated):'] = '\n'.join([
             f'  python={python_parser.document(state)}',
+            f'  powershell={PowerShellPathParser().document(state)}',
         ])
 
         return f'{{{section_name}}}'

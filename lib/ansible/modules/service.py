@@ -986,6 +986,16 @@ class LinuxService(Service):
         return (rc_state, stdout, stderr)
 
 
+class HurdService(LinuxService):
+    """
+    This is the GNU Hurd Service manipulation class - it uses SysV init scripts
+    and should be broadly compatible with the Linux Service manipulation class.
+    """
+
+    platform = 'GNU'
+    distribution = None
+
+
 class FreeBsdService(Service):
     """
     This is the FreeBSD Service manipulation class - it uses the /etc/rc.conf

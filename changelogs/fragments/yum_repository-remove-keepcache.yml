@@ -1,2 +1,0 @@
-removed_features:
-  - yum_repository - remove deprecated ``keepcache`` option.

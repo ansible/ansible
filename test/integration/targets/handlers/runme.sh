@@ -143,7 +143,7 @@ ansible-playbook 52561.yml -i inventory.handlers "$@" 2>&1 | tee out.txt
 
 # Test flush_handlers meta task does not imply any_errors_fatal
 ansible-playbook 54991.yml -i inventory.handlers "$@" 2>&1 | tee out.txt
-[ "$(grep out.txt -ce 'handler ran')" = "5" ]
+[ "$(grep out.txt -ce 'handler ran')" = "4" ]
 
 ansible-playbook order.yml -i inventory.handlers "$@" 2>&1
 set +e
@@ -209,8 +209,8 @@ ansible-playbook force_handlers_blocks_81533-2.yml -i inventory.handlers "$@" 2>
 [ "$(grep out.txt -ce 'hosts_left')" = "1" ]
 
 ansible-playbook nested_flush_handlers_failure_force.yml -i inventory.handlers "$@" 2>&1 | tee out.txt
-[ "$(grep out.txt -ce 'flush_handlers_rescued')" = "1" ]
-[ "$(grep out.txt -ce 'flush_handlers_always')" = "3" ]
+[ "$(grep out.txt -ce '"flush_handlers_rescued"')" = "1" ]
+[ "$(grep out.txt -ce '"flush_handlers_always"')" = "2" ]
 
 ansible-playbook 82241.yml -i inventory.handlers "$@" 2>&1 | tee out.txt
 [ "$(grep out.txt -ce 'included_task_from_tasks_dir')" = "1" ]
@@ -229,6 +229,13 @@ ansible-playbook handler_notify_earlier_handler.yml "$@" 2>&1 | tee out.txt
 
 ANSIBLE_DEBUG=1 ansible-playbook tagged_play.yml --skip-tags the_whole_play "$@" 2>&1 | tee out.txt
 [ "$(grep out.txt -ce 'META: triggered running handlers')" = "0" ]
+[ "$(grep out.txt -ce 'No handler notifications for')" = "0" ]
 [ "$(grep out.txt -ce 'handler_ran')" = "0" ]
+[ "$(grep out.txt -ce 'handler1_ran')" = "0" ]
 
 ansible-playbook rescue_flush_handlers.yml "$@"
+
+ANSIBLE_DEBUG=1 ansible-playbook tagged_play.yml --tags task_tag "$@" 2>&1 | tee out.txt
+[ "$(grep out.txt -ce 'META: triggered running handlers')" = "1" ]
+[ "$(grep out.txt -ce 'handler_ran')" = "0" ]
+[ "$(grep out.txt -ce 'handler1_ran')" = "1" ]

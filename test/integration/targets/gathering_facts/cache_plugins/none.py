@@ -34,7 +34,7 @@ class CacheModule(BaseCacheModule):
         return key in self.empty
 
     def delete(self, key):
-        del self.emtpy[key]
+        del self.empty[key]
 
     def flush(self):
         self.empty = {}

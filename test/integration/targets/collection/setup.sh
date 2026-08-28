@@ -15,7 +15,7 @@
 #
 # 4) Windows tests need access to the ansible.windows vendored collection.
 #    This script copies any of the existing collections in ANSIBLE_COLLECTIONS_PATH to the temporary directory.
-
+#
 set -eu -o pipefail
 
 export TEST_DIR
@@ -30,7 +30,13 @@ cp -a "${TEST_DIR}/ansible_collections" "${WORK_DIR}"
 cd "${WORK_DIR}/ansible_collections/ns/${COLLECTION_NAME:-col}"
 
 if [ "${ANSIBLE_COLLECTIONS_PATH:+set}" = "set" ]; then
-    cp -aL "${ANSIBLE_COLLECTIONS_PATH}"/ansible_collections/* "${WORK_DIR}/ansible_collections"
+    IFS=':' read -ra collections_paths <<< "${ANSIBLE_COLLECTIONS_PATH}"
+
+    for collections_path in "${collections_paths[@]}"; do
+        if [ -d "${collections_path}/ansible_collections" ]; then
+            cp -aL "${collections_path}"/ansible_collections/* "${WORK_DIR}/ansible_collections"
+        fi
+    done
 fi
 
 "${TEST_DIR}/../collection/update-ignore.py"

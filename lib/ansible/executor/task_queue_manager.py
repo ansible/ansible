@@ -18,29 +18,37 @@
 from __future__ import annotations
 
 import dataclasses
+import errno
 import os
 import sys
+import signal
 import tempfile
 import threading
 import time
 import typing as t
 import multiprocessing.queues
 
+from pathlib import Path
+
 from ansible import constants as C
 from ansible import context
 from ansible.errors import AnsibleError, ExitCode, AnsibleCallbackError
 from ansible._internal._errors._handler import ErrorHandler
+from ansible._internal import _rpc_host
 from ansible.executor.play_iterator import PlayIterator
 from ansible.executor.stats import AggregateStats
-from ansible.executor.task_result import _RawTaskResult, _WireTaskResult
-from ansible.inventory.data import InventoryData
+from ansible.executor.task_result import CallbackTaskResult
+from ansible.inventory.manager import InventoryManager
+from ansible.module_utils._internal import _debug
 from ansible.module_utils.common.text.converters import to_native
 from ansible.parsing.dataloader import DataLoader
 from ansible.playbook.play_context import PlayContext
 from ansible.playbook.task import Task
-from ansible.plugins.loader import callback_loader, strategy_loader, module_loader
 from ansible.plugins.callback import CallbackBase
+from ansible.plugins.loader import callback_loader, strategy_loader, module_loader
+from ansible._internal._plugins import _strategy
 from ansible._internal._templating._engine import TemplateEngine
+from ansible._internal._task import UnifiedTaskResult, WireTaskResult, HostTaskResult
 from ansible.vars.hostvars import HostVars
 from ansible.vars.manager import VariableManager
 from ansible.utils.display import Display
@@ -49,6 +57,7 @@ from ansible.utils.multiprocessing import context as multiprocessing_context
 
 if t.TYPE_CHECKING:
     from ansible.executor.process.worker import WorkerProcess
+    from ansible.inventory.host import Host
 
 __all__ = ['TaskQueueManager']
 
@@ -62,7 +71,7 @@ display = Display()
 @dataclasses.dataclass(frozen=True, kw_only=True, slots=True)
 class CallbackSend:
     method_name: str
-    wire_task_result: _WireTaskResult
+    wire_task_result: WireTaskResult
 
 
 class DisplaySend:
@@ -87,11 +96,11 @@ class FinalQueue(multiprocessing.queues.SimpleQueue):
         kwargs['ctx'] = multiprocessing_context
         super().__init__(*args, **kwargs)
 
-    def send_callback(self, method_name: str, task_result: _RawTaskResult) -> None:
-        self.put(CallbackSend(method_name=method_name, wire_task_result=task_result.as_wire_task_result()))
+    def send_callback(self, method_name: str, host: Host, task: Task, utr: UnifiedTaskResult) -> None:
+        self.put(CallbackSend(method_name=method_name, wire_task_result=WireTaskResult.create(host=host, task=task, utr=utr)))
 
-    def send_task_result(self, task_result: _RawTaskResult) -> None:
-        self.put(task_result.as_wire_task_result())
+    def send_task_result(self, host: Host, task: Task, utr: UnifiedTaskResult) -> None:
+        self.put(WireTaskResult.create(host=host, task=task, utr=utr))
 
     def send_display(self, method, *args, **kwargs):
         self.put(
@@ -107,6 +116,16 @@ class FinalQueue(multiprocessing.queues.SimpleQueue):
 class AnsibleEndPlay(Exception):
     def __init__(self, result):
         self.result = result
+
+
+def _resolve_callback_option_variables(callback: CallbackBase, variables: dict[str, object], templar: TemplateEngine) -> None:
+    """Set callback plugin options using documented variables."""
+    callback_variables = {
+        var_name: variables[var_name]
+        for var_name in C.config.get_plugin_vars(callback.plugin_type, callback._load_name)
+        if var_name in variables
+    }
+    callback.set_options(var_options=templar.template(callback_variables))
 
 
 class TaskQueueManager:
@@ -132,7 +151,7 @@ class TaskQueueManager:
 
     def __init__(
         self,
-        inventory: InventoryData,
+        inventory: InventoryManager,
         variable_manager: VariableManager,
         loader: DataLoader,
         passwords: dict[str, str | None],
@@ -153,6 +172,8 @@ class TaskQueueManager:
 
         self._callback_plugins: list[CallbackBase] = []
         self._start_at_done = False
+
+        _rpc_host.LocalManager.shared_instance()  # ensure the RPC host is available
 
         # make sure any module paths (if specified) are added to the module_loader
         if context.CLIARGS.get('module_path', False):
@@ -185,8 +206,60 @@ class TaskQueueManager:
         # plugins for inter-process locking.
         self._connection_lockfile = tempfile.TemporaryFile()
 
+        self._workers: list[WorkerProcess | None] = []
+
+        # signal handlers to propagate signals to workers
+        signal.signal(signal.SIGTERM, self._signal_handler)
+        signal.signal(signal.SIGINT, self._signal_handler)
+
+        # Location of our stacktrace dump directory. Pre-create so Workers don't have to.
+        trace_dir = Path(C.ANSIBLE_HOME).expanduser() / 'debug'
+        try:
+            trace_dir.mkdir(parents=True, exist_ok=True, mode=0o700)
+        except Exception as e:
+            display.warning(f"Unable to create debug directory {trace_dir}: {e}")
+            self.stacktrace_dir = None
+        else:
+            display.debug(f"Using stacktrace dump directory {trace_dir}")
+            self.stacktrace_dir = str(trace_dir)
+        _debug.register_for_stacktrace(self.stacktrace_dir)
+
     def _initialize_processes(self, num: int) -> None:
-        self._workers: list[WorkerProcess | None] = [None] * num
+        # mutable update to ensure the reference stays the same
+        self._workers[:] = [None] * num
+
+    def _signal_handler(self, signum, frame) -> None:
+        """
+        terminate all running process groups created as a result of calling
+        setsid from within a WorkerProcess.
+
+        Since the children become process leaders, signals will not
+        automatically propagate to them.
+        """
+        signal.signal(signum, signal.SIG_DFL)
+
+        for worker in self._workers:
+            if worker is None or not worker.is_alive():
+                continue
+            if worker.pid:
+                try:
+                    # notify workers
+                    os.kill(worker.pid, signum)
+                except OSError as e:
+                    if e.errno != errno.ESRCH:
+                        signame = signal.strsignal(signum)
+                        display.error(f'Unable to send {signame} to child[{worker.pid}]: {e}')
+
+        if signum == signal.SIGINT:
+            # Defer to CLI handling
+            raise KeyboardInterrupt()
+
+        pid = os.getpid()
+        try:
+            os.kill(pid, signum)
+        except OSError as e:
+            signame = signal.strsignal(signum)
+            display.error(f'Unable to send {signame} to {pid}: {e}')
 
     def load_callbacks(self):
         """
@@ -206,8 +279,10 @@ class TaskQueueManager:
         if not stdout_callback:
             raise AnsibleError(f"Could not load {self._stdout_callback_name!r} callback plugin.")
 
+        templar = TemplateEngine(loader=self._loader, variables=self._variable_manager._extra_vars)
+
         stdout_callback._init_callback_methods()
-        stdout_callback.set_options()
+        _resolve_callback_option_variables(stdout_callback, self._variable_manager._extra_vars, templar)
 
         self._callback_plugins.append(stdout_callback)
 
@@ -261,7 +336,7 @@ class TaskQueueManager:
                 # really a bug in the plugin itself which we ignore as callback errors are not supposed to be fatal.
                 if callback_obj:
                     callback_obj._init_callback_methods()
-                    callback_obj.set_options()
+                    _resolve_callback_option_variables(callback_obj, self._variable_manager._extra_vars, templar)
                     self._callback_plugins.append(callback_obj)
                 else:
                     display.warning("Skipping callback '%s', as it does not create a valid plugin instance." % callback_name)
@@ -339,7 +414,8 @@ class TaskQueueManager:
 
         # and run the play using the strategy and cleanup on way out
         try:
-            play_return = strategy.run(iterator, play_context)
+            with _strategy.StrategyContext(strategy=strategy, tqm=self).activate():
+                play_return = strategy.run(iterator, play_context)
         finally:
             strategy.cleanup()
             self._cleanup_processes()
@@ -384,7 +460,7 @@ class TaskQueueManager:
     def clear_failed_hosts(self) -> None:
         self._failed_hosts = dict()
 
-    def get_inventory(self) -> InventoryData:
+    def get_inventory(self) -> InventoryManager:
         return self._inventory
 
     def get_variable_manager(self) -> VariableManager:
@@ -442,8 +518,8 @@ class TaskQueueManager:
 
                 for arg in args:
                     # FIXME: add play/task cleaners
-                    if isinstance(arg, _RawTaskResult):
-                        copied_tr = arg.as_callback_task_result()
+                    if isinstance(arg, HostTaskResult):
+                        copied_tr = CallbackTaskResult(host=arg.host, task=arg.task, utr=arg.utr)
                         new_args.append(copied_tr)
                         # this state hack requires that no callback ever accepts > 1 TaskResult object
                         callback_plugin._current_task_result = copied_tr

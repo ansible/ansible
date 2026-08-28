@@ -3,7 +3,7 @@ DOCUMENTATION:
   version_added: "2.9"
   short_description: namespaced UUID generator
   description:
-    - Use to generate namespaced Universal Unique ID.
+    - Use to generate namespaced Universal Unique ID (UUIDv5).
   positional: _input, namespace
   options:
     _input:
@@ -17,7 +17,7 @@ DOCUMENTATION:
 
 EXAMPLES: |
 
-  # To create a namespaced UUIDv5
+  # To create a namespaced UUIDv5 using the namespace '11111111-2222-3333-4444-555555555555'
   uuid: "{{ string | to_uuid(namespace='11111111-2222-3333-4444-555555555555') }}"
 
 

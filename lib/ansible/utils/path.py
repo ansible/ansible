@@ -26,7 +26,7 @@ from ansible.module_utils.common.text.converters import to_bytes, to_text
 __all__ = ['unfrackpath', 'makedirs_safe']
 
 
-def unfrackpath(path, follow=True, basedir=None):
+def unfrackpath(path: str, follow: bool = True, basedir: str | None = None) -> str:
     """
     Returns a path that is free of symlinks (if follow=True), environment variables, relative path traversals and symbols (~)
 
@@ -45,22 +45,20 @@ def unfrackpath(path, follow=True, basedir=None):
         '$HOME/../../var/mail' becomes '/var/spool/mail'
     """
 
-    b_basedir = to_bytes(basedir, errors='surrogate_or_strict', nonstring='passthru')
+    if basedir is None:
+        basedir = os.getcwd()
+    elif os.path.isfile(basedir):
+        basedir = os.path.dirname(basedir)
 
-    if b_basedir is None:
-        b_basedir = to_bytes(os.getcwd(), errors='surrogate_or_strict')
-    elif os.path.isfile(b_basedir):
-        b_basedir = os.path.dirname(b_basedir)
+    final_path = os.path.expanduser(os.path.expandvars(path))
 
-    b_final_path = os.path.expanduser(os.path.expandvars(to_bytes(path, errors='surrogate_or_strict')))
-
-    if not os.path.isabs(b_final_path):
-        b_final_path = os.path.join(b_basedir, b_final_path)
+    if not os.path.isabs(final_path):
+        final_path = os.path.join(basedir, final_path)
 
     if follow:
-        b_final_path = os.path.realpath(b_final_path)
+        final_path = os.path.realpath(final_path)
 
-    return to_text(os.path.normpath(b_final_path), errors='surrogate_or_strict')
+    return os.path.normpath(final_path)
 
 
 def makedirs_safe(path, mode=None):

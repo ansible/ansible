@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import os
 import base64
-from ansible.errors import AnsibleConnectionFailure, AnsibleError, AnsibleActionFail, AnsibleActionSkip
+from ansible.errors import AnsibleConnectionFailure, AnsibleError, AnsibleActionFail
 from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
@@ -41,7 +41,11 @@ class ActionModule(ActionBase):
 
         try:
             if self._task.check_mode:
-                raise AnsibleActionSkip('check mode not (yet) supported for this module')
+                return dict(
+                    msg='check mode not (yet) supported for this module',
+                    changed=False,
+                    skipped=True,  # deprecated: description='remove this skipped return', core_version='2.25'
+                )
 
             source = self._task.args.get('src', None)
             original_dest = dest = self._task.args.get('dest', None)
@@ -192,7 +196,7 @@ class ActionModule(ActionBase):
                                        msg="checksum mismatch", file=source, dest=dest, remote_md5sum=None,
                                        checksum=new_checksum, remote_checksum=remote_checksum))
                 else:
-                    result.update({'changed': True, 'md5sum': new_md5, 'dest': dest,
+                    result.update({'changed': True, 'md5sum': new_md5, 'file': source, 'dest': dest,
                                    'remote_md5sum': None, 'checksum': new_checksum,
                                    'remote_checksum': remote_checksum})
             else:

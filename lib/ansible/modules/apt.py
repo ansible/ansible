@@ -13,6 +13,8 @@ DOCUMENTATION = """
 ---
 module: apt
 short_description: Manages apt-packages
+seealso:
+  - module: ansible.builtin.deb822_repository
 description:
   - Manages I(apt) packages (such as for Debian/Ubuntu).
 version_added: "0.0.2"
@@ -222,6 +224,7 @@ notes:
    - If the interpreter can't import C(python3-apt) the module will check for it in system-owned interpreters as well.
      If the dependency can't be found, depending on the value of O(auto_install_module_deps) the module will attempt to install it.
      If the dependency is found or installed, the module will be respawned under the correct interpreter.
+   - From ansible-core 2.21, if the apt lists directory is absent, the module will recreate it by running C(apt-get update).
 """
 
 EXAMPLES = """
@@ -516,9 +519,12 @@ def package_best_match(pkgname, version_cmp, version, release, cache):
     pkgver = policy.get_candidate_ver(pkg)
     if not pkgver:
         return None
+    # Check if the available version matches the requested version
     if version_cmp == "=" and not fnmatch.fnmatch(pkgver.ver_str, version):
         # Even though we put in a pin policy, it can be ignored if there is no
         # possible candidate.
+        return None
+    if version_cmp == ">=" and not apt_pkg.version_compare(pkgver.ver_str, version) >= 0:
         return None
     return pkgver.ver_str
 
@@ -591,19 +597,17 @@ def package_status(m, pkgname, version_cmp, version, default_release, cache, sta
         except AttributeError:
             installed_version = pkg.installedVersion
 
+        # Check if the installed version already matches the requested version
         if version_cmp == "=":
-            # check if the version is matched as well
             version_is_installed = fnmatch.fnmatch(installed_version, version)
-            if version_best and installed_version != version_best and fnmatch.fnmatch(version_best, version):
-                version_installable = version_best
         elif version_cmp == ">=":
             version_is_installed = apt_pkg.version_compare(installed_version, version) >= 0
-            if version_best and installed_version != version_best and apt_pkg.version_compare(version_best, version) >= 0:
-                version_installable = version_best
         else:
             version_is_installed = True
-            if version_best and installed_version != version_best:
-                version_installable = version_best
+
+        # Check if a better version is available
+        if version_best and installed_version != version_best:
+            version_installable = version_best
     else:
         version_installable = version_best
 
@@ -851,6 +855,33 @@ def get_field_of_deb(m, deb_file, field="Version"):
     return to_native(stdout).strip('\n')
 
 
+def install_recommended_packages(cache: apt.Cache, recommended_packages: str) -> list[str]:
+    deps_to_install = []
+    for recommend_one_of in apt_pkg.parse_depends(recommended_packages, False):
+        for name, version, op in recommend_one_of:
+            try:
+                pkg = cache[name]
+            except KeyError:
+                # no package found, continue with next recommended package
+                continue
+
+            if pkg.is_installed and version and op and apt_pkg.check_dep(pkg.installed.version, op, version):
+                # package is installed and the version is the same, continue with next recommended package
+                break
+
+            if not pkg.candidate:
+                # no candidate found, continue with next recommended package
+                continue
+
+            if version and op and not apt_pkg.check_dep(pkg.candidate.version, op, version):
+                # candidate version does not match the version, continue with next recommended package
+                continue
+
+            deps_to_install.append(name)
+            break
+    return deps_to_install
+
+
 def install_deb(
         m, debs, cache, force, fail_on_autoremove, install_recommends,
         allow_unauthenticated,
@@ -898,7 +929,7 @@ def install_deb(
         # Install 'Recommends' of this deb file
         if install_recommends:
             pkg_recommends = get_field_of_deb(m, deb_file, "Recommends")
-            deps_to_install.extend([pkg_name.strip() for pkg_name in pkg_recommends.split()])
+            deps_to_install.extend(install_recommended_packages(cache, pkg_recommends))
 
         # and add this deb to the list of packages to install
         pkgs_to_install.append(deb_file)
@@ -1194,6 +1225,17 @@ def get_updated_cache_time():
     return mtimestamp, updated_cache_time
 
 
+def recreate_cache(module, max_retries=2):
+    retries = 0
+    update_cmd = ['apt-get', 'update', '-q']
+    while retries < max_retries:
+        rc, stdout, stderr = module.run_command(update_cmd)
+        retries += 1
+        if rc == 0:
+            break
+    return rc, stdout, stderr
+
+
 # https://github.com/ansible/ansible-modules-core/issues/2951
 def get_cache(module):
     """Attempt to get the cache object and update till it works"""
@@ -1203,18 +1245,20 @@ def get_cache(module):
     except SystemError as e:
         if '/var/lib/apt/lists/' in to_native(e).lower():
             # update cache until files are fixed or retries exceeded
-            retries = 0
-            while retries < 2:
-                (rc, so, se) = module.run_command(['apt-get', 'update', '-q'])
-                retries += 1
-                if rc == 0:
-                    break
+            rc, stdout, stderr = recreate_cache(module)
             if rc != 0:
-                module.fail_json(msg='Updating the cache to correct corrupt package lists failed:\n%s\n%s' % (to_native(e), so + se), rc=rc)
+                module.fail_json(msg=f'Updating the cache to correct corrupt package lists failed:\n{to_native(e)}\n{stdout + stderr}', rc=rc)
             # try again
             cache = apt.Cache()
         else:
             module.fail_json(msg=to_native(e))
+
+    # Check if the cache is valid
+    if not os.path.isdir(apt_pkg.config.find_dir("Dir::State::Lists")):
+        rc, stdout, stderr = recreate_cache(module)
+        if rc != 0:
+            module.fail_json(msg=f'Failed to recreate the cache: {stdout + stderr}', rc=rc)
+        cache = apt.Cache()
     return cache
 
 

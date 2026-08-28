@@ -46,7 +46,7 @@ def mock_lchmod(mocker):
 
 
 @pytest.mark.parametrize('previous_changes, check_mode, exists, stdin',
-                         product((True, False), (True, False), (True, False), ({},)),
+                         list(product((True, False), (True, False), (True, False), ({},))),
                          indirect=['stdin'])
 def test_no_mode_given_returns_previous_changes(am, mock_stats, mock_lchmod, mocker, previous_changes, check_mode, exists):
     am.check_mode = check_mode
@@ -60,7 +60,7 @@ def test_no_mode_given_returns_previous_changes(am, mock_stats, mock_lchmod, moc
 
 
 @pytest.mark.parametrize('mode, check_mode, stdin',
-                         product(SYNONYMS_0660, (True, False), ({},)),
+                         list(product(SYNONYMS_0660, (True, False), ({},))),
                          indirect=['stdin'])
 def test_mode_changed_to_0660(am, mock_stats, mocker, mode, check_mode):
     # Note: This is for checking that all the different ways of specifying
@@ -79,7 +79,7 @@ def test_mode_changed_to_0660(am, mock_stats, mocker, mode, check_mode):
 
 
 @pytest.mark.parametrize('mode, check_mode, stdin',
-                         product(SYNONYMS_0660, (True, False), ({},)),
+                         list(product(SYNONYMS_0660, (True, False), ({},))),
                          indirect=['stdin'])
 def test_mode_unchanged_when_already_0660(am, mock_stats, mocker, mode, check_mode):
     # Note: This is for checking that all the different ways of specifying
@@ -94,7 +94,7 @@ def test_mode_unchanged_when_already_0660(am, mock_stats, mocker, mode, check_mo
     assert not m_lchmod.called
 
 
-@pytest.mark.parametrize('mode, stdin', product(SYNONYMS_0660, ({},)), indirect=['stdin'])
+@pytest.mark.parametrize('mode, stdin', list(product(SYNONYMS_0660, ({},))), indirect=['stdin'])
 def test_mode_changed_to_0660_check_mode_no_file(am, mocker, mode):
     am.check_mode = True
     mocker.patch('os.path.exists', return_value=False)
@@ -102,7 +102,7 @@ def test_mode_changed_to_0660_check_mode_no_file(am, mocker, mode):
 
 
 @pytest.mark.parametrize('check_mode, stdin',
-                         product((True, False), ({},)),
+                         list(product((True, False), ({},))),
                          indirect=['stdin'])
 def test_missing_lchmod_is_not_link(am, mock_stats, mocker, monkeypatch, check_mode):
     """Some platforms have lchmod (*BSD) others do not (Linux)"""
@@ -125,7 +125,7 @@ def test_missing_lchmod_is_not_link(am, mock_stats, mocker, monkeypatch, check_m
 
 
 @pytest.mark.parametrize('check_mode, stdin',
-                         product((True, False), ({},)),
+                         list(product((True, False), ({},))),
                          indirect=['stdin'])
 def test_missing_lchmod_is_link(am, mock_stats, mocker, monkeypatch, check_mode):
     """Some platforms have lchmod (*BSD) others do not (Linux)"""
@@ -151,7 +151,7 @@ def test_missing_lchmod_is_link(am, mock_stats, mocker, monkeypatch, check_mode)
     mocker.stopall()
 
 
-@pytest.mark.parametrize('stdin,',
+@pytest.mark.parametrize('stdin',
                          ({},),
                          indirect=['stdin'])
 def test_missing_lchmod_is_link_in_sticky_dir(am, mock_stats, mocker):

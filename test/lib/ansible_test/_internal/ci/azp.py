@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 import tempfile
 import uuid
@@ -27,6 +28,7 @@ from ..http import (
 
 from ..util import (
     display,
+    ApplicationError,
     MissingEnvironmentVariable,
 )
 
@@ -220,6 +222,19 @@ class AzurePipelinesChanges:
             self.diff = []
 
     def get_successful_merge_run_commits(self) -> set[str]:
+        """
+        Return a set of recent successful merge commits from Azure Pipelines.
+        A warning will be displayed and no commits returned if an error occurs.
+        """
+        try:
+            commits = self._get_successful_merge_run_commits()
+        except ApplicationError as ex:
+            commits = set()
+            display.warning(f'Cannot determine changes. All tests will be executed. Reason: {ex}')
+
+        return commits
+
+    def _get_successful_merge_run_commits(self) -> set[str]:
         """Return a set of recent successful merge commits from Azure Pipelines."""
         parameters = dict(
             maxBuildsPerDefinition=100,  # max 5000
@@ -230,20 +245,29 @@ class AzurePipelinesChanges:
             repositoryId='%s/%s' % (self.org, self.project),
         )
 
-        url = '%s%s/_apis/build/builds?api-version=6.0&%s' % (self.org_uri, self.project, urllib.parse.urlencode(parameters))
+        url = '%s%s/_apis/build/builds?api-version=7.1&%s' % (self.org_uri, self.project, urllib.parse.urlencode(parameters))
 
         http = HttpClient(self.args, always=True)
         response = http.get(url)
 
-        # noinspection PyBroadException
         try:
-            result = response.json()
-        except Exception:  # pylint: disable=broad-except
-            # most likely due to a private project, which returns an HTTP 203 response with HTML
-            display.warning('Unable to find project. Cannot determine changes. All tests will be executed.')
-            return set()
+            result = json.loads(response.response)
+            result_type = 'JSON'
+        except json.JSONDecodeError:
+            result = ...
+            result_type = 'Non-JSON'
 
-        commits = set(build['sourceVersion'] for build in result['value'])
+        result_description = f'HTTP {response.status_code} {result_type} result'
+
+        if response.status_code != 200 or result is ...:
+            raise ApplicationError(f'Unable to find project due to {result_description}.')
+
+        try:
+            commits = {build['sourceVersion'] for build in result['value']}
+        except KeyError as ex:
+            raise ApplicationError(f'Missing {ex.args[0]!r} key in response from {result_description}.') from ex
+        except (ValueError, TypeError) as ex:
+            raise ApplicationError(f'Unexpected response format from {result_description}: {ex}') from ex
 
         return commits
 

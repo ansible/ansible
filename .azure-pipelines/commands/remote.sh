@@ -18,7 +18,9 @@ if [ "${#splitversion[@]}" -gt 1 ]; then
     pyver="${splitversion[1]}"
 fi
 
-if [ "${#args[@]}" -gt 2 ]; then
+if [ "${#args[@]}" -gt 3 ]; then
+    target="shippable/${args[3]}/${args[2]}/"
+elif [ "${#args[@]}" -gt 2 ]; then
     target="shippable/posix/group${args[2]}/"
 else
     target="shippable/posix/"

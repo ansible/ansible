@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-from ansible.utils.display import Display
+from ansible_collections.testns.testcol.plugins.module_utils import Display
+# Test for https://github.com/ansible/ansible/issues/85754
+from ...module_utils import Display
 
 display = Display()
 

@@ -15,15 +15,25 @@ SOFT_RLIMIT_NOFILE = 1024
 
 # File used to track the ansible-test test execution timeout.
 TIMEOUT_PATH = '.ansible-test-timeout.json'
+TIMEOUT_MARGIN_SECONDS = 10
 
 CONTROLLER_MIN_PYTHON_VERSION = CONTROLLER_PYTHON_VERSIONS[0]
 SUPPORTED_PYTHON_VERSIONS = REMOTE_ONLY_PYTHON_VERSIONS + CONTROLLER_PYTHON_VERSIONS
+
+SUPPORTED_POWERSHELL_VERSIONS = [
+    '7.6.0',
+]
+"""
+PowerShell versions supported by ansible-test.
+Full versions must be specified since they are used to install specific releases.
+Only one entry for each {major}.{minor} version is supported.
+"""
 
 REMOTE_PROVIDERS = [
     'default',
     'aws',
     'azure',
-    'parallels',
+    'mac',
 ]
 
 SECCOMP_CHOICES = [

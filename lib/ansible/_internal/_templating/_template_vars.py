@@ -19,7 +19,7 @@ def generate_ansible_template_vars(
     Generate and return a dictionary with variable metadata about the template specified by `fullpath`.
     If `fullpath` is `None`, `path` will be used instead.
     """
-    # deprecated description="update the ansible.windows collection to inline this logic instead of calling this internal function" core_version="2.23"
+    # deprecated: description="update the ansible.windows collection to inline this logic instead of calling this internal function" core_version="2.23"
     if fullpath is None:
         fullpath = _os.path.abspath(path)
 
@@ -51,7 +51,7 @@ def generate_ansible_template_vars(
 
 def _generate_ansible_managed(template_stat: _os.stat_result) -> str:
     """Generate and return the `ansible_managed` variable."""
-    # deprecated description="remove the `_generate_ansible_managed` function and use a constant instead" core_version="2.23"
+    # deprecated: description="remove the `_generate_ansible_managed` function and use a constant instead" core_version="2.23"
 
     from ansible.template import trust_as_template
 

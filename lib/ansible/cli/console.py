@@ -20,7 +20,7 @@ import sys
 from ansible import constants as C
 from ansible import context
 from ansible.cli.arguments import option_helpers as opt_help
-from ansible.executor.task_queue_manager import TaskQueueManager
+from ansible.executor.task_queue_manager import AnsibleEndPlay, TaskQueueManager
 from ansible.module_utils.common.text.converters import to_native, to_text
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.parsing.splitter import parse_kv
@@ -230,6 +230,8 @@ class ConsoleCLI(CLI, cmd.Cmd):
 
                 result = self._tqm.run(play)
                 display.debug(result)
+            except AnsibleEndPlay as e:
+                result = e.result
             finally:
                 if self._tqm:
                     self._tqm.cleanup()
@@ -482,7 +484,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
         if module_name:
             in_path = module_loader.find_plugin(module_name)
             if in_path:
-                oc, a, _dummy1, _dummy2 = plugin_docs.get_docstring(in_path, fragment_loader)
+                oc, a, _dummy1, _dummy2 = plugin_docs.get_docstring(filename=in_path, fragment_loader=fragment_loader)
                 if oc:
                     display.display(oc['short_description'])
                     display.display('Parameters:')
@@ -517,7 +519,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
 
     def module_args(self, module_name):
         in_path = module_loader.find_plugin(module_name)
-        oc, a, _dummy1, _dummy2 = plugin_docs.get_docstring(in_path, fragment_loader, is_module=True)
+        oc, a, _dummy1, _dummy2 = plugin_docs.get_docstring(filename=in_path, fragment_loader=fragment_loader, plugin_type='module')
         return list(oc['options'].keys())
 
     def run(self):

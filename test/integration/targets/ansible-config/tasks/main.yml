@@ -1,3 +1,21 @@
+- name: check the default type in help for every action
+  ansible.builtin.command: ansible-config {{ item }} --help
+  loop:
+    - list
+    - dump
+    - view
+    - init
+    - validate
+  register: config_help
+  changed_when: false
+
+- name: ensure every action documents all as the default type
+  ansible.builtin.assert:
+    that:
+      - >-
+        item.stdout is regex("Defaults to\\s*'all'")
+  loop: '{{ config_help.results }}'
+
 - name: test ansible-config init for valid output and no dupes
   block:
     - name: Create temporary file
@@ -7,17 +25,16 @@
         suffix: temp.ini
       register: ini_tempfile
 
-    - name: run config full dump
-      shell: ansible-config init -t all > {{ini_tempfile.path}}
+    - name: run config full dump using the default type
+      shell: ansible-config init > {{ini_tempfile.path}}
 
     - name: run ini tester, for correctness and dupes
       shell: "{{ansible_playbook_python}} '{{role_path}}/files/ini_dupes.py' '{{ini_tempfile.path}}'"
 
 - name: test ansible-config validate
   block:
-  # not testing w/o -t all as ansible-test uses it's own plugins and would give false positives
-  - name: validate config files
-    shell: ansible-config validate -t all -v
+  - name: validate config files using the default type
+    shell: ansible-config validate -v
     register: valid_cfg
     loop:
         - empty.cfg
@@ -73,9 +90,6 @@
         password:
           value: my_pass
           origin: role_path ~ "/files/galaxy_server.ini"
-        api_version:
-          value: None
-          origin: default
       release_galaxy:
       test_galaxy:
       my_galaxy_ng:
@@ -120,7 +134,6 @@
           auth_url:
           username:
           password:
-          api_version:
           timeout:
       origin: '{{ role_path ~ "/files/galaxy_server.ini" }}'
       gs_keys: '{{ gs.keys()|list|sort }}'
@@ -146,8 +159,8 @@
   vars:
     config_keys: "{{ config_dump['stdout'] | from_json | selectattr('name', 'defined') }}"
   block:
-    - name: run config full dump
-      shell: ansible-config dump -t all -f json
+    - name: run config full dump using the default type
+      shell: ansible-config dump -f json
       register: config_dump
 
     - name: validate we get 'internal' but not hidden (_Z_)

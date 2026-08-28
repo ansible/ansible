@@ -534,13 +534,6 @@ class PathMapper:
                     'units': units_path,
                 }
 
-            if name == 'paramiko_ssh':
-                return {
-                    'integration': integration_name,
-                    'network-integration': self.integration_all_target,
-                    'units': units_path,
-                }
-
             # other connection plugins have isolated integration and unit tests
 
             return {
@@ -715,6 +708,9 @@ class PathMapper:
             return all_tests(self.args)  # broad impact, run all tests
 
         if path.startswith('changelogs/'):
+            return minimal
+
+        if path.startswith('context/'):
             return minimal
 
         if path.startswith('hacking/'):

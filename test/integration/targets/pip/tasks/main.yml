@@ -23,6 +23,8 @@
 
     - include_tasks: pip.yml
 
+    - include_tasks: url_packages.yml
+
     - include_tasks: no_setuptools.yml
   always:
     - name: platform specific cleanup

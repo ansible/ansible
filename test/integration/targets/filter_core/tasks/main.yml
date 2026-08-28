@@ -384,7 +384,8 @@
     that:
       - '"%Y-%m-%d"|strftime(1585247522) == "2020-03-26"'
       - '"%Y-%m-%d"|strftime("1585247522.0") == "2020-03-26"'
-      - '"%Y-%m-%d"|strftime("1585247522.0", utc=True) == "2020-03-26"'
+      - '"%Y-%m-%d%z"|strftime("1585247522.0", utc=True) == "2020-03-26+0000"'
+      - '"%:z"|strftime(None, utc=True) == "+00:00"'
       - '("%Y"|strftime(None)).startswith("20")' # Current date, can't check much there.
       - strftime_fail is failed
       - '"Invalid value for epoch value" in strftime_fail.msg'
@@ -437,12 +438,6 @@
   vars:
     d: {}
 
-- name: Verify regex_escape raises on posix_extended (failure expected)
-  set_fact:
-    foo: '{{"]]^"|regex_escape(re_type="posix_extended")}}'
-  ignore_errors: yes
-  register: regex_escape_fail_1
-
 - name: Verify regex_escape raises on other re_type (failure expected)
   set_fact:
     foo: '{{"]]^"|regex_escape(re_type="haha")}}'
@@ -453,8 +448,9 @@
   assert:
     that:
       - '"]]^"|regex_escape(re_type="posix_basic") == "\\]\\]\\^"'
-      - regex_escape_fail_1 is failed
-      - '"Regex type (posix_extended) not yet implemented" is in regex_escape_fail_1.msg'
+      - '"]]^"|regex_escape(re_type="posix_extended") == "\\]\\]\\^"'
+      - '"^f.*o(.*)$"|regex_escape(re_type="posix_extended") == "\\^f\\.\\*o\\(\\.\\*\\)\\$"'
+      - '"(a|b)"|regex_escape(re_type="posix_extended") == "\\(a\\|b\\)"'
       - regex_escape_fail_2 is failed
       - '"Invalid regex type (haha)" is in regex_escape_fail_2.msg'
 
@@ -546,12 +542,6 @@
   ignore_errors: yes
   register: password_hash_2
 
-- name: Verify password_hash throws on weird rounds
-  set_fact:
-    foo: '{{ "hey" | password_hash(rounds=1) }}'
-  ignore_errors: yes
-  register: password_hash_3
-
 - name: test using passlib with an unsupported hash type
   set_fact:
     foo: '{{"hey"|password_hash("msdcc")}}'
@@ -566,8 +556,6 @@
       - "'salt_size must be an integer' in password_hash_1.msg"
       - password_hash_2 is failed
       - "'is not in the list of supported passlib algorithms' in password_hash_2.msg"
-      - password_hash_3 is failed
-      - "'Could not hash the secret' in password_hash_3.msg"
       - "'msdcc is not in the list of supported passlib algorithms' in unsupported_hash_type.msg"
 
 - name: Verify to_uuid throws on weird namespace
@@ -708,6 +696,18 @@
   ignore_errors: yes
   register: subelements_5
 
+- name: Verify subelements throws on empty list
+  set_fact:
+    foo: '{{subelements_demo | subelements([])}}'
+  ignore_errors: yes
+  register: subelements_6
+
+- name: Verify subelements throws on empty subelements
+  set_fact:
+    foo: '{{subelements_demo | subelements("")}}'
+  ignore_errors: yes
+  register: subelements_7
+
 - name: Verify subelements
   assert:
     that:
@@ -724,7 +724,11 @@
       - '"should point to a dictionary" in subelements_5.msg'
       - 'subelements_demo|subelements("groups") == [({"name": "alice", "groups": ["wheel"], "authorized": ["/tmp/alice/onekey.pub"]}, "wheel")]'
       - 'subelements_demo|subelements(["groups"]) == [({"name": "alice", "groups": ["wheel"], "authorized": ["/tmp/alice/onekey.pub"]}, "wheel")]'
-
+      - subelements_6 is failed
+      - '"subelements is empty" in subelements_6.msg'
+      - subelements_7 is failed
+      - '"could not find" in subelements_7.msg'
+      - '[] | subelements("groups") == []'
 
 - name: Verify dict2items throws on non-Mapping
   set_fact:
@@ -845,6 +849,7 @@
       - "1,2,3"
       - "4,5,6"
 
+
 - name: test to_yaml and to_nice_yaml
   include_tasks: to_yaml.yml
 
@@ -867,3 +872,5 @@
     that:
       - '"/foo/bar" in commonpath_01.ansible_facts.msg'
       - "'|commonpath expects' in commonpath_02.msg"
+
+- include_tasks: password_hash.yml

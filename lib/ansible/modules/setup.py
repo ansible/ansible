@@ -18,7 +18,7 @@ options:
             - "If supplied, restrict the additional facts collected to the given subset.
               Possible values: V(all), V(all_ipv4_addresses), V(all_ipv6_addresses), V(apparmor), V(architecture),
               V(caps), V(chroot),V(cmdline), V(date_time), V(default_ipv4), V(default_ipv6), V(devices),
-              V(distribution), V(distribution_major_version), V(distribution_release), V(distribution_version),
+              V(distribution), V(distribution_cpe_name), V(distribution_major_version), V(distribution_release), V(distribution_version),
               V(dns), V(effective_group_ids), V(effective_user_id), V(env), V(facter), V(fips), V(hardware),
               V(interfaces), V(is_chroot), V(iscsi), V(kernel), V(local), V(lsb), V(machine), V(machine_id),
               V(mounts), V(network), V(ohai), V(os_family), V(pkg_mgr), V(platform), V(processor), V(processor_cores),

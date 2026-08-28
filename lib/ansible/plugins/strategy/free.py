@@ -32,6 +32,7 @@ DOCUMENTATION = """
 import time
 
 from ansible import constants as C
+from ansible._internal import _task
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.playbook.handler import Handler
 from ansible.playbook.included_file import IncludedFile
@@ -39,6 +40,8 @@ from ansible.plugins.loader import action_loader
 from ansible.plugins.strategy import StrategyBase
 from ansible._internal._templating._engine import TemplateEngine
 from ansible.utils.display import Display
+from ansible.executor.play_iterator import PlayIterator
+from ansible.playbook.play_context import PlayContext
 
 display = Display()
 
@@ -52,7 +55,7 @@ class StrategyModule(StrategyBase):
         super(StrategyModule, self).__init__(tqm)
         self._host_pinned = False
 
-    def run(self, iterator, play_context):
+    def run(self, iterator: PlayIterator, play_context: PlayContext):  # type: ignore[override]
         """
         The "free" strategy is a bit more complex, in that it allows tasks to
         be sent to hosts as quickly as they can be processed. This means that
@@ -69,7 +72,7 @@ class StrategyModule(StrategyBase):
         # the last host to be given a task
         last_host = 0
 
-        result = self._tqm.RUN_OK
+        result = int(self._tqm.RUN_OK)
 
         # start with all workers being counted as being free
         workers_free = len(self._workers)
@@ -88,6 +91,11 @@ class StrategyModule(StrategyBase):
                 self._tqm.send_callback('v2_playbook_on_no_hosts_remaining')
                 result = False
                 break
+
+            # Reset last_host if it's out of bounds for the current hosts_left
+            # This can happen when hosts become unreachable between iterations
+            if last_host >= len(hosts_left):
+                last_host = 0
 
             work_to_do = False        # assume we have no more work to do
             starting_host = last_host  # save current position so we know when we've looped back around and need to break
@@ -141,8 +149,6 @@ class StrategyModule(StrategyBase):
                             if same_tasks >= throttle:
                                 break
 
-                        # advance the host, mark the host blocked, and queue it
-                        self._blocked_hosts[host_name] = True
                         iterator.set_state_for_host(host.name, state)
                         if isinstance(task, Handler):
                             task.remove_host(host)
@@ -170,7 +176,6 @@ class StrategyModule(StrategyBase):
                                 meta_task_dummy_results_count += 1
                                 workers_free -= 1
                             self._execute_meta(task, play_context, iterator, target_host=host)
-                            self._blocked_hosts[host_name] = False
                         else:
                             # handle step if needed, skip meta actions as they are used internally
                             if not self._step or self._take_step(task, host_name):
@@ -240,7 +245,6 @@ class StrategyModule(StrategyBase):
                                 included_file,
                                 iterator=iterator,
                                 is_handler=is_handler,
-                                handle_stats_and_callbacks=False,
                             )
 
                         # let PlayIterator know about any new handlers included via include_role or
@@ -249,11 +253,14 @@ class StrategyModule(StrategyBase):
                     except AnsibleParserError:
                         raise
                     except AnsibleError as ex:
-                        # FIXME: send the error to the callback; don't directly write to display here
-                        display.error(ex)
                         for r in included_file._results:
-                            r._return_data['failed'] = True
-                            r._return_data['reason'] = str(ex)
+                            # RPFIX-9: FUTURE: do this better, instead of creating a throw-away UTR to merge onto the existing one
+                            utr = _task.UnifiedTaskResult._create_from_exception(ex, source_is_module=False)
+
+                            r.utr.failed = utr.failed
+                            r.utr.exception = utr.exception
+                            r.utr.msg = utr.msg
+
                             self._tqm._stats.increment('failures', r.host.name)
                             self._tqm.send_callback('v2_runner_on_failed', r)
                             failed_includes_hosts.add(r.host)

@@ -1,0 +1,3 @@
+- name: libxcrypt was installed
+  debug:
+    msg: "LIBXCRYPT_WAS_INSTALLED"

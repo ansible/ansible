@@ -17,7 +17,6 @@
 
 from __future__ import annotations
 
-import ansible.constants as C
 from ansible.errors import AnsibleParserError
 from ansible.module_utils.common.sentinel import Sentinel
 from ansible.playbook.attribute import NonInheritableFieldAttribute
@@ -27,7 +26,6 @@ from ansible.playbook.collectionsearch import CollectionSearch
 from ansible.playbook.delegatable import Delegatable
 from ansible.playbook.helpers import load_list_of_tasks
 from ansible.playbook.notifiable import Notifiable
-from ansible.playbook.role import Role
 from ansible.playbook.taggable import Taggable
 
 
@@ -113,52 +111,29 @@ class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatab
 
         return super(Block, self).preprocess_data(ds)
 
-    # FIXME: these do nothing but augment the exception message; DRY and nuke
+    def _load(self, attr: str, ds: object) -> list:
+        try:
+            return load_list_of_tasks(
+                ds,
+                play=self._play,
+                block=self,
+                role=self._role,
+                task_include=None,
+                variable_manager=self._variable_manager,
+                loader=self._loader,
+                use_handlers=self._use_handlers,
+            )
+        except AssertionError as ex:
+            raise AnsibleParserError(f"A malformed block was encountered while loading {attr}.", obj=self._ds) from ex
 
     def _load_block(self, attr, ds):
-        try:
-            return load_list_of_tasks(
-                ds,
-                play=self._play,
-                block=self,
-                role=self._role,
-                task_include=None,
-                variable_manager=self._variable_manager,
-                loader=self._loader,
-                use_handlers=self._use_handlers,
-            )
-        except AssertionError as ex:
-            raise AnsibleParserError("A malformed block was encountered while loading a block", obj=self._ds) from ex
+        return self._load(attr, ds)
 
     def _load_rescue(self, attr, ds):
-        try:
-            return load_list_of_tasks(
-                ds,
-                play=self._play,
-                block=self,
-                role=self._role,
-                task_include=None,
-                variable_manager=self._variable_manager,
-                loader=self._loader,
-                use_handlers=self._use_handlers,
-            )
-        except AssertionError as ex:
-            raise AnsibleParserError("A malformed block was encountered while loading rescue.", obj=self._ds) from ex
+        return self._load(attr, ds)
 
     def _load_always(self, attr, ds):
-        try:
-            return load_list_of_tasks(
-                ds,
-                play=self._play,
-                block=self,
-                role=self._role,
-                task_include=None,
-                variable_manager=self._variable_manager,
-                loader=self._loader,
-                use_handlers=self._use_handlers,
-            )
-        except AssertionError as ex:
-            raise AnsibleParserError("A malformed block was encountered while loading always", obj=self._ds) from ex
+        return self._load(attr, ds)
 
     def _validate_always(self, attr, name, value):
         if value and not self.block:
@@ -219,65 +194,6 @@ class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatab
 
         new_me.validate()
         return new_me
-
-    def serialize(self):
-        """
-        Override of the default serialize method, since when we're serializing
-        a task we don't want to include the attribute list of tasks.
-        """
-
-        data = dict()
-        for attr in self.fattributes:
-            if attr not in ('block', 'rescue', 'always'):
-                data[attr] = getattr(self, attr)
-
-        data['dep_chain'] = self.get_dep_chain()
-
-        if self._role is not None:
-            data['role'] = self._role.serialize()
-        if self._parent is not None:
-            data['parent'] = self._parent.copy(exclude_tasks=True).serialize()
-            data['parent_type'] = self._parent.__class__.__name__
-
-        return data
-
-    def deserialize(self, data):
-        """
-        Override of the default deserialize method, to match the above overridden
-        serialize method
-        """
-
-        # import is here to avoid import loops
-        from ansible.playbook.task_include import TaskInclude
-        from ansible.playbook.handler_task_include import HandlerTaskInclude
-
-        # we don't want the full set of attributes (the task lists), as that
-        # would lead to a serialize/deserialize loop
-        for attr in self.fattributes:
-            if attr in data and attr not in ('block', 'rescue', 'always'):
-                setattr(self, attr, data.get(attr))
-
-        self._dep_chain = data.get('dep_chain', None)
-
-        # if there was a serialized role, unpack it too
-        role_data = data.get('role')
-        if role_data:
-            r = Role()
-            r.deserialize(role_data)
-            self._role = r
-
-        parent_data = data.get('parent')
-        if parent_data:
-            parent_type = data.get('parent_type')
-            if parent_type == 'Block':
-                p = Block()
-            elif parent_type == 'TaskInclude':
-                p = TaskInclude()
-            elif parent_type == 'HandlerTaskInclude':
-                p = HandlerTaskInclude()
-            p.deserialize(parent_data)
-            self._parent = p
-            self._dep_chain = self._parent.get_dep_chain()
 
     def set_loader(self, loader):
         self._loader = loader
@@ -376,8 +292,7 @@ class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatab
                     filtered_block = evaluate_block(task)
                     if filtered_block.has_tasks():
                         tmp_list.append(filtered_block)
-                elif ((task.action in C._ACTION_META and task.implicit) or
-                        task.evaluate_tags(self._play.only_tags, self._play.skip_tags, all_vars=all_vars)):
+                elif task.evaluate_tags(self._play.only_tags, self._play.skip_tags, all_vars=all_vars):
                     tmp_list.append(task)
             return tmp_list
 

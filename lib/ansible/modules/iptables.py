@@ -136,6 +136,8 @@ options:
       - The set of matches makes up the condition under which a target is invoked.
       - Matches are evaluated first to last if specified as an array and work in short-circuit
         fashion, in other words if one extension yields false, the evaluation will stop.
+      - The module automatically adds necessary extensions (for example, O(uid_owner=1) corresponds
+        to the command flags C(-m owner --uid-owner 1)), so it is often unnecessary to use the O(match) argument.
     type: list
     elements: str
     default: []
@@ -598,9 +600,10 @@ def append_csv(rule, param, flag):
         rule.extend([flag, ','.join(param)])
 
 
-def append_match(rule, param, match):
-    if param:
+def append_match(rule, param, match, loaded_extensions):
+    if param and match not in loaded_extensions:
         rule.extend(['-m', match])
+        loaded_extensions.add(match)
 
 
 def append_jump(rule, param, jump):
@@ -619,6 +622,7 @@ def construct_rule(params):
     append_param(rule, params['source'], '-s', False)
     append_param(rule, params['destination'], '-d', False)
     append_param(rule, params['match'], '-m', True)
+    loaded_extensions = set(params['match'])  # Keep track of the above extensions
     append_tcp_flags(rule, params['tcp_flags'], '--tcp-flags')
     append_param(rule, params['jump'], '-j', False)
     if params.get('jump') and params['jump'].lower() == 'tee':
@@ -626,7 +630,7 @@ def construct_rule(params):
     append_param(rule, params['log_prefix'], '--log-prefix', False)
     append_param(rule, params['log_level'], '--log-level', False)
     append_param(rule, params['to_destination'], '--to-destination', False)
-    append_match(rule, params['destination_ports'], 'multiport')
+    append_match(rule, params['destination_ports'], 'multiport', loaded_extensions)
     append_csv(rule, params['destination_ports'], '--dports')
     append_param(rule, params['to_source'], '--to-source', False)
     append_param(rule, params['goto'], '-g', False)
@@ -654,29 +658,29 @@ def construct_rule(params):
     elif 'state' in params['match']:
         append_csv(rule, params['ctstate'], '--state')
     elif params['ctstate']:
-        append_match(rule, params['ctstate'], 'conntrack')
+        append_match(rule, params['ctstate'], 'conntrack', loaded_extensions)
         append_csv(rule, params['ctstate'], '--ctstate')
     if 'iprange' in params['match']:
         append_param(rule, params['src_range'], '--src-range', False)
         append_param(rule, params['dst_range'], '--dst-range', False)
     elif params['src_range'] or params['dst_range']:
-        append_match(rule, params['src_range'] or params['dst_range'], 'iprange')
+        append_match(rule, params['src_range'] or params['dst_range'], 'iprange', loaded_extensions)
         append_param(rule, params['src_range'], '--src-range', False)
         append_param(rule, params['dst_range'], '--dst-range', False)
     if 'set' in params['match']:
         append_param(rule, params['match_set'], '--match-set', False)
         append_match_flag(rule, 'match', params['match_set_flags'], False)
     elif params['match_set']:
-        append_match(rule, params['match_set'], 'set')
+        append_match(rule, params['match_set'], 'set', loaded_extensions)
         append_param(rule, params['match_set'], '--match-set', False)
         append_match_flag(rule, 'match', params['match_set_flags'], False)
-    append_match(rule, params['limit'] or params['limit_burst'], 'limit')
+    append_match(rule, params['limit'] or params['limit_burst'], 'limit', loaded_extensions)
     append_param(rule, params['limit'], '--limit', False)
     append_param(rule, params['limit_burst'], '--limit-burst', False)
-    append_match(rule, params['uid_owner'], 'owner')
+    append_match(rule, params['uid_owner'], 'owner', loaded_extensions)
     append_match_flag(rule, params['uid_owner'], '--uid-owner', True)
     append_param(rule, params['uid_owner'], '--uid-owner', False)
-    append_match(rule, params['gid_owner'], 'owner')
+    append_match(rule, params['gid_owner'], 'owner', loaded_extensions)
     append_match_flag(rule, params['gid_owner'], '--gid-owner', True)
     append_param(rule, params['gid_owner'], '--gid-owner', False)
     if params['jump'] is None:
@@ -690,7 +694,7 @@ def construct_rule(params):
         params['icmp_type'],
         ICMP_TYPE_OPTIONS[params['ip_version']],
         False)
-    append_match(rule, params['comment'], 'comment')
+    append_match(rule, params['comment'], 'comment', loaded_extensions)
     append_param(rule, params['comment'], '--comment', False)
     return rule
 

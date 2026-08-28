@@ -42,6 +42,7 @@ from ...util_common import (
     process_scoped_temporary_directory,
     run_command,
     ResultType,
+    get_powershell_injector_env,
 )
 
 from ...ansible_util import (
@@ -122,6 +123,7 @@ class ValidateModulesTest(SanitySingleVersion):
 
     def test(self, args: SanityConfig, targets: SanityTargets, python: PythonConfig) -> TestResult:
         env = ansible_environment(args, color=False)
+        env.update(get_powershell_injector_env(args.controller_powershell, env))
 
         settings = self.load_processor(args)
 

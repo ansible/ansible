@@ -1,0 +1,4 @@
+minor_changes:
+- url `multipart/form-data` - Replace Python ``email`` multipart generator with custom generator, allowing for binary content without ``Content-Transfer-Encoding``
+bugfixes:
+- uri - Enable multipart/form-data requests over 2GB (https://github.com/ansible/ansible/issues/76666)

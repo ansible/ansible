@@ -8,7 +8,7 @@ DOCUMENTATION = """
     description:
         - This connection plugin just verifies parameters passed in
     author: ansible (@core)
-    version_added: histerical
+    version_added: hysterical
     options:
       password:
           description: Authentication password for the C(remote_user). Can be supplied as CLI option.

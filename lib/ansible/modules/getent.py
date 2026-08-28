@@ -36,6 +36,7 @@ options:
         description:
             - Character used to split the database values into lists/arrays such as V(:) or V(\\t),
               otherwise it will try to pick one depending on the database.
+            - The value must be a non-empty string.
         type: str
     fail_key:
         description:
@@ -114,6 +115,7 @@ ansible_facts:
       type: list
 """
 
+import platform
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.text.converters import to_native
 
@@ -146,7 +148,12 @@ def main():
         cmd = [getent_bin, database]
 
     if service is not None:
+        if platform.libc_ver()[0] not in ('glibc',):
+            module.fail_json(msg=f"Specifying service `{service}` not supported on this platform.")
         cmd.extend(['-s', service])
+
+    if not split and split is not None:
+        module.fail_json(msg="Invalid split value. The value must be a non-empty string")
 
     if split is None and database in colon:
         split = ':'

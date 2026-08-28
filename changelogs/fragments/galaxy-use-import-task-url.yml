@@ -1,2 +1,0 @@
-bugfixes:
-- ansible-galaxy - Use the provided import task url, instead of parsing to get the task id and reconstructing the URL

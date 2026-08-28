@@ -21,16 +21,14 @@ import pytest
 import typing as t
 import unittest
 
-import pytest_mock
 import yaml
 
 from ansible.module_utils._internal._datatag import Tripwire
 from ansible.module_utils._internal._datatag._tags import Deprecated
 from ansible.parsing import vault
-from ansible._internal._datatag._tags import VaultedValue, TrustedAsTemplate
+from ansible._internal._datatag._tags import TrustedAsTemplate
 from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.parsing.yaml.dumper import AnsibleDumper
-from ansible.plugins.filter.core import to_yaml, to_nice_yaml
 from ansible._internal._templating._jinja_bits import _DEFAULT_UNDEF
 from ansible._internal._templating._jinja_common import MarkerError
 
@@ -84,27 +82,6 @@ class TestAnsibleDumper(unittest.TestCase, YamlTestUtils):
     def test_undefined(self):
         with pytest.raises(MarkerError):
             self._dump_string(_DEFAULT_UNDEF, dumper=self.dumper)
-
-
-@pytest.mark.parametrize("filter_impl, expected_output", [
-    (to_yaml, "!vault |-\n  ciphertext\n"),
-    (to_nice_yaml, "!vault |-\n    ciphertext\n"),
-])
-def test_vaulted_value_dump(
-    filter_impl: t.Callable,
-    expected_output: str,
-    mocker: pytest_mock.MockerFixture
-) -> None:
-    """Validate that strings tagged VaultedValue are represented properly."""
-    value = VaultedValue(ciphertext="ciphertext").tag("secret plaintext")
-
-    from ansible.utils.display import Display
-
-    _deprecated_spy = mocker.spy(Display(), 'deprecated')
-
-    res = filter_impl(value)
-
-    assert res == expected_output
 
 
 _test_tag = Deprecated(msg="test")

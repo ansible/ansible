@@ -5,6 +5,7 @@ using namespace System.Collections
 using namespace System.Collections.Generic
 using namespace System.Diagnostics.CodeAnalysis
 using namespace System.IO
+using namespace System.IO.Compression
 using namespace System.Linq
 using namespace System.Management.Automation
 using namespace System.Management.Automation.Language
@@ -25,7 +26,7 @@ param (
     $InputObject,
 
     [Parameter()]
-    [IDictionary]
+    [PSObject]
     $Manifest,
 
     [Parameter()]
@@ -33,16 +34,24 @@ param (
     $EncodeInputOutput,
 
     [Parameter()]
-    [Version]
+    [string]
     $MinOSVersion,
 
     [Parameter()]
-    [Version]
+    [string]
     $MinPSVersion,
 
     [Parameter()]
     [string]
     $TempPath,
+
+    [Parameter()]
+    [string]
+    $PwshPath,
+
+    [Parameter()]
+    [switch]
+    $DecompressInput,
 
     [Parameter()]
     [PSObject]
@@ -64,9 +73,98 @@ begin {
         [Console]::InputEncoding = [Console]::OutputEncoding = [UTF8Encoding]::new()
     }
     catch {
-        # PSRP will not have a console host so this will fail. The line here is
-        # to ignore sanity checks.
-        $null = $_
+        # PSRP will not have a console host so this will fail. Fallback to
+        # setting the private field we know is present on this version. This
+        # is important as PowerShell uses this encoding when decoding output
+        # from a new process that it spawns.
+        if ($PSVersionTable.PSVersion -lt '6.0') {
+            [Console].GetField('_outputEncoding', [BindingFlags]'NonPublic, Static').SetValue($null, [UTF8Encoding]::new())
+        }
+    }
+
+    $respawnPipeline = $null
+    if ($PwshPath) {
+        $null = $PSBoundParameters.Remove('PwshPath')
+
+        $targetPwsh = Get-Command -Name $PwshPath -CommandType Application -ErrorAction Ignore |
+            Select-Object -First 1 |
+            ForEach-Object { [Path]::GetFullPath($_.Path) }
+        if (-not $targetPwsh) {
+            @{
+                failed = $true
+                msg = "Could not find the specified PowerShell interpreter '$PwshPath'."
+            } | ConvertTo-Json -Compress
+            $Host.SetShouldExit(1)
+            return
+        }
+
+        # Resolve the path in case of a symbolic link, ResolveLinkTarget is
+        # present in pwsh 7+.
+        if ([Directory]::ResolveLinkTarget) {
+            $targetPath = [Directory]::ResolveLinkTarget($targetPwsh, $true)
+            if ($targetPath) {
+                $targetPwsh = $targetPath.FullName
+            }
+        }
+        else {
+            while ($true) {
+                $target = Get-Item -LiteralPath $targetPwsh
+                if ($target.LinkType -ne 'SymbolicLink') {
+                    break
+                }
+
+                $targetPath = $target.Target
+                if ($targetPath -notmatch '([a-z]:[\\/])|([\\/]{2})') {
+                    # If the target isn't rooted in a drive or UNC path then
+                    # they are relative to the link location.
+                    $targetPath = [Path]::Combine(
+                        [Path]::GetDirectoryName($targetPwsh),
+                        $targetPath)
+                }
+                $targetPwsh = [Path]::GetFullPath($targetPath)
+            }
+        }
+
+        # We don't compare the exe as the current process may not be the
+        # normal interpreter but the WSManProvHost used by PSRP. Instead see if
+        # the PSHome path is the same as the target interpreter directory.
+        $targetPSHome = Split-Path -Path $targetPwsh -Parent
+        if ($targetPSHome -ne $PSHome) {
+            $bootstrapWrapper = (Get-PSCallStack)[1].InvocationInfo.MyCommand.Definition
+            $encCommand = [Convert]::ToBase64String([Encoding]::Unicode.GetBytes($bootstrapWrapper))
+
+            $targetPwshArgs = @(
+                '-NoProfile'
+                '-NonInteractive'
+                if ($PSVersionTable.PSVersion -lt '6.0' -or $IsWindows) {
+                    '-ExecutionPolicy'
+                    'Unrestricted'
+                }
+                '-EncodedCommand'
+                $encCommand
+            )
+
+            # Switch parameters need to be converted to a boolean so they
+            # serialized properly in JSON
+            $PSBoundParameters['DecompressInput'] = $PSBoundParameters['DecompressInput'].IsPresent
+
+            $execManifest = @{
+                name = 'exec_wrapper-respawn.ps1'
+                params = $PSBoundParameters
+                script = $MyInvocation.MyCommand.ScriptBlock.ToString()
+            } | ConvertTo-Json -Compress -Depth 99
+
+            $respawnPipeline = { & $targetPwsh @targetPwshArgs }.GetSteppablePipeline()
+
+            # Need to set back to Continue to stderr ErrorRecords don't stop at
+            # the first one (line).
+            $ErrorActionPreference = 'Continue'
+            $null = $respawnPipeline.Begin($true)
+            $null = $respawnPipeline.Process($execManifest)
+            $null = $respawnPipeline.Process("`0`0`0`0")
+            # Remaining input will be sent in the process block
+            return
+        }
     }
 
     if ($MinOSVersion) {
@@ -83,7 +181,7 @@ begin {
     }
 
     if ($MinPSVersion) {
-        if ($PSVersionTable.PSVersion -lt $MinPSVersion) {
+        if ([version]$PSVersionTable.PSVersion -lt $MinPSVersion) {
             @{
                 failed = $true
                 msg = "This module cannot run as it requires a minimum PowerShell version of $MinPSVersion, actual was ""$($PSVersionTable.PSVersion)"""
@@ -93,8 +191,13 @@ begin {
         }
     }
 
-    # $Script:AnsibleManifest = @{}  # Defined in process/end.
-    $Script:AnsibleShouldConstrain = [SystemPolicy]::GetSystemLockdownPolicy() -eq 'Enforce'
+    # $Script:AnsibleManifest = [PSCustomObject]@{}  # Defined in process/end.
+    $Script:AnsibleShouldConstrain = if ($PSVersionTable.PSVersion -lt '6.0' -or $IsWindows) {
+        [SystemPolicy]::GetSystemLockdownPolicy() -eq 'Enforce'
+    }
+    else {
+        $false
+    }
     $Script:AnsibleTrustedHashList = [HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
     $Script:AnsibleUnsupportedHashList = [HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
     $Script:AnsibleWrapperWarnings = [List[string]]::new()
@@ -121,33 +224,6 @@ begin {
     $Script:AnsibleTempScripts = [List[string]]::new()
     $Script:AnsibleClrFacadeSet = $false
 
-    Function Convert-JsonObject {
-        param(
-            [Parameter(Mandatory, ValueFromPipeline)]
-            [AllowNull()]
-            [object]
-            $InputObject
-        )
-
-        process {
-            # Using the full type name is important as PSCustomObject is an
-            # alias for PSObject which all piped objects are.
-            if ($InputObject -is [System.Management.Automation.PSCustomObject]) {
-                $value = @{}
-                foreach ($prop in $InputObject.PSObject.Properties) {
-                    $value[$prop.Name] = Convert-JsonObject -InputObject $prop.Value
-                }
-                $value
-            }
-            elseif ($InputObject -is [Array]) {
-                , @($InputObject | Convert-JsonObject)
-            }
-            else {
-                $InputObject
-            }
-        }
-    }
-
     Function Get-AnsibleScript {
         [CmdletBinding()]
         param (
@@ -164,7 +240,7 @@ begin {
             $SkipHashCheck
         )
 
-        if (-not $Script:AnsibleManifest.scripts.Contains($Name)) {
+        if (-not $Script:AnsibleManifest.scripts.PSObject.Properties.Match($Name)) {
             $err = [ErrorRecord]::new(
                 [Exception]::new("Could not find the script '$Name'."),
                 "ScriptNotFound",
@@ -173,7 +249,7 @@ begin {
             $PSCmdlet.ThrowTerminatingError($err)
         }
 
-        $scriptInfo = $Script:AnsibleManifest.scripts[$Name]
+        $scriptInfo = $Script:AnsibleManifest.scripts.$Name
         $scriptBytes = [Convert]::FromBase64String($scriptInfo.script)
         $scriptContents = [Encoding]::UTF8.GetString($scriptBytes)
 
@@ -284,16 +360,18 @@ begin {
         $Script:AnsibleManifest.actions = @($newActions | Select-Object)
 
         $actionName = $action.name
-        $actionParams = $action.params
+        $actionParams = @{}
         $actionScript = Get-AnsibleScript -Name $actionName -IncludeScriptBlock
 
-        foreach ($kvp in $action.secure_params.GetEnumerator()) {
-            if (-not $kvp.Value) {
+        foreach ($prop in $action.params.PSObject.Properties) {
+            $actionParams[$prop.Name] = $prop.Value
+        }
+        foreach ($prop in $action.secure_params.PSObject.Properties) {
+            if (-not $prop.Value) {
                 continue
             }
 
-            $name = $kvp.Key
-            $actionParams.$name = $kvp.Value | ConvertTo-SecureString -AsPlainText -Force
+            $actionParams[$prop.Name] = $prop.Value | ConvertTo-SecureString -AsPlainText -Force
         }
 
         [PSCustomObject]@{
@@ -653,7 +731,7 @@ begin {
         else {
             # Otherwise the first part of the input is the manifest json with the
             # chance for extra data afterwards.
-            $jsonPipeline = { ConvertFrom-Json | Convert-JsonObject }.GetSteppablePipeline()
+            $jsonPipeline = { ConvertFrom-Json }.GetSteppablePipeline()
             $jsonPipeline.Begin($true)
         }
     }
@@ -663,6 +741,12 @@ begin {
 }
 
 process {
+    if ($respawnPipeline) {
+        $null = $respawnPipeline.Process($InputObject)
+        return
+    }
+
+    $inputStream = $outputStream = $gzipStream = $null
     try {
         if ($actionPipeline) {
             # We received our manifest and started the action pipeline, redirect
@@ -679,6 +763,14 @@ process {
             if ($EncodeInputOutput) {
                 $jsonPipeline.Process([Encoding]::UTF8.GetString([Convert]::FromBase64String($InputObject)))
             }
+            elseif ($DecompressInput) {
+                $inputStream = [MemoryStream]::new([Convert]::FromBase64String($InputObject))
+                $gzipStream = [GZipStream]::new($inputStream, [CompressionMode]::Decompress)
+                $outputStream = [MemoryStream]::new()
+                $gzipStream.CopyTo($outputStream)
+
+                $jsonPipeline.Process([Encoding]::UTF8.GetString($outputStream.ToArray()))
+            }
             else {
                 $jsonPipeline.Process($InputObject)
             }
@@ -687,9 +779,19 @@ process {
     catch {
         Write-AnsibleErrorJson -ErrorRecord $_
     }
+    finally {
+        if ($inputStream) { $inputStream.Dispose() }
+        if ($outputStream) { $outputStream.Dispose() }
+        if ($gzipStream) { $gzipStream.Dispose() }
+    }
 }
 
 end {
+    if ($respawnPipeline) {
+        $respawnPipeline.End()
+        return
+    }
+
     try {
         if ($jsonPipeline) {
             # Only manifest input was received, process it now and start the

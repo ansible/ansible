@@ -68,7 +68,7 @@
       register: ouch
       ignore_errors: true
 
-    - name: no log wont obscure booleans when True, but still hide in msg
+    - name: no log won't obscure booleans when True, but still hide in msg
       assert:
         that:
           - ouch['changed'] is boolean
@@ -80,7 +80,7 @@
       register: ouch
       ignore_errors: true
 
-    - name: no log wont obscure booleans when False, but still hide in msg
+    - name: no log won't obscure booleans when False, but still hide in msg
       assert:
         that:
           - ouch['changed'] is boolean

@@ -243,7 +243,7 @@ def main(args=None):
         options = pickle.loads(opts_data, encoding='bytes')
 
         play_context = PlayContext()
-        play_context.deserialize(pc_data)
+        play_context.from_attrs(pc_data)
 
     except Exception as e:
         rc = 1

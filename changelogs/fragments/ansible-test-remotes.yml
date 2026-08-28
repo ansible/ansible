@@ -1,4 +1,0 @@
-minor_changes:
-  - ansible-test - Upgrade Fedora 41 to Fedora 42.
-  - ansible-test - Upgrade Alpine 3.21 to 3.22.
-  - ansible-test - Update Ubuntu containers.

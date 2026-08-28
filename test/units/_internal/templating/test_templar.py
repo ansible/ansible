@@ -31,6 +31,7 @@ from jinja2.loaders import DictLoader
 
 import unittest
 
+from ansible._internal import _display_utils
 from ansible._internal._templating._datatag import _JinjaConstTemplate
 from ansible.errors import (
     AnsibleError, AnsibleUndefinedVariable, AnsibleTemplateSyntaxError, AnsibleBrokenConditionalError, AnsibleTemplateError, AnsibleTemplateTransformLimitError,
@@ -52,7 +53,7 @@ from ansible._internal._templating._jinja_bits import AnsibleEnvironment, Ansibl
 from ansible._internal._templating._marker_behaviors import ReplacingMarkerBehavior
 from ansible._internal._templating._utils import TemplateContext
 from ansible.module_utils._internal import _event_utils
-from ansible.utils.display import Display, _DeferredWarningContext
+from ansible.utils.display import Display
 from units.mock.loader import DictDataLoader
 from units.test_utils.controller.display import emits_warnings
 
@@ -1033,7 +1034,7 @@ def test_deprecated_dedupe_and_source():
 
     templar = TemplateEngine(variables=variables)
 
-    with _DeferredWarningContext(variables=variables) as dwc:
+    with _display_utils.DeferredWarningContext(variables=variables) as dwc:
         # The indirect access summary occurs first.
         # The two following direct access summaries get deduped to a single one by the warning context (but unique template value keeps distinct from indirect).
         # The accesses with the shared tag instance values are internally deduped by the audit context.
@@ -1049,14 +1050,14 @@ def test_deprecated_dedupe_and_source():
 
 def test_jinja_const_template_leak(template_context: TemplateContext) -> None:
     """Verify that _JinjaConstTemplate is present during internal templating."""
-    with _DeferredWarningContext(variables={}):  # suppress warning from usage of embedded template
+    with _display_utils.DeferredWarningContext(variables={}):  # suppress warning from usage of embedded template
         with unittest.mock.patch.object(_TemplateConfig, 'allow_embedded_templates', True):
             assert _JinjaConstTemplate.is_tagged_on(TemplateEngine().template(TRUST.tag("{{ '{{ 1 }}' }}")))
 
 
 def test_jinja_const_template_finalized() -> None:
     """Verify that _JinjaConstTemplate is not present in finalized template results."""
-    with _DeferredWarningContext(variables={}):  # suppress warning from usage of embedded template
+    with _display_utils.DeferredWarningContext(variables={}):  # suppress warning from usage of embedded template
         with unittest.mock.patch.object(_TemplateConfig, 'allow_embedded_templates', True):
             assert not _JinjaConstTemplate.is_tagged_on(TemplateEngine().template(TRUST.tag("{{ '{{ 1 }}' }}")))
 

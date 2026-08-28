@@ -193,6 +193,7 @@ options:
   certificate_key_pem:
     description:
     - The local path to an X509 certificate key to use with certificate auth.
+    - If the certificate key is encrypted then O(certificate_key_password) must also be set.
     type: path
     vars:
     - name: ansible_psrp_certificate_key_pem
@@ -202,6 +203,14 @@ options:
     type: path
     vars:
     - name: ansible_psrp_certificate_pem
+  certificate_key_password:
+    description:
+    - The password for the O(certificate_key_pem) key file if it is encrypted.
+    - This option requires pypsrp >= 0.9.0 to be installed.
+    type: str
+    vars:
+    - name: ansible_psrp_certificate_key_password
+    version_added: '2.21'
   credssp_auth_mechanism:
     description:
     - The sub authentication mechanism to use with CredSSP auth.
@@ -271,7 +280,9 @@ options:
     - Only valid when Kerberos was the negotiated auth or was explicitly set as
       the authentication.
     - Ignored when NTLM was the negotiated auth.
-    default: WSMAN
+    - Before ansible-core 2.21, this had a default value of V(WSMAN) which failed to
+      work on some hosts. Since ansible-core 2.21 the default value is V(host).
+    default: host
     type: str
     vars:
     - name: ansible_psrp_negotiate_service
@@ -302,16 +313,25 @@ options:
     vars:
     - name: ansible_psrp_configuration_name
     default: Microsoft.PowerShell
+  no_profile:
+    description:
+    - Do not load the user's PowerShell profile when connecting.
+    - This option requires pypsrp >= 0.9.0 to be installed.
+    type: bool
+    default: false
+    vars:
+    - name: ansible_psrp_no_profile
+    version_added: '2.21'
 """
 
 import base64
 import json
 import logging
 import os
-import shlex
 import typing as t
 
 from ansible import constants as C
+from ansible._internal._powershell import _script
 from ansible.errors import AnsibleConnectionFailure, AnsibleError
 from ansible.errors import AnsibleFileNotFound
 from ansible.executor.powershell.module_manifest import _bootstrap_powershell_script
@@ -319,7 +339,6 @@ from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.plugins.connection import ConnectionBase
 from ansible.plugins.shell.powershell import ShellModule as PowerShellPlugin
-from ansible.plugins.shell.powershell import _common_args
 from ansible.utils.display import Display
 from ansible.utils.hashing import sha1
 
@@ -331,7 +350,7 @@ try:
     from pypsrp.host import PSHost, PSHostUserInterface
     from pypsrp.powershell import PowerShell, RunspacePool
     from pypsrp.wsman import WSMan
-    from requests.exceptions import ConnectionError, ConnectTimeout
+    from requests.exceptions import ConnectionError, ConnectTimeout, ReadTimeout
 except ImportError as err:
     HAS_PYPSRP = False
     PYPSRP_IMP_ERR = err
@@ -350,15 +369,24 @@ class Connection(ConnectionBase):
     _shell: PowerShellPlugin
 
     def __init__(self, *args: t.Any, **kwargs: t.Any) -> None:
-        self.always_pipeline_modules = True
-        self.has_native_async = True
-
         self.runspace: RunspacePool | None = None
         self.host: PSHost | None = None
         self._last_pipeline: PowerShell | None = None
 
         self._shell_type = 'powershell'
         super(Connection, self).__init__(*args, **kwargs)
+        if self._shell.SHELL_FAMILY != 'powershell':
+            # This shouldn't happen but someone might have ansible_shell_type=cmd
+            # set from testing with winrm/ssh. This plugin will probably still work
+            # but there are edge cases that could fail unless powershell was
+            # used.
+            display.warning(
+                msg=(
+                    "The psrp connection plugin should have the shell type of powershell and not "
+                    f"{self._shell.SHELL_FAMILY}. This may result in an error when attempting to run more complex commands."
+                ),
+                help_text="Unset ansible_shell_type or set to powershell to use the required powershell shell.",
+            )
 
         if not C.DEFAULT_DEBUG:
             logging.getLogger('pypsrp').setLevel(logging.WARNING)
@@ -385,11 +413,11 @@ class Connection(ConnectionBase):
 
             self.runspace = RunspacePool(
                 connection, host=self.host,
-                configuration_name=self._psrp_configuration_name
+                **self._psrp_runspace_kwargs,
             )
             display.vvvvv(
                 "PSRP OPEN RUNSPACE: auth=%s configuration=%s endpoint=%s" %
-                (self._psrp_auth, self._psrp_configuration_name,
+                (self._psrp_auth, self._psrp_runspace_kwargs.get('configuration_name', 'Unknown'),
                  connection.transport.endpoint), host=self._psrp_host
             )
             try:
@@ -432,58 +460,33 @@ class Connection(ConnectionBase):
         super(Connection, self).exec_command(cmd, in_data=in_data,
                                              sudoable=sudoable)
 
-        pwsh_in_data: bytes | str | None = None
+        pwsh_in_data: bytes | str | None = to_text(in_data, errors="surrogate_or_strict", nonstring="passthru")
         script_args: list[str] | None = None
 
-        common_args_prefix = " ".join(_common_args)
-        if cmd.startswith(f"{common_args_prefix} -EncodedCommand"):
-            # This is a PowerShell script encoded by the shell plugin, we will
-            # decode the script and execute it in the runspace instead of
-            # starting a new interpreter to save on time
-            b_command = base64.b64decode(cmd.split(" ")[-1])
-            script = to_text(b_command, 'utf-16-le')
-            pwsh_in_data = to_text(in_data, errors="surrogate_or_strict", nonstring="passthru")
-
-            if pwsh_in_data and isinstance(pwsh_in_data, str) and pwsh_in_data.startswith("#!"):
-                # ANSIBALLZ wrapper, we need to get the interpreter and execute
-                # that as the script - note this won't work as basic.py relies
-                # on packages not available on Windows, once fixed we can enable
-                # this path
-                interpreter = to_native(pwsh_in_data.splitlines()[0][2:])
-                # script = "$input | &'%s' -" % interpreter
-                raise AnsibleError("cannot run the interpreter '%s' on the psrp "
-                                   "connection plugin" % interpreter)
-
-            # call build_module_command to get the bootstrap wrapper text
-            bootstrap_wrapper = self._shell.build_module_command('', '', '')
-            if bootstrap_wrapper == cmd:
-                # Do not display to the user each invocation of the bootstrap wrapper
-                display.vvv("PSRP: EXEC (via pipeline wrapper)")
-            else:
-                display.vvv("PSRP: EXEC %s" % script, host=self._psrp_host)
-
-        elif cmd.startswith(f"{common_args_prefix} -File "):  # trailing space is on purpose
-            # Used when executing a script file, we will execute it in the runspace process
-            # instead on a new subprocess
-            script = 'param([string]$Path, [Parameter(ValueFromRemainingArguments)][string[]]$ScriptArgs) & $Path @ScriptArgs'
-
-            # Using shlex isn't perfect but it's good enough.
-            cmd = cmd[len(common_args_prefix) + 7:]
-            script_args = shlex.split(cmd)
-            display.vvv(f"PSRP: EXEC {cmd}")
-
+        # If -EncodedCommand is present we assume it's an encoded PowerShell
+        # command which we will just execute directly without spawning a new
+        # subprocess.
+        if enc_cmd := _script.parse_encoded_cmdline(cmd):
+            script, script_args = enc_cmd
         else:
-            # In other cases we want to execute the cmd as the script. We add on the 'exit $LASTEXITCODE' to ensure the
-            # rc is propagated back to the connection plugin.
-            script = to_text(u"%s\nexit $LASTEXITCODE" % cmd)
+            # In other cases we want to execute the cmd as the script. We
+            # expect the cmd to be a valid PowerShell script/command.
+            # We add on the 'exit $LASTEXITCODE' to ensure the # rc is
+            # propagated back to the connection plugin.
+            script = f"{cmd}\nexit $LASTEXITCODE"
             pwsh_in_data = in_data
             display.vvv(u"PSRP: EXEC %s" % script, host=self._psrp_host)
 
-        rc, stdout, stderr = self._exec_psrp_script(
-            script=script,
-            input_data=pwsh_in_data.splitlines() if pwsh_in_data else None,
-            arguments=script_args,
-        )
+        try:
+            rc, stdout, stderr = self._exec_psrp_script(
+                script=script,
+                input_data=pwsh_in_data.splitlines() if pwsh_in_data else None,
+                arguments=script_args,
+            )
+        except ReadTimeout as e:
+            raise AnsibleConnectionFailure(
+                "HTTP read timeout during PSRP script execution"
+            ) from e
         return rc, stdout, stderr
 
     def put_file(self, in_path: str, out_path: str) -> None:
@@ -615,7 +618,12 @@ class Connection(ConnectionBase):
 
         self._psrp_port = int(port)
         self._psrp_auth = self.get_option('auth')
-        self._psrp_configuration_name = self.get_option('configuration_name')
+
+        self._psrp_runspace_kwargs = dict(
+            configuration_name=self.get_option('configuration_name'),
+        )
+        if no_profile := self.get_option('no_profile'):
+            self._psrp_runspace_kwargs['no_profile'] = no_profile
 
         # cert validation can either be a bool or a path to the cert
         cert_validation = self.get_option('cert_validation')
@@ -655,6 +663,12 @@ class Connection(ConnectionBase):
             negotiate_hostname_override=self.get_option('negotiate_hostname_override'),
             negotiate_service=self.get_option('negotiate_service'),
         )
+
+        # We don't always set this in case we are working with an older pypsrp
+        # version that doesn't support this option.
+        certificate_key_password = self.get_option('certificate_key_password')
+        if certificate_key_password:
+            self._psrp_conn_kwargs['certificate_key_password'] = certificate_key_password
 
     def _exec_psrp_script(
         self,
@@ -732,17 +746,7 @@ class Connection(ConnectionBase):
             # NativeCommandError and NativeCommandErrorMessage are special
             # cases used for stderr from a subprocess, we will just print the
             # error message
-            if error.fq_error == 'NativeCommandErrorMessage' and not error.target_name:
-                # This can be removed once Server 2016 is EOL and no longer
-                # supported. PS 5.1 on 2016 will emit 1 error record under
-                # NativeCommandError being the first line, subsequent records
-                # are the raw stderr up to 4096 chars. Each entry is the raw
-                # stderr value without any newlines appended so we just use the
-                # value as is. We know it's 2016 as the target_name is empty in
-                # this scenario.
-                stderr_list.append(str(error))
-                continue
-            elif error.fq_error in ['NativeCommandError', 'NativeCommandErrorMessage']:
+            if error.fq_error in ['NativeCommandError', 'NativeCommandErrorMessage']:
                 stderr_list.append(f"{error}\r\n")
                 continue
 
@@ -762,9 +766,14 @@ class Connection(ConnectionBase):
             stderr_list += self.host.ui.stderr
         stderr = "".join([to_text(o) for o in stderr_list])
 
+        log_stdout = stdout
+        log_stderr = stderr
+        if self._play_context.no_log:
+            log_stdout = log_stderr = '<censored due to no log>'
+
         display.vvvvv("PSRP RC: %d" % rc, host=self._psrp_host)
-        display.vvvvv("PSRP STDOUT: %s" % stdout, host=self._psrp_host)
-        display.vvvvv("PSRP STDERR: %s" % stderr, host=self._psrp_host)
+        display.vvvvv(f"PSRP STDOUT: {log_stdout}", host=self._psrp_host)
+        display.vvvvv(f"PSRP STDERR: {log_stderr}", host=self._psrp_host)
 
         # reset the host back output back to defaults, needed if running
         # multiple pipelines on the same RunspacePool
@@ -773,3 +782,6 @@ class Connection(ConnectionBase):
         self.host.ui.stderr = []
 
         return rc, to_bytes(stdout, encoding='utf-8'), to_bytes(stderr, encoding='utf-8')
+
+    def is_pipelining_enabled(self, wrap_async: bool = False) -> bool:
+        return True

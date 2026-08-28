@@ -1,0 +1,7 @@
+- hosts: all
+  gather_facts: false
+  tasks:
+    - name: populate cache, will fail if invalid files are used
+      set_fact:
+        cacheable: true
+        testing: 123{{inventory_hostname}}

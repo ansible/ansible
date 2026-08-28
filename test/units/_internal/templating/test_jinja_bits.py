@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import pathlib
 import sys
 import typing as t
@@ -9,6 +10,7 @@ from contextlib import nullcontext
 import pytest
 import pytest_mock
 
+from ansible._internal import _display_utils
 from ansible._internal._templating._access import NotifiableAccessContextBase
 from ansible.errors import AnsibleUndefinedVariable, AnsibleTemplateError
 from ansible._internal._templating._errors import AnsibleTemplatePluginRuntimeError
@@ -21,8 +23,6 @@ from ansible._internal._templating._jinja_bits import (AnsibleEnvironment, Templ
 from ansible._internal._templating import _jinja_plugins
 from ansible._internal._templating._engine import TemplateEngine, TemplateOptions
 from jinja2.loaders import DictLoader
-
-from ansible.utils.display import _DeferredWarningContext
 
 if t.TYPE_CHECKING:
     import unittest.mock
@@ -79,7 +79,7 @@ def test_templatemodule_ignore(template_context):
     templar = TemplateEngine()
     templar.environment.loader = DictLoader(dict(foo=TRUST.tag('{{ undefined_in_import }}')))
 
-    with _DeferredWarningContext(variables=templar.available_variables) as warnings:
+    with _display_utils.DeferredWarningContext(variables=templar.available_variables) as warnings:
         result = templar.template(template)
 
     assert not warnings.get_warnings()
@@ -401,7 +401,7 @@ def test_builtin_alt_names(name: str) -> None:
 def test_macro_marker_handling(template: str, variables: dict[str, object], expected: object) -> None:
     """
     Ensure that `JinjaCallContext` Marker handling is masked/set correctly for Jinja macro callables.
-    Jinja's generated macro code handles Markers, so pre-emptive raise on retrieval should be disabled for the macro `call()`.
+    Jinja's generated macro code handles Markers, so preemptive raise on retrieval should be disabled for the macro `call()`.
     """
     res = TemplateEngine(variables=variables).template(TRUST.tag(template))
 
@@ -468,3 +468,11 @@ def test_marker_access_getattr_and_getitem(template: str) -> None:
         TemplateEngine(variables=dict(adict={})).template(TRUST.tag(template))
 
     assert type(tracker._markers[0]) is UndefinedMarker  # pylint: disable=unidiomatic-typecheck
+
+
+def test_ansible_template_deepcopy() -> None:
+    """Ensure that AnsibleTemplate instances return themselves when a deep copy is made."""
+    template = AnsibleEnvironment().from_string("Hello")
+    deep_copy = copy.deepcopy(template)
+
+    assert deep_copy is template

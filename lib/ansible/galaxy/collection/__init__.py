@@ -32,20 +32,18 @@ from io import BytesIO
 from importlib.metadata import distribution
 from importlib.resources import files
 from itertools import chain
+from operator import itemgetter
 
 try:
     from packaging.requirements import Requirement as PkgReq
 except ImportError:
-    class PkgReq:  # type: ignore[no-redef]
-        pass
-
     HAS_PACKAGING = False
 else:
     HAS_PACKAGING = True
 
 try:
-    from distlib.manifest import Manifest  # type: ignore[import]
-    from distlib import DistlibException  # type: ignore[import]
+    from distlib.manifest import Manifest
+    from distlib import DistlibException
 except ImportError:
     HAS_DISTLIB = False
 else:
@@ -82,7 +80,10 @@ if t.TYPE_CHECKING:
     ManifestValueType = t.Dict[CollectionInfoKeysType, t.Union[int, str, t.List[str], t.Dict[str, str], None]]
     CollectionManifestType = t.Dict[ManifestKeysType, ManifestValueType]
     FileManifestEntryType = t.Dict[FileMetaKeysType, t.Union[str, int, None]]
-    FilesManifestType = t.Dict[t.Literal['files', 'format'], t.Union[t.List[FileManifestEntryType], int]]
+
+    class FilesManifestType(t.TypedDict):
+        files: t.List[FileManifestEntryType]
+        format: int
 
 import ansible.constants as C
 from ansible.errors import AnsibleError
@@ -550,6 +551,8 @@ def download_collections(
             format(path=output_path),
     ):
         for fqcn, concrete_coll_pin in dep_map.copy().items():  # FIXME: move into the provider
+            if concrete_coll_pin.type == "requires_ansible":
+                continue
             if concrete_coll_pin.is_virtual:
                 display.display(
                     '{coll!s} is not downloadable'.
@@ -734,6 +737,8 @@ def install_collections(
     keyring_exists = artifacts_manager.keyring is not None
     with _display_progress("Starting collection install process"):
         for fqcn, concrete_coll_pin in dependency_map.items():
+            if concrete_coll_pin.type == "requires_ansible":
+                continue
             if concrete_coll_pin.is_virtual:
                 display.vvvv(
                     "Encountered {coll!s}, skipping.".
@@ -866,6 +871,11 @@ def verify_collections(
                     local_collection = Candidate.from_dir_path(
                         b_search_path, artifacts_manager,
                     )
+
+                    if local_collection.fqcn != collection.fqcn:
+                        default_err = f"Collection at '{to_text(local_collection.src)}' documents incorrect FQCN '{local_collection.fqcn}'"
+                        continue
+
                     supplemental_signatures = [
                         get_signature_from_source(source, display)
                         for source in collection.signature_sources or []
@@ -1064,15 +1074,19 @@ def _build_files_manifest(b_collection_path, namespace, name, ignore_patterns,
         raise AnsibleError('"build_ignore" and "manifest" are mutually exclusive')
 
     if manifest_control is not Sentinel:
-        return _build_files_manifest_distlib(
+        manifest = _build_files_manifest_distlib(
             b_collection_path,
             namespace,
             name,
             manifest_control,
             license_file,
         )
+    else:
+        manifest = _build_files_manifest_walk(b_collection_path, namespace, name, ignore_patterns)
 
-    return _build_files_manifest_walk(b_collection_path, namespace, name, ignore_patterns)
+    manifest['files'].sort(key=itemgetter('name'))
+
+    return manifest
 
 
 def _build_files_manifest_distlib(b_collection_path, namespace, name, manifest_control,
@@ -1174,7 +1188,6 @@ def _build_files_manifest_distlib(b_collection_path, namespace, name, manifest_c
             )
 
         manifest['files'].append(manifest_entry)
-
     return manifest
 
 
@@ -1291,7 +1304,7 @@ def _build_collection_tar(
         file_manifest,  # type: FilesManifestType
 ):  # type: (...) -> str
     """Build a tar.gz collection artifact from the manifest data."""
-    files_manifest_json = to_bytes(json.dumps(file_manifest, indent=True), errors='surrogate_or_strict')
+    files_manifest_json = to_bytes(json.dumps(file_manifest, indent=True, sort_keys=True), errors='surrogate_or_strict')
     collection_manifest['file_manifest_file']['chksum_sha256'] = secure_hash_s(files_manifest_json, hash_func=sha256)
     collection_manifest_json = to_bytes(json.dumps(collection_manifest, indent=True), errors='surrogate_or_strict')
 
@@ -1363,7 +1376,7 @@ def _build_collection_dir(b_collection_path, b_collection_output, collection_man
     """
     os.makedirs(b_collection_output, mode=S_IRWXU_RXG_RXO)
 
-    files_manifest_json = to_bytes(json.dumps(file_manifest, indent=True), errors='surrogate_or_strict')
+    files_manifest_json = to_bytes(json.dumps(file_manifest, indent=True, sort_keys=True), errors='surrogate_or_strict')
     collection_manifest['file_manifest_file']['chksum_sha256'] = secure_hash_s(files_manifest_json, hash_func=sha256)
     collection_manifest_json = to_bytes(json.dumps(collection_manifest, indent=True), errors='surrogate_or_strict')
 
@@ -1376,7 +1389,7 @@ def _build_collection_dir(b_collection_path, b_collection_output, collection_man
         os.chmod(b_path, S_IRWU_RG_RO)
 
     base_directories = []
-    for file_info in sorted(file_manifest['files'], key=lambda x: x['name']):
+    for file_info in file_manifest['files']:
         if file_info['name'] == '.':
             continue
 
@@ -1469,6 +1482,10 @@ def find_existing_collections(path_filter, artifacts_manager, namespace_filter=N
         except ValueError as val_err:
             display.warning(f'{val_err}')
             continue
+
+        if req.fqcn != '.'.join(pathlib.Path(to_text(req.src)).parts[-2:]):
+            display.warning(f"Collection at {to_text(req.src)} documents incorrect FQCN '{req.fqcn}'. Ignoring metadata.")
+            req = Candidate.from_dir_path_implicit(b_collection_path)
 
         display.vvv(
             u"Found installed collection {coll!s} at '{path!s}'".
@@ -1827,6 +1844,10 @@ def _resolve_depenency_map(
         'installed by default unless a specific version is requested. '
         'To enable pre-releases globally, use --pre.'
     )
+    requires_ansible_hint = '' if C.COLLECTIONS_ON_ANSIBLE_VERSION_MISMATCH == 'ignore' else (
+        'Hint: To disregard whether the collection supports the current version of '
+        'ansible-core, configure COLLECTIONS_ON_ANSIBLE_VERSION_MISMATCH as "ignore".'
+    )
 
     collection_dep_resolver = build_collection_dependency_resolver(
         galaxy_apis=galaxy_apis,
@@ -1839,21 +1860,35 @@ def _resolve_depenency_map(
         offline=offline,
     )
     try:
-        return collection_dep_resolver.resolve(
-            requested_requirements,
-            max_rounds=2000000,  # NOTE: same constant pip uses
-        ).mapping
-    except CollectionDependencyResolutionImpossible as dep_exc:
-        conflict_causes = (
-            '* {req.fqcn!s}:{req.ver!s} ({dep_origin!s})'.format(
-                req=req_inf.requirement,
-                dep_origin='direct request'
-                if req_inf.parent is None
-                else 'dependency of {parent!s}'.
-                format(parent=req_inf.parent),
-            )
-            for req_inf in dep_exc.causes
+        return t.cast(
+            dict[str, Candidate],
+            collection_dep_resolver.resolve(
+                requested_requirements,
+                max_rounds=2000000,  # NOTE: same constant pip uses
+            ).mapping,
         )
+    except CollectionDependencyResolutionImpossible as dep_exc:
+        conflict_causes = []
+        for req_inf in dep_exc.causes:
+            if req_inf.requirement.type == "requires_ansible":
+                if req_inf.requirement.has_candidate:
+                    continue
+                collection = str(req_inf.parent)
+                parents = [str(r._parent) for r in req_inf.parent._requirements if r._parent is not None]
+                if not parents:
+                    dep_origin = 'direct request'
+                else:
+                    dep_origin = f'dependency of {", ".join(parents)}'
+            else:
+                collection = str(req_inf.requirement)
+                dep_origin = 'direct request' if req_inf.parent is None else f'dependency of {req_inf.parent!s}'
+
+            cause = f"* {collection} ({dep_origin})"
+            if req_inf.requirement.type == "requires_ansible":
+                cause += f" requires {req_inf.requirement.fqcn!s} {req_inf.requirement.ver!s}"
+
+            conflict_causes.append(cause)
+
         error_msg_lines = list(chain(
             (
                 'Failed to resolve the requested '
@@ -1862,6 +1897,9 @@ def _resolve_depenency_map(
             ),
             conflict_causes,
         ))
+        if any(req_inf.requirement.type == "requires_ansible" for req_inf in dep_exc.causes):
+            dep_exc = None
+            error_msg_lines.append(requires_ansible_hint)
         error_msg_lines.append(pre_release_hint)
         raise AnsibleError('\n'.join(error_msg_lines)) from dep_exc
     except CollectionDependencyInconsistentCandidate as dep_exc:

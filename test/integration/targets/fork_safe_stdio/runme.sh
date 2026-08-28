@@ -2,6 +2,10 @@
 
 set -eu
 
+echo "testing optional pty inheritance"
+
+python run-with-pty.py ansible-playbook test_pty_inherit.yml
+
 echo "testing for stdio deadlock on forked workers (10s timeout)..."
 
 # Enable a callback that trips deadlocks on forked-child stdout, time out after 10s; forces running

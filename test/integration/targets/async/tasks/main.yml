@@ -172,6 +172,9 @@
   poll: 1
   register: async_result
 
+- debug:
+    var: async_result
+
 - name: validate response
   assert:
     that:
@@ -284,7 +287,7 @@
 - name: Test that async has stdin
   command: >
     {{ ansible_python_interpreter|default('/usr/bin/python') }} -c 'import os; os.fdopen(os.dup(0), "r")'
-  async: 1
+  async: 5
   poll: 1
 
 - name: run async poll callback test playbook
@@ -311,6 +314,7 @@
 - name: test 'hidden' async, gather_facts does internal on parallel true. Ensure it won't freeze in check_mode due to async_status not supporting it.
   gather_facts:
     parallel: true
+    gather_timeout: 10
   timeout: 60
   check_mode: true
   when: "ansible_facts['os_family'] != 'Darwin'"

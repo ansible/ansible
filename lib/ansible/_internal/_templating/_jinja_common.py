@@ -303,11 +303,12 @@ class JinjaCallContext(NotifiableAccessContextBase):
         o.trip()
 
 
-def validate_arg_type(name: str, value: t.Any, allowed_type_or_types: type | tuple[type, ...], /) -> None:
+# TODO: see if we can make this a proper generic signature
+def validate_arg_type(name: str, value: t.Any, allowed_type_or_types: type | tuple[type, ...], /) -> t.Any:
     """Validate the type of the given argument while preserving context for Marker values."""
     # DTFIX-FUTURE: find a home for this as a general-purpose utliity method and expose it after some API review
     if isinstance(value, allowed_type_or_types):
-        return
+        return value
 
     if isinstance(allowed_type_or_types, type):
         arg_type_description = repr(native_type_name(allowed_type_or_types))

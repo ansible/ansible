@@ -1,3 +1,0 @@
-bugfixes:
-- >-
-  ``ansible-galaxy collection list`` - fail when none of the configured collection paths exist.

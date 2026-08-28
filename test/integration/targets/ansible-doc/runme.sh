@@ -59,6 +59,16 @@ current_out="$(ansible-doc --playbook-dir ./ testns.testcol.yolo --type test | s
 expected_out="$(sed '1 s/\(^> TEST testns\.testcol\.yolo\).*(.*)$/\1/' yolo-text.output)"
 test "$current_out" == "$expected_out"
 
+# PAGER is set to less by default, so we need to test with other pagers
+for pager in more cat; do
+    echo "testing with pager $pager"
+    PAGER=$pager ansible-doc --list testns.testcol --playbook-dir ./ 2>&1 | grep "${GREP_OPTS[@]}" -v "Invalid collection name"
+done
+
+# set pager to empty string
+echo "testing with pager empty"
+PAGER="" ansible-doc --list testns.testcol --playbook-dir ./ 2>&1 | grep "${GREP_OPTS[@]}" -v "Invalid collection name"
+
 # ensure we do work with valid collection name for list
 ansible-doc --list testns.testcol --playbook-dir ./ 2>&1 | grep -v "Invalid collection name"
 
@@ -121,7 +131,7 @@ done
 
 echo "testing role text output"
 # we use sed to strip the role path from the first line
-current_role_out="$(ansible-doc -t role -r ./roles test_role1 | sed '1 s/\(^> ROLE: \*test_role1\*\).*(.*)$/\1/')"
+current_role_out="$(ansible-doc -t role -r ./roles test_role1 | sed '1 s/\(^> ROLE: \*test_role1\*\).*(.*)$/\1/' | python fix-urls.py)"
 expected_role_out="$(sed '1 s/\(^> ROLE: \*test_role1\*\).*(.*)$/\1/' fakerole.output)"
 test "$current_role_out" == "$expected_role_out"
 
@@ -211,6 +221,13 @@ ANSIBLE_LIBRARY='./nolibrary' ansible-doc --metadata-dump --no-fail-on-errors --
 output=$(ANSIBLE_LIBRARY='./nolibrary' ansible-doc --metadata-dump --playbook-dir broken-docs testns.testcol 2>&1 | grep -c 'ERROR' || true)
 test "${output}" -eq 1
 
+# ensure --metadata-dump does not crash if the ansible_collections is nested (https://github.com/ansible/ansible/issues/84909)
+testdir="$(pwd)"
+pbdir="collections/ansible_collections/testns/testcol/playbooks"
+cd "$pbdir"
+ANSIBLE_COLLECTIONS_PATH="$testdir/$pbdir/collections" ansible-doc -vvv --metadata-dump --no-fail-on-errors
+cd "$testdir"
+
 echo "test doc list on broken role metadata"
 # ensure that role doc does not fail when --no-fail-on-errors is supplied
 ANSIBLE_LIBRARY='./nolibrary' ansible-doc --no-fail-on-errors --playbook-dir broken-docs testns.testcol.testrole -t role 1>/dev/null 2>&1
@@ -243,6 +260,7 @@ echo "testing sidecar docs for jinja plugins"
 [ "$(ansible-doc -t test --playbook-dir ./ testns.testcol.yolo| wc -l)" -gt "0" ]
 [ "$(ansible-doc -t filter --playbook-dir ./ donothing| wc -l)" -gt "0" ]
 [ "$(ansible-doc -t filter --playbook-dir ./ ansible.legacy.donothing| wc -l)" -gt "0" ]
+[ "$(ansible-doc -t filter --playbook-dir ./ testns.testcol.filter_subdir.nested| wc -l)" -gt "0" ]
 
 echo "testing no docs and no sidecar"
 ansible-doc -t filter --playbook-dir ./ nodocs 2>&1| grep "${GREP_OPTS[@]}" -c 'missing documentation' || true
@@ -264,7 +282,7 @@ echo "testing no duplicates for plugins that only exist in ansible.builtin when 
 [ "$(ansible-doc -l -t filter --playbook-dir ./ |grep -c 'b64encode')" -eq "1" ]
 
 echo "testing with playbook dir, legacy should override"
-ansible-doc -t filter split --playbook-dir ./ -v|grep "${GREP_OPTS[@]}" histerical
+ansible-doc -t filter split --playbook-dir ./ -v|grep "${GREP_OPTS[@]}" hysterical
 
 pyc_src="$(pwd)/filter_plugins/other.py"
 pyc_1="$(pwd)/filter_plugins/split.pyc"
@@ -273,14 +291,14 @@ trap 'rm -rf "$pyc_1" "$pyc_2"' EXIT
 
 echo "testing pyc files are not used as adjacent documentation"
 python -c "import py_compile; py_compile.compile('$pyc_src', cfile='$pyc_1')"
-ansible-doc -t filter split --playbook-dir ./ -v|grep "${GREP_OPTS[@]}" histerical
+ansible-doc -t filter split --playbook-dir ./ -v|grep "${GREP_OPTS[@]}" hysterical
 
 echo "testing pyc files are not listed as plugins"
 python -c "import py_compile; py_compile.compile('$pyc_src', cfile='$pyc_2')"
 test "$(ansible-doc -l -t module --playbook-dir ./ 2>&1 1>/dev/null |grep -c "notaplugin")" == 0
 
 echo "testing without playbook dir, builtin should return"
-ansible-doc -t filter split -v 2>&1 |grep "${GREP_OPTS[@]}" -v histerical
+ansible-doc -t filter split -v 2>&1 |grep "${GREP_OPTS[@]}" -v hysterical
 
 echo "test 'sidecar' for no extension module  with .py doc"
 [ "$(ansible-doc -M ./library -l ansible.legacy |grep -v 'UNDOCUMENTED' |grep -c bogus_facts)" == "1" ]

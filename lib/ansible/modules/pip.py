@@ -80,7 +80,7 @@ options:
     version_added: "1.0"
   editable:
     description:
-      - Pass the editable flag.
+      - Pass the editable flag to all packages.
     type: bool
     default: 'no'
     version_added: "2.0"
@@ -293,6 +293,7 @@ virtualenv:
 """
 
 import argparse
+import json
 import os
 import re
 import sys
@@ -611,6 +612,57 @@ def setup_virtualenv(module, env, chdir, out, err):
     return out, err, cmd
 
 
+def _resolve_package_names(
+        module: AnsibleModule,
+        package_list: list[Package],
+        pip: list[str],
+        python_bin: str,
+) -> list[Package]:
+    """Resolve package references in the list.
+
+    This helper function downloads metadata from PyPI
+    using ``pip install``'s ability to return JSON.
+    """
+    pkgs_to_resolve = [pkg for pkg in package_list if not pkg.has_requirement]
+
+    if not pkgs_to_resolve:
+        return package_list
+
+    # pip install --dry-run is not available in pip versions older than 22.2 and it doesn't
+    # work correctly on all cases until 24.1, so check for this and use the non-resolved
+    # package names if pip is outdated.
+    pip_dep = _get_package_info(module, "pip", python_bin)
+
+    installed_pip = LooseVersion(pip_dep.split('==')[1])
+    minimum_pip = LooseVersion("24.1")
+
+    if installed_pip < minimum_pip:
+        module.warn("Using check mode with packages from vcs urls, file paths, or archives will not behave as expected when using pip versions <24.1.")
+        return package_list  # Just use the default behavior
+
+    with tempfile.NamedTemporaryFile() as tmpfile:
+        # Uses a tmpfile instead of capturing and parsing stdout because it circumvents the need to fuss with ANSI color output
+        module.run_command(
+            [
+                *pip, 'install',
+                '--dry-run',
+                '--ignore-installed',
+                f'--report={tmpfile.name}',
+                *map(str, pkgs_to_resolve),
+            ],
+            check_rc=True,
+        )
+        report = json.load(tmpfile)
+
+    package_objects = (
+        Package(install_report['metadata']['name'], version_string=install_report['metadata']['version'])
+        for install_report in report['install']
+    )
+
+    other_packages = (pkg for pkg in package_list if pkg.has_requirement)
+    return [*other_packages, *package_objects]
+
+
 class Package:
     """Python distribution package metadata wrapper.
 
@@ -663,6 +715,11 @@ class Package:
                 for op, ver in self._requirement.specs
             )
 
+    @property
+    def has_requirement(self) -> bool:
+        """Compute whether the object represents complex requirement."""
+        return self._requirement is not None
+
     @staticmethod
     def canonicalize_name(name):
         # This is taken from PEP 503.
@@ -700,7 +757,11 @@ def main():
             break_system_packages=dict(type='bool', default=False),
         ),
         required_one_of=[['name', 'requirements']],
-        mutually_exclusive=[['name', 'requirements'], ['executable', 'virtualenv']],
+        mutually_exclusive=[
+            ['name', 'requirements'],
+            ['executable', 'virtualenv'],
+            ['editable', 'requirements'],
+        ],
         supports_check_mode=True,
     )
 
@@ -716,6 +777,7 @@ def main():
     chdir = module.params['chdir']
     umask = module.params['umask']
     env = module.params['virtualenv']
+    editable = module.params['editable']
 
     venv_created = False
     if env and chdir:
@@ -791,15 +853,6 @@ def main():
                 # if the version specifier is provided by version, append that into the package
                 packages[0] = Package(to_native(packages[0]), version)
 
-        if module.params['editable']:
-            args_list = []  # used if extra_args is not used at all
-            if extra_args:
-                args_list = extra_args.split(' ')
-            if '-e' not in args_list:
-                args_list.append('-e')
-                # Ok, we will reconstruct the option string
-                extra_args = ' '.join(args_list)
-
         if extra_args:
             cmd.extend(shlex.split(extra_args))
 
@@ -809,7 +862,10 @@ def main():
             os.environ['PIP_BREAK_SYSTEM_PACKAGES'] = '1'
 
         if name:
-            cmd.extend(to_native(p) for p in packages)
+            for p in packages:
+                if editable:
+                    cmd.append('-e')
+                cmd.append(to_native(p))
         elif requirements:
             cmd.extend(['-r', requirements])
         elif venv_created and not name and not requirements:
@@ -845,7 +901,9 @@ def main():
                                 pkg_list.append(formatted_dep)
                                 out += '%s\n' % formatted_dep
 
-                for package in packages:
+                normalized_package_list = _resolve_package_names(module, packages, pip, py_bin)
+
+                for package in normalized_package_list:
                     is_present = _is_present(module, package, pkg_list, pkg_cmd)
                     if (state == 'present' and not is_present) or (state == 'absent' and is_present):
                         changed = True

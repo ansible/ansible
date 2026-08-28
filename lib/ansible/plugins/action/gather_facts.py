@@ -106,8 +106,8 @@ class ActionModule(ActionBase):
 
         parallel = task_vars.pop('ansible_facts_parallel', self._task.args.pop('parallel', None))
 
-        failed = {}
-        skipped = {}
+        failed: dict[str, t.Any] = {}
+        skipped: dict[str, t.Any] = {}
 
         if parallel is None:
             if len(modules) > 1:
@@ -137,7 +137,7 @@ class ActionModule(ActionBase):
             self._remove_tmp_path(self._connection._shell.tmpdir)
         else:
             # do it async, aka parallel
-            jobs = {}
+            jobs: dict[str, t.Any] = {}
 
             for fact_module in modules:
                 mod_args = self._get_module_args(fact_module, task_vars)
@@ -180,7 +180,8 @@ class ActionModule(ActionBase):
             result['msg'] = f"The following modules were skipped: {', '.join(skipped.keys())}."
             result['skipped_modules'] = skipped
             if len(skipped) == len(modules):
-                result['skipped'] = True
+                result['skipped'] = True  # deprecated: description='returning skipped from actions/modules' core_version='2.25'
+                result['changed'] = False
 
         if failed:
             result['failed_modules'] = failed

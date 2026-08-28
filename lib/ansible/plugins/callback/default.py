@@ -18,6 +18,7 @@ DOCUMENTATION = """
       - set as stdout in configuration
 """
 
+import typing as _t
 
 from ansible import constants as C
 from ansible import context
@@ -26,6 +27,9 @@ from ansible.playbook.task_include import TaskInclude
 from ansible.plugins.callback import CallbackBase
 from ansible.utils.color import colorize, hostcolor
 from ansible.utils.fqcn import add_internal_fqcns
+
+if _t.TYPE_CHECKING:
+    from ansible.playbook.included_file import IncludedFile
 
 
 class CallbackModule(CallbackBase):
@@ -292,7 +296,10 @@ class CallbackModule(CallbackBase):
                 msg += " => %s" % self._dump_results(result.result)
             self._display.display(msg, color=C.COLOR_SKIP)
 
-    def v2_playbook_on_include(self, included_file):
+    def v2_playbook_on_include(self, included_file: IncludedFile) -> None:
+        if not self.get_option("display_included_hosts"):
+            return
+
         msg = 'included: %s for %s' % (included_file._filename, ", ".join([h.name for h in included_file._hosts]))
         label = self._get_item_label(included_file._vars)
         if label:

@@ -103,8 +103,8 @@ options:
         version_added: "1.9"
     force:
         description:
-            - If V(true), any modified files in the working
-              repository will be discarded.  Prior to 0.7, this was always
+            - If V(true), any modified files in the working repository and
+              local commits will be discarded.  Prior to 0.7, this was always
               V(true) and could not be disabled.  Prior to 1.9, the default was
               V(true).
         type: bool
@@ -168,9 +168,11 @@ options:
 
     track_submodules:
         description:
-            - If V(true), submodules will track the latest commit on their
-              master branch (or other branch specified in C(.gitmodules)).  If
-              V(false), submodules will be kept at the revision specified by the
+            - If V(true), submodules will track the latest commit on the branch specified in C(.gitmodules).
+              If no branch is specified in C(.gitmodules), it will use the remote HEAD.
+            - Currently, the value of remote is defaulted to C(origin).
+              Specifying the remote for the submodules is not supported.
+            - If V(false), submodules will be kept at the revision specified by the
               main project. This is equivalent to specifying the C(--remote) flag
               to git submodule update.
         type: bool
@@ -218,11 +220,9 @@ options:
            - Only used when O(verify_commit=yes).
            - Use of this feature requires Git 2.6+ due to its reliance on git's C(--raw) flag to C(verify-commit) and C(verify-tag).
            - Alias O(gpg_allowlist) is added in version 2.17.
-           - Alias O(gpg_whitelist) is deprecated and will be removed in version 2.21.
         type: list
         elements: str
         default: []
-        aliases: [ gpg_whitelist ]
         version_added: "2.9"
 
 requirements:
@@ -331,6 +331,7 @@ git_dir_before:
 
 import filecmp
 import os
+import pathlib
 import re
 import shlex
 import stat
@@ -566,6 +567,28 @@ def get_submodule_versions(git_path, module, dest, version='HEAD'):
     return submodules
 
 
+def get_submodule_branch(git_path, module, dest, submodule):
+    """Get the configured branch for a submodule from .gitmodules.
+
+    Falls back to the remote HEAD if no branch is configured.
+    """
+    cmd = [git_path, 'config', '-f', '.gitmodules',
+           f'submodule.{submodule}.branch']
+    rc, out, _err = module.run_command(cmd, cwd=dest)
+    if rc == 0 and out.strip():
+        return out.strip()
+
+    # No branch configured in .gitmodules, use remote HEAD
+    submodule_path = os.path.join(dest, submodule)
+    cmd = [git_path, 'symbolic-ref', '--short', 'refs/remotes/origin/HEAD']
+    rc, out, _err = module.run_command(cmd, cwd=submodule_path)
+    if rc == 0 and out.strip():
+        # Returns e.g. "origin/main", strip the remote prefix
+        return out.strip().split('/', 1)[-1]
+
+    return 'HEAD'
+
+
 def clone(git_path, module, repo, dest, remote, depth, version, bare,
           reference, refspec, git_version_used, verify_commit, separate_git_dir, result, gpg_allowlist, single_branch):
     """ makes a new git repo if it does not already exist """
@@ -659,14 +682,14 @@ def reset(git_path, module, dest):
     return module.run_command(cmd, check_rc=True, cwd=dest)
 
 
-def get_diff(module, git_path, dest, repo, remote, depth, bare, before, after):
+def get_diff(module, git_path, dest, repo, remote, depth, bare, before, after, refspec, force):
     """ Return the difference between 2 versions """
     if before is None:
         return {'prepared': '>> Newly checked out %s' % after}
     elif before != after:
         # Ensure we have the object we are referring to during git diff !
         git_version_used = git_version(git_path, module)
-        fetch(git_path, module, repo, dest, after, remote, depth, bare, '', git_version_used)
+        fetch(git_path, module, repo, dest, after, remote, depth, bare, refspec, git_version_used, force)
         cmd = '%s diff %s %s' % (git_path, before, after)
         (rc, out, err) = module.run_command(cmd, cwd=dest)
         if rc == 0 and out:
@@ -678,6 +701,20 @@ def get_diff(module, git_path, dest, repo, remote, depth, bare, before, after):
         else:
             return {'prepared': '>> Failed to get proper diff between %s and %s' % (before, after)}
     return {}
+
+
+def get_sha_hash(module: AnsibleModule, git_path: str, remote: str, version: str, cwd: str) -> str:
+    if cwd is None or not (working_dir := pathlib.Path(cwd)).exists():
+        working_dir = pathlib.Path(module.tmpdir) / "tmp_repo"
+        working_dir.mkdir(exist_ok=True)
+        module.run_command([git_path, 'init'], cwd=working_dir)  # Create a bare repo
+        module.run_command([git_path, 'remote', 'add', 'origin', remote], cwd=working_dir)
+
+    # This command's error message is descriptive enough for our purposes, so we set check_rc to True and let it bail
+    module.run_command([git_path, 'fetch', '--dry-run', remote, version], cwd=working_dir, check_rc=True)
+
+    # Should only succeed when 'version' is a valid revision
+    return version
 
 
 def get_remote_head(git_path, module, dest, version, remote, bare):
@@ -703,9 +740,11 @@ def get_remote_head(git_path, module, dest, version, remote, bare):
         tag = True
         cmd = '%s ls-remote %s -t refs/tags/%s*' % (git_path, remote, version)
     else:
-        # appears to be a sha1.  return as-is since it appears
-        # cannot check for a specific sha1 on remote
-        return version
+        # Appears to be a sha hash. Checking requires special action
+        rev = get_sha_hash(module, git_path, remote, version, cwd)
+
+        return rev
+
     (rc, out, err) = module.run_command(cmd, check_rc=True, cwd=cwd)
     if len(out) < 1:
         module.fail_json(msg="Could not determine remote revision for %s" % version, stdout=out, stderr=err, rc=rc)
@@ -955,22 +994,26 @@ def submodules_fetch(git_path, module, remote, track_submodules, dest):
         begin = get_submodule_versions(git_path, module, dest)
         cmd = [git_path, 'submodule', 'foreach', git_path, 'fetch']
         (rc, out, err) = module.run_command(cmd, check_rc=True, cwd=dest)
-        if rc != 0:
-            module.fail_json(msg="Failed to fetch submodules: %s" % out + err)
-
         if track_submodules:
-            # Compare against submodule HEAD
-            # FIXME: determine this from .gitmodules
-            version = 'master'
-            after = get_submodule_versions(git_path, module, dest, '%s/%s' % (remote, version))
+            # Compare each submodule against its configured remote branch
+            after = {}
+            for submodule in begin:
+                branch = get_submodule_branch(git_path, module, dest, submodule)
+                version_ref = f'{remote}/{branch}' if branch != 'HEAD' else 'HEAD'
+                submodule_path = os.path.join(dest, submodule)
+                cmd = [git_path, 'rev-parse', version_ref]
+                (rc, out, err) = module.run_command(cmd, cwd=submodule_path)
+                if rc != 0:
+                    module.fail_json(
+                        msg='Unable to determine hash of submodule %s at %s' % (submodule, version_ref),
+                        stdout=out, stderr=err, rc=rc)
+                after[submodule] = out.strip()
             if begin != after:
                 changed = True
         else:
             # Compare against the superproject's expectation
             cmd = [git_path, 'submodule', 'status']
             (rc, out, err) = module.run_command(cmd, check_rc=True, cwd=dest)
-            if rc != 0:
-                module.fail_json(msg='Failed to retrieve submodule status: %s' % out + err)
             for line in out.splitlines():
                 if line[0] != ' ':
                     changed = True
@@ -1016,7 +1059,7 @@ def set_remote_branch(git_path, module, dest, remote, version, depth):
         module.fail_json(msg="Failed to fetch branch from remote: %s" % version, stdout=out, stderr=err, rc=rc)
 
 
-def switch_version(git_path, module, dest, remote, version, verify_commit, depth, gpg_allowlist):
+def switch_version(git_path, module, dest, remote, version, verify_commit, depth, gpg_allowlist, force=False):
     cmd = ''
     if version == 'HEAD':
         branch = get_head_branch(git_path, module, dest, remote)
@@ -1039,7 +1082,13 @@ def switch_version(git_path, module, dest, remote, version, verify_commit, depth
                 (rc, out, err) = module.run_command("%s checkout --force %s" % (git_path, version), cwd=dest)
                 if rc != 0:
                     module.fail_json(msg="Failed to checkout branch %s" % version, stdout=out, stderr=err, rc=rc)
-                cmd = "%s reset --hard %s/%s" % (git_path, remote, version)
+                if ('ahead' in out or 'diverged' in out) and not force:
+                    module.fail_json(msg=f"Unable to advance to {remote}/{version} because local commits will be lost. "
+                                     f"Use `force: yes` to overwrite local commits.")
+                if force:
+                    cmd = f"{git_path} reset --hard {remote}/{version}"
+                else:
+                    cmd = f"{git_path} merge --ff-only {remote}/{version}"
         else:
             cmd = "%s checkout --force %s" % (git_path, version)
     (rc, out1, err1) = module.run_command(cmd, cwd=dest)
@@ -1185,14 +1234,7 @@ def main():
             update=dict(default='yes', type='bool'),
             verify_commit=dict(default='no', type='bool'),
             gpg_allowlist=dict(
-                default=[], type='list', aliases=['gpg_whitelist'], elements='str',
-                deprecated_aliases=[
-                    dict(
-                        name='gpg_whitelist',
-                        version='2.21',
-                        collection_name='ansible.builtin',
-                    )
-                ],
+                default=[], type='list', elements='str',
             ),
             accept_hostkey=dict(default='no', type='bool'),
             accept_newhostkey=dict(default='no', type='bool'),
@@ -1326,7 +1368,7 @@ def main():
             remote_head = get_remote_head(git_path, module, dest, version, repo, bare)
             result.update(changed=True, after=remote_head)
             if module._diff:
-                diff = get_diff(module, git_path, dest, repo, remote, depth, bare, result['before'], result['after'])
+                diff = get_diff(module, git_path, dest, repo, remote, depth, bare, result['before'], result['after'], refspec, force)
                 if diff:
                     result['diff'] = diff
             module.exit_json(**result)
@@ -1375,7 +1417,7 @@ def main():
             result.update(changed=(result['before'] != remote_head or remote_url_changed), after=remote_head)
             # FIXME: This diff should fail since the new remote_head is not fetched yet?!
             if module._diff:
-                diff = get_diff(module, git_path, dest, repo, remote, depth, bare, result['before'], result['after'])
+                diff = get_diff(module, git_path, dest, repo, remote, depth, bare, result['before'], result['after'], refspec, force)
                 if diff:
                     result['diff'] = diff
             module.exit_json(**result)
@@ -1387,7 +1429,7 @@ def main():
     # switch to version specified regardless of whether
     # we got new revisions from the repository
     if not bare:
-        switch_version(git_path, module, dest, remote, version, verify_commit, depth, gpg_allowlist)
+        switch_version(git_path, module, dest, remote, version, verify_commit, depth, gpg_allowlist, force=force)
 
     # Deal with submodules
     submodules_updated = False
@@ -1409,7 +1451,7 @@ def main():
     if result['before'] != result['after'] or local_mods or submodules_updated or remote_url_changed:
         result.update(changed=True)
         if module._diff:
-            diff = get_diff(module, git_path, dest, repo, remote, depth, bare, result['before'], result['after'])
+            diff = get_diff(module, git_path, dest, repo, remote, depth, bare, result['before'], result['after'], refspec, force)
             if diff:
                 result['diff'] = diff
 

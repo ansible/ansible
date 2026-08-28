@@ -325,3 +325,7 @@ class PlayContext(Base):
                         variables[var_opt] = var_val
             except AttributeError:
                 continue
+
+    def deserialize(self, data):
+        """Do not use this method. Backward compatibility for network connections plugins that rely on it."""
+        self.from_attrs(data)

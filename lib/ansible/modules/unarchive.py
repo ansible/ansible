@@ -428,17 +428,17 @@ class ZipArchive(object):
         """ Return a valid time object from the given time string """
         DT_RE = re.compile(r'^(\d{4})(\d{2})(\d{2})\.(\d{2})(\d{2})(\d{2})$')
         match = DT_RE.match(timestamp_str)
-        epoch_date_time = (1980, 1, 1, 0, 0, 0, 0, 0, 0)
+        epoch_date_time = (1980, 1, 1, 0, 0, 0, 0, 0, -1)
         if match:
             try:
                 if int(match.groups()[0]) < 1980:
                     date_time = epoch_date_time
                 elif int(match.groups()[0]) >= 2038 and _y2038_impacted():
-                    date_time = (2038, 1, 1, 0, 0, 0, 0, 0, 0)
+                    date_time = (2038, 1, 1, 0, 0, 0, 0, 0, -1)
                 elif int(match.groups()[0]) > 2107:
-                    date_time = (2107, 12, 31, 23, 59, 59, 0, 0, 0)
+                    date_time = (2107, 12, 31, 23, 59, 59, 0, 0, -1)
                 else:
-                    date_time = (int(m) for m in match.groups() + (0, 0, 0))
+                    date_time = (int(m) for m in match.groups() + (0, 0, -1))
             except ValueError:
                 date_time = epoch_date_time
         else:
@@ -809,7 +809,10 @@ class TgzArchive(object):
         self.opts = module.params['extra_opts']
         self.module = module
         if self.module.check_mode:
-            self.module.exit_json(skipped=True, msg="remote module (%s) does not support check mode when using gtar" % self.module._name)
+            self.module.exit_json(
+                skipped=True,  # deprecated: description='remove this skipped return', core_version='2.25'
+                msg="remote module (%s) does not support check mode when using gtar" % self.module._name,
+            )
         self.excludes = [path.rstrip('/') for path in self.module.params['exclude']]
         self.include_files = self.module.params['include']
         self.cmd_path = None

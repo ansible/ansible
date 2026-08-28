@@ -23,7 +23,7 @@ if 1 <= len(sys.argv) <= 2 and os.path.basename(sys.argv[0]) == "ansible" and os
 
 # Used for determining if the system is running a new enough python version
 # and should only restrict on our documented minimum versions
-_PY_MIN = (3, 12)
+_PY_MIN = (3, 13)
 
 if sys.version_info < _PY_MIN:
     raise SystemExit(
@@ -372,7 +372,7 @@ class CLI(ABC):
         return op
 
     @abstractmethod
-    def init_parser(self, usage="", desc=None, epilog=None):
+    def init_parser(self, desc=None, epilog=None):
         """
         Create an options parser for most ansible scripts
 
@@ -382,11 +382,11 @@ class CLI(ABC):
         An implementation will look something like this::
 
             def init_parser(self):
-                super(MyCLI, self).init_parser(usage="My Ansible CLI", inventory_opts=True)
+                super(MyCLI, self).init_parser(desc='The purpose of the program is...')
                 ansible.arguments.option_helpers.add_runas_options(self.parser)
                 self.parser.add_option('--my-option', dest='my_option', action='store')
         """
-        self.parser = opt_help.create_base_parser(self.name, usage=usage, desc=desc, epilog=epilog)
+        self.parser = opt_help.create_base_parser(self.name, desc=desc, epilog=epilog)
 
     @abstractmethod
     def post_process_args(self, options):
@@ -514,17 +514,19 @@ class CLI(ABC):
             p = subprocess.Popen('less --version', shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             p.communicate()
             if p.returncode == 0:
-                CLI.pager_pipe(text, 'less')
+                CLI.pager_pipe(text, pager='less')
             else:
                 display.display(text, screen_only=True)
 
     @staticmethod
-    def pager_pipe(text):
+    def pager_pipe(text, pager=None):
         """ pipe text through a pager """
-        if 'less' in CLI.PAGER:
+        pager_cmd = pager or CLI.PAGER
+
+        if 'less' in pager_cmd:
             os.environ['LESS'] = CLI.LESS_OPTS
         try:
-            cmd = subprocess.Popen(CLI.PAGER, shell=True, stdin=subprocess.PIPE, stdout=sys.stdout)
+            cmd = subprocess.Popen(pager_cmd, shell=True, stdin=subprocess.PIPE, stdout=sys.stdout)
             cmd.communicate(input=to_bytes(text))
         except (OSError, KeyboardInterrupt):
             pass

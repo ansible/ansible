@@ -134,7 +134,7 @@ def get_collection_version():
     try:
         result = collection_detail.read_manifest_json('.') or collection_detail.read_galaxy_yml('.')
         version = SemanticVersion()
-        version.parse(result['version'])
+        version.parse(result['version'].split('-', 1)[0].split('+', 1)[0])
         return version
     except Exception:  # pylint: disable=broad-except
         # We do not care why it fails, in case we cannot get the version

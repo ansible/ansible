@@ -1,0 +1,2 @@
+bugfixes:
+  - encrypt - fix bcrypt salt string formatting on musl libc by ensuring it is always zero-padded to 2 digits (https://github.com/ansible/ansible/issues/87180).

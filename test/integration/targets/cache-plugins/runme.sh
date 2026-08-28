@@ -30,3 +30,17 @@ export ANSIBLE_INVENTORY_CACHE_PLUGIN=dummy_cache
 ansible-playbook test_inventory_cache.yml "$@"
 
 ansible-playbook inspect_inventory_cache.yml -i test.inventoryconfig.yml "$@"
+
+# test file based cache with 'fun' inventory names
+export ANSIBLE_CACHE_PLUGIN=dummy_file_cache ANSIBLE_CACHE_PLUGIN_CONNECTION="${OUTPUT_DIR}/dummy-file-cache"
+mkdir -p "${ANSIBLE_CACHE_PLUGIN_CONNECTION}"
+ansible-playbook -i chroot_inventory_config.yml invalid_hostname_file_caches.yml "$@"
+
+# same, but using 'persistent' route
+ANSIBLE_CACHE_PLUGIN=dummy_file_cache_persistent ansible-playbook -i chroot_inventory_config.yml invalid_hostname_file_caches.yml "$@"
+
+# test file based cache with 'fun' inventory names, and a prefix!
+export ANSIBLE_CACHE_PLUGIN_PREFIX="YOLO"
+ansible-playbook -i chroot_inventory_config.yml invalid_hostname_file_caches.yml "$@"
+
+ANSIBLE_CACHE_PLUGIN=dummy_file_cache_persistent ansible-playbook -i chroot_inventory_config.yml invalid_hostname_file_caches.yml "$@"

@@ -30,12 +30,6 @@ def discover_interpreter(action, interpreter_name, discovery_mode, task_vars):
     found_interpreters = [_FALLBACK_INTERPRETER]  # fallback value
     is_silent = discovery_mode.endswith('_silent')
 
-    if discovery_mode.startswith('auto_legacy'):
-        display.deprecated(
-            msg=f"The '{discovery_mode}' option for 'INTERPRETER_PYTHON' now has the same effect as 'auto'.",
-            version='2.21',
-        )
-
     try:
         bootstrap_python_list = C.config.get_config_value('INTERPRETER_PYTHON_FALLBACK', variables=task_vars)
 

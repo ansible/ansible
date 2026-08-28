@@ -69,7 +69,8 @@ class CoverageVersion:
 
 COVERAGE_VERSIONS = (
     # IMPORTANT: Keep this in sync with the ansible-test.txt requirements file.
-    CoverageVersion('7.10.5', 7, (3, 9), (3, 14)),
+    CoverageVersion('7.15.4', 7, (3, 10), (3, 15)),
+    CoverageVersion('7.10.7', 7, (3, 9), (3, 9)),
 )
 """
 This tuple specifies the coverage version to use for Python version ranges.
@@ -248,6 +249,7 @@ def generate_ansible_coverage_config() -> str:
     """Generate code coverage configuration for Ansible tests."""
     coverage_config = """
 [run]
+core = ctrace
 branch = True
 concurrency =
     multiprocessing
@@ -261,7 +263,7 @@ omit =
     */pyshared/*
     */pytest
     */AnsiballZ_*.py
-    */test/results/*
+    */test/results/.tmp/delegation/*
 """
 
     coverage_config = coverage_config.lstrip()
@@ -279,8 +281,8 @@ def generate_collection_coverage_config() -> str:
     ]
 
     omit_patterns = [
-        # {base}/ansible_collections/{ns}/{col}/tests/output/*
-        os.path.join(data_context().content.root, data_context().content.results_path, '*'),
+        # {base}/ansible_collections/{ns}/{col}/tests/output/.tmp/delegation/*
+        os.path.join(data_context().content.root, data_context().content.results_path, '.tmp/delegation/*'),
     ]
 
     include = textwrap.indent('\n'.join(include_patterns), ' ' * 4)
@@ -288,6 +290,7 @@ def generate_collection_coverage_config() -> str:
 
     coverage_config = f"""
 [run]
+core = ctrace
 branch = True
 concurrency =
     multiprocessing

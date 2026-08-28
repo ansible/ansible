@@ -236,7 +236,9 @@ class RoleMixin(object):
         b_colldirs = list_collection_dirs(coll_filter=collection_filter)
         for b_path in b_colldirs:
             path = to_text(b_path, errors='surrogate_or_strict')
-            collname = _get_collection_name_from_path(b_path)
+            if not (collname := _get_collection_name_from_path(b_path)):
+                display.debug(f'Skipping invalid path {b_path!r}')
+                continue
 
             roles_dir = os.path.join(path, 'roles')
             if os.path.exists(roles_dir):
@@ -359,7 +361,7 @@ class RoleMixin(object):
             try:
                 meta = self._load_metadata(role, role_path, collection)
             except Exception as e:
-                display.vvv('No metadata for role (%s) due to: %s' % (role, to_native(e)), True)
+                display.vvv(f'No metadata for role ({role}) due to: {e}')
                 meta = {}
 
             argspec = self._load_argspec(role, role_path, collection)
@@ -367,7 +369,7 @@ class RoleMixin(object):
                 if fail_on_errors:
                     raise argspec['exception']
                 else:
-                    display.warning('Skipping role (%s) due to: %s' % (role, argspec['error']), True)
+                    display.warning(f'Skipping role ({role}) due to: {argspec["error"]}')
                     continue
 
             fqcn, summary = self._build_summary(role, collection, meta, argspec)
@@ -890,7 +892,6 @@ class DocCLI(CLI, RoleMixin):
                     short_description=desc,
                     description=[
                         desc,
-                        '',
                         f"This is the Jinja builtin {plugin_type} plugin {short_name!r}.",
                         f"See: U(https://jinja.palletsprojects.com/en/stable/templates/#jinja-{plugin_type}s.{short_name})",
                     ],
@@ -1064,8 +1065,13 @@ class DocCLI(CLI, RoleMixin):
         collection_name = result.plugin_resolved_collection
 
         try:
-            doc, __, __, __ = get_docstring(filename, fragment_loader, verbose=(context.CLIARGS['verbosity'] > 0),
-                                            collection_name=collection_name, plugin_type=plugin_type)
+            doc, __, __, __ = get_docstring(
+                filename=filename,
+                fragment_loader=fragment_loader,
+                verbose=(context.CLIARGS['verbosity'] > 0),
+                collection_name=collection_name,
+                plugin_type=plugin_type,
+            )
         except Exception as ex:
             raise AnsibleError(f"{plugin_type} {plugin_name} at {filename!r} has a documentation formatting error or is missing documentation.") from ex
 

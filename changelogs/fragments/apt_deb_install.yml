@@ -1,3 +1,0 @@
----
-bugfixes:
-  - apt - mark dependencies installed as part of deb file installation as auto (https://github.com/ansible/ansible/issues/78123).

@@ -105,13 +105,3 @@ class RoleMetadata(Base, CollectionSearch):
                                       collection_search_list=collection_search_list)
         except AssertionError as ex:
             raise AnsibleParserError("A malformed list of role dependencies was encountered.", obj=self._ds) from ex
-
-    def serialize(self):
-        return dict(
-            allow_duplicates=self._allow_duplicates,
-            dependencies=self._dependencies
-        )
-
-    def deserialize(self, data):
-        setattr(self, 'allow_duplicates', data.get('allow_duplicates', False))
-        setattr(self, 'dependencies', data.get('dependencies', []))

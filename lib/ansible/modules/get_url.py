@@ -94,11 +94,11 @@ options:
       - The Python C(hashlib) module is responsible for providing the available algorithms.
         The choices vary based on Python version and OpenSSL version.
       - On systems running in FIPS compliant mode, the C(md5) algorithm may be unavailable.
-      - Additionally, if a checksum is passed to this parameter, and the file exist under
-        the O(dest) location, the C(destination_checksum) would be calculated, and if
+      - Additionally, if a checksum is supplied to this parameter, and the file exists under
+        the O(dest) location, the C(destination_checksum) would be calculated; and if
         checksum equals C(destination_checksum), the file download would be skipped
         (unless O(force=true)). If the checksum does not equal C(destination_checksum),
-        the destination file is deleted.
+        the destination file is replaced with the newly downloaded file.
       - If the checksum URL requires username and password, O(url_username) and O(url_password) are used
         to download the checksum file.
     type: str
@@ -378,7 +378,7 @@ from urllib.parse import urlsplit
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.text.converters import to_native
-from ansible.module_utils.urls import fetch_url, url_argument_spec
+from ansible.module_utils.urls import fetch_url, is_fetch_success, mask_url, url_argument_spec
 
 # ==============================================================
 # url handling
@@ -405,14 +405,11 @@ def url_get(module, url, dest, use_proxy, last_mod_time, force, timeout=10, head
     elapsed = (datetime.now(timezone.utc) - start).seconds
 
     if info['status'] == 304:
-        module.exit_json(url=url, dest=dest, changed=False, msg=info.get('msg', ''), status_code=info['status'], elapsed=elapsed)
+        module.exit_json(url=mask_url(url), dest=dest, changed=False, msg=info.get('msg', ''), status_code=info['status'], elapsed=elapsed)
 
-    # Exceptions in fetch_url may result in a status -1, the ensures a proper error to the user in all cases
-    if info['status'] == -1:
-        module.fail_json(msg=info['msg'], url=url, dest=dest, elapsed=elapsed)
-
-    if info['status'] != 200 and not url.startswith('file:/') and not (url.startswith('ftp:/') and info.get('msg', '').startswith('OK')):
-        module.fail_json(msg="Request failed", status_code=info['status'], response=info['msg'], url=url, dest=dest, elapsed=elapsed)
+    if not is_fetch_success(info) and not url.startswith('file:/'):
+        module.fail_json(msg=f"Request failed with msg {info['msg']}", status_code=info['status'], response=info['msg'], url=mask_url(url),
+                         dest=dest, elapsed=elapsed)
 
     # create a temporary file and copy content to do checksum-based replacement
     if tmp_dest:
@@ -477,17 +474,13 @@ def is_url(checksum):
     return urlsplit(checksum).scheme in supported_schemes
 
 
-def parse_digest_lines(filename, lines):
+def parse_digest_lines(filename: str, lines: list[str]) -> list[tuple[str, str]]:
     """Returns a list of tuple containing the filename and digest depending upon
       the lines provided
-
-    Args:
-        filename (str): Name of the filename, used only when the digest is one-liner
-        lines (list): A list of lines containing filenames and checksums
     """
     checksum_map = []
     BSD_DIGEST_LINE = re.compile(r'^(\w+) ?\((?P<path>.+)\) ?= (?P<digest>[\w.]+)$')
-    GNU_DIGEST_LINE = re.compile(r'^(?P<digest>[\w.]+) ([ *])(?P<path>.+)$')
+    GNU_DIGEST_LINE = re.compile(r'^(?P<digest>[\w.]+)\s+(\*|\.\/|\.)?(?P<path>.+)$')
 
     if len(lines) == 1 and len(lines[0].split()) == 1:
         # Only a single line with a single string
@@ -559,7 +552,7 @@ def main():
         checksum_src=None,
         dest=dest,
         elapsed=0,
-        url=url,
+        url=mask_url(url),
     )
 
     dest_is_dir = os.path.isdir(dest)
@@ -591,7 +584,7 @@ def main():
                 checksum = None
 
             if checksum is None:
-                module.fail_json(msg="Unable to find a checksum for file '%s' in '%s'" % (filename, checksum_url))
+                module.fail_json(msg="Unable to find a checksum for file '%s' in '%s'" % (filename, mask_url(checksum_url)))
         # Remove any non-alphanumeric characters, including the infamous
         # Unicode zero-width space
         checksum = re.sub(r'\W+', '', checksum).lower()

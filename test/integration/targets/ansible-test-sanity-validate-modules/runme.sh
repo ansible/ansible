@@ -25,6 +25,8 @@ if ! command -V pwsh; then
   exit 0
 fi
 
+pwsh --version
+
 # Use a PowerShell-only collection to verify that validate-modules does not load the collection loader multiple times.
 ansible-test sanity --test validate-modules --color --truncate 0 "${@}"
 

@@ -841,12 +841,26 @@ def test_build_with_symlink_inside_collection(collection_input):
         assert actual_file == '08f24200b9fbe18903e7a50930c9d0df0b8d7da3'  # shasum test/units/cli/test_data/collection_skeleton/README.md
 
 
+def test_build_files_manifest_sorted_by_name(collection_input):
+    """Verify _build_files_manifest returns files sorted by name."""
+    input_dir = collection_input[0]
+
+    for filename in ['z.txt', 'a.txt', 'm.txt']:
+        with open(os.path.join(input_dir, filename), 'w') as f:
+            f.write('test')
+
+    manifest = collection._build_files_manifest(to_bytes(input_dir), 'namespace', 'collection', [], Sentinel, None)
+    names = [entry['name'] for entry in manifest['files']]
+
+    assert names == sorted(names)
+
+
 def test_publish_no_wait(galaxy_server, collection_artifact, monkeypatch):
     mock_display = MagicMock()
     monkeypatch.setattr(Display, 'display', mock_display)
 
     artifact_path, mock_open = collection_artifact
-    fake_import_uri = 'https://galaxy.server.com/api/v2/import/1234'
+    fake_import_uri = 'https://galaxy.server.com/api/v3/import/1234'
 
     mock_publish = MagicMock()
     mock_publish.return_value = fake_import_uri
@@ -869,7 +883,7 @@ def test_publish_with_wait(galaxy_server, collection_artifact, monkeypatch):
     monkeypatch.setattr(Display, 'display', mock_display)
 
     artifact_path, mock_open = collection_artifact
-    fake_import_uri = 'https://galaxy.server.com/api/v2/import/1234'
+    fake_import_uri = 'https://galaxy.server.com/api/v3/import/1234'
 
     mock_publish = MagicMock()
     mock_publish.return_value = fake_import_uri
@@ -890,7 +904,26 @@ def test_publish_with_wait(galaxy_server, collection_artifact, monkeypatch):
         % galaxy_server.api_server
 
 
-def test_download_file(tmp_path_factory, monkeypatch):
+class MockHTTPResponses:
+    def __init__(self, responses: list[tuple[bytes, int | None]]) -> None:
+        self._body, self.length = responses[0]
+        self._responses = responses[1:]
+        self._stream = BytesIO(self._body)
+
+    def read(self, size: int = -1) -> bytes:
+        data = self._stream.read(size)
+
+        if not data:
+            # reset the stream to simulate retries
+            if self._responses:
+                self._body, self.length = self._responses[0]
+                del self._responses[0]
+            self._stream = BytesIO(self._body)
+
+        return data
+
+
+def test_download_file(tmp_path_factory: pytest.TempPathFactory, monkeypatch: pytest.MonkeyPatch) -> None:
     temp_dir = to_bytes(tmp_path_factory.mktemp('test-ÅÑŚÌβŁÈ Collections'))
 
     data = b"\x00\x01\x02\x03"
@@ -898,7 +931,7 @@ def test_download_file(tmp_path_factory, monkeypatch):
     sha256_hash.update(data)
 
     mock_open = MagicMock()
-    mock_open.return_value = BytesIO(data)
+    mock_open.return_value = MockHTTPResponses([(data, len(data))])
     monkeypatch.setattr(collection.concrete_artifact_manager, 'open_url', mock_open)
 
     expected = temp_dir
@@ -913,18 +946,47 @@ def test_download_file(tmp_path_factory, monkeypatch):
     assert mock_open.mock_calls[0][1][0] == 'http://google.com/file'
 
 
-def test_download_file_hash_mismatch(tmp_path_factory, monkeypatch):
+def test_download_file_hash_mismatch(tmp_path_factory: pytest.TempPathFactory, monkeypatch: pytest.MonkeyPatch) -> None:
     temp_dir = to_bytes(tmp_path_factory.mktemp('test-ÅÑŚÌβŁÈ Collections'))
 
     data = b"\x00\x01\x02\x03"
 
     mock_open = MagicMock()
-    mock_open.return_value = BytesIO(data)
+    mock_open.return_value = MockHTTPResponses([(data, len(data))])
     monkeypatch.setattr(collection.concrete_artifact_manager, 'open_url', mock_open)
 
     expected = "Mismatch artifact hash with downloaded file"
     with pytest.raises(AnsibleError, match=expected):
         collection._download_file('http://google.com/file', temp_dir, 'bad', True)
+
+
+def test_download_file_incomplete_read(
+    tmp_path_factory: pytest.TempPathFactory,
+    monkeypatch: pytest.MonkeyPatch
+) -> None:
+    temp_dir = to_bytes(tmp_path_factory.mktemp('test-ÅÑŚÌβŁÈ Collections'))
+
+    incomplete_data = b"\x00\x01\x02\x03"
+    data = incomplete_data + b"\x04"
+    sha256_hash = sha256(data)
+
+    # Test retries succeed
+    responses = [(incomplete_data, len(data)), (data, len(data))]
+    mock_open = MagicMock(return_value=MockHTTPResponses(responses))
+    monkeypatch.setattr(collection.concrete_artifact_manager, 'open_url', mock_open)
+
+    collection._download_file('http://google.com/file', temp_dir, sha256_hash.hexdigest(), True)
+
+    # Test error is correct
+    mock_open.return_value = MockHTTPResponses([(data, len(data) + 1)])
+    monkeypatch.setattr(collection.concrete_artifact_manager, 'open_url', mock_open)
+
+    expected_error = re.escape(
+        "Downloading http://google.com/file failed: "
+        "IncompleteRead(5 bytes read, 1 more expected)"
+    )
+    with pytest.raises(AnsibleError, match=expected_error):
+        collection._download_file('http://google.com/file', temp_dir, sha256_hash.hexdigest(), True)
 
 
 def test_extract_tar_file_invalid_hash(tmp_tarfile):

@@ -1,0 +1,7 @@
+DOCUMENTATION:
+  description: filter plugin in a subdirectory
+  author: ansible-core
+  options:
+    _input:
+      description: input data, which does nothing
+      type: raw

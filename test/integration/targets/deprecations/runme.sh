@@ -25,8 +25,9 @@ ansible-playbook deprecated.yml -i ../../inventory "${@}"
 # check for entry key deprecation including the name of the option, must be defined to trigger
 [ "$(ANSIBLE_CONFIG='entry_key_deprecated.cfg' ansible -m meta -a 'noop' localhost 2>&1 | grep -c "\[DEPRECATION WARNING\]: \[testing\]deprecated option.")" -eq "1" ]
 
+# DTFIX: fix issue with x2 deprecation and wrong pllugin attribution
 # check for deprecation of entry itself, must be consumed to trigger
-[ "$(ANSIBLE_TEST_ENTRY2=1 ansible -m debug -a 'msg={{q("config", "_Z_TEST_ENTRY_2")}}' localhost  2>&1 | grep -c 'DEPRECATION')" -eq "1" ]
+[ "$(ANSIBLE_TEST_ENTRY2=1 ansible -m debug -a 'msg={{q("config", "_Z_TEST_ENTRY_2")}}' localhost  2>&1 | grep -c 'DEPRECATION')" -eq "2" ]
 
 # check for entry deprecation, just need key defined to trigger
 [ "$(ANSIBLE_CONFIG='entry_key_deprecated2.cfg' ansible -m meta -a 'noop'  localhost 2>&1 | grep -c 'DEPRECATION')" -eq "1" ]
@@ -58,3 +59,6 @@ export ANSIBLE_CACHE_PLUGIN=notjsonfile
 
 # Injection default is deprecated
 [ "$(ANSIBLE_INJECT_FACT_VARS=1 ansible-playbook injectfacts.yml 2>&1 | grep -c 'INJECT_FACTS_AS_VARS')" -eq "0" ]
+
+# Injection default is deprecated but not ansible_local
+[ "$(ansible-playbook injectfacts.yml --tags alocal 2>&1 | grep -c 'INJECT_FACTS_AS_VARS')" -eq "0" ]

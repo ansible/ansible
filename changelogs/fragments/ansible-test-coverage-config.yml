@@ -1,7 +1,0 @@
-bugfixes:
- - ansible-test - Use a consistent coverage config for all collection testing.
- - ansible-test - Always exclude the ``tests/output/`` directory from a collection's code coverage.
-   (https://github.com/ansible/ansible/issues/84244)
-
-minor_changes:
-  - ansible-test - Improve formatting of generated coverage config file.

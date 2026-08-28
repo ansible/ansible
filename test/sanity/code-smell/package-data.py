@@ -26,12 +26,16 @@ def collect_sdist_files(complete_file_list: list[str]) -> list[str]:
     ignore_patterns = (
         '.azure-pipelines/*',
         '.cherry_picker.toml',
+        '.claude/*',
         '.git*',
         '.mailmap',
         'bin/*',
         'changelogs/README.md',
         'changelogs/config.yaml',
         'changelogs/fragments/*',
+        'AGENTS.md',
+        'CLAUDE.md',
+        'context/*',
         'hacking/*',
     )
 
@@ -247,7 +251,7 @@ def check_build(complete_file_list: list[str], use_upper_setuptools_version: boo
             errors.extend(check_files('sdist', expected_sdist_files, actual_sdist_files))
             errors.extend(check_files('wheel', expected_wheel_files, actual_wheel_files))
 
-    errors = [f'{msg} ({setuptools_version})' for msg in errors]
+    errors = [f'{msg} (setuptools=={setuptools_version})' for msg in errors]
 
     return errors
 

@@ -40,11 +40,13 @@ class ActionModule(ActionBase):
             return result
 
         group_name = self._task.args.get('key')
+
         parent_groups = self._task.args.get('parents', ['all'])
         if isinstance(parent_groups, str):
             parent_groups = [parent_groups]
 
-        result['changed'] = False
         result['add_group'] = group_name.replace(' ', '-')
         result['parent_groups'] = [name.replace(' ', '-') for name in parent_groups]
+        result['changed'] = self.add_group(group_name, parent_group_names=result['parent_groups'])
+
         return result
