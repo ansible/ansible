@@ -46,7 +46,7 @@ display = Display()
 # Helper methods
 def to_safe_group_name(name):
     # placeholder for backwards compat
-    return original_safe(name, force=True, silent=True)
+    return original_safe(name, force=True)
 
 
 def detect_range(line=None):

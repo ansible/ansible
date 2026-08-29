@@ -1,0 +1,2 @@
+minor_changes:
+  - "inventory plugins - group names with invalid characters (e.g., hyphens) are now visibly normalized with a warning when using the Constructable mixin. Previously normalization was silent. Use ``-vvvv`` to see which specific groups were renamed."

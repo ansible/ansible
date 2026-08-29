@@ -5,9 +5,13 @@ from __future__ import annotations
 
 import pytest
 
-from ansible.inventory.group import Group
+from ansible.inventory.group import Group, to_safe_group_name
 from ansible.inventory.host import Host
 from ansible.errors import AnsibleError
+from ansible import constants as C
+from ansible.plugins.inventory import to_safe_group_name as wrapper_to_safe_group_name
+from ansible.plugins.inventory import BaseInventoryPlugin
+from units.test_utils.controller.display import emits_warnings
 
 
 def test_depth_update():
@@ -169,3 +173,65 @@ def test_set_priority_invalid_values(priority, expected):
     group = Group('test_group')
     group.set_priority(priority)
     assert group.priority == expected
+
+
+@pytest.fixture
+def force_transform_always(monkeypatch):
+    """Ensure group name transformation is always enabled for testing."""
+    monkeypatch.setattr(C, 'TRANSFORM_INVALID_GROUP_CHARS', 'always')
+
+
+def test_to_safe_group_name_valid_unchanged():
+    """Valid group names should pass through unchanged."""
+    assert to_safe_group_name('valid_group') == 'valid_group'
+    assert to_safe_group_name('group123') == 'group123'
+
+
+def test_to_safe_group_name_hyphen_normalized():
+    """Hyphens should be replaced with underscores."""
+    assert to_safe_group_name('qa-windows', force=True) == 'qa_windows'
+    assert to_safe_group_name('prod-linux-web', force=True) == 'prod_linux_web'
+
+
+def test_to_safe_group_name_warning_emitted(force_transform_always):
+    """Warning should be emitted when normalizing with silent=False."""
+    with emits_warnings(warning_pattern=r'Invalid characters were found in group names'):
+        result = to_safe_group_name('qa-windows', force=True, silent=False)
+
+    assert result == 'qa_windows'
+
+
+def test_to_safe_group_name_warning_suppressed_when_silent(force_transform_always):
+    """Warning should be suppressed when silent=True."""
+    # Empty pattern list with allow_unmatched_message=True verifies NO warnings
+    with emits_warnings(warning_pattern=[], allow_unmatched_message=True):
+        result = to_safe_group_name('qa-windows', force=True, silent=True)
+
+    assert result == 'qa_windows'
+
+
+def test_plugin_wrapper_emits_warnings(force_transform_always):
+    """
+    Plugin wrapper should emit warnings after fix (silent=True removed).
+
+    NOTE: This test validates the FIXED behavior. It will FAIL on devel
+    (where silent=True is present) and PASS after our change is applied.
+    """
+    with emits_warnings(warning_pattern=r'Invalid characters were found in group names'):
+        result = wrapper_to_safe_group_name('qa-windows')
+
+    assert result == 'qa_windows'
+
+
+def test_plugin_wrapper_via_sanitize_group_name(force_transform_always):
+    """
+    Test wrapper through actual code path used by Constructable mixin.
+
+    NOTE: This test validates the FIXED behavior. Tests the full integration:
+    BaseInventoryPlugin._sanitize_group_name → wrapper → to_safe_group_name
+    """
+    with emits_warnings(warning_pattern=r'Invalid characters were found in group names'):
+        plugin = BaseInventoryPlugin()
+        result = plugin._sanitize_group_name('qa-windows')
+
+    assert result == 'qa_windows'
