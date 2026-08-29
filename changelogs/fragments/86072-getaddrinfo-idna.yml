@@ -1,2 +1,2 @@
 bugfixes:
-  - "module_utils - importing modules no longer fails when the idna codec is missing; the standard library ``getaddrinfo`` is used instead (https://github.com/ansible/ansible/issues/86072)."
+  - "Ansible no longer fails to import when IDNA support is missing (https://github.com/ansible/ansible/issues/86072)."
