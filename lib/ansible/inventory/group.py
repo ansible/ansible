@@ -30,13 +30,12 @@ def to_safe_group_name(name, replacer="_", force=False, silent=False):
     if name:  # when deserializing we might not have name yet
         invalid_chars = C.INVALID_VARIABLE_NAMES.findall(name)
         if invalid_chars:
-            original = name
             msg = 'invalid character(s) "%s" in group name (%s)' % (to_text(set(invalid_chars)), to_text(name))
             if C.TRANSFORM_INVALID_GROUP_CHARS not in ('never', 'ignore') or force:
                 name = C.INVALID_VARIABLE_NAMES.sub(replacer, name)
                 if not (silent or C.TRANSFORM_INVALID_GROUP_CHARS == 'silently'):
                     display.vvvv('Replacing ' + msg)
-                    warn = "Group name '%s' was normalized to '%s'. Use '%s' in limits and patterns." % (original, name, name)
+                    warn = 'Invalid characters were found in group names and automatically replaced, use -vvvv to see details'
             else:
                 if C.TRANSFORM_INVALID_GROUP_CHARS == 'never':
                     display.vvvv('Not replacing %s' % msg)

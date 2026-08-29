@@ -1,6 +1,0 @@
-minor_changes:
-  - inventory - group names with invalid characters (e.g. hyphens) that are renamed during
-    inventory processing now emit a warning naming both the original and normalized name,
-    visible at default verbosity (https://github.com/ansible/ansible/issues/TODO).
-  - inventory - when a host pattern matches no hosts and a similarly-named normalized group
-    exists, the warning now suggests the correct group name to use in limits and patterns.

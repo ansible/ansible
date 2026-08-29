@@ -599,9 +599,6 @@ class InventoryManager:
         # Display warning if specified host pattern did not match any groups or hosts
         if not results and not matching_groups and pattern != 'all':
             msg = "Could not match supplied host pattern, ignoring: %s" % pattern
-            normalized = C.INVALID_VARIABLE_NAMES.sub('_', pattern)
-            if normalized != pattern and normalized in self._inventory.groups:
-                msg += ". Group '%s' exists (group names are normalized); use '%s' instead." % (normalized, normalized)
             display.debug(msg)
             if C.HOST_PATTERN_MISMATCH == 'warning':
                 display.warning(msg)
