@@ -60,7 +60,7 @@ options:
       - If this is a relative path, it is interpreted with respect to C(/etc/cron.d).
       - Many Linux distros expect (and some require) the filename portion to consist solely
         of upper- and lower-case letters, digits, underscores, and hyphens.
-      - Using this parameter requires you to specify the O(user) as well, unless O(state=absent).
+      - Using this parameter requires you to specify the O(user) as well, unless O(state=absent) or O(env=true).
       - Either this parameter or O(name) is required.
     type: path
   backup:
@@ -651,7 +651,7 @@ def main():
         module.fail_json(msg="Solaris does not support special_time=... or @reboot")
 
     if do_install:
-        if cron_file and not user:
+        if cron_file and not user and not env:
             module.fail_json(msg="To use cron_file=... parameter you must specify user=... as well")
 
         if job is None:

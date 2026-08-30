@@ -1,0 +1,2 @@
+bugfixes:
+  - cron - do not require ``user`` parameter when adding an environment variable (``env=true``) with ``cron_file`` specified (https://github.com/ansible/ansible/issues/83682).
