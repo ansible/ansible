@@ -44,3 +44,13 @@ def test_check_required_one_of_context(arguments_terms):
         check_required_one_of(arguments_terms, params, option_context)
 
     assert to_native(e.value) == expected
+
+
+def test_check_required_one_of_none_values(arguments_terms):
+    params = {"state": "present", "path": None, "owner": None}
+    expected = "one of the following is required: path, owner"
+
+    with pytest.raises(TypeError) as e:
+        check_required_one_of(arguments_terms, params)
+
+    assert to_native(e.value) == expected

@@ -37,3 +37,11 @@ def test_count_terms_tuple_input(params):
 def test_count_terms_list_input(params):
     check = ['name', 'dest']
     assert count_terms(check, params) == 2
+
+
+def test_count_terms_none_value():
+    params = {'name': 'bob', 'dest': None, 'other': None}
+    assert count_terms(['name', 'dest'], params) == 1
+    assert count_terms(['dest', 'other'], params) == 0
+    assert count_terms('dest', params) == 0
+

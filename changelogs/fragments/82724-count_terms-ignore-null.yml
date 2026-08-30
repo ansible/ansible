@@ -1,0 +1,2 @@
+bugfixes:
+  - count_terms - do not count parameters whose values are ``None`` in validation functions such as ``check_required_one_of`` (https://github.com/ansible/ansible/issues/82724).

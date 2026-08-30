@@ -24,13 +24,13 @@ def count_terms(terms, parameters):
     :arg parameters: Dictionary of parameters
 
     :returns: An integer that is the number of occurrences of the terms values
-        in the provided dictionary.
+        in the provided dictionary whose value is not None.
     """
 
     if not is_iterable(terms):
         terms = [terms]
 
-    return len(set(terms).intersection(parameters))
+    return len([term for term in set(terms).intersection(parameters) if parameters[term] is not None])
 
 
 def check_mutually_exclusive(terms, parameters, options_context=None):
