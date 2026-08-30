@@ -272,6 +272,12 @@ options:
             - Supported on Linux only.
         type: int
         version_added: "2.16"
+    password_last_change_day:
+        description:
+            - The date of the last password change, expressed as the number of days since Jan 1, 1970 (or V(0) to force password change on next login).
+            - Supported on Linux only.
+        type: int
+        version_added: "2.21"
     umask:
         description:
             - Sets the umask of the user.
@@ -635,6 +641,7 @@ class User(object):
         self.password_expire_max = module.params['password_expire_max']
         self.password_expire_min = module.params['password_expire_min']
         self.password_expire_warn = module.params['password_expire_warn']
+        self.password_last_change_day = module.params['password_last_change_day']
         self.umask = module.params['umask']
         self.inactive = module.params['password_expire_account_disable']
         self.uid_min = module.params['uid_min']
@@ -1172,6 +1179,7 @@ class User(object):
         min_needs_change = self.password_expire_min is not None
         max_needs_change = self.password_expire_max is not None
         warn_needs_change = self.password_expire_warn is not None
+        last_change_needs_change = self.password_last_change_day is not None
 
         if HAVE_SPWD:
             try:
@@ -1182,18 +1190,21 @@ class User(object):
             min_needs_change &= self.password_expire_min != shadow_info.sp_min
             max_needs_change &= self.password_expire_max != shadow_info.sp_max
             warn_needs_change &= self.password_expire_warn != shadow_info.sp_warn
+            last_change_needs_change &= self.password_last_change_day != shadow_info.sp_lstchg
 
-        if not (min_needs_change or max_needs_change or warn_needs_change):
+        if not (min_needs_change or max_needs_change or warn_needs_change or last_change_needs_change):
             return (None, '', '')  # target state already reached
 
         command_name = 'chage'
         cmd = [self.module.get_bin_path(command_name, True)]
         if min_needs_change:
-            cmd.extend(["-m", self.password_expire_min])
+            cmd.extend(["-m", str(self.password_expire_min)])
         if max_needs_change:
-            cmd.extend(["-M", self.password_expire_max])
+            cmd.extend(["-M", str(self.password_expire_max)])
         if warn_needs_change:
-            cmd.extend(["-W", self.password_expire_warn])
+            cmd.extend(["-W", str(self.password_expire_warn)])
+        if last_change_needs_change:
+            cmd.extend(["-d", str(self.password_last_change_day)])
         cmd.append(self.name)
 
         return self.execute_command(cmd)
@@ -3427,6 +3438,7 @@ def main():
             password_expire_max=dict(type='int', no_log=False),
             password_expire_min=dict(type='int', no_log=False),
             password_expire_warn=dict(type='int', no_log=False),
+            password_last_change_day=dict(type='int', no_log=False),
             # following options are specific to macOS
             hidden=dict(type='bool'),
             # following options are specific to selinux
