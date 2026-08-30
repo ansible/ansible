@@ -158,6 +158,8 @@ from ansible.module_utils.common.warnings import (
     warn,
 )
 
+from ansible.module_utils._internal import _debug
+
 # Note: When getting Sequence from collections, it matches with strings. If
 # this matters, make sure to check for strings before checking for sequencetype
 SEQUENCETYPE = frozenset, KeysView, Sequence
@@ -436,7 +438,10 @@ class AnsibleModule(object):
             self.fail_json(msg=msg)
 
         if self.check_mode and not self.supports_check_mode:
-            self.exit_json(skipped=True, msg="remote module (%s) does not support check mode" % self._name)
+            self.exit_json(
+                skipped=True,  # deprecated: description='remove this skipped return', core_version='2.25'
+                msg="remote module (%s) does not support check mode" % self._name,
+            )
 
         # This is for backwards compatibility only.
         self._CHECK_ARGUMENT_TYPES_DISPATCHER = DEFAULT_TYPE_VALIDATORS
@@ -451,6 +456,10 @@ class AnsibleModule(object):
 
         # finally, make sure we're in a logical working dir
         self._set_cwd()
+
+        # Use system temp dir for module-level stacktraces. Using remote_tmp gets complicated with tasks
+        # as different or unprivileged users.
+        _debug.register_for_stacktrace()
 
     @property
     def tmpdir(self):

@@ -127,6 +127,15 @@ class AnsibleUnwantedChecker(BaseChecker):
                                             '/lib/ansible/module_utils/basic.py',
                                         ),
                                         modules_only=True),
+
+        # deprecated: description='remove this entire AnsibleActionSkip entry when the exception is removed' core_version='2.25'
+        'ansible.errors.AnsibleActionSkip': UnwantedEntry(
+            'AnsibleActionNoCheckMode if the desired skip is for lacking check_mode, otherwise returning `skipped` from actions is deprecated.',
+            ignore_paths=(
+                # deprecated: description='remove ignore when action/__init__.py switches to AnsibleActionNoCheckMode' core_version='2.25'
+                '/lib/ansible/plugins/action/__init__.py',
+            ),
+        ),
     }
 
     for method in (

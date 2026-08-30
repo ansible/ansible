@@ -981,7 +981,7 @@ namespace Ansible.Basic
             // Only run this check if we are at the root argument (optionsContext.Count == 0)
             if (CheckMode && !(bool)spec["supports_check_mode"] && optionsContext.Count == 0)
             {
-                Result["skipped"] = true;
+                Result["skipped"] = true;  // deprecated: description='remove this skipped return', core_version='2.25'
                 Result["msg"] = String.Format("remote module ({0}) does not support check mode", ModuleName);
                 ExitJson();
             }

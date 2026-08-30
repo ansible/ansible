@@ -36,5 +36,5 @@
       - fetched_again.file == remote_tmp_dir ~ "/orig"
       - fetched.remote_checksum == "a94a8fe5ccb19ba61c4c0873d391e987982fbbd3"
       - lookup("file", output_dir + "/fetched/" + inventory_hostname + remote_tmp_dir + "/orig") == "test"
-      - fetch_check_mode is skipped
+      - fetch_check_mode is not changed
       - fetch_check_mode.msg is search('not \(yet\) supported')

@@ -23,7 +23,7 @@ import shlex
 import typing as _t
 
 from ansible._internal._powershell import _script as _ps_script
-from ansible.errors import AnsibleError, AnsibleActionFail, AnsibleActionSkip
+from ansible.errors import AnsibleError, AnsibleActionFail
 from ansible.executor.powershell import module_manifest as ps_manifest
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.plugins.action import ActionBase
@@ -65,7 +65,11 @@ class ActionModule(ActionBase):
                 # and the filename already exists. This allows idempotence
                 # of command executions.
                 if self._remote_file_exists(creates):
-                    raise AnsibleActionSkip("%s exists, matching creates option" % creates)
+                    return dict(
+                        changed=False,
+                        skipped=True,  # deprecated: description='remove this skipped return', core_version='2.25'
+                        msg=f'{creates} exists, matching creates option',
+                    )
 
             removes = new_module_args['removes']
             if removes:
@@ -73,7 +77,11 @@ class ActionModule(ActionBase):
                 # and the filename does not exist. This allows idempotence
                 # of command executions.
                 if not self._remote_file_exists(removes):
-                    raise AnsibleActionSkip("%s does not exist, matching removes option" % removes)
+                    return dict(
+                        changed=False,
+                        skipped=True,  # deprecated: description='remove this skipped return', core_version='2.25'
+                        msg=f'{removes} does not exist, matching removes option',
+                    )
 
             # The chdir must be absolute, because a relative path would rely on
             # remote node behaviour & user config.
@@ -111,7 +119,11 @@ class ActionModule(ActionBase):
                 # If the script doesn't return changed in the result, it defaults to True,
                 # but since the script may override 'changed', just skip instead of guessing.
                 else:
-                    raise AnsibleActionSkip('Check mode is not supported for this task.', result=dict(changed=False))
+                    return dict(
+                        msg='Check mode is not supported for this task.',
+                        changed=False,
+                        skipped=True,  # deprecated: description='remove this skipped return', core_version='2.25'
+                    )
 
             # transfer the file to a remote tmp location
             tmp_src = self._connection._shell.join_path(self._connection._shell.tmpdir,
