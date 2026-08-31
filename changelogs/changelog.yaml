@@ -736,3 +736,38 @@ releases:
     - collection-loader-extensions.yml
     - fix-short-timeout-async-wrapper.yml
     release_date: '2026-08-03'
+  2.20.9rc1:
+    changes:
+      bugfixes:
+      - apt_key module now masks authentication information in all displays and returns
+        of uri information.
+      - get_url module now masks authentication information in all displays and returns
+        of uri information.
+      - module_utils - ``mask_url`` now masks the password in URLs that contain a
+        password but no username, such as ``redis://:password@host``, instead of returning
+        them unmasked.
+      - module_utils.urls now all errors mask in line url authentication information.
+      - rpm_key module now masks authentication information in all displays and returns
+        of uri information.
+      - tempfile - reject prefix and suffix values that contain path components to
+        prevent path traversal.
+      - uri module now masks authentication information in all displays and returns
+        of uri information.
+      - url lookup now masks authentication information in all displays and returns
+        of uri information.
+      minor_changes:
+      - mask_url function in module_utils to allow for masking of auth data embedded
+        in urls.
+      release_summary: '| Release Date: 2026-08-31
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.20/porting_guides/porting_guide_core_2.20.html>`__
+
+        '
+    codename: Good Times Bad Times
+    fragments:
+    - 2.20.9rc1_summary.yaml
+    - mask_inurl_auth.yml
+    - mask_url-password-auth.yml
+    - mask_url.yml
+    - tempfile-path-traversal.yml
+    release_date: '2026-08-31'
