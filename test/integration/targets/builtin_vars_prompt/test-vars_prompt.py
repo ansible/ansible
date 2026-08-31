@@ -54,20 +54,20 @@ tests = [
     {'playbook': 'vars_prompt-1.yml',
      'test_spec': [
         [('input:', 'some input\r')],
-         '"input": "some input"']},
+         r'"input": "\$REDACTED\$"']},
 
     # Custom prompt
     {'playbook': 'vars_prompt-2.yml',
      'test_spec': [
          [('Enter some input:', 'some more input\r')],
-         '"input": "some more input"']},
+         r'"input": "\$REDACTED\$"']},
 
     # Test confirm, both correct and incorrect
     {'playbook': 'vars_prompt-3.yml',
      'test_spec': [
          [('input:', 'confirm me\r'),
           ('confirm input:', 'confirm me\r')],
-         '"input": "confirm me"']},
+         r'"input": "\$REDACTED\$"']},
 
     {'playbook': 'vars_prompt-3.yml',
      'test_spec': [
@@ -76,7 +76,7 @@ tests = [
           (r'\*\*\*\*\* VALUES ENTERED DO NOT MATCH \*\*\*\*', ''),
           ('input:', 'confirm me\r'),
           ('confirm input:', 'confirm me\r')],
-         '"input": "confirm me"']},
+         r'"input": "\$REDACTED\$"']},
 
     # Test private
     {'playbook': 'vars_prompt-4.yml',
@@ -90,7 +90,7 @@ tests = [
      'test_spec': [
          [('password', 'Scenic-Improving-Payphone\r'),
           ('confirm password', 'Scenic-Improving-Payphone\r')],
-         r'"password": "\$6\$']},
+         r'"password": "\$REDACTED\$"']},
 
     # Test variables in prompt field
     # https://github.com/ansible/ansible/issues/32723

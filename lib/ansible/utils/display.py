@@ -967,7 +967,10 @@ class Display(metaclass=Singleton):
             # to maintain backward compatibility, assume these values are safe to template
             result = TrustedAsTemplate().tag(result)
 
-        return register_secret(result)
+        if private:
+            result = register_secret(result)
+
+        return result
 
     def _set_column_width(self) -> None:
         if os.isatty(1):

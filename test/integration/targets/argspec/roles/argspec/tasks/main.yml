@@ -562,7 +562,10 @@
       - '"Module did not set no_log for maybe_password" in argspec_password_no_log.stderr'
       - '"Module did not set no_log for password" not in argspec_password_no_log.stderr'
       - '"Module did not set no_log for not_a_password" not in argspec_password_no_log.stderr'
-      - argspec_password_no_log.stdout|regex_findall('VALUE_SPECIFIED_IN_NO_LOG_PARAMETER')|length == 1
+      - '"$REDACTED$" in argspec_password_no_log.stdout'
+      - '"secret_password_value" not in argspec_password_no_log.stdout'
+      - '"plaintext_not_a_password_value" in argspec_password_no_log.stdout'
+      - '"plaintext_maybe_password_value" in argspec_password_no_log.stdout'
 
       - argspec_int_invalid is failed
 
