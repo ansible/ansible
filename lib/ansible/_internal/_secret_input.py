@@ -55,9 +55,7 @@ def _read_secret_input_file(path: str) -> list[str]:
         # values are validated as strings without coercion, so non-string entries are an error
         # cannot show actual value in error message because it may be a secret, so show idx and type instead
         if not isinstance(secret, str):
-            raise AnsibleError(
-                f"Secrets input file {path!r} entry secrets[{idx}] must be a string, not a {native_type_name(secret)}."
-            )
+            raise AnsibleError(f"Secrets input file {path!r} entry secrets[{idx}] must be a string, not a {native_type_name(secret)}.")
 
     return list(secrets)
 
@@ -69,8 +67,7 @@ def _run_secret_input_command(path: str) -> bytes:
         proc = subprocess.run([path], stdout=subprocess.PIPE, check=False)
     except OSError as ex:
         raise AnsibleError(
-            f"Could not run secrets input file {path!r}: {ex}. "
-            f"If this is not an executable, remove the executable bit from the file."
+            f"Could not run secrets input file {path!r}: {ex}. " f"If this is not an executable, remove the executable bit from the file."
         ) from ex
 
     if proc.returncode != 0:

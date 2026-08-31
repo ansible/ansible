@@ -4,7 +4,6 @@ from __future__ import annotations as _annotations
 
 import os as _os
 import threading as _threading
-import typing as _t
 
 _FORK_LOCK_TIMEOUT = 10
 
@@ -33,7 +32,7 @@ class ForkSafeLock:
     def locked(self) -> bool:
         return self._lock.locked()
 
-    def __enter__(self) -> _t.Self:
+    def __enter__(self) -> ForkSafeLock:
         self._lock.__enter__()
         return self
 

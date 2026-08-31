@@ -78,10 +78,7 @@ class SecretMasker:
 
     def _effective_spans(self, value: str) -> list[tuple[int, int]]:
         """Spans to redact: long secrets always, short secrets only when at a word boundary."""
-        return [
-            (start, end) for start, end in self._raw_spans(value)
-            if not _is_short_secret(end - start) or _sits_at_boundary(value, start, end)
-        ]
+        return [(start, end) for start, end in self._raw_spans(value) if not _is_short_secret(end - start) or _sits_at_boundary(value, start, end)]
 
     def mask_string(self, value: str, *, mask_placeholder: str = '$REDACTED$') -> str:
         if not value:

@@ -8,7 +8,10 @@ namespace Ansible.Secrets
 {
     public class SecretMasker
     {
-        private static readonly SecretMasker _instance = new SecretMasker();
+        // Not marked readonly so integration tests can reset the singleton to a
+        // pristine instance via reflection between test cases (setting a static
+        // readonly field via reflection is not supported on CoreCLR).
+        private static SecretMasker _instance = new SecretMasker();
 
         private int[] _failureLink;
         private int[] _outputLink;

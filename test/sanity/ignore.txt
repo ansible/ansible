@@ -190,6 +190,7 @@ test/units/errors/fixtures/outputs/short_file_long_line_truncated_past_target.tx
 test/units/errors/fixtures/outputs/short_file_no_column.txt codespell!skip  # intentionally truncated test data
 test/units/errors/fixtures/outputs/short_file_truncated_target.txt codespell!skip  # intentionally truncated test data
 test/units/errors/fixtures/outputs/short_file_truncated_target_last_displayed_char.txt codespell!skip  # intentionally truncated test data
+test/units/module_utils/_internal/fixtures/ahocorasick_conformance.json codespell!skip  # test data
 test/units/module_utils/facts/fixtures/cpuinfo/s390x-z13-2cpu-cpuinfo codespell!skip  # test data
 test/units/module_utils/facts/fixtures/cpuinfo/s390x-z14-64cpu-cpuinfo codespell!skip  # test data
 test/units/module_utils/facts/system/distribution/fixtures/univention_corporate_server_5.2.json codespell!skip  # test data

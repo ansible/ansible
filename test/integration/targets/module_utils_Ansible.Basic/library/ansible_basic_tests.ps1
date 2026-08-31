@@ -635,35 +635,39 @@ $tests = [Ordered]@{
         }
         $failed | Assert-Equal -Expected $true
 
-        # verify no_log params are masked in invocation
+        $new_secrets = @($actual._ansible_new_secrets | Sort-Object)
+        $actual.Remove("_ansible_new_secrets")
+        Assert-Equal -Actual $new_secrets -Expected @("1234", "pass")
+
+        # verify the invocation contains the raw, unmasked values
         $expected = @{
             invocation = @{
                 module_args = @{
-                    password2 = "VALUE_SPECIFIED_IN_NO_LOG_PARAMETER"
+                    password2 = 1234
                     dict = @{
                         dict = @{
                             pass = "plain"
-                            hide = "VALUE_SPECIFIED_IN_NO_LOG_PARAMETER"
-                            sub_hide = "********word"
-                            int_hide = "VALUE_SPECIFIED_IN_NO_LOG_PARAMETER"
+                            hide = "pass"
+                            sub_hide = "password"
+                            int_hide = 123456
                         }
-                        custom = "VALUE_SPECIFIED_IN_NO_LOG_PARAMETER"
+                        custom = "pass"
                         list = @(
-                            "VALUE_SPECIFIED_IN_NO_LOG_PARAMETER",
-                            "********word",
-                            "VALUE_SPECIFIED_IN_NO_LOG_PARAMETER",
+                            "pass",
+                            "password",
+                            1234567,
                             "pa ss",
                             @{
                                 pass = "plain"
-                                hide = "VALUE_SPECIFIED_IN_NO_LOG_PARAMETER"
-                                sub_hide = "********word"
-                                int_hide = "VALUE_SPECIFIED_IN_NO_LOG_PARAMETER"
+                                hide = "pass"
+                                sub_hide = "password"
+                                int_hide = 123456
                             }
                         )
-                        data = "Oops this is secret: ********"
+                        data = "Oops this is secret: pass"
                     }
-                    username = "user - ******** - name"
-                    password = "VALUE_SPECIFIED_IN_NO_LOG_PARAMETER"
+                    username = "user - pass - name"
+                    password = "pass"
                 }
             }
             changed = $false
@@ -675,24 +679,24 @@ $tests = [Ordered]@{
 
             $expected_event = @'
 test_no_log - Invoked with:
-  username: user - ******** - name
-  dict: dict: sub_hide: ****word
+  username: user - $REDACTED$ - name
+  dict: dict: sub_hide: $REDACTED$word
       pass: plain
-      int_hide: ********56
-      hide: VALUE_SPECIFIED_IN_NO_LOG_PARAMETER
-      data: Oops this is secret: ********
-      custom: VALUE_SPECIFIED_IN_NO_LOG_PARAMETER
+      int_hide: $REDACTED$56
+      hide: $REDACTED$
+      data: Oops this is secret: $REDACTED$
+      custom: $REDACTED$
       list:
-      - VALUE_SPECIFIED_IN_NO_LOG_PARAMETER
-      - ********word
-      - ********567
+      - $REDACTED$
+      - $REDACTED$word
+      - $REDACTED$567
       - pa ss
-      - sub_hide: ********word
+      - sub_hide: $REDACTED$word
           pass: plain
-          int_hide: ********56
-          hide: VALUE_SPECIFIED_IN_NO_LOG_PARAMETER
-  password2: VALUE_SPECIFIED_IN_NO_LOG_PARAMETER
-  password: VALUE_SPECIFIED_IN_NO_LOG_PARAMETER
+          int_hide: $REDACTED$56
+          hide: $REDACTED$
+  password2: $REDACTED$
+  password: $REDACTED$
 '@
             $actual_event = (Get-EventLog -LogName Application -Source Ansible -Newest 1).Message
             $actual_event | Assert-DictionaryEqual -Expected $expected_event
@@ -1895,7 +1899,8 @@ test_no_log - Invoked with:
         $expected_msg += "removed_in_version, removed_at_date, removed_from_collection, required, required_by, required_if, "
         $expected_msg += "required_one_of, required_together, supports_check_mode, type"
 
-        $actual.Keys.Count | Assert-Equal -Expected 3
+        $actual.Keys.Count | Assert-Equal -Expected 4
+        $actual.changed | Assert-Equal -Expected $false
         $actual.failed | Assert-Equal -Expected $true
         $actual.msg | Assert-Equal -Expected $expected_msg
         ("exception" -cin $actual.Keys) | Assert-Equal -Expected $true
@@ -1929,7 +1934,8 @@ test_no_log - Invoked with:
         $expected_msg += "removed_in_version, removed_at_date, removed_from_collection, required, required_by, required_if, "
         $expected_msg += "required_one_of, required_together, supports_check_mode, type - found in option_key -> sub_option_key"
 
-        $actual.Keys.Count | Assert-Equal -Expected 3
+        $actual.Keys.Count | Assert-Equal -Expected 4
+        $actual.changed | Assert-Equal -Expected $false
         $actual.failed | Assert-Equal -Expected $true
         $actual.msg | Assert-Equal -Expected $expected_msg
         ("exception" -cin $actual.Keys) | Assert-Equal -Expected $true
@@ -1953,7 +1959,8 @@ test_no_log - Invoked with:
         $expected_msg = "internal error: argument spec for 'apply_defaults' did not match expected "
         $expected_msg += "type System.Boolean: actual type System.String"
 
-        $actual.Keys.Count | Assert-Equal -Expected 3
+        $actual.Keys.Count | Assert-Equal -Expected 4
+        $actual.changed | Assert-Equal -Expected $false
         $actual.failed | Assert-Equal -Expected $true
         $actual.msg | Assert-Equal -Expected $expected_msg
         ("exception" -cin $actual.Keys) | Assert-Equal -Expected $true
@@ -1981,7 +1988,8 @@ test_no_log - Invoked with:
         $expected_msg = "internal error: type 'invalid type' is unsupported - found in option_key. "
         $expected_msg += "Valid types are: bool, dict, float, int, json, list, path, raw, sid, str"
 
-        $actual.Keys.Count | Assert-Equal -Expected 3
+        $actual.Keys.Count | Assert-Equal -Expected 4
+        $actual.changed | Assert-Equal -Expected $false
         $actual.failed | Assert-Equal -Expected $true
         $actual.msg | Assert-Equal -Expected $expected_msg
         ("exception" -cin $actual.Keys) | Assert-Equal -Expected $true
@@ -2010,7 +2018,8 @@ test_no_log - Invoked with:
         $expected_msg = "internal error: elements 'invalid type' is unsupported - found in option_key. "
         $expected_msg += "Valid types are: bool, dict, float, int, json, list, path, raw, sid, str"
 
-        $actual.Keys.Count | Assert-Equal -Expected 3
+        $actual.Keys.Count | Assert-Equal -Expected 4
+        $actual.changed | Assert-Equal -Expected $false
         $actual.failed | Assert-Equal -Expected $true
         $actual.msg | Assert-Equal -Expected $expected_msg
         ("exception" -cin $actual.Keys) | Assert-Equal -Expected $true
@@ -2042,7 +2051,8 @@ test_no_log - Invoked with:
 
         $expected_msg = "internal error: One of version or date is required in a deprecated_aliases entry"
 
-        $actual.Keys.Count | Assert-Equal -Expected 3
+        $actual.Keys.Count | Assert-Equal -Expected 4
+        $actual.changed | Assert-Equal -Expected $false
         $actual.failed | Assert-Equal -Expected $true
         $actual.msg | Assert-Equal -Expected $expected_msg
         ("exception" -cin $actual.Keys) | Assert-Equal -Expected $true
@@ -2114,7 +2124,8 @@ test_no_log - Invoked with:
 
         $expected_msg = "internal error: Only one of version or date is allowed in a deprecated_aliases entry"
 
-        $actual.Keys.Count | Assert-Equal -Expected 3
+        $actual.Keys.Count | Assert-Equal -Expected 4
+        $actual.changed | Assert-Equal -Expected $false
         $actual.failed | Assert-Equal -Expected $true
         $actual.msg | Assert-Equal -Expected $expected_msg
         ("exception" -cin $actual.Keys) | Assert-Equal -Expected $true
@@ -2149,7 +2160,8 @@ test_no_log - Invoked with:
 
         $expected_msg = "internal error: A deprecated_aliases date must be a DateTime object"
 
-        $actual.Keys.Count | Assert-Equal -Expected 3
+        $actual.Keys.Count | Assert-Equal -Expected 4
+        $actual.changed | Assert-Equal -Expected $false
         $actual.failed | Assert-Equal -Expected $true
         $actual.msg | Assert-Equal -Expected $expected_msg
         ("exception" -cin $actual.Keys) | Assert-Equal -Expected $true
@@ -2178,7 +2190,8 @@ test_no_log - Invoked with:
 
         $expected_msg = "internal error: required and default are mutually exclusive for option_key"
 
-        $actual.Keys.Count | Assert-Equal -Expected 3
+        $actual.Keys.Count | Assert-Equal -Expected 4
+        $actual.changed | Assert-Equal -Expected $false
         $actual.failed | Assert-Equal -Expected $true
         $actual.msg | Assert-Equal -Expected $expected_msg
         ("exception" -cin $actual.Keys) | Assert-Equal -Expected $true
@@ -2551,13 +2564,14 @@ test_no_log - Invoked with:
         }
         $failed | Assert-Equal -Expected $true
 
-        $expected_msg = "value of option_key must be one of: a, b. Got no match for: ********"
+        $expected_msg = "value of option_key must be one of: a, b. Got no match for: abc"
 
-        $actual.Keys.Count | Assert-Equal -Expected 4
+        $actual.Keys.Count | Assert-Equal -Expected 5
         $actual.changed | Assert-Equal -Expected $false
         $actual.failed | Assert-Equal -Expected $true
         $actual.msg | Assert-Equal -Expected $expected_msg
-        $actual.invocation | Assert-DictionaryEqual -Expected @{module_args = @{option_key = "VALUE_SPECIFIED_IN_NO_LOG_PARAMETER" } }
+        $actual.invocation | Assert-DictionaryEqual -Expected @{module_args = @{option_key = "abc" } }
+        $actual._ansible_new_secrets | Assert-Equal -Expected @("abc")
     }
 
     "Invalid choice in list" = {
@@ -3332,10 +3346,23 @@ test_no_log - Invoked with:
     }
 }
 
+if (-not $IsCoreCLR) {
+    Set-Variable -Name IsWindows -Value $true -Scope Global
+}
+
 try {
+    # The SecretMasker is a process-wide singleton, so reset it to a pristine
+    # instance before each test to avoid secrets registered by one test leaking
+    # into the _ansible_new_secrets of a later test.
+    $secretMaskerField = [Ansible.Secrets.SecretMasker].GetField(
+        "_instance", [System.Reflection.BindingFlags]"NonPublic, Static")
+    $secretMaskerCtor = [Ansible.Secrets.SecretMasker].GetConstructor(
+        [System.Reflection.BindingFlags]"NonPublic, Instance", $null, @(), $null)
+
     foreach ($test_impl in $tests.GetEnumerator()) {
         # Reset the variables before each test
         Set-Variable -Name complex_args -Value @{} -Scope Global
+        $secretMaskerField.SetValue($null, $secretMaskerCtor.Invoke(@()))
 
         $test = $test_impl.Key
         &$test_impl.Value

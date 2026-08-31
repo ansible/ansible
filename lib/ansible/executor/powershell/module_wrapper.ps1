@@ -256,7 +256,7 @@ if ($Breakpoints) {
 
 if ($Secrets.Count) {
     # Using SecureString is important to avoid AMSI and other logging tools
-    # from accidentially exposing the raw values.
+    # from accidentally exposing the raw values.
     [Ansible.Secrets.SecretMasker]::_RegisterAnsibleSecrets($Secrets)
 }
 
