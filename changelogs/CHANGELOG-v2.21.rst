@@ -4,6 +4,32 @@ ansible-core 2.21 "The Rain Song" Release Notes
 
 .. contents:: Topics
 
+v2.21.4rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2026-08-31
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.21/porting_guides/porting_guide_core_2.21.html>`__
+
+Minor Changes
+-------------
+
+- mask_url function in module_utils to allow for masking of auth data embedded in urls.
+
+Bugfixes
+--------
+
+- apt_key module now masks authentication information in all displays and returns of uri information.
+- get_url module now masks authentication information in all displays and returns of uri information.
+- module_utils - ``mask_url`` now masks the password in URLs that contain a password but no username, such as ``redis://:password@host``, instead of returning them unmasked.
+- module_utils.urls now all errors mask in line url authentication information.
+- rpm_key module now masks authentication information in all displays and returns of uri information.
+- tempfile - reject prefix and suffix values that contain path components to prevent path traversal.
+- uri module now masks authentication information in all displays and returns of uri information.
+- url lookup now masks authentication information in all displays and returns of uri information.
+
 v2.21.3
 =======
 
