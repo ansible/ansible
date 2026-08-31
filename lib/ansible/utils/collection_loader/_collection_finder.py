@@ -341,6 +341,7 @@ class _AnsibleCollectionFinder:
         if part_count > 1 and path is None:
             raise ValueError('path must be specified for subpackages (trying to find {0})'.format(fullname))
 
+        kwargs = {}
         if toplevel_pkg == 'ansible':
             # something under the ansible package, delegate to our internal loader in case of redirections
             initialize_loader = _AnsibleInternalRedirectLoader
@@ -353,10 +354,12 @@ class _AnsibleCollectionFinder:
         else:
             # anything below the collection
             initialize_loader = _AnsibleCollectionLoader
+            is_module = split_name[3:5] == ['plugins', 'modules']
+            kwargs['allows_package_code'] = not is_module
 
         # NB: actual "find"ing is delegated to the constructors on the various loaders; they'll ImportError if not found
         try:
-            return initialize_loader(fullname=fullname, path_list=path)
+            return initialize_loader(fullname=fullname, path_list=path, **kwargs)
         except ImportError:
             # TODO: log attempt to load context
             return None
@@ -755,6 +758,10 @@ class _AnsibleCollectionLoader(_AnsibleCollectionPkgLoaderBase):
     # HACK: stash this in a better place
     _redirected_package_map = {}  # type: dict[str, str]
 
+    def __init__(self, *args, allows_package_code=True, **kwargs):
+        self._allows_package_code = allows_package_code
+        super().__init__(*args, **kwargs)
+
     def _validate_args(self):
         super(_AnsibleCollectionLoader, self)._validate_args()
         if len(self._split_name) < 4:
@@ -812,13 +819,7 @@ class _AnsibleCollectionLoader(_AnsibleCollectionPkgLoaderBase):
         found_path, has_code, package_path = self._module_file_from_path(self._package_to_load, candidate_paths[0])
 
         # still here? we found something to load...
-        # Detect if we're loading a module package (ansible_collections.*.*.plugins.modules.*)
-        # Modules are not allowed to have shared code in __init__.py
-        is_module = self._split_name[3:5] == ['plugins', 'modules']
-
-        # Only allow code execution for leaf modules or non-module packages
-        # For modules specifically, force packages to be synthetic (no __init__.py execution)
-        if has_code and not (package_path and is_module):
+        if has_code and (self._allows_package_code or not package_path):
             self._source_code_path = found_path
 
         if package_path:
