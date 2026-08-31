@@ -53,6 +53,8 @@ seealso:
 - module: ansible.windows.win_tempfile
 author:
   - Krzysztof Magosa (@krzysztof-magosa)
+notes:
+  - O(prefix) and O(suffix) must be file name components and must not contain path separators.
 """
 
 EXAMPLES = """
@@ -88,7 +90,7 @@ path:
   sample: "/tmp/ansible.bMlvdk"
 """
 
-from os import close
+import os
 from tempfile import mkstemp, mkdtemp
 
 from ansible.module_utils.basic import AnsibleModule
@@ -105,18 +107,26 @@ def main():
         ),
     )
 
+    prefix = module.params['prefix']
+    suffix = module.params['suffix']
+
+    if prefix and prefix != os.path.basename(prefix):
+        module.fail_json(msg=f"prefix must be a valid file name component, got {prefix!r}")
+    if suffix and suffix != os.path.basename(suffix):
+        module.fail_json(msg=f"suffix must be a valid file name component, got {suffix!r}")
+
     try:
         if module.params['state'] == 'file':
             handle, path = mkstemp(
-                prefix=module.params['prefix'],
-                suffix=module.params['suffix'],
+                prefix=prefix,
+                suffix=suffix,
                 dir=module.params['path'],
             )
-            close(handle)
+            os.close(handle)
         else:
             path = mkdtemp(
-                prefix=module.params['prefix'],
-                suffix=module.params['suffix'],
+                prefix=prefix,
+                suffix=suffix,
                 dir=module.params['path'],
             )
 
