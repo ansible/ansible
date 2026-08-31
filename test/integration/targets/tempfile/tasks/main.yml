@@ -35,6 +35,36 @@
   register: temp_dir_non_existent_path
   ignore_errors: yes
 
+- name: Reject path components in prefix for file
+  tempfile:
+    path: "{{ remote_tmp_dir }}"
+    prefix: "../../nested"
+  register: temp_file_invalid_prefix
+  ignore_errors: yes
+
+- name: Reject path components in suffix for file
+  tempfile:
+    path: "{{ remote_tmp_dir }}"
+    suffix: "../world"
+  register: temp_file_invalid_suffix
+  ignore_errors: yes
+
+- name: Reject path components in prefix for directory
+  tempfile:
+    state: directory
+    path: "{{ remote_tmp_dir }}"
+    prefix: "../../nested"
+  register: temp_dir_invalid_prefix
+  ignore_errors: yes
+
+- name: Reject path components in suffix for directory
+  tempfile:
+    state: directory
+    path: "{{ remote_tmp_dir }}"
+    suffix: "../world"
+  register: temp_dir_invalid_suffix
+  ignore_errors: yes
+
 - name: Check results
   assert:
     that:
@@ -61,3 +91,12 @@
       - temp_file_non_existent_path is failed
 
       - temp_dir_non_existent_path is failed
+
+      - temp_file_invalid_prefix is failed
+      - '"prefix must be a valid file name component" in temp_file_invalid_prefix.msg'
+      - temp_file_invalid_suffix is failed
+      - '"suffix must be a valid file name component" in temp_file_invalid_suffix.msg'
+      - temp_dir_invalid_prefix is failed
+      - '"prefix must be a valid file name component" in temp_dir_invalid_prefix.msg'
+      - temp_dir_invalid_suffix is failed
+      - '"suffix must be a valid file name component" in temp_dir_invalid_suffix.msg'
