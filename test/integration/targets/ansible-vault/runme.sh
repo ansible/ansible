@@ -628,3 +628,18 @@ out=$(diff salted_test1 salted_test2)
 # should be diff
 out=$(diff salted_test1 salted_test3 || true)
 [ "${out}" != "" ]
+
+### Testing password that starts and ends with spaces ###
+# normal password script
+ansible-vault view vault-with-spaces --vault-password-file password-with-spaces.sh
+
+# client password script
+ansible-vault view vault-with-spaces --vault-password-file password-with-spaces-client.sh
+
+# providing password to prompt
+setsid sh -c 'tty; cat password-with-spaces | ansible-vault view vault-with-spaces --vault-password-file password-with-spaces' < /dev/null > log 2>&1
+echo $?
+cat log
+
+# plain text password file
+ansible-vault view vault-with-spaces --vault-password-file password-with-spaces
