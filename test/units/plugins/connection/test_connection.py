@@ -18,9 +18,11 @@
 from __future__ import annotations
 
 from io import StringIO
+from unittest import mock
 
 import unittest
 from ansible.playbook.play_context import PlayContext
+from ansible.plugins import connection as connection_plugin
 from ansible.plugins.connection import ConnectionBase
 from ansible.plugins.loader import become_loader
 
@@ -67,6 +69,26 @@ class TestConnectionBaseClass(unittest.TestCase):
 
     def test_subclass_success(self):
         self.assertIsInstance(NoOpConnection(self.play_context, self.in_stream), NoOpConnection)
+
+    def test_persistent_connection_lock_releases_after_error(self):
+        with (
+            mock.patch.object(connection_plugin.os, 'open', return_value=42) as open_mock,
+            mock.patch.object(connection_plugin.fcntl, 'lockf') as lock_mock,
+            mock.patch.object(connection_plugin.os, 'close') as close_mock,
+            self.assertRaisesRegex(RuntimeError, 'operation failed'),
+        ):
+            with connection_plugin._persistent_connection_lock('/path/to/lock'):
+                raise RuntimeError('operation failed')
+
+        open_mock.assert_called_once_with('/path/to/lock', connection_plugin.os.O_RDWR | connection_plugin.os.O_CREAT, 0o600)
+        self.assertEqual(
+            lock_mock.call_args_list,
+            [
+                mock.call(42, connection_plugin.fcntl.LOCK_EX),
+                mock.call(42, connection_plugin.fcntl.LOCK_UN),
+            ],
+        )
+        close_mock.assert_called_once_with(42)
 
     def test_check_password_prompt(self):
         local = (

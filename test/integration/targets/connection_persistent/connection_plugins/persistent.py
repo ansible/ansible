@@ -64,9 +64,14 @@ class Connection(NetworkConnectionBase):
             )
         )
 
+    def set_check_prompt(self, task_uuid):
+        self._check_prompt = task_uuid
+
     def get_capabilities(self, *args, **kwargs):
         return json.dumps({
             'pid': os.getpid(),
             'ppid': os.getppid(),
+            'command_timeout': self.get_option('persistent_command_timeout'),
+            'check_prompt': getattr(self, '_check_prompt', None),
             **self._play_context.dump_attrs()
         })
