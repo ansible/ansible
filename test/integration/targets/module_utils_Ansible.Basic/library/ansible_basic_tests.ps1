@@ -90,6 +90,22 @@ Function Assert-DictionaryEqual {
     }
 }
 
+Function Assert-EventEqual {
+    param(
+        [Parameter(Mandatory = $true, ValueFromPipeline = $true)][AllowNull()]$Actual,
+        [Parameter(Mandatory = $true, Position = 0)][String]$Expected
+    )
+
+    process {
+        # Normalise line endings and strip trailing whitespace on each line so
+        # the expected here-strings can stay free of literal trailing spaces
+        # (the formatter emits a trailing space after a key whose value is a
+        # list, e.g. "list: ").
+        $normalized = (($Actual -split "`r?`n") | ForEach-Object { $_.TrimEnd() }) -join "`n"
+        $normalized | Assert-Equal -Expected $Expected
+    }
+}
+
 Function Exit-Module {
     # Make sure Exit actually calls exit and not our overridden test behaviour
     [Ansible.Basic.AnsibleModule]::Exit = { param([Int32]$rc) exit $rc }
@@ -587,31 +603,31 @@ $tests = [Ordered]@{
         }
         Set-Variable -Name complex_args -Scope Global -Value @{
             _ansible_module_name = "test_no_log"
-            username = "user - pass - name"
-            password = "pass"
-            password2 = 1234
+            username = "user - password - name"
+            password = "password"
+            password2 = 1234567
             _ansible_inject_invocation = $true
             dict = @{
                 data = "Oops this is secret: pass"
                 dict = @{
                     pass = "plain"
-                    hide = "pass"
-                    sub_hide = "password"
-                    int_hide = 123456
+                    hide = "password"
+                    sub_hide = "password123"
+                    int_hide = 12345678
                 }
                 list = @(
-                    "pass",
                     "password",
-                    1234567,
+                    "password123",
+                    12345678,
                     "pa ss",
                     @{
                         pass = "plain"
-                        hide = "pass"
-                        sub_hide = "password"
-                        int_hide = 123456
+                        hide = "password"
+                        sub_hide = "password123"
+                        int_hide = 12345678
                     }
                 )
-                custom = "pass"
+                custom = "password"
             }
         }
 
@@ -619,10 +635,10 @@ $tests = [Ordered]@{
         $m.Result.data = $complex_args.dict
 
         # verify params internally aren't masked
-        $m.Params.username | Assert-Equal -Expected "user - pass - name"
-        $m.Params.password | Assert-Equal -Expected "pass"
-        $m.Params.password2 | Assert-Equal -Expected 1234
-        $m.Params.dict.custom | Assert-Equal -Expected "pass"
+        $m.Params.username | Assert-Equal -Expected "user - password - name"
+        $m.Params.password | Assert-Equal -Expected "password"
+        $m.Params.password2 | Assert-Equal -Expected 1234567
+        $m.Params.dict.custom | Assert-Equal -Expected "password"
 
         $failed = $false
         try {
@@ -637,37 +653,37 @@ $tests = [Ordered]@{
 
         $new_secrets = @($actual._ansible_new_secrets | Sort-Object)
         $actual.Remove("_ansible_new_secrets")
-        Assert-Equal -Actual $new_secrets -Expected @("1234", "pass")
+        Assert-Equal -Actual $new_secrets -Expected @("1234567", "password")
 
         # verify the invocation contains the raw, unmasked values
         $expected = @{
             invocation = @{
                 module_args = @{
-                    password2 = 1234
+                    password2 = 1234567
                     dict = @{
                         dict = @{
                             pass = "plain"
-                            hide = "pass"
-                            sub_hide = "password"
-                            int_hide = 123456
+                            hide = "password"
+                            sub_hide = "password123"
+                            int_hide = 12345678
                         }
-                        custom = "pass"
+                        custom = "password"
                         list = @(
-                            "pass",
                             "password",
-                            1234567,
+                            "password123",
+                            12345678,
                             "pa ss",
                             @{
                                 pass = "plain"
-                                hide = "pass"
-                                sub_hide = "password"
-                                int_hide = 123456
+                                hide = "password"
+                                sub_hide = "password123"
+                                int_hide = 12345678
                             }
                         )
                         data = "Oops this is secret: pass"
                     }
-                    username = "user - pass - name"
-                    password = "pass"
+                    username = "user - password - name"
+                    password = "password"
                 }
             }
             changed = $false
@@ -679,27 +695,78 @@ $tests = [Ordered]@{
 
             $expected_event = @'
 test_no_log - Invoked with:
-  username: user - $REDACTED$ - name
-  dict: dict: sub_hide: $REDACTED$word
+  $REDACTED$: $REDACTED$
+  dict: dict: sub_hide: $REDACTED$123
       pass: plain
-      int_hide: $REDACTED$56
+      int_hide: $REDACTED$8
       hide: $REDACTED$
-      data: Oops this is secret: $REDACTED$
-      custom: $REDACTED$
-      list:
+    data: Oops this is secret: pass
+    custom: $REDACTED$
+    list:
       - $REDACTED$
-      - $REDACTED$word
-      - $REDACTED$567
+      - $REDACTED$123
+      - $REDACTED$8
       - pa ss
-      - sub_hide: $REDACTED$word
-          pass: plain
-          int_hide: $REDACTED$56
-          hide: $REDACTED$
-  password2: $REDACTED$
-  password: $REDACTED$
+      - sub_hide: $REDACTED$123
+        pass: plain
+        int_hide: $REDACTED$8
+        hide: $REDACTED$
+  username: user - $REDACTED$ - name
+  $REDACTED$2: $REDACTED$
 '@
             $actual_event = (Get-EventLog -LogName Application -Source Ansible -Newest 1).Message
-            $actual_event | Assert-DictionaryEqual -Expected $expected_event
+            $actual_event | Assert-EventEqual -Expected $expected_event
+        }
+    }
+
+    "No log value shorter than the secret masker minimum" = {
+        # A no_log value too short for the SecretMasker to register (< 4 chars)
+        # must still be blocked out of the logged invocation. The invocation is
+        # redacted with a pre-pass over the no_log params before the SecretMasker
+        # runs, so short/non-string secrets are always hidden regardless of the
+        # masker's length heuristics.
+        $spec = @{
+            options = @{
+                token = @{type = "str"; no_log = $true }
+            }
+        }
+        Set-Variable -Name complex_args -Scope Global -Value @{
+            _ansible_module_name = "test_no_log_short"
+            token = "ab"
+            _ansible_inject_invocation = $true
+        }
+
+        $m = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
+
+        # verify params internally aren't masked
+        $m.Params.token | Assert-Equal -Expected "ab"
+
+        $failed = $false
+        try {
+            $m.ExitJson()
+        }
+        catch [System.Management.Automation.RuntimeException] {
+            $failed = $true
+            $_.Exception.Message | Assert-Equal -Expected "exit: 0"
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
+        }
+        $failed | Assert-Equal -Expected $true
+
+        # "ab" is too short to be registered as a secret, so it is not reported
+        # as a new secret to mask on the controller.
+        $actual.ContainsKey("_ansible_new_secrets") | Assert-Equal -Expected $false
+
+        # the invocation result still contains the raw value (the controller
+        # masks it on display based on no_log)
+        $actual.invocation | Assert-DictionaryEqual -Expected @{module_args = @{token = "ab" } }
+
+        if ($IsWindows) {
+            $expected_event = @'
+test_no_log_short - Invoked with:
+  token: $REDACTED$
+'@
+            $actual_event = (Get-EventLog -LogName Application -Source Ansible -Newest 1).Message
+            $actual_event | Assert-EventEqual -Expected $expected_event
         }
     }
 
@@ -2543,13 +2610,23 @@ test_no_log - Invoked with:
         $spec = @{
             options = @{
                 option_key = @{
-                    choices = "a", "b"
+                    choices = "firstoption", "secondoption"
+                    no_log = $true
+                }
+                secret1 = @{
+                    type = "str"
+                    no_log = $true
+                }
+                secret2 = @{
+                    type = "str"
                     no_log = $true
                 }
             }
         }
         Set-Variable -Name complex_args -Scope Global -Value @{
-            option_key = "abc"
+            option_key = "longvalue"
+            secret1 = "abc"
+            secret2 = "other secret"
             _ansible_inject_invocation = $true
         }
 
@@ -2564,14 +2641,20 @@ test_no_log - Invoked with:
         }
         $failed | Assert-Equal -Expected $true
 
-        $expected_msg = "value of option_key must be one of: a, b. Got no match for: abc"
+        $expected_msg = "value of option_key must be one of: firstoption, secondoption. Got no match for: longvalue"
 
         $actual.Keys.Count | Assert-Equal -Expected 5
         $actual.changed | Assert-Equal -Expected $false
         $actual.failed | Assert-Equal -Expected $true
         $actual.msg | Assert-Equal -Expected $expected_msg
-        $actual.invocation | Assert-DictionaryEqual -Expected @{module_args = @{option_key = "abc" } }
-        $actual._ansible_new_secrets | Assert-Equal -Expected @("abc")
+        $actual.invocation | Assert-DictionaryEqual -Expected @{
+            module_args = @{
+                option_key = "longvalue"
+                secret1 = "abc"
+                secret2 = "other secret"
+            }
+        }
+        Assert-Equal -Actual @($actual._ansible_new_secrets | Sort-Object) -Expected @("longvalue", "other secret")
     }
 
     "Invalid choice in list" = {

@@ -32,6 +32,13 @@ namespace Ansible.Secrets
 
         private const int InitialNodeCapacity = 64;
 
+        // Mirrors ansible.module_utils._internal._secrets. Secrets shorter than
+        // MinimumSecretLength are never registered; secrets between Minimum and
+        // MaximumShortSecretLength ("short") are only masked when they sit at a
+        // word boundary. Longer secrets are always masked.
+        private const int MinimumSecretLength = 4;
+        private const int MaximumShortSecretLength = 6;
+
         public static SecretMasker Instance
         {
             get
@@ -122,7 +129,7 @@ namespace Ansible.Secrets
         /// <param name="secret">The secret to register</param>
         public void RegisterSecret(string secret)
         {
-            if (string.IsNullOrEmpty(secret))
+            if (string.IsNullOrEmpty(secret) || secret.Length < MinimumSecretLength)
             {
                 return;
             }
@@ -189,74 +196,120 @@ namespace Ansible.Secrets
                 _dirty = false;
             }
 
-            int state = 0;
-            int writePos = 0;
-            int regionStart = -1;
-            int regionEnd = -1;
+            // Leftmost-longest, non-overlapping matching, mirroring the pure-Python
+            // Aho-Corasick iter_long implementation in _ahocorasick.py. Fail links are
+            // followed only while seeking (never while extending) and on a commit we
+            // resume at the character after the match to re-scan any probe overshoot
+            // while staying non-overlapping. Only matches surviving the short-secret
+            // boundary check (see MaskSpan) are actually redacted.
             StringBuilder sb = null;
-            int alphaSize = _alphaSize;
-            int[] transitions = _transitions;
-            int[] charToIndex = _charToIndex;
+            int valuePos = 0;
 
-            for (int i = 0; i < value.Length; i++)
+            int state = 0;
+            int i = 0;
+            int length = value.Length;
+
+            bool haveCandidate = false;
+            int candidateStart = 0;
+            int candidateEnd = 0;
+
+            while (i < length)
             {
                 char c = value[i];
-                int ci = charToIndex[c];
+                long key = ((long)state << 16) | (long)c;
 
-                state = ci >= 0 ? transitions[state * alphaSize + ci] : 0;
-
-                int matchLen = GetLongestMatch(state);
-                if (matchLen > 0)
+                int next;
+                if (_trieGoto.TryGetValue(key, out next))
                 {
-                    int mStart = i - matchLen + 1;
-                    int mEnd = i + 1;
-
-                    if (regionStart < 0)
+                    // Descend the goto edge; record a match if it is at least as leftward.
+                    state = next;
+                    int matchLen = GetLongestMatch(state);
+                    if (matchLen > 0)
                     {
-                        regionStart = mStart;
-                        regionEnd = mEnd;
-                    }
-                    else if (mStart < regionEnd)
-                    {
-                        if (mStart < regionStart)
+                        int start = i - matchLen + 1;
+                        if (!haveCandidate || start <= candidateStart)
                         {
-                            regionStart = mStart;
-                        }
-                        if (mEnd > regionEnd)
-                        {
-                            regionEnd = mEnd;
+                            candidateStart = start;
+                            candidateEnd = i;
+                            haveCandidate = true;
                         }
                     }
-                    else
-                    {
-                        if (sb == null)
-                        {
-                            sb = new StringBuilder(value.Length);
-                        }
-                        sb.Append(value, writePos, regionStart - writePos);
-                        sb.Append(maskPlaceholder);
-                        writePos = regionEnd;
-                        regionStart = mStart;
-                        regionEnd = mEnd;
-                    }
+                    i++;
+                }
+                else if (haveCandidate)
+                {
+                    // Extending dead-ended: commit the candidate and resume past its end.
+                    sb = MaskSpan(value, maskPlaceholder, sb, ref valuePos, candidateStart, candidateEnd + 1);
+                    i = candidateEnd + 1;
+                    state = 0;
+                    haveCandidate = false;
+                }
+                else if (state == 0)
+                {
+                    // Seeking with no edge at the un-seeded root: skip this char.
+                    i++;
+                }
+                else
+                {
+                    // Seeking: follow one fail link and re-try the goto next iteration.
+                    state = _failureLink[state];
                 }
             }
 
-            if (regionStart < 0)
+            if (haveCandidate)
+            {
+                sb = MaskSpan(value, maskPlaceholder, sb, ref valuePos, candidateStart, candidateEnd + 1);
+            }
+
+            if (sb == null)
             {
                 return value;
+            }
+
+            sb.Append(value, valuePos, value.Length - valuePos);
+            return sb.ToString();
+        }
+
+        /// <summary>
+        /// Redacts a matched span into <paramref name="sb"/> unless it is a short secret
+        /// that does not sit at a word boundary, in which case the text is left untouched.
+        /// </summary>
+        private static StringBuilder MaskSpan(string value, string maskPlaceholder, StringBuilder sb, ref int valuePos, int start, int end)
+        {
+            int spanLength = end - start;
+            if (IsShortSecret(spanLength) && !SitsAtBoundary(value, start, end))
+            {
+                return sb;
             }
 
             if (sb == null)
             {
                 sb = new StringBuilder(value.Length);
             }
-            sb.Append(value, writePos, regionStart - writePos);
+            sb.Append(value, valuePos, start - valuePos);
             sb.Append(maskPlaceholder);
-            writePos = regionEnd;
-            sb.Append(value, writePos, value.Length - writePos);
+            valuePos = end;
+            return sb;
+        }
 
-            return sb.ToString();
+        private static bool IsShortSecret(int length)
+        {
+            return length >= MinimumSecretLength && length <= MaximumShortSecretLength;
+        }
+
+        private static bool SitsAtBoundary(string value, int start, int end)
+        {
+            bool atBeginning = start == 0;
+            bool atEnd = end == value.Length;
+            bool boundaryLeft = atBeginning || !IsAlphaNumeric(value[start - 1]);
+            bool boundaryRight = atEnd || !IsAlphaNumeric(value[end]);
+            return boundaryLeft && boundaryRight;
+        }
+
+        private static bool IsAlphaNumeric(char c)
+        {
+            // Matches Python's str.isalnum for the character classes secret masking cares about.
+            return char.IsLetterOrDigit(c);
         }
 
         private void EnsureNodeCapacity(int needed)

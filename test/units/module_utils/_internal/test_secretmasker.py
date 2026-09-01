@@ -11,9 +11,9 @@ try:
 except ImportError:
     c_extension = None
 
-# Corpus contract: each case asserts which substrings must be absent (masked) and which must
-# survive. Short secrets (4-6 chars) are masked only at a word boundary, so one can survive.
-CORPUS = "test/units/module_utils/_internal/fixtures/secret_masking_corpus.json"
+# Corpus contract: each case registers its secrets, masks its input, and must produce exactly
+# the expected output. Short secrets (4-6 chars) are masked only at a word boundary.
+CORPUS = "test/integration/targets/module_utils_Ansible.Secrets/files/secret_masking_corpus.json"
 
 with open(CORPUS) as _fh:
     _CORPUS = json.load(_fh)
@@ -36,14 +36,11 @@ def masker(request, monkeypatch):
 
 @pytest.mark.parametrize("case", CASES, ids=[c["name"] for c in CASES])
 def test_masking_contract(masker, case):
-    """Each case: every expect_absent substring is masked out; every expect_present survives verbatim."""
+    """Each case: registering its secrets and masking its input yields exactly the expected output."""
     for secret in case["secrets"]:
         masker.register_secret_text(secret)
     masked = masker.mask_string(case["input"], mask_placeholder=SENTINEL)
-    for absent in case["expect_absent"]:
-        assert absent not in masked, f"{absent!r} survived in {masked!r}"
-    for present in case["expect_present"]:
-        assert present in masked, f"{present!r} was destroyed in {masked!r}"
+    assert masked == case["expected"]
 
 
 def test_register_secret_text_is_idempotent(masker):

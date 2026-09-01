@@ -12,6 +12,8 @@ except ImportError:
 
 _emptyfrozenset: frozenset[str] = frozenset()  # shared frozenset optimization for no secrets found
 
+# If this is ever changed we need to ensure that Ansible.Secrets.cs is updated
+# to match.
 _MINIMUM_SECRET_LENGTH = 4  # below this, not registered at all
 _MAXIMUM_SHORT_SECRET_LENGTH = 6  # above this, mask unconditionally
 
