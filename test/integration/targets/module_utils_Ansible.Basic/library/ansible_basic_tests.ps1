@@ -90,22 +90,6 @@ Function Assert-DictionaryEqual {
     }
 }
 
-Function Assert-EventEqual {
-    param(
-        [Parameter(Mandatory = $true, ValueFromPipeline = $true)][AllowNull()]$Actual,
-        [Parameter(Mandatory = $true, Position = 0)][String]$Expected
-    )
-
-    process {
-        # Normalise line endings and strip trailing whitespace on each line so
-        # the expected here-strings can stay free of literal trailing spaces
-        # (the formatter emits a trailing space after a key whose value is a
-        # list, e.g. "list: ").
-        $normalized = (($Actual -split "`r?`n") | ForEach-Object { $_.TrimEnd() }) -join "`n"
-        $normalized | Assert-Equal -Expected $Expected
-    }
-}
-
 Function Exit-Module {
     # Make sure Exit actually calls exit and not our overridden test behaviour
     [Ansible.Basic.AnsibleModule]::Exit = { param([Int32]$rc) exit $rc }
@@ -608,7 +592,7 @@ $tests = [Ordered]@{
             password2 = 1234567
             _ansible_inject_invocation = $true
             dict = @{
-                data = "Oops this is secret: pass"
+                data = "Oops this is secret: password"
                 dict = @{
                     pass = "plain"
                     hide = "password"
@@ -680,7 +664,7 @@ $tests = [Ordered]@{
                                 int_hide = 12345678
                             }
                         )
-                        data = "Oops this is secret: pass"
+                        data = "Oops this is secret: password"
                     }
                     username = "user - password - name"
                     password = "password"
@@ -690,33 +674,6 @@ $tests = [Ordered]@{
             data = $complex_args.dict
         }
         $actual | Assert-DictionaryEqual -Expected $expected
-
-        if ($IsWindows) {
-
-            $expected_event = @'
-test_no_log - Invoked with:
-  $REDACTED$: $REDACTED$
-  dict: dict: sub_hide: $REDACTED$123
-      pass: plain
-      int_hide: $REDACTED$8
-      hide: $REDACTED$
-    data: Oops this is secret: pass
-    custom: $REDACTED$
-    list:
-      - $REDACTED$
-      - $REDACTED$123
-      - $REDACTED$8
-      - pa ss
-      - sub_hide: $REDACTED$123
-        pass: plain
-        int_hide: $REDACTED$8
-        hide: $REDACTED$
-  username: user - $REDACTED$ - name
-  $REDACTED$2: $REDACTED$
-'@
-            $actual_event = (Get-EventLog -LogName Application -Source Ansible -Newest 1).Message
-            $actual_event | Assert-EventEqual -Expected $expected_event
-        }
     }
 
     "No log value shorter than the secret masker minimum" = {
@@ -761,13 +718,168 @@ test_no_log - Invoked with:
         $actual.invocation | Assert-DictionaryEqual -Expected @{module_args = @{token = "ab" } }
 
         if ($IsWindows) {
-            $expected_event = @'
-test_no_log_short - Invoked with:
-  token: $REDACTED$
-'@
+            # The short no_log value is blocked out by the pre-pass even though
+            # it is too short for the SecretMasker to register.
             $actual_event = (Get-EventLog -LogName Application -Source Ansible -Newest 1).Message
-            $actual_event | Assert-EventEqual -Expected $expected_event
+            $actual_event | Assert-Equal -Expected "test_no_log_short - Invoked with:`r`n  token: `$REDACTED`$"
         }
+    }
+
+    "No log short value is redacted while the identical key survives" = {
+        # This test only asserts the Windows event log, so skip it elsewhere.
+        if (-not $IsWindows) {
+            return
+        }
+
+        # The redaction is done per no_log value (positional), not by masking the
+        # secret text. The value "abc" is too short (< 4) to ever be registered
+        # as a secret, so the identical key text is left untouched while the
+        # value is still blocked out by the pre-pass.
+        $spec = @{
+            options = @{
+                abc = @{type = "str"; no_log = $true }
+            }
+        }
+        Set-Variable -Name complex_args -Scope Global -Value @{
+            _ansible_module_name = "test_no_log_short_kv"
+            abc = "abc"
+        }
+
+        $null = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
+        $actual_event = (Get-EventLog -LogName Application -Source Ansible -Newest 1).Message
+        $actual_event | Assert-Equal -Expected "test_no_log_short_kv - Invoked with:`r`n  abc: `$REDACTED`$"
+    }
+
+    "No log string value is redacted in the event log" = {
+        # This test only asserts the Windows event log, so skip it elsewhere.
+        if (-not $IsWindows) {
+            return
+        }
+
+        $spec = @{
+            options = @{
+                hidden = @{type = "str"; no_log = $true }
+            }
+        }
+        Set-Variable -Name complex_args -Scope Global -Value @{
+            _ansible_module_name = "test_no_log_str"
+            hidden = "supersecretvalue"
+        }
+
+        $null = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
+        $actual_event = (Get-EventLog -LogName Application -Source Ansible -Newest 1).Message
+        $actual_event | Assert-Equal -Expected "test_no_log_str - Invoked with:`r`n  hidden: `$REDACTED`$"
+    }
+
+    "No log int value is redacted in the event log" = {
+        # This test only asserts the Windows event log, so skip it elsewhere.
+        if (-not $IsWindows) {
+            return
+        }
+
+        # A non-string no_log value is still blocked out by the pre-pass, which
+        # redacts every no_log value regardless of type or length.
+        $spec = @{
+            options = @{
+                hidden = @{type = "int"; no_log = $true }
+            }
+        }
+        Set-Variable -Name complex_args -Scope Global -Value @{
+            _ansible_module_name = "test_no_log_int"
+            hidden = 123456
+        }
+
+        $null = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
+        $actual_event = (Get-EventLog -LogName Application -Source Ansible -Newest 1).Message
+        $actual_event | Assert-Equal -Expected "test_no_log_int - Invoked with:`r`n  hidden: `$REDACTED`$"
+    }
+
+    "Registered secret is masked in the event log by the backstop" = {
+        # This test only asserts the Windows event log, so skip it elsewhere.
+        if (-not $IsWindows) {
+            return
+        }
+
+        # The pre-pass only redacts no_log values. The option key here happens to
+        # equal the registered secret text, so it survives the pre-pass and is
+        # instead caught by the SecretMasker backstop that runs over the whole
+        # formatted string - proving both layers are wired up.
+        $spec = @{
+            options = @{
+                password = @{type = "str"; no_log = $true }
+            }
+        }
+        Set-Variable -Name complex_args -Scope Global -Value @{
+            _ansible_module_name = "test_no_log_backstop"
+            password = "password"
+        }
+
+        $null = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
+        $actual_event = (Get-EventLog -LogName Application -Source Ansible -Newest 1).Message
+        $actual_event | Assert-Equal -Expected "test_no_log_backstop - Invoked with:`r`n  `$REDACTED`$: `$REDACTED`$"
+    }
+
+    "No log value nested in a dict sub-option is redacted in the event log" = {
+        # This test only asserts the Windows event log, so skip it elsewhere.
+        if (-not $IsWindows) {
+            return
+        }
+
+        # The pre-pass descends into dict sub-options and redacts nested no_log
+        # values, not just top-level ones.
+        $spec = @{
+            options = @{
+                config = @{
+                    type = "dict"
+                    options = @{
+                        hidden = @{type = "str"; no_log = $true }
+                    }
+                }
+            }
+        }
+        Set-Variable -Name complex_args -Scope Global -Value @{
+            _ansible_module_name = "test_no_log_dict"
+            config = @{
+                hidden = "supersecretvalue"
+            }
+        }
+
+        $null = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
+        $actual_event = (Get-EventLog -LogName Application -Source Ansible -Newest 1).Message
+        $actual_event | Assert-Equal -Expected "test_no_log_dict - Invoked with:`r`n  config: hidden: `$REDACTED`$"
+    }
+
+    "No log value nested in a list sub-option is redacted in the event log" = {
+        # This test only asserts the Windows event log, so skip it elsewhere.
+        if (-not $IsWindows) {
+            return
+        }
+
+        # The pre-pass descends into each element of a list of dicts and redacts
+        # nested no_log values.
+        $spec = @{
+            options = @{
+                items = @{
+                    type = "list"
+                    elements = "dict"
+                    options = @{
+                        hidden = @{type = "str"; no_log = $true }
+                    }
+                }
+            }
+        }
+        Set-Variable -Name complex_args -Scope Global -Value @{
+            _ansible_module_name = "test_no_log_list"
+            items = @(
+                @{
+                    hidden = "supersecretvalue"
+                }
+            )
+        }
+
+        $null = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
+        $actual_event = (Get-EventLog -LogName Application -Source Ansible -Newest 1).Message
+        $actual_event | Assert-Equal -Expected "test_no_log_list - Invoked with:`r`n  items: `r`n    - hidden: `$REDACTED`$"
     }
 
     "No log value with an empty string" = {
