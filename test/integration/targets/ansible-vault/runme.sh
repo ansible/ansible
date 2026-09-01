@@ -636,10 +636,13 @@ ansible-vault view vault-with-spaces --vault-password-file password-with-spaces.
 # client password script
 ansible-vault view vault-with-spaces --vault-password-file password-with-spaces-client.sh
 
-# providing password to prompt
-setsid sh -c 'tty; cat password-with-spaces | ansible-vault view vault-with-spaces --vault-password-file password-with-spaces' < /dev/null > log 2>&1
-echo $?
-cat log
+# Use linux setsid to test without a tty. No setsid if osx/bsd though...
+if [ -x "$(command -v setsid)" ]; then
+    # providing password to prompt
+    setsid sh -c 'tty; cat password-with-spaces | ansible-vault view vault-with-spaces --vault-password-file password-with-spaces' < /dev/null > log 2>&1
+    echo $?
+    cat log
+fi
 
 # plain text password file
 ansible-vault view vault-with-spaces --vault-password-file password-with-spaces
