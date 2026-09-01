@@ -90,8 +90,12 @@
     state: restarted
   when: ansible_distribution != 'Alpine'
 
+# Run busybox crond in the foreground: self-daemonizing closes all inherited fds,
+# including the one libfaketime (>= 0.9.13) holds for its flock-based stat lock, so
+# the next faked fstat() fails with EBADF and libfaketime aborts crond before it
+# schedules anything.
 - name: enable cron service - Alpine
-  command: nohup crond
+  shell: crond -f &
   environment:
     FAKETIME: "+0y x10"
     LD_PRELOAD: "{{ libfaketime_path }}"
