@@ -724,7 +724,6 @@ class User(object):
 
         cmd = [self.module.get_bin_path(command_name, True)]
         if not self.local and self.module.selinux_enabled():
-            # remove any SELinux user mapping for the user's login
             cmd.append('-Z')
         if self.force and not self.local:
             cmd.append('-f')
