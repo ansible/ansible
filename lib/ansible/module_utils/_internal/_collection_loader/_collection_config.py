@@ -6,7 +6,7 @@
 
 from __future__ import annotations
 
-from . import _to_text
+from ._utils import _to_text
 
 
 class _EventSource:

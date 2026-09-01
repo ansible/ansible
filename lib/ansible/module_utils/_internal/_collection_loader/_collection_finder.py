@@ -13,6 +13,7 @@ import os.path
 import pathlib
 import re
 import sys
+import typing as t
 
 from contextlib import contextmanager
 from importlib import import_module, reload as reload_module
@@ -23,7 +24,7 @@ from types import ModuleType
 
 # DO NOT add new non-stdlib import deps here, this loader is used by external tools (eg ansible-test import sanity)
 # that only allow stdlib and module_utils
-from . import _to_bytes, _to_text
+from ._utils import _to_bytes, _to_text
 from ._collection_config import AnsibleCollectionConfig
 
 try:
@@ -37,6 +38,18 @@ except ImportError:
     # is deprecated as of Python 3.12.
     # deprecated: description='TraversableResources move' python_version='3.10'
     from importlib.abc import TraversableResources  # type: ignore[assignment,no-redef]
+
+if sys.version_info >= (3, 10):
+    from importlib.resources import files
+else:
+    # Python 3.9 compatibility: files() behavior differs from 3.10+
+    # deprecated: description='reliable importlib.resources.files' python_version='3.10'
+    def files(name):
+        if (spec := find_spec(name)) is None:
+            raise ImportError(name)
+        origin = pathlib.Path(spec.origin)
+        return origin.parent
+
 
 # NB: this supports import sanity test providing a different impl
 try:
@@ -187,7 +200,10 @@ class _AnsibleTraversableResources(TraversableResources):
 class _AnsibleCollectionFinder:
     def __init__(self, paths=None, scan_sys_paths=True, internal_collections=None):
         # TODO: accept metadata loader override
-        self._ansible_pkg_path = _to_text(os.path.dirname(_to_bytes(sys.modules['ansible'].__file__)))
+        try:
+            self._ansible_pkg_path = _to_text(os.path.dirname(_to_bytes(sys.modules['ansible'].__file__)))
+        except KeyError:
+            self._ansible_pkg_path = None
 
         if isinstance(paths, str):
             paths = [paths]
@@ -267,7 +283,8 @@ class _AnsibleCollectionFinder:
                 if p not in interesting_paths:
                     interesting_paths.append(p)
 
-            interesting_paths.insert(0, self._ansible_pkg_path)
+            if self._ansible_pkg_path:
+                interesting_paths.insert(0, self._ansible_pkg_path)
             self._n_cached_collection_qualified_paths = interesting_paths
 
         if any(path.startswith(p) for p in interesting_paths):
@@ -1218,6 +1235,99 @@ def _get_collection_name_from_path(path):
         return None
 
     return candidate_collection_name
+
+
+def _split_collection_filter(coll_filter: list[str] | None) -> tuple[list[str] | None, list[str] | None]:
+    """Split a user-facing collection filter into namespace and collection filters.
+
+    ``coll_filter`` may be a single ``namespace`` or ``namespace.collection``
+    string, or a list of such strings. Returns a ``(namespace_filter,
+    collection_filter)`` tuple where each is a sorted list or ``None``.
+    """
+    if coll_filter is None:
+        return None, None
+
+    namespace_filter = set()
+    collection_filter: list[str] | None = None
+    has_pure_namespace_filter = False  # whether at least one coll_filter is a namespace-only filter
+    for coll_name in coll_filter:
+        if '.' in coll_name:
+            try:
+                namespace, collection = coll_name.split('.')
+            except ValueError:
+                raise ValueError('Invalid collection pattern supplied: %s' % coll_name)
+            namespace_filter.add(namespace)
+            if not has_pure_namespace_filter:
+                if collection_filter is None:
+                    collection_filter = []
+                collection_filter.append(collection)
+        else:
+            namespace_filter.add(coll_name)
+            has_pure_namespace_filter = True
+            collection_filter = None
+
+    return sorted(namespace_filter), collection_filter
+
+
+def _normalize_collection_search_path(path):
+    if isinstance(path, pathlib.Path):
+        path = path.as_posix()
+    return pathlib.Path(os.path.expandvars(path)).expanduser().absolute()
+
+
+def _find_collection_paths(
+    paths: list[str | os.PathLike] | str | os.PathLike | None = None,
+    namespace_filter: list[str] | None = None,
+    collection_filter: list[str] | None = None,
+    dedupe: bool = True,
+) -> t.Iterable[pathlib.Path]:
+    """Shared collection discovery over the installed ``ansible_collections`` namespace.
+
+    ``namespace_filter`` and ``collection_filter`` are applied independently: a
+    collection is yielded when its namespace is in ``namespace_filter`` (or the
+    filter is empty) and its name is in ``collection_filter`` (or the filter is
+    empty). Yields ``pathlib.Path`` collection directories.
+    """
+    if paths and isinstance(paths, (str, pathlib.Path)):
+        paths = [paths]
+
+    normalized_path_filter = [_normalize_collection_search_path(p) for p in paths] if paths and isinstance(paths, list) else None
+
+    discovered = set()
+    for path in files('ansible_collections').glob('*/*/'):
+        path = _normalize_collection_search_path(path)
+        if not path.is_dir():
+            continue
+        if normalized_path_filter:
+            for pf in normalized_path_filter:
+                try:
+                    path.relative_to(pf)
+                except ValueError:
+                    continue
+                break
+            else:
+                continue
+        discovered.add(path)
+
+    seen = set()
+    for path in discovered:
+        namespace = path.parent.name
+        name = path.name
+        if namespace_filter and namespace not in namespace_filter:
+            continue
+        if collection_filter and name not in collection_filter:
+            continue
+
+        if dedupe:
+            try:
+                canonical = files(f'ansible_collections.{namespace}.{name}')
+            except ImportError:
+                continue
+            if canonical in seen:
+                continue
+            seen.add(canonical)
+
+        yield path
 
 
 def _get_import_redirect(collection_meta_dict, fullname):

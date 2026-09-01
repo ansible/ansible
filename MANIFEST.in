@@ -8,3 +8,4 @@ recursive-include test/integration *
 recursive-include test/sanity *.in *.json *.py *.pyi *.txt *.ini
 recursive-include test/support *.py *.ps1 *.psm1 *.cs *.md
 recursive-include test/units *
+prune packaging/ansible_utils

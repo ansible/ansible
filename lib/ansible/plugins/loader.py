@@ -31,8 +31,10 @@ from ansible.module_utils.datatag import deprecator_from_collection_name
 from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible._internal._yaml._loader import AnsibleInstrumentedLoader
 from ansible.plugins import get_plugin_class, MODULE_CACHE, PATH_CACHE, PLUGIN_PATH_CACHE, AnsibleJinja2Plugin
-from ansible.utils.collection_loader import AnsibleCollectionConfig, AnsibleCollectionRef
-from ansible.module_utils._internal._collection_loader._collection_finder import _AnsibleCollectionFinder, _get_collection_metadata
+
+from ansible.utils.collection_loader import AnsibleCollectionConfig, AnsibleCollectionRef, install_finder
+from ansible.module_utils._internal._collection_loader._collection_finder import _get_collection_metadata
+
 from ansible.utils.display import Display
 from ansible.utils.plugin_docs import add_fragments
 from ansible._internal._datatag import _tags
@@ -1718,18 +1720,12 @@ def _does_collection_support_ansible_version(requirement_string, ansible_version
 
 
 def _configure_collection_loader(prefix_collections_path=None):
-    if AnsibleCollectionConfig.collection_finder:
-        # this must be a Python warning so that it can be filtered out by the import sanity test
-        warnings.warn('AnsibleCollectionFinder has already been configured')
-        return
-
     if prefix_collections_path is None:
         prefix_collections_path = []
 
     # insert the internal ansible._protomatter collection up front
     paths = [os.path.dirname(_internal.__file__)] + list(prefix_collections_path) + C.COLLECTIONS_PATHS
-    finder = _AnsibleCollectionFinder(paths, C.COLLECTIONS_SCAN_SYS_PATH, internal_collections=paths[0])
-    finder._install()
+    install_finder(paths, C.COLLECTIONS_SCAN_SYS_PATH, internal_collections=paths[0])
 
     # this should succeed now
     AnsibleCollectionConfig.on_collection_load += _on_collection_load_handler

@@ -37,6 +37,7 @@ def collect_sdist_files(complete_file_list: list[str]) -> list[str]:
         'CLAUDE.md',
         'context/*',
         'hacking/*',
+        'packaging/ansible_utils/*',
     )
 
     sdist_files = [path for path in complete_file_list if not any(fnmatch.fnmatch(path, ignore) for ignore in ignore_patterns)]
