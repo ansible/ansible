@@ -1407,6 +1407,11 @@ class AnsibleModule(object):
         if flushed := self._new_secrets.flush():
             kwargs['_ansible_new_secrets'] = list(flushed)
 
+        # Technically process end is the same but in case this is ever run in
+        # a persisted process worker or multiple times in the same process we
+        # detach our secret tracker.
+        self._new_secrets.unregister()
+
         self.add_path_info(kwargs)
 
         if _PARSED_MODULE_ARGS.get('_ansible_inject_invocation', False):
@@ -1975,7 +1980,10 @@ class AnsibleModule(object):
 
         try:
             if self._debug:
-                self.log('Executing: ' + args)
+                # `args` is bytes (shell) or a list of bytes (non-shell) at this point;
+                # render a printable command line. log() masks any secrets in it.
+                printable_args = b' '.join(args) if isinstance(args, list) else args
+                self.log('Executing: ' + to_native(printable_args, errors='surrogate_or_strict'))
             cmd = subprocess.Popen(args, **kwargs)
             if before_communicate_callback:
                 before_communicate_callback(cmd)
@@ -2070,7 +2078,7 @@ class AnsibleModule(object):
                 raise
 
         if rc != 0 and check_rc:
-            self.fail_json(cmd=args, rc=rc, stdout=stdout, stderr=stderr, msg=stderr.rstrip().decode())
+            self.fail_json(cmd=args, rc=rc, stdout=stdout, stderr=stderr, msg=to_native(stderr.rstrip(), errors='surrogate_or_strict'))
 
         if encoding is not None:
             return (rc, to_native(stdout, encoding=encoding, errors=errors),

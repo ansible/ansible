@@ -955,22 +955,22 @@ class Display(metaclass=Singleton):
         if not result and default is not None:
             result = default
 
+        # handle utf-8 chars
+        result_str = to_text(result, errors='surrogate_or_strict')
+
+        if private and result:
+            register_secret(result_str)
+
         if encrypt:
             # Circular import because encrypt needs a display class
             from ansible.utils.encrypt import do_encrypt
-            result = do_encrypt(result, encrypt, salt_size=salt_size, salt=salt)
-
-        # handle utf-8 chars
-        result = to_text(result, errors='surrogate_or_strict')
+            result_str = do_encrypt(result_str, encrypt, salt_size=salt_size, salt=salt)
 
         if not unsafe:
             # to maintain backward compatibility, assume these values are safe to template
-            result = TrustedAsTemplate().tag(result)
+            result_str = TrustedAsTemplate().tag(result_str)
 
-        if private:
-            result = register_secret(result)
-
-        return result
+        return result_str
 
     def _set_column_width(self) -> None:
         if os.isatty(1):

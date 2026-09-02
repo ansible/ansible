@@ -324,6 +324,7 @@ class PromptVaultSecret(VaultSecret):
             self.confirm(b_vault_passwords[0], b_vault_password)
 
         if b_vault_passwords:
+            register_secret(to_text(b_vault_passwords[0], errors='surrogate_or_strict'))
             return b_vault_passwords[0]
 
         return None
@@ -423,6 +424,8 @@ class FileVaultSecret(VaultSecret):
         verify_secret_is_not_empty(vault_pass,
                                    msg='Invalid vault password was provided from file (%s)' % filename)
 
+        register_secret(to_text(vault_pass, errors='surrogate_or_strict'))
+
         return vault_pass
 
     def __repr__(self):
@@ -446,6 +449,8 @@ class ScriptVaultSecret(FileVaultSecret):
 
         empty_password_msg = 'Invalid vault password was provided from script (%s)' % filename
         verify_secret_is_not_empty(vault_pass, msg=empty_password_msg)
+
+        register_secret(to_text(vault_pass, errors='surrogate_or_strict'))
 
         return vault_pass
 
