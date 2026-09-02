@@ -33,7 +33,7 @@ options:
     - When unspecified (default), the current state of the file on the target is assumed to be the desired state.
     type: str
     choices:
-        absent: The O(path) should not exist, As needed, files, hard links and symlinks will be unlinked, directories will be recursively deleted.
+        absent: The O(path) should not exist. As needed, files, hard links and symlinks will be unlinked, directories will be recursively deleted.
                 In the case of a directory, if C(diff) is declared, you will see the files and folders deleted listed under C(path_contents).
                 The action will not fail if the O(path) does not exist as the state did not change.
         directory: The target is a directory. If needed, all intermediate subdirectories will be created,
