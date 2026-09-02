@@ -13,15 +13,26 @@ class ForkSafeLock:
 
     def __init__(self) -> None:
         self._lock = _threading.Lock()
+        self._acquired_before_fork = False
         _os.register_at_fork(
             before=self._before_fork,
-            after_in_parent=self._lock.release,
-            after_in_child=self._lock.release,
+            after_in_parent=self._after_fork,
+            after_in_child=self._after_fork,
         )
 
     def _before_fork(self) -> None:
-        if not self._lock.acquire(timeout=_FORK_LOCK_TIMEOUT):
+        self._acquired_before_fork = self._lock.acquire(timeout=_FORK_LOCK_TIMEOUT)
+        if not self._acquired_before_fork:
             raise RuntimeError("timed out acquiring lock before fork")
+
+    def _after_fork(self) -> None:
+        # Only release if _before_fork actually acquired the lock. CPython swallows
+        # exceptions raised by at-fork callbacks and proceeds with the fork anyway, so on a
+        # timed-out acquire this still runs; releasing then would either raise "release
+        # unlocked lock" or release a lock still held by another thread.
+        if self._acquired_before_fork:
+            self._acquired_before_fork = False
+            self._lock.release()
 
     def acquire(self, blocking: bool = True, timeout: float = -1) -> bool:
         return self._lock.acquire(blocking=blocking, timeout=timeout)

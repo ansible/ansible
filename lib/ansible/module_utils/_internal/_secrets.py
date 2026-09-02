@@ -31,13 +31,17 @@ def _sits_at_boundary(value: str, start: int, end: int) -> bool:
 
 
 class SecretMasker:
+    # Instantiating this permanently registers os.register_at_fork handlers (via
+    # ForkSafeLock) that cannot be unregistered, so this is intended to be used as a
+    # long-lived singleton (see the shared _secret_masker instance below).
     def __init__(self) -> None:
         self._store = ahocorasick.Automaton()
         self._new_secret_trackers: set[NewSecretTracker] = set()
         self._lock = ForkSafeLock()
 
     def track_new_secrets(self) -> NewSecretTracker:
-        self._new_secret_trackers.add(st := NewSecretTracker(self))
+        with self._lock:
+            self._new_secret_trackers.add(st := NewSecretTracker(self))
         return st
 
     def register_secret_text(self, secret: str) -> str:
@@ -125,14 +129,15 @@ class NewSecretTracker:
         self._masker = masker
 
     def unregister(self):
-        if self in self._masker._new_secret_trackers:
-            self._masker._new_secret_trackers.remove(self)
+        with self._masker._lock:
+            self._masker._new_secret_trackers.discard(self)
 
     def flush(self) -> frozenset[str]:
-        if not self._new_secrets:
-            return _emptyfrozenset
-        flushed = frozenset(self._new_secrets)
-        self._new_secrets = set()
+        with self._masker._lock:
+            if not self._new_secrets:
+                return _emptyfrozenset
+            flushed = frozenset(self._new_secrets)
+            self._new_secrets = set()
         return flushed
 
 

@@ -11,4 +11,6 @@
 
   tasks:
     - debug:
-        var: password
+        # The literal password here tests that the input value is registered
+        # as a secret and will be redacted in the output.
+        msg: Scenic-Improving-Payphone {{ password }}

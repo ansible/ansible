@@ -24,9 +24,31 @@ import subprocess
 import sys
 
 from ansible.module_utils.common.text.converters import to_bytes
+from ansible.utils.display import Display
+from ansible.utils.sentinel import Sentinel
+
+display = Display()
 
 
-def run_cmd(cmd, live=False, readsize=10):
+def run_cmd(cmd, live=Sentinel, readsize=10):
+    if live is Sentinel:
+        live = False
+    else:
+        display.deprecated(
+            msg=(
+                "The 'live' argument of run_cmd is deprecated because it writes the "
+                "subprocess output directly to stdout/stderr, bypassing the built-in "
+                "secret masking that is applied to the captured output."
+            ),
+            version="2.26",
+            help_text=(
+                "If you need to stream the subprocess output live, run the subprocess "
+                "yourself (e.g. with subprocess.Popen) so it writes directly to the "
+                "current stdout/stderr. You are then responsible for masking any secrets "
+                "in that output, as this is not handled for you."
+            ),
+        )
+
     cmdargs = shlex.split(cmd)
 
     # subprocess should be passed byte strings.
