@@ -30,17 +30,17 @@ options:
     description:
     - Defines the expectation for the file/path, see the choice values for details.
     - All values, except V(absent), are expected to enforce the other options, like O(mode), O(owner) and O(access_time) as appropriate.
-    - When unspecified (default), the current state of the file on the target, is assumed to be the desired state.
+    - When unspecified (default), the current state of the file on the target is assumed to be the desired state.
     type: str
     choices:
         absent: The O(path) should not exist, As needed, files, hard links and symlinks will be unlinked, directories will be recursively deleted.
                 In the case of a directory, if C(diff) is declared, you will see the files and folders deleted listed under C(path_contents).
-                The actoin will not fail if the O(path) does not exist as the state did not change.
+                The action will not fail if the O(path) does not exist as the state did not change.
         directory: The target is a directory. If needed, all intermediate subdirectories will be created,
                    using the supplied permissions.
-        file: The O(path) is a file, if no other options were specified, it can be used to query the current information of the O(path).
+        file: The O(path) is a file. If no other options were specified, it can be used to query the current information of the O(path).
         hard: The O(path) is a hard link to the specified O(src).
-        link: The O(path) is a symbolic link to the specified O(srC). Other options can be applied depending on O(follow) setting,
+        link: The O(path) is a symbolic link to the specified O(src). Other options can be applied depending on O(follow) setting,
               depending on filesystem support. For example, O(mode) and O(owner) are often not applicable on the link itself.
         touch: If the O(path) does not exist, an empty file will be created.  Otherwise, an existing file or directory will
                receive updated file access and modification times (similar to the way V(touch) works from the command line).
