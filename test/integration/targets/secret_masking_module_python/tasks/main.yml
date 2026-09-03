@@ -1,0 +1,36 @@
+---
+- name: run the module through an action plugin that checks masking during result processing
+  run_module_check:
+    incoming: "{{ 'IncomingPySecret' | register_secret }}"
+    register_as_secret: InlineDiscoveredPySecret
+    no_log_option: NoLogPyOptionSecret
+  register: py_module
+
+- name: assert the module-side masking API behaved as expected
+  assert:
+    that:
+    # mask_secrets redacted all three registered values with the default placeholder
+    - py_module.masked == '$REDACTED$ $REDACTED$ $REDACTED$'
+    # register_secret returned the value unchanged (non-destructive), so it is still usable by its
+    # true value even though the controller masks it at Display egress
+    - py_module.discovered == 'PyModuleSecret1'
+    # the already-registered secret arrived as the literal value in the module params ...
+    - py_module.incoming == 'IncomingPySecret'
+    # ... but mask_secrets redacts it because the controller propagated the registration
+    - py_module.incoming_masked == '$REDACTED$'
+    # the runtime-discovered option value is echoed back by its true value (non-destructive)
+    - py_module.register_as_secret == 'InlineDiscoveredPySecret'
+    # a no_log option value is automatically registered as a secret, so the module masks it ...
+    - py_module.no_log_option_masked == '$REDACTED$'
+    # ... but masking is non-destructive: the true value still comes back in the result data
+    - py_module.no_log_option == 'NoLogPyOptionSecret'
+    fail_msg: module-side secret masking API did not behave as expected
+
+- name: confirm the module-registered secrets still mask in a later task
+  assert_propagated:
+    secrets:
+    - PyModuleSecret1
+    - PyModuleSecret2
+    - PyModuleSecret3
+    - InlineDiscoveredPySecret
+    - NoLogPyOptionSecret

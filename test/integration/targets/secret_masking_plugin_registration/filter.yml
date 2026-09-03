@@ -1,0 +1,10 @@
+---
+- name: filter plugin secret registration
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: invoke the filter_test filter, which registers and masks secrets
+      assert:
+        that:
+          - ('probe' | filter_test) == 'probe'
+        quiet: true

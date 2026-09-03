@@ -75,5 +75,11 @@ Assert-True ($masker.DrainNewSecrets().Count -eq 0) "secret shorter than the min
 $text = "XX${short}XX"
 Assert-True ($masker.MaskString($text, $sentinel) -ceq $text) "unregistered short secret must pass through unmasked"
 
+# --- MaskString(value) default-placeholder overload (parity with mask_secrets default) ---
+$masker = New-Masker
+$masker.RegisterSecret("defaultPlaceholderSecret")
+$maskedDefault = $masker.MaskString("pre defaultPlaceholderSecret post")
+Assert-True ($maskedDefault -ceq 'pre $REDACTED$ post') "MaskString(value) must use the default placeholder, got '$maskedDefault'"
+
 $module.Result.data = "success"
 $module.ExitJson()
