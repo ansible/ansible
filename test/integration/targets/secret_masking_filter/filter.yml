@@ -1,0 +1,67 @@
+---
+- name: secret masking filter scenarios
+  hosts: testhost
+  gather_facts: false
+  vars:
+    filter_register_secret: Filterregister0001Secret
+    filter_mask_secret: Filtermask0002Secret
+    vault_filter_pass: Vaultfilterpass0003Secret
+    nondestruct_secret: Nondestruct0040Secret
+  tasks:
+    - name: register_secret returns the value unchanged
+      assert:
+        that:
+          - (filter_register_secret | register_secret) == 'Filterregister0001Secret'
+        quiet: true
+
+    - name: emit register_secret value
+      debug:
+        msg: "SCN filter_register: {{ filter_register_secret }}"
+
+    - name: mask_secrets redacts a registered value inside a larger string
+      vars:
+        registered: "{{ filter_mask_secret | register_secret }}"
+      assert:
+        that:
+          - registered == 'Filtermask0002Secret'
+          - ('before ' ~ registered ~ ' after') | mask_secrets == 'before $REDACTED$ after'
+        quiet: true
+
+    - name: emit mask_secrets value
+      debug:
+        msg: "SCN filter_mask: {{ filter_mask_secret }}"
+
+    - name: vault/unvault filters register the passphrase
+      set_fact:
+        _unvaulted: "{{ ('ignored' | vault(vault_filter_pass)) | unvault(vault_filter_pass) }}"
+
+    - name: unvault round-trips
+      assert:
+        that:
+          - _unvaulted == 'ignored'
+        quiet: true
+
+    - name: emit vault/unvault passphrase
+      debug:
+        msg: "SCN vault_filter: {{ vault_filter_pass }}"
+
+    - name: register a secret into a fact
+      set_fact:
+        nd_value: "{{ nondestruct_secret | register_secret }}"
+
+    - name: secret usable by its true value in when/assert
+      assert:
+        that:
+          - nd_value == 'Nondestruct0040Secret'
+          - nd_value | length == 'Nondestruct0040Secret' | length
+        quiet: true
+      when: nd_value == nondestruct_secret
+
+    - name: secret usable by its true value in failed_when
+      command: "true"
+      changed_when: false
+      failed_when: nd_value != nondestruct_secret
+
+    - name: but debug output of the same value is redacted
+      debug:
+        msg: "SCN nondestruct: {{ nd_value }}"

@@ -35,9 +35,11 @@ namespace Ansible.Secrets
         // Mirrors ansible.module_utils._internal._secrets. Secrets shorter than
         // MinimumSecretLength are never registered; secrets between Minimum and
         // MaximumShortSecretLength ("short") are only masked when they sit at a
-        // word boundary. Longer secrets are always masked.
+        // word boundary. Longer secrets are always masked. Secrets longer than
+        // MaximumSecretLength are trimmed to that length before registration.
         private const int MinimumSecretLength = 4;
         private const int MaximumShortSecretLength = 6;
+        private const int MaximumSecretLength = 1024;
 
         public static SecretMasker Instance
         {
@@ -132,6 +134,13 @@ namespace Ansible.Secrets
             if (string.IsNullOrEmpty(secret) || secret.Length < MinimumSecretLength)
             {
                 return;
+            }
+
+            // Overly long secrets are trimmed before registration so only the
+            // first MaximumSecretLength characters are matched and masked.
+            if (secret.Length > MaximumSecretLength)
+            {
+                secret = secret.Substring(0, MaximumSecretLength);
             }
 
             if (!_registered.Add(secret))

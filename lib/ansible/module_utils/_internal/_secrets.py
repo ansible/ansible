@@ -16,6 +16,7 @@ _emptyfrozenset: frozenset[str] = frozenset()  # shared frozenset optimization f
 # to match.
 _MINIMUM_SECRET_LENGTH = 4  # below this, not registered at all
 _MAXIMUM_SHORT_SECRET_LENGTH = 6  # above this, mask unconditionally
+_MAXIMUM_SECRET_LENGTH = 1024  # secrets longer than this are trimmed to this length before registration
 
 
 def _is_short_secret(length: int) -> bool:
@@ -48,14 +49,18 @@ class SecretMasker:
         if len(secret) < _MINIMUM_SECRET_LENGTH:
             return secret
 
+        # Overly long secrets are trimmed before registration so only the first
+        # _MAXIMUM_SECRET_LENGTH characters are matched and masked.
+        trimmed = secret[:_MAXIMUM_SECRET_LENGTH]
+
         with self._lock:
-            if self._store.exists(secret):
+            if self._store.exists(trimmed):
                 return secret
 
-            self._store.add_word(secret, len(secret))
+            self._store.add_word(trimmed, len(trimmed))
 
             for tracker in self._new_secret_trackers:
-                tracker._new_secrets.add(secret)
+                tracker._new_secrets.add(trimmed)
 
             return secret
 
@@ -64,10 +69,13 @@ class SecretMasker:
             new = set()
 
             for secret in secrets:
-                if len(secret) < _MINIMUM_SECRET_LENGTH or self._store.exists(secret):
+                if len(secret) < _MINIMUM_SECRET_LENGTH:
                     continue
-                self._store.add_word(secret, len(secret))
-                new.add(secret)
+                trimmed = secret[:_MAXIMUM_SECRET_LENGTH]
+                if self._store.exists(trimmed):
+                    continue
+                self._store.add_word(trimmed, len(trimmed))
+                new.add(trimmed)
 
             for tracker in self._new_secret_trackers:
                 tracker._new_secrets.update(new)

@@ -1,0 +1,19 @@
+---
+- name: secret masking lookup scenarios
+  hosts: testhost
+  gather_facts: false
+  tasks:
+    - name: lookups resolve to the known values in-playbook
+      assert:
+        that:
+          - lookup('password', playbook_dir ~ '/files/existing_password') == 'Passwordlookup0004Secret'
+          - lookup('unvault', unvault_target_file) == 'Unvaultlookup0005Secret'
+        quiet: true
+
+    - name: password lookup registers the returned password
+      debug:
+        msg: "SCN password_lookup: Passwordlookup0004Secret"
+
+    - name: unvault lookup registers the decrypted content
+      debug:
+        msg: "SCN unvault_lookup: Unvaultlookup0005Secret"
