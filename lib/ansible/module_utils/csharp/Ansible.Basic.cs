@@ -395,7 +395,7 @@ namespace Ansible.Basic
 
             if (sanitise)
             {
-                message = SecretMasker.Instance.MaskString(message);
+                message = SecretMasker.MaskString(message);
             }
 
             using (EventLog eventLog = new EventLog("Application"))
@@ -945,7 +945,7 @@ namespace Ansible.Basic
                 {
                     object noLogObject = parameters.Contains(k) ? parameters[k] : null;
                     string noLogString = noLogObject == null ? "" : noLogObject.ToString();
-                    SecretMasker.Instance.RegisterSecret(noLogString);
+                    SecretMasker.RegisterSecret(noLogString);
                 }
 
                 string collectionName = null;
@@ -1418,7 +1418,7 @@ namespace Ansible.Basic
             if (Diff.Count > 0 && DiffMode)
                 result["diff"] = Diff;
 
-            string[] newSecrets = SecretMasker.Instance.DrainNewSecrets().ToArray();
+            string[] newSecrets = SecretMasker.DrainNewSecrets().ToArray();
             if (newSecrets.Length > 0)
             {
                 result["_ansible_new_secrets"] = newSecrets;

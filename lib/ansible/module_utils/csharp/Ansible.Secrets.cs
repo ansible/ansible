@@ -26,7 +26,7 @@ namespace Ansible.Secrets
         private int _alphaSize;
         private char[] _prevAlpha;
 
-        public readonly HashSet<string> _registered;
+        private readonly HashSet<string> _registered;
         private HashSet<string> _newSecrets;
         private bool _dirty;
 
@@ -41,28 +41,70 @@ namespace Ansible.Secrets
         private const int MaximumShortSecretLength = 6;
         private const int MaximumSecretLength = 1024;
 
-        public static SecretMasker Instance
-        {
-            get
-            {
-                return _instance;
-            }
-        }
-
         /// <summary>
         /// Internal API: Used to register initial secrets known to Ansible.
         /// </summary>
         /// <param name="secrets">The initial secrets to register with the masker</param>
         public static void _RegisterAnsibleSecrets(IEnumerable<SecureString> secrets)
         {
-            SecretMasker masker = SecretMasker.Instance;
+            SecretMasker masker = _instance;
 
             foreach (SecureString secret in secrets)
             {
-                masker.RegisterSecret(secret);
+                masker.RegisterSecretImpl(secret);
             }
 
-            masker.DrainNewSecrets();
+            masker.DrainNewSecretsImpl();
+        }
+
+        /// <summary>
+        /// Drains any new secrets that have been registered since the last call to this method.
+        /// Used to determine what secrets need to be sent to the Ansible controller for masking.
+        /// </summary>
+        /// <returns>The unique secrets that have been registered.</returns>
+        public static HashSet<string> DrainNewSecrets()
+        {
+            return _instance.DrainNewSecretsImpl();
+        }
+
+        /// <summary>
+        /// Registers a new secret with the masker.
+        /// </summary>
+        /// <param name="secret">The secret to register</param>
+        public static void RegisterSecret(SecureString secret)
+        {
+            _instance.RegisterSecretImpl(secret);
+        }
+
+        /// <summary>
+        /// Registers a new secret with the masker.
+        /// Use the SecureString overload if possible to avoid AMSI logging in PowerShell.
+        /// </summary>
+        /// <param name="secret">The secret to register</param>
+        public static void RegisterSecret(string secret)
+        {
+            _instance.RegisterSecretImpl(secret);
+        }
+
+        /// <summary>
+        /// Masks any registered secrets found in the input string with the default placeholder "$REDACTED$".
+        /// </summary>
+        /// <param name="value">The input string to mask</param>
+        /// <returns>The masked string</returns>
+        public static string MaskString(string value)
+        {
+            return MaskString(value, "$REDACTED$");
+        }
+
+        /// <summary>
+        /// Masks any registered secrets found in the input string with the specified placeholder.
+        /// </summary>
+        /// <param name="value">The input string to mask</param>
+        /// <param name="maskPlaceholder">The placeholder to use for masking secrets</param>
+        /// <returns>The masked string</returns>
+        public static string MaskString(string value, string maskPlaceholder)
+        {
+            return _instance.MaskStringImpl(value, maskPlaceholder);
         }
 
         private SecretMasker()
@@ -85,23 +127,14 @@ namespace Ansible.Secrets
             _dirty = false;
         }
 
-        /// <summary>
-        /// Drains any new secrets that have been registered since the last call to this method.
-        /// Used to determine what secrets need to be sent to the Ansible controller for masking.
-        /// </summary>
-        /// <returns>The unique secrets that have been registered.</returns>
-        public HashSet<string> DrainNewSecrets()
+        private HashSet<string> DrainNewSecretsImpl()
         {
             HashSet<string> result = _newSecrets;
             _newSecrets = new HashSet<string>(StringComparer.Ordinal);
             return result;
         }
 
-        /// <summary>
-        /// Registers a new secret with the masker.
-        /// </summary>
-        /// <param name="secret">The secret to register</param>
-        public void RegisterSecret(SecureString secret)
+        private void RegisterSecretImpl(SecureString secret)
         {
             if (secret.Length == 0)
             {
@@ -113,7 +146,7 @@ namespace Ansible.Secrets
             {
                 stringPtr = Marshal.SecureStringToBSTR(secret);
                 string secretString = Marshal.PtrToStringBSTR(stringPtr);
-                RegisterSecret(secretString);
+                RegisterSecretImpl(secretString);
             }
             finally
             {
@@ -124,12 +157,7 @@ namespace Ansible.Secrets
             }
         }
 
-        /// <summary>
-        /// Registers a new secret with the masker.
-        /// Use the SecureString overload if possible to avoid AMSI logging in PowerShell.
-        /// </summary>
-        /// <param name="secret">The secret to register</param>
-        public void RegisterSecret(string secret)
+        private void RegisterSecretImpl(string secret)
         {
             if (string.IsNullOrEmpty(secret) || secret.Length < MinimumSecretLength)
             {
@@ -176,23 +204,7 @@ namespace Ansible.Secrets
             return;
         }
 
-        /// <summary>
-        /// Masks any registered secrets found in the input string with the default placeholder "$REDACTED$".
-        /// </summary>
-        /// <param name="value">The input string to mask</param>
-        /// <returns>The masked string</returns>
-        public string MaskString(string value)
-        {
-            return MaskString(value, "$REDACTED$");
-        }
-
-        /// <summary>
-        /// Masks any registered secrets found in the input string with the specified placeholder.
-        /// </summary>
-        /// <param name="value">The input string to mask</param>
-        /// <param name="maskPlaceholder">The placeholder to use for masking secrets</param>
-        /// <returns>The masked string</returns>
-        public string MaskString(string value, string maskPlaceholder)
+        private string MaskStringImpl(string value, string maskPlaceholder)
         {
             if (string.IsNullOrEmpty(value) || _registered.Count == 0)
             {

@@ -51,6 +51,15 @@ def test_register_secret_text_is_idempotent(masker):
     assert tracker.flush() == frozenset({"password123"})
 
 
+def test_flush_clears_state_second_flush_is_empty(masker):
+    """flush() drains the collected secrets, so a second flush with nothing new returns empty."""
+    tracker = masker.track_new_secrets()
+    masker.register_secret_text("password123")
+
+    assert tracker.flush() == frozenset({"password123"})
+    assert tracker.flush() == frozenset()
+
+
 def test_short_secrets_are_not_registered(masker):
     """Secrets shorter than the minimum length are silently skipped, so they pass through unmasked."""
     short = "a" * (_secrets._MINIMUM_SECRET_LENGTH - 1)
@@ -64,3 +73,81 @@ def test_secrets_in_reports_registered_secrets(masker):
     masker.register_secret_text("alpha")
     masker.register_secret_text("bravo")
     assert masker.secrets_in("XXalphaYYbravoZZ") == frozenset({"alpha", "bravo"})
+
+
+def test_mask_string_fails_closed_on_malformed_input(masker):
+    """A masking failure raises a generic error instead of returning the unmasked value (FR22)."""
+    masker.register_secret_text("password123")
+
+    malformed = "password123 leaked".encode()
+    with pytest.raises(_secrets.AnsibleSecretMaskError):
+        masker.mask_string(malformed)
+
+
+def test_mask_string_failure_does_not_leak_value(masker):
+    """The fail-closed error must not carry the value it failed to mask (FR22)."""
+    masker.register_secret_text("password123")
+    malformed = "password123 leaked".encode()
+
+    try:
+        masker.mask_string(malformed)
+    except _secrets.AnsibleSecretMaskError as ex:
+        assert "password123" not in str(ex)
+        assert repr(malformed) not in str(ex)
+        # The original exception context is suppressed so it cannot surface the value.
+        assert ex.__cause__ is None
+    else:
+        pytest.fail("expected AnsibleSecretMaskError")
+
+
+def test_mask_string_no_registered_secrets_is_noop(masker):
+    """With nothing registered there is no masking work, so malformed input is returned as-is."""
+    malformed = b"nothing registered"
+    assert masker.mask_string(malformed) == malformed
+
+
+def test_register_secret_texts_bulk_registers_and_masks(masker):
+    """The bulk path registers every eligible secret in the batch so each is masked."""
+    masker.register_secret_texts(["alpha_secret", "bravo_secret"])
+    masked = masker.mask_string("XXalpha_secretYYbravo_secretZZ", mask_placeholder=SENTINEL)
+    assert masked == f"XX{SENTINEL}YY{SENTINEL}ZZ"
+
+
+def test_register_secret_texts_deduplicates(masker):
+    """The bulk path tracks each new secret once, skipping duplicates and already-registered ones."""
+    masker.register_secret_text("alpha_secret")
+
+    tracker = masker.track_new_secrets()
+    # alpha_secret already exists (skipped); bravo_secret is new but appears twice (tracked once).
+    masker.register_secret_texts(["alpha_secret", "bravo_secret", "bravo_secret"])
+
+    assert tracker.flush() == frozenset({"bravo_secret"})
+
+
+def test_register_secret_texts_skips_short_secrets(masker):
+    """Secrets shorter than the minimum length are skipped by the bulk path too."""
+    short = "a" * (_secrets._MINIMUM_SECRET_LENGTH - 1)
+
+    tracker = masker.track_new_secrets()
+    masker.register_secret_texts([short, "long_enough_secret"])
+
+    assert tracker.flush() == frozenset({"long_enough_secret"})
+
+
+def test_unregister_stops_tracking_new_secrets(masker):
+    """After unregister a tracker keeps what it already collected but records nothing new."""
+    tracker = masker.track_new_secrets()
+    masker.register_secret_text("alpha_secret")
+
+    tracker.unregister()
+    masker.register_secret_text("bravo_secret")
+
+    # alpha_secret was collected before unregister; bravo_secret, registered after, is not.
+    assert tracker.flush() == frozenset({"alpha_secret"})
+
+
+def test_unregister_is_idempotent(masker):
+    """Unregistering a tracker twice is safe (a no-op the second time)."""
+    tracker = masker.track_new_secrets()
+    tracker.unregister()
+    tracker.unregister()

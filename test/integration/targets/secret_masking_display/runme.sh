@@ -1,7 +1,4 @@
 #!/usr/bin/env bash
-# Secret-masking Display-egress tests: a registered secret must be masked at every controller
-# Display() boundary (banner, warning, deprecation, invocation dump, error). Secrets are
-# pre-seeded via the _SECRETS_INPUT_FILES config so they are registered before any sink runs.
 
 set -eux -o pipefail
 
@@ -20,6 +17,7 @@ secrets:
 _ANSIBLE_SECRETS_INPUT_FILES=<(printf '%s' "${SEED}") \
 ANSIBLE_INJECT_INVOCATION=True \
 ANSIBLE_DEPRECATION_WARNINGS=True \
+ANSIBLE_DISPLAY_TRACEBACK=always \
     ansible-playbook display.yml -i ../../inventory -vvv "$@" 2>&1 | tee "${LOG}"
 
 # No registered plaintext secret may appear anywhere in the captured output.
@@ -54,3 +52,11 @@ for marker in "${sink_markers[@]}"; do
         exit 1
     fi
 done
+
+# The error sink must have rendered a real Python traceback (ANSIBLE_DISPLAY_TRACEBACK=always),
+# proving the traceback egress path ran; the plaintext scan above already guarantees nothing in
+# it leaked.
+if ! grep -qF -- "Traceback (most recent call last):" "${LOG}"; then
+    echo "FAIL: expected a rendered traceback (ANSIBLE_DISPLAY_TRACEBACK=always) but found none" >&2
+    exit 1
+fi

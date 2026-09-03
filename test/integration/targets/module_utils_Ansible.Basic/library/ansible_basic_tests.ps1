@@ -1440,6 +1440,75 @@ $tests = [Ordered]@{
         $actual | Assert-DictionaryEqual -Expected $expected
     }
 
+    "LogEvent masks registered secrets" = {
+        if (-not $IsWindows) {
+            return
+        }
+
+        $m = [Ansible.Basic.AnsibleModule]::Create(@(), @{})
+        [Ansible.Secrets.SecretMasker]::RegisterSecret("SuperSecretValue")
+
+        $m.LogEvent("connecting with SuperSecretValue now")
+        $actual_event = (Get-EventLog -LogName Application -Source Ansible -Newest 1).Message
+        $actual_event | Assert-Equal -Expected "undefined win module - connecting with `$REDACTED`$ now"
+    }
+
+    "LogEvent with sanitise disabled does not mask secrets" = {
+        if (-not $IsWindows) {
+            return
+        }
+
+        $m = [Ansible.Basic.AnsibleModule]::Create(@(), @{})
+        [Ansible.Secrets.SecretMasker]::RegisterSecret("SuperSecretValue")
+
+        $m.LogEvent("connecting with SuperSecretValue now", [System.Diagnostics.EventLogEntryType]::Information, $false)
+        $actual_event = (Get-EventLog -LogName Application -Source Ansible -Newest 1).Message
+        $actual_event | Assert-Equal -Expected "undefined win module - connecting with SuperSecretValue now"
+    }
+
+    "Debug masks registered secrets" = {
+        if (-not $IsWindows) {
+            return
+        }
+
+        Set-Variable -Name complex_args -Scope Global -Value @{
+            _ansible_debug = $true
+        }
+        $m = [Ansible.Basic.AnsibleModule]::Create(@(), @{})
+        [Ansible.Secrets.SecretMasker]::RegisterSecret("SuperSecretValue")
+
+        $m.Debug("debugging SuperSecretValue here")
+        $actual_event = (Get-EventLog -LogName Application -Source Ansible -Newest 1).Message
+        $actual_event | Assert-Equal -Expected "undefined win module - [DEBUG] debugging `$REDACTED`$ here"
+    }
+
+    "Warn masks registered secrets" = {
+        if (-not $IsWindows) {
+            return
+        }
+
+        $m = [Ansible.Basic.AnsibleModule]::Create(@(), @{})
+        [Ansible.Secrets.SecretMasker]::RegisterSecret("SuperSecretValue")
+
+        $m.Warn("warning about SuperSecretValue")
+        $actual_event = (Get-EventLog -LogName Application -Source Ansible -Newest 1)
+        $actual_event.EntryType | Assert-Equal -Expected "Warning"
+        $actual_event.Message | Assert-Equal -Expected "undefined win module - [WARNING] warning about `$REDACTED`$"
+    }
+
+    "Deprecate masks registered secrets" = {
+        if (-not $IsWindows) {
+            return
+        }
+
+        $m = [Ansible.Basic.AnsibleModule]::Create(@(), @{})
+        [Ansible.Secrets.SecretMasker]::RegisterSecret("SuperSecretValue")
+
+        $m.Deprecate("deprecating SuperSecretValue", "2.7")
+        $actual_event = (Get-EventLog -LogName Application -Source Ansible -Newest 1).Message
+        $actual_event | Assert-Equal -Expected "undefined win module - [DEPRECATION WARNING] deprecating `$REDACTED`$ 2.7"
+    }
+
     "Run with exec wrapper warnings" = {
         [Ansible.Basic.AnsibleModule]::_WrapperWarnings = [System.Collections.Generic.List[string]]@('Warning 1', 'Warning 2')
         try {

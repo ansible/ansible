@@ -12,6 +12,15 @@ except ImportError:
 
 _emptyfrozenset: frozenset[str] = frozenset()  # shared frozenset optimization for no secrets found
 
+
+class AnsibleSecretMaskError(Exception):
+    """Raised when secret masking fails.
+
+    Deliberately carries no reference to the value being masked so that a masking
+    failure can never leak the unmasked value through the exception itself.
+    """
+
+
 # If this is ever changed we need to ensure that Ansible.Secrets.cs is updated
 # to match.
 _MINIMUM_SECRET_LENGTH = 4  # below this, not registered at all
@@ -98,22 +107,27 @@ class SecretMasker:
         if not value:
             return value
 
-        spans = self._effective_spans(value)
+        try:
+            spans = self._effective_spans(value)
 
-        if not spans:
-            return value
+            if not spans:
+                return value
 
-        parts = []
-        value_pos = 0
+            parts = []
+            value_pos = 0
 
-        for start, end in spans:
-            parts.append(value[value_pos:start])
-            parts.append(mask_placeholder)
-            value_pos = end
+            for start, end in spans:
+                parts.append(value[value_pos:start])
+                parts.append(mask_placeholder)
+                value_pos = end
 
-        parts.append(value[value_pos:])
+            parts.append(value[value_pos:])
 
-        return ''.join(parts)
+            return ''.join(parts)
+        except Exception:
+            # We deliberately do not include the value or original exception
+            # to avoid leaking secrets through the exception.
+            raise AnsibleSecretMaskError('secret masking failed') from None
 
     def secrets_in(self, value: str) -> frozenset[str]:
         # Detection, not redaction: report every present secret (even short, non-boundary ones)

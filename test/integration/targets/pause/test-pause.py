@@ -270,6 +270,10 @@ pause_test.send('\r')
 pause_test.expect(r'Enter some text \(output is hidden\):')
 pause_test.send('supersecretpancakes')
 pause_test.send('\r')
+# The private pause input is a registered secret, so it must be masked at the
+# debug (Display) egress. If it leaks in plaintext instead, fail loudly.
+idx = pause_test.expect([r'SCNPAUSE \$REDACTED\$', r'SCNPAUSE supersecretpancakes'])
+assert idx == 0, 'private pause input leaked in plaintext at Display egress'
 pause_test.expect(pexpect.EOF)
 pause_test.close()
 

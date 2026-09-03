@@ -6,7 +6,8 @@
   tasks:
     # Important this comes before the rest because location of error
     # in the output traceback may contain preceding lines, including
-    # the previous tasks plaintext value.
+    # the previous tasks plaintext value. The SCNLINE comment must stay on the
+    # line immediately above the task so it lands in the error's source context.
     # SCNLINE Displayline0055Secret
     - name: error sink
       fail:

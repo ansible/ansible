@@ -7,6 +7,9 @@
     filter_mask_secret: Filtermask0002Secret
     vault_filter_pass: Vaultfilterpass0003Secret
     nondestruct_secret: Nondestruct0040Secret
+    lazy_first_secret: Lazyfirst0050Secret
+    lazy_second_secret: Lazysecond0051Secret
+    lazy_registered: "{{ lookup('file', lazy_file) | register_secret }}"
   tasks:
     - name: register_secret returns the value unchanged
       assert:
@@ -65,3 +68,31 @@
     - name: but debug output of the same value is redacted
       debug:
         msg: "SCN nondestruct: {{ nd_value }}"
+
+    # --- template laziness: register_secret runs when the template is evaluated (on use),
+    # not once at definition, so editing the lookup source between uses registers the new value.
+    - name: seed the lookup source file with the first secret
+      copy:
+        dest: "{{ lazy_file }}"
+        content: "{{ lazy_first_secret }}"
+
+    - name: first use of the lazy template registers the current file contents
+      debug:
+        msg: "SCN lazy_use1: {{ lazy_registered }}"
+
+    - name: the first file value is now a registered secret (masked at egress)
+      debug:
+        msg: "SCN lazy_first: {{ lazy_first_secret }}"
+
+    - name: overwrite the lookup source file with a different secret
+      copy:
+        dest: "{{ lazy_file }}"
+        content: "{{ lazy_second_secret }}"
+
+    - name: second use re-evaluates the template and registers the new file contents
+      debug:
+        msg: "SCN lazy_use2: {{ lazy_registered }}"
+
+    - name: the second file value is now a registered secret too (proves lazy re-evaluation)
+      debug:
+        msg: "SCN lazy_second: {{ lazy_second_secret }}"

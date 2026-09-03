@@ -15,28 +15,26 @@ $spec = @{
 }
 $module = [Ansible.Basic.AnsibleModule]::Create($args, $spec)
 
-$masker = [Ansible.Secrets.SecretMasker]::Instance
-
 $incoming = $module.Params.incoming
 
 $secrets = @('PwshModuleSecret1', 'PwshModuleSecret2', 'PwshModuleSecret3')
 foreach ($secret in $secrets) {
-    $masker.RegisterSecret($secret)
+    [Ansible.Secrets.SecretMasker]::RegisterSecret($secret)
 }
 
 $registerAsSecret = $module.Params.register_as_secret
 if ($null -ne $registerAsSecret) {
-    $masker.RegisterSecret($registerAsSecret)
+    [Ansible.Secrets.SecretMasker]::RegisterSecret($registerAsSecret)
 }
 
 $module.Result.discovered = $secrets[0]
-$module.Result.masked = $masker.MaskString("$($secrets[0]) $($secrets[1]) $($secrets[2])")
-$module.Result.masked_custom = $masker.MaskString($secrets[0], "<HIDDEN>")
+$module.Result.masked = [Ansible.Secrets.SecretMasker]::MaskString("$($secrets[0]) $($secrets[1]) $($secrets[2])")
+$module.Result.masked_custom = [Ansible.Secrets.SecretMasker]::MaskString($secrets[0], "<HIDDEN>")
 $module.Result.incoming = $incoming
-$module.Result.incoming_masked = $masker.MaskString($incoming)
+$module.Result.incoming_masked = [Ansible.Secrets.SecretMasker]::MaskString($incoming)
 $module.Result.register_as_secret = $registerAsSecret
 $module.Result.no_log_option = $module.Params.no_log_option
-$module.Result.no_log_option_masked = $masker.MaskString($module.Params.no_log_option)
+$module.Result.no_log_option_masked = [Ansible.Secrets.SecretMasker]::MaskString($module.Params.no_log_option)
 $module.Result.changed = $false
 
 $module.ExitJson()
