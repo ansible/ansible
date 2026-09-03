@@ -106,7 +106,7 @@ class BecomeModule(BecomeBase):
         matched = super().check_password_prompt(b_output)
         if not matched:
             # try sudo-rs, which is not backwards compatible and does i18n
-            sudo_rs = re.compile(re.escape(f"[sudo: {self.prompt.strip()}] \\S.+?\\S\\Z".encode()))
+            sudo_rs = re.compile(fr"\[sudo: {self.prompt.strip()}\] \S.+\Z".encode())
             # using match as the line MUST start with this
             matched = any(sudo_rs.match(l) for l in b_output.splitlines())
         return matched
