@@ -717,7 +717,8 @@ class VaultLib:
                     stripped_vault_secret = VaultSecret(vault_secret.bytes.strip())
                     if stripped_vault_secret.bytes != vault_secret.bytes:
                         b_plaintext = this_cipher.decrypt(b_vaulttext, stripped_vault_secret)
-                        display.warning(u"You provided a vault password that started or ended with white space. But to decrypt the vault the white space needed to be stripped!")
+                        display.warning(u"The secret provided for vault id (%s) contained leading or trailing whitespace. "
+                                        u"But to decrypt it the whitespace needed to be stripped." % to_text(vault_secret_id))
                     else:
                         raise e
 
