@@ -78,6 +78,8 @@ NEED_CRYPTO_LIBRARY = "ansible-vault requires the cryptography library in order 
 class AnsibleVaultError(AnsibleError):
     pass
 
+class AnsibleVaultHMACError(AnsibleVaultError):
+    pass
 
 class AnsibleVaultPasswordError(AnsibleVaultError):
     pass
@@ -709,7 +711,16 @@ class VaultLib:
             try:
                 # secret = self.secrets[vault_secret_id]
                 display.vvvv(u'Trying secret %s for vault_id=%s' % (to_text(vault_secret), to_text(vault_secret_id)))
-                b_plaintext = this_cipher.decrypt(b_vaulttext, vault_secret)
+                try:
+                    b_plaintext = this_cipher.decrypt(b_vaulttext, vault_secret)
+                except AnsibleVaultHMACError as e:
+                    stripped_vault_secret = VaultSecret(vault_secret.bytes.strip())
+                    if stripped_vault_secret.bytes != vault_secret.bytes:
+                        b_plaintext = this_cipher.decrypt(b_vaulttext, stripped_vault_secret)
+                        display.warning(u"You provided a vault password that started or ended with white space. But to decrypt the vault the white space needed to be stripped!")
+                    else:
+                        raise e
+
                 # DTFIX7: possible candidate for propagate_origin
                 b_plaintext = AnsibleTagHelper.tag_copy(vaulttext, b_plaintext)
                 if b_plaintext is not None:
@@ -1212,7 +1223,7 @@ class VaultAES256:
         try:
             hmac.verify(_unhexlify(b_crypted_hmac))
         except InvalidSignature as e:
-            raise AnsibleVaultError('HMAC verification failed: %s' % e)
+            raise AnsibleVaultHMACError('HMAC verification failed: %s' % e)
 
         cipher = C_Cipher(algorithms.AES(b_key1), modes.CTR(b_iv), CRYPTOGRAPHY_BACKEND)
         decryptor = cipher.decryptor()
