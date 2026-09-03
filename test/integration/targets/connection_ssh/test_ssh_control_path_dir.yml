@@ -1,0 +1,20 @@
+- hosts: ssh
+  gather_facts: false
+  vars:
+    ansible_connection: ssh
+  tasks:
+    - name: run a command to trigger SSH connection and control path creation
+      raw: echo ok
+
+    - name: check that control path directory was created under ANSIBLE_HOME
+      stat:
+        path: "{{ lookup('env', 'ANSIBLE_HOME') }}/cp"
+      register: cpdir_stat
+      delegate_to: localhost
+
+    - name: assert control path directory exists
+      assert:
+        that:
+          - cpdir_stat.stat.exists
+          - cpdir_stat.stat.isdir
+        fail_msg: "Control path directory '{{ lookup('env', 'ANSIBLE_HOME') }}/cp' was not created"

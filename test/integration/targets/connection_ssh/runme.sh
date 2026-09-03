@@ -96,4 +96,11 @@ ANSIBLE_SSH_VERBOSITY=1 ansible ssh -m raw -a whoami -i test_connection.inventor
 # enable SSH client verbosity level 3 via var; ensure debug3 lines
 ansible ssh -m raw -a whoami -i test_connection.inventory -vvvvv -e ansible_ssh_verbosity=3 2>&1 | grep 'debug3:'
 
+# test that control_path_dir respects ANSIBLE_HOME
+CUSTOM_HOME="$(mktemp -d)"
+ANSIBLE_HOME="$CUSTOM_HOME" ansible-playbook test_ssh_control_path_dir.yml "$@" -i test_connection.inventory
+# verify the cp directory was created under custom ANSIBLE_HOME, not ~/.ansible
+test -d "$CUSTOM_HOME/cp"
+rm -rf "$CUSTOM_HOME"
+
 echo PASS

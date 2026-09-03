@@ -318,7 +318,7 @@ DOCUMENTATION = """
           - name: ansible_control_path
             version_added: '2.7'
       control_path_dir:
-        default: ~/.ansible/cp
+        default: '{{ ANSIBLE_HOME ~ "/cp" }}'
         description:
           - This sets the directory to use for ssh control path if the control path setting is null.
           - Also, provides the ``%(directory)s`` variable for the control path setting.
@@ -665,6 +665,14 @@ class Connection(ConnectionBase):
         self._tty_parser.add_argument('-o', action='append')
 
         self._populated_agent: pathlib.Path | None = None
+
+    def set_options(self, task_keys=None, var_options=None, direct=None):
+        # Inject ANSIBLE_HOME into template variables so plugin defaults
+        # like '{{ ANSIBLE_HOME ~ "/cp" }}' resolve correctly.
+        if var_options is None:
+            var_options = {}
+        var_options.setdefault('ANSIBLE_HOME', C.config.get_config_value('ANSIBLE_HOME'))
+        super().set_options(task_keys=task_keys, var_options=var_options, direct=direct)
 
     # The connection is created by running ssh/scp/sftp from the exec_command,
     # put_file, and fetch_file methods, so we don't need to do any connection
