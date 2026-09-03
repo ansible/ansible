@@ -153,11 +153,7 @@ EXAMPLES = r"""
 """
 
 RETURN = r"""
-msg:
-    description: changed
-    returned: always
-    type: bool
-    sample: True
+# This module will always include return values from the command module.
 start:
     description: The command execution start time.
     returned: always
@@ -168,39 +164,13 @@ end:
     returned: always
     type: str
     sample: '2016-02-25 09:18:26.755339'
-delta:
-    description: The command execution delta time.
-    returned: always
-    type: str
-    sample: '0:00:00.325771'
 stdout:
-    description: The command standard output.
+    description:
+      - The standard output from the command execution.
+      - When O(creates) or O(removes) causes the task to skip, contains an informational skip message instead of command output.
+      - This module delegates to M(ansible.builtin.command), so see that module's return values for additional details.
     returned: always
     type: str
     sample: 'Clustering node rabbit@slave1 with rabbit@master …'
-stderr:
-    description: The command standard error.
-    returned: always
-    type: str
-    sample: 'ls: cannot access foo: No such file or directory'
-cmd:
-    description: The command executed by the task.
-    returned: always
-    type: str
-    sample: 'rabbitmqctl join_cluster rabbit@master'
-rc:
-    description: The command return code (0 means success).
-    returned: always
-    type: int
-    sample: 0
-stdout_lines:
-    description: The command standard output split in lines.
-    returned: always
-    type: list
-    sample: [u'Clustering node rabbit@slave1 with rabbit@master …']
-stderr_lines:
-    description: The command standard error split in lines.
-    returned: always
-    type: list
-    sample: [u'ls cannot access foo: No such file or directory', u'ls …']
 """
+# TODO: Deprecate the skip message usage of stdout in favor of skip_reason

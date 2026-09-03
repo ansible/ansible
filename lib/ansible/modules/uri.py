@@ -430,7 +430,13 @@ url:
   returned: always
   type: str
   sample: https://www.ansible.com/
+stdout:
+  description: Informational message when creates or removes causes the task to skip.
+  returned: when creates or removes causes a skip
+  type: str
+  sample: "skipped, since '/path/to/file' exists"
 """
+# TODO: Deprecate this use of stdout in favor of msg
 
 import http
 import json

@@ -111,6 +111,7 @@ EXAMPLES = r"""
 """
 
 RETURN = r"""
+# This module will always include return values from the copy action plugin.
 dest:
     description: Destination file/path, equal to the value passed to I(dest).
     returned: success

@@ -327,6 +327,21 @@ git_dir_before:
     returned: success
     type: str
     sample: /path/to/old/git/dir
+submodules_changed:
+    description: Whether submodules were updated during the operation.
+    returned: when submodules are updated
+    type: bool
+    sample: true
+cmd:
+    description: The git command that failed.
+    returned: when git command fails
+    type: str
+    sample: git fetch origin
+details:
+    description: Additional details about a failure.
+    returned: when an operation fails
+    type: str
+    sample: "Git archive command failed to create archive"
 """
 
 import filecmp

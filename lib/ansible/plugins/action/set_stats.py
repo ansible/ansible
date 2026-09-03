@@ -28,7 +28,6 @@ class ActionModule(ActionBase):
     _VALID_ARGS = frozenset(('aggregate', 'data', 'per_host'))
     _requires_connection = False
 
-    # TODO: document this in non-empty set_stats.py module
     def run(self, tmp=None, task_vars=None):
         if task_vars is None:
             task_vars = dict()

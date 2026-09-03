@@ -52,6 +52,19 @@ EXAMPLES = """
     selection: install
 """
 
+RETURN = """
+before:
+    description: The package selection state before any change.
+    returned: always
+    type: str
+    sample: install
+after:
+    description: The package selection state after the module runs.
+    returned: always
+    type: str
+    sample: hold
+"""
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.locale import get_best_parsable_locale
 

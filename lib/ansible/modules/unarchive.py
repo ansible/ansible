@@ -237,6 +237,27 @@ uid:
   returned: always
   type: int
   sample: 1000
+extract_results:
+  description: Results from the extraction command
+  returned: when archive was extracted
+  type: dict
+  contains:
+    cmd:
+      description: Command used to extract the archive
+      type: list
+      sample: ["/usr/bin/unzip", "-o", "/tmp/archive.zip", "-d", "/opt/software"]
+    rc:
+      description: Return code from the extraction command
+      type: int
+      sample: 0
+    out:
+      description: Standard output from the extraction command
+      type: str
+      sample: ""
+    err:
+      description: Standard error from the extraction command
+      type: str
+      sample: ""
 """
 
 import binascii

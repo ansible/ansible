@@ -279,6 +279,16 @@ skipped_paths:
     type: dict
     sample: {"/laskdfj": "'/laskdfj' is not a directory"}
     version_added: '2.12'
+age:
+    description: The age parameter value that failed to be parsed.
+    returned: when age parameter parsing fails
+    type: str
+    sample: "1x"
+size:
+    description: The size parameter value that failed to be parsed.
+    returned: when size parameter parsing fails
+    type: str
+    sample: "10x"
 """
 
 import errno

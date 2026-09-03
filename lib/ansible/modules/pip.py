@@ -290,6 +290,11 @@ virtualenv:
   returned: success, if a virtualenv path was provided
   type: str
   sample: "/tmp/virtualenv"
+state:
+  description: The state of the Python package
+  returned: success
+  type: str
+  sample: "present"
 """
 
 import argparse

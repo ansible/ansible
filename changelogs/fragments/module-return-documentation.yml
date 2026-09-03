@@ -1,0 +1,3 @@
+---
+minor_changes:
+  - "core modules - added missing RETURN documentation to 22 modules and removed redundant common return value documentation from 8 modules to standardize module documentation."

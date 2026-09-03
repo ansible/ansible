@@ -182,15 +182,16 @@ EXAMPLES = r"""
 """
 
 RETURN = r"""
-ansible_facts:
-  description: Variables that were included and their values
-  returned: success
-  type: dict
-  sample: {'variable': 'value'}
 ansible_included_var_files:
   description: A list of files that were successfully included
   returned: success
   type: list
   sample: [ /path/to/file.json, /path/to/file.yaml ]
   version_added: '2.4'
+message:
+  description: Error message if the module failed
+  returned: failure
+  type: str
+  sample: "/path/to/vars directory does not exist"
 """
+# FIXME: 'message' should not be a module result key (confusing with msg). We already have exception, stderr, and msg.

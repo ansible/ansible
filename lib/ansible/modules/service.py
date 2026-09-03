@@ -155,7 +155,25 @@ EXAMPLES = r"""
     args: eth0
 """
 
-RETURN = r"""#"""
+RETURN = r"""
+# This module acts as a proxy and may return additional values from the underlying
+# service manager module that is invoked (systemd, sysvinit, etc.).
+name:
+  description: The name of the service
+  returned: always
+  type: str
+  sample: httpd
+state:
+  description: The state of the service
+  returned: always
+  type: str
+  sample: started
+enabled:
+  description: Whether the service is enabled to start on boot
+  returned: when O(enabled) parameter is provided
+  type: bool
+  sample: true
+"""
 
 import glob
 import json

@@ -107,3 +107,16 @@ EXAMPLES = r"""
       - my_param >= 0
     quiet: true
 """
+
+RETURN = r"""
+evaluated_to:
+  description: The boolean result of the failed assertion.
+  returned: failure
+  type: bool
+  sample: false
+assertion:
+  description: The specific assertion expression that failed.
+  returned: failure
+  type: str
+  sample: "my_param <= 100"
+"""

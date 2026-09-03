@@ -275,11 +275,6 @@ EXAMPLES = r"""
 """
 
 RETURN = r"""
-backup_file:
-    description: name of backup file created after download
-    returned: changed and if backup=yes
-    type: str
-    sample: /path/to/file.txt.2015-02-12@22:09~
 checksum_dest:
     description: sha1 checksum of the file after copy
     returned: success
@@ -320,11 +315,6 @@ mode:
     returned: success
     type: str
     sample: "0644"
-msg:
-    description: the HTTP message from the request
-    returned: always
-    type: str
-    sample: OK (unknown bytes)
 owner:
     description: owner of the file
     returned: success
@@ -365,6 +355,11 @@ url:
     returned: always
     type: str
     sample: https://www.ansible.com/
+response:
+    description: the HTTP response message from a failed request
+    returned: when request fails
+    type: str
+    sample: "HTTP Error 404: Not Found"
 """
 
 import email.message

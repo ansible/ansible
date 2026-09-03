@@ -118,6 +118,29 @@ EXAMPLES = r"""
             - "{{ db_password }}"
 """
 
+RETURN = r"""
+cmd:
+    description: The command executed by the task.
+    returned: always
+    type: str
+    sample: passwd username
+start:
+    description: The command execution start time.
+    returned: always
+    type: str
+    sample: '2017-09-29 22:03:48.083128'
+end:
+    description: The command execution end time.
+    returned: always
+    type: str
+    sample: '2017-09-29 22:03:48.084657'
+delta:
+    description: The command execution delta time.
+    returned: always
+    type: str
+    sample: '0:00:00.001529'
+"""
+
 import datetime
 import os
 

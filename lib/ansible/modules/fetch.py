@@ -121,3 +121,36 @@ EXAMPLES = r"""
     dest: special/prefix-{{ inventory_hostname }}
     flat: yes
 """
+
+RETURN = r"""
+# This module will sometimes include return values from the slurp module (for files with checksum '1' or empty/None).
+dest:
+  description: Path to the local file that was fetched.
+  returned: success
+  type: str
+  sample: /tmp/fetched/host.example.com/tmp/somefile
+file:
+  description: Path to the remote source file.
+  returned: success
+  type: str
+  sample: /tmp/somefile
+checksum:
+  description: SHA1 checksum of the local file.
+  returned: success
+  type: str
+  sample: 6e642bb8dd5c2e027bf21dd923337cbb4214f827
+md5sum:
+  description: MD5 checksum of the local file.
+  returned: success or checksum validation failure
+  type: str
+  sample: 2a5aeecc61dc98c4d780b14b330e3282
+remote_checksum:
+  description: SHA1 checksum of the remote file.
+  returned: when file is changed
+  type: str
+  sample: 6e642bb8dd5c2e027bf21dd923337cbb4214f827
+remote_md5sum:
+  description: MD5 checksum of the remote file (currently always None).
+  returned: when file is changed
+  type: str
+"""

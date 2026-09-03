@@ -137,4 +137,9 @@ elapsed:
   returned: always
   type: int
   sample: 23
+start:
+  description: The time when the reboot was initiated.
+  returned: when reboot command fails
+  type: str
+  sample: "2024-04-15 10:30:45.123456+00:00"
 """

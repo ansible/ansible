@@ -96,18 +96,15 @@ started:
   returned: always
   type: bool
   sample: true
-stdout:
-  description: Any output returned by async_wrapper
-  returned: always
-  type: str
-stderr:
-  description: Any errors returned by async_wrapper
-  returned: always
-  type: str
 erased:
   description: Path to erased job file
   returned: when file is erased
   type: str
+results_file:
+  description: Path to the async job status file
+  returned: when job is running or when parsing job output fails
+  type: str
+  sample: /home/user/.ansible_async/360874038559.4169
 """
 
 import json

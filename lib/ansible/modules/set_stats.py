@@ -79,3 +79,26 @@ EXAMPLES = r"""
       the_answer: 42
     aggregate: no
 """
+
+RETURN = r"""
+ansible_stats:
+  description: Dictionary containing the custom stats that were set.
+  returned: always
+  type: dict
+  contains:
+    data:
+      description: The statistics data that was set.
+      returned: always
+      type: dict
+      sample: {"packages_installed": 31, "the_answer": 42}
+    per_host:
+      description: Whether the stats are per host or for all hosts in the run.
+      returned: always
+      type: bool
+      sample: false
+    aggregate:
+      description: Whether the provided value is aggregated to the existing stat or replaces it.
+      returned: always
+      type: bool
+      sample: true
+"""
