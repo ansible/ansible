@@ -1,0 +1,31 @@
+---
+- name: secret masking for callbacks that do not opt in new masking behavior
+  hosts: localhost
+  gather_facts: false
+  vars:
+    callback_secret: Callbacksecret0060Value
+  tasks:
+    - name: register the secret on the controller
+      set_fact:
+        cb_value: "{{ callback_secret | register_secret }}"
+
+    - name: emit a task result whose payload contains the registered secret
+      debug:
+        msg: "SCN callback: {{ cb_value }}"
+
+    - name: build a nested structure with the secret at several container depths
+      set_fact:
+        nested:
+          scalar: "{{ callback_secret }}"
+          a_list:
+            - "{{ callback_secret }}"
+            - safe-value
+          dict_in_list:
+            - inner: "{{ callback_secret }}"
+          list_in_dict:
+            deep:
+              - "{{ callback_secret }}"
+
+    - name: emit a task result whose payload nests the secret at every depth
+      debug:
+        var: nested
