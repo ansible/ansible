@@ -25,7 +25,7 @@ import pytest
 
 import unittest
 from unittest.mock import patch, MagicMock, PropertyMock
-from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
+from ansible.errors import AnsibleAuthenticationFailure, AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
 import shlex
 from ansible.module_utils.common.text.converters import to_bytes
 from ansible.playbook.play_context import PlayContext
@@ -209,7 +209,7 @@ class TestConnectionBaseClass(unittest.TestCase):
 
         mock_ospe.return_value = True
         conn._build_command.return_value = 'some command to run'
-        conn._bare_run.return_value = (0, '', '')
+        conn._bare_run.return_value = (0, b'', b'')
 
         conn.set_option("host", "some_host")
         conn.set_option('reconnection_retries', 9)
@@ -228,27 +228,27 @@ class TestConnectionBaseClass(unittest.TestCase):
         conn._bare_run.assert_called_with('some command to run', expected_in_data, checkrc=False)
 
         # Test when SFTP doesn't work but SCP does
-        conn._bare_run.side_effect = [(1, 'stdout', 'some errors'), (0, '', '')]
+        conn._bare_run.side_effect = [(1, b'stdout', b'some errors'), (0, b'', b'')]
         conn.put_file('/path/to/in/file', '/path/to/dest/file')
         conn._bare_run.assert_called_with('some command to run', None, checkrc=False)
         conn._bare_run.side_effect = None
 
         # Test that a non-zero rc raises an error
         conn.set_option('ssh_transfer_method', 'sftp')
-        conn._bare_run.return_value = (1, 'stdout', 'some errors')
+        conn._bare_run.return_value = (1, b'stdout', b'some errors')
         self.assertRaises(AnsibleError, conn.put_file, '/path/to/bad/file', '/remote/path/to/file')
 
         # Test that rc=255 raises an error
-        conn._bare_run.return_value = (255, 'stdout', 'some errors')
+        conn._bare_run.return_value = (255, b'stdout', b'some errors')
         self.assertRaises(AnsibleConnectionFailure, conn.put_file, '/path/to/bad/file', '/remote/path/to/file')
 
         # Test that rc=256 raises an error
-        conn._bare_run.return_value = (256, 'stdout', 'some errors')
+        conn._bare_run.return_value = (256, b'stdout', b'some errors')
         self.assertRaises(AnsibleError, conn.put_file, '/path/to/bad/file', '/remote/path/to/file')
 
         # Test that a not-found path raises an error
         mock_ospe.return_value = False
-        conn._bare_run.return_value = (0, 'stdout', '')
+        conn._bare_run.return_value = (0, b'stdout', b'')
         self.assertRaises(AnsibleFileNotFound, conn.put_file, '/path/to/bad/file', '/remote/path/to/file')
 
     @patch('time.sleep')
@@ -260,7 +260,7 @@ class TestConnectionBaseClass(unittest.TestCase):
         conn._load_name = 'ssh'
 
         conn._build_command.return_value = 'some command to run'
-        conn._bare_run.return_value = (0, '', '')
+        conn._bare_run.return_value = (0, b'', b'')
 
         conn.set_option("host", "some_host")
         conn.set_option('reconnection_retries', 9)
@@ -273,7 +273,7 @@ class TestConnectionBaseClass(unittest.TestCase):
         conn._bare_run.assert_called_with('some command to run', expected_in_data, checkrc=False)
 
         # Test when SFTP doesn't work but SCP does
-        conn._bare_run.side_effect = [(1, 'stdout', 'some errors'), (0, '', '')]
+        conn._bare_run.side_effect = [(1, b'stdout', b'some errors'), (0, b'', b'')]
         conn.fetch_file('/path/to/in/file', '/path/to/dest/file')
         conn._bare_run.assert_called_with('some command to run', None, checkrc=False)
         conn._bare_run.side_effect = None
@@ -288,15 +288,15 @@ class TestConnectionBaseClass(unittest.TestCase):
 
         # Test that a non-zero rc raises an error
         conn.set_option('ssh_transfer_method', 'sftp')
-        conn._bare_run.return_value = (1, 'stdout', 'some errors')
+        conn._bare_run.return_value = (1, b'stdout', b'some errors')
         self.assertRaises(AnsibleError, conn.fetch_file, '/path/to/bad/file', '/remote/path/to/file')
 
         # Test that rc=255 raises an error
-        conn._bare_run.return_value = (255, 'stdout', 'some errors')
+        conn._bare_run.return_value = (255, b'stdout', b'some errors')
         self.assertRaises(AnsibleConnectionFailure, conn.fetch_file, '/path/to/bad/file', '/remote/path/to/file')
 
         # Test that rc=256 raises an error
-        conn._bare_run.return_value = (256, 'stdout', 'some errors')
+        conn._bare_run.return_value = (256, b'stdout', b'some errors')
         self.assertRaises(AnsibleError, conn.fetch_file, '/path/to/bad/file', '/remote/path/to/file')
 
 
@@ -597,3 +597,38 @@ class TestSSHConnectionRetries(object):
         assert b_stdout == b"my_stdout\nsecond_line"
         assert b_stderr == b"my_stderr"
         assert self.mock_popen.call_count == 2
+
+
+class TestHandleError:
+    """Tests for the _handle_error helper function."""
+
+    @pytest.mark.parametrize('rc', [1, 2, 3, 4, 6])
+    def test_sshpass_nonzero_rc_does_not_raise(self, rc):
+        # sshpass propagates SSH's exit code which propagates the remote command's exit code.
+        # Any value in 1-254 is a legitimate remote command exit code, so none of them should
+        # cause a connection failure — doing so produces false UNREACHABLE results.
+        ssh._handle_error(0, b'sshpass', (rc, b'', b'Shared connection to 1.2.3.4 closed.\r\n'), False, 'host')
+
+    @pytest.mark.parametrize('rc', [1, 2, 3, 4, 6])
+    def test_sshpass_nonzero_rc_does_not_raise_no_log(self, rc):
+        ssh._handle_error(0, b'sshpass', (rc, b'', b'Shared connection to 1.2.3.4 closed.\r\n'), True, 'host')
+
+    @pytest.mark.parametrize('rc', [1, 2, 3, 4, 6])
+    def test_sshpass_nonzero_rc_with_sshpass_own_stderr_does_not_raise(self, rc):
+        # Even when stderr contains sshpass-specific output, no connection failure is raised —
+        # the exit code alone cannot distinguish a sshpass failure from a remote command result.
+        ssh._handle_error(0, b'sshpass', (rc, b'', b'SSHPASS: Failed to run command: No such file or directory\n'), False, 'host')
+
+    def test_sshpass_rc5_raises_authentication_failure(self):
+        with pytest.raises(AnsibleAuthenticationFailure):
+            ssh._handle_error(0, b'sshpass', (5, b'', b''), False, 'host')
+
+    def test_sshpass_invalid_P_option_raises_ansible_error(self):
+        # Old sshpass versions don't support -P; this should raise AnsibleError with a helpful message,
+        # not AnsibleConnectionFailure (UNREACHABLE).
+        with pytest.raises(AnsibleError, match='Upgrade sshpass'):
+            ssh._handle_error(0, b'sshpass', (1, b'', b"sshpass: invalid option -- 'P'\n"), False, 'host')
+
+    def test_sshpass_invalid_P_option_no_log_does_not_raise(self):
+        # When no_log is set, stderr is suppressed so we cannot safely inspect it; fall through.
+        ssh._handle_error(0, b'sshpass', (1, b'', b"sshpass: invalid option -- 'P'\n"), True, 'host')

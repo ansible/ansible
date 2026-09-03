@@ -3,7 +3,6 @@
 # Copyright 2017 Toshio Kuratomi <tkuratomi@ansible.com>
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-
 from __future__ import annotations
 
 DOCUMENTATION = """
@@ -491,8 +490,10 @@ def _handle_error(
 ) -> None:
 
     # sshpass errors
-    if command == b'sshpass':
-        # Error 5 is invalid/incorrect password. Raise an exception to prevent retries from locking the account.
+    # Identification: Either the command is b'sshpass', or the stderr starts with 'sshpass:' (standard for sshpass errors).
+    is_sshpass = command == b'sshpass' or return_tuple[2].startswith(b'sshpass:')
+
+    if is_sshpass:
         if return_tuple[0] == 5:
             msg = 'Invalid/incorrect username/password. Skipping remaining {0} retries to prevent account lockout:'.format(remaining_retries)
             if remaining_retries <= 0:
@@ -503,21 +504,11 @@ def _handle_error(
                 msg = '{0} {1}'.format(msg, to_native(return_tuple[2]).rstrip())
             raise AnsibleAuthenticationFailure(msg)
 
-        # sshpass returns codes are 1-6. We handle 5 previously, so this catches other scenarios.
-        # No exception is raised, so the connection is retried - except when attempting to use
-        # sshpass_prompt with an sshpass that won't let us pass -P, in which case we fail loudly.
-        elif return_tuple[0] in [1, 2, 3, 4, 6]:
-            msg = 'sshpass error:'
-            if no_log:
-                msg = '{0} <error censored due to no log>'.format(msg)
-            else:
-                details = to_native(return_tuple[2]).rstrip()
-                if "sshpass: invalid option -- 'P'" in details:
-                    details = 'Installed sshpass version does not support customized password prompts. ' \
-                              'Upgrade sshpass to use sshpass_prompt, or otherwise switch to ssh keys.'
-                    raise AnsibleError('{0} {1}'.format(msg, details))
-                msg = '{0} {1}'.format(msg, details)
-            raise AnsibleConnectionFailure(msg)
+        if not no_log and b"sshpass: invalid option -- 'P'" in return_tuple[2]:
+            raise AnsibleError(
+                "Installed sshpass version does not support customized password prompts. "
+                "Upgrade sshpass to use sshpass_prompt, or otherwise switch to ssh keys."
+            )
 
     if return_tuple[0] == 255:
         SSH_ERROR = True
@@ -1094,10 +1085,6 @@ class Connection(ConnectionBase):
         Starts the command and communicates with it until it ends.
         """
 
-        # We don't use _shell.quote as this is run on the controller and independent from the shell plugin chosen
-        display_cmd = u' '.join(shlex.quote(to_text(c)) for c in cmd)
-        display.vvv(u'SSH: EXEC {0}'.format(display_cmd), host=self.host)
-
         conn_password = self.get_option('password') or self._play_context.password
         password_mechanism = self.get_option('password_mechanism')
 
@@ -1109,15 +1096,24 @@ class Connection(ConnectionBase):
         p = None
 
         if isinstance(cmd, (str, bytes)):
-            cmd = to_bytes(cmd)
+            cmd = [to_bytes(cmd)]
         else:
-            cmd = list(map(to_bytes, cmd))
+            # Modify in-place so decorators like _ssh_retry see the byte-converted list
+            cmd[:] = [to_bytes(c) for c in cmd]
 
         popen_kwargs = self._init_shm()
 
         if b_ssh_pass_cmd := self._sshpass_cmd():
-            cmd[:0] = b_ssh_pass_cmd
+            if cmd and cmd[0] == b'sshpass':
+                # sshpass already added by a previous attempt
+                cmd[1] = b_ssh_pass_cmd[1]
+            else:
+                cmd[:0] = b_ssh_pass_cmd
             popen_kwargs['pass_fds'] = self.sshpass_pipe
+
+        # We don't use _shell.quote as this is run on the controller and independent from the shell plugin chosen
+        display_cmd = u' '.join(shlex.quote(to_text(c)) for c in cmd)
+        display.vvv(u'SSH: EXEC {0}'.format(display_cmd), host=self.host)
 
         if not in_data:
             try:
