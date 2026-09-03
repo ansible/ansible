@@ -78,8 +78,10 @@ NEED_CRYPTO_LIBRARY = "ansible-vault requires the cryptography library in order 
 class AnsibleVaultError(AnsibleError):
     pass
 
+
 class AnsibleVaultHMACError(AnsibleVaultError):
     pass
+
 
 class AnsibleVaultPasswordError(AnsibleVaultError):
     pass
