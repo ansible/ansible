@@ -630,19 +630,33 @@ out=$(diff salted_test1 salted_test3 || true)
 [ "${out}" != "" ]
 
 ### Testing password that starts and ends with spaces ###
-# normal password script
+## normal password script
+# vault password starts and ends with whitespace
 ansible-vault view vault-with-spaces --vault-password-file password-with-spaces.sh
+# vault password doesn't start and end with whitespace (backwards compatibility)
+ansible-vault view vault-without-spaces --vault-password-file password-with-spaces.sh
 
-# client password script
+## client password script
+# vault password starts and ends with whitespace
 ansible-vault view vault-with-spaces --vault-password-file password-with-spaces-client.sh
+# vault password doesn't start and end with whitespace (backwards compatibility)
+ansible-vault view vault-without-spaces --vault-password-file password-with-spaces-client.sh
 
 # Use linux setsid to test without a tty. No setsid if osx/bsd though...
 if [ -x "$(command -v setsid)" ]; then
-    # providing password to prompt
+    ## providing password to prompt
+    # vault password starts and ends with whitespace
     setsid sh -c 'tty; cat password-with-spaces | ansible-vault view vault-with-spaces --vault-password-file password-with-spaces' < /dev/null > log 2>&1
+    echo $?
+    cat log
+    # vault password doesn't start and end with whitespace (backwards compatibility)
+    setsid sh -c 'tty; cat password-with-spaces | ansible-vault view vault-without-spaces --vault-password-file password-with-spaces' < /dev/null > log 2>&1
     echo $?
     cat log
 fi
 
-# plain text password file
+## plain text password file
+# vault password starts and ends with whitespace
 ansible-vault view vault-with-spaces --vault-password-file password-with-spaces
+# vault password doesn't start and end with whitespace (backwards compatibility)
+ansible-vault view vault-without-spaces --vault-password-file password-with-spaces
