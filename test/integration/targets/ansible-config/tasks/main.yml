@@ -29,7 +29,7 @@
       shell: ansible-config init > {{ini_tempfile.path}}
 
     - name: run ini tester, for correctness and dupes
-      shell: "{{ansible_playbook_python}} '{{role_path}}/files/ini_dupes.py' '{{ini_tempfile.path}}'"
+      shell: "{{ansible_playbook_python}} -Im coverage run '{{role_path}}/files/ini_dupes.py' '{{ini_tempfile.path}}'"
 
 - name: test ansible-config validate
   block:
