@@ -570,11 +570,15 @@ def _ssh_retry[**P](
             try:
                 try:
                     return_tuple = func(self, *args, **kwargs)
+                    display.vvv(u'rc=%s' % return_tuple[0], host=self.host)
+                    # The raw output is only shown under ANSIBLE_DEBUG. Module output may contain secrets which are
+                    # not registered with the secret masker until the result has been parsed by the action plugin,
+                    # so displaying the raw output here at a normal verbosity level could leak them.
                     # TODO: this should come from task
                     if self._play_context.no_log:
-                        display.vvv(u'rc=%s, stdout and stderr censored due to no log' % return_tuple[0], host=self.host)
+                        display.debug(u'stdout and stderr censored due to no log')
                     else:
-                        display.vvv(str(return_tuple), host=self.host)
+                        display.debug(u'stdout and stderr: %s' % str(return_tuple[1:]))
                     # 0 = success
                     # 1-254 = remote command return code
                     # 255 could be a failure from the ssh command itself
@@ -1251,6 +1255,8 @@ class Connection(ConnectionBase):
                             # not going to arrive until the persisted connection closes.
                             timeout = 1
                         b_tmp_stdout += b_chunk
+                        # Known limitation: under ANSIBLE_DEBUG the raw chunks are shown before any secrets in module output
+                        # have been registered with the secret masker, so they may be shown in plaintext.
                         display.debug(u"stdout chunk (state=%s):\n>>>%s<<<\n" % (state, to_text(b_chunk)))
                     elif key.fileobj == p.stderr:
                         b_chunk = p.stderr.read()

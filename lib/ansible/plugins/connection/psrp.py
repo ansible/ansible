@@ -774,8 +774,11 @@ class Connection(ConnectionBase):
             log_stdout = log_stderr = '<censored due to no log>'
 
         display.vvvvv("PSRP RC: %d" % rc, host=self._psrp_host)
-        display.vvvvv(f"PSRP STDOUT: {log_stdout}", host=self._psrp_host)
-        display.vvvvv(f"PSRP STDERR: {log_stderr}", host=self._psrp_host)
+        # The raw output is only shown under ANSIBLE_DEBUG. Module output may contain secrets which are not
+        # registered with the secret masker until the result has been parsed by the action plugin, so displaying
+        # the raw output here at a normal verbosity level could leak them.
+        display.debug(f"PSRP STDOUT: {log_stdout}")
+        display.debug(f"PSRP STDERR: {log_stderr}")
 
         # reset the host back output back to defaults, needed if running
         # multiple pipelines on the same RunspacePool

@@ -37,6 +37,11 @@ minor_changes:
     Secret masking - add the internal ``_SECRETS_INPUT_FILES`` config option to pre-seed values to redact from the output of ``ansible``,
     ``ansible-playbook``, and ``ansible-console``. Each file is YAML or JSON containing a mapping with a ``version`` key (currently only ``1``) and a
     ``secrets`` key listing the string values to mask. A file with the executable bit set is run instead of read, and its stdout is parsed as the document.
+  - >-
+    ssh, winrm, and psrp connection plugins - the raw stdout and stderr of executed commands are no longer displayed at increased verbosity
+    (``-vvv`` for ``ssh``, ``-vvvvv`` for ``winrm`` and ``psrp``), only the return code is shown. Module output can contain secrets, such as
+    ``no_log`` option values, which are only registered for masking once the result has been parsed, so displaying the raw output before then could
+    leak them. The raw output is still available with ``ANSIBLE_DEBUG=1`` if needed for debugging purposes.
 breaking_changes:
   - >-
     Module options that are marked as ``no_log: true`` will no longer be redacted literally as ``"VALUE_SPECIFIED_IN_NO_LOG_PARAMETER"`` in the module
@@ -67,3 +72,8 @@ deprecated_features:
     ansible.utils.cmd_functions.run_cmd - the ``live`` argument is deprecated and will be removed in ansible-core 2.25 because it writes the subprocess
     output directly to stdout/stderr, bypassing the built-in secret masking applied to captured output. Callers that need to stream output live should run
     the subprocess themselves and are responsible for masking any secrets.
+known_issues:
+  - >-
+    Secret masking - when ``ANSIBLE_DEBUG=1`` is set, the raw stdout and stderr of commands executed on the target, including module results, are displayed
+    before the secrets contained in the module result have been registered for masking. Secrets which are only known to the module, such as ``no_log``
+    option values, may therefore be shown in plaintext in debug output.
