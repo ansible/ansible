@@ -185,6 +185,8 @@
     - import_tasks: test.yml
     - import_tasks: name_handling.yml
     - import_tasks: install.yml
+
+    - include_tasks: test_backup.yml
   always:
     - name: uninstall python3-debian
       apt:
