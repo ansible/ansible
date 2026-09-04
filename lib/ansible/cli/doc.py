@@ -626,29 +626,19 @@ class DocCLI(CLI, RoleMixin):
             # list plugin file names
             for plugin in sorted(results.keys()):
                 filename = to_native(results[plugin])
-
-                # handle deprecated for builtin/legacy
-                pbreak = plugin.split('.')
-                if pbreak[-1].startswith('_') and pbreak[0] == 'ansible' and pbreak[1] in ('builtin', 'legacy'):
-                    pbreak[-1] = pbreak[-1][1:]
-                    plugin = '.'.join(pbreak)
-                    deprecated.append("%-*s %-*.*s" % (displace, plugin, linelimit, len(filename), filename))
-                else:
-                    text.append("%-*s %-*.*s" % (displace, plugin, linelimit, len(filename), filename))
+                text.append("%-*s %-*.*s" % (displace, plugin, linelimit, len(filename), filename))
         else:
             # list plugin names and short desc
             for plugin in sorted(results.keys()):
-                desc = DocCLI.tty_ify(results[plugin])
+                desc = DocCLI.tty_ify(results[plugin][0])
+                is_deprecated = results[plugin][1]
 
                 if len(desc) > linelimit:
                     desc = desc[:linelimit] + '...'
 
                 pbreak = plugin.split('.')
                 # TODO: add mark for deprecated collection plugins
-                if pbreak[-1].startswith('_') and plugin.startswith(('ansible.builtin.', 'ansible.legacy.')):
-                    # Handle deprecated ansible.builtin plugins
-                    pbreak[-1] = pbreak[-1][1:]
-                    plugin = '.'.join(pbreak)
+                if is_deprecated:
                     deprecated.append("%-*s %-*.*s" % (displace, plugin, linelimit, len(desc), desc))
                 else:
                     text.append("%-*s %-*.*s" % (displace, plugin, linelimit, len(desc), desc))
@@ -1000,7 +990,13 @@ class DocCLI(CLI, RoleMixin):
 
         # Display the docs
         if do_json:
-            jdump(docs)
+            new_docs = {}
+            for key, value in docs.items():
+                if isinstance(value, tuple):
+                    new_docs[key] = value[0]
+                else:
+                    new_docs[key] = value
+            jdump(new_docs)
         else:
             text = []
             if plugin_type in C.DOCUMENTABLE_PLUGINS:
@@ -1154,7 +1150,7 @@ class DocCLI(CLI, RoleMixin):
 
         return text
 
-    def _get_plugin_list_descriptions(self, plugins: dict[str, _PluginDocMetadata]) -> dict[str, str]:
+    def _get_plugin_list_descriptions(self, plugins: dict[str, _PluginDocMetadata]) -> dict[str, tuple[str, bool]]:
 
         descs = {}
         for plugin, plugin_info in plugins.items():
@@ -1185,7 +1181,7 @@ class DocCLI(CLI, RoleMixin):
                 # Do a final fallback to see if the plugin is a shadowed Jinja2 plugin
                 # without any explicit documentation.
                 if doc is None and plugin_info.jinja_builtin_short_description:
-                    descs[plugin] = plugin_info.jinja_builtin_short_description
+                    descs[plugin] = (plugin_info.jinja_builtin_short_description, False)
                     continue
 
                 if docerror:
@@ -1194,10 +1190,12 @@ class DocCLI(CLI, RoleMixin):
 
             if not doc or not isinstance(doc, dict):
                 desc = 'UNDOCUMENTED'
+                deprecated = False
             else:
                 desc = doc.get('short_description', 'INVALID SHORT DESCRIPTION').strip()
+                deprecated = doc.get('deprecated', False)
 
-            descs[plugin] = desc
+            descs[plugin] = (desc, deprecated)
 
         return descs
 
