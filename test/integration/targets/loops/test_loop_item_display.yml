@@ -1,0 +1,9 @@
+---
+- hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: Sleep per loop item
+      shell: sleep {{ item }}
+      loop:
+        - 0
+        - 2
