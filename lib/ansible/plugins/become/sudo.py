@@ -84,6 +84,19 @@ DOCUMENTATION = """
             ini:
               - section: sudo_become_plugin
                 key: chdir
+        selinux_role:
+            description:
+                - For SELinux systems, the role to assume when running commands.
+                - Note that your sudo executable needs to support this option; otherwise, it will error out.
+            version_added: '2.21'
+            required: False
+            vars:
+              - name: ansible_sudo_selinux_role
+            env:
+              - name: ANSIBLE_SUDO_SELINUX_ROLE
+            ini:
+              - section: sudo_become_plugin
+                key: selinux_role
 """
 
 import re
@@ -146,5 +159,8 @@ class BecomeModule(BecomeBase):
                 becomecmd = f'{shell.CD} {shlex.quote(chdir)} {shell._SHELL_AND} {becomecmd}'
             except AttributeError as ex:
                 raise AnsibleError(f'The {shell._load_name!r} shell plugin does not support sudo chdir. It is missing the {ex.name!r} attribute.')
+
+        if selinux_role := self.get_option('selinux_role'):
+            flags += f'-r {shlex.quote(selinux_role)}'
 
         return ' '.join([becomecmd, flags, prompt, user, self._build_success_command(cmd, shell)])
