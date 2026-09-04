@@ -95,6 +95,16 @@ from ansible.module_utils.common import json as _common_json
 
 import hashlib
 
+if t.TYPE_CHECKING:
+    from ansible.module_utils.common.arg_spec import (
+        ArgumentSpec,
+        MutuallyExclusive,
+        RequiredTogether,
+        RequiredOneOf,
+        RequiredIf,
+        RequiredBy,
+    )
+
 
 def _get_available_hash_algorithms():
     """Return a dictionary of available hash function names and their associated function."""
@@ -177,7 +187,7 @@ _ANSIBLE_PROFILE: str | None = None
 _PARSED_MODULE_ARGS: dict[str, t.Any] | None = None
 
 
-FILE_COMMON_ARGUMENTS = dict(
+FILE_COMMON_ARGUMENTS: ArgumentSpec = dict(
     # These are things we want. About setting metadata (mode, ownership, permissions in general) on
     # created files (these are used by set_fs_attributes_if_different and included in
     # load_file_common_arguments)
@@ -352,10 +362,10 @@ def missing_required_lib(library, reason=None, url=None):
 
 
 class AnsibleModule(object):
-    def __init__(self, argument_spec, bypass_checks=False, no_log=False,
-                 mutually_exclusive=None, required_together=None,
-                 required_one_of=None, add_file_common_args=False,
-                 supports_check_mode=False, required_if=None, required_by=None):
+    def __init__(self, argument_spec: ArgumentSpec, bypass_checks: bool = False, no_log: bool = False,
+                 mutually_exclusive: MutuallyExclusive | None = None, required_together: RequiredTogether | None = None,
+                 required_one_of: RequiredOneOf | None = None, add_file_common_args: bool = False,
+                 supports_check_mode: bool = False, required_if: RequiredIf | None = None, required_by: RequiredBy | None = None) -> None:
 
         """
         Common code for quickly building an ansible module in Python
@@ -377,7 +387,7 @@ class AnsibleModule(object):
         self.required_one_of = required_one_of
         self.required_if = required_if
         self.required_by = required_by
-        self.cleanup_files = []
+        self.cleanup_files: list[bytes | str | os.PathLike[bytes] | os.PathLike[str]] = []
         self._debug = False
         self._diff = False
         self._socket_path = None
@@ -386,12 +396,12 @@ class AnsibleModule(object):
         self._verbosity = 0
         # May be used to set modifications to the environment for any
         # run_command invocation
-        self.run_command_environ_update = {}
-        self._clean = {}
+        self.run_command_environ_update: dict[str, str] = {}
+        self._clean: dict[t.NoReturn, t.NoReturn] | str | None = {}
 
         self.aliases = {}
-        self._legal_inputs = []
-        self._options_context = list()
+        self._legal_inputs: list[t.NoReturn] = []
+        self._options_context: list[t.NoReturn] = list()
         self._tmpdir = None
 
         if add_file_common_args:
