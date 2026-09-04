@@ -1,0 +1,2 @@
+- set_fact:
+    '{{ item }}': '{{ lookup("vars", item)|default(0)|int + 1}}'
