@@ -801,6 +801,13 @@ DEFAULT_HOST_LIST:
       section: defaults
   type: pathlist
   yaml: {key: defaults.inventory}
+DEFAULT_SUBSET:
+  name: Default inventory subset
+  default: null
+  description: Pattern used to limit selected hosts subset
+  env:
+    - name: ANSIBLE_LIMIT
+  type: string
 DEFAULT_HTTPAPI_PLUGIN_PATH:
   name: HttpApi Plugins Path
   default: '{{ ANSIBLE_HOME ~ "/plugins/httpapi:/usr/share/ansible/plugins/httpapi" }}'
