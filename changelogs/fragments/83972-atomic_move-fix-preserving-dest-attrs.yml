@@ -1,0 +1,2 @@
+bugfixes:
+  - atomic_move - Fix preserving destination attrs when copying across different partitions (https://github.com/ansible/ansible/issues/83972).
