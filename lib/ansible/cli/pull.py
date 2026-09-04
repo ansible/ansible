@@ -16,6 +16,7 @@ import secrets
 import shlex
 import shutil
 import socket
+import subprocess
 import sys
 import time
 
@@ -25,39 +26,10 @@ from ansible.cli.arguments import option_helpers as opt_help
 from ansible.errors import AnsibleOptionsError
 from ansible.module_utils.common.text.converters import to_native, to_text
 from ansible.plugins.loader import module_loader
-from ansible.utils.cmd_functions import run_cmd
 from ansible.utils.display import Display
 
 
 display = Display()
-
-SAFE_OUTPUT_ENV = {
-    'ANSIBLE_CALLBACK_RESULT_FORMAT': 'json',
-    'ANSIBLE_LOAD_CALLBACK_PLUGINS': '0',
-}
-
-
-def safe_output_env(f):
-
-    def wrapper(*args, **kwargs):
-
-        orig = {}
-
-        for k, v in SAFE_OUTPUT_ENV.items():
-            orig[k] = os.environ.get(k, None)
-            os.environ[k] = v
-
-        result = f(*args, **kwargs)
-
-        for key in orig.keys():
-            if orig[key] is None:
-                del os.environ[key]
-            else:
-                os.environ[key] = orig[key]
-
-        return result
-
-    return wrapper
 
 
 class PullCLI(CLI):
@@ -280,7 +252,18 @@ class PullCLI(CLI):
         # RUN the Checkout command
         display.debug("running ansible with VCS module to checkout repo")
         display.vvvv('EXEC: %s' % cmd)
-        rc, b_out, b_err = safe_output_env(run_cmd)(cmd, live=True)
+
+        safe_output_env = os.environ | {
+            'ANSIBLE_CALLBACK_RESULT_FORMAT': 'json',
+            'ANSIBLE_LOAD_CALLBACK_PLUGINS': '0',
+        }
+        p = subprocess.Popen(shlex.split(cmd), stdout=subprocess.PIPE, env=safe_output_env)
+        b_out = b''
+        for chunk in iter(lambda: p.stdout.read(1024), b''):
+            sys.stdout.buffer.write(chunk)
+            sys.stdout.buffer.flush()
+            b_out += chunk
+        rc = p.wait()
 
         if rc != 0:
             if context.CLIARGS['force']:
@@ -347,7 +330,8 @@ class PullCLI(CLI):
         # RUN THE PLAYBOOK COMMAND
         display.debug("running ansible-playbook to do actual work")
         display.debug('EXEC: %s' % cmd)
-        rc, b_out, b_err = run_cmd(cmd, live=True)
+        p = subprocess.Popen(shlex.split(cmd))
+        rc = p.wait()
 
         if context.CLIARGS['purge']:
             os.chdir('/')

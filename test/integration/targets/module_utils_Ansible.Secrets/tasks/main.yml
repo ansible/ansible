@@ -1,0 +1,14 @@
+---
+# The masking corpus is passed as raw content because the test module runs on a
+# remote target that cannot access the controller's files. The same fixture is
+# consumed by the units in test/units/module_utils/_internal/ to keep the C# and
+# Python secret masking implementations aligned.
+- name: test Ansible.Secrets.cs
+  ansible_secrets_tests:
+    corpus: '{{ lookup("file", "secret_masking_corpus.json") }}'
+  register: ansible_secrets_test
+
+- name: assert test Ansible.Secrets.cs
+  assert:
+    that:
+    - ansible_secrets_test.data == "success"

@@ -29,6 +29,8 @@ from ansible.module_utils.common.validation import (
     check_required_arguments,
 )
 
+from .. import secrets as _secrets
+
 from ansible.module_utils.errors import (
     AliasError,
     AnsibleValidationErrorMultiple,
@@ -283,6 +285,11 @@ class ArgumentSpecValidator:
 
             msg = "{0}. Supported parameters include: {1}.".format(unsupported_string, supported_string)
             result.errors.append(UnsupportedError(msg))
+
+        # Register every no_log value as a secret once they have all been
+        # collected. This must happen after defaults and sub-spec validation
+        # so values sourced from defaults or fallbacks are also masked.
+        _secrets.register_secrets(result._no_log_values)
 
         return result
 

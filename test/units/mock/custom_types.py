@@ -42,6 +42,24 @@ class CustomSequence(c.Sequence):
         return self._data == other
 
 
+class CustomSet(c.Set):
+    """Minimally functional Set implementation for testing."""
+    def __init__(self, data: list) -> None:
+        self._data = list(data)
+
+    def __contains__(self, value):
+        return value in self._data
+
+    def __len__(self):
+        return len(self._data)
+
+    def __iter__(self):
+        return iter(self._data)
+
+    def __repr__(self):
+        return f'{type(self).__name__}({self._data!r})'
+
+
 class CustomInt(int): ...
 
 

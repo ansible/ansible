@@ -1,0 +1,16 @@
+vaulted_scalar: Vaultfilescalar0010Secret
+vaulted_list:
+  - Vaultfilelist0011Secret
+vaulted_dict:
+  nested_key: Vaultfiledict0012Secret
+vaulted_int: 87654321
+notasecretkeyname: Vaultfilekeyval0014Secret
+vaulted_dict_in_list:
+  - nested_dict_key: Vaultdictinlist0015Secret
+vaulted_list_in_dict:
+  outer_key:
+    - Vaultlistindict0016Secret
+vaulted_deep:
+  level_a:
+    - level_b:
+        - Vaultdeep0017Secret

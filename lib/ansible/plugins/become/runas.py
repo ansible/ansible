@@ -45,6 +45,8 @@ DOCUMENTATION = """
               - name: become_flags
         become_pass:
             description: password
+            type: str
+            secret: true
             ini:
               - section: runas_become_plugin
                 key: password

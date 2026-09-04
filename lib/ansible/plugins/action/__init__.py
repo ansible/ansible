@@ -1460,6 +1460,8 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         # be sure to remove the BECOME-SUCCESS message now
         out = self._strip_success_message(out)
 
+        # Known limitation: under ANSIBLE_DEBUG the raw output is shown before any secrets in module output have been
+        # registered with the secret masker (that happens when the result is parsed), so they may be shown in plaintext.
         display.debug(u"_low_level_execute_command() done: rc=%d, stdout=%s, stderr=%s" % (rc, out, err))
         return dict(rc=rc, stdout=out, stdout_lines=out.splitlines(), stderr=err, stderr_lines=err.splitlines())
 

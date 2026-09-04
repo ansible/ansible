@@ -41,6 +41,7 @@ from ansible.executor.task_result import CallbackTaskResult
 from ansible.inventory.manager import InventoryManager
 from ansible.module_utils._internal import _debug
 from ansible.module_utils.common.text.converters import to_native
+from ansible.module_utils.secrets import register_secrets
 from ansible.parsing.dataloader import DataLoader
 from ansible.playbook.play_context import PlayContext
 from ansible.playbook.task import Task
@@ -48,7 +49,7 @@ from ansible.plugins.callback import CallbackBase
 from ansible.plugins.loader import callback_loader, strategy_loader, module_loader
 from ansible._internal._plugins import _strategy
 from ansible._internal._templating._engine import TemplateEngine
-from ansible._internal._task import UnifiedTaskResult, WireTaskResult, HostTaskResult
+from ansible._internal._task import UnifiedTaskResult, WireTaskResult, HostTaskResult, TaskContext
 from ansible.vars.hostvars import HostVars
 from ansible.vars.manager import VariableManager
 from ansible.utils.display import Display
@@ -66,6 +67,12 @@ STDOUT_FILENO = 1
 STDERR_FILENO = 2
 
 display = Display()
+
+
+@dataclasses.dataclass(frozen=True, kw_only=True, slots=True)
+class _Envelope:
+    secrets: frozenset[str] | None = None
+    message: CallbackSend | DisplaySend | PromptSend | WireTaskResult
 
 
 @dataclasses.dataclass(frozen=True, kw_only=True, slots=True)
@@ -95,6 +102,20 @@ class FinalQueue(multiprocessing.queues.SimpleQueue):
     def __init__(self, *args, **kwargs):
         kwargs['ctx'] = multiprocessing_context
         super().__init__(*args, **kwargs)
+
+    def put(self, obj):
+        super().put(
+            _Envelope(
+                secrets=tc.flush_new_secrets() if (tc := TaskContext.current(optional=True)) else None,
+                message=obj
+            ),
+        )
+
+    def get(self):
+        envelope = super().get()
+        if envelope.secrets:
+            register_secrets(envelope.secrets)
+        return envelope.message
 
     def send_callback(self, method_name: str, host: Host, task: Task, utr: UnifiedTaskResult) -> None:
         self.put(CallbackSend(method_name=method_name, wire_task_result=WireTaskResult.create(host=host, task=task, utr=utr)))
@@ -519,7 +540,8 @@ class TaskQueueManager:
                 for arg in args:
                     # FIXME: add play/task cleaners
                     if isinstance(arg, HostTaskResult):
-                        copied_tr = CallbackTaskResult(host=arg.host, task=arg.task, utr=arg.utr)
+                        mask_result = not callback_plugin.ANSIBLE_SUPPORTS_MASKING
+                        copied_tr = CallbackTaskResult(host=arg.host, task=arg.task, utr=arg.utr, mask_result=mask_result)
                         new_args.append(copied_tr)
                         # this state hack requires that no callback ever accepts > 1 TaskResult object
                         callback_plugin._current_task_result = copied_tr
