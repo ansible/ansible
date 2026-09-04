@@ -1,0 +1,28 @@
+- hosts: testhost,testhost2
+  gather_facts: no
+  strategy: linear
+  tasks:
+    - name: Test run_once set on a block
+      run_once: True
+      block:
+        - name: EXPECTED FAILURE
+          fail:
+            msg: "task 1 {{ inventory_hostname }}"
+      rescue:
+        - debug:
+            msg: "task 2 {{ inventory_hostname }}"
+          failed_when: inventory_hostname != 'testhost'
+
+- hosts: testhost,testhost2
+  gather_facts: no
+  strategy: linear
+  tasks:
+    - name: Test run_once set within a block
+      block:
+        - name: EXPECTED FAILURE
+          fail:
+            msg: "task 3 {{ inventory_hostname }}"
+          run_once: True
+      rescue:
+        - debug:
+            msg: "task 4 {{ inventory_hostname }}"

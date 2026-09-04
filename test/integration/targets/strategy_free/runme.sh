@@ -13,4 +13,9 @@ set +e
 result="$(ansible-playbook free_index_error.yml -i free_hosts "$@" 2>&1)"
 set -e
 grep -q "\[host1\]: UNREACHABLE!" <<< "$result"
-! grep -q "IndexError: list index out of range" <<< "$result"
+if grep -q "IndexError: list index out of range" <<< "$result"; then
+    exit 1
+fi
+
+result="$(ansible-playbook test_run_once_noop.yml -i free_hosts "$@" 2>&1)"
+grep "Using run_once with the free strategy is not currently supported." <<< "$result"
