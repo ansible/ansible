@@ -1,0 +1,8 @@
+---
+
+bugfixes:
+- >-
+  ansible-galaxy - the dependency resolution steps are now very detailed
+  when collections installation is running under debug mode.
+
+...
