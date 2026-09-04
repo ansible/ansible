@@ -241,3 +241,55 @@
     that:
       - list_result is failed
       - "'is expected to have a valid SemVer version value but got None' in list_result.stderr"
+
+- name: Test showing the first FQCN in the configured paths
+  vars:
+    dev: "{{ galaxy_dir }}/dev/ansible_collections"
+    prod: "{{ galaxy_dir }}/prod/ansible_collections"
+    test_paths:
+      - "{{ dev }}"
+      - "{{ prod }}"
+  block:
+    - name: Remove collection paths
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop: "{{ test_paths }}"
+
+    - name: Initialize collection paths
+      file:
+        path: "{{ item }}"
+        state: directory
+      loop: "{{ test_paths }}"
+
+    - name: Initialize a collection in two paths
+      command: ansible-galaxy collection init common.collection --init-path {{ item }}
+      loop: "{{ test_paths }}"
+
+    - name: List deduplicated collection by name
+      command: ansible-galaxy collection list common.collection --deduplicate --format yaml
+      register: first_by_name
+      environment:
+        ANSIBLE_COLLECTIONS_PATH: "{{ test_paths | join(':') }}"
+
+    - name: Reverse the search order and list all deduplicated collections
+      command: ansible-galaxy collection list --deduplicate --format yaml
+      register: first_all
+      environment:
+        ANSIBLE_COLLECTIONS_PATH: "{{ test_paths | reverse | join(':') }}"
+
+    - name: List deduplicated collections with -p
+      command: ansible-galaxy collection list -p {{ test_paths | first }} --deduplicate --format yaml
+      register: first_override
+      environment:
+        ANSIBLE_COLLECTIONS_PATH: "{{ test_paths | last }}"
+
+    - assert:
+        that:
+          - 'first_by_name.stdout | from_yaml == {dev: found}'
+          - 'first_all.stdout | from_yaml == {prod: found}'
+          - 'first_override.stdout | from_yaml == {dev: found}'
+      vars:
+        found:
+          common.collection:
+            version: 1.0.0
