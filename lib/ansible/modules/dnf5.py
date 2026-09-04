@@ -232,6 +232,7 @@ options:
 extends_documentation_fragment:
 - action_common_attributes
 - action_common_attributes.flow
+- dnf
 attributes:
     action:
         details: dnf5 has 2 action plugins that use it under the hood, M(ansible.builtin.dnf) and M(ansible.builtin.package).
@@ -594,7 +595,12 @@ class Dnf5Module(YumDnf):
             conf.pkg_gpgcheck = not self.disable_gpg_check
         conf.localpkg_gpgcheck = not self.disable_gpg_check
         conf.sslverify = self.sslverify
-        conf.clean_requirements_on_remove = self.autoremove
+        # `clean_requirements_on_remove` can be set independently of `autoremove`. When it
+        # is not specified, fall back to `autoremove` to preserve backwards compatibility.
+        if self.clean_requirements_on_remove is None:
+            conf.clean_requirements_on_remove = self.autoremove
+        else:
+            conf.clean_requirements_on_remove = self.clean_requirements_on_remove
 
         if not os.path.isdir(self.installroot):
             self.module.fail_json(msg=f"Installroot {self.installroot} must be a directory")
