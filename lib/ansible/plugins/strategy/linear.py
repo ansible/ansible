@@ -361,8 +361,7 @@ class StrategyModule(StrategyBase):
                 display.debug("checking for max_fail_percentage")
                 if iterator._play.max_fail_percentage is not None and len(results) > 0:
                     percentage = iterator._play.max_fail_percentage / 100.0
-
-                    if (len(self._tqm._failed_hosts) / iterator.batch_size) > percentage:
+                    if (len(failed_hosts) / iterator.batch_size) > percentage:
                         for host in hosts_left:
                             # don't double-mark hosts, or the iterator will potentially
                             # fail them out of the rescue/always states
