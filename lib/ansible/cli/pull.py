@@ -83,6 +83,7 @@ class PullCLI(CLI):
     PLAYBOOK_ERRORS = {
         1: 'File does not exist',
         2: 'File is not readable',
+        3: 'File is not in the source repository',
     }
     ARGUMENTS = {'playbook.yml': 'The name of one the YAML format files to run as an Ansible playbook. '
                                  'This can be a relative path within the checkout. By default, Ansible will '
@@ -360,11 +361,13 @@ class PullCLI(CLI):
         return rc
 
     @staticmethod
-    def try_playbook(path):
-        if not os.path.exists(path):
+    def try_playbook(path, book_path):
+        if not os.path.exists(book_path):
             return 1
-        if not os.access(path, os.R_OK):
+        if not os.access(book_path, os.R_OK):
             return 2
+        if not book_path.startswith(path):
+            return 3
         return 0
 
     @staticmethod
@@ -374,8 +377,8 @@ class PullCLI(CLI):
         if context.CLIARGS['args'] and context.CLIARGS['args'][0] is not None:
             playbooks = []
             for book in context.CLIARGS['args']:
-                book_path = os.path.join(path, book)
-                rc = PullCLI.try_playbook(book_path)
+                book_path = os.path.realpath(os.path.join(path, book))
+                rc = PullCLI.try_playbook(path, book_path)
                 if rc != 0:
                     errors.append("%s: %s" % (book_path, PullCLI.PLAYBOOK_ERRORS[rc]))
                     continue
@@ -387,11 +390,11 @@ class PullCLI(CLI):
             return playbook
         else:
             fqdn = socket.getfqdn()
-            hostpb = os.path.join(path, fqdn + '.yml')
-            shorthostpb = os.path.join(path, fqdn.split('.')[0] + '.yml')
-            localpb = os.path.join(path, PullCLI.DEFAULT_PLAYBOOK)
+            hostpb = os.path.realpath(os.path.join(path, fqdn + '.yml'))
+            shorthostpb = os.path.realpath(os.path.join(path, fqdn.split('.')[0] + '.yml'))
+            localpb = os.path.realpath(os.path.join(path, PullCLI.DEFAULT_PLAYBOOK))
             for pb in [hostpb, shorthostpb, localpb]:
-                rc = PullCLI.try_playbook(pb)
+                rc = PullCLI.try_playbook(path, pb)
                 if rc == 0:
                     playbook = pb
                     break
