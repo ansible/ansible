@@ -202,8 +202,7 @@ class TaskContext(AmbientContextBase):
         original_task = self.task
         original_play_context = te._play_context
 
-        loop_item_task = self.task.copy(exclude_parent=True, exclude_tasks=True)
-        loop_item_task._parent = self.task._parent
+        loop_item_task = self.task.copy()
         loop_item_play_context = te._play_context.copy()
 
         self._task = loop_item_task
