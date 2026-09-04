@@ -1,0 +1,2 @@
+bugfixes:
+  - dpkg_selections now handles existing, but not primed, packages correctly.
