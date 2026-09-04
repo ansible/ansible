@@ -1,0 +1,2 @@
+bugfixes:
+  - async_wrapper - fix variable expansion in async_dir to match remote_tmp behavior (https://github.com/ansible/ansible/issues/85370).
