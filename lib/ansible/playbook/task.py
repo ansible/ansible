@@ -65,6 +65,10 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
 
     _post_validate_object = True
 
+    # used to handle 'environment' templating errors at play level when user does not have facts yet
+    _ENV_FACTS_ERR = ('ansible_env', 'ansible_facts.env')
+    _ENV_FACTS_SRC = ('ansible_facts.env', 'ansible_facts["env"]', "ansible_facts['env']")
+
     # =================================================================================
     # ATTRIBUTES
     # load_<attribute_name> and
@@ -418,9 +422,11 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
                 # skip this value
                 return
             except AnsibleUndefinedVariable as e:
-                error = to_native(e)
-                if self.action in C._ACTION_FACT_GATHERING and 'ansible_facts.env' in error or 'ansible_env' in error:
-                    # ignore as fact gathering is required for 'env' facts
+                err = str(e)
+                if self.action in C._ACTION_FACT_GATHERING and \
+                (any(env in err for env in self._ENV_FACTS_ERR) or \
+                "object of type 'dict' has no attribute 'env'" in err and any(tmpl in v for tmpl in self._ENV_FACTS_SRC)):
+                    display.debug("Ignored 'environment' templating error due to ansible_env match: {e}")
                     return
                 raise
 
