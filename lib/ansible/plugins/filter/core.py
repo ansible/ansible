@@ -21,6 +21,7 @@ import typing as t
 from collections.abc import Mapping
 from functools import partial
 from random import Random, SystemRandom, shuffle
+from urllib.parse import urlparse
 
 from jinja2.filters import do_map, do_select, do_selectattr, do_reject, do_rejectattr, pass_environment, sync_do_groupby
 from jinja2.environment import Environment
@@ -732,6 +733,53 @@ def type_debug(obj: object) -> str:
     return native_type_name(obj)
 
 
+def ppa_to_url(url: str) -> str:
+    expected_format_msg = f"Invalid PPA format: {url}. Expected format: ppa:user/ppa-name, user/ppa-name, or user"
+    if ":" not in url:
+        # Handle user/ppa-name and user formats
+        url = f"ppa:{url}"
+
+    (prefix, dummy, ppa_path) = url.rpartition(':')
+    if not prefix == 'ppa':
+        raise ValueError(expected_format_msg) from None
+
+    (user, dummy, ppa_name) = ppa_path.partition('/')
+    user = user.lstrip('~')
+    if '/' in ppa_name:
+        ubuntu_version, dummy, ppa_name = ppa_name.partition('/')
+        if ubuntu_version != 'ubuntu' or '/' in ppa_name:
+            raise ValueError(expected_format_msg) from None
+    ppa_name = ppa_name or 'ppa'
+    return f"https://ppa.launchpad.net/{user}/{ppa_name}/ubuntu"
+
+
+def url_to_ppa(url: str) -> str:
+    expected_format_msg = (
+        f"Invalid URL format: {url}. "
+        "Expected format: https://launchpad.net/~user/+archive/ubuntu/package "
+        "or https://ppa.launchpad.net/user/package/ubuntu"
+    )
+    if "://" not in url:
+        url = f"https://{url}"
+
+    parsed_url = urlparse(url)
+    if parsed_url.netloc == 'launchpad.net':
+        path = parsed_url.path.split('/')
+        if len(path) != 5:
+            raise ValueError(expected_format_msg) from None
+        user = path[1].replace('~', '')
+        ppa_name = path[-1]
+        return f"ppa:{user}/{ppa_name}"
+    elif parsed_url.netloc == 'ppa.launchpad.net':
+        path = parsed_url.path.split('/')
+        if len(path) != 4:
+            raise ValueError(expected_format_msg) from None
+        user = path[1].replace('~', '')
+        ppa_name = path[2]
+        return f"ppa:{user}/{ppa_name}"
+    raise ValueError(expected_format_msg) from None
+
+
 class FilterModule(object):
     """ Ansible core jinja2 filters """
 
@@ -835,4 +883,7 @@ class FilterModule(object):
             'selectattr': wrapped_selectattr,
             'reject': wrapped_reject,
             'rejectattr': wrapped_rejectattr,
+
+            'ppa_to_url': ppa_to_url,
+            'url_to_ppa': url_to_ppa,
         }

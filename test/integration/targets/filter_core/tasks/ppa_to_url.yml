@@ -1,0 +1,47 @@
+- name: Test ppa_to_url filter
+  set_fact:
+    ppa_url: 'ppa:user/ppa-name'
+    ppa_without_prefix: 'user/ppa-name'
+    ppa_without_ppaname: 'user'
+    ppa_with_tilde: 'ppa:~user/ppa-name'
+    invalid_ppa: 'ppa:user/ppa-name/invalid'
+    ppa_with_ubuntu_version: 'ppa:user/ubuntu/ppa-name'
+    invalid_ppa_with_no_ubuntu_version: 'ppa:user/ppa-name/sample'
+    expected_url: 'https://ppa.launchpad.net/user/ppa-name/ubuntu'
+    expected_url_without_prefix: 'https://ppa.launchpad.net/user/ppa-name/ubuntu'
+    expected_url_without_ppaname: 'https://ppa.launchpad.net/user/ppa/ubuntu'
+    expected_url_with_tilde: 'https://ppa.launchpad.net/user/ppa-name/ubuntu'
+    expected_url_ppa_with_ubuntu_version: 'https://ppa.launchpad.net/user/ppa-name/ubuntu'
+
+- name: Verify ppa_to_url filter
+  assert:
+    that:
+      - ppa_url | ppa_to_url == expected_url
+      - ppa_without_prefix | ppa_to_url == expected_url_without_prefix
+      - ppa_without_ppaname | ppa_to_url == expected_url_without_ppaname
+      - ppa_with_tilde | ppa_to_url == expected_url_with_tilde
+      - ppa_with_ubuntu_version | ppa_to_url == expected_url_ppa_with_ubuntu_version
+
+- name: Test ppa_to_url filter with invalid format
+  set_fact:
+    foo: '{{ invalid_ppa | ppa_to_url }}'
+  ignore_errors: yes
+  register: ppa_to_url_invalid_ppa
+
+- name: Verify ppa_to_url filter with invalid format
+  assert:
+    that:
+      - ppa_to_url_invalid_ppa is failed
+      - "'Invalid PPA format' in ppa_to_url_invalid_ppa.msg"
+
+- name: Test ppa_to_url filter with invalid format
+  set_fact:
+    foo: '{{ invalid_ppa_with_no_ubuntu_version | ppa_to_url }}'
+  ignore_errors: yes
+  register: ppa_to_url_invalid_ppa_with_no_ubuntu_version
+
+- name: Verify ppa_to_url filter with invalid format
+  assert:
+    that:
+      - ppa_to_url_invalid_ppa_with_no_ubuntu_version is failed
+      - "'Invalid PPA format' in ppa_to_url_invalid_ppa_with_no_ubuntu_version.msg"
