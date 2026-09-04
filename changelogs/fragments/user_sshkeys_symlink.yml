@@ -1,0 +1,3 @@
+bugfixes:
+  - The user module, now unlinks target ssh key files if they are symlinks to avoid overwriting their sources.
+  - The user module, will no longer remove existing public key files in check mode.
