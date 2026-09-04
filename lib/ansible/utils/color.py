@@ -100,12 +100,25 @@ def colorize(lead, num, color):
     return s
 
 
-def hostcolor(host, stats, color=True):
+def hostcolor(host, stats, color=True, width=26):
+    # Lazy import: display.py imports stringc from this module.
+    from ansible.utils.display import get_text_width
+
+    try:
+        host_w = get_text_width(host)
+    except EnvironmentError:
+        host_w = len(host)
+
+    padding = u' ' * max(0, width - host_w)
+
     if ANSIBLE_COLOR and color:
         if stats['failures'] != 0 or stats['unreachable'] != 0:
-            return u"%-37s" % stringc(host, C.COLOR_ERROR)
+            host_text = stringc(host, C.COLOR_ERROR)
         elif stats['changed'] != 0:
-            return u"%-37s" % stringc(host, C.COLOR_CHANGED)
+            host_text = stringc(host, C.COLOR_CHANGED)
         else:
-            return u"%-37s" % stringc(host, C.COLOR_OK)
-    return u"%-26s" % host
+            host_text = stringc(host, C.COLOR_OK)
+    else:
+        host_text = host
+
+    return u'%s%s' % (host_text, padding)
