@@ -1,0 +1,2 @@
+bugfixes:
+  - unarchive - validate ``extra_opts`` parameter to reject dangerous GNU tar options that could execute arbitrary commands.
