@@ -1,5 +1,0 @@
-deprecated_features:
-  - >-
-    ansible.utils.cmd_functions.run_cmd - the ``live`` argument is deprecated because it writes the subprocess output directly to
-    stdout/stderr, bypassing the built-in secret masking applied to captured output. Callers that need to stream output live should
-    run the subprocess themselves and are responsible for masking any secrets.

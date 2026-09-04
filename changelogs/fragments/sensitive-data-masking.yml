@@ -1,3 +1,69 @@
+major_changes:
+  - >-
+    Secret masking - Ansible now automatically redacts known secret values from the output it generates, such as ``display`` output (including verbose,
+    warning, deprecation, and error output), module logging, and task results passed to callback plugins. Masking is non-destructive; the real value
+    remains available to tasks, conditionals, and registered variables, only the rendered output is redacted with ``$REDACTED$``. Secrets shorter than 4
+    characters are never masked, secrets of 4 to 6 characters are only masked when they appear as a whole word, and secrets longer than 1024 characters
+    are matched on their first 1024 characters.
+  - >-
+    Secret masking - add the ``ansible.module_utils.secrets`` public API for working with secrets manually. It provides ``register_secret`` and
+    ``register_secrets`` to register values that should be redacted from masked output, and ``mask_secrets`` to redact any registered secrets from a
+    string. The API can be used on the controller and in Python modules; the new ``Ansible.Secrets`` C# module_util provides the equivalent
+    ``[Ansible.Secrets.SecretMasker]::RegisterSecret()`` and ``MaskString()`` methods for PowerShell modules. Secrets registered inside a module or worker
+    process are propagated back to the controller so they are also masked there.
+  - >-
+    callback plugins - callback plugin authors should opt into the new secret masking behaviour by setting the class attribute ``ANSIBLE_SUPPORTS_MASKING
+    = True``. A callback that sets this receives the unmasked task result and must ensure any secrets are redacted before they are written, either by
+    emitting output through ``Display`` which masks automatically, or by passing the values through ``ansible.module_utils.secrets.mask_secrets()`` before
+    writing them elsewhere. Callbacks that do not set the attribute continue to receive task results with any registered secrets replaced by
+    ``$REDACTED$``, matching the redacted results they receive today. This implicit masking exists only for backwards compatibility with existing
+    callbacks and will be removed in a future release, at which point all callbacks will receive unmasked results and must mask them manually if not using
+    ``Display``. Task-level ``no_log: true`` continues to censor the entire result regardless of this attribute.
+minor_changes:
+  - >-
+    Secret masking - the following values are now automatically registered as secrets and redacted from masked output: vault passwords provided by prompt,
+    file, or script; the decrypted plaintext of vault encrypted values and every string or numeric value in a vault encrypted vars file; passwords entered
+    for ``--ask-pass`` and ``--ask-become-pass``; ``no_log`` module option values; the ``become_pass`` option of the ``sudo``, ``su``, and ``runas``
+    become plugins; the ``password``, ``private_key``, and ``private_key_passphrase`` options of the ``ssh`` connection plugin; the ``password`` option of
+    the ``winrm`` and ``psrp`` connection plugins and the ``certificate_key_password`` option of ``psrp``; the ``password`` option of the ``url`` lookup;
+    the values returned by the ``password`` and ``unvault`` lookups; the secret passed to the ``vault`` and ``unvault`` filters; the user input of the
+    ``pause`` action when ``echo`` is ``false``; and values entered for a play ``vars_prompt`` when ``private`` is ``true`` (the default).
+  - >-
+    config - add a ``secret`` boolean keyword to plugin configuration option definitions. When set to ``true``, the resolved value of the option is
+    automatically registered as a secret for output masking, regardless of the source it was set from (env, ini, vars, CLI, or plugin arguments). It is
+    only supported for the ``str``, ``string``, and ``list`` types (string elements of a list are registered); using it with any other type raises an
+    error when the plugin configuration is loaded.
+  - >-
+    Secret masking - add the internal ``_SECRETS_INPUT_FILES`` config option to pre-seed values to redact from the output of ``ansible``,
+    ``ansible-playbook``, and ``ansible-console``. Each file is YAML or JSON containing a mapping with a ``version`` key (currently only ``1``) and a
+    ``secrets`` key listing the string values to mask. A file with the executable bit set is run instead of read, and its stdout is parsed as the document.
+breaking_changes:
+  - >-
+    Module options that are marked as ``no_log: true`` will no longer be redacted literally as ``"VALUE_SPECIFIED_IN_NO_LOG_PARAMETER"`` in the module
+    result and ``invocation.module_args``. Instead, the actual value is registered as a secret and is only redacted in generated output, allowing these
+    values to be used by subsequent tasks without any loss of data. The value is still redacted in callback output and module logging. Playbooks or tests
+    that check for the ``VALUE_SPECIFIED_IN_NO_LOG_PARAMETER`` placeholder in results should be updated.
+  - >-
+    AnsibleModule - ``log()`` and the automatic invocation logging now only redact values registered as secrets (such as ``no_log`` option values) and no
+    longer apply the ``heuristic_log_sanitize()`` heuristics, for example ``user:password@host`` in URLs is no longer rewritten unless the password is a
+    registered secret. ``no_log`` and password-like options are logged as ``$REDACTED$`` instead of ``NOT_LOGGING_PARAMETER`` or ``NOT_LOGGING_PASSWORD``.
+  - >-
+    AnsibleModule - ``run_command()`` no longer rewrites the ``cmd`` value in a failure result to replace password-like arguments (such as
+    ``--password=...``) with ``********``, and the ``msg`` value is no longer passed through ``heuristic_log_sanitize()``. Registered secrets in these
+    values are still redacted in output. Modules that pass a secret on the command line which is not a ``no_log`` option should register it with
+    ``ansible.module_utils.secrets.register_secret()``.
+  - >-
+    uri - response keys are no longer rewritten to strip ``no_log`` values (previously done with ``sanitize_keys()``); registered secrets are masked in
+    output instead.
 deprecated_features:
-  - module_utils - the ``heuristic_log_sanitize()`` function in ``ansible.module_utils.basic`` is deprecated and will be removed in ansible-core 2.25. Secret values are now masked automatically, use functions from the ``ansible.module_utils.secrets`` module to handle secrets manually.
-  - module_utils - the ``remove_values()`` and ``sanitize_keys()`` functions in ``ansible.module_utils.common.parameters`` are deprecated and will be removed in ansible-core 2.25. Secret values are now masked automatically, use functions from the ``ansible.module_utils.secrets`` module to handle secrets manually.
+  - >-
+    module_utils - the ``heuristic_log_sanitize()`` function in ``ansible.module_utils.basic`` is deprecated and will be removed in ansible-core 2.25.
+    Secret values are now masked automatically, use functions from the ``ansible.module_utils.secrets`` module to handle secrets manually.
+  - >-
+    module_utils - the ``remove_values()`` and ``sanitize_keys()`` functions in ``ansible.module_utils.common.parameters`` are deprecated and will be
+    removed in ansible-core 2.25. Secret values are now masked automatically, use functions from the ``ansible.module_utils.secrets`` module to handle
+    secrets manually.
+  - >-
+    ansible.utils.cmd_functions.run_cmd - the ``live`` argument is deprecated and will be removed in ansible-core 2.25 because it writes the subprocess
+    output directly to stdout/stderr, bypassing the built-in secret masking applied to captured output. Callers that need to stream output live should run
+    the subprocess themselves and are responsible for masking any secrets.

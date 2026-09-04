@@ -31,6 +31,8 @@ class CallbackModule(CallbackBase):
     CALLBACK_TYPE = 'stdout'
     CALLBACK_NAME = 'minimal'
 
+    ANSIBLE_SUPPORTS_MASKING = True
+
     def _command_generic_msg(self, host, result, caption):
         """ output the result of a command run """
 

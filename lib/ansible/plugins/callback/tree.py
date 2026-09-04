@@ -35,7 +35,8 @@ import os
 
 from ansible.constants import TREE_DIR
 from ansible.executor.task_result import CallbackTaskResult
-from ansible.module_utils.common.text.converters import to_bytes
+from ansible.module_utils.common.text.converters import to_bytes, to_text
+from ansible.module_utils.secrets import mask_secrets
 from ansible.plugins.callback import CallbackBase
 from ansible.utils.path import makedirs_safe, unfrackpath
 
@@ -49,6 +50,8 @@ class CallbackModule(CallbackBase):
     CALLBACK_TYPE = 'aggregate'
     CALLBACK_NAME = 'tree'
     CALLBACK_NEEDS_ENABLED = True
+
+    ANSIBLE_SUPPORTS_MASKING = True
 
     def set_options(self, task_keys=None, var_options=None, direct=None):
         """ override to set self.tree """
@@ -64,7 +67,8 @@ class CallbackModule(CallbackBase):
     def write_tree_file(self, hostname, buf):
         """ write something into treedir/hostname """
 
-        buf = to_bytes(buf)
+        # This callback opts in to receiving unmasked results, so any secrets must be redacted before they reach the file.
+        buf = to_bytes(mask_secrets(to_text(buf)))
         try:
             makedirs_safe(self.tree)
         except OSError as ex:

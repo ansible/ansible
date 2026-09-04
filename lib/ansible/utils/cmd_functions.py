@@ -40,7 +40,7 @@ def run_cmd(cmd, live=Sentinel, readsize=10):
                 "subprocess output directly to stdout/stderr, bypassing the built-in "
                 "secret masking that is applied to the captured output."
             ),
-            version="2.26",
+            version="2.25",
             help_text=(
                 "If you need to stream the subprocess output live, run the subprocess "
                 "yourself (e.g. with subprocess.Popen) so it writes directly to the "

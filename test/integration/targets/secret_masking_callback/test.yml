@@ -29,3 +29,8 @@
     - name: emit a task result whose payload nests the secret at every depth
       debug:
         var: nested
+
+    - name: emit a failed task result whose msg contains the registered secret
+      fail:
+        msg: "MARKER failed: {{ cb_value }}"
+      ignore_errors: true

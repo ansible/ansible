@@ -91,6 +91,7 @@ import typing as t
 from ansible import constants
 from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.module_utils._internal import _event_utils
+from ansible.module_utils.secrets import mask_secrets
 from ansible._internal import _event_formatting
 from ansible.playbook.task import Task
 from ansible.plugins.callback import CallbackBase
@@ -143,6 +144,8 @@ class CallbackModule(CallbackBase):
     CALLBACK_NAME = 'junit'
     CALLBACK_NEEDS_ENABLED = True
 
+    ANSIBLE_SUPPORTS_MASKING = True
+
     def __init__(self) -> None:
         super(CallbackModule, self).__init__()
 
@@ -186,7 +189,8 @@ class CallbackModule(CallbackBase):
             if args:
                 name += ' ' + args
 
-        self._task_data[uuid] = TaskData(uuid, name, path, play, action)
+        # This callback opts in to receiving unmasked results, so any secrets must be redacted before they reach the report.
+        self._task_data[uuid] = TaskData(uuid, mask_secrets(name), path, play, action)
 
     def _finish_task(self, status: str, result: IncludedFile | CallbackTaskResult) -> None:
         """ record the results of a task for a single host """
@@ -220,7 +224,7 @@ class CallbackModule(CallbackBase):
     def _build_test_case(self, task_data: TaskData, host_data: HostData) -> TestCase:
         """ build a TestCase from the given TaskData and HostData """
 
-        name = '[%s] %s: %s' % (host_data.name, task_data.play, task_data.name)
+        name = mask_secrets('[%s] %s: %s' % (host_data.name, task_data.play, task_data.name))
         duration = decimal.Decimal(host_data.finish - task_data.start)
 
         if self._task_relative_path and task_data.path:
@@ -235,13 +239,12 @@ class CallbackModule(CallbackBase):
             junit_classname = re.sub(r'\.yml:[0-9]+$', '', junit_classname)
 
         if host_data.status == 'included':
-            return TestCase(name=name, classname=junit_classname, time=duration, system_out=str(host_data.result))
+            return TestCase(name=name, classname=junit_classname, time=duration, system_out=mask_secrets(str(host_data.result)))
 
         task_result = t.cast(CallbackTaskResult, host_data.result)
         res = task_result.result
         rc = res.get('rc', 0)
-        dump = self._dump_results(res, indent=0)
-        dump = self._cleanse_string(dump)
+        dump = self._cleanse_string(mask_secrets(self._dump_results(res, indent=0)))
 
         if host_data.status == 'ok':
             return TestCase(name=name, classname=junit_classname, time=duration, system_out=dump)
@@ -250,17 +253,17 @@ class CallbackModule(CallbackBase):
 
         if host_data.status == 'failed':
             if error_summary := task_result.exception:
-                message = _event_utils.format_event_brief_message(error_summary.event)
-                output = _event_formatting.format_event_traceback(error_summary.event)
+                message = mask_secrets(_event_utils.format_event_brief_message(error_summary.event))
+                output = mask_secrets(_event_formatting.format_event_traceback(error_summary.event))
                 test_case.errors.append(TestError(message=message, output=output))
             elif 'msg' in res:
-                message = res['msg']
+                message = mask_secrets(str(res['msg']))
                 test_case.failures.append(TestFailure(message=message, output=dump))
             else:
                 test_case.failures.append(TestFailure(message='rc=%s' % rc, output=dump))
         elif host_data.status == 'skipped':
             if 'skip_reason' in res:
-                message = res['skip_reason']
+                message = mask_secrets(str(res['skip_reason']))
             else:
                 message = 'skipped'
             test_case.skipped = message
