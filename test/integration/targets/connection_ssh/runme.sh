@@ -96,4 +96,6 @@ ANSIBLE_SSH_VERBOSITY=1 ansible ssh -m raw -a whoami -i test_connection.inventor
 # enable SSH client verbosity level 3 via var; ensure debug3 lines
 ansible ssh -m raw -a whoami -i test_connection.inventory -vvvvv -e ansible_ssh_verbosity=3 2>&1 | grep 'debug3:'
 
+ansible-playbook test_escalation_check.yml "$@"
+
 echo PASS

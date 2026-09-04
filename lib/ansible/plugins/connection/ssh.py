@@ -1108,12 +1108,9 @@ class Connection(ConnectionBase):
 
         p = None
 
-        if isinstance(cmd, (str, bytes)):
-            cmd = to_bytes(cmd)
-        else:
-            cmd = list(map(to_bytes, cmd))
-
         popen_kwargs = self._init_shm()
+
+        is_ssh = to_bytes(self.get_option('ssh_executable')) == cmd[0]
 
         if b_ssh_pass_cmd := self._sshpass_cmd():
             cmd[:0] = b_ssh_pass_cmd
@@ -1165,7 +1162,7 @@ class Connection(ConnectionBase):
         # only when using ssh. Otherwise, we can send initial data straight away.
 
         state = states.index('ready_to_send')
-        if to_bytes(self.get_option('ssh_executable')) in cmd and sudoable:
+        if is_ssh and sudoable:
             prompt = getattr(self.become, 'prompt', None)
             if prompt:
                 # We're requesting escalation with a password, so we have to
