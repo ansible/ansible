@@ -1,0 +1,10 @@
+[Unit]
+Description=Ansible Test Service which fails
+After=local-fs.target
+
+[Service]
+Type=simple
+ExecStart=/bin/false
+
+[Install]
+WantedBy=multi-user.target
