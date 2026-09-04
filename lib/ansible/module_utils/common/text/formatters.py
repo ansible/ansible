@@ -121,6 +121,15 @@ def bytes_to_human(size, isbits=False, unit=None):
         if (unit is None and size >= limit) or unit is not None and unit.upper() == suffix[0]:
             break
 
+    # Rounding to 2 decimals can push the value to the next unit's boundary
+    # (e.g. 1 GiB - 1 byte is 1023.9999... MB, which renders as "1024.00 MB").
+    # Promote to the next-larger unit so it shows as "1.00 GB".
+    if unit is None and limit != 1 and round(size / limit, 2) >= 1024:
+        larger = min((v for v in SIZE_RANGES.values() if v > limit), default=None)
+        if larger is not None:
+            limit = larger
+            suffix = next(s for s, v in SIZE_RANGES.items() if v == larger)
+
     if limit != 1:
         suffix += base[0]
     else:
