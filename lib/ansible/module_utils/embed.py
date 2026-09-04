@@ -55,6 +55,23 @@ class EmbeddedResource:
         """
         return _importlib_resources.path(self.package, self.resource)
 
+    def read_bytes(self) -> bytes:
+        """Read the embedded resource as bytes."""
+        return _importlib_resources.read_binary(self.package, self.resource)
+
+    def read_text(self, encoding: str = 'utf-8') -> str:
+        """Read the embedded resource as text."""
+        # Use read_bytes().decode() instead of importlib.resources.read_text() to avoid
+        # compatibility issues. In Python 3.14+, read_text() tries to pass an 'errors'
+        # parameter to Traversable.read_text(), but that method doesn't support it.
+        # See: https://github.com/python/cpython/issues/127012
+        return self.read_bytes().decode(encoding)
+
+    @property
+    def traversable(self):
+        """Returns the traversable interface for the embedded resource, providing access to read_bytes(), read_text(), open(), etc."""
+        return _importlib_resources.files(self.package) / self.resource
+
     @property
     def python_module_ref(self) -> str:
         """Returns a fully-qualified Python module reference to the embedded content (with the `.py` extension suppressed)."""

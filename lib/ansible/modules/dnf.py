@@ -396,7 +396,7 @@ import sys
 
 from ansible.module_utils.urls import fetch_file
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.common.respawn import get_env_with_pythonpath, probe_interpreters_for_module
+from ansible.module_utils.common.respawn import probe_interpreters_for_module
 from ansible.module_utils.embed import EmbedManager
 from ansible.module_utils.yumdnf import YumDnf, yumdnf_argument_spec
 
@@ -470,17 +470,20 @@ class DnfModule(YumDnf):
         if params:
             request['params'] = params
 
-        request_json = json.dumps(request)
+        dnf_script = dnfscript.read_text()
+        dnf_script = dnf_script.replace(
+            'request = json.load(sys.stdin)',
+            f'request = {request!r}'
+        )
+
         python_executable = self._interpreter or sys.executable
-        env = get_env_with_pythonpath()
 
         try:
             rc, stdout, stderr = self.module.run_command(
-                [python_executable, '-m', dnfscript.python_module_ref],
-                data=request_json,
+                [python_executable, '-'],
+                data=dnf_script,
                 check_rc=False,
                 handle_exceptions=False,
-                environ_update=env,
             )
 
             if stdout:
