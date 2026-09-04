@@ -20,7 +20,7 @@
   include_vars: '{{ item }}'
   with_first_found:
   - files:
-    - '{{ ansible_distribution }}-{{ ansible_distribution_major_version }}.yml'
+    - '{{ ansible_facts.distribution }}-{{ ansible_facts.distribution_major_version }}.yml'
     - 'default.yml'
     paths: '../vars'
 
