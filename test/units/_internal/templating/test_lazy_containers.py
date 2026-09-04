@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import collections.abc as c
 import copy
+import dataclasses
 import re
 import sys
 import typing as t
@@ -31,6 +32,21 @@ CONTAINER_VALUES = (
     dict(hello=VALUE_TO_TEMPLATE),
     [VALUE_TO_TEMPLATE],
 )
+
+
+@pytest.mark.parametrize(("value", "expected"), (
+    ([TRUST.tag('{{ 1 }}')], [1]),
+    ((TRUST.tag('{{ 1 }}'),), (1,)),
+    (dict(key=TRUST.tag('{{ 1 }}')), dict(key=1)),
+))
+def test_dataclasses_asdict_with_lazy_containers(template_context, value: t.Any, expected: t.Any) -> None:
+    @dataclasses.dataclass
+    class Example:
+        data: t.Any
+
+    lazy = _AnsibleLazyTemplateMixin._try_create(value)
+
+    assert dataclasses.asdict(Example(data=lazy)) == dict(data=expected)
 
 
 @pytest.mark.parametrize("value", CONTAINER_VALUES, ids=[type(value).__name__ for value in CONTAINER_VALUES])
@@ -370,8 +386,11 @@ def test_lazy_list_adapter_operators(template, variables, expected) -> None:
     ('tuple() + d1', 'can only concatenate tuple (not "_AnsibleLazyTemplateDict") to tuple', TypeError),  # relies on tuple.__add__
     ('l1.pop(42)', "pop index out of range", IndexError),
     ('type(l1)([])', 'Direct construction of lazy containers is not supported.', UnsupportedConstructionMethodError),
+    ('type(l1)(iter([]))', 'Direct construction of lazy containers is not supported.', UnsupportedConstructionMethodError),
     ('type(t1)([])', 'Direct construction of lazy containers is not supported.', UnsupportedConstructionMethodError),
+    ('type(t1)(iter([]))', 'Direct construction of lazy containers is not supported.', UnsupportedConstructionMethodError),
     ('type(d1)({})', 'Direct construction of lazy containers is not supported.', UnsupportedConstructionMethodError),
+    ('type(d1)(iter([]))', 'Direct construction of lazy containers is not supported.', UnsupportedConstructionMethodError),
 ], ids=str)
 def test_lazy_container_operators(expression: str, expected_value: t.Any, expected_type: type) -> None:
     """

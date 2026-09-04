@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import collections.abc as c
 import copy
 import dataclasses
 import functools
+import sys
 import types
 import typing as t
 
@@ -62,6 +64,20 @@ class UnsupportedConstructionMethodError(RuntimeError):
 
     def __init__(self):
         super().__init__("Direct construction of lazy containers is not supported.")
+
+
+def _is_dataclasses_asdict_constructor() -> bool:
+    """Return True when called from the `dataclasses.asdict` reconstruction path."""
+    for depth in range(3, 5):
+        try:
+            caller = sys._getframe(depth)
+        except ValueError:  # pragma: nocover
+            return False
+
+        if caller.f_globals.get('__name__') == 'dataclasses' and caller.f_code.co_name == '_asdict_inner':
+            return True
+
+    return False
 
 
 @t.final
@@ -131,7 +147,28 @@ class _AnsibleLazyTemplateMixin:
 
         register_known_types(cls)
 
+    @staticmethod
+    def _coerce_implicit_constructor_source(contents: t.Iterable | _LazyValueSource) -> t.Iterable | _LazyValueSource:
+        """
+        Coerce `dataclasses.asdict` reconstruction to a lazy value source.
+
+        `dataclasses.asdict` reconstructs list/dict/tuple subclasses using `type(obj)(generator)`.
+        For lazy containers, that pattern must preserve constructor metadata without enabling direct
+        iterator-based construction.
+        """
+        if isinstance(contents, c.Iterator) and _is_dataclasses_asdict_constructor():
+            if template_context := TemplateContext.current(optional=True):
+                return _LazyValueSource(
+                    source=contents,
+                    templar=template_context.templar,
+                    lazy_options=LazyOptions.SKIP_TEMPLATES_AND_ACCESS,
+                )
+
+        return contents
+
     def __init__(self, contents: t.Iterable | _LazyValueSource) -> None:
+        contents = self._coerce_implicit_constructor_source(contents)
+
         if isinstance(contents, _LazyValueSource):
             self._templar = contents.templar
             self._lazy_options = contents.lazy_options
@@ -229,6 +266,8 @@ class _AnsibleLazyTemplateDict(_AnsibleTaggedDict, _AnsibleLazyTemplateMixin):
     __slots__ = _AnsibleLazyTemplateMixin._SLOTS
 
     def __init__(self, contents: t.Iterable | _LazyValueSource, /, **kwargs) -> None:
+        contents = self._coerce_implicit_constructor_source(contents)
+
         if isinstance(contents, _AnsibleLazyTemplateDict):
             super().__init__(dict.items(contents), **kwargs)
         elif isinstance(contents, _LazyValueSource):
@@ -372,6 +411,8 @@ class _AnsibleLazyTemplateList(_AnsibleTaggedList, _AnsibleLazyTemplateMixin):
     __slots__ = _AnsibleLazyTemplateMixin._SLOTS
 
     def __init__(self, contents: t.Iterable | _LazyValueSource, /) -> None:
+        contents = self._coerce_implicit_constructor_source(contents)
+
         if isinstance(contents, _AnsibleLazyTemplateList):
             super().__init__(list.__iter__(contents))
         elif isinstance(contents, _LazyValueSource):
@@ -554,6 +595,8 @@ class _AnsibleLazyAccessTuple(_AnsibleTaggedTuple, _AnsibleLazyTemplateMixin):
     # nonempty __slots__ not supported for subtype of 'tuple'
 
     def __new__(cls, contents: t.Iterable | _LazyValueSource, /) -> t.Self:
+        contents = cls._coerce_implicit_constructor_source(contents)
+
         if isinstance(contents, _AnsibleLazyAccessTuple):
             return super().__new__(cls, tuple.__iter__(contents))
 

@@ -1,0 +1,2 @@
+bugfixes:
+  - templating - allow ``dataclasses.asdict`` to handle lazy list, dict, and tuple values without raising ``UnsupportedConstructionMethodError``.
