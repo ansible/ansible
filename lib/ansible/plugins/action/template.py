@@ -157,6 +157,19 @@ class ActionModule(ActionBase):
                 with open(to_bytes(result_file, errors='surrogate_or_strict'), 'wb') as f:
                     f.write(to_bytes(resultant, encoding=output_encoding, errors='surrogate_or_strict'))
 
+                # If the user asked to carry the template's xattrs onto the destination, copy
+                # them from the original .j2 source onto the rendered temp file so the copy
+                # action plugin (which we delegate to below) picks them up naturally.
+                preserve_mode = self._task.args.get('preserve_xattrs')
+                if preserve_mode in ('source', 'merge') and hasattr(shutil, 'copystat'):
+                    try:
+                        shutil.copystat(to_bytes(source, errors='surrogate_or_strict'),
+                                        to_bytes(result_file, errors='surrogate_or_strict'))
+                    except OSError:
+                        # Fall through — the downstream copy module will surface xattr issues
+                        # according to xattr_error_mode.
+                        pass
+
                 new_task.args.update(
                     dict(
                         src=result_file,
