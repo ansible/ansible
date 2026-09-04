@@ -925,9 +925,10 @@ DEFAULT_MANAGED_STR:
   - {key: ansible_managed, section: defaults}
   yaml: {key: defaults.ansible_managed}
   deprecated:
-    why: The `ansible_managed` variable can be set just like any other variable, or a different variable can be used.
-    version: "2.23"
-    alternatives: Set the `ansible_managed` variable, or use any custom variable in templates.
+    why: The 'ansible_managed' setting in ansible.cfg is deprecated. Its name was confusing and it's better to set 'ansible_managed' as a normal variable.
+    alternative: To control the content of the 'ansible_managed' magic variable, set it as a variable in your inventory, playbooks, or roles instead of using this setting.
+    version: '2.23'
+    removed: False
 DEFAULT_MODULE_ARGS:
   name: Adhoc default arguments
   default: ~
