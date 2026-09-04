@@ -21,6 +21,7 @@ import time
 
 from ansible.errors import AnsibleError, AnsiblePromptInterrupt, AnsiblePromptNoninteractive
 from ansible.module_utils.common.text.converters import to_text
+from ansible.module_utils.secrets import register_secret
 from ansible.plugins.action import ActionBase
 from ansible.utils.display import Display
 
@@ -147,7 +148,6 @@ class ActionModule(ActionBase):
         user_input = to_text(user_input, errors='surrogate_or_strict')
 
         if not echo and user_input:
-            from ansible.module_utils.secrets import register_secret
             register_secret(user_input)
 
         result['user_input'] = user_input

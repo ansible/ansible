@@ -42,7 +42,7 @@ class ActionModule(ActionBase):
             if mask_secrets(f"pre {secret} post") != 'pre $REDACTED$ post':
                 raise Exception("registering a new secret cleared a previously persisted secret")
 
-        display.display(f"SCN {label}_persist: ok")
+        display.display(f"MARKER {label}_persist: ok")
 
         result['changed'] = False
         return result

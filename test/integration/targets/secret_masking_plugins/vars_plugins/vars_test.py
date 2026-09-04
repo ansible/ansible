@@ -33,10 +33,10 @@ class VarsModule(BaseVarsPlugin):
             secrets = ['VarsSecret1', 'VarsSecret2', 'VarsSecret3']
 
             register_secret(secrets[0])
-            display.display(f"SCN vars_register: {secrets[0]}")
+            display.display(f"MARKER vars_register: {secrets[0]}")
 
             register_secrets(secrets)
-            display.display(f"SCN vars_registers: {secrets[0]} {secrets[1]} {secrets[2]}")
+            display.display(f"MARKER vars_registers: {secrets[0]} {secrets[1]} {secrets[2]}")
 
             if mask_secrets(f"{secrets[0]} {secrets[1]} {secrets[2]}") != '$REDACTED$ $REDACTED$ $REDACTED$':
                 raise Exception("mask_secrets did not redact all the registered secrets")

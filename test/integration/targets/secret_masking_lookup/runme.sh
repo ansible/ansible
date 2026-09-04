@@ -26,8 +26,8 @@ for secret in "${registered_secrets[@]}"; do
 done
 
 markers=(
-    "SCN password_lookup: \$REDACTED\$"
-    "SCN unvault_lookup: \$REDACTED\$"
+    "MARKER password_lookup: \$REDACTED\$"
+    "MARKER unvault_lookup: \$REDACTED\$"
 )
 for marker in "${markers[@]}"; do
     if ! grep -qF -- "${marker}" "${LOG}"; then

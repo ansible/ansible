@@ -43,10 +43,10 @@ for secret in "${registered_secrets[@]}"; do
 done
 
 markers=(
-    "SCN input_yaml: \$REDACTED\$"
-    "SCN input_json: \$REDACTED\$"
-    "SCN input_exec: \$REDACTED\$"
-    "SCN input_dup: \$REDACTED\$"
+    "MARKER input_yaml: \$REDACTED\$"
+    "MARKER input_json: \$REDACTED\$"
+    "MARKER input_exec: \$REDACTED\$"
+    "MARKER input_dup: \$REDACTED\$"
 )
 for marker in "${markers[@]}"; do
     if ! grep -qF -- "${marker}" "${LOG}"; then

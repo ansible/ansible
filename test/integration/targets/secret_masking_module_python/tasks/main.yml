@@ -34,3 +34,29 @@
     - PyModuleSecret3
     - InlineDiscoveredPySecret
     - NoLogPyOptionSecret
+
+- name: run a module that respawns itself under a different interpreter
+  run_respawn_check:
+    incoming: "{{ 'IncomingRespawnPySecret' | register_secret }}"
+    register_as_secret: OutgoingRespawnPySecret
+  register: respawn_module_result
+
+- name: assert secret masking behaved across the module respawn boundary
+  assert:
+    that:
+    # the module result actually came from the respawned child process
+    - respawn_module_result.respawned
+    # the controller-registered incoming secret arrived as the literal value in the respawned child ...
+    - respawn_module_result.incoming == 'IncomingRespawnPySecret'
+    # ... and the respawned child could still mask it (incoming secrets survive the respawn)
+    - respawn_module_result.incoming_masked == '$REDACTED$'
+    # a secret registered inside the respawned child echoes back by its true value (non-destructive) ...
+    - respawn_module_result.register_as_secret == 'OutgoingRespawnPySecret'
+    # ... but the child masks it locally
+    - respawn_module_result.register_as_secret_masked == '$REDACTED$'
+    fail_msg: secret masking did not behave correctly across a module respawn
+
+- name: confirm the respawn-registered secret propagated and still masks in a later task
+  assert_propagated:
+    secrets:
+    - OutgoingRespawnPySecret

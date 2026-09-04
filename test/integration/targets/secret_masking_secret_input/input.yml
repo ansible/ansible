@@ -5,16 +5,16 @@
   tasks:
     - name: emit secret seeded via a YAML source
       debug:
-        msg: "SCN input_yaml: Inputyaml0030Secret"
+        msg: "MARKER input_yaml: Inputyaml0030Secret"
 
     - name: emit secret seeded via a JSON source
       debug:
-        msg: "SCN input_json: Inputjson0031Secret"
+        msg: "MARKER input_json: Inputjson0031Secret"
 
     - name: emit secret seeded via an executable source
       debug:
-        msg: "SCN input_exec: Inputexec0032Secret"
+        msg: "MARKER input_exec: Inputexec0032Secret"
 
     - name: emit secret registered from duplicate entries across sources
       debug:
-        msg: "SCN input_dup: Inputdup0033Secret"
+        msg: "MARKER input_dup: Inputdup0033Secret"

@@ -12,8 +12,8 @@
 
     - name: password lookup registers the returned password
       debug:
-        msg: "SCN password_lookup: Passwordlookup0004Secret"
+        msg: "MARKER password_lookup: Passwordlookup0004Secret"
 
     - name: unvault lookup registers the decrypted content
       debug:
-        msg: "SCN unvault_lookup: Unvaultlookup0005Secret"
+        msg: "MARKER unvault_lookup: Unvaultlookup0005Secret"

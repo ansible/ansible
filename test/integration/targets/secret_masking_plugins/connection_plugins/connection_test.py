@@ -31,16 +31,16 @@ class Connection(ConnectionBase):
             secrets = ['ConnectionSecret1', 'ConnectionSecret2', 'ConnectionSecret3']
 
             register_secret(secrets[0])
-            display.display(f"SCN connection_register: {secrets[0]}")
+            display.display(f"MARKER connection_register: {secrets[0]}")
 
             register_secrets(secrets)
-            display.display(f"SCN connection_registers: {secrets[0]} {secrets[1]} {secrets[2]}")
+            display.display(f"MARKER connection_registers: {secrets[0]} {secrets[1]} {secrets[2]}")
 
             if mask_secrets(f"{secrets[0]} {secrets[1]} {secrets[2]}") != '$REDACTED$ $REDACTED$ $REDACTED$':
                 raise Exception("mask_secrets did not redact all the registered secrets")
 
-            display.warning(f"SCN connection_warning: {secrets[1]}")
-            display.deprecated(f"SCN connection_deprecated: {secrets[2]}", version='9999.9')
+            display.warning(f"MARKER connection_warning: {secrets[1]}")
+            display.deprecated(f"MARKER connection_deprecated: {secrets[2]}", version='9999.9')
 
             self._connected = True
         return self

@@ -12,10 +12,10 @@ def test_test(value):
     secrets = ['TestSecret1', 'TestSecret2', 'TestSecret3']
 
     register_secret(secrets[0])
-    display.display(f"SCN test_register: {secrets[0]}")
+    display.display(f"MARKER test_register: {secrets[0]}")
 
     register_secrets(secrets)
-    display.display(f"SCN test_registers: {secrets[0]} {secrets[1]} {secrets[2]}")
+    display.display(f"MARKER test_registers: {secrets[0]} {secrets[1]} {secrets[2]}")
 
     if mask_secrets(f"{secrets[0]} {secrets[1]} {secrets[2]}") != '$REDACTED$ $REDACTED$ $REDACTED$':
         raise Exception("mask_secrets did not redact all the registered secrets")

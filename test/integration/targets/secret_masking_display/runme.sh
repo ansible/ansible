@@ -39,12 +39,12 @@ done
 
 # Each sink must have run and emitted a redacted marker.
 sink_markers=(
-    "SCNBANNER \$REDACTED\$"
-    "SCNWARN \$REDACTED\$"
-    "SCNDEPR \$REDACTED\$"
-    "SCNINVOKE \$REDACTED\$"
-    "SCNERROR \$REDACTED\$"
-    "SCNLINE \$REDACTED\$"
+    "MARKERBANNER \$REDACTED\$"
+    "MARKERWARN \$REDACTED\$"
+    "MARKERDEPR \$REDACTED\$"
+    "MARKERINVOKE \$REDACTED\$"
+    "MARKERERROR \$REDACTED\$"
+    "MARKERLINE \$REDACTED\$"
 )
 for marker in "${sink_markers[@]}"; do
     if ! grep -qF -- "${marker}" "${LOG}"; then

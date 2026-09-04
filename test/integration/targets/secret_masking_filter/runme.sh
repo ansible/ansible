@@ -25,14 +25,14 @@ for secret in "${registered_secrets[@]}"; do
 done
 
 markers=(
-    "SCN filter_register: \$REDACTED\$"
-    "SCN filter_mask: \$REDACTED\$"
-    "SCN vault_filter: \$REDACTED\$"
-    "SCN nondestruct: \$REDACTED\$"
-    "SCN lazy_use1: \$REDACTED\$"
-    "SCN lazy_first: \$REDACTED\$"
-    "SCN lazy_use2: \$REDACTED\$"
-    "SCN lazy_second: \$REDACTED\$"
+    "MARKER filter_register: \$REDACTED\$"
+    "MARKER filter_mask: \$REDACTED\$"
+    "MARKER vault_filter: \$REDACTED\$"
+    "MARKER nondestruct: \$REDACTED\$"
+    "MARKER lazy_use1: \$REDACTED\$"
+    "MARKER lazy_first: \$REDACTED\$"
+    "MARKER lazy_use2: \$REDACTED\$"
+    "MARKER lazy_second: \$REDACTED\$"
 )
 for marker in "${markers[@]}"; do
     if ! grep -qF -- "${marker}" "${LOG}"; then

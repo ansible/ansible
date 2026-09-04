@@ -11,7 +11,7 @@
 
     - name: emit a task result whose payload contains the registered secret
       debug:
-        msg: "SCN callback: {{ cb_value }}"
+        msg: "MARKER callback: {{ cb_value }}"
 
     - name: build a nested structure with the secret at several container depths
       set_fact:

@@ -6,20 +6,20 @@
   tasks:
     # Important this comes before the rest because location of error
     # in the output traceback may contain preceding lines, including
-    # the previous tasks plaintext value. The SCNLINE comment must stay on the
+    # the previous tasks plaintext value. The MARKERLINE comment must stay on the
     # line immediately above the task so it lands in the error's source context.
-    # SCNLINE Displayline0055Secret
+    # MARKERLINE Displayline0055Secret
     - name: error sink
       fail:
-        msg: SCNERROR Displayerror0053Secret
+        msg: MARKERERROR Displayerror0053Secret
       ignore_errors: true
 
-    - name: SCNBANNER Displaybanner0052Secret
+    - name: MARKERBANNER Displaybanner0052Secret
       debug:
         msg: banner task body
 
     - name: warning, deprecation and invocation sinks
       display_probe:
-        warning: SCNWARN Displaywarn0050Secret
-        deprecation: SCNDEPR Displaydeprec0051Secret
-        invocation_arg: SCNINVOKE Displayinvoke0054Secret
+        warning: MARKERWARN Displaywarn0050Secret
+        deprecation: MARKERDEPR Displaydeprec0051Secret
+        invocation_arg: MARKERINVOKE Displayinvoke0054Secret

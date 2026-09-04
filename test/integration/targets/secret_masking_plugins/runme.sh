@@ -33,8 +33,8 @@ assert_masked "${LOG}" \
     'FilterSecret1
 FilterSecret2
 FilterSecret3' \
-    "SCN filter_register: \$REDACTED\$
-SCN filter_registers: \$REDACTED\$ \$REDACTED\$ \$REDACTED\$"
+    "MARKER filter_register: \$REDACTED\$
+MARKER filter_registers: \$REDACTED\$ \$REDACTED\$ \$REDACTED\$"
 
 ### test plugin ##############################################################
 LOG="${OUTPUT_DIR}/test.log"
@@ -43,8 +43,8 @@ assert_masked "${LOG}" \
     'TestSecret1
 TestSecret2
 TestSecret3' \
-    "SCN test_register: \$REDACTED\$
-SCN test_registers: \$REDACTED\$ \$REDACTED\$ \$REDACTED\$"
+    "MARKER test_register: \$REDACTED\$
+MARKER test_registers: \$REDACTED\$ \$REDACTED\$ \$REDACTED\$"
 
 ### lookup plugin ############################################################
 LOG="${OUTPUT_DIR}/lookup.log"
@@ -53,8 +53,8 @@ assert_masked "${LOG}" \
     'LookupSecret1
 LookupSecret2
 LookupSecret3' \
-    "SCN lookup_register: \$REDACTED\$
-SCN lookup_registers: \$REDACTED\$ \$REDACTED\$ \$REDACTED\$"
+    "MARKER lookup_register: \$REDACTED\$
+MARKER lookup_registers: \$REDACTED\$ \$REDACTED\$ \$REDACTED\$"
 
 ### vars plugin ##############################################################
 LOG="${OUTPUT_DIR}/vars.log"
@@ -64,8 +64,8 @@ assert_masked "${LOG}" \
     'VarsSecret1
 VarsSecret2
 VarsSecret3' \
-    "SCN vars_register: \$REDACTED\$
-SCN vars_registers: \$REDACTED\$ \$REDACTED\$ \$REDACTED\$"
+    "MARKER vars_register: \$REDACTED\$
+MARKER vars_registers: \$REDACTED\$ \$REDACTED\$ \$REDACTED\$"
 
 ### inventory plugin #########################################################
 LOG="${OUTPUT_DIR}/inventory.log"
@@ -75,8 +75,8 @@ assert_masked "${LOG}" \
     'InventorySecret1
 InventorySecret2
 InventorySecret3' \
-    "SCN inventory_register: \$REDACTED\$
-SCN inventory_registers: \$REDACTED\$ \$REDACTED\$ \$REDACTED\$"
+    "MARKER inventory_register: \$REDACTED\$
+MARKER inventory_registers: \$REDACTED\$ \$REDACTED\$ \$REDACTED\$"
 
 ### action plugin (runs in a forked worker) ##################################
 LOG="${OUTPUT_DIR}/action.log"
@@ -87,11 +87,11 @@ assert_masked "${LOG}" \
 ActionSecret2
 ActionSecret3
 MaskCheckActionSecret' \
-    "SCN action_register: \$REDACTED\$
-SCN action_registers: \$REDACTED\$ \$REDACTED\$ \$REDACTED\$
-SCN action_warning: \$REDACTED\$
-SCN action_deprecated: \$REDACTED\$
-SCN action_persist: ok"
+    "MARKER action_register: \$REDACTED\$
+MARKER action_registers: \$REDACTED\$ \$REDACTED\$ \$REDACTED\$
+MARKER action_warning: \$REDACTED\$
+MARKER action_deprecated: \$REDACTED\$
+MARKER action_persist: ok"
 
 ### connection plugin (runs in a forked worker) #############################
 LOG="${OUTPUT_DIR}/connection.log"
@@ -102,10 +102,10 @@ assert_masked "${LOG}" \
 ConnectionSecret2
 ConnectionSecret3
 MaskCheckConnectionSecret' \
-    "SCN connection_register: \$REDACTED\$
-SCN connection_registers: \$REDACTED\$ \$REDACTED\$ \$REDACTED\$
-SCN connection_warning: \$REDACTED\$
-SCN connection_deprecated: \$REDACTED\$
-SCN connection_persist: ok"
+    "MARKER connection_register: \$REDACTED\$
+MARKER connection_registers: \$REDACTED\$ \$REDACTED\$ \$REDACTED\$
+MARKER connection_warning: \$REDACTED\$
+MARKER connection_deprecated: \$REDACTED\$
+MARKER connection_persist: ok"
 
 echo "All secret masking plugin registration scenarios passed."

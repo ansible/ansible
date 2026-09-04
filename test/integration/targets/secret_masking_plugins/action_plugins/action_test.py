@@ -20,16 +20,16 @@ class ActionModule(ActionBase):
         secrets = ['ActionSecret1', 'ActionSecret2', 'ActionSecret3']
 
         register_secret(secrets[0])
-        display.display(f"SCN action_register: {secrets[0]}")
+        display.display(f"MARKER action_register: {secrets[0]}")
 
         register_secrets(secrets)
-        display.display(f"SCN action_registers: {secrets[0]} {secrets[1]} {secrets[2]}")
+        display.display(f"MARKER action_registers: {secrets[0]} {secrets[1]} {secrets[2]}")
 
         if mask_secrets(f"{secrets[0]} {secrets[1]} {secrets[2]}") != '$REDACTED$ $REDACTED$ $REDACTED$':
             raise Exception("mask_secrets did not redact all the registered secrets")
 
-        display.warning(f"SCN action_warning: {secrets[1]}")
-        display.deprecated(f"SCN action_deprecated: {secrets[2]}", version='9999.9')
+        display.warning(f"MARKER action_warning: {secrets[1]}")
+        display.deprecated(f"MARKER action_deprecated: {secrets[2]}", version='9999.9')
 
         result['changed'] = False
         return result

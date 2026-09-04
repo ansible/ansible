@@ -19,7 +19,7 @@
 
     - name: emit register_secret value
       debug:
-        msg: "SCN filter_register: {{ filter_register_secret }}"
+        msg: "MARKER filter_register: {{ filter_register_secret }}"
 
     - name: mask_secrets redacts a registered value inside a larger string
       vars:
@@ -32,7 +32,7 @@
 
     - name: emit mask_secrets value
       debug:
-        msg: "SCN filter_mask: {{ filter_mask_secret }}"
+        msg: "MARKER filter_mask: {{ filter_mask_secret }}"
 
     - name: vault/unvault filters register the passphrase
       set_fact:
@@ -46,7 +46,7 @@
 
     - name: emit vault/unvault passphrase
       debug:
-        msg: "SCN vault_filter: {{ vault_filter_pass }}"
+        msg: "MARKER vault_filter: {{ vault_filter_pass }}"
 
     - name: register a secret into a fact
       set_fact:
@@ -67,7 +67,7 @@
 
     - name: but debug output of the same value is redacted
       debug:
-        msg: "SCN nondestruct: {{ nd_value }}"
+        msg: "MARKER nondestruct: {{ nd_value }}"
 
     # --- template laziness: register_secret runs when the template is evaluated (on use),
     # not once at definition, so editing the lookup source between uses registers the new value.
@@ -78,11 +78,11 @@
 
     - name: first use of the lazy template registers the current file contents
       debug:
-        msg: "SCN lazy_use1: {{ lazy_registered }}"
+        msg: "MARKER lazy_use1: {{ lazy_registered }}"
 
     - name: the first file value is now a registered secret (masked at egress)
       debug:
-        msg: "SCN lazy_first: {{ lazy_first_secret }}"
+        msg: "MARKER lazy_first: {{ lazy_first_secret }}"
 
     - name: overwrite the lookup source file with a different secret
       copy:
@@ -91,8 +91,8 @@
 
     - name: second use re-evaluates the template and registers the new file contents
       debug:
-        msg: "SCN lazy_use2: {{ lazy_registered }}"
+        msg: "MARKER lazy_use2: {{ lazy_registered }}"
 
     - name: the second file value is now a registered secret too (proves lazy re-evaluation)
       debug:
-        msg: "SCN lazy_second: {{ lazy_second_secret }}"
+        msg: "MARKER lazy_second: {{ lazy_second_secret }}"

@@ -39,14 +39,14 @@ for secret in "${registered_secrets[@]}"; do
 done
 
 markers=(
-    "SCN vault_scalar: \$REDACTED\$"
-    "SCN vault_list: \$REDACTED\$"
-    "SCN vault_dict: \$REDACTED\$"
-    "SCN vault_int: \$REDACTED\$"
-    "SCN vault_inline: \$REDACTED\$"
-    "SCN vault_dict_in_list: \$REDACTED\$"
-    "SCN vault_list_in_dict: \$REDACTED\$"
-    "SCN vault_deep: \$REDACTED\$"
+    "MARKER vault_scalar: \$REDACTED\$"
+    "MARKER vault_list: \$REDACTED\$"
+    "MARKER vault_dict: \$REDACTED\$"
+    "MARKER vault_int: \$REDACTED\$"
+    "MARKER vault_inline: \$REDACTED\$"
+    "MARKER vault_dict_in_list: \$REDACTED\$"
+    "MARKER vault_list_in_dict: \$REDACTED\$"
+    "MARKER vault_deep: \$REDACTED\$"
 )
 for marker in "${markers[@]}"; do
     if ! grep -qF -- "${marker}" "${LOG}"; then
@@ -56,6 +56,6 @@ for marker in "${markers[@]}"; do
 done
 
 # the value is masked but its key name is never registered
-grep -qF -- "SCN vault_keyval: key=notasecretkeyname value=\$REDACTED\$" "${LOG}"
+grep -qF -- "MARKER vault_keyval: key=notasecretkeyname value=\$REDACTED\$" "${LOG}"
 
 echo "All secret masking vault scenarios passed."
