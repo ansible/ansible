@@ -64,3 +64,13 @@ done
 
 # include_role should work in rescue, even if error is from magic variable templating
 ansible-playbook 75240.yml -i ../../inventory "$@"
+
+# Test that invalid collection role names raise a clear error (issue 75023)
+ansible-playbook invalid_collection_role_name.yml -i ../../inventory > invalid_role_name_output.log 2>&1 || true
+if grep "Invalid collection role name" invalid_role_name_output.log >/dev/null; then
+    echo "Test passed: invalid collection role name raised expected error."
+else
+    echo "Test failed: expected error message not found."
+    cat invalid_role_name_output.log
+    exit 1
+fi
