@@ -190,6 +190,8 @@ FILE_COMMON_ARGUMENTS = dict(
     setype=dict(type='str'),
     attributes=dict(type='str', aliases=['attr']),
     unsafe_writes=dict(type='bool', default=False, fallback=(env_fallback, ['ANSIBLE_UNSAFE_WRITES'])),  # should be available to any module using atomic_move
+    # default is sha1 to maintain backward compatibility
+    checksum_algorithm=dict(type='str', default='sha1', fallback=(env_fallback, ['ANSIBLE_FILE_CHECKSUM_ALGORITHM'])),
 )
 
 PASSWD_ARG_RE = re.compile(r'^[-]{0,2}pass[-]?(word|wd)?')
@@ -1601,6 +1603,10 @@ class AnsibleModule(object):
     def sha256(self, filename):
         """ Return SHA-256 hex digest of local file using digest_from_file(). """
         return self.digest_from_file(filename, 'sha256')
+
+    def file_checksum(self, filename: str, algorithm: str | None = None) -> str:
+        """Return hex digest of local file using default or specified algorithm."""
+        return self.digest_from_file(filename, algorithm)
 
     def backup_local(self, fn):
         """make a date-marked backup of the specified file, return True or False on success or failure"""

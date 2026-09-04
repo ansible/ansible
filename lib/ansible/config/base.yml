@@ -719,6 +719,17 @@ DEFAULT_EXECUTABLE:
   env: [{name: ANSIBLE_EXECUTABLE}]
   ini:
   - {key: executable, section: defaults}
+DEFAULT_FILE_CHECKSUM_ALGORITHM:
+  name: Default file checksum algorithm
+  default: sha1
+  description:
+    - Default hashlib algorithm used by file-based modules for change detection and checksum validation (for example M(ansible.builtin.copy), M(ansible.builtin.stat)).
+    - Can be overridden per task with the O(checksum_algorithm) parameter where supported, or by setting C(ANSIBLE_FILE_CHECKSUM_ALGORITHM) in the task environment.
+  env: [{name: ANSIBLE_FILE_CHECKSUM_ALGORITHM}]
+  ini:
+  - {key: file_checksum_algorithm, section: defaults}
+  type: str
+  version_added: '2.21'
 DEFAULT_FILTER_PLUGIN_PATH:
   name: Jinja2 Filter Plugins Path
   default: '{{ ANSIBLE_HOME ~ "/plugins/filter:/usr/share/ansible/plugins/filter" }}'
