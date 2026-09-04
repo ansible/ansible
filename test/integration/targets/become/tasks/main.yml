@@ -18,3 +18,9 @@
   loop_control:
     loop_var: become_test_config
     label: "{{ become_test }}"
+
+- name: Test ansible_become_password is templated lazily
+  vars:
+    ansible_become_password: "{{ not_defined_anywhere }}"
+    ansible_become: no  # override variable set by ansible-test
+  ping:
