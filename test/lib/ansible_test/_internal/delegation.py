@@ -295,6 +295,13 @@ def generate_command(
         ANSIBLE_TEST_CONTENT_ROOT=content_root,
     )
 
+    if color_term := os.getenv('COLORTERM'):
+        # NOTE: The current terminal emulator may have this set to `truecolor`
+        # NOTE: which is important for setting different color defaults. This
+        # NOTE: may be evident in Kitty that does not interpret the bold ANSI
+        # NOTE: marker as bright like some of the others.
+        env_vars['COLORTERM'] = color_term
+
     if isinstance(args.controller, OriginConfig):
         # Expose the ansible and ansible_test library directories to the Python environment.
         # This is only required when delegation is used on the origin host.
