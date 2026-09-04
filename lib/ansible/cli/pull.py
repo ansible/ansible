@@ -200,11 +200,17 @@ class PullCLI(CLI):
         # Now construct the ansible command
         node = platform.node()
         host = socket.getfqdn()
-        hostnames = ','.join(set([host, node, host.split('.')[0], node.split('.')[0]]))
+
+        if C.FQDN_ONLY_PULL_LIMIT:
+            hostnames = [x for x in [host, node] if '.' in x]
+        else:
+            hostnames = [host, node, host.split('.')[0], node.split('.')[0]]
+
         if hostnames:
-            limit_opts = 'localhost,%s,127.0.0.1' % hostnames
+            limit_opts = f'localhost,{','.join(set(hostnames))},127.0.0.1'
         else:
             limit_opts = 'localhost,127.0.0.1'
+
         base_opts = '-c local '
         if context.CLIARGS['verbosity'] > 0:
             base_opts += ' -%s' % ''.join(["v" for dummy in range(0, context.CLIARGS['verbosity'])])

@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-pull gets a new option to control the implied C(--limit) option to ensure it only uses FQDN names for the host, FQDN_ONLY_PULL_LIMIT.
