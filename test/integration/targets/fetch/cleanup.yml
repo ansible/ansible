@@ -13,4 +13,5 @@
       file:
         path: "{{ remote_tmp_dir }}"
         state: absent
+      when: remote_tmp_dir is defined
       no_log: yes
