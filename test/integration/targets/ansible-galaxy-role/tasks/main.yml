@@ -57,6 +57,44 @@
 - name: Uninstall valid role
   command: ansible-galaxy role remove valid-testrole
 
+- name: Download a role archive from a direct role specification
+  command: >-
+    ansible-galaxy role download {{ remote_tmp_dir }}/valid-role.tar,,direct-download-role
+    --download-path {{ remote_tmp_dir }}/role-download-direct
+
+- name: Install the directly downloaded role archive offline
+  command: ansible-galaxy role install -r requirements.yml --roles-path '{{ remote_tmp_dir }}/roles-direct'
+  args:
+    chdir: '{{ remote_tmp_dir }}/role-download-direct'
+
+- name: Verify the directly downloaded role was installed
+  stat:
+    path: '{{ remote_tmp_dir }}/roles-direct/direct-download-role/tasks/main.yml'
+  register: direct_download_role
+
+- assert:
+    that:
+    - direct_download_role.stat.exists
+
+- name: Download a role archive from a requirements file
+  command: >-
+    ansible-galaxy role download -r valid-requirements.yml
+    --download-path {{ remote_tmp_dir }}/role-download-requirements
+
+- name: Install the requirements-downloaded role archive offline
+  command: ansible-galaxy role install -r requirements.yml --roles-path '{{ remote_tmp_dir }}/roles-requirements'
+  args:
+    chdir: '{{ remote_tmp_dir }}/role-download-requirements'
+
+- name: Verify the requirements-downloaded role was installed
+  stat:
+    path: '{{ remote_tmp_dir }}/roles-requirements/valid-testrole/tasks/main.yml'
+  register: requirements_download_role
+
+- assert:
+    that:
+    - requirements_download_role.stat.exists
+
 - name: Install invalid role
   command: ansible-galaxy install -r invalid-requirements.yml
   ignore_errors: yes

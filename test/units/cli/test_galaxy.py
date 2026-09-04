@@ -1070,6 +1070,41 @@ def test_collection_install_custom_server(collection_install):
     assert mock_install.call_args[0][2][0].validate_certs is True
 
 
+def test_role_download_with_name(monkeypatch, tmp_path):
+    mock_download = MagicMock()
+    monkeypatch.setattr(ansible.cli.galaxy, 'download_roles', mock_download)
+
+    download_path = to_text(tmp_path / 'roles')
+    GalaxyCLI(args=['ansible-galaxy', 'role', 'download', 'namespace.role', '-p', download_path]).run()
+
+    assert mock_download.call_count == 1
+    roles, actual_download_path, ignore_errors = mock_download.call_args.args
+    assert len(roles) == 1
+    assert roles[0].name == 'namespace.role'
+    assert actual_download_path == download_path
+    assert ignore_errors is False
+
+
+@pytest.mark.parametrize('requirements_file', ["""
+roles:
+- name: namespace.role
+  src: namespace.role
+"""], indirect=True)
+def test_role_download_with_requirements_file(monkeypatch, requirements_file, tmp_path):
+    mock_download = MagicMock()
+    monkeypatch.setattr(ansible.cli.galaxy, 'download_roles', mock_download)
+
+    download_path = to_text(tmp_path / 'roles')
+    GalaxyCLI(args=['ansible-galaxy', 'role', 'download', '-r', requirements_file, '-p', download_path]).run()
+
+    assert mock_download.call_count == 1
+    roles, actual_download_path, ignore_errors = mock_download.call_args.args
+    assert len(roles) == 1
+    assert roles[0].name == 'namespace.role'
+    assert actual_download_path == download_path
+    assert ignore_errors is False
+
+
 @pytest.fixture()
 def requirements_file(request, tmp_path_factory):
     content = request.param
