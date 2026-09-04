@@ -769,3 +769,229 @@
       - not srcpkgcache_bin.stat.exists
     fail_msg: "apt cache files still exist."
     success_msg: "apt cache files are cleaned."
+
+# Test that 'autoremove' works when redundant package changes are requested
+- name: Install the hello package and mark it as automatically installed
+  shell: "apt-get -y install hello && apt-mark auto hello"
+
+- name: Autoremove while requesting an already installed package to be present
+  apt:
+    name: apt
+    state: present
+    autoremove: true
+  register: autoremove_1
+
+- name: Nothing to autoremove
+  apt:
+    autoremove: true
+  register: autoremove_2
+
+- name: Verify that the first autoremove worked
+  assert:
+    that:
+      - autoremove_1 is changed
+      - autoremove_2 is not changed
+
+- name: Install the hello package and mark it as automatically installed
+  shell: "apt-get -y install hello && apt-mark auto hello"
+
+- name: Autoremove while requesting an already absent package to be absent
+  apt:
+    name: hello-traditional
+    state: absent
+    autoremove: true
+  register: autoremove_1
+
+- name: Nothing to autoremove
+  apt:
+    autoremove: true
+  register: autoremove_2
+
+- name: Verify that the first autoremove worked
+  assert:
+    that:
+      - autoremove_1 is changed
+      - autoremove_2 is not changed
+
+# Test that 'autoremove' works with 'clean'
+- name: Install the hello package and mark it as automatically installed
+  shell: "apt-get -y install hello && apt-mark auto hello"
+
+- name: Autoremove while cleaning
+  apt:
+    clean: true
+    autoremove: true
+  register: autoremove_1
+
+- name: Nothing to autoremove
+  apt:
+    autoremove: true
+  register: autoremove_2
+
+- name: Verify that the first autoremove worked
+  assert:
+    that:
+      - autoremove_1 is changed
+      - autoremove_2 is not changed
+
+# Test that the purge option works
+- name: Install the nano package
+  shell: "apt-get -y install nano"
+
+- name: Remove and purge it
+  apt:
+    name: nano
+    state: absent
+    purge: true
+  register: purge_test
+
+- name: Check if the configuration files have been removed
+  shell: "apt-get --dry-run purge ?config-files"
+  register: config_check
+
+- name: Verify that purge worked
+  assert:
+    that:
+      - purge_test is changed
+      - "'nano*' not in config_check.stdout"
+
+- name: Install the nano package and mark it as automatically installed
+  shell: "apt-get -y install nano && apt-mark auto nano"
+
+- name: Autoremove and purge
+  apt:
+    autoremove: true
+    purge: true
+  register: purge_test
+
+- name: Check if the configuration files have been removed
+  shell: "apt-get --dry-run purge ?config-files"
+  register: config_check
+
+- name: Verify that purge worked
+  assert:
+    that:
+      - purge_test is changed
+      - "'nano*' not in config_check.stdout"
+
+- name: Install the nano package and mark it as automatically installed
+  shell: "apt-get -y install nano && apt-mark auto nano"
+
+- name: Autoremove and purge while installing hello
+  apt:
+    name: hello
+    state: present
+    autoremove: true
+    purge: true
+  register: purge_test
+
+- name: Check if the configuration files have been removed
+  shell: "apt-get --dry-run purge ?config-files"
+  register: config_check
+
+- name: Verify that purge worked
+  assert:
+    that:
+      - purge_test is changed
+      - "'nano*' not in config_check.stdout"
+
+- name: Install the nano package and mark it as automatically installed
+  shell: "apt-get -y install nano && apt-mark auto nano"
+
+- name: Autoremove and purge while removing hello
+  apt:
+    name: hello
+    state: absent
+    autoremove: true
+    purge: true
+  register: purge_test
+
+- name: Check if the configuration files have been removed
+  shell: "apt-get --dry-run purge ?config-files"
+  register: config_check
+
+- name: Verify that purge worked
+  assert:
+    that:
+      - purge_test is changed
+      - "'nano*' not in config_check.stdout"
+
+# Test the purge and autoremove options during upgrades
+- name: Install the nano package and mark it as automatically installed
+  shell: "apt-get -y install nano && apt-mark auto nano"
+
+- name: Full upgrade
+  apt:
+    upgrade: full
+    autoremove: true
+    purge: true
+  register: autoremove_1
+
+- name: Autoremove for a second time
+  apt:
+    autoremove: true
+  register: autoremove_2
+
+- name: Check if the configuration files have been removed
+  shell: "apt-get --dry-run purge ?config-files"
+  register: config_check
+
+- name: Verify that the first autoremove worked
+  assert:
+    that:
+      - autoremove_1 is changed
+      - autoremove_2 is not changed
+      - "'nano*' not in config_check.stdout"
+
+- name: Install the nano package and mark it as automatically installed
+  shell: "apt-get -y install nano && apt-mark auto nano"
+
+- name: Safe upgrade
+  apt:
+    upgrade: safe
+    autoremove: true
+    purge: true
+  register: autoremove_1
+
+- name: Autoremove for a second time
+  apt:
+    autoremove: true
+  register: autoremove_2
+
+- name: Check if the configuration files have been removed
+  shell: "apt-get --dry-run purge ?config-files"
+  register: config_check
+
+- name: Verify that the first autoremove worked
+  assert:
+    that:
+      - autoremove_1 is changed
+      - autoremove_2 is not changed
+      - "'nano*' not in config_check.stdout"
+
+- name: Install the nano package and mark it as automatically installed
+  shell: "apt-get -y install nano && apt-mark auto nano"
+
+- name: Safe upgrade with apt-get
+  apt:
+    upgrade: safe
+    force_apt_get: true
+    autoremove: true
+    purge: true
+  register: autoremove_1
+
+- name: Autoremove for a second time
+  apt:
+    autoremove: true
+  register: autoremove_2
+
+- name: Check if the configuration files have been removed
+  shell: "apt-get --dry-run purge ?config-files"
+  register: config_check
+
+- name: Verify that the first autoremove worked
+  assert:
+    that:
+      - autoremove_1 is changed
+      - autoremove_2 is not changed
+      - "'nano*' not in config_check.stdout"
