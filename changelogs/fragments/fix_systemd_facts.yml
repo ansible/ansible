@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - facts - add systemd full_version and ensure version is integer
