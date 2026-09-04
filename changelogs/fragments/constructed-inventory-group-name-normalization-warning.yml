@@ -1,0 +1,4 @@
+minor_changes:
+  - constructed inventory plugin - group names with invalid characters (e.g. hyphens) are now
+    visibly normalized with a warning instead of silently. Use ``-vvvv`` to see which specific
+    group names were renamed and update any limits or patterns that reference the original name.
