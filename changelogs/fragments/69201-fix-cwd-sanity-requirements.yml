@@ -1,0 +1,4 @@
+bugfixes:
+- module_utils - When checking that it is possible to cd in current working
+  directory before running a module, ansible now also checks that the directory
+  is searchable (+x).
