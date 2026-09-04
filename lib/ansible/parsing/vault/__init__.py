@@ -17,6 +17,7 @@
 
 from __future__ import annotations
 
+import errno
 import fcntl
 import functools
 import os
@@ -981,7 +982,13 @@ class VaultEditor:
 
         # preserve permissions
         os.chmod(filename, prev.st_mode)
-        os.chown(filename, prev.st_uid, prev.st_gid)
+        try:
+            os.chown(filename, prev.st_uid, prev.st_gid)
+        except OSError as ex:
+            # unprivileged users cannot restore ownership to a group they are not a member of,
+            # such as when the file was created in a directory with BSD group inheritance (e.g. /tmp on macOS)
+            if ex.errno != errno.EPERM:
+                raise
 
         display.vvvvv(u'Rekeyed file "%s" (decrypted with vault id "%s") was encrypted with new vault-id "%s" and vault secret %s' %
                       (to_text(filename), to_text(vault_id_used), to_text(new_vault_id), to_text(new_vault_secret)))
@@ -1093,7 +1100,13 @@ class VaultEditor:
         if prev is not None:
             # TODO: selinux, ACLs, xattr?
             os.chmod(dest, prev.st_mode)
-            os.chown(dest, prev.st_uid, prev.st_gid)
+            try:
+                os.chown(dest, prev.st_uid, prev.st_gid)
+            except OSError as ex:
+                # unprivileged users cannot restore ownership to a group they are not a member of,
+                # such as when the file was created in a directory with BSD group inheritance (e.g. /tmp on macOS)
+                if ex.errno != errno.EPERM:
+                    raise
 
     def _editor_shell_command(self, filename):
         env_editor = C.config.get_config_value('EDITOR')
