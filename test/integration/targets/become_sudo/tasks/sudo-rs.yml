@@ -1,0 +1,32 @@
+- name: Test sudo with i18n, required for sudo-rs
+  become: yes
+  when: ansible_facts['system'] == 'Linux' and ansible_facts['os_distribution'] == 'Ubuntu'
+  vars:
+    testlocales:
+      - en_US.UTF-8   # Password
+      - de_DE.UTF-8   # Passwort
+      - ja_JP.UTF-8   # パスワード
+  block:
+    - name: Ensure we have locales ready to use
+      block:
+        - name: ensure debian locale package is available
+          apt:
+            name: locales
+            state: present
+          when: ansible_facts['os_family'] == "Debian"
+
+        - name: Configure locales
+          replace:
+            path: /etc/locale.gen
+          loop: '{{testlocales}}'
+
+        - name: Generate locales
+          shell: locale-gen --keep-existing
+
+    - name: Actually test sudo with locales
+      become_method: sudo
+      environment:
+        LC_ALL: '{{item}}'
+        LANG: '{{item}}'
+      shell: whoami
+      loop: '{{testlocales}}'
