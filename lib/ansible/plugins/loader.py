@@ -438,7 +438,7 @@ class PluginLoader:
         for i in paths:
             if i not in ret:
                 ret.append(i)
-        return os.pathsep.join(ret)
+        return to_text(os.pathsep.join(ret), errors='surrogate_or_strict')
 
     def print_paths(self):
         return self.format_paths(self._get_paths(subdirs=False))
@@ -531,7 +531,7 @@ class PluginLoader:
 
         # plugins w/o class name don't support config
         if self.class_name:
-            type_name = get_plugin_class(self.class_name)
+            type_name = self.class_name.lower().replace('module', '')
 
             # if type name != 'module_doc_fragment':
             if type_name in C.CONFIGURABLE_PLUGINS and not C.config.has_configuration_definition(type_name, name):
