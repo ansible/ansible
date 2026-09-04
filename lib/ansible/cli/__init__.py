@@ -589,8 +589,10 @@ class CLI(ABC):
     def get_host_list(inventory, subset, pattern='all'):
 
         no_hosts = False
+        # Empty inventory
         if len(inventory.list_hosts()) == 0:
-            # Empty inventory
+            if C.ERROR_ON_EMPTY_INVENTORY:
+                raise AnsibleError("No hosts found in inventory")
             if C.LOCALHOST_WARNING and pattern not in C.LOCALHOST:
                 display.warning("provided hosts list is empty, only localhost is available. Note that the implicit localhost does not match 'all'")
             no_hosts = True

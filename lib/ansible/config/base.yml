@@ -1383,6 +1383,15 @@ DUPLICATE_YAML_DICT_KEY:
     warn: issue a warning but continue
     ignore: just continue silently
   version_added: "2.9"
+ERROR_ON_EMPTY_INVENTORY:
+    name: Empty inventory error
+    default: False
+    description: "Toggle to allow empty inventory to become an error instead of a warning."
+    env: [{name: ANSIBLE_ERROR_ON_EMPTY_INVENTORY}]
+    ini:
+    - {key: error_on_empty_inventory, section: defaults}
+    type: boolean
+    version_added: "2.20"
 ERROR_ON_MISSING_HANDLER:
   name: Missing handler error
   default: True
