@@ -1,0 +1,45 @@
+# Test modifying user groups
+
+- name: run user module with empty groups param
+  block:
+    - name: remove test user for groups return test
+      user:
+        name: ansibulluser_groups
+        state: absent
+
+    - name: create test user with initial groups
+      user:
+        name: ansibulluser_groups
+        groups:
+          - daemon
+          - bin
+        state: present
+      register: user_groups_create
+
+    - name: validate groups on initial creation
+      assert:
+        that:
+          - user_groups_create.groups is defined
+          - "'bin' in user_groups_create.groups"
+          - "'daemon' in user_groups_create.groups"
+
+    - name: append a group to the test user
+      user:
+        name: ansibulluser_groups
+        groups: []
+        append: false
+        state: present
+      register: user_groups_remove
+
+    - name: validate groups after append includes all groups
+      assert:
+        that:
+          - user_groups_remove.changed
+          - user_groups_remove.groups is defined
+          - not "'bin' in user_groups_remove.groups"
+          - not "'daemon' in user_groups_remove.groups"
+  always:
+    - name: clean up test user
+      user:
+        name: ansibulluser_groups
+        state: absent
