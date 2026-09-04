@@ -1,0 +1,2 @@
+bugfixes:
+  - "``required_if`` - fix argument validation for value ``None`` when the option is omitted and defaults to `None`."

@@ -272,7 +272,7 @@ def check_required_if(requirements, parameters, options_context=None):
         else:
             missing['requires'] = 'all'
 
-        if key in parameters and parameters[key] == val:
+        if (key in parameters and parameters[key] == val) or (val is None and key not in parameters):
             for check in requirements:
                 count = count_terms(check, parameters)
                 if count == 0:
