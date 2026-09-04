@@ -391,6 +391,19 @@ def url_filename(url):
     return fn
 
 
+def url_path(url):
+    fn = os.path.dirname(urlsplit(url)[2])
+    if fn == '':
+        return '/'
+    return fn
+
+
+def pre_prefix(str, prefix):
+    if str.startswith(prefix):
+        str_new = str[len(prefix):]
+    return str_new
+
+
 def url_get(module, url, dest, use_proxy, last_mod_time, force, timeout=10, headers=None, tmp_dest='', method='GET', unredirected_headers=None,
             decompress=True, ciphers=None, use_netrc=True):
     """
@@ -573,7 +586,13 @@ def main():
             with open(checksum_tmpsrc) as f:
                 lines = [line.rstrip('\n') for line in f]
             os.remove(checksum_tmpsrc)
-            filename = url_filename(url)
+            path = url_path(url)
+            relative_path = pre_prefix(path, os.path.commonpath([path, url_path(checksum_url)]))
+
+            if relative_path == '' :
+                filename = url_filename(url)
+            else :
+                filename = "%s/%s" % (relative_path, url_filename(url))
             checksum_map = parse_digest_lines(filename=filename, lines=lines)
             # Look through each line in the checksum file for a hash corresponding to
             # the filename in the url, returning the first hash that is found.
