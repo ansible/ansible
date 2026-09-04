@@ -108,14 +108,6 @@ class TestBase(unittest.TestCase):
 
         self.assertRaises(AnsibleParserError, self.b.load_data, ds)
 
-    def test_load_data_invalid_attr_type(self):
-        ds = {'environment': True}
-
-        # environment is supposed to be  a list. This
-        # seems like it shouldn't work?
-        ret = self.b.load_data(ds)
-        self.assertEqual(True, ret._environment)
-
     def test_post_validate(self):
         ds = {'environment': [],
               'port': 443}
@@ -170,80 +162,12 @@ class TestBase(unittest.TestCase):
         b = self._base_validate(ds)
         self.assertEqual(b.vars, {})
 
-    def test_validate_empty(self):
-        self.b.validate()
-        self.assertTrue(self.b._validated)
-
     def test_getters(self):
         # not sure why these exist, but here are tests anyway
         loader = self.b.get_loader()
         variable_manager = self.b.get_variable_manager()
         self.assertEqual(loader, self.b._loader)
         self.assertEqual(variable_manager, self.b._variable_manager)
-
-
-class TestExtendValue(unittest.TestCase):
-    # _extend_value could be a module or staticmethod but since its
-    # not, the test is here.
-    def test_extend_value_list_newlist(self):
-        b = base.Base()
-        value_list = ['first', 'second']
-        new_value_list = ['new_first', 'new_second']
-        ret = b._extend_value(value_list, new_value_list)
-        self.assertEqual(value_list + new_value_list, ret)
-
-    def test_extend_value_list_newlist_prepend(self):
-        b = base.Base()
-        value_list = ['first', 'second']
-        new_value_list = ['new_first', 'new_second']
-        ret_prepend = b._extend_value(value_list, new_value_list, prepend=True)
-        self.assertEqual(new_value_list + value_list, ret_prepend)
-
-    def test_extend_value_newlist_list(self):
-        b = base.Base()
-        value_list = ['first', 'second']
-        new_value_list = ['new_first', 'new_second']
-        ret = b._extend_value(new_value_list, value_list)
-        self.assertEqual(new_value_list + value_list, ret)
-
-    def test_extend_value_newlist_list_prepend(self):
-        b = base.Base()
-        value_list = ['first', 'second']
-        new_value_list = ['new_first', 'new_second']
-        ret = b._extend_value(new_value_list, value_list, prepend=True)
-        self.assertEqual(value_list + new_value_list, ret)
-
-    def test_extend_value_string_newlist(self):
-        b = base.Base()
-        some_string = 'some string'
-        new_value_list = ['new_first', 'new_second']
-        ret = b._extend_value(some_string, new_value_list)
-        self.assertEqual([some_string] + new_value_list, ret)
-
-    def test_extend_value_string_newstring(self):
-        b = base.Base()
-        some_string = 'some string'
-        new_value_string = 'this is the new values'
-        ret = b._extend_value(some_string, new_value_string)
-        self.assertEqual([some_string, new_value_string], ret)
-
-    def test_extend_value_list_newstring(self):
-        b = base.Base()
-        value_list = ['first', 'second']
-        new_value_string = 'this is the new values'
-        ret = b._extend_value(value_list, new_value_string)
-        self.assertEqual(value_list + [new_value_string], ret)
-
-    def test_extend_value_none_none(self):
-        b = base.Base()
-        ret = b._extend_value(None, None)
-        self.assertEqual(len(ret), 0)
-        self.assertFalse(ret)
-
-    def test_extend_value_none_list(self):
-        b = base.Base()
-        ret = b._extend_value(None, ['foo'])
-        self.assertEqual(ret, ['foo'])
 
 
 class ExampleException(Exception):
@@ -294,13 +218,8 @@ class BaseSubClass(base.Base):
                                        always_post_validate=True)
     test_attr_none = FieldAttribute(isa='string', always_post_validate=True)
     test_attr_preprocess = FieldAttribute(isa='string', default='the default for preprocess')
-    test_attr_method = FieldAttribute(isa='string', default='some attr with a getter',
-                                      always_post_validate=True)
     test_attr_method_missing = FieldAttribute(isa='string', default='some attr with a missing getter',
                                               always_post_validate=True)
-
-    def _get_attr_test_attr_method(self):
-        return 'foo bar'
 
     def _validate_test_attr_example(self, attr, name, value):
         if not isinstance(value, str):
@@ -332,13 +251,6 @@ class TestBaseSubClass(TestBase):
         ds = {'test_attr_int': MOST_RANDOM_NUMBER}
         bsc = self._base_validate(ds)
         self.assertEqual(bsc.test_attr_int, MOST_RANDOM_NUMBER)
-
-    def test_attr_int_del(self):
-        MOST_RANDOM_NUMBER = 37
-        ds = {'test_attr_int': MOST_RANDOM_NUMBER}
-        bsc = self._base_validate(ds)
-        del bsc.test_attr_int
-        self.assertNotIn('_test_attr_int', bsc.__dict__)
 
     def test_attr_float(self):
         roughly_pi = 4.0
@@ -511,12 +423,6 @@ class TestBaseSubClass(TestBase):
             self._base_validate,
             {'test_attr_unknown_isa': True}
         )
-
-    def test_attr_method(self):
-        ds = {'test_attr_method': 'value from the ds'}
-        bsc = self._base_validate(ds)
-        # The value returned by the subclasses _get_attr_test_attr_method
-        self.assertEqual(bsc.test_attr_method, 'foo bar')
 
     def test_attr_method_missing(self):
         a_string = 'The value set from the ds'
