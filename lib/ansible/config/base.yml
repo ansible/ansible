@@ -2043,6 +2043,17 @@ TARGET_LOG_INFO:
   vars:
   - name: ansible_target_log_info
   version_added: "2.17"
+TASK_ENVIRONMENT:
+  name: Task environment
+  description:
+    - Environment variables to be provided for the task upon execution on the target.
+    - This can ONLY affects module execution, it does not affect any other type of plugin nor Ansible itself nor its configuration. 
+    - This is not a recommended way to pass in confidential data.
+  type: list
+  keyword:
+    - name: environment
+  cli:
+    - name: environment
 TASK_TIMEOUT:
   name: Task Timeout
   default: 0
