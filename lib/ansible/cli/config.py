@@ -12,6 +12,7 @@ import os
 import shlex
 import sys
 import yaml
+import re
 
 from collections.abc import Mapping
 
@@ -20,7 +21,7 @@ import ansible.plugins.loader as plugin_loader
 
 from ansible import constants as C
 from ansible.cli.arguments import option_helpers as opt_help
-from ansible.config.manager import ConfigManager
+from ansible.config.manager import ConfigManager, GALAXY_SERVER_DEF
 from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleRequiredOptionError
 from ansible.module_utils.common.text.converters import to_native, to_text, to_bytes
 from ansible._internal import _json
@@ -34,6 +35,14 @@ display = Display()
 
 
 _IGNORE_CHANGED = frozenset({'_terms', '_input'})
+
+Field_Type_Validators = {
+    'int': r'^-?\d+$',
+    'bool': r'^(true|false)$',
+    'str': r'^.*$',
+    'url': r'https?://[^\s]+',
+    'token': r'^[A-Za-z0-9\-_]+$',
+}
 
 
 def yaml_dump(data, default_flow_style=False, default_style=None):
@@ -77,8 +86,8 @@ def _get_ini_entries(settings):
         if 'ini' in settings[setting] and settings[setting]['ini']:
             for kv in settings[setting]['ini']:
                 if not kv['section'] in data:
-                    data[kv['section']] = set()
-                data[kv['section']].add(kv['key'])
+                    data[kv['section']] = {}
+                data[kv['section']][kv['key']] = None
     return data
 
 
@@ -638,23 +647,19 @@ class ConfigCLI(CLI):
                 # Also from plugins
                 if plugin_types:
                     for ptype in plugin_types:
-                        for plugin in plugin_types[ptype].keys():
+                        for plugin in plugin_types[ptype]:
                             plugin_sections = _get_ini_entries(plugin_types[ptype][plugin])
                             for s in plugin_sections:
-                                if s in sections:
-                                    sections[s].update(plugin_sections[s])
-                                else:
-                                    sections[s] = plugin_sections[s]
+                                sections.setdefault(s, {}).update(plugin_sections[s])
                 if galaxy_servers:
-                    for server in galaxy_servers:
-                        server_sections = _get_ini_entries(galaxy_servers[server])
-                        for s in server_sections:
-                            if s in sections:
-                                sections[s].update(server_sections[s])
-                            else:
-                                sections[s] = server_sections[s]
-                if sections:
-                    p = C.config._parsers[C.CONFIG_FILE]
+                    for server, settings in galaxy_servers.items():
+                        section_name = f"galaxy_server.{server}"
+                        sections[section_name] = {}
+                        for key, meta in settings.items():
+                            sections[section_name][key] = meta
+
+                p = C.config._parsers.get(C.CONFIG_FILE)
+                if p:
                     for s in p.sections():
                         # check for valid sections
                         if s not in sections:
@@ -667,6 +672,21 @@ class ConfigCLI(CLI):
                             if k not in sections[s]:
                                 display.error(f"Found unknown key '{k}' in section '{s}' in '{C.CONFIG_FILE}.")
                                 found = True
+                    for section in p.sections():
+                        if section.startswith("galaxy_server."):
+                            for key, required, expected_type in GALAXY_SERVER_DEF:
+                                if required and not p.has_option(section, key):
+                                    display.error(f"[{section}] missing required field: {key}")
+                                    found = True
+                                elif p.has_option(section, key):
+                                    input_value = p.get(section, key).strip().lower()
+                                    pattern = Field_Type_Validators.get(expected_type)
+                                    if pattern:
+                                        if not re.fullmatch(pattern, input_value):
+                                            display.error(
+                                                f"[{section}] {key} should be of type '{expected_type}', but got {type(input_value).__name__} - {input_value}"
+                                            )
+                                            found = True
 
         elif context.CLIARGS['format'] == 'env':
             # validate any 'ANSIBLE_' env vars found
