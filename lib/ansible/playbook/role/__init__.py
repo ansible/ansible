@@ -390,7 +390,6 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
             'args': {
                 # Pass only the 'options' portion of the arg spec to the module.
                 'argument_spec': argument_spec.get('options', {}),
-                'provided_arguments': self._role_params,
                 'validate_args_context': {
                     'type': 'role',
                     'name': self._role_name,
