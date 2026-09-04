@@ -1,0 +1,51 @@
+---
+- name: Test 50% with under threshold (1 unreachable out of 5 = 20%)
+  hosts: testhost1,testhost2,testhost3,testhost4,unreachable1
+  gather_facts: false
+  max_fail_percentage: 50%
+  tasks:
+    - name: Ping (unreachable1 will become unreachable)
+      ping:
+      # 1 unreachable / 5 total = 20% < 50%
+      # Play should continue
+
+    - name: Should execute 4 times
+      debug:
+        msg: "SHOULD_EXECUTE_4_TIMES"
+
+- name: Test 50% mixed - 1 unreachable + 1 failed = exactly 50%
+  hosts: testhost5,testhost6,testhost7,unreachable2
+  gather_facts: false
+  max_fail_percentage: 50%
+  tasks:
+    - name: Fail one host
+      fail:
+        msg: "Intentional failure"
+      when: inventory_hostname == 'testhost5'
+      # testhost5 fails
+
+    - name: Ping (unreachable2 will become unreachable)
+      ping:
+      # testhost5 failed + unreachable2 unreachable = 2/4 = 50%
+      # 50% is NOT > 50%, so play continues
+
+    - name: Should execute 2 times (testhost6,7)
+      debug:
+        msg: "SHOULD_EXECUTE_2_TIMES"
+
+- name: Test 50% over threshold mixed (1 unreachable + 2 failed out of 4 = 75%)
+  hosts: testhost8,testhost9,testhost10,unreachable3
+  gather_facts: false
+  max_fail_percentage: 50%
+  tasks:
+    - name: Fail two hosts
+      fail:
+        msg: "Intentional failure"
+      when: inventory_hostname in ['testhost8', 'testhost9']
+
+    - name: Ping (unreachable3 will fail)
+      ping:
+
+    - name: Should not execute
+      debug:
+        msg: "SHOULD_NOT_EXECUTE"
