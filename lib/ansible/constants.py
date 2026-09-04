@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import re
+import sys
 
 from string import ascii_letters, digits
 
@@ -16,12 +17,6 @@ from ansible.utils.fqcn import add_internal_fqcns
 # initialize config manager/config data to read/store global settings
 # and generate 'pseudo constants' for app consumption.
 config = ConfigManager()
-
-
-def set_constant(name, value, export=vars()):
-    """ sets constants and returns resolved options dict """
-    export[name] = value
-
 
 # CONSTANTS ### yes, actual ones
 
@@ -71,9 +66,8 @@ DEFAULT_BECOME_PASS = None
 DEFAULT_PASSWORD_CHARS = to_text(ascii_letters + digits + ".,:-_", errors='strict')  # characters included in auto-generated passwords
 DEFAULT_REMOTE_PASS = None
 DEFAULT_SUBSET = None
-# FIXME: expand to other plugins, but never doc fragments
+
 CONFIGURABLE_PLUGINS = ('become', 'cache', 'callback', 'cliconf', 'connection', 'httpapi', 'inventory', 'lookup', 'netconf', 'shell', 'vars')
-# NOTE: always update the docs/docsite/Makefile to match
 DOCUMENTABLE_PLUGINS = CONFIGURABLE_PLUGINS + ('module', 'strategy', 'test', 'filter')
 IGNORE_FILES = ("COPYING", "CONTRIBUTING", "LICENSE", "README", "VERSION", "GUIDELINES", "MANIFEST", "Makefile")  # ignore during module search
 INTERNAL_STATIC_VARS = frozenset(
@@ -129,13 +123,11 @@ VAULT_VERSION_MAX = 1.0
 # This matches a string that cannot be used as a valid python variable name i.e 'not-valid', 'not!valid@either' '1_nor_This'
 INVALID_VARIABLE_NAMES = re.compile(r'^[\d\W]|[^\w]')
 
-
 # FIXME: remove once play_context mangling is removed
 # the magic variable mapping dictionary below is used to translate
 # host/inventory variables to fields in the PlayContext
 # object. The dictionary values are tuples, to account for aliases
 # in variable names.
-
 COMMON_CONNECTION_VARS = frozenset(('ansible_connection', 'ansible_host', 'ansible_user', 'ansible_shell_executable',
                                     'ansible_port', 'ansible_pipelining', 'ansible_password', 'ansible_timeout',
                                     'ansible_shell_type', 'ansible_module_compression', 'ansible_private_key_file'))
@@ -181,6 +173,22 @@ MAGIC_VARIABLE_MAPPING = dict(
     become_flags=('ansible_become_flags', ),
 )
 
-# POPULATE SETTINGS FROM CONFIG ###
-for setting in config.get_configuration_definitions():
-    set_constant(setting, config.get_config_value(setting, variables=vars()))
+### Generate C.<setting> ###
+_me = sys.modules[__name__]
+_C = {}
+
+
+def __getattr__(name):
+    """
+    Dynamically load constants from settings
+    """
+    if name not in _C:
+        try:
+            return _me.__dict__[name]
+        except KeyError as e:
+            try:
+                value = config.get_config_value(name)
+                _C[name] = value
+            except:
+                raise AttributeError from e
+    return _C[name]
