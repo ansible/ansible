@@ -30,3 +30,25 @@ set -e
 # The task is tagged with 'foo' but we use 'bar' in the call below and expect
 # the validation task to run anyway since it is tagged 'always'.
 ansible-playbook test_tags.yml -i ../../inventory "$@" --tags bar | grep "a : Validating arguments against arg spec 'main' - Main entry point for role A."
+
+# Test unsupported role spec fields emit a warning
+expected_warning="Role 'invalid_specs' entrypoint 'main' contains errors in the argument spec. Use -vvv to see details."
+ansible localhost -m include_role -a "name=invalid_specs" 2>&1 | grep -e "$expected_warning"
+ansible localhost -m include_role -a "name=invalid_specs" -vvv | tee details
+grep "Role 'invalid_specs' \(.*\) argument spec 'main' contains errors:" details
+invalid_specs=(
+    "password: no_log"
+    "auth.password: no_log"
+    "option_with_suboptions: apply_defaults"
+    "option_name: aliases"
+    "option_with_env_fallback: fallback"
+)
+for spec in "${invalid_specs[@]}"; do
+    grep "$spec" details
+done
+
+# Test a valid spec doesn't cause a warning
+ansible-playbook test_tags.yml -i ../../inventory "$@" --tags bar 2> error
+if [ -s error ]; then
+    grep -v "\[WARNING\]: Role 'a' entrypoint 'main'" error
+fi

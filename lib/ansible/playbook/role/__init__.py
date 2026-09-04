@@ -297,11 +297,18 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
 
         if self._should_validate:
             role_argspecs = self._get_role_argspecs()
-            task_data = self._prepend_validation_task(task_data, role_argspecs)
+            validation_task_data = self._prepend_validation_task(None, role_argspecs)
+            validation_blocks = load_list_of_blocks(
+                validation_task_data, play=self._play, role=self, loader=self._loader, variable_manager=self._variable_manager
+            )
+            for block in validation_blocks:
+                for task in block.block:
+                    task.implicit = True
+            self._task_blocks = validation_blocks
 
         if task_data:
             try:
-                self._task_blocks = load_list_of_blocks(task_data, play=self._play, role=self, loader=self._loader, variable_manager=self._variable_manager)
+                self._task_blocks += load_list_of_blocks(task_data, play=self._play, role=self, loader=self._loader, variable_manager=self._variable_manager)
             except AssertionError as ex:
                 raise AnsibleParserError(f"The tasks/main.yml file for role {self._role_name!r} must contain a list of tasks.", obj=task_data) from ex
 
