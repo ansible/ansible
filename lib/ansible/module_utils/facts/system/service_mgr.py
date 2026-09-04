@@ -41,15 +41,36 @@ class ServiceMgrFactCollector(BaseFactCollector):
     required_facts = set(['platform', 'distribution'])
 
     @staticmethod
+    def _proc_1_exe_is_systemd():
+        # Compare PID 1's executable to the systemd binary (definitive check on Linux).
+        try:
+            proc_1_exe = os.path.realpath('/proc/1/exe')
+        except (OSError, FileNotFoundError):
+            return False
+        for systemd_path in ['/lib/systemd/systemd', '/usr/lib/systemd/systemd']:
+            if not os.path.exists(systemd_path):
+                continue
+            try:
+                if os.path.realpath(systemd_path) == proc_1_exe:
+                    return True
+            except (OSError, FileNotFoundError):
+                continue
+        return False
+
+    @staticmethod
     def is_systemd_managed(module):
         # tools must be installed
-        if module.get_bin_path('systemctl'):
+        if not module.get_bin_path('systemctl'):
+            return False
 
-            # this should show if systemd is the boot init system, if checking init failed to mark as systemd
-            # these mirror systemd's own sd_boot test http://www.freedesktop.org/software/systemd/man/sd_booted.html
-            for canary in ["/run/systemd/system/", "/dev/.run/systemd/", "/dev/.systemd/"]:
-                if os.path.exists(canary):
-                    return True
+        # definitive: PID 1 is the systemd binary
+        if ServiceMgrFactCollector._proc_1_exe_is_systemd():
+            return True
+        # this should show if systemd is the boot init system, if checking init failed to mark as systemd
+        # these mirror systemd's own sd_boot test http://www.freedesktop.org/software/systemd/man/sd_booted.html
+        for canary in ["/run/systemd/system/", "/dev/.run/systemd/", "/dev/.systemd/"]:
+            if os.path.exists(canary):
+                return True
         return False
 
     @staticmethod
