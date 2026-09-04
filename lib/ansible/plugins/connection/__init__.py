@@ -11,6 +11,7 @@ import shlex
 import typing as t
 
 from abc import abstractmethod
+from contextlib import contextmanager
 from functools import wraps
 
 from ansible import constants as C
@@ -36,6 +37,40 @@ class ConnectionKwargs(t.TypedDict):
     task_uuid: str
     ansible_playbook_pid: str
     shell: t.NotRequired[ShellBase]
+
+
+def _get_persistent_connection_socket_path(play_context: PlayContext, ansible_playbook_pid: str | int | None) -> str:
+    """Return the canonical persistent connection socket path for the supplied task context."""
+    ssh = connection_loader.get('ssh', class_only=True)
+    control_path = ssh._create_control_path(
+        play_context.remote_addr,
+        play_context.port,
+        play_context.remote_user,
+        play_context.connection,
+        ansible_playbook_pid,
+    )
+
+    tmp_path = unfrackpath(C.PERSISTENT_CONTROL_PATH_DIR)
+    return unfrackpath(control_path % dict(directory=tmp_path))
+
+
+def _get_persistent_connection_lock_path(socket_path: str) -> str:
+    """Return the lock path used to serialize persistent connection setup."""
+    return unfrackpath("%s/.ansible_pc_lock_%s" % os.path.split(socket_path))
+
+
+@contextmanager
+def _persistent_connection_lock(lock_path: str) -> c.Iterator[None]:
+    """Acquire and release a persistent connection setup lock."""
+    lock_fd = os.open(lock_path, os.O_RDWR | os.O_CREAT, 0o600)
+    try:
+        fcntl.lockf(lock_fd, fcntl.LOCK_EX)
+        try:
+            yield
+        finally:
+            fcntl.lockf(lock_fd, fcntl.LOCK_UN)
+    finally:
+        os.close(lock_fd)
 
 
 def ensure_connect[T, **P](
@@ -437,15 +472,7 @@ class NetworkConnectionBase(ConnectionBase):
         to True.  If the socket path doesn't exist, leave the socket path
         value to None and the _connected value to False
         """
-        ssh = connection_loader.get('ssh', class_only=True)
-        control_path = ssh._create_control_path(
-            self._play_context.remote_addr, self._play_context.port,
-            self._play_context.remote_user, self._play_context.connection,
-            self._ansible_playbook_pid
-        )
-
-        tmp_path = unfrackpath(C.PERSISTENT_CONTROL_PATH_DIR)
-        socket_path = unfrackpath(control_path % dict(directory=tmp_path))
+        socket_path = _get_persistent_connection_socket_path(self._play_context, self._ansible_playbook_pid)
 
         if os.path.exists(socket_path):
             self._connected = True
