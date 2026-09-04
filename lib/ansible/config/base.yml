@@ -1835,6 +1835,13 @@ OLD_PLUGIN_CACHE_CLEARING:
   type: boolean
   default: False
   version_added: "2.8"
+PACKAGE_MANAGERS:
+  name: Map of package facts to actions.
+  description: A dictionary mapping the detected pkg_mgr fact to the action that should resolve it.
+  default: {}
+  type: dict
+  vars:
+  - name: ansible_package_managers
 PAGER:
   name: pager application to use
   default: less
