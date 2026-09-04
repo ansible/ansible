@@ -1,0 +1,5 @@
+{
+  "text": true,
+  "output": "path-line-column-code-message",
+  "split_targets": true
+}
