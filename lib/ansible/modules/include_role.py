@@ -45,11 +45,6 @@ options:
       - File to load from a role's C(defaults/) directory.
     type: str
     default: main
-  allow_duplicates:
-    description:
-      - Overrides the role's metadata setting to allow using a role more than once with the same parameters.
-    type: bool
-    default: yes
   public:
     description:
       - This option dictates whether the role's C(vars) and C(defaults) are exposed to the play. If set to V(true)
