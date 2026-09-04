@@ -1,0 +1,2 @@
+bugfixes:
+  - strategy - preserve rescued ``run_once`` failures across all hosts without reporting a failed play (https://github.com/ansible/ansible/issues/83292).

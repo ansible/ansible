@@ -1,0 +1,13 @@
+---
+- name: Unrescued failure still honors max_fail_percentage
+  hosts: testhost,testhost2
+  gather_facts: false
+  max_fail_percentage: 0
+  tasks:
+    - name: Fail one host
+      command: /bin/false
+      when: inventory_hostname == 'testhost'
+
+    - name: Do not continue after the max-fail threshold
+      debug:
+        msg: SHOULD NOT HAPPEN
