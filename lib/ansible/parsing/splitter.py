@@ -20,6 +20,7 @@ from __future__ import annotations
 import codecs
 import re
 
+from ansible.errors import AnsibleError
 from ansible.errors import AnsibleParserError
 from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils._internal._datatag import AnsibleTagHelper
@@ -92,12 +93,12 @@ def parse_kv(args, check_raw=False):
                 else:
                     options[k.strip()] = unquote(v.strip())
             else:
-                raw_params.append(orig_x)
+    # Freeform arguments are not supported for --extra-vars
+                raise AnsibleError(
+        f"Invalid --extra-vars format: '{orig_x}'. "
+        "Use key=value, JSON, or YAML."
+    )
 
-        # recombine the free-form params, if any were found, and assign
-        # them to a special option for use later by the shell/command module
-        if len(raw_params) > 0:
-            options[u'_raw_params'] = join_args(raw_params)
 
     if tags:
         options = {AnsibleTagHelper.tag(k, tags): AnsibleTagHelper.tag(v, tags) for k, v in options.items()}
