@@ -73,6 +73,18 @@ class PullCLI(CLI):
         This is useful both for extreme scale-out and periodic remediation.
         Usage of the 'fetch' module to retrieve logs from ansible-pull runs would be an
         excellent way to gather and analyze remote logs from ansible-pull.
+
+
+        .. note::
+            ``ansible-pull`` always executes the playbook using ``--connection=local``
+            because each managed node runs Ansible against itself. This is by design
+            and cannot be overridden via the command line.
+
+            The ``--limit`` (``-l``) option does **not** connect to remote hosts.
+            Instead, it filters which host entries within the local inventory are
+            matched during playbook execution on the current node. For typical
+            ``ansible-pull`` usage, you should ensure your playbook targets
+            ``localhost`` or uses ``connection: local`` explicitly in plays.
     """
 
     name = 'ansible-pull'
