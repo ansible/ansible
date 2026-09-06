@@ -20,7 +20,7 @@ from jinja2.defaults import (
 
 from ansible import constants as C
 from ansible.config.manager import ensure_type
-from ansible.errors import AnsibleError, AnsibleActionFail
+from ansible.errors import AnsibleError, AnsibleActionFail, AnsibleFileNotFound
 from ansible.module_utils.common.text.converters import to_bytes, to_text, to_native
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
@@ -92,14 +92,17 @@ class ActionModule(ActionBase):
                 try:
                     source = self._find_needle('templates', source)
                 except AnsibleError as e:
-                    raise AnsibleActionFail(to_text(e))
+                    return {"failed": True, "msg": to_text(e), "changed": False}
 
             mode = self._task.args.get('mode', None)
             if mode == 'preserve':
                 mode = '0%03o' % stat.S_IMODE(os.stat(source).st_mode)
 
             # template the source data locally & get ready to transfer
-            template_data = trust_as_template(self._loader.get_text_file_contents(source))
+            try:
+                template_data = trust_as_template(self._loader.get_text_file_contents(source))
+            except AnsibleFileNotFound as e:
+                return {"failed": True, "msg": "could not find src=%s, %s" % (source, to_text(e)), "changed": False}
 
             # set jinja2 internal search path for includes
             searchpath = task_vars.get('ansible_search_path', [])
