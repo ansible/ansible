@@ -231,6 +231,10 @@ AGNOSTIC_BECOME_PROMPT:
   name: Display an agnostic become prompt
   default: True
   type: boolean
+  deprecated:
+    why: This setting causes confusion and is no longer recommended.
+    version: "2.20"
+    alternative: None
   description: Display an agnostic become prompt instead of displaying a prompt containing the command line supplied become method.
   env: [{name: ANSIBLE_AGNOSTIC_BECOME_PROMPT}]
   ini:
