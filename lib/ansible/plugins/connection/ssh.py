@@ -1591,23 +1591,9 @@ class Connection(ConnectionBase):
 
         try:
             args, dummy = self._tty_parser.parse_known_args(opts)
-        except argparse.ArgumentError as ex:
-            # re-parse each option alone to name the offending one
-            msg = 'Failed to parse SSH client arguments.'
-            for opt in ('ssh_args', 'ssh_common_args', 'ssh_extra_args'):
-                attr = self.get_option(opt)
-                if attr is None:
-                    continue
-                try:
-                    self._tty_parser.parse_known_args(self._split_ssh_args(attr))
-                except argparse.ArgumentError:
-                    if display.verbosity:
-                        # the value may contain sensitive data, only show it when verbosity was requested
-                        msg = f'Failed to parse the {opt} option value {attr!r}.'
-                    else:
-                        msg = f'Failed to parse the {opt} option value.'
-                    break
-            raise AnsibleError(msg) from ex
+        except argparse.ArgumentError:
+            # malformed args; cannot tell if a tty was requested, ssh itself will report the problem when the command runs
+            return False
 
         if args.t:
             return True
