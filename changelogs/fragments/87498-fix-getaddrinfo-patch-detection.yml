@@ -1,0 +1,2 @@
+bugfixes:
+  - module_utils - fix module initialization failures on QNX Neutrino 6.5.0 by specifying IPv4 stream socket hints in the ``socket.getaddrinfo`` integer-subclass compatibility probe (https://github.com/ansible/ansible/issues/87496).
