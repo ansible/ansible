@@ -1,0 +1,2 @@
+bugfixes:
+  - "Ansible no longer fails to import when IDNA support is missing (https://github.com/ansible/ansible/issues/86072)."

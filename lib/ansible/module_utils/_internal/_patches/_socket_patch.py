@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import contextlib
 import socket
 import typing as t
 
@@ -21,11 +20,14 @@ class GetAddrInfoPatch(CallablePatch):
 
     @classmethod
     def is_patch_needed(cls) -> bool:
-        with contextlib.suppress(OSError):
+        try:
             socket.getaddrinfo('127.0.0.1', _CustomInt(22))
+        except OSError:
+            return True
+        except LookupError:
             return False
 
-        return True
+        return False
 
     def __call__(self, host, port, *args, **kwargs) -> t.Any:
         if type(port) is not int and isinstance(port, int):  # pylint: disable=unidiomatic-typecheck
