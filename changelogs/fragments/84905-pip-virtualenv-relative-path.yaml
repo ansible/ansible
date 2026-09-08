@@ -1,0 +1,3 @@
+bugfixes:
+  - pip - fix relative ``virtualenv`` path being resolved against ``/tmp`` instead
+    of the current working directory when ``chdir`` is not set (https://github.com/ansible/ansible/issues/84905).

@@ -682,3 +682,20 @@
           - multi_editable_install is changed
           - multi_pip_list_check.stdout is search('sample-project\s+1.0.0\s+' ~ remote_tmp_dir ~ '/sample-project')
           - multi_pip_list_check.stdout is search('another-project\s+1.0.0\s+' ~ remote_tmp_dir ~ '/another-project')
+
+# Test: relative virtualenv path without chdir should resolve against cwd, not /tmp
+- name: Create virtualenv with relative path (no chdir)
+  pip:
+    name: setuptools
+    virtualenv: relative-test-venv
+  register: pip_relative_venv
+
+- name: Assert relative virtualenv was created successfully
+  assert:
+    that:
+      - pip_relative_venv is success
+
+- name: Cleanup relative virtualenv
+  file:
+    path: "{{ playbook_dir }}/relative-test-venv"
+    state: absent
