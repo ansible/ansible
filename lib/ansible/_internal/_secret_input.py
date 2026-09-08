@@ -68,9 +68,7 @@ def _run_secret_input_command(path: os.PathLike) -> bytes:
         # stderr is passed through so the command can prompt or report errors to the user
         proc = subprocess.run([path], stdout=subprocess.PIPE, check=False)
     except OSError as ex:
-        raise AnsibleError(
-            f"Could not run secrets input file {path!r}: {ex}. If this is not an executable, remove the executable bit from the file."
-        ) from ex
+        raise AnsibleError(f"Could not run secrets input file {path!r}: {ex}. If this is not an executable, remove the executable bit from the file.") from ex
 
     if proc.returncode != 0:
         raise AnsibleError(f"Secrets input file {path!r} returned non-zero exit status {proc.returncode}.")
