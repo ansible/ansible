@@ -2,8 +2,13 @@
 - name: run the module through an action plugin that checks masking during result processing
   run_module_check:
     incoming: "{{ 'IncomingPySecret' | register_secret }}"
+    escaped_incoming: "{{ escaped_secret | register_secret }}"
     register_as_secret: InlineDiscoveredPySecret
     no_log_option: NoLogPyOptionSecret
+  vars:
+    # contains characters that JSON escapes (quote, backslash, non-ASCII) so the module args the
+    # controller sends only carry the escaped form of the registered secret
+    escaped_secret: 'Incoming"Py\Secretü'
   register: py_module
 
 - name: assert the module-side masking API behaved as expected
@@ -18,6 +23,10 @@
     - py_module.incoming == 'IncomingPySecret'
     # ... but mask_secrets redacts it because the controller propagated the registration
     - py_module.incoming_masked == '$REDACTED$'
+    # a secret that JSON escapes still arrived as the literal value ...
+    - py_module.escaped_incoming == 'Incoming"Py\\Secretü'
+    # ... and the controller recognised its escaped form in the module args and propagated the registration
+    - py_module.escaped_incoming_masked == '$REDACTED$'
     # the runtime-discovered option value is echoed back by its true value (non-destructive)
     - py_module.register_as_secret == 'InlineDiscoveredPySecret'
     # a no_log option value is automatically registered as a secret, so the module masks it ...
@@ -38,7 +47,10 @@
 - name: run a module that respawns itself under a different interpreter
   run_respawn_check:
     incoming: "{{ 'IncomingRespawnPySecret' | register_secret }}"
+    escaped_incoming: "{{ escaped_secret | register_secret }}"
     register_as_secret: OutgoingRespawnPySecret
+  vars:
+    escaped_secret: 'IncomingRespawn"Py\Secretü'
   register: respawn_module_result
 
 - name: assert secret masking behaved across the module respawn boundary
@@ -50,6 +62,9 @@
     - respawn_module_result.incoming == 'IncomingRespawnPySecret'
     # ... and the respawned child could still mask it (incoming secrets survive the respawn)
     - respawn_module_result.incoming_masked == '$REDACTED$'
+    # the respawned child re-reads its args as JSON, a secret that JSON escapes must still map back to the literal value
+    - respawn_module_result.escaped_incoming == 'IncomingRespawn"Py\\Secretü'
+    - respawn_module_result.escaped_incoming_masked == '$REDACTED$'
     # a secret registered inside the respawned child echoes back by its true value (non-destructive) ...
     - respawn_module_result.register_as_secret == 'OutgoingRespawnPySecret'
     # ... but the child masks it locally

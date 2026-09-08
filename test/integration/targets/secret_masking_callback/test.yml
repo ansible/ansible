@@ -4,6 +4,9 @@
   gather_facts: false
   vars:
     callback_secret: Callbacksecret0060Value
+    # Contains a double quote, a backslash and a non-ASCII character, so the JSON that callbacks
+    # emit carries the escaped forms (\" \\ and either \u00fc or the raw ü) rather than the literal.
+    callback_escaped_secret: 'Escaped"Callback\Secretü'
   tasks:
     - name: register the secret on the controller
       set_fact:
@@ -12,6 +15,14 @@
     - name: emit a task result whose payload contains the registered secret
       debug:
         msg: "MARKER callback: {{ cb_value }}"
+
+    - name: register a secret whose JSON encoded form differs from its literal value
+      set_fact:
+        cb_escaped: "{{ callback_escaped_secret | register_secret }}"
+
+    - name: emit a task result whose JSON serialization contains the escaped form of the secret
+      debug:
+        msg: "MARKER escaped: {{ cb_escaped }}"
 
     - name: build a nested structure with the secret at several container depths
       set_fact:
@@ -30,7 +41,7 @@
       debug:
         var: nested
 
-    - name: emit a failed task result whose msg contains the registered secret
+    - name: emit a failed task result whose msg contains both registered secrets
       fail:
-        msg: "MARKER failed: {{ cb_value }}"
+        msg: "MARKER failed: {{ cb_value }} {{ cb_escaped }}"
       ignore_errors: true

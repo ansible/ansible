@@ -29,6 +29,7 @@ class ActionModule(ActionBase):
             module_name='respawn_secret',
             module_args={
                 'incoming': self._task.args['incoming'],
+                'escaped_incoming': self._task.args['escaped_incoming'],
                 'register_as_secret': register_as_secret,
             },
             task_vars=task_vars,

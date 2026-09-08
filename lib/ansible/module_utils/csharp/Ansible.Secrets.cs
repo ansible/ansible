@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Security;
 using System.Text;
 
 namespace Ansible.Secrets
 {
+    // See lib/ansible/module_utils/_internal/_secrets.py for the Python impl and details behind algorithm choices.
     public class SecretMasker
     {
         // Not marked readonly so integration tests can reset the singleton to a
@@ -13,33 +15,30 @@ namespace Ansible.Secrets
         // readonly field via reflection is not supported on CoreCLR).
         private static SecretMasker _instance = new SecretMasker();
 
-        private int[] _failureLink;
-        private int[] _outputLink;
-        private int[] _patternLength;
-        private int _nodeCount;
+        // If any of these are changed we need to ensure that _secrets.py is updated to match.
+        private const int MinimumSecretLength = 4;  // below this, not registered at all
+        private const int MaximumShortSecretLength = 6;  // above this, mask unconditionally
+        private const int MaximumSecretLength = 65536;  // trims to this length as a cap for registration and matching
 
-        private readonly Dictionary<long, int> _trieGoto;
-        private readonly HashSet<char> _alphabet;
-
-        private int[] _transitions;
-        private int[] _charToIndex;
-        private int _alphaSize;
-        private char[] _prevAlpha;
-
+        private readonly Node _root;
         private readonly HashSet<string> _registered;
         private HashSet<string> _newSecrets;
         private bool _dirty;
 
-        private const int InitialNodeCapacity = 64;
+        private sealed class Node
+        {
+            public readonly Dictionary<char, Node> Children = new Dictionary<char, Node>();
+            public readonly int Depth;
+            public bool IsTerminal;  // a registered value ends here; its length in chars is Depth
+            public int CodePoints;  // length of that value in code points, the unit the length rules use
+            public Node Fail;  // longest proper suffix of this node's path that is also a path
+            public Node Output;  // nearest terminal node on the fail chain, excluding this node
 
-        // Mirrors ansible.module_utils._internal._secrets. Secrets shorter than
-        // MinimumSecretLength are never registered; secrets between Minimum and
-        // MaximumShortSecretLength ("short") are only masked when they sit at a
-        // word boundary. Longer secrets are always masked. Secrets longer than
-        // MaximumSecretLength are trimmed to that length before registration.
-        private const int MinimumSecretLength = 4;
-        private const int MaximumShortSecretLength = 6;
-        private const int MaximumSecretLength = 1024;
+            public Node(int depth)
+            {
+                Depth = depth;
+            }
+        }
 
         /// <summary>
         /// Internal API: Used to register initial secrets known to Ansible.
@@ -109,19 +108,8 @@ namespace Ansible.Secrets
 
         private SecretMasker()
         {
-            _failureLink = new int[InitialNodeCapacity];
-            _outputLink = new int[InitialNodeCapacity];
-            _patternLength = new int[InitialNodeCapacity];
-            _nodeCount = 1;
-
-            _trieGoto = new Dictionary<long, int>();
-            _alphabet = new HashSet<char>();
-
-            _transitions = Array.Empty<int>();
-            _charToIndex = null;
-            _alphaSize = 0;
-            _prevAlpha = Array.Empty<char>();
-
+            _root = new Node(0);
+            _root.Fail = _root;
             _registered = new HashSet<string>(StringComparer.Ordinal);
             _newSecrets = new HashSet<string>(StringComparer.Ordinal);
             _dirty = false;
@@ -159,49 +147,192 @@ namespace Ansible.Secrets
 
         private void RegisterSecretImpl(string secret)
         {
-            if (string.IsNullOrEmpty(secret) || secret.Length < MinimumSecretLength)
+            // Lengths are measured in code points, as Python does, so a surrogate pair counts once.
+            if (string.IsNullOrEmpty(secret) || CodePointCount(secret) < MinimumSecretLength)
             {
                 return;
             }
 
             // Overly long secrets are trimmed before registration so only the
             // first MaximumSecretLength characters are matched and masked.
-            if (secret.Length > MaximumSecretLength)
-            {
-                secret = secret.Substring(0, MaximumSecretLength);
-            }
+            secret = TrimToCodePoints(secret, MaximumSecretLength);
 
             if (!_registered.Add(secret))
             {
                 return;
             }
 
-            int current = 0;
-            for (int i = 0; i < secret.Length; i++)
-            {
-                char c = secret[i];
-                _alphabet.Add(c);
-
-                long key = ((long)current << 16) | (long)c;
-                int next = 0;
-                if (!_trieGoto.TryGetValue(key, out next))
-                {
-                    next = _nodeCount++;
-                    EnsureNodeCapacity(_nodeCount);
-                    _trieGoto[key] = next;
-                }
-                current = next;
-            }
-
-            if (_patternLength[current] == 0)
-            {
-                _patternLength[current] = secret.Length;
-            }
-
-            _dirty = true;
             _newSecrets.Add(secret);
 
-            return;
+            // Register the literal value and the forms it takes once JSON encoded. The ASCII
+            // form escapes non-ASCII characters as well (legacy module serialization profile),
+            // the other form only escapes what JSON requires (modern profile). When the ASCII
+            // form is the same as the literal value neither form can differ from it.
+            AddValue(secret);
+
+            string jsonAsciiForm = JsonEncode(secret, true);
+            if (jsonAsciiForm != secret)
+            {
+                AddValue(jsonAsciiForm);
+                AddValue(JsonEncode(secret, false));
+            }
+        }
+
+        private void AddValue(string value)
+        {
+            Node node = _root;
+            foreach (char c in value)
+            {
+                Node child;
+                if (!node.Children.TryGetValue(c, out child))
+                {
+                    child = new Node(node.Depth + 1);
+                    node.Children[c] = child;
+                    _dirty = true;
+                }
+                node = child;
+            }
+
+            if (!node.IsTerminal)
+            {
+                node.IsTerminal = true;
+                node.CodePoints = CodePointCount(value);
+                _dirty = true;
+            }
+        }
+
+        private static int CodePointCount(string value)
+        {
+            int count = value.Length;
+            for (int i = 0; i < value.Length - 1; i++)
+            {
+                if (char.IsSurrogatePair(value[i], value[i + 1]))
+                {
+                    count--;
+                    i++;
+                }
+            }
+
+            return count;
+        }
+
+        private static string TrimToCodePoints(string value, int maxCodePoints)
+        {
+            if (value.Length <= maxCodePoints)
+            {
+                return value;
+            }
+
+            int index = 0;
+            for (int count = 0; count < maxCodePoints && index < value.Length; count++)
+            {
+                index += char.IsSurrogatePair(value, index) ? 2 : 1;
+            }
+
+            return index < value.Length ? value.Substring(0, index) : value;
+        }
+
+        /// <summary>
+        /// Encodes a string as the Python json module would, without the surrounding quotes. With
+        /// <paramref name="asciiOnly"/> every character outside the printable ASCII range is escaped as
+        /// \uXXXX (ensure_ascii=True), otherwise only the characters JSON requires to be escaped are.
+        /// </summary>
+        private static string JsonEncode(string value, bool asciiOnly)
+        {
+            StringBuilder sb = null;
+
+            for (int i = 0; i < value.Length; i++)
+            {
+                char c = value[i];
+                string escaped = null;
+
+                switch (c)
+                {
+                    case '"':
+                        escaped = "\\\"";
+                        break;
+                    case '\\':
+                        escaped = "\\\\";
+                        break;
+                    case '\n':
+                        escaped = "\\n";
+                        break;
+                    case '\r':
+                        escaped = "\\r";
+                        break;
+                    case '\t':
+                        escaped = "\\t";
+                        break;
+                    case '\b':
+                        escaped = "\\b";
+                        break;
+                    case '\f':
+                        escaped = "\\f";
+                        break;
+                    default:
+                        if (c < ' ' || (asciiOnly && c > '~'))
+                        {
+                            // Python escapes each UTF-16 code unit, so a surrogate pair becomes two escapes.
+                            escaped = "\\u" + ((int)c).ToString("x4");
+                        }
+                        break;
+                }
+
+                if (escaped == null)
+                {
+                    if (sb != null)
+                    {
+                        sb.Append(c);
+                    }
+                    continue;
+                }
+
+                if (sb == null)
+                {
+                    sb = new StringBuilder(value.Length + 16);
+                    sb.Append(value, 0, i);
+                }
+                sb.Append(escaped);
+            }
+
+            return sb == null ? value : sb.ToString();
+        }
+
+        private void BuildLinks()
+        {
+            // Standard breadth first computation of the fail and output links.
+            Queue<Node> queue = new Queue<Node>();
+
+            foreach (Node child in _root.Children.Values)
+            {
+                child.Fail = _root;
+                child.Output = null;
+                queue.Enqueue(child);
+            }
+
+            while (queue.Count > 0)
+            {
+                Node node = queue.Dequeue();
+
+                foreach (KeyValuePair<char, Node> edge in node.Children)
+                {
+                    char c = edge.Key;
+                    Node child = edge.Value;
+
+                    Node fail = node.Fail;
+                    Node target;
+                    while (!fail.Children.TryGetValue(c, out target) && fail != _root)
+                    {
+                        fail = fail.Fail;
+                    }
+
+                    child.Fail = target ?? _root;
+                    child.Output = child.Fail.IsTerminal ? child.Fail : child.Fail.Output;
+                    queue.Enqueue(child);
+                }
+            }
+
+            _dirty = false;
         }
 
         private string MaskStringImpl(string value, string maskPlaceholder)
@@ -213,247 +344,135 @@ namespace Ansible.Secrets
 
             if (_dirty)
             {
-                BuildAutomaton();
-                _dirty = false;
+                BuildLinks();
             }
 
-            // Leftmost-longest, non-overlapping matching, mirroring the pure-Python
-            // Aho-Corasick iter_long implementation in _ahocorasick.py. Fail links are
-            // followed only while seeking (never while extending) and on a commit we
-            // resume at the character after the match to re-scan any probe overshoot
-            // while staying non-overlapping. Only matches surviving the short-secret
-            // boundary check (see MaskSpan) are actually redacted.
-            StringBuilder sb = null;
-            int valuePos = 0;
-
-            int state = 0;
-            int i = 0;
-            int length = value.Length;
-
-            bool haveCandidate = false;
-            int candidateStart = 0;
-            int candidateEnd = 0;
-
-            while (i < length)
-            {
-                char c = value[i];
-                long key = ((long)state << 16) | (long)c;
-
-                int next;
-                if (_trieGoto.TryGetValue(key, out next))
-                {
-                    // Descend the goto edge; record a match if it is at least as leftward.
-                    state = next;
-                    int matchLen = GetLongestMatch(state);
-                    if (matchLen > 0)
-                    {
-                        int start = i - matchLen + 1;
-                        if (!haveCandidate || start <= candidateStart)
-                        {
-                            candidateStart = start;
-                            candidateEnd = i;
-                            haveCandidate = true;
-                        }
-                    }
-                    i++;
-                }
-                else if (haveCandidate)
-                {
-                    // Extending dead-ended: commit the candidate and resume past its end.
-                    sb = MaskSpan(value, maskPlaceholder, sb, ref valuePos, candidateStart, candidateEnd + 1);
-                    i = candidateEnd + 1;
-                    state = 0;
-                    haveCandidate = false;
-                }
-                else if (state == 0)
-                {
-                    // Seeking with no edge at the un-seeded root: skip this char.
-                    i++;
-                }
-                else
-                {
-                    // Seeking: follow one fail link and re-try the goto next iteration.
-                    state = _failureLink[state];
-                }
-            }
-
-            if (haveCandidate)
-            {
-                sb = MaskSpan(value, maskPlaceholder, sb, ref valuePos, candidateStart, candidateEnd + 1);
-            }
-
-            if (sb == null)
+            List<int[]> spans = FindSpans(value);
+            if (spans.Count == 0)
             {
                 return value;
             }
 
+            MergeSpans(spans);
+
+            StringBuilder sb = new StringBuilder(value.Length);
+            int valuePos = 0;
+            foreach (int[] span in spans)
+            {
+                sb.Append(value, valuePos, span[0] - valuePos);
+                sb.Append(maskPlaceholder);
+                valuePos = span[1];
+            }
             sb.Append(value, valuePos, value.Length - valuePos);
+
             return sb.ToString();
         }
 
         /// <summary>
-        /// Redacts a matched span into <paramref name="sb"/> unless it is a short secret
-        /// that does not sit at a word boundary, in which case the text is left untouched.
+        /// Every occurrence of every registered value in <paramref name="value"/> as [start, end) spans,
+        /// overlapping included, except short values that do not sit at a word boundary.
         /// </summary>
-        private static StringBuilder MaskSpan(string value, string maskPlaceholder, StringBuilder sb, ref int valuePos, int start, int end)
+        private List<int[]> FindSpans(string value)
         {
-            int spanLength = end - start;
-            if (IsShortSecret(spanLength) && !SitsAtBoundary(value, start, end))
+            List<int[]> spans = new List<int[]>();
+            Node state = _root;
+
+            for (int i = 0; i < value.Length; i++)
             {
-                return sb;
+                char c = value[i];
+
+                Node next;
+                while (!state.Children.TryGetValue(c, out next) && state != _root)
+                {
+                    state = state.Fail;
+                }
+                state = next ?? _root;
+
+                // every registered value ending at this index: the state's own then the shorter suffixes
+                Node hit = state.IsTerminal ? state : state.Output;
+                while (hit != null)
+                {
+                    int start = i - hit.Depth + 1;
+                    int end = i + 1;
+
+                    if (hit.CodePoints > MaximumShortSecretLength || SitsAtBoundary(value, start, end))
+                    {
+                        spans.Add(new int[] { start, end });
+                    }
+
+                    hit = hit.Output;
+                }
             }
 
-            if (sb == null)
-            {
-                sb = new StringBuilder(value.Length);
-            }
-            sb.Append(value, valuePos, start - valuePos);
-            sb.Append(maskPlaceholder);
-            valuePos = end;
-            return sb;
+            return spans;
         }
 
-        private static bool IsShortSecret(int length)
+        /// <summary>
+        /// Sorts spans and merges any that overlap or touch into one, so one placeholder covers them all.
+        /// </summary>
+        private static void MergeSpans(List<int[]> spans)
         {
-            return length >= MinimumSecretLength && length <= MaximumShortSecretLength;
+            if (spans.Count < 2)
+            {
+                return;
+            }
+
+            spans.Sort((a, b) => a[0] != b[0] ? a[0].CompareTo(b[0]) : a[1].CompareTo(b[1]));
+
+            int merged = 0;
+            for (int i = 1; i < spans.Count; i++)
+            {
+                int[] last = spans[merged];
+                int[] current = spans[i];
+
+                if (current[0] <= last[1])
+                {
+                    if (current[1] > last[1])
+                    {
+                        last[1] = current[1];
+                    }
+                }
+                else
+                {
+                    merged++;
+                    spans[merged] = current;
+                }
+            }
+
+            spans.RemoveRange(merged + 1, spans.Count - merged - 1);
         }
 
         private static bool SitsAtBoundary(string value, int start, int end)
         {
-            bool atBeginning = start == 0;
-            bool atEnd = end == value.Length;
-            bool boundaryLeft = atBeginning || !IsAlphaNumeric(value[start - 1]);
-            bool boundaryRight = atEnd || !IsAlphaNumeric(value[end]);
+            bool boundaryLeft = start == 0 || !IsAlphaNumeric(value, start - 1);
+            bool boundaryRight = end == value.Length || !IsAlphaNumeric(value, end);
             return boundaryLeft && boundaryRight;
         }
 
-        private static bool IsAlphaNumeric(char c)
+        /// <summary>
+        /// Matches Python's str.isalnum for the character at <paramref name="index"/>: any letter or number
+        /// category, with a surrogate pair classified as the code point it encodes.
+        /// </summary>
+        private static bool IsAlphaNumeric(string value, int index)
         {
-            // Matches Python's str.isalnum for the character classes secret masking cares about.
-            return char.IsLetterOrDigit(c);
-        }
-
-        private void EnsureNodeCapacity(int needed)
-        {
-            if (needed <= _failureLink.Length)
-                return;
-            int newCap = Math.Max(_failureLink.Length * 2, needed);
-            Array.Resize(ref _failureLink, newCap);
-            Array.Resize(ref _outputLink, newCap);
-            Array.Resize(ref _patternLength, newCap);
-        }
-
-        private int GetLongestMatch(int state)
-        {
-            if (state == 0)
+            if (index > 0 && char.IsLowSurrogate(value[index]) && char.IsHighSurrogate(value[index - 1]))
             {
-                return 0;
+                index--;
             }
 
-            if (_patternLength[state] > 0)
+            switch (CharUnicodeInfo.GetUnicodeCategory(value, index))
             {
-                return _patternLength[state];
-            }
-
-            int outLink = _outputLink[state];
-            if (outLink > 0)
-            {
-                return _patternLength[outLink];
-            }
-
-            return 0;
-        }
-
-        private void BuildAutomaton()
-        {
-            if (_charToIndex == null)
-            {
-                _charToIndex = new int[65536];
-                for (int i = 0; i < _charToIndex.Length; i++)
-                {
-                    _charToIndex[i] = -1;
-                }
-            }
-            else
-            {
-                for (int i = 0; i < _prevAlpha.Length; i++)
-                {
-                    _charToIndex[_prevAlpha[i]] = -1;
-                }
-            }
-
-            char[] alpha = new char[_alphabet.Count];
-            _alphabet.CopyTo(alpha);
-            _alphaSize = alpha.Length;
-            for (int i = 0; i < alpha.Length; i++)
-                _charToIndex[alpha[i]] = i;
-            _prevAlpha = alpha;
-
-            _transitions = new int[_nodeCount * _alphaSize];
-
-            foreach (KeyValuePair<long, int> kvp in _trieGoto)
-            {
-                int fromState = (int)(kvp.Key >> 16);
-                int ci = _charToIndex[(char)(kvp.Key & 0xFFFF)];
-                _transitions[fromState * _alphaSize + ci] = kvp.Value;
-            }
-
-            for (int i = 0; i < _nodeCount; i++)
-            {
-                _failureLink[i] = 0;
-                _outputLink[i] = 0;
-            }
-
-            Queue<int> queue = new Queue<int>();
-
-            for (int ai = 0; ai < _alphaSize; ai++)
-            {
-                int child = _transitions[ai];
-                if (child != 0)
-                {
-                    _failureLink[child] = 0;
-                    queue.Enqueue(child);
-                }
-            }
-
-            while (queue.Count > 0)
-            {
-                int u = queue.Dequeue();
-                int uBase = u * _alphaSize;
-                int failBase = _failureLink[u] * _alphaSize;
-
-                for (int ai = 0; ai < _alphaSize; ai++)
-                {
-                    int v = _transitions[uBase + ai];
-                    if (v != 0)
-                    {
-                        int fv = _transitions[failBase + ai];
-                        if (fv != v)
-                        {
-                            _failureLink[v] = fv;
-                        }
-                        else
-                        {
-                            _failureLink[v] = 0;
-                        }
-
-                        int fl = _failureLink[v];
-                        if (_patternLength[fl] > 0)
-                        {
-                            _outputLink[v] = fl;
-                        }
-                        else
-                        {
-                            _outputLink[v] = _outputLink[fl];
-                        }
-
-                        queue.Enqueue(v);
-                    }
-                    else
-                    {
-                        _transitions[uBase + ai] = _transitions[failBase + ai];
-                    }
-                }
+                case UnicodeCategory.UppercaseLetter:
+                case UnicodeCategory.LowercaseLetter:
+                case UnicodeCategory.TitlecaseLetter:
+                case UnicodeCategory.ModifierLetter:
+                case UnicodeCategory.OtherLetter:
+                case UnicodeCategory.DecimalDigitNumber:
+                case UnicodeCategory.LetterNumber:
+                case UnicodeCategory.OtherNumber:
+                    return true;
+                default:
+                    return false;
             }
         }
     }

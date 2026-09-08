@@ -14,6 +14,7 @@ from ansible.module_utils.secrets import register_secret, mask_secrets
 def main():
     module = AnsibleModule(argument_spec=dict(
         incoming=dict(type='str', required=True),
+        escaped_incoming=dict(type='str', required=True),
         register_as_secret=dict(type='str', required=True),
     ))
 
@@ -25,6 +26,7 @@ def main():
         raise Exception('FAIL, should never reach this line after respawn_module')
 
     incoming = module.params['incoming']
+    escaped_incoming = module.params['escaped_incoming']
 
     register_as_secret = module.params['register_as_secret']
     register_secret(register_as_secret)
@@ -34,6 +36,8 @@ def main():
         respawned=has_respawned(),
         incoming=incoming,
         incoming_masked=mask_secrets(incoming),
+        escaped_incoming=escaped_incoming,
+        escaped_incoming_masked=mask_secrets(escaped_incoming),
         register_as_secret=register_as_secret,
         register_as_secret_masked=mask_secrets(register_as_secret),
     )

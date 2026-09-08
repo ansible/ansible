@@ -3,9 +3,8 @@
 
 from __future__ import annotations
 
+import collections.abc as _c
 import subprocess
-
-from collections.abc import Iterable, Mapping, Sequence
 
 from ansible.errors import AnsibleError
 from ansible.module_utils.common.file import is_executable
@@ -17,7 +16,7 @@ from ansible.parsing.utils.yaml import from_yaml
 _SUPPORTED_VERSIONS = frozenset((1,))
 
 
-def load_secret_input_files(paths: Iterable[str]) -> None:
+def load_secret_input_files(paths: _c.Iterable[str], /) -> None:
     """Read each secret input file and register its secrets for output masking."""
     for path in paths:
         register_secrets(_read_secret_input_file(path))
@@ -33,7 +32,7 @@ def _read_secret_input_file(path: str) -> list[str]:
 
     data = from_yaml(to_text(raw, errors='surrogate_or_strict'), file_name=path, show_content=False)
 
-    if not isinstance(data, Mapping):
+    if not isinstance(data, _c.Mapping):
         raise AnsibleError(f"Secrets input file {path!r} must contain a mapping, not a {native_type_name(data)}.")
 
     version = data.get('version')
@@ -48,7 +47,7 @@ def _read_secret_input_file(path: str) -> list[str]:
     secrets = data.get('secrets')
 
     # a str is a Sequence, guard against a bare string being treated as a list of characters
-    if not isinstance(secrets, Sequence) or isinstance(secrets, (str, bytes)):
+    if not isinstance(secrets, _c.Sequence) or isinstance(secrets, (str, bytes)):
         raise AnsibleError(f"Secrets input file {path!r} must contain a 'secrets' list.")
 
     for idx, secret in enumerate(secrets):

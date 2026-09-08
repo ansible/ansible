@@ -26,6 +26,7 @@ class ActionModule(ActionBase):
             module_name='discover_secret',
             module_args={
                 'incoming': self._task.args['incoming'],
+                'escaped_incoming': self._task.args['escaped_incoming'],
                 'register_as_secret': register_as_secret,
                 'no_log_option': no_log_option,
             },

@@ -10,11 +10,13 @@ from ansible.module_utils.secrets import register_secret, register_secrets, mask
 def main():
     module = AnsibleModule(argument_spec=dict(
         incoming=dict(type='str', required=True),
+        escaped_incoming=dict(type='str', required=True),
         register_as_secret=dict(type='str', required=False, default=None),
         no_log_option=dict(type='str', required=True, no_log=True),
     ))
 
     incoming = module.params['incoming']
+    escaped_incoming = module.params['escaped_incoming']
 
     secrets = ['PyModuleSecret1', 'PyModuleSecret2', 'PyModuleSecret3']
 
@@ -34,6 +36,8 @@ def main():
         masked=masked,
         incoming=incoming,
         incoming_masked=mask_secrets(incoming),
+        escaped_incoming=escaped_incoming,
+        escaped_incoming_masked=mask_secrets(escaped_incoming),
         register_as_secret=register_as_secret,
         no_log_option=module.params['no_log_option'],
         no_log_option_masked=mask_secrets(module.params['no_log_option']),

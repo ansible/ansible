@@ -9,6 +9,7 @@
 $spec = @{
     options = @{
         incoming = @{ type = "str"; required = $true }
+        escaped_incoming = @{ type = "str"; required = $true }
         register_as_secret = @{ type = "str"; required = $false; default = $null }
         no_log_option = @{ type = "str"; required = $true; no_log = $true }
     }
@@ -16,6 +17,7 @@ $spec = @{
 $module = [Ansible.Basic.AnsibleModule]::Create($args, $spec)
 
 $incoming = $module.Params.incoming
+$escapedIncoming = $module.Params.escaped_incoming
 
 $secrets = @('PwshModuleSecret1', 'PwshModuleSecret2', 'PwshModuleSecret3')
 foreach ($secret in $secrets) {
@@ -32,6 +34,8 @@ $module.Result.masked = [Ansible.Secrets.SecretMasker]::MaskString("$($secrets[0
 $module.Result.masked_custom = [Ansible.Secrets.SecretMasker]::MaskString($secrets[0], "<HIDDEN>")
 $module.Result.incoming = $incoming
 $module.Result.incoming_masked = [Ansible.Secrets.SecretMasker]::MaskString($incoming)
+$module.Result.escaped_incoming = $escapedIncoming
+$module.Result.escaped_incoming_masked = [Ansible.Secrets.SecretMasker]::MaskString($escapedIncoming)
 $module.Result.register_as_secret = $registerAsSecret
 $module.Result.no_log_option = $module.Params.no_log_option
 $module.Result.no_log_option_masked = [Ansible.Secrets.SecretMasker]::MaskString($module.Params.no_log_option)

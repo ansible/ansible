@@ -1374,7 +1374,7 @@ def _find_module_utils(
             rlimit_nofile=rlimit_nofile,
             params=encoded_params,
             extensions=extension_manager.get_extensions(),
-            secrets=_secrets._secret_masker.secrets_in(encoded_params),
+            secrets=_secrets._secret_masker.secrets_in_json(encoded_params),
             zip_data=to_text(cached_module.zip_data),
         )
 
