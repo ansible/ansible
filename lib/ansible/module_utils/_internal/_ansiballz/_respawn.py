@@ -15,7 +15,7 @@ def create_payload() -> str:
 
     ansible_args = basic._ANSIBLE_ARGS
 
-    # This works on the assumption that the respawned process is in charge or
+    # This works on the assumption that the respawned process is in charge of
     # all output sent back to the controller. It'll take over registering of
     # new secrets and masking any output based on the input provided to it.
     secrets = _secrets._secret_masker.secrets_in_json(ansible_args.decode())

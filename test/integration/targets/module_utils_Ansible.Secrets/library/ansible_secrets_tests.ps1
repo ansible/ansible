@@ -71,13 +71,11 @@ Assert-True ($drained.Contains("password123")) "expected 'password123' in draine
 $drainedAgain = [Ansible.Secrets.SecretMasker]::DrainNewSecrets()
 Assert-True ($drainedAgain.Count -eq 0) "expected 0 new secrets on the second drain, got $($drainedAgain.Count)"
 
-# --- Short secrets are not registered (parity with test_short_secrets_are_not_registered) ---
+# --- Short secrets are not registered (the masking side is in the corpus) ---
 Reset-Masker
 $short = "a" * 3  # below the minimum secret length
 [Ansible.Secrets.SecretMasker]::RegisterSecret($short)
 Assert-True ([Ansible.Secrets.SecretMasker]::DrainNewSecrets().Count -eq 0) "secret shorter than the minimum length must not be registered"
-$text = "XX${short}XX"
-Assert-True ([Ansible.Secrets.SecretMasker]::MaskString($text, $sentinel) -ceq $text) "unregistered short secret must pass through unmasked"
 
 # --- MaskString(value) default-placeholder overload (parity with mask_secrets default) ---
 Reset-Masker
@@ -117,19 +115,24 @@ $base = -join (0..($maxLength - 1) | ForEach-Object { [char](0x21 + ($_ % 90)) }
 $drainedTrimmed = [Ansible.Secrets.SecretMasker]::DrainNewSecrets()
 Assert-True ($drainedTrimmed.Count -eq 1) "two secrets that differ only beyond the cap must be reported as one, got $($drainedTrimmed.Count)"
 Assert-True ($drainedTrimmed.Contains($base)) "expected the trimmed secret in the drained secrets"
-$maskedTrimmed = [Ansible.Secrets.SecretMasker]::MaskString("key=${base}CCC;", $sentinel)
-Assert-True ($maskedTrimmed -ceq "key=${sentinel}CCC;") "only the trimmed prefix of an oversized secret must be masked"
+
+# --- Surrounding whitespace is stripped before registration (parity with test_tracker_records_stripped_secret) ---
+Reset-Masker
+[Ansible.Secrets.SecretMasker]::RegisterSecret(" `tStrippedSecretValue`r`n")
+$drainedStripped = [Ansible.Secrets.SecretMasker]::DrainNewSecrets()
+Assert-True ($drainedStripped.Count -eq 1) "expected 1 new secret after registering a padded value, got $($drainedStripped.Count)"
+Assert-True ($drainedStripped.Contains("StrippedSecretValue")) "expected the stripped secret to be reported as new"
+[Ansible.Secrets.SecretMasker]::RegisterSecret("    ")
+[Ansible.Secrets.SecretMasker]::RegisterSecret(" ab ")
+Assert-True ([Ansible.Secrets.SecretMasker]::DrainNewSecrets().Count -eq 0) "whitespace-only and padded short values must not be registered"
 
 # --- Lengths are measured in code points, matching Python (surrogate pairs count once) ---
 Reset-Masker
 $astral = [char]::ConvertFromUtf32(0x1F600)  # one code point, two UTF-16 chars
 [Ansible.Secrets.SecretMasker]::RegisterSecret($astral * 3)
 Assert-True ([Ansible.Secrets.SecretMasker]::DrainNewSecrets().Count -eq 0) "a secret of 3 code points must not be registered even though it is 6 chars"
-$astralText = "a $($astral * 3) b"
-Assert-True ([Ansible.Secrets.SecretMasker]::MaskString($astralText, $sentinel) -ceq $astralText) "an unregistered astral secret must pass through unmasked"
 [Ansible.Secrets.SecretMasker]::RegisterSecret($astral * 4)
-$maskedAstral = [Ansible.Secrets.SecretMasker]::MaskString("a $($astral * 4) b x$($astral * 4)x", $sentinel)
-Assert-True ($maskedAstral -ceq "a $sentinel b x$($astral * 4)x") "a 4 code point secret is short and only masked at a word boundary, got '$maskedAstral'"
+Assert-True ([Ansible.Secrets.SecretMasker]::DrainNewSecrets().Count -eq 1) "a secret of 4 code points must be registered"
 
 # --- Interleaving registration and masking keeps every earlier secret masked (parity with test_registering_a_secret_does_not_rebuild_previous_state) ---
 Reset-Masker

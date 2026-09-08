@@ -55,27 +55,8 @@ def test_flush_clears_state_second_flush_is_empty(masker):
     assert tracker.flush() == frozenset()
 
 
-def test_short_secrets_are_not_registered(masker):
-    """Secrets shorter than the minimum length are silently skipped, so they pass through unmasked."""
-    short = "a" * (_secrets._MINIMUM_SECRET_LENGTH - 1)
-    masker.register_secret_text(short)
-    text = f"XX {short} XX"
-    assert masker.mask_string(text, mask_placeholder=SENTINEL) == text
-
-
-def test_minimum_length_secret_is_registered(masker):
-    secret = "a" * _secrets._MINIMUM_SECRET_LENGTH
-    masker.register_secret_text(secret)
-    assert masker.mask_string(f"x {secret} y", mask_placeholder=SENTINEL) == f"x {SENTINEL} y"
-
-
 def test_mask_string_no_registered_secrets_returns_value_unchanged(masker):
     assert masker.mask_string("nothing registered") == "nothing registered"
-
-
-def test_mask_string_value_without_secrets_is_unchanged(masker):
-    masker.register_secret_text("password123")
-    assert masker.mask_string("nothing to see") == "nothing to see"
 
 
 def test_mask_string_default_placeholder(masker):
@@ -175,20 +156,26 @@ def test_tracker_records_trimmed_secret(masker):
     assert tracker.flush() == frozenset({secret[:_secrets._MAXIMUM_SECRET_LENGTH]})
 
 
+def test_tracker_records_stripped_secret(masker):
+    """Surrounding whitespace is stripped before registration; the caller still gets the value unchanged."""
+    tracker = masker.track_new_secrets()
+    assert masker.register_secret_text(" \tsecret-value\r\n") == " \tsecret-value\r\n"
+    assert tracker.flush() == frozenset({"secret-value"})
+
+
+def test_whitespace_only_or_padded_short_secrets_are_not_registered(masker):
+    """The minimum length applies after stripping."""
+    tracker = masker.track_new_secrets()
+    masker.register_secret_texts(["    ", "\n\n\n\n", " ab ", "\tabc\n"])
+    assert tracker.flush() == frozenset()
+    assert masker.mask_string("    ab abc", mask_placeholder=SENTINEL) == "    ab abc"
+
+
 def test_only_the_secret_itself_is_tracked_as_new(masker):
     """Derived forms (JSON escapes) are re-derived by receivers, so trackers carry only the secret."""
     tracker = masker.track_new_secrets()
     masker.register_secret_text('test"secret')
     assert tracker.flush() == frozenset({'test"secret'})
-
-
-def test_oversized_secret_is_trimmed_to_max_length(masker):
-    """A secret longer than the cap is trimmed before registration, so only that prefix is masked."""
-    # non-repeating so the trimmed prefix occurs exactly once in the input
-    secret = "".join(chr(0x21 + i % 90) for i in range(_secrets._MAXIMUM_SECRET_LENGTH + 10))
-    masker.register_secret_text(secret)
-    masked = masker.mask_string(f"key={secret};", mask_placeholder=SENTINEL)
-    assert masked == f"key={SENTINEL}{secret[_secrets._MAXIMUM_SECRET_LENGTH:]};"
 
 
 def test_oversized_secrets_sharing_the_trimmed_prefix_are_one_secret(masker):

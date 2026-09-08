@@ -6,6 +6,16 @@
     filter_register_secret: Filterregister0001Secret
     filter_mask_secret: Filtermask0002Secret
     vault_filter_pass: Vaultfilterpass0003Secret
+    vault_data_secret: Vaultdata0004Secret
+    unvault_filter_pass: Unvaultpass0006Secret
+    # 'Unvaultdata0005Secret' encrypted with unvault_filter_pass, so the plaintext is only ever seen by the unvault filter
+    unvault_ciphertext: |
+      $ANSIBLE_VAULT;1.2;AES256;filter_default
+      65313361346630333761626137363163366164306365613639386530336266396462303335636536
+      6463323766306138643731393635633230633134376161390a663835383832376365653065383363
+      63653863636537363562313961313633643861623564393133313965363331353232623361333466
+      3863626665626634350a386132663938663539353432653138313130343734666339363263393334
+      31383331346531613835616163623161633238303366303535336238623864313838
     nondestruct_secret: Nondestruct0040Secret
     lazy_first_secret: Lazyfirst0050Secret
     lazy_second_secret: Lazysecond0051Secret
@@ -34,19 +44,45 @@
       debug:
         msg: "MARKER filter_mask: {{ filter_mask_secret }}"
 
-    - name: vault/unvault filters register the passphrase
-      set_fact:
-        _unvaulted: "{{ ('ignored' | vault(vault_filter_pass)) | unvault(vault_filter_pass) }}"
+    - name: the plaintext is not a secret before the vault filter sees it
+      debug:
+        msg: "MARKER vault_data_before: {{ vault_data_secret }}"
 
-    - name: unvault round-trips
+    - name: vault filter registers the passphrase and the plaintext it encrypts
+      set_fact:
+        _vaulted: "{{ vault_data_secret | vault(vault_filter_pass) }}"
+
+    - name: unvault filter round-trips the plaintext
       assert:
         that:
-          - _unvaulted == 'ignored'
+          - (_vaulted | unvault(vault_filter_pass)) == vault_data_secret
         quiet: true
 
     - name: emit vault/unvault passphrase
       debug:
         msg: "MARKER vault_filter: {{ vault_filter_pass }}"
+
+    - name: emit the plaintext given to the vault filter
+      debug:
+        msg: "MARKER vault_data: {{ vault_data_secret }}"
+
+    - name: unvault filter registers the passphrase and the plaintext it decrypts
+      set_fact:
+        _unvaulted: "{{ unvault_ciphertext | unvault(unvault_filter_pass) }}"
+
+    - name: unvault decrypted the expected plaintext
+      assert:
+        that:
+          - _unvaulted == 'Unvaultdata0005Secret'
+        quiet: true
+
+    - name: emit unvault passphrase
+      debug:
+        msg: "MARKER unvault_filter: {{ unvault_filter_pass }}"
+
+    - name: emit the plaintext produced by the unvault filter
+      debug:
+        msg: "MARKER unvault_data: Unvaultdata0005Secret"
 
     - name: register a secret into a fact
       set_fact:

@@ -10,18 +10,18 @@ from ansible.module_utils.secrets import mask_secrets
 import pytest
 
 
-def _write(tmp_path: pathlib.Path, name: str, content: str) -> str:
+def _write(tmp_path: pathlib.Path, name: str, content: str) -> pathlib.Path:
     path = tmp_path / name
     path.write_text(content)
-    return str(path)
+    return path
 
 
-def _write_executable(tmp_path: pathlib.Path, name: str, content: str) -> str:
+def _write_executable(tmp_path: pathlib.Path, name: str, content: str) -> pathlib.Path:
     path = tmp_path / name
     path.write_text(content)
     path.chmod(path.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
 
-    return str(path)
+    return path
 
 
 def test_yaml_secrets_are_masked(tmp_path: pathlib.Path) -> None:

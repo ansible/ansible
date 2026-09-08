@@ -40,6 +40,7 @@ _emptyfrozenset: frozenset[str] = frozenset()
 _MINIMUM_SECRET_LENGTH = 4  # below this, not registered at all
 _MAXIMUM_SHORT_SECRET_LENGTH = 6  # above this, mask unconditionally
 _MAXIMUM_SECRET_LENGTH = 65536  # trims to this length as a cap for registration and matching
+_STRIP_CHARS = " \t\r\n"  # stripped from both ends before registration
 
 # _AnchoredMatcher tuning; neither affects results
 _ANCHOR_LEN = 8  # chars of each secret held in the automaton; trades memory against false anchor hits
@@ -106,7 +107,7 @@ class _Node:
 class _AnchoredMatcher:
     """Finds every occurrence of the registered words in a string. Not thread-safe; the owner locks.
 
-    Words must already satisfy the registry rules (minimum length, trimmed, not previously added).
+    Words must already satisfy the registry rules (stripped, minimum length, trimmed, not previously added).
     """
 
     def __init__(self) -> None:
@@ -287,7 +288,7 @@ class SecretMasker:
         self._lock = ForkSafeLock()
         self._matcher = _AnchoredMatcher()
 
-        self._secrets: set[str] = set()  # the registered secrets, as given (trimmed)
+        self._secrets: set[str] = set()  # the registered secrets, as given (stripped and trimmed)
         self._forms: set[str] = set()  # every string the matcher knows: secrets and their derived forms
         # JSON-encoded form -> the secret it is the encoding of, for forms that differ from the secret
         self._json_forms: dict[str, str] = {}
@@ -298,9 +299,8 @@ class SecretMasker:
         return tracker
 
     def register_secret_text(self, secret: str, /) -> str:
-        """Register a secret for masking, returning the registered value."""
-        if len(secret) >= _MINIMUM_SECRET_LENGTH:
-            self.register_secret_texts((secret,))
+        """Register a secret for masking, returning the value unchanged."""
+        self.register_secret_texts((secret,))
 
         return secret
 
@@ -312,14 +312,18 @@ class SecretMasker:
             _gc.disable()  # trie construction is dominated by the cyclic GC otherwise
             try:
                 for secret in secrets:
-                    if len(secret) < _MINIMUM_SECRET_LENGTH:
-                        continue
-
+                    # Surrounding whitespace is not part of the secret: values often
+                    # arrive with a trailing newline (vaulted files, stdin) but are used
+                    # stripped. The stripped value matches every occurrence the original
+                    # would have, plus the stripped uses.
                     # FUTURE: Look into string normalisation \u00e9 vs \u0065\u0301, etc. to avoid
                     # leaking secrets that are equivalent but not identical. Would require logic
                     # on the masking side either to normalise and mutate the input or to register
                     # multiple normalised forms of each secret.
-                    trimmed = secret[:_MAXIMUM_SECRET_LENGTH]
+                    trimmed = secret.strip(_STRIP_CHARS)[:_MAXIMUM_SECRET_LENGTH]
+
+                    if len(trimmed) < _MINIMUM_SECRET_LENGTH:
+                        continue
 
                     if self._add(trimmed):
                         new.add(trimmed)

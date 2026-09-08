@@ -19,6 +19,7 @@ namespace Ansible.Secrets
         private const int MinimumSecretLength = 4;  // below this, not registered at all
         private const int MaximumShortSecretLength = 6;  // above this, mask unconditionally
         private const int MaximumSecretLength = 65536;  // trims to this length as a cap for registration and matching
+        private static readonly char[] StripChars = new char[] { ' ', '\t', '\r', '\n' };  // stripped from both ends before registration
 
         private readonly Node _root;
         private readonly HashSet<string> _registered;
@@ -147,15 +148,18 @@ namespace Ansible.Secrets
 
         private void RegisterSecretImpl(string secret)
         {
-            // Lengths are measured in code points, as Python does, so a surrogate pair counts once.
-            if (string.IsNullOrEmpty(secret) || CodePointCount(secret) < MinimumSecretLength)
+            if (secret == null)
             {
                 return;
             }
 
-            // Overly long secrets are trimmed before registration so only the
-            // first MaximumSecretLength characters are matched and masked.
-            secret = TrimToCodePoints(secret, MaximumSecretLength);
+            // Copies behaviour of Python to strip whitespace and trim to the
+            // maximum length before registering.
+            secret = TrimToCodePoints(secret.Trim(StripChars), MaximumSecretLength);
+            if (CodePointCount(secret) < MinimumSecretLength)
+            {
+                return;
+            }
 
             if (!_registered.Add(secret))
             {

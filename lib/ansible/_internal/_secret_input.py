@@ -4,11 +4,10 @@
 from __future__ import annotations
 
 import collections.abc as _c
+import os
 import subprocess
 
 from ansible.errors import AnsibleError
-from ansible.module_utils.common.file import is_executable
-from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.datatag import native_type_name
 from ansible.module_utils.secrets import register_secrets
 from ansible.parsing.utils.yaml import from_yaml
@@ -16,21 +15,25 @@ from ansible.parsing.utils.yaml import from_yaml
 _SUPPORTED_VERSIONS = frozenset((1,))
 
 
-def load_secret_input_files(paths: _c.Iterable[str], /) -> None:
+def load_secret_input_files(paths: _c.Iterable[os.PathLike], /) -> None:
     """Read each secret input file and register its secrets for output masking."""
     for path in paths:
         register_secrets(_read_secret_input_file(path))
 
 
-def _read_secret_input_file(path: str) -> list[str]:
+def _read_secret_input_file(path: os.PathLike) -> _c.Iterable[str]:
     """Parse and validate a single secret input file, returning its list of secret values."""
-    if is_executable(path):
+    if os.access(path, os.X_OK):
         raw = _run_secret_input_command(path)
     else:
         with open(path, 'rb') as f:
             raw = f.read()
 
-    data = from_yaml(to_text(raw, errors='surrogate_or_strict'), file_name=path, show_content=False)
+    data = from_yaml(
+        raw.decode('utf-8'),
+        file_name=str(path),
+        show_content=False,
+    )
 
     if not isinstance(data, _c.Mapping):
         raise AnsibleError(f"Secrets input file {path!r} must contain a mapping, not a {native_type_name(data)}.")
@@ -56,17 +59,17 @@ def _read_secret_input_file(path: str) -> list[str]:
         if not isinstance(secret, str):
             raise AnsibleError(f"Secrets input file {path!r} entry secrets[{idx}] must be a string, not a {native_type_name(secret)}.")
 
-    return list(secrets)
+    return secrets
 
 
-def _run_secret_input_command(path: str) -> bytes:
+def _run_secret_input_command(path: os.PathLike) -> bytes:
     """Execute an executable secrets input file and return its stdout as bytes."""
     try:
         # stderr is passed through so the command can prompt or report errors to the user
         proc = subprocess.run([path], stdout=subprocess.PIPE, check=False)
     except OSError as ex:
         raise AnsibleError(
-            f"Could not run secrets input file {path!r}: {ex}. " f"If this is not an executable, remove the executable bit from the file."
+            f"Could not run secrets input file {path!r}: {ex}. If this is not an executable, remove the executable bit from the file."
         ) from ex
 
     if proc.returncode != 0:
