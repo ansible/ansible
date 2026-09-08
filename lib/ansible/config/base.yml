@@ -237,6 +237,10 @@ AGNOSTIC_BECOME_PROMPT:
     - {key: agnostic_become_prompt, section: privilege_escalation}
   yaml: {key: privilege_escalation.agnostic_become_prompt}
   version_added: "2.5"
+  deprecated:
+    why: All external tools should have been migrated to the method agnostic version of the prompt by now.
+    alternatives: None, there should be no need for one.
+    version: '2.26'
 CACHE_PLUGIN:
   name: Persistent Fact Cache plugin
   default: memory
