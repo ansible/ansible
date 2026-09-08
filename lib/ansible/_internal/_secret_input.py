@@ -8,6 +8,7 @@ import os
 import subprocess
 
 from ansible.errors import AnsibleError
+from ansible.module_utils.common.file import is_executable
 from ansible.module_utils.datatag import native_type_name
 from ansible.module_utils.secrets import register_secrets
 from ansible.parsing.utils.yaml import from_yaml
@@ -23,7 +24,10 @@ def load_secret_input_files(paths: _c.Iterable[os.PathLike], /) -> None:
 
 def _read_secret_input_file(path: os.PathLike) -> _c.Iterable[str]:
     """Parse and validate a single secret input file, returning its list of secret values."""
-    if os.access(path, os.X_OK):
+    # Cannot use os.access(path, os.X_OK) because on macOS running as root any
+    # non regular file (e.g. pipe) will always be True. Our is_executable
+    # check does not suffer from this issue.
+    if is_executable(str(path)):
         raw = _run_secret_input_command(path)
     else:
         with open(path, 'rb') as f:
