@@ -40,7 +40,9 @@ DOCUMENTATION = """
         type: integer
       persistent:
         version_added: "2.22"
-        description: Set to False to use the cache filename and lossy format used prior to ansible-core 2.19.
+        description:
+          - Whether or not to persist data tags, such as deprecation notices.
+          - Setting this option to False will use the cache filename and tagless format used prior to ansible-core 2.19.
         default: True
         type: bool
         env:
@@ -59,9 +61,9 @@ from ansible.plugins.cache import BaseFileCacheModule
 class CacheModule(BaseFileCacheModule):
     """A caching module backed by json files."""
 
+    # NOTE: This relies on core impl details about cache instantiation and the PluginLoader that can change at any time.
     @property
     def _persistent(self):
-        # evaluate on request, since the plugin loader initializes defs before checking _persistent
         return self.get_option("persistent")
 
     def _load(self, filepath: str) -> object:
