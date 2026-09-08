@@ -38,6 +38,7 @@ options:
         If the virtualenv does not exist, it will be created before installing
         packages. The optional O(virtualenv_site_packages), O(virtualenv_command),
         and O(virtualenv_python) options affect the creation of the virtualenv.
+      - When O(chdir) is set, a relative path is resolved relative to O(chdir).
     type: path
   virtualenv_site_packages:
     description:
@@ -87,6 +88,7 @@ options:
   chdir:
     description:
       - cd into this directory before running the command.
+      - When O(virtualenv) is a relative path, it is resolved relative to O(chdir).
     type: path
     version_added: "1.3"
   executable:
@@ -780,8 +782,10 @@ def main():
     editable = module.params['editable']
 
     venv_created = False
-    if env and chdir:
-        env = os.path.join(chdir, env)
+    if env:
+        if chdir:
+            env = os.path.join(chdir, env)
+        env = os.path.abspath(env)
 
     if umask and not isinstance(umask, int):
         try:
