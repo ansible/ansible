@@ -1248,6 +1248,7 @@ class User(object):
             return (1, '', to_native(e))
         ssh_dir = os.path.dirname(ssh_key_file)
 
+        # no need to check for broken symlnk as mkdir below will fail
         if not os.path.exists(ssh_dir):
             if self.module.check_mode:
                 return (0, '', '')
@@ -1255,20 +1256,24 @@ class User(object):
                 os.mkdir(ssh_dir, int('0700', 8))
                 os.chown(ssh_dir, info[2], info[3])
             except OSError as e:
-                return (1, '', 'Failed to create %s: %s' % (ssh_dir, to_native(e)))
+                return (1, '', f'Failed to create ssh directory {ssh_dir}: {e!r}')
 
-        if os.path.exists(ssh_key_file):
+        # use lexists instead of exists to account for broken symlinks
+        if os.path.lexists(ssh_key_file):
             if self.force:
+                if not self.module.check_mode and os.path.islink(ssh_key_file):
+                    os.unlink(ssh_key_file)
                 self.module.warn(f'Overwriting existing ssh key private file "{ssh_key_file}"')
                 overwrite = 'y'
             else:
                 self.module.warn(f'Found existing ssh key private file "{ssh_key_file}", no force, so skipping ssh-keygen generation')
                 return (None, 'Key already exists, use "force: yes" to overwrite', '')
 
-        if os.path.exists(pub_file):
+        if os.path.lexists(pub_file):
             if self.force:
+                if not self.module.check_mode:
+                    os.unlink(pub_file)
                 self.module.warn(f'Overwriting existing ssh key public file "{pub_file}"')
-                os.unlink(pub_file)
             else:
                 self.module.warn(f'Found existing ssh key public file "{pub_file}", no force, so skipping ssh-keygen generation')
                 return (None, 'Public key already exists, use "force: yes" to overwrite', '')
