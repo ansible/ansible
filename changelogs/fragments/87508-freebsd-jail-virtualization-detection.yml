@@ -1,0 +1,8 @@
+bugfixes:
+  - ansible_virtualization_role and ansible_virtualization_type facts - do not
+    misreport FreeBSD jails running on a bhyve host as ``bhyve``/``host``.
+    The kldstat(8) hypervisor probe now only runs when the target is not
+    itself a guest, since a jail shares the host kernel and
+    ``kldstat -q -m vmm`` succeeds inside the jail, previously overwriting
+    the jail facts (``jails``/``guest``) with the host's bhyve facts
+    (https://github.com/ansible/ansible/pull/85767).
