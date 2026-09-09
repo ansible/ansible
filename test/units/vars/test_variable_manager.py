@@ -165,3 +165,25 @@ class TestVariableManager(unittest.TestCase):
             task = blocks[2].block[0]
             res = v.get_vars(play=play1, task=task)
             self.assertEqual(res['role_var'], 'role_var_from_role2')
+
+    def test_set_host_facts_does_not_alias_caller_mapping_across_hosts(self):
+        # https://github.com/ansible/ansible/issues/87415 -- the strategy
+        # broadcasts one templated run_once set_fact/gather_facts result object
+        # to every target host; set_host_facts() must not store that same object
+        # for more than one host, or a later per-host update to one host mutates
+        # the others in place.
+        fake_loader = DictDataLoader({})
+        mock_inventory = InventoryManager(loader=fake_loader)
+        v = VariableManager(loader=fake_loader, inventory=mock_inventory)
+
+        shared = {"discovered_interpreter_python": "/usr/bin/python3"}
+        v.set_host_facts("host1", shared)
+        v.set_host_facts("host2", shared)
+
+        # a later, host1-only update
+        v.set_host_facts("host1", {"gathered": "host1-only"})
+
+        self.assertEqual(v._fact_cache.get("host1").get("gathered"), "host1-only")
+        self.assertNotIn("gathered", v._fact_cache.get("host2"))
+        # the caller's own mapping must be left untouched
+        self.assertEqual(shared, {"discovered_interpreter_python": "/usr/bin/python3"})
