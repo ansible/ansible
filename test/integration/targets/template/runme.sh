@@ -56,5 +56,8 @@ do
 	ANSIBLE_CONFIG="./${badcfg}.cfg" ansible-config dump --only-changed
 done
 
-# ensure we picle hostvarscorrectly with native https://github.com/ansible/ansible/issues/83503
+# ensure we pickle hostvars correctly with native https://github.com/ansible/ansible/issues/83503
 ANSIBLE_JINJA2_NATIVE=1 ansible -m debug -a "msg={{ groups.all | map('extract', hostvars) }}" -i testhost, all -c local -v "$@"
+
+# https://github.com/ansible/ansible/issues/87491
+ansible-playbook missing_src_failed_when_87491.yml -v "$@"
