@@ -7,27 +7,27 @@
   register: no_warning_or_deprecation
 
 - name: Emit a warning and deprecation
-  warning-deprecation:
+  warning_deprecation:
   register: unchanged
 
 - name: Make task changed when a specific warning is visible during task execution
-  warning-deprecation:
+  warning_deprecation:
   changed_when: _task.result.warnings[0] == "This is a warning from a module"
   register: warning_changed
 
 - name: Make task changed when a specific deprecation is visible during task execution
-  warning-deprecation:
+  warning_deprecation:
   changed_when: _task.result.deprecations[0].msg == "This is a deprecation from a module"
   register: deprecation_changed
 
 - name: Make task failed when a specific warning is visible during task execution
-  warning-deprecation:
+  warning_deprecation:
   failed_when: _task.result.warnings[0] == "This is a warning from a module"
   register: warning_failed
   ignore_errors: yes
 
 - name: Make task failed when a specific deprecation is visible during task execution
-  warning-deprecation:
+  warning_deprecation:
   failed_when: _task.result.deprecations[0].msg == "This is a deprecation from a module"
   register: deprecation_failed
   ignore_errors: yes

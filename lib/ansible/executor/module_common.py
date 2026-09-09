@@ -19,7 +19,6 @@
 from __future__ import annotations
 
 import ast
-import base64
 import dataclasses
 import datetime
 import importlib.util as _importlib_util
@@ -952,6 +951,15 @@ def recursive_finder(
         if extension_manager.debugger_enabled and (origin := Origin.get_tag(source_code)) and origin.path:
             extension_manager.source_mapping[origin.path] = py_module_file_name
 
+    main_py_code = _builder.generate_main_py(
+        module_fqn=module_fqn,
+        profile=profile,
+        extensions=extension_manager.get_extensions(),
+    )
+    display.vvvvv("Including generated __main__.py entry point")
+    zf.writestr(_make_zinfo('__main__.py', date_time, zf=zf), main_py_code)
+    written_files.add('__main__.py')
+
     anchor_cache: dict[str, pathlib.Path] = {}
     for embed in embeds:
         try:
@@ -1310,7 +1318,7 @@ def _find_module_utils(
                     _add_module_to_zip(zf, date_time, remote_module_fqn, b_module_data, module_path, extension_manager)
 
                     zf.close()
-                    zip_data = base64.b64encode(zipoutput.getvalue())
+                    zip_data = zipoutput.getvalue()
 
                     # Write the assembled module to a temp file (write to temp
                     # so that no one looking for the file reads a partially
@@ -1373,7 +1381,8 @@ def _find_module_utils(
             rlimit_nofile=rlimit_nofile,
             params=encoded_params,
             extensions=extension_manager.get_extensions(),
-            zip_data=to_text(cached_module.zip_data),
+            zip_data=cached_module.zip_data,
+            wrapper_source=code,
         )
 
         args_string = '\n'.join(f'{key}={value!r},' for key, value in args.items())

@@ -25,7 +25,8 @@ from ansible.plugins.loader import init_plugin_loader
 # We will remove these when we modify AnsiBallZ to store its args in a separate file instead of in
 # basic.py
 
-MODULE_UTILS_BASIC_FILES = frozenset(('ansible/__init__.py',
+MODULE_UTILS_BASIC_FILES = frozenset(('__main__.py',
+                                      'ansible/__init__.py',
                                       'ansible/module_utils/__init__.py',
                                       'ansible/module_utils/basic.py',
                                       'ansible/module_utils/_internal/__init__.py',

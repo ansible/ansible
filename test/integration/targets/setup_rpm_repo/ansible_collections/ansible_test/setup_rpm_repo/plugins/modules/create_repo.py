@@ -8,7 +8,7 @@ import tempfile
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.embed import EmbedManager
-from ansible.module_utils.common.respawn import get_env_with_pythonpath, probe_interpreters_for_module
+from ansible.module_utils.common.respawn import probe_interpreters_for_module
 
 embed = EmbedManager.embed('..module_utils._embed', 'create_repo.py')
 
@@ -33,14 +33,10 @@ def main():
     tempfile.tempdir = tempdir
 
     try:
+        script = embed.read_text()
         repo_dir = subprocess.check_output(
-            [
-                interpreter,
-                '-m',
-                embed.python_module_ref,
-                tempdir,
-            ],
-            env=get_env_with_pythonpath(),
+            [interpreter, '-', tempdir],
+            input=script,
             stderr=subprocess.STDOUT,
             universal_newlines=True
         ).strip()

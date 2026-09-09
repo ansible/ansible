@@ -8,16 +8,21 @@ def _respawn_main(
     modlib_path: str,
 ) -> None:
     import sys
+    import runpy
 
     sys.path.insert(0, modlib_path)
 
+    from ansible.module_utils import basic
     from ansible.module_utils._internal._ansiballz import _loader
 
-    _loader.run_module(
-        json_params=json_params,
-        profile=profile,
-        module_fqn=module_fqn,
-        modlib_path=modlib_path,
-        extensions={},
-        init_globals=dict(_respawned=True),
-    )
+    basic._ANSIBLE_ARGS = json_params
+    basic._ANSIBLE_PROFILE = profile
+
+    init_globals = dict(_respawned=True, _module_fqn=module_fqn, _modlib_path=modlib_path)
+
+    try:
+        runpy.run_module(mod_name=module_fqn, init_globals=init_globals, run_name='__main__', alter_sys=True)
+
+        raise RuntimeError('New-style module did not handle its own exit.')
+    except Exception as e:
+        _loader._handle_exception(e, profile)
