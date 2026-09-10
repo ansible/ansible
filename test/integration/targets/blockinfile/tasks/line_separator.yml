@@ -76,9 +76,44 @@
           - convert_result is changed
           - (convert_slurp.content | b64decode) == "# BEGIN ANSIBLE MANAGED BLOCK\nline1\nline2\n# END ANSIBLE MANAGED BLOCK\n"
 
+    - name: insert a crlf block in check mode
+      blockinfile:
+        path: "{{ base_path }}check.txt"
+        create: true
+        line_separator: crlf
+        block: "line1\r\nline2"
+      check_mode: true
+      register: check_result
+
+    - name: stat the check-mode file
+      stat:
+        path: "{{ base_path }}check.txt"
+      register: check_stat
+
+    - name: validate check mode reports change without writing the file
+      assert:
+        that:
+          - check_result is changed
+          - not check_stat.stat.exists
+
+    - name: insert a crlf block with diff enabled
+      blockinfile:
+        path: "{{ base_path }}diff.txt"
+        create: true
+        line_separator: crlf
+        block: "line1\r\nline2"
+      diff: true
+      register: diff_result
+
+    - name: validate diff reflects the crlf line endings within the block
+      assert:
+        that:
+          - diff_result is changed
+          - diff_result.diff[0].after == "# BEGIN ANSIBLE MANAGED BLOCK\r\nline1\r\nline2\r\n# END ANSIBLE MANAGED BLOCK\r\n"
+
   always:
     - name: clean up line_separator test files
       file:
         path: "{{ base_path }}{{ item }}.txt"
         state: absent
-      loop: "{{ (line_seps | map(attribute='sep') | list) + ['convert'] }}"
+      loop: "{{ (line_seps | map(attribute='sep') | list) + ['convert', 'diff'] }}"
