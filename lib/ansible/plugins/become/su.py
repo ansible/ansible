@@ -61,6 +61,8 @@ DOCUMENTATION = """
               - name: become_flags
         become_pass:
             description: Password to pass to su
+            type: str
+            secret: true
             required: False
             vars:
               - name: ansible_become_password

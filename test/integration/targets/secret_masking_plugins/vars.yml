@@ -1,0 +1,8 @@
+---
+- name: vars plugin secret registration
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: the vars_test vars plugin runs automatically while resolving host vars
+      debug:
+        msg: vars plugin scenario complete

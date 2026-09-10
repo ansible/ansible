@@ -14,6 +14,8 @@ import pytest
 
 from ansible.config.manager import ConfigManager, ensure_type, resolve_path, get_config_type
 from ansible.errors import AnsibleOptionsError, AnsibleError
+from ansible.module_utils import secrets as _secrets_api
+from ansible.module_utils._internal import _secrets
 from ansible._internal._datatag._tags import Origin, VaultedValue
 from ansible.module_utils._internal._datatag import AnsibleTagHelper
 from ansible.template import is_trusted_as_template
@@ -260,6 +262,58 @@ class TestConfigManager:
             self.manager._read_config_yaml_file(os.path.join(curdir, 'test_non_existent.yml'))
 
         assert "Missing base YAML definition file (bad install?)" in str(exec_info.value)
+
+
+@pytest.fixture
+def fresh_masker(monkeypatch: pytest.MonkeyPatch) -> _secrets.SecretMasker:
+    """Swap in a fresh SecretMasker so registration/masking is isolated per test."""
+    masker = _secrets.SecretMasker()
+    monkeypatch.setattr(_secrets_api, '_secret_masker', masker)
+    return masker
+
+
+def test_initialize_plugin_secret_option_invalid_type() -> None:
+    cm = ConfigManager()
+    with pytest.raises(AnsibleOptionsError):
+        cm.initialize_plugin_configuration_definitions('connection', 'demo', {'port': {'type': 'int', 'secret': True}})
+
+
+def test_secret_config_value_registered_from_env(monkeypatch: pytest.MonkeyPatch, fresh_masker: _secrets.SecretMasker) -> None:
+    monkeypatch.setenv('ANSIBLE_TEST_SECRET_OPT', 'super-secret-value')
+    cm = ConfigManager()
+    cm.initialize_plugin_configuration_definitions('connection', 'demo', {
+        'password': {'type': 'str', 'secret': True, 'env': [{'name': 'ANSIBLE_TEST_SECRET_OPT'}], 'default': None},
+    })
+
+    value = cm.get_config_value('password', plugin_type='connection', plugin_name='demo')
+
+    assert value == 'super-secret-value'
+    assert fresh_masker.mask_string('log: super-secret-value') == 'log: $REDACTED$'
+
+
+def test_secret_config_value_registers_list_elements(fresh_masker: _secrets.SecretMasker) -> None:
+    cm = ConfigManager()
+    cm.initialize_plugin_configuration_definitions('connection', 'demo', {
+        'keys': {'type': 'list', 'secret': True, 'default': []},
+    })
+
+    value = cm.get_config_value('keys', plugin_type='connection', plugin_name='demo',
+                                direct={'keys': ['first-secret-key', 12345678, 'second-secret-key']})
+
+    assert value == ['first-secret-key', 12345678, 'second-secret-key']
+    masked = fresh_masker.mask_string('first-secret-key, 12345678, and second-secret-key')
+    assert masked == '$REDACTED$, 12345678, and $REDACTED$'
+
+
+def test_non_secret_config_value_not_registered(fresh_masker: _secrets.SecretMasker) -> None:
+    cm = ConfigManager()
+    cm.initialize_plugin_configuration_definitions('connection', 'demo', {
+        'token': {'type': 'str', 'default': None},  # not marked secret
+    })
+
+    cm.get_config_value('token', plugin_type='connection', plugin_name='demo', direct={'token': 'not-a-registered-secret'})
+
+    assert fresh_masker.mask_string('not-a-registered-secret') == 'not-a-registered-secret'
 
 
 @pytest.mark.parametrize(("key", "expected_value"), (

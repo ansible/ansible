@@ -35,4 +35,4 @@ ansible-playbook ansible_no_log_in_result.yml -vvvvv > "${OUTPUT_DIR}/output.log
 [ "$(ANSIBLE_NO_LOG=1 ansible-playbook no_log_config.yml -i ../../inventory -vvvvv "$@" | grep -Ec 'the output has been hidden')" = "5" ]
 
 # Ensure module no_log masking handles secrets that are substrings of other secrets correctly
-ansible-playbook sub_masking.yml -i ../../inventory -vvvvv "$@"
+[ "$(ansible-playbook sub_masking.yml -i ../../inventory -vvvvv "$@" | grep -Ec 'SEC')" = "0" ]

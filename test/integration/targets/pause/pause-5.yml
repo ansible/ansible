@@ -33,3 +33,9 @@
       assert:
         that:
           - result.user_input == 'supersecretpancakes'
+
+    # A private (echo: no) pause input is registered as a secret, so it must be
+    # masked at a Display egress boundary while the raw value stays usable above.
+    - name: Display the private pause input
+      debug:
+        msg: SCNPAUSE supersecretpancakes

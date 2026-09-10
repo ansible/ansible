@@ -674,29 +674,6 @@ class TestLoadFileCommonArguments:
 
 
 @pytest.mark.parametrize("stdin", [{"arg_pass": "testing"}], indirect=["stdin"])
-def test_no_log_true(stdin, capfd):
-    """Explicitly mask an argument (no_log=True)."""
-    arg_spec = {
-        "arg_pass": {"no_log": True}
-    }
-    am = basic.AnsibleModule(arg_spec)
-    # no_log=True is picked up by both am._log_invocation and list_no_log_values
-    # (called by am._handle_no_log_values). As a result, we can check for the
-    # value in am.no_log_values.
-    assert "testing" in am.no_log_values
-
-
-@pytest.mark.parametrize("stdin", [{"arg_pass": "testing"}], indirect=["stdin"])
-def test_no_log_false(stdin, capfd):
-    """Explicitly log and display an argument (no_log=False)."""
-    arg_spec = {
-        "arg_pass": {"no_log": False}
-    }
-    am = basic.AnsibleModule(arg_spec)
-    assert "testing" not in am.no_log_values and not get_warning_messages()
-
-
-@pytest.mark.parametrize("stdin", [{"arg_pass": "testing"}], indirect=["stdin"])
 def test_no_log_none(stdin, capfd):
     """Allow Ansible to make the decision by matching the argument name
     against PASSWORD_MATCH."""

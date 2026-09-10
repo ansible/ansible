@@ -143,11 +143,37 @@ class CallbackBase(AnsiblePlugin):
     custom actions.
     """
 
+    # deprecated: description='Remove this attribute as it will be no-op' core_version='2.27'
+    ANSIBLE_SUPPORTS_MASKING = False
+
     _implemented_callback_methods: frozenset[str] = frozenset()
     """Set of callback methods overridden by each subclass; used by TQM to bypass callback dispatch on no-op methods."""
 
+    def __init_subclass__(cls, **kwargs) -> None:
+        super().__init_subclass__(**kwargs)
+
+        # deprecated: description='Remove this once the attr becomes a no-op' core_version='2.27'
+        # While we set a default of False in CallbackBase it is common for custom
+        # callback plugins to inherit default.py which we set to True. This ensures
+        # that if a subclass does not set the attribute it will always be False and
+        # not inherit the value from a parent class.
+        if 'ANSIBLE_SUPPORTS_MASKING' not in cls.__dict__:
+            cls.ANSIBLE_SUPPORTS_MASKING = False
+
     def __init__(self, display: Display | None = None, options: dict[str, t.Any] | None = None) -> None:
         super().__init__()
+
+        # deprecated: description='Enable deprecation and decide when to deprecate new attribute altogether' core_version='2.24'
+        # if not self.ANSIBLE_SUPPORTS_MASKING:
+        #     callback_name = getattr(self, 'CALLBACK_NAME', type(self).__name__)
+        #     global_display.deprecated(
+        #         msg=f"The callback {callback_name!r} relies on the implicit task result masking which is deprecated.",
+        #         help_text=(
+        #             "Update callback to use the new secret masking API or change to a different callback that does. "
+        #             "If not updated, secrets will no longer be redacted in future versions of Ansible."
+        #         ),
+        #         version="2.27",
+        #     )
 
         if display:
             self._display = display

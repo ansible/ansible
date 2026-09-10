@@ -1,0 +1,134 @@
+---
+- name: secret masking filter scenarios
+  hosts: testhost
+  gather_facts: false
+  vars:
+    filter_register_secret: Filterregister0001Secret
+    filter_mask_secret: Filtermask0002Secret
+    vault_filter_pass: Vaultfilterpass0003Secret
+    vault_data_secret: Vaultdata0004Secret
+    unvault_filter_pass: Unvaultpass0006Secret
+    # 'Unvaultdata0005Secret' encrypted with unvault_filter_pass, so the plaintext is only ever seen by the unvault filter
+    unvault_ciphertext: |
+      $ANSIBLE_VAULT;1.2;AES256;filter_default
+      65313361346630333761626137363163366164306365613639386530336266396462303335636536
+      6463323766306138643731393635633230633134376161390a663835383832376365653065383363
+      63653863636537363562313961313633643861623564393133313965363331353232623361333466
+      3863626665626634350a386132663938663539353432653138313130343734666339363263393334
+      31383331346531613835616163623161633238303366303535336238623864313838
+    nondestruct_secret: Nondestruct0040Secret
+    lazy_first_secret: Lazyfirst0050Secret
+    lazy_second_secret: Lazysecond0051Secret
+    lazy_registered: "{{ lookup('file', lazy_file) | register_secret }}"
+  tasks:
+    - name: register_secret returns the value unchanged
+      assert:
+        that:
+          - (filter_register_secret | register_secret) == 'Filterregister0001Secret'
+        quiet: true
+
+    - name: emit register_secret value
+      debug:
+        msg: "MARKER filter_register: {{ filter_register_secret }}"
+
+    - name: mask_secrets redacts a registered value inside a larger string
+      vars:
+        registered: "{{ filter_mask_secret | register_secret }}"
+      assert:
+        that:
+          - registered == 'Filtermask0002Secret'
+          - ('before ' ~ registered ~ ' after') | mask_secrets == 'before $REDACTED$ after'
+        quiet: true
+
+    - name: emit mask_secrets value
+      debug:
+        msg: "MARKER filter_mask: {{ filter_mask_secret }}"
+
+    - name: the plaintext is not a secret before the vault filter sees it
+      debug:
+        msg: "MARKER vault_data_before: {{ vault_data_secret }}"
+
+    - name: vault filter registers the passphrase and the plaintext it encrypts
+      set_fact:
+        _vaulted: "{{ vault_data_secret | vault(vault_filter_pass) }}"
+
+    - name: unvault filter round-trips the plaintext
+      assert:
+        that:
+          - (_vaulted | unvault(vault_filter_pass)) == vault_data_secret
+        quiet: true
+
+    - name: emit vault/unvault passphrase
+      debug:
+        msg: "MARKER vault_filter: {{ vault_filter_pass }}"
+
+    - name: emit the plaintext given to the vault filter
+      debug:
+        msg: "MARKER vault_data: {{ vault_data_secret }}"
+
+    - name: unvault filter registers the passphrase and the plaintext it decrypts
+      set_fact:
+        _unvaulted: "{{ unvault_ciphertext | unvault(unvault_filter_pass) }}"
+
+    - name: unvault decrypted the expected plaintext
+      assert:
+        that:
+          - _unvaulted == 'Unvaultdata0005Secret'
+        quiet: true
+
+    - name: emit unvault passphrase
+      debug:
+        msg: "MARKER unvault_filter: {{ unvault_filter_pass }}"
+
+    - name: emit the plaintext produced by the unvault filter
+      debug:
+        msg: "MARKER unvault_data: Unvaultdata0005Secret"
+
+    - name: register a secret into a fact
+      set_fact:
+        nd_value: "{{ nondestruct_secret | register_secret }}"
+
+    - name: secret usable by its true value in when/assert
+      assert:
+        that:
+          - nd_value == 'Nondestruct0040Secret'
+          - nd_value | length == 'Nondestruct0040Secret' | length
+        quiet: true
+      when: nd_value == nondestruct_secret
+
+    - name: secret usable by its true value in failed_when
+      command: "true"
+      changed_when: false
+      failed_when: nd_value != nondestruct_secret
+
+    - name: but debug output of the same value is redacted
+      debug:
+        msg: "MARKER nondestruct: {{ nd_value }}"
+
+    # --- template laziness: register_secret runs when the template is evaluated (on use),
+    # not once at definition, so editing the lookup source between uses registers the new value.
+    - name: seed the lookup source file with the first secret
+      copy:
+        dest: "{{ lazy_file }}"
+        content: "{{ lazy_first_secret }}"
+
+    - name: first use of the lazy template registers the current file contents
+      debug:
+        msg: "MARKER lazy_use1: {{ lazy_registered }}"
+
+    - name: the first file value is now a registered secret (masked at egress)
+      debug:
+        msg: "MARKER lazy_first: {{ lazy_first_secret }}"
+
+    - name: overwrite the lookup source file with a different secret
+      copy:
+        dest: "{{ lazy_file }}"
+        content: "{{ lazy_second_secret }}"
+
+    - name: second use re-evaluates the template and registers the new file contents
+      debug:
+        msg: "MARKER lazy_use2: {{ lazy_registered }}"
+
+    - name: the second file value is now a registered secret too (proves lazy re-evaluation)
+      debug:
+        msg: "MARKER lazy_second: {{ lazy_second_secret }}"

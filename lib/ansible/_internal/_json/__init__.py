@@ -18,6 +18,7 @@ from ansible.module_utils._internal._datatag import (
     AnsibleTagHelper,
 )
 from ansible.module_utils._internal._json._profiles import _tagless
+from ansible.module_utils.secrets import mask_secrets
 from ansible.parsing.vault import EncryptedString
 from ansible._internal._datatag._tags import Origin, TrustedAsTemplate
 from ansible._internal._templating import _transform
@@ -82,6 +83,8 @@ class AnsibleVariableVisitor:
         apply_transforms: bool = False,
         visit_keys: bool = False,
         encrypted_string_behavior: EncryptedStringBehavior = EncryptedStringBehavior.DECRYPT,
+        # deprecated: description='Remove mask_secret_values', core_version='2.27'
+        mask_secret_values: bool = False,
     ):
         super().__init__()  # supports StateTrackingMixIn
 
@@ -94,6 +97,7 @@ class AnsibleVariableVisitor:
         self.apply_transforms = apply_transforms
         self.visit_keys = visit_keys
         self.encrypted_string_behavior = encrypted_string_behavior
+        self._mask_secret_values = mask_secret_values
 
         if apply_transforms:
             from ansible._internal._templating import _engine
@@ -204,6 +208,9 @@ class AnsibleVariableVisitor:
         if self.origin and not Origin.is_tagged_on(result):
             # apply shared instance default origin tag
             result = self.origin.tag(result)
+
+        if self._mask_secret_values and isinstance(result, str):
+            result = mask_secrets(result)  # type: ignore[assignment]
 
         return result
 

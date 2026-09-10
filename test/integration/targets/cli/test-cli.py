@@ -4,16 +4,24 @@
 
 from __future__ import annotations
 
+import base64
 import os
 
 import pexpect
 
+
+input_password = '{{ 1 + 2 }}'
+
+# We use base64 to bypass masking of password. Easier than trying to
+# compare in the process and deal with argv and template escaping.
+input_password_b64 = base64.b64encode(input_password.encode())
+
 os.environ['ANSIBLE_NOCOLOR'] = '1'
 out = pexpect.run(
-    'ansible localhost -m debug -a msg="{{ ansible_password }}" -k',
+    'ansible localhost -m debug -a msg="{{ ansible_password | b64encode }}" -k',
     events={
-        'SSH password:': '{{ 1 + 2 }}\n'
+        'SSH password:': f"{input_password}\n"
     }
 )
 
-assert b'{{ 1 + 2 }}' in out
+assert input_password_b64 in out

@@ -34,6 +34,8 @@ class CallbackModule(CallbackBase):
     CALLBACK_TYPE = 'stdout'
     CALLBACK_NAME = 'oneline'
 
+    ANSIBLE_SUPPORTS_MASKING = True
+
     def _command_generic_msg(self, hostname, result, caption):
         stdout = result.get('stdout', '').replace('\n', '\\n').replace('\r', '\\r')
         if 'stderr' in result and result['stderr']:

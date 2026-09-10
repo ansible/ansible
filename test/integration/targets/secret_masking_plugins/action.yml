@@ -1,0 +1,15 @@
+---
+- name: action plugin secret registration
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: invoke the action_test action, which registers and masks secrets in a forked worker
+      action_test:
+
+    - name: a new worker must still mask secrets the previous task registered on the controller
+      mask_check:
+        label: action
+        secrets:
+          - ActionSecret1
+          - ActionSecret2
+          - ActionSecret3

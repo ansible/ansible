@@ -17,6 +17,7 @@ using System.Text.Json;
 #else
 using System.Web.Script.Serialization;
 #endif
+using Ansible.Secrets;
 
 // System.Diagnostics.EventLog.dll reference different versioned dlls that are
 // loaded in PSCore, ignore CS1702 so the code will ignore this warning
@@ -51,7 +52,6 @@ namespace Ansible.Basic
         private bool ignoreUnknownOpts = false;
         private string remoteTmp = Path.GetTempPath();
         private string tmpdir = null;
-        private HashSet<string> noLogValues = new HashSet<string>();
         private List<string> optionsContext = new List<string>();
         private List<string> warnings = new List<string>();
         private List<Dictionary<string, string>> deprecations = new List<Dictionary<string, string>>();
@@ -256,14 +256,8 @@ namespace Ansible.Basic
                 if (e.Message == "ansible-test validate-modules check")
                     Exit(0);
 
-                Dictionary<string, object> result = new Dictionary<string, object>
-                {
-                    { "failed", true },
-                    { "msg", String.Format("internal error: {0}", e.Message) },
-                    { "exception", e.ToString() }
-                };
-                WriteLine(ToJson(result));
-                Exit(1);
+                Result["exception"] = e.ToString();
+                FailJson(string.Format("internal error: {0}", e.Message));
             }
 
             // Initialise public properties to the defaults before we parse the actual inputs
@@ -285,11 +279,11 @@ namespace Ansible.Basic
             // Set a Ansible friendly invocation value in the result object
             if (injectInvocation) {
                 Dictionary<string, object> invocation = new Dictionary<string, object>() { { "module_args", Params } };
-                Result["invocation"] = RemoveNoLogValues(invocation, noLogValues);
+                Result["invocation"] = invocation;
             }
 
             if (!NoLog)
-                LogEvent(String.Format("Invoked with:\r\n  {0}", FormatLogData(Params, 2)), sanitise: false);
+                LogEvent(String.Format("Invoked with:\r\n  {0}", FormatLogData(GetLogInvocationData(argumentSpec, Params), 2)));
         }
 
         public static AnsibleModule Create(string[] args, IDictionary argumentSpec, IDictionary[] fragments = null)
@@ -341,8 +335,7 @@ namespace Ansible.Basic
         private void FailJson(string message, ErrorRecord psErrorRecord, Exception exception)
         {
             Result["failed"] = true;
-            Result["msg"] = RemoveNoLogValues(message, noLogValues);
-
+            Result["msg"] = message;
 
             if (!Result.ContainsKey("exception") && (Verbosity > 2 || DebugMode))
             {
@@ -402,7 +395,7 @@ namespace Ansible.Basic
 
             if (sanitise)
             {
-                message = (string)RemoveNoLogValues(message, noLogValues);
+                message = SecretMasker.MaskString(message);
             }
 
             using (EventLog eventLog = new EventLog("Application"))
@@ -952,9 +945,9 @@ namespace Ansible.Basic
                 {
                     object noLogObject = parameters.Contains(k) ? parameters[k] : null;
                     string noLogString = noLogObject == null ? "" : noLogObject.ToString();
-                    if (!String.IsNullOrEmpty(noLogString))
-                        noLogValues.Add(noLogString);
+                    SecretMasker.RegisterSecret(noLogString);
                 }
+
                 string collectionName = null;
                 if (v.ContainsKey("removed_from_collection"))
                 {
@@ -1058,7 +1051,7 @@ namespace Ansible.Basic
                             // We will warn the user it was case insensitive and tell them this will become case sensitive in the future.
                             string msg = String.Format(
                                 "value of {0} was a case insensitive match of {1}: {2}. Checking of choices will be case sensitive in a future Ansible release. Case insensitive matches were: {3}",
-                                k, choiceMsg, String.Join(", ", choices), String.Join(", ", caseDiffList.Select(x => RemoveNoLogValues(x, noLogValues)))
+                                k, choiceMsg, String.Join(", ", choices), String.Join(", ", caseDiffList)
                             );
                             Warn(FormatOptionsContext(msg));
                         }*/
@@ -1406,7 +1399,7 @@ namespace Ansible.Basic
         private string GetFormattedResults(Dictionary<string, object> result)
         {
             if (injectInvocation && !result.ContainsKey("invocation"))
-                result["invocation"] = new Dictionary<string, object>() { { "module_args", RemoveNoLogValues(Params, noLogValues) } };
+                result["invocation"] = new Dictionary<string, object>() { { "module_args", Params } };
 
             if (_WrapperWarnings != null)
             {
@@ -1425,7 +1418,69 @@ namespace Ansible.Basic
             if (Diff.Count > 0 && DiffMode)
                 result["diff"] = Diff;
 
+            string[] newSecrets = SecretMasker.DrainNewSecrets().ToArray();
+            if (newSecrets.Length > 0)
+            {
+                result["_ansible_new_secrets"] = newSecrets;
+            }
+
             return ToJson(result);
+        }
+
+        private IDictionary GetLogInvocationData(IDictionary argumentSpec, IDictionary parameters)
+        {
+            // While we mask the final string we need to redact any value that
+            // was marked as no_log in the spec in case the length was shorter
+            // than our masking minimum. The final string is still passed
+            // through the secret masker to ensure anything else is masked
+            // based on our new rules.
+            IDictionary options = (IDictionary)argumentSpec["options"];
+            Dictionary<string, object> logData = new Dictionary<string, object>();
+
+            foreach (DictionaryEntry entry in parameters)
+            {
+                string key = (string)entry.Key;
+                Hashtable optionSpec = options.Contains(key) ? (Hashtable)options[key] : null;
+
+                if (optionSpec == null)
+                    logData[key] = entry.Value;
+                else if ((bool)optionSpec["no_log"])
+                    logData[key] = "$REDACTED$";
+                else
+                    logData[key] = RedactLogSubOptions(optionSpec, entry.Value);
+            }
+
+            return logData;
+        }
+
+        private object RedactLogSubOptions(IDictionary optionSpec, object value)
+        {
+            // Recurse into dict and list-of-dict sub-options so their own no_log
+            // sub-options are redacted too. Any other value is returned as-is;
+            // the SecretMasker string pass in LogEvent is the backstop for it.
+            if (value == null)
+                return value;
+
+            string type = optionSpec["type"] as string;
+            string elements = optionSpec["elements"] as string;
+
+            if (type == "dict" && value is IDictionary)
+                return GetLogInvocationData(optionSpec, (IDictionary)value);
+
+            if (type == "list" && elements == "dict" && value is IList)
+            {
+                List<object> newValue = new List<object>();
+                foreach (object element in (IList)value)
+                {
+                    if (element is IDictionary)
+                        newValue.Add(GetLogInvocationData(optionSpec, (IDictionary)element));
+                    else
+                        newValue.Add(element);
+                }
+                return newValue;
+            }
+
+            return value;
         }
 
         private string FormatLogData(object data, int indentLevel)
@@ -1457,89 +1512,9 @@ namespace Ansible.Basic
                 }
             }
             else
-                msg = (string)RemoveNoLogValues(ParseStr(data), noLogValues);
+                msg = ParseStr(data);
 
             return msg;
-        }
-
-        private object RemoveNoLogValues(object value, HashSet<string> noLogStrings)
-        {
-            Queue<Tuple<object, object>> deferredRemovals = new Queue<Tuple<object, object>>();
-            object newValue = RemoveValueConditions(value, noLogStrings, deferredRemovals);
-
-            while (deferredRemovals.Count > 0)
-            {
-                Tuple<object, object> data = deferredRemovals.Dequeue();
-                object oldData = data.Item1;
-                object newData = data.Item2;
-
-                if (oldData is IDictionary)
-                {
-                    foreach (DictionaryEntry entry in (IDictionary)oldData)
-                    {
-                        object newElement = RemoveValueConditions(entry.Value, noLogStrings, deferredRemovals);
-                        ((IDictionary)newData).Add((string)entry.Key, newElement);
-                    }
-                }
-                else
-                {
-                    foreach (object element in (IList)oldData)
-                    {
-                        object newElement = RemoveValueConditions(element, noLogStrings, deferredRemovals);
-                        ((IList)newData).Add(newElement);
-                    }
-                }
-            }
-
-            return newValue;
-        }
-
-        private object RemoveValueConditions(object value, HashSet<string> noLogStrings, Queue<Tuple<object, object>> deferredRemovals)
-        {
-            if (value == null)
-                return value;
-
-            Type valueType = value.GetType();
-            HashSet<Type> numericTypes = new HashSet<Type>
-            {
-                typeof(byte), typeof(sbyte), typeof(short), typeof(ushort), typeof(int), typeof(uint),
-                typeof(long), typeof(ulong), typeof(decimal), typeof(double), typeof(float)
-            };
-
-            if (numericTypes.Contains(valueType) || valueType == typeof(bool))
-            {
-                string valueString = ParseStr(value);
-                if (noLogStrings.Contains(valueString))
-                    return "VALUE_SPECIFIED_IN_NO_LOG_PARAMETER";
-                foreach (string omitMe in noLogStrings)
-                    if (valueString.Contains(omitMe))
-                        return "VALUE_SPECIFIED_IN_NO_LOG_PARAMETER";
-            }
-            else if (valueType == typeof(DateTime))
-                value = ((DateTime)value).ToString("o");
-            else if (value is IList)
-            {
-                List<object> newValue = new List<object>();
-                deferredRemovals.Enqueue(new Tuple<object, object>((IList)value, newValue));
-                value = newValue;
-            }
-            else if (value is IDictionary)
-            {
-                Hashtable newValue = new Hashtable();
-                deferredRemovals.Enqueue(new Tuple<object, object>((IDictionary)value, newValue));
-                value = newValue;
-            }
-            else
-            {
-                string stringValue = value.ToString();
-                if (noLogStrings.Contains(stringValue))
-                    return "VALUE_SPECIFIED_IN_NO_LOG_PARAMETER";
-                foreach (string omitMe in noLogStrings)
-                    if (stringValue.Contains(omitMe))
-                        return (stringValue).Replace(omitMe, "********");
-                value = stringValue;
-            }
-            return value;
         }
 
         private void CleanupFiles(object s, EventArgs ev)

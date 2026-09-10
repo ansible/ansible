@@ -24,10 +24,12 @@ class CallbackTaskResult:
         host: Host,
         task: Task,
         utr: _task.UnifiedTaskResult,
+        mask_result: bool = False,
     ) -> None:
         self.__host = host
         self.__task = task
         self.__utr = utr
+        self.__mask_result = mask_result
 
     @property
     def host(self) -> Host:
@@ -118,7 +120,11 @@ class CallbackTaskResult:
         Internal custom types are transformed to native Python types to facilitate access and serialization.
         """
         # RPFIX-9: FUTURE: consolidate the no_log logic earlier so we don't have to check both the task and UTR here
-        return self.__utr.as_result_dict(for_callback=True, censor_callback_result=self.task.no_log or self.__utr.no_log)
+        return self.__utr.as_result_dict(
+            for_callback=True,
+            censor_callback_result=self.task.no_log or self.__utr.no_log,
+            mask_callback_result=self.__mask_result,
+        )
 
 
 TaskResult = CallbackTaskResult

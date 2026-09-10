@@ -1,0 +1,30 @@
+---
+- name: ask-pass prompt masking
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: register passwords from plugin
+      get_prompted_pass:
+      register:
+        become_pass_result: _task.result.become_pass
+        connection_pass_result: _task.result.connection_pass
+      become: true
+      become_method: sudo
+
+    - name: verify password var is not redacted in process
+      assert:
+        that:
+          - connection_pass_result == 'ConnectionPasswordSecret'
+
+    - name: debug output of the prompted password is redacted
+      debug:
+        msg: "ask_pass: {{ connection_pass_result }}"
+
+    - name: verify become password var is not redacted in process
+      assert:
+        that:
+          - become_pass_result == 'BecomePasswordSecret'
+
+    - name: debug output of the prompted become password is redacted
+      debug:
+        msg: "ask_become_pass: {{ become_pass_result }}"

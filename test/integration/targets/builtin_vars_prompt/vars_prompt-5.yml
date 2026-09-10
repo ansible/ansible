@@ -10,5 +10,12 @@
       salt: 'jESIyad4F08hP3Ta'
 
   tasks:
+    - name: verify the prompted value produced the expected hash
+      assert:
+        that:
+          - password == ('Scenic-Improving-Payphone' | password_hash('sha512', 'jESIyad4F08hP3Ta'))
+
     - debug:
-        var: password
+        # The literal password here tests that the input value is registered
+        # as a secret and will be redacted in the output.
+        msg: Scenic-Improving-Payphone {{ password }}

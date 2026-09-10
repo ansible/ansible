@@ -639,10 +639,10 @@
     password: password
   register: sanitize_keys
 
-- name: assert that keys were sanitized
+- name: assert that keys are still accessible in result
   assert:
     that:
-    - sanitize_keys.json.args['key-********'] == 'value-********'
+    - sanitize_keys.json.args['key-password'] == 'value-password'
 
 - name: Test gzip encoding
   uri:

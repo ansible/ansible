@@ -15,6 +15,8 @@ from ansible.module_utils import basic
 from ansible.module_utils._internal import _errors, _traceback, _messages, _ansiballz
 from ansible.module_utils.common.json import get_module_encoder, Direction
 
+from ansible.module_utils import secrets as _secrets
+
 
 def run_module(
     *,
@@ -23,6 +25,7 @@ def run_module(
     module_fqn: str,
     modlib_path: str,
     extensions: dict[str, dict[str, object]],
+    secrets: frozenset[str],
     init_globals: dict[str, t.Any] | None = None,
 ) -> None:  # pragma: nocover
     """Used internally by the AnsiballZ wrapper to run an Ansible module."""
@@ -38,6 +41,7 @@ def run_module(
             module_fqn=module_fqn,
             modlib_path=modlib_path,
             init_globals=init_globals,
+            secrets=secrets,
         )
     except Exception as ex:  # not BaseException, since modules are expected to raise SystemExit
         _handle_exception(ex, profile)
@@ -50,6 +54,7 @@ def _run_module(
     module_fqn: str,
     modlib_path: str,
     init_globals: dict[str, t.Any] | None = None,
+    secrets: frozenset[str],
 ) -> None:
     """Used internally by `_run_module` to run an Ansible module after coverage has been enabled (if applicable)."""
     basic._ANSIBLE_ARGS = json_params
@@ -57,6 +62,10 @@ def _run_module(
 
     init_globals = init_globals or {}
     init_globals.update(_module_fqn=module_fqn, _modlib_path=modlib_path)
+
+    for s in secrets:
+        # NB: AnsibleModule tracks new secrets later
+        _secrets._secret_masker.register_secret_text(s)
 
     # Run the module. By importing it as '__main__', it executes as a script.
     runpy.run_module(mod_name=module_fqn, init_globals=init_globals, run_name='__main__', alter_sys=True)

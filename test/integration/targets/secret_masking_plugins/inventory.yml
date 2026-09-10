@@ -1,0 +1,9 @@
+---
+- name: inventory plugin secret registration
+  hosts: testhost
+  gather_facts: false
+  connection: local
+  tasks:
+    - name: the reg_probe inventory plugin runs automatically while parsing the source
+      debug:
+        msg: inventory plugin scenario complete

@@ -96,7 +96,10 @@ if ($manifest.Contains('ps_utils')) {
     }
 }
 
-Add-CSharpType -References @(Get-Content -LiteralPath $manifest.ansible_basic -Raw)
+Add-CSharpType -References @(
+    Get-Content -LiteralPath $manifest.ansible_basic -Raw
+    Get-Content -LiteralPath $manifest.ansible_secrets -Raw
+)
 [Ansible.Basic.AnsibleModule]::_DebugArgSpec = $true
 
 $powershell.AddScript($module_code) > $null
