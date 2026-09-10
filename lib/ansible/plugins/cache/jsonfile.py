@@ -48,8 +48,8 @@ DOCUMENTATION = """
         env:
           - name: ANSIBLE_CACHE_JSONFILE_PERSISTENT
         ini:
-          - key: fact_caching_jsonfile_persistent
-            section: defaults
+          - key: persistent
+            section: jsonfile_cache
 """
 
 import json
