@@ -322,8 +322,8 @@ def main():
     marker = params['marker']
     if marker[-1] in _LINE_ENDINGS.values():
         module.deprecate(
-            "Appending a line separator to `marker` to control the block marker endings is deprecated; "
-            "use the `line_separator` parameter instead.",
+            "Appending a line separator to `marker` to control the block marker endings is not a supported pattern; "
+            "use the `line_separator` to control line endings instead.",
             version="2.23",
         )
 
