@@ -2,8 +2,8 @@
 
 ``SecretMasker`` is the public side: it registers secret values (length rules, trimming, de-duplication,
 new-secret tracking, locking) and redacts every occurrence of them from strings. Matching is delegated to
-a matcher object with a small interface (``add``, ``raw_spans``, ``boundary_checked_spans``) so the
-algorithm can be swapped, for example for a compiled extension, without touching the registry semantics:
+a matcher object with a small interface (``add``, ``spans``) so the algorithm can be swapped, for example
+for a compiled extension, without touching the registry semantics:
 
 * every occurrence of every secret is found (overlapping included) and the union of the spans is
   redacted, with overlapping and adjacent spans merged into one placeholder, so no character that
@@ -125,14 +125,18 @@ class _Fixed4Matcher:
         probes.add(word[probe_offset:probe_stop])
         secrets.add(word)
 
-    def _spans(self, value: str, boundary_check: bool = False) -> list[tuple[int, int]]:
-        """Scan for secret occurrences, optionally applying boundary rules and longest-first."""
+    def spans(self, value: str, boundary_check: bool = True) -> list[tuple[int, int]]:
+        """Find secret occurrences in ``value`` as (start, end) spans.
+
+        When ``boundary_check`` is True, applies leftmost-longest matching with boundary rules for
+        short secrets. When False, returns all overlapping occurrences.
+        """
         value_len = len(value)
         spans: list[tuple[int, int]] = []
         scan_get = self._scan.get
 
         for start in range(value_len - _ANCHOR_LEN + 1):
-            buckets = scan_get(value[start : start + _ANCHOR_LEN])  # sliding window
+            buckets = scan_get(value[start : start + _ANCHOR_LEN])
             if not buckets:
                 continue
 
@@ -152,21 +156,9 @@ class _Fixed4Matcher:
                 spans.append((start, end))
 
                 if boundary_check:
-                    break  # buckets are longest first, so this one covers any shorter match here
+                    break
 
         return spans
-
-    def raw_spans(self, value: str) -> list[tuple[int, int]]:
-        """Every verified word occurrence in ``value`` as (start, end), unsorted, overlapping allowed."""
-        return self._spans(value, boundary_check=False)
-
-    def boundary_checked_spans(self, value: str) -> list[tuple[int, int]]:
-        """The longest verified word at each start in ``value`` as (start, end), unsorted.
-
-        The longest word at a start covers any shorter one there, so only it is reported. Short words
-        are subject to the boundary rule; if the longest is rejected by it a shorter one may still apply.
-        """
-        return self._spans(value, boundary_check=True)
 
 
 class SecretMasker:
@@ -226,7 +218,7 @@ class SecretMasker:
             spans = []
             with self._lock:
                 if self._forms:
-                    spans = self._matcher.boundary_checked_spans(value)
+                    spans = self._matcher.spans(value, boundary_check=True)
 
             spans = _merge_spans(spans)
             if not spans:
@@ -256,7 +248,7 @@ class SecretMasker:
         spans = None
         with self._lock:
             if self._forms:
-                spans = self._matcher.raw_spans(value)
+                spans = self._matcher.spans(value, boundary_check=False)
 
         if not spans:
             return _emptyfrozenset
