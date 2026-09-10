@@ -333,6 +333,8 @@ def main():
 
     n0 = n1 = None
     for i, line in enumerate(lines):
+        # Match markers independently of the file's line endings.
+        line = line.rstrip('\r\n') + line_separator
         if line == marker0:
             n0 = i
         if line == marker1:

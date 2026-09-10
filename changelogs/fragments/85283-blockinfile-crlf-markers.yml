@@ -1,0 +1,2 @@
+bugfixes:
+  - blockinfile - recognize existing block markers with CRLF line endings to avoid inserting duplicate blocks and allow removing them (https://github.com/ansible/ansible/issues/85283).
