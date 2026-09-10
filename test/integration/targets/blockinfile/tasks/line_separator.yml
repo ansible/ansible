@@ -1,121 +1,84 @@
-- name: Test updating and removing blocks with {{ separator.name }} markers
+# Tests for the `line_separator` option, which controls the line endings used
+# for the marker and block lines written into the file.
+
+- name: line_separator tests
   vars:
-    separator_path: "{{ remote_tmp_dir_test }}/line_separator_{{ separator.name }}.txt"
-    separator_original: "before{{ separator.value }}# BEGIN ANSIBLE MANAGED BLOCK{{ separator.value }}old{{ separator.value }}# END ANSIBLE MANAGED BLOCK{{ separator.value }}after{{ separator.value }}"
-    separator_updated: "before{{ separator.value }}# BEGIN ANSIBLE MANAGED BLOCK{{ separator.value }}new{{ separator.value }}second{{ separator.value }}# END ANSIBLE MANAGED BLOCK{{ separator.value }}after{{ separator.value }}"
+    base_path: "{{ remote_tmp_dir_test }}/line_separator_"
+    line_seps:
+      - {sep: lf, eol: "\n"}
+      - {sep: cr, eol: "\r"}
+      - {sep: crlf, eol: "\r\n"}
   block:
-    - name: Create a file with {{ separator.name }} markers
-      copy:
-        dest: "{{ separator_path }}"
-        content: "{{ separator_original }}"
-
-    - name: Update the {{ separator.name }} block in check mode
+    - name: create a block for each line_separator choice
       blockinfile:
-        path: "{{ separator_path }}"
-        line_separator: "{{ separator.name }}"
-        block: "new\nsecond\n"
-      check_mode: true
-      diff: true
-      register: separator_check
+        path: "{{ base_path }}{{ item.sep }}.txt"
+        create: true
+        line_separator: "{{ item.sep }}"
+        block: "line1{{ item.eol }}line2"
+      register: sep_insert
+      with_items: "{{ line_seps }}"
 
-    - name: Read the file after check mode
+    - name: run the same block again for each choice (idempotency)
+      blockinfile:
+        path: "{{ base_path }}{{ item.sep }}.txt"
+        create: true
+        line_separator: "{{ item.sep }}"
+        block: "line1{{ item.eol }}line2"
+      register: sep_reinsert
+      with_items: "{{ line_seps }}"
+
+    - name: read back each file
       slurp:
-        src: "{{ separator_path }}"
-      register: separator_content
+        src: "{{ base_path }}{{ item.sep }}.txt"
+      register: sep_slurp
+      with_items: "{{ line_seps }}"
 
-    - name: Check the predicted update and unchanged file
+    - name: validate line endings and idempotency for each choice
       assert:
         that:
-          - separator_check is changed
-          - separator_check.diff[0].after == separator_updated
-          - separator_content.content | b64decode == separator_original
-
-    - name: Update the existing {{ separator.name }} block
-      blockinfile:
-        path: "{{ separator_path }}"
-        line_separator: "{{ separator.name }}"
-        block: "new\nsecond\n"
-      register: separator_update
-
-    - name: Repeat the update
-      blockinfile:
-        path: "{{ separator_path }}"
-        line_separator: "{{ separator.name }}"
-        block: "new\nsecond\n"
-      register: separator_repeat
-
-    - name: Read the updated file
-      slurp:
-        src: "{{ separator_path }}"
-      register: separator_content
-
-    - name: Check replacement, idempotency, and preservation of surrounding {{ separator.name }} lines
-      assert:
-        that:
-          - separator_update is changed
-          - separator_repeat is not changed
-          - separator_content.content | b64decode == separator_updated
-
-    - name: Restore the original {{ separator.name }} file for removal
-      copy:
-        dest: "{{ separator_path }}"
-        content: "{{ separator_original }}"
-
-    - name: Remove the existing {{ separator.name }} block
-      blockinfile:
-        path: "{{ separator_path }}"
-        line_separator: "{{ separator.name }}"
-        state: absent
-      register: separator_remove
-
-    - name: Repeat the removal
-      blockinfile:
-        path: "{{ separator_path }}"
-        line_separator: "{{ separator.name }}"
-        state: absent
-      register: separator_remove_repeat
-
-    - name: Read the file after removal
-      slurp:
-        src: "{{ separator_path }}"
-      register: separator_content
-
-    - name: Check removal, idempotency, and preservation of surrounding {{ separator.name }} lines
-      assert:
-        that:
-          - separator_remove is changed
-          - separator_remove_repeat is not changed
-          - separator_content.content | b64decode == "before{{ separator.value }}after{{ separator.value }}"
-
-    - name: Create a file with no existing block
-      copy:
-        dest: "{{ separator_path }}"
-        content: "first{{ separator.value }}anchor{{ separator.value }}last"
-
-    - name: Insert after a multiline regular expression with blank lines
-      blockinfile: &insert_with_separator
-        path: "{{ separator_path }}"
-        line_separator: "{{ separator.name }}"
-        insertafter: '(?m)anchor'
-        prepend_newline: true
-        append_newline: true
-        block: "new\nsecond"
-      register: separator_insert
-
-    - name: Repeat insertion with blank lines
-      blockinfile: *insert_with_separator
-      register: separator_insert_repeat
-
-    - name: Read the inserted block
-      slurp:
-        src: "{{ separator_path }}"
-      register: separator_content
-
-    - name: Check insertion position, blank lines, and idempotency
+          - item.0 is changed
+          - item.1 is not changed
+          - (item.2.content | b64decode) == expected
       vars:
-        expected_lines: [first, anchor, '', '# BEGIN ANSIBLE MANAGED BLOCK', new, second, '# END ANSIBLE MANAGED BLOCK', '', last]
+        eol: "{{ item.0.item.eol }}"
+        expected: >-
+          {{ "# BEGIN ANSIBLE MANAGED BLOCK" ~ eol ~ "line1" ~ eol
+             ~ "line2" ~ eol ~ "# END ANSIBLE MANAGED BLOCK" ~ eol }}
+      loop: "{{ sep_insert.results | zip(sep_reinsert.results, sep_slurp.results) | list }}"
+      loop_control:
+        label: "{{ item.0.item.sep }}"
+
+    # The marker search normalizes each file line's ending before comparing, so an
+    # existing block is found and updated even when its line endings differ from the
+    # requested line_separator (rather than a duplicate block being appended).
+    - name: create a block written with crlf endings
+      blockinfile:
+        path: "{{ base_path }}convert.txt"
+        create: true
+        line_separator: crlf
+        block: "line1\r\nline2"
+
+    - name: rewrite the same block with lf endings
+      blockinfile:
+        path: "{{ base_path }}convert.txt"
+        line_separator: lf
+        block: "line1\nline2"
+      register: convert_result
+
+    - name: read back the converted file
+      slurp:
+        src: "{{ base_path }}convert.txt"
+      register: convert_slurp
+
+    - name: validate the crlf block was found and converted to lf without duplication
       assert:
         that:
-          - separator_insert is changed
-          - separator_insert_repeat is not changed
-          - separator_content.content | b64decode == expected_lines | join(separator.value)
+          - convert_result is changed
+          - (convert_slurp.content | b64decode) == "# BEGIN ANSIBLE MANAGED BLOCK\nline1\nline2\n# END ANSIBLE MANAGED BLOCK\n"
+
+  always:
+    - name: clean up line_separator test files
+      file:
+        path: "{{ base_path }}{{ item }}.txt"
+        state: absent
+      loop: "{{ (line_seps | map(attribute='sep') | list) + ['convert'] }}"

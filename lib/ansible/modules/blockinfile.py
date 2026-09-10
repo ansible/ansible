@@ -102,6 +102,20 @@ options:
     type: bool
     default: no
     version_added: '2.16'
+  line_separator:
+    required: false
+    description:
+    - The type of line separator used when writing block lines in the file.
+    - This will not impact how blocks are found, which will be found regardless of line endings.
+    - This will not have any impact on line endings elsewhere in the entire file, only within the block.
+    type: str
+    default: OS
+    version_added: '2.22'
+    choices:
+      OS: Use C(os.linesep) as the line separator.
+      LF: Use C(\n), Line Feed, as the line separator.
+      CR: Use C(\r), Carriage Return, as the line separator.
+      CRLF: Use C(\r\n), Carriage Return + Line Feed, as the line separator.
   encoding:
     description:
       - The character set in which the target file is encoded.
@@ -109,17 +123,6 @@ options:
     type: str
     default: utf-8
     version_added: '2.20'
-  line_separator:
-    description:
-      - The line separator used for marker lines and newlines added by the module.
-      - V(OS) uses the target operating system's line separator and preserves line separators within O(block).
-      - V(CR), V(LF), and V(CRLF) also convert line separators within O(block) to the selected separator.
-      - Set this to match the target file when editing files with non-native line endings.
-      - Existing lines outside the managed block are not converted.
-    type: str
-    choices: [ OS, CR, LF, CRLF ]
-    default: OS
-    version_added: '2.22'
 notes:
   - When using C(with_*) loops be aware that if you do not set a unique mark the block will be overwritten on each iteration.
   - As of Ansible 2.3, the O(dest) option has been changed to O(path) as default, but O(dest) still works as well.
@@ -223,6 +226,9 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.text.converters import to_native
 
 
+_LINE_ENDINGS = dict(LF="\n", CR="\r", CRLF="\r\n")
+
+
 def write_changes(module, contents, path, encoding=None):
 
     tmpfd, tmpfile = tempfile.mkstemp(dir=module.tmpdir)
@@ -324,7 +330,7 @@ def main():
     marker = params['marker']
     present = params['state'] == 'present'
 
-    line_separator = {'OS': os.linesep, 'CR': '\r', 'LF': '\n', 'CRLF': '\r\n'}[params['line_separator']]
+    line_separator = _LINE_ENDINGS.get(params['line_separator'].lower(), os.linesep)
     blank_line = [line_separator]
 
     if not present and not path_exists:
@@ -356,6 +362,7 @@ def main():
 
     n0 = n1 = None
     for i, line in enumerate(lines):
+        line = line.rstrip("\r\n") + line_separator
         if line == marker0:
             n0 = i
         if line == marker1:

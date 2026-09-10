@@ -1,0 +1,4 @@
+minor_changes:
+  - blockinfile - add ``line_separator`` option to control the line endings (``os``, ``lf``, ``cr``, or ``crlf``) used for the marker and block lines written into the file (https://github.com/ansible/ansible/issues/85283).
+bugfixes:
+  - blockinfile - locate an existing managed block regardless of the line endings of its marker lines, so the block is updated in place instead of a duplicate block being appended when the file's line endings differ from the host's (https://github.com/ansible/ansible/issues/85283).
