@@ -1,28 +1,13 @@
 # (c) 2016 RedHat
-#
-# This file is part of Ansible.
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import annotations
 
 import dataclasses
-import os
-import os.path
 import re
-import secrets
 import shlex
-import time
+import uuid
+
+from os.path import isabs, basename, join as path_join
 
 from ansible.errors import AnsibleError
 from ansible.module_utils.common.text.converters import to_native
@@ -61,9 +46,8 @@ class ShellBase(AnsiblePlugin):
 
         # Make sure all system_tmpdirs are absolute otherwise they'd be relative to the login dir
         # which is almost certainly going to fail in a cornercase.
-        if not all(os.path.isabs(d) for d in normalized_paths):
-            raise AnsibleError('The configured system_tmpdirs contains a relative path: {0}. All'
-                               ' system_tmpdirs must be absolute'.format(to_native(normalized_paths)))
+        if not all(isabs(d) for d in normalized_paths):
+            raise AnsibleError(f'The configured system_tmpdirs contains a relative path: {normalized_paths}. Allsystem_tmpdirs must be absolute')
 
         self.set_option('system_tmpdirs', normalized_paths)
 
@@ -81,18 +65,17 @@ class ShellBase(AnsiblePlugin):
 
     @staticmethod
     def _generate_temp_dir_name():
-        return 'ansible-tmp-%s-%s-%s' % (time.time(), os.getpid(), secrets.randbelow(2**48))
+        return f'ansible-tmp-{uuid.uuid4()}'
 
     def env_prefix(self, **kwargs):
-        return ' '.join(['%s=%s' % (k, self.quote(str(v))) for k, v in kwargs.items()])
+        return ' '.join([f'{k}={self.quote(str(v))}' for k, v in kwargs.items()])
 
     def join_path(self, *args):
-        return os.path.join(*args)
+        return path_join(*args)
 
     # some shells (eg, powershell) are snooty about filenames/extensions, this lets the shell plugin have a say
     def get_remote_filename(self, pathname):
-        base_name = os.path.basename(pathname.strip())
-        return base_name.strip()
+        return basename(pathname.strip())
 
     def path_has_trailing_slash(self, path):
         return path.endswith('/')
@@ -114,20 +97,19 @@ class ShellBase(AnsiblePlugin):
 
     def set_user_facl(self, paths, user, mode):
         """Only sets acls for users as that's really all we need"""
-        cmd = ['setfacl', '-m', 'u:%s:%s' % (user, mode)]
+        cmd = ['setfacl', '-m', f'u:{user}:{mode}']
         cmd.extend(paths)
         return self.join(cmd)
 
     def remove(self, path, recurse=False):
-        path = self.quote(path)
-        cmd = 'rm -f '
+        cmd = ['rm', '-f']
         if recurse:
-            cmd += '-r '
-        return cmd + "%s %s" % (path, self._SHELL_REDIRECT_ALLNULL)
+            cmd.append('-r')
+        cmd.extend([self.quote(path), self._SHELL_REDIRECT_ALLNULL])
+        return ' '.join(cmd)
 
     def exists(self, path):
-        cmd = ['test', '-e', self.quote(path)]
-        return ' '.join(cmd)
+        return ' '.join(['test', '-e', self.quote(path)])
 
     def mkdtemp(
         self,
@@ -165,17 +147,18 @@ class ShellBase(AnsiblePlugin):
         basetmp = self.join_path(basetmpdir, basefile)
 
         # use mkdir -p to ensure parents exist, but mkdir fullpath to ensure last one is created by us
-        cmd = 'mkdir -p %s echo %s %s' % (self._SHELL_SUB_LEFT, basetmpdir, self._SHELL_SUB_RIGHT)
-        cmd += '%s mkdir %s echo %s %s' % (self._SHELL_AND, self._SHELL_SUB_LEFT, basetmp, self._SHELL_SUB_RIGHT)
-        cmd += ' %s echo %s=%s echo %s %s' % (self._SHELL_AND, basefile, self._SHELL_SUB_LEFT, basetmp, self._SHELL_SUB_RIGHT)
+        cmd = [
+            'mkdir', '-p', self._SHELL_SUB_LEFT, 'echo', basetmpdir, self._SHELL_SUB_RIGHT, self._SHELL_AND,
+            'mkdir', self._SHELL_SUB_LEFT, 'echo', basetmp, self._SHELL_SUB_RIGHT, self._SHELL_AND,
+            f'echo {basefile}={self._SHELL_SUB_LEFT} echo {basetmp} {self._SHELL_SUB_RIGHT}'
+        ]
 
         # change the umask in a subshell to achieve the desired mode
         # also for directories created with `mkdir -p`
         if mode:
-            tmp_umask = 0o777 & ~mode
-            cmd = '%s umask %o %s %s %s' % (self._SHELL_GROUP_LEFT, tmp_umask, self._SHELL_AND, cmd, self._SHELL_GROUP_RIGHT)
+            cmd = [self._SHELL_GROUP_LEFT, 'umask', f'{0o777 & ~mode:o}', self._SHELL_AND] + cmd + [self._SHELL_GROUP_RIGHT]
 
-        return cmd
+        return ' '.join(cmd)
 
     def _mkdtemp2(
         self,
@@ -220,7 +203,7 @@ class ShellBase(AnsiblePlugin):
             # if present the user name is appended to resolve "that user's home"
             user_home_path += username
 
-        return 'echo %s' % user_home_path
+        return f'echo {user_home_path}'
 
     def _expand_user2(
         self,
@@ -240,33 +223,25 @@ class ShellBase(AnsiblePlugin):
 
     def pwd(self):
         """Return the working directory after connecting"""
-        return 'echo %spwd%s' % (self._SHELL_SUB_LEFT, self._SHELL_SUB_RIGHT)
+        return f'echo {self._SHELL_SUB_LEFT}pwd{self._SHELL_SUB_RIGHT}'
 
     def build_module_command(self, env_string, shebang, cmd, arg_path=None):
-        env_string = env_string.strip()
-        if env_string:
-            env_string += ' '
-
         if shebang is None:
             shebang = ''
 
         cmd_parts = [
-            shebang.removeprefix('#!').strip(),
-            cmd.strip(),
+            env_string,
+            shebang.removeprefix('#!'),
+            cmd,
             arg_path,
         ]
-
-        cleaned_up_cmd = self.join(
-            stripped_cmd_part for raw_cmd_part in cmd_parts
-            if raw_cmd_part and (stripped_cmd_part := raw_cmd_part.strip())
-        )
-        return ''.join((env_string, cleaned_up_cmd))
+        return self.join([raw_cmd_part.strip() for raw_cmd_part in cmd_parts if raw_cmd_part])
 
     def append_command(self, cmd, cmd_to_append):
         """Append an additional command if supported by the shell"""
 
         if self._SHELL_AND:
-            cmd += ' %s %s' % (self._SHELL_AND, cmd_to_append)
+            cmd = ' '.join([cmd, self._SHELL_AND, cmd_to_append])
 
         return cmd
 
