@@ -18,7 +18,7 @@
         name: ansibulluser
         state: present
         generate_ssh_key: yes
-        ssh_key_file: '{{ ssh_key_file}}'
+        ssh_key_file: '{{ ssh_key_file }}'
 
     - name: check files exist
       stat:
@@ -32,7 +32,7 @@
         name: ansibulluser
         state: present
         generate_ssh_key: yes
-        ssh_key_file: '{{ ssh_key_file}}'
+        ssh_key_file: '{{ ssh_key_file }}'
         force: yes
 
     - name: check files again, in case of deletion/overwrite in check mode
@@ -48,6 +48,33 @@
           - stat_keys2.results[item].stat.exists
           - stat_keys.results[item].stat.checksum == stat_keys2.results[item].stat.checksum
       loop: [0, 1]
+
+    - name: Remove .ssh directory
+      file:
+        path: '{{ home ~ ".ssh" }}'
+        state: absent
+
+    - name: Create a dangling symlink
+      file:
+        path: '{{ home ~ ".ssh" }}'
+        src: '{{ home ~ "/does_not_exist" }}'
+        state: link
+        force: true
+
+    - name: Create user with ssh key, dangling symlink should be ignored
+      user:
+        name: ansibulluser
+        state: present
+        generate_ssh_key: yes
+        ssh_key_file: '{{ ssh_key_file }}'
+      ignore_errors: true
+      register: user_no_force
+
+    - name: Make sure dangling symlink fail
+      assert:
+        that:
+          - user_no_force is failed
+          - "'Failed to create ssh directory' in user_no_force.msg"
 
     always:
     - name: Clean ssh keys
