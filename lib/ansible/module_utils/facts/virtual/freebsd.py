@@ -69,15 +69,21 @@ class FreeBSDVirtual(Virtual, VirtualSysctlDetectionMixin):
         if virtual_facts['virtualization_type'] == '':
             virtual_facts.update(virtual_vendor_facts)
 
-        # if vmm.ko kernel module is loaded
-        kldstat_bin = self.module.get_bin_path('kldstat')
+        # Only probe for the bhyve hypervisor role when this host is not itself
+        # a guest. Jails share the host kernel, so running `kldstat -q -m vmm`
+        # inside a jail that lives on a bhyve host finds the host's vmm(4)
+        # module and would otherwise misreport the jail as the bhyve
+        # hypervisor (virtualization_type=bhyve, virtualization_role=host).
+        if virtual_facts['virtualization_role'] != "guest":
+            # if vmm.ko kernel module is loaded
+            kldstat_bin = self.module.get_bin_path('kldstat')
 
-        if kldstat_bin is not None:
-            (rc, out, err) = self.module.run_command('%s -q -m vmm' % kldstat_bin)
-            if rc == 0:
-                host_tech.add('bhyve')
-                virtual_facts['virtualization_type'] = 'bhyve'
-                virtual_facts['virtualization_role'] = 'host'
+            if kldstat_bin is not None:
+                (rc, out, err) = self.module.run_command('%s -q -m vmm' % kldstat_bin)
+                if rc == 0:
+                    host_tech.add('bhyve')
+                    virtual_facts['virtualization_type'] = 'bhyve'
+                    virtual_facts['virtualization_role'] = 'host'
 
         virtual_facts['virtualization_tech_guest'] = guest_tech
         virtual_facts['virtualization_tech_host'] = host_tech
