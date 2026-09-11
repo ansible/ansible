@@ -49,7 +49,7 @@ ANSIBLE_CACHE_PLUGIN=dummy_file_cache_persistent ansible-playbook -i chroot_inve
 export ANSIBLE_CACHE_PLUGIN=ansible.builtin.jsonfile \
     ANSIBLE_CACHE_PLUGIN_CONNECTION="${OUTPUT_DIR}" \
     ANSIBLE_CACHE_PLUGIN_PREFIX=legacy_ \
-    ANSIBLE_CACHE_JSONFILE_PERSISTENT=false
+    ANSIBLE_CACHE_JSONFILE_PERSIST_METADATA=false
 
 ansible localhost -m assert -a "that='TEST_FACT is undefined'"
 ansible localhost -m set_fact -a "cacheable='True' TEST_FACT='DEFINED'"
