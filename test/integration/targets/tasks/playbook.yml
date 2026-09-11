@@ -5,6 +5,12 @@
     - name: "Task name with undefined variable: {{ not_defined }}"
       debug:
         msg: Hello
+      register: action_result
+
+    - name: validated expected action result keys
+      assert:
+        that:
+          - action_result.keys() | sort == ["changed", "failed", "msg"]
 
     # ensure we properly test for an action name, not a task name when checking for a meta task
     - name: "meta"
@@ -32,6 +38,7 @@
         that:
           - action_with_raise is failed
           - action_with_raise.msg is match "Task failed. I am an exception from an action"
+          - action_with_raise.keys() | sort == ["changed", "exception", "failed", "msg"]
 
     - name: validate error handling for actions that directly set `exception` in result dict
       action_that_fails:
@@ -43,3 +50,11 @@
         that:
           - action_with_result_fail is failed
           - action_with_result_fail.msg is match "sorry, it broke"
+
+    - name: validate expected module result keys
+      ping:
+      register: module_result
+
+    - assert:
+        that:
+          - module_result.keys() | sort == ["changed", "failed", "ping"]
