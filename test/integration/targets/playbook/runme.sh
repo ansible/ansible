@@ -90,3 +90,12 @@ ansible-playbook -i ../../inventory vars_files_null.yml -v "$@"
 
 # test vars_files: filename.yml
 ansible-playbook -i ../../inventory vars_files_string.yml -v "$@"
+
+# test environment variable setting with -E option (basic KEY=VALUE)
+ansible-playbook -i ../../inventory env_var_test.yml -E '@playbook_env_vars.yml' "$@"
+
+# test environment variable setting with -E option (basic KEY=VALUE)
+ansible-playbook -i ../../inventory env_var_test.yml -E 'TEST_PLAYBOOK=playbook_test_value' "$@"
+
+# test environment variable setting with -E option (JSON format)
+ansible-playbook -i ../../inventory env_var_test.yml -E '{"TEST_PLAYBOOK": "playbook_test_value"}' "$@"

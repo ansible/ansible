@@ -20,8 +20,7 @@ from __future__ import annotations
 import functools as _functools
 import pathlib as _pathlib
 
-from ansible import constants as C
-from ansible import context
+from ansible import context, constants as C
 from ansible.errors import AnsibleError
 from ansible.errors import AnsibleParserError, AnsibleAssertionError, AnsibleValueOmittedError
 from ansible.module_utils.common.collections import is_sequence
@@ -172,6 +171,16 @@ class Play(Base, Taggable, CollectionSearch):
 
             ds['remote_user'] = ds['user']
             del ds['user']
+
+        # prepend possible CLI environment vars (tuple of immutable dicts), these are not a default values
+        cli = C.config.get_config_value('TASK_ENVIRONMENT')
+        if cli:
+            play_env = ds.get('environment')
+            ds['environment'] = [dict(d) for d in cli]  # from ImmutableDict
+            if play_env:
+                if not isinstance(play_env, list):
+                    play_env = [play_env]
+                ds['environment'].extend(play_env)
 
         return super(Play, self).preprocess_data(ds)
 
