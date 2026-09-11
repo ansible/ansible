@@ -772,19 +772,6 @@ class StrategyBase:
 
         return ret_results
 
-    def _copy_included_file(self, included_file: IncludedFile) -> TaskInclude | IncludeRole:
-        """
-        A proven safe and performant way to create a copy of an included file
-        """
-        ti_copy = included_file._task.copy(exclude_parent=True)
-        ti_copy._parent = included_file._task._parent
-
-        temp_vars = ti_copy.vars | included_file._vars
-
-        ti_copy.vars = temp_vars
-
-        return ti_copy
-
     def _load_included_file(self, included_file: IncludedFile, iterator, is_handler=False):
         """
         Loads an included YAML file of tasks, applying the optional set of variables.
@@ -800,13 +787,13 @@ class StrategyBase:
         elif not isinstance(data, list):
             raise AnsibleError("included task files must contain a list of tasks", obj=data)
 
-        ti_copy = self._copy_included_file(included_file)
+        task = included_file._task
 
         block_list = load_list_of_blocks(
             data,
             play=iterator._play,
-            parent_block=ti_copy.build_parent_block(),
-            role=included_file._task._role,
+            parent_block=task.build_parent_block(),
+            role=task._role,
             use_handlers=is_handler,
             loader=self._loader,
             variable_manager=self._variable_manager,
