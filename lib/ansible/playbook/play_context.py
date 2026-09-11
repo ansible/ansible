@@ -245,6 +245,8 @@ class PlayContext(Base):
 
         attrs_considered = []
         for (attr, variable_names) in C.MAGIC_VARIABLE_MAPPING.items():
+            if attr.startswith("become_") and not self._become_plugin:
+                continue
             for variable_name in variable_names:
                 if attr in attrs_considered:
                     continue
