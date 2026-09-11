@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-galaxy collection install - validate the ``namespace`` and ``name`` read from an artifact's ``MANIFEST.json`` and fail with a clear error when they do not form a valid ``namespace.name``, instead of using the unvalidated value to build the installation path.
