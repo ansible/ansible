@@ -1,0 +1,75 @@
+- name: Initialize one daemon concurrently through two inventory aliases
+  hosts: persistent_aliases
+  gather_facts: false
+  tasks:
+    - persistent:
+      vars:
+        ansible_command_timeout: 51
+      register: alias_initial
+
+    - assert:
+        that:
+          - alias_initial.pid == hostvars['persistent_alias_a'].alias_initial.pid
+          - alias_initial.pid == hostvars['persistent_alias_b'].alias_initial.pid
+          - alias_initial.timeout == 51
+          - alias_initial.command_timeout == 51
+          - alias_initial.remote_addr == 'shared-connection-target'
+          - alias_initial.remote_user == 'shared-user'
+          - alias_initial.port == 2222
+          - alias_initial.connection == 'persistent'
+          - lookup('file', alias_helper_counter_path).splitlines() | length == 2
+      run_once: true
+
+    - name: Refresh shared daemon state through the first alias
+      persistent_state:
+      vars:
+        ansible_command_timeout: 52
+        ansible_become: true
+      register: alias_a_refreshed
+      when: inventory_hostname == 'persistent_alias_a'
+
+    - assert:
+        that:
+          - hostvars['persistent_alias_a'].alias_a_refreshed.pid == hostvars['persistent_alias_a'].alias_initial.pid
+          - hostvars['persistent_alias_a'].alias_a_refreshed.timeout == 52
+          - hostvars['persistent_alias_a'].alias_a_refreshed.command_timeout == 52
+          - hostvars['persistent_alias_a'].alias_a_refreshed.become is true
+          - hostvars['persistent_alias_a'].alias_a_refreshed.check_prompt is truthy
+          - lookup('file', alias_helper_counter_path).splitlines() | length == 2
+      run_once: true
+
+    - name: Refresh the same daemon state through the second alias
+      persistent_state:
+      vars:
+        ansible_command_timeout: 53
+        ansible_become: false
+      register: alias_b_refreshed
+      when: inventory_hostname == 'persistent_alias_b'
+
+    - assert:
+        that:
+          - hostvars['persistent_alias_b'].alias_b_refreshed.pid == hostvars['persistent_alias_b'].alias_initial.pid
+          - hostvars['persistent_alias_b'].alias_b_refreshed.pid == hostvars['persistent_alias_a'].alias_a_refreshed.pid
+          - hostvars['persistent_alias_b'].alias_b_refreshed.timeout == 53
+          - hostvars['persistent_alias_b'].alias_b_refreshed.command_timeout == 53
+          - hostvars['persistent_alias_b'].alias_b_refreshed.become is false
+          - hostvars['persistent_alias_b'].alias_b_refreshed.check_prompt is truthy
+          - hostvars['persistent_alias_b'].alias_b_refreshed.check_prompt != hostvars['persistent_alias_a'].alias_a_refreshed.check_prompt
+          - lookup('file', alias_helper_counter_path).splitlines() | length == 2
+      run_once: true
+
+    - name: Reuse the shared daemon concurrently without more helpers
+      persistent:
+      vars:
+        ansible_command_timeout: 54
+      register: alias_reused
+
+    - assert:
+        that:
+          - alias_reused.pid == alias_initial.pid
+          - alias_reused.pid == hostvars['persistent_alias_a'].alias_reused.pid
+          - alias_reused.pid == hostvars['persistent_alias_b'].alias_reused.pid
+          - alias_reused.timeout == 54
+          - alias_reused.command_timeout == 54
+          - lookup('file', alias_helper_counter_path).splitlines() | length == 2
+      run_once: true

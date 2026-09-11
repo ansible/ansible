@@ -9,13 +9,14 @@ from ansible.module_utils import connection
 import pytest
 
 
-def test_set_options_credential_exposure():
+@pytest.mark.parametrize('method_name', ['set_options', 'set_options_ansible_connection_cli_stub'])
+def test_set_options_credential_exposure(method_name):
     def send(data):
         return '{'
 
     c = connection.Connection(connection.__file__)
     c.send = send
     with pytest.raises(connection.ConnectionError) as excinfo:
-        c._exec_jsonrpc('set_options', become_pass='password')
+        c._exec_jsonrpc(method_name, become_pass='password')
 
     assert 'password' not in str(excinfo.value)
