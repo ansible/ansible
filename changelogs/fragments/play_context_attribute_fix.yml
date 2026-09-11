@@ -1,0 +1,2 @@
+bugfixes:
+  - playcontext now correctly mirrors the settings from the plugins with which it overlaps.
