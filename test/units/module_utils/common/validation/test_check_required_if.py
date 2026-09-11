@@ -76,3 +76,14 @@ def test_check_required_if_multiple():
     options_context = ["foo_context"]
     assert check_required_if(arguments_terms, params) == []
     assert check_required_if(arguments_terms, params, options_context) == []
+
+
+def test_check_required_if_None_vallue():
+    arguments_terms = [["state", None, ("path",)]]
+    params = {}
+    expected = "state is None but all of the following are missing: path"
+
+    with pytest.raises(TypeError) as e:
+        check_required_if(arguments_terms, params)
+
+    assert to_native(e.value) == expected
