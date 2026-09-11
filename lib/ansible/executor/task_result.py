@@ -31,6 +31,11 @@ class CallbackTaskResult:
         self.__utr = utr
         self.__mask_result = mask_result
 
+        # removing these as they can be inherited and probably unrelated to the current task
+        # and could be pointing at information from other tasks
+        if self.__task_fields.get('ansible_task', {}).get('module_defaults'):
+            del self.__task_fields['ansible_task']['module_defaults']
+
     @property
     def host(self) -> Host:
         """The host associated with this result."""

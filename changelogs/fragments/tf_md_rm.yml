@@ -1,0 +1,2 @@
+bugfixes:
+  - task result object, used by callbacks, will now have 'module_defaults' removed from the task_fields property as it can be inherited from play and was causing confusion on unrelated tasks that did not use them. The module option information is still accessible via the task object itself.

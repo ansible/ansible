@@ -34,8 +34,89 @@ from ansible.plugins.callback import CallbackBase
 mock_task = MagicMock()
 mock_task.delegate_to = None
 
+# full example of task_fields
+sample_task_fields: dict = {
+    "ansible_check_mode": False,
+    "ansible_host": "testhost",
+    "ansible_playbook": "play.yml",
+    "ansible_result": {
+        "_ansible_no_log": False,
+        "changed": False,
+        "msg": "All assertions passed",
+    },
+    "ansible_role": "test_role_1",
+    "ansible_task": {
+        "action": "ansible.builtin.assert",
+        "any_errors_fatal": False,
+        "async": 0,
+        "async_val": 0,
+        "become": False,
+        "become_exe": None,
+        "become_flags": None,
+        "become_method": "sudo",
+        "become_user": None,
+        "changed_when": [],
+        "check_mode": False,
+        "collections": [],
+        "connection": "local",
+        "debugger": None,
+        "delay": 5,
+        "delegate_facts": None,
+        "delegate_to": None,
+        "diff": False,
+        "environment": [{}],
+        "failed_when": [],
+        "ignore_errors": None,
+        "ignore_unreachable": None,
+        "loop": None,
+        "loop_control": {
+            "extended": None,
+            "extended_allitems": True,
+            "finalized": True,
+            "index_var": None,
+            "label": None,
+            "loop_var": "item",
+            "pause": 0.0,
+            "squashed": False,
+            "uuid": "0000-000-001",
+        },
+        "loop_with": None,
+        "module_defaults": [
+            {
+                "my.test.api": {"token": "thisisme", "host": "https://api.example.com"},
+                "my.test.other": {"id": "notme", "roast": "duck"},
+            }
+        ],
+        "name": "check assertion",
+        "no_log": False,
+        "notify": None,
+        "poll": 15,
+        "port": None,
+        "register": None,
+        "remote_user": None,
+        "retries": None,
+        "run_once": None,
+        "tags": ["asserts"],
+        "throttle": 0,
+        "timeout": 0,
+        "until": [],
+        "vars": {},
+        "when": [],
+    },
+    "ansible_version": "",
+    "host": "xxxx",
+    "ip_address": "127.0.0.1",
+    "runtime": 0.00001,
+    "session": "0aa0aaaa-0aa0-0aaa-0a00-000aa00a0a00",
+    "status": "OK",
+    "timestamp": "1970-01-01 00:00:01 +0000",
+    "user": "me",
+    "uuid": "00000-000-001",
+}
+
 
 class TestCallback(unittest.TestCase):
+
     # FIXME: This doesn't really test anything...
     def test_init(self):
         CallbackBase()
@@ -66,6 +147,12 @@ class TestCallback(unittest.TestCase):
             utr=utr,
         )
         self.assertEqual(CallbackBase.host_label(result), 'host1 -> host2')
+
+    def test_removal_of_defaults(self):
+        result = CallbackTaskResult(host=Host('testhost'), task=mock_task, return_data={}, task_fields=sample_task_fields)
+        serialized = json.dumps(result.task_fields)
+        self.assertNotRegex(serialized, '.*notme.*', msg='Failed to remove module_defaults')
+        self.assertRegex(serialized, '.*play.yml.*', msg='removed too much other than  module_defaults')
 
     # TODO: import callback module so we can patch callback.cli/callback.C
 
