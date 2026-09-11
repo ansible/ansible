@@ -1,0 +1,55 @@
+---
+- name: Test ignored errors do not count toward threshold
+  hosts: testhost1,testhost2,testhost3,testhost4,testhost5
+  gather_facts: false
+  max_fail_percentage: 50%
+  tasks:
+    - name: Fail 3 hosts but ignore (3/5 = 60% > 50%, but ignored)
+      fail:
+        msg: intentional failure but ignored
+      when: inventory_hostname in ['testhost1', 'testhost2', 'testhost3']
+      ignore_errors: true
+
+    - name: Should execute on all hosts (ignored failures don't count)
+      debug:
+        msg: "{{ 'IGNORE_ERRORS' ~ '_ALL_EXECUTED' }}"
+
+- name: Test mixed ignored and real failures
+  hosts: testhost6,testhost7,testhost8,testhost9,testhost10
+  gather_facts: false
+  max_fail_percentage: 50%
+  tasks:
+    - name: Fail 2 hosts with ignore_errors
+      fail:
+        msg: intentional failure but ignored
+      when: inventory_hostname in ['testhost6', 'testhost7']
+      ignore_errors: true
+
+    - name: Fail 1 host without ignore (1/5 = 20% < 50%)
+      fail:
+        msg: intentional real failure
+      when: inventory_hostname == 'testhost8'
+
+    - name: Should execute 4 times (ignored don't count, 1 real failure)
+      debug:
+        msg: "{{ 'IGNORE_ERRORS' ~ '_MIXED_EXECUTED' }}"
+
+- name: Test ignored errors do not prevent threshold from being exceeded by real failures
+  hosts: testhost1,testhost2,testhost3
+  gather_facts: false
+  max_fail_percentage: 50%
+  tasks:
+    - name: Fail 1 host with ignore_errors
+      fail:
+        msg: intentional failure but ignored
+      when: inventory_hostname == 'testhost1'
+      ignore_errors: true
+
+    - name: Fail 2 hosts without ignore (2/3 = 67% > 50%)
+      fail:
+        msg: intentional real failure
+      when: inventory_hostname in ['testhost2', 'testhost3']
+
+    - name: Should not execute due to real failures exceeding threshold
+      debug:
+        msg: "{{ 'IGNORE_ERRORS' ~ '_SHOULD_NOT_EXECUTE' }}"

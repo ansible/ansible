@@ -1,0 +1,14 @@
+---
+- name: Test 0% with 1 unreachable
+  hosts: testhost1,testhost2,testhost3,unreachable1
+  gather_facts: false
+  max_fail_percentage: 0%
+  tasks:
+    - name: Ping (unreachable1 will become unreachable)
+      ping:
+      # 1 unreachable / 4 total = 25% > 0%
+      # Play should break immediately
+
+    - name: Should not execute
+      debug:
+        msg: "SHOULD_NOT_EXECUTE"
