@@ -273,8 +273,8 @@ class ConsoleCLI(CLI, cmd.Cmd):
         if arg:
             try:
                 forks = int(arg)
-            except TypeError:
-                display.error('Invalid argument for "forks"')
+            except (TypeError, ValueError) as e:
+                display.error('The number of forks must be a valid positive integer: %s' % to_text(e))
                 self.usage_forks()
 
             if forks > 0:
@@ -282,7 +282,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
                 self.set_prompt()
 
             else:
-                display.display('forks must be greater than or equal to 1')
+                display.error('forks must be greater than or equal to 1')
         else:
             self.usage_forks()
 
