@@ -628,3 +628,41 @@ out=$(diff salted_test1 salted_test2)
 # should be diff
 out=$(diff salted_test1 salted_test3 || true)
 [ "${out}" != "" ]
+
+# https://github.com/ansible/ansible/issues/11544
+# ansible-vault edit/rekey must tolerate EPERM when restoring the file's group ownership,
+# e.g. an unprivileged user editing a vaulted file whose group they are not a member of
+# (files created in /tmp on macOS inherit the directory's group through BSD group inheritance).
+# root normally holds CAP_CHOWN and cannot get EPERM from chown, so drop that capability
+# with setpriv to reproduce the unprivileged condition.
+if [ "$(id -u)" -eq 0 ] && command -v setpriv > /dev/null 2>&1 && command -v groupadd > /dev/null 2>&1; then
+    EPERM_GROUP="vault_eperm_test"
+    groupadd "${EPERM_GROUP}" || true
+
+    # sanity: the group restore below can only return EPERM if we are not a member of the group
+    if id -Gn | tr ' ' '\n' | grep -qxF "${EPERM_GROUP}"; then
+        echo "cannot test EPERM tolerance: current user is a member of ${EPERM_GROUP}"
+        exit 1
+    fi
+
+    TEST_FILE_EPERM="${MYTMPDIR}/test_file_eperm"
+    echo "This is a test file for edit and rekey without CAP_CHOWN" > "${TEST_FILE_EPERM}"
+    ansible-vault encrypt "$@" --vault-password-file vault-password "${TEST_FILE_EPERM}"
+    chgrp "${EPERM_GROUP}" "${TEST_FILE_EPERM}"
+
+    # edit rewrites the file and then restores its previous ownership; without CAP_CHOWN the
+    # group restore returns EPERM, which must be tolerated rather than fail the edit
+    EDITOR=./faux-editor.py setpriv --bounding-set=-chown ansible-vault edit "$@" --vault-password-file vault-password "${TEST_FILE_EPERM}"
+    ansible-vault view "$@" --vault-password-file vault-password "${TEST_FILE_EPERM}" | grep 'faux editor added'
+
+    # rekey restores ownership through its own chown call; the tolerated EPERM above left the
+    # file's group as the default one, so re-apply the test group to make the rekey restore a
+    # real group change again
+    chgrp "${EPERM_GROUP}" "${TEST_FILE_EPERM}"
+    EPERM_NEW_PASSWORD="${MYTMPDIR}/eperm-new-vault-password"
+    echo "new-password-for-eperm-test" > "${EPERM_NEW_PASSWORD}"
+    setpriv --bounding-set=-chown ansible-vault rekey "$@" --vault-password-file vault-password --new-vault-password-file "${EPERM_NEW_PASSWORD}" "${TEST_FILE_EPERM}"
+    ansible-vault view "$@" --vault-password-file "${EPERM_NEW_PASSWORD}" "${TEST_FILE_EPERM}" | grep 'faux editor added'
+
+    groupdel "${EPERM_GROUP}" || true
+fi
