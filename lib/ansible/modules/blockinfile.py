@@ -103,7 +103,6 @@ options:
     default: no
     version_added: '2.16'
   line_separator:
-    required: false
     description:
     - The type of line separator used when writing block lines in the file.
     - This will not impact how blocks are found, which will be found regardless of line endings.
@@ -320,7 +319,7 @@ def main():
     insertafter = params['insertafter']
     block = params['block']
     marker = params['marker']
-    if marker[-1] in _LINE_ENDINGS.values():
+    if marker.rstrip("\r\n") != marker:
         module.deprecate(
             "Appending a line separator to `marker` to control the block marker endings is not a supported pattern; "
             "use the `line_separator` to control line endings instead.",
