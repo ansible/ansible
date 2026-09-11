@@ -38,6 +38,11 @@ fake_cache = [
             ["apt", "apt-utils"],
             id="pkgname-expands",
         ),
+        pytest.param(
+            ["?config-files"],
+            ["?config-files"],
+            id="apt-pattern",
+        ),
     ],
 )
 def test_expand_pkgspec_from_fnmatches(test_input, expected):
