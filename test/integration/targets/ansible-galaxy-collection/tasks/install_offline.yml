@@ -95,10 +95,12 @@
           - galaxy_err in missing_dep.stderr
           - missing_err in missing_dep_offline.stderr
       vars:
-        galaxy_err: "Unknown error when attempting to call Galaxy at '{{ offline_server }}'"
+        galaxy_err: >-
+          Error when finding available api versions from offline ({{ offline_server }})
+          (HTTP Code: 404, Message: Not Found)
         missing_err: |-
-            Failed to resolve the requested dependencies map. Could not satisfy the following requirements:
-            * ns.coll2:>=1.0.0 (dependency of ns.coll1:1.0.0)
+          Failed to resolve the requested dependencies map. Could not satisfy the following requirements:
+          * ns.coll2:>=1.0.0 (dependency of ns.coll1:1.0.0)
 
     - name: install the dependency from the tarfile
       command: ansible-galaxy collection install {{ build_dir }}/ns-coll2-1.0.0.tar.gz -p {{ install_dir }}
