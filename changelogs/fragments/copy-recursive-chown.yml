@@ -1,0 +1,2 @@
+bugfixes:
+  - copy - do not modify ownership of pre-existing files in the ``dest`` that are not in the ``src`` when ``remote_src`` is ``True``.
