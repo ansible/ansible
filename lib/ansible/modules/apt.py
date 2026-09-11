@@ -158,6 +158,7 @@ options:
   autoclean:
     description:
       - If V(true), cleans the local repository of retrieved package files that can no longer be downloaded.
+      - 'O(autoclean) cannot be used in combination with other parameters.'
     type: bool
     default: 'no'
     version_added: "2.4"
@@ -719,7 +720,7 @@ def mark_installed(m: AnsibleModule, packages: list[str], manual: bool) -> None:
 
 
 def install(m, pkgspec, cache, upgrade=False, default_release=None,
-            install_recommends=None, force=False,
+            install_recommends=None, purge=True, force=False,
             dpkg_options=expand_dpkg_options(DPKG_OPTIONS),
             build_dep=False, fixed=False, autoremove=False, fail_on_autoremove=False, only_upgrade=False,
             allow_unauthenticated=False, allow_downgrade=False, allow_change_held_packages=False):
@@ -764,11 +765,16 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
             pkg_list.append("'%s=%s'" % (name, version))
     packages = ' '.join(pkg_list)
 
-    if packages:
+    if packages or autoremove:
         if force:
             force_yes = '--force-yes'
         else:
             force_yes = ''
+
+        if purge:
+            purge = '--purge'
+        else:
+            purge = ''
 
         if m.check_mode:
             check_arg = '--simulate'
@@ -798,8 +804,8 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
         if build_dep:
             cmd = "%s -y %s %s %s %s %s %s build-dep %s" % (APT_GET_CMD, dpkg_options, only_upgrade, fixed, force_yes, fail_on_autoremove, check_arg, packages)
         else:
-            cmd = "%s -y %s %s %s %s %s %s %s install %s" % \
-                  (APT_GET_CMD, dpkg_options, only_upgrade, fixed, force_yes, autoremove, fail_on_autoremove, check_arg, packages)
+            cmd = "%s -y %s %s %s %s %s %s %s %s install %s" % \
+                  (APT_GET_CMD, dpkg_options, only_upgrade, fixed, purge, force_yes, autoremove, fail_on_autoremove, check_arg, packages)
 
         if default_release:
             cmd += " -t '%s'" % (default_release,)
@@ -828,9 +834,11 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
             diff = {}
         status = True
 
-        changed = True
+        changed = len(packages) > 0
         if build_dep:
             changed = APT_GET_ZERO not in out
+        if CLEAN_OP_CHANGED_STR["autoremove"] in out:
+            changed = True
 
         data = dict(changed=changed, stdout=out, stderr=err, diff=diff)
         if rc:
@@ -999,7 +1007,7 @@ def remove(m, pkgspec, cache, purge=False, force=False,
             pkg_list.append("'%s'" % package)
     packages = ' '.join(pkg_list)
 
-    if not packages:
+    if not packages and not autoremove:
         m.exit_json(changed=False)
     else:
         if force:
@@ -1047,7 +1055,10 @@ def remove(m, pkgspec, cache, purge=False, force=False,
             diff = {}
         if rc:
             m.fail_json(msg="'apt-get remove %s' failed: %s" % (packages, err), stdout=out, stderr=err, rc=rc)
-        m.exit_json(changed=True, stdout=out, stderr=err, diff=diff)
+
+        changed = len(packages) > 0 or CLEAN_OP_CHANGED_STR["autoremove"] in out
+
+        m.exit_json(changed=changed, stdout=out, stderr=err, diff=diff)
 
 
 def cleanup(m, purge=False, force=False, operation=None,
@@ -1099,7 +1110,7 @@ def aptclean(m):
     return (clean_out, clean_err, clean_diff)
 
 
-def upgrade(m, mode="yes", force=False, default_release=None,
+def upgrade(m, mode="yes", purge=False, force=False, default_release=None,
             use_apt_get=False,
             dpkg_options=expand_dpkg_options(DPKG_OPTIONS), autoremove=False, fail_on_autoremove=False,
             allow_unauthenticated=False,
@@ -1108,8 +1119,17 @@ def upgrade(m, mode="yes", force=False, default_release=None,
 
     if autoremove:
         autoremove = '--auto-remove'
+        autoremove_aptitude = '-o Aptitude::Delete-Unused=1'
     else:
         autoremove = ''
+        autoremove_aptitude = '-o Aptitude::Delete-Unused=0'
+
+    if purge:
+        purge = '--purge'
+        purge_aptitude = '-o Aptitude::Purge-Unused=1'
+    else:
+        purge = ''
+        purge_aptitude = '-o Aptitude::Purge-Unused=0'
 
     if m.check_mode:
         check_arg = '--simulate'
@@ -1121,19 +1141,19 @@ def upgrade(m, mode="yes", force=False, default_release=None,
     if mode == "dist" or (mode == "full" and use_apt_get):
         # apt-get dist-upgrade
         apt_cmd = APT_GET_CMD
-        upgrade_command = "dist-upgrade %s" % (autoremove)
+        upgrade_command = "dist-upgrade %s %s" % (autoremove, purge)
     elif mode == "full" and not use_apt_get:
         # aptitude full-upgrade
         apt_cmd = APTITUDE_CMD
-        upgrade_command = "full-upgrade"
+        upgrade_command = "full-upgrade %s %s" % (autoremove_aptitude, purge_aptitude)
     else:
         if use_apt_get:
             apt_cmd = APT_GET_CMD
-            upgrade_command = "upgrade --with-new-pkgs %s" % (autoremove)
+            upgrade_command = "upgrade --with-new-pkgs %s %s" % (autoremove, purge)
         else:
             # aptitude safe-upgrade # mode=yes # default
             apt_cmd = APTITUDE_CMD
-            upgrade_command = "safe-upgrade"
+            upgrade_command = "safe-upgrade %s %s" % (autoremove_aptitude, purge_aptitude)
             prompt_regex = r"(^Do you want to ignore this warning and proceed anyway\?|^\*\*\*.*\[default=.*\])"
 
     if force:
@@ -1397,7 +1417,8 @@ def main():
         aptclean_stdout, aptclean_stderr, aptclean_diff = aptclean(module)
         # If there is nothing else to do exit. This will set state as
         #  changed based on if the cache was updated.
-        if not p['package'] and p['upgrade'] == 'no' and not p['deb']:
+        # Note: 'autoclean' is no longer needed at this point, because it's a subset of 'clean'.
+        if not p['package'] and p['upgrade'] == 'no' and not p['deb'] and not p['autoremove']:
             module.exit_json(
                 changed=True,
                 msg=aptclean_stdout,
@@ -1500,15 +1521,16 @@ def main():
             if p['upgrade']:
                 upgrade(
                     module,
-                    p['upgrade'],
-                    force_yes,
-                    p['default_release'],
-                    use_apt_get,
-                    dpkg_options,
-                    autoremove,
-                    fail_on_autoremove,
-                    allow_unauthenticated,
-                    allow_downgrade
+                    mode=p['upgrade'],
+                    purge=p['purge'],
+                    force=force_yes,
+                    default_release=p['default_release'],
+                    use_apt_get=use_apt_get,
+                    dpkg_options=dpkg_options,
+                    autoremove=autoremove,
+                    fail_on_autoremove=fail_on_autoremove,
+                    allow_unauthenticated=allow_unauthenticated,
+                    allow_downgrade=allow_downgrade
                 )
 
             if p['deb']:
@@ -1537,15 +1559,16 @@ def main():
                     module.fail_json(msg='unable to install additional packages when upgrading all installed packages')
                 upgrade(
                     module,
-                    'yes',
-                    force_yes,
-                    p['default_release'],
-                    use_apt_get,
-                    dpkg_options,
-                    autoremove,
-                    fail_on_autoremove,
-                    allow_unauthenticated,
-                    allow_downgrade
+                    mode='yes',
+                    purge=p['purge'],
+                    force=force_yes,
+                    default_release=p['default_release'],
+                    use_apt_get=use_apt_get,
+                    dpkg_options=dpkg_options,
+                    autoremove=autoremove,
+                    fail_on_autoremove=fail_on_autoremove,
+                    allow_unauthenticated=allow_unauthenticated,
+                    allow_downgrade=allow_downgrade
                 )
 
             if packages:
@@ -1554,10 +1577,10 @@ def main():
                         module.fail_json(msg="invalid package spec: %s" % package)
 
             if not packages:
-                if autoclean:
-                    cleanup(module, p['purge'], force=force_yes, operation='autoclean', dpkg_options=dpkg_options)
                 if autoremove:
                     cleanup(module, p['purge'], force=force_yes, operation='autoremove', dpkg_options=dpkg_options)
+                if autoclean:
+                    cleanup(module, p['purge'], force=force_yes, operation='autoclean', dpkg_options=dpkg_options)
 
             if p['state'] in ('latest', 'present', 'build-dep', 'fixed'):
                 state_upgrade = False
@@ -1577,6 +1600,7 @@ def main():
                     upgrade=state_upgrade,
                     default_release=p['default_release'],
                     install_recommends=install_recommends,
+                    purge=p['purge'],
                     force=force_yes,
                     dpkg_options=dpkg_options,
                     build_dep=state_builddep,
