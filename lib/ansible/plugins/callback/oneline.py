@@ -11,13 +11,16 @@ DOCUMENTATION = """
     version_added: historical
     description:
         - This is the output callback used by the C(-o)/C(--one-line) command line option.
+    deprecated:
+      why: The P(ansible.builtin.oneline#callback) callback is no longer recommended due to long term instability.
+      alternatives: Use a stable callback with test coverage, or consider vendoring and/or adding this plugin to a collection.
+      removed_in: "2.23"
 """
 
 from ansible import constants as C
 from ansible.plugins.callback import CallbackBase
 from ansible.template import Templar
 from ansible.executor.task_result import CallbackTaskResult
-from ansible.module_utils._internal import _deprecator
 
 
 class CallbackModule(CallbackBase):
@@ -30,15 +33,6 @@ class CallbackModule(CallbackBase):
     CALLBACK_VERSION = 2.0
     CALLBACK_TYPE = 'stdout'
     CALLBACK_NAME = 'oneline'
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        self._display.deprecated(  # pylint: disable=ansible-deprecated-unnecessary-collection-name
-            msg='The oneline callback plugin is deprecated.',
-            version='2.23',
-            deprecator=_deprecator.ANSIBLE_CORE_DEPRECATOR,  # entire plugin being removed; this improves the messaging
-        )
 
     def _command_generic_msg(self, hostname, result, caption):
         stdout = result.get('stdout', '').replace('\n', '\\n').replace('\r', '\\r')
