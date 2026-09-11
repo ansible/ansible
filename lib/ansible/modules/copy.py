@@ -146,7 +146,8 @@ attributes:
   check_mode:
     support: full
   diff_mode:
-    support: full
+    details: Content diffs are shown for regular file copies. Recursive copies can report changed files without showing content diffs.
+    support: partial
   platform:
     platforms: posix
   safe_file_operations:
