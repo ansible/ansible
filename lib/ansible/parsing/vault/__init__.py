@@ -80,6 +80,10 @@ class AnsibleVaultError(AnsibleError):
     pass
 
 
+class AnsibleVaultHMACError(AnsibleVaultError):
+    pass
+
+
 class AnsibleVaultPasswordError(AnsibleVaultError):
     pass
 
@@ -316,7 +320,7 @@ class PromptVaultSecret(VaultSecret):
 
             verify_secret_is_not_empty(vault_pass)
 
-            b_vault_pass = to_bytes(vault_pass, errors='strict', nonstring='simplerepr').strip()
+            b_vault_pass = to_bytes(vault_pass, errors='strict', nonstring='simplerepr').strip(b'\r\n')
             b_vault_passwords.append(b_vault_pass)
 
         # Make sure the passwords match by comparing them all to the first password
@@ -413,7 +417,7 @@ class FileVaultSecret(VaultSecret):
         # TODO: replace with use of self.loader
         try:
             with open(filename, "rb") as f:
-                vault_pass = f.read().strip()
+                vault_pass = f.read().strip(b'\r\n')
         except OSError as ex:
             raise AnsibleError(f"Could not read vault password file {filename!r}.") from ex
 
@@ -715,7 +719,17 @@ class VaultLib:
             try:
                 # secret = self.secrets[vault_secret_id]
                 display.vvvv(u'Trying secret %s for vault_id=%s' % (to_text(vault_secret), to_text(vault_secret_id)))
-                b_plaintext = this_cipher.decrypt(b_vaulttext, vault_secret)
+                try:
+                    b_plaintext = this_cipher.decrypt(b_vaulttext, vault_secret)
+                except AnsibleVaultHMACError as e:
+                    stripped_vault_secret = VaultSecret(vault_secret.bytes.strip())
+                    if stripped_vault_secret.bytes != vault_secret.bytes:
+                        b_plaintext = this_cipher.decrypt(b_vaulttext, stripped_vault_secret)
+                        display.warning(u"The secret provided for vault id (%s) contained leading or trailing whitespace. "
+                                        u"But to decrypt it the whitespace needed to be stripped." % to_text(vault_secret_id))
+                    else:
+                        raise e
+
                 # DTFIX7: possible candidate for propagate_origin
                 b_plaintext = AnsibleTagHelper.tag_copy(vaulttext, b_plaintext)
                 if b_plaintext is not None:
@@ -1218,7 +1232,7 @@ class VaultAES256:
         try:
             hmac.verify(_unhexlify(b_crypted_hmac))
         except InvalidSignature as e:
-            raise AnsibleVaultError('HMAC verification failed: %s' % e)
+            raise AnsibleVaultHMACError('HMAC verification failed: %s' % e)
 
         cipher = C_Cipher(algorithms.AES(b_key1), modes.CTR(b_iv), CRYPTOGRAPHY_BACKEND)
         decryptor = cipher.decryptor()
