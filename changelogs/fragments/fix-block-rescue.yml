@@ -1,0 +1,5 @@
+bugfixes:
+  - free strategy - now ignores ``run_once`` when processing task failures instead of marking other hosts in the batch as failed. (https://github.com/ansible/ansible/issues/80737)
+   - Fix an issue where rescued hosts were excluded from subsequent plays when ``any_errors_fatal`` was set. (https://github.com/ansible/ansible/issues/84117)
+  - Hosts failed indirectly by ``any_errors_fatal``/``run_once`` now increment the ``failed`` or ``rescued`` stat in the ``PLAY RECAP``.
+  - Hosts failed indirectly by ``run_once`` now execute ``rescue``/``always`` tasks. (https://github.com/ansible/ansible/issues/87308)
