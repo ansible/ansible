@@ -1,0 +1,3 @@
+---
+minor_changes:
+  - "`ansible.builtin.apt` learned to be able to verify packages specified via the `deb` parameter using `<algorithm>:<digest>` syntax"
