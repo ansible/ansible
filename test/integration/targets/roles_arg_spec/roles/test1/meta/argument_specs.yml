@@ -83,6 +83,8 @@ argument_specs:
        removed_in: 2.10
      some_tmp_path:
        type: "path"
+     some_secret:
+       no_log: True
      multi_level_option:
        type: "dict"
        options:
@@ -92,6 +94,8 @@ argument_specs:
              third_level:
                type: "int"
                required: true
+         second_level_secret:
+           no_log: True
 
   other:
     short_description: "test1_simple_preset_arg_spec_other"
