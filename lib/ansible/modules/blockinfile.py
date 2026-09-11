@@ -326,7 +326,7 @@ def main():
     insertbefore = params['insertbefore']
     insertafter = params['insertafter']
     block = params['block']
-    marker = params['marker']
+    marker = params['marker'].rstrip("\r\n")
     present = params['state'] == 'present'
 
     line_separator = _LINE_ENDINGS.get(params['line_separator'].lower(), os.linesep)
