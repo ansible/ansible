@@ -808,6 +808,23 @@ class TgzArchive(object):
         self.file_args = file_args
         self.opts = module.params['extra_opts']
         self.module = module
+
+        # Prefer gtar (GNU tar) as it supports the compression options -z, -j and -J
+        try:
+            self.cmd_path = get_bin_path('gtar')
+        except ValueError:
+            # Fallback to tar
+            try:
+                self.cmd_path = get_bin_path('tar')
+            except ValueError:
+                self.module.fail_json(msg="Unable to find required 'gtar' or 'tar' binary in the path")
+
+        self.tar_type = self._get_tar_type()
+        if self.tar_type == 'gnu':
+            try:
+                self._reject_dangerous_gnu_tar_extra_opts()
+            except ValueError as ex:
+                self.module.fail_json(msg=str(ex))
         if self.module.check_mode:
             self.module.exit_json(
                 skipped=True,  # deprecated: description='remove this skipped return', core_version='2.25'
@@ -815,8 +832,6 @@ class TgzArchive(object):
             )
         self.excludes = [path.rstrip('/') for path in self.module.params['exclude']]
         self.include_files = self.module.params['include']
-        self.cmd_path = None
-        self.tar_type = None
         self.zipflag = '-z'
         self._files_in_archive = []
 
@@ -952,18 +967,6 @@ class TgzArchive(object):
         return dict(cmd=cmd, rc=rc, out=out, err=err)
 
     def can_handle_archive(self):
-        # Prefer gtar (GNU tar) as it supports the compression options -z, -j and -J
-        try:
-            self.cmd_path = get_bin_path('gtar')
-        except ValueError:
-            # Fallback to tar
-            try:
-                self.cmd_path = get_bin_path('tar')
-            except ValueError:
-                return False, "Unable to find required 'gtar' or 'tar' binary in the path"
-
-        self.tar_type = self._get_tar_type()
-
         if self.tar_type != 'gnu':
             return False, 'Command "%s" detected as tar type %s. GNU tar required.' % (self.cmd_path, self.tar_type)
 
@@ -975,6 +978,31 @@ class TgzArchive(object):
         # Errors and no files in archive assume that we weren't able to
         # properly unarchive it
         return False, 'Command "%s" found no files in archive. Empty archive files are not supported.' % self.cmd_path
+
+    def _reject_dangerous_gnu_tar_extra_opts(self):
+        """Reject GNU tar extra_opts that can execute arbitrary commands."""
+        dangerous_value_prefixes = (
+            '--checkpoint-action=exec=',
+            '--to-command=',
+            '--use-compress-program=',
+        )
+        dangerous_split_options = {
+            '--to-command',
+            '--use-compress-program',
+            '-I',
+        }
+
+        opts = iter(self.opts)
+        for opt in opts:
+            for prefix in dangerous_value_prefixes:
+                if opt.startswith(prefix):
+                    raise ValueError(f'Refusing unsafe tar extra option: {opt}')
+
+            next_opt = next(opts, None)
+            if next_opt:
+                if opt.startswith('--checkpoint-action') and next_opt.startswith('exec=') or \
+                   opt in dangerous_split_options:
+                    raise ValueError(f'Refusing unsafe tar extra option: {opt} {next_opt}')
 
 
 # Class to handle tar files that aren't compressed
