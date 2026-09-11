@@ -29,6 +29,7 @@ lib/ansible/module_utils/common/respawn.py pylint:ansible-bad-function
 lib/ansible/module_utils/distro/_distro.py pylint:ansible-bad-function
 lib/ansible/module_utils/facts/system/pkg_mgr.py pylint:ansible-bad-function
 lib/ansible/module_utils/service.py pylint:ansible-bad-function
+lib/ansible/modules/gather_facts.py validate-modules:option-incorrect-version-added
 lib/ansible/modules/mount_facts.py pylint:ansible-bad-function
 lib/ansible/modules/service.py pylint:ansible-bad-function
 lib/ansible/modules/user.py pylint:ansible-bad-function

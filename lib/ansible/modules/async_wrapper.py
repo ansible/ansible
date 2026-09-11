@@ -300,7 +300,7 @@ def main():
                 while os.waitpid(sub_pid, os.WNOHANG) == (0, 0):
                     remaining = remaining - step
                     notice("%s still running (%s)" % (sub_pid, remaining))
-                    if remaining <= 0:
+                    if remaining <= 0 and int(time_limit) != 0:
                         # actually kill it
                         notice("Timeout reached, now killing %s" % (sub_pid))
                         os.killpg(sub_pid, signal.SIGKILL)
