@@ -44,6 +44,7 @@ PKG_MGRS = [{'path': '/usr/bin/rpm-ostree', 'name': 'atomic_container'},
             {'path': '/usr/bin/swupd', 'name': 'swupd'},
             {'path': '/usr/sbin/sorcery', 'name': 'sorcery'},
             {'path': '/usr/bin/installp', 'name': 'installp'},
+            {'path': '/data/data/com.termux/files/usr/bin/apt', 'name': 'apt'},
             ]
 
 
