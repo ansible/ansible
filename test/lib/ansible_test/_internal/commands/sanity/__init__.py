@@ -235,6 +235,7 @@ def command_sanity(args: SanityConfig) -> None:
 
                 usable_targets = sorted(test.filter_targets_by_version(args, list(usable_targets), version))
                 usable_targets = settings.filter_skipped_targets(usable_targets)
+                usable_targets = settings.filter_ignored_targets(usable_targets) if args.fix else usable_targets
                 sanity_targets = SanityTargets(tuple(all_targets), tuple(usable_targets))
 
                 test_needed = bool(usable_targets or test.no_targets or args.prime_venvs)
@@ -563,6 +564,10 @@ class SanityIgnoreProcessor:
     def filter_skipped_targets(self, targets: list[TestTarget]) -> list[TestTarget]:
         """Return the given targets, with any skipped paths filtered out."""
         return sorted(target for target in targets if target.path not in self.skip_entries)
+
+    def filter_ignored_targets(self, targets: list[TestTarget]) -> list[TestTarget]:
+        """Return the given targets, with any ignored paths filtered out."""
+        return sorted(target for target in targets if target.path not in self.ignore_entries)
 
     def process_errors(self, errors: list[SanityMessage], paths: list[str]) -> list[SanityMessage]:
         """Return the given errors filtered for ignores and with any settings related errors included."""

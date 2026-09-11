@@ -282,3 +282,4 @@ test/units/errors/fixtures/inputs/long_file.txt trailing-newline
 test/units/errors/fixtures/inputs/one_line_file.txt trailing-newline
 test/units/errors/fixtures/inputs/short_file_missing_trailing_newline.txt trailing-newline
 .github/RELEASE_NAMES.txt release-names  # TODO: 2.21
+test/integration/targets/ansible-test-sanity/no_trailing_newline.txt trailing-newline  # Using trailing-newline test to check ignore filtering when used with --fix

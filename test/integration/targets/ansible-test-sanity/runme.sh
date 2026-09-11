@@ -2,6 +2,8 @@
 
 set -eux
 
+source ./fix_filtering.sh
+
 ansible-test sanity --color --allow-disabled -e "${@}"
 
 set +x

@@ -1,0 +1,2 @@
+minor_changes:
+ - ansible-test sanity trailing-newline - add support for ``--fix`` flag to automatically end files with a newline ``\n``.
