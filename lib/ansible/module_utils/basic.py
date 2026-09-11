@@ -1289,37 +1289,64 @@ class AnsibleModule(object):
                 msg_to_log=msg,
             )
 
-    def _log_invocation(self):
-        """ log that ansible ran the module """
-        # TODO: generalize a separate log function and make log_invocation use it
-        # Sanitize possible password argument when logging.
-        log_args = dict()
+    def _redact_no_log_params(
+        self,
+        argument_spec: Mapping[str, Mapping[str, t.Any]],
+        params: Mapping[str, t.Any],
+        prefix: str = '',
+    ) -> dict[str, t.Any]:
+        """Return a copy of ``params`` suitable for logging with ``no_log`` values replaced by a placeholder.
 
-        for param in self.params:
-            canon = self.aliases.get(param, param)
-            arg_opts = self.argument_spec.get(canon, {})
+        Values are redacted by their position in ``argument_spec`` rather than by matching their content, so
+        ``no_log`` values that are too short or not a string to be registered as a secret are still hidden.
+        Sub options are processed recursively using the same rules as the top level parameters.
+        """
+        aliases = {alias: name for name, opts in argument_spec.items() for alias in opts.get('aliases') or ()}
+        redacted: dict[str, t.Any] = {}
+
+        for param, value in params.items():
+            arg_opts = argument_spec.get(aliases.get(param, param), {})
             no_log = arg_opts.get('no_log', None)
 
             # try to proactively capture password/passphrase fields
             if no_log is None and PASSWORD_MATCH.search(param):
-                log_args[param] = '$REDACTED$'
-                self.warn('Module did not set no_log for %s' % param)
+                value = '$REDACTED$'
+                self.warn(f'Module did not set no_log for {prefix}{param}')
             elif self.boolean(no_log):
                 # We don't rely on the secret masker here because the value
                 # may have been set to anything (non-string/too short, etc) and
                 # historically we've always just blocked it out.
-                log_args[param] = '$REDACTED$'
-            else:
-                param_val = self.params[param]
-                if not isinstance(param_val, (str, bytes)):
-                    param_val = str(param_val)
-                elif isinstance(param_val, bytes):
-                    param_val = param_val.decode('utf-8')
+                value = '$REDACTED$'
+            elif (sub_spec := arg_opts.get('options')) and value is not None:
+                wanted_type = arg_opts.get('type')
 
-                # These log args will be masked in log() if they contain any secrets.
-                log_args[param] = param_val
+                if wanted_type == 'dict' and isinstance(value, Mapping):
+                    value = self._redact_no_log_params(
+                        argument_spec=sub_spec,
+                        params=value,
+                        prefix=f'{prefix}{param}.',
+                    )
+                elif wanted_type == 'list' and arg_opts.get('elements') == 'dict' and isinstance(value, list):
+                    value = [
+                        self._redact_no_log_params(
+                            argument_spec=sub_spec,
+                            params=elem,
+                            prefix=f'{prefix}{param}[{idx}].'
+                        ) if isinstance(elem, Mapping) else elem
+                        for idx, elem in enumerate(value)
+                    ]
 
-        msg = ['%s=%s' % (to_native(arg), to_native(val)) for arg, val in log_args.items()]
+            redacted[param] = value
+
+        return redacted
+
+    def _log_invocation(self) -> None:
+        """ log that ansible ran the module """
+        # TODO: generalize a separate log function and make log_invocation use it
+        # These log args will be masked in log() if they contain any secrets.
+        log_args = {key: to_text(value) for key, value in self._redact_no_log_params(self.argument_spec, self.params).items()}
+
+        msg = [f'{k}={v}' for k, v in log_args.items()]
         if msg:
             msg = 'Invoked with %s' % ' '.join(msg)
         else:
