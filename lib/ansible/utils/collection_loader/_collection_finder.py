@@ -1073,6 +1073,21 @@ class AnsibleCollectionRef:
             for ns_or_name in collection_name.split(u'.')
         )
 
+    @staticmethod
+    def assert_valid_collection_name(collection_name):
+        """
+        Validates collection name format and raises ValueError if invalid.
+        :param collection_name: candidate collection name to validate (a valid name is of the form 'ns.collname')
+        :raises ValueError: if the collection name is not well-formed
+        """
+        if not AnsibleCollectionRef.is_valid_collection_name(collection_name):
+            raise ValueError(
+                "Invalid collection name {0!r}, name must be in the format <namespace>.<collection>. "
+                "Please make sure namespace and collection name contain characters from [a-zA-Z0-9_] only.".format(
+                    _to_text(collection_name)
+                )
+            )
+
 
 def _get_collection_path(collection_name):
     collection_name = _to_text(collection_name)

@@ -381,7 +381,11 @@ class _ComputedReqKindsMixin:
                 elif req_name is not None and os.path.isdir(req_name):
                     tip = dir_tip_tmpl.format(src=req_name)
                 elif req_name:
-                    tip = '\n\nCould not find {0}.'.format(req_name)
+                    try:
+                        AnsibleCollectionRef.assert_valid_collection_name(req_name)
+                        tip = '\n\nCould not find {0}.'.format(req_name)
+                    except ValueError as e:
+                        tip = '\n\n{0}'.format(e)
                 else:
                     tip = ''
 
@@ -389,10 +393,7 @@ class _ComputedReqKindsMixin:
                     'Neither the collection requirement entry key '
                     "'name', nor 'source' point to a concrete "
                     "resolvable collection artifact. Also 'name' is "
-                    'not an FQCN. A valid collection name must be in '
-                    'the format <namespace>.<collection>. Please make '
-                    'sure that the namespace and the collection name '
-                    'contain characters from [a-zA-Z0-9_] only.'
+                    'not an FQCN.'
                     '{extra_tip!s}'.format(extra_tip=tip),
                 )
 
