@@ -1,0 +1,2 @@
+bugfixes:
+  - git - support repositories using the ``reftable`` refstorage backend.
