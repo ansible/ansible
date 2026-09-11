@@ -1,0 +1,3 @@
+---
+bugfixes:
+    - git - honor check mode in set_remote_url (https://github.com/ansible/ansible/issues/76221).
