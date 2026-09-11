@@ -19,7 +19,7 @@ options:
               Possible values: V(all), V(all_ipv4_addresses), V(all_ipv6_addresses), V(apparmor), V(architecture),
               V(caps), V(chroot),V(cmdline), V(date_time), V(default_ipv4), V(default_ipv6), V(devices),
               V(distribution), V(distribution_cpe_name), V(distribution_major_version), V(distribution_release), V(distribution_version),
-              V(dns), V(effective_group_ids), V(effective_user_id), V(env), V(facter), V(fips), V(hardware),
+              V(dns), V(effective_group_ids), V(effective_user_id), V(env), V(facter), V(fips), V(fqdn), V(hardware),
               V(interfaces), V(is_chroot), V(iscsi), V(kernel), V(local), V(lsb), V(machine), V(machine_id),
               V(mounts), V(network), V(ohai), V(os_family), V(pkg_mgr), V(platform), V(processor), V(processor_cores),
               V(processor_count), V(python), V(python_version), V(real_user_id), V(selinux), V(service_mgr),
@@ -199,7 +199,7 @@ def main():
     # TODO: decide what '!all' means, I lean towards making it mean none, but likely needs
     #       some tweaking on how gather_subset operations are performed
     minimal_gather_subset = frozenset(['apparmor', 'caps', 'cmdline', 'date_time',
-                                       'distribution', 'dns', 'env', 'fips', 'local',
+                                       'distribution', 'dns', 'env', 'fips', 'fqdn', 'local',
                                        'lsb', 'pkg_mgr', 'platform', 'python', 'selinux',
                                        'service_mgr', 'ssh_pub_keys', 'user'])
 
