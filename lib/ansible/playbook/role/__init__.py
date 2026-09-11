@@ -22,6 +22,7 @@ import os
 import typing as _t
 
 from collections.abc import Container, Mapping, Set, Sequence
+from functools import cached_property
 from types import MappingProxyType
 
 from ansible import constants as C
@@ -44,7 +45,7 @@ from ansible.utils.vars import combine_vars
 # NOTE: This import is only needed for the type-checking in __init__. While there's an alternative
 #       available by using forward references this seems not to work well with commonly used IDEs.
 #       Therefore the TYPE_CHECKING hack seems to be a more universal approach, even if not being very elegant.
-#       References:
+#       Refs:
 #       * https://stackoverflow.com/q/39740632/199513
 #       * https://peps.python.org/pep-0484/#forward-references
 if _t.TYPE_CHECKING:
@@ -145,7 +146,6 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
         self._play: Play = play
         self._parents: list[Role] = []
         self._dependencies: list[Role] = []
-        self._all_dependencies: list[Role] | None = None
         self._task_blocks: list[Block] = []
         self._handler_blocks: list[Block] = []
         self._compiled_handler_blocks: list[Block] | None = None
@@ -492,17 +492,27 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
             dep_chain.append(parent)
         return dep_chain
 
-    def get_default_vars(self, dep_chain=None):
-        dep_chain = [] if dep_chain is None else dep_chain
+    @cached_property
+    def _default_vars_full(self):
+        """Return a dict which includes all default variables.
+        The full transitive dependency chain variables are also included.
+        """
+        default_vars_full = dict()
+        for dep in self._all_dependencies:
+            default_vars_full = combine_vars(default_vars_full, dep.get_default_vars())
+        default_vars_full = combine_vars(default_vars_full, self._default_vars)
+        return default_vars_full
 
-        default_vars = dict()
-        for dep in self.get_all_dependencies():
-            default_vars = combine_vars(default_vars, dep.get_default_vars())
+    def get_default_vars(self, dep_chain=None):
+        default_vars_full = self._default_vars_full
+
+        # Note: In case of a depchain we need to recompute the default vars everytime (not use cache) to include the parent's default vars
         if dep_chain:
             for parent in dep_chain:
-                default_vars = combine_vars(default_vars, parent._default_vars)
-        default_vars = combine_vars(default_vars, self._default_vars)
-        return default_vars
+                default_vars_full = combine_vars(default_vars_full, parent._default_vars)
+            default_vars_full = combine_vars(default_vars_full, self._default_vars)
+
+        return default_vars_full
 
     def get_inherited_vars(self, dep_chain=None, only_exports=False):
         dep_chain = [] if dep_chain is None else dep_chain
@@ -526,27 +536,28 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
         params = combine_vars(params, self._role_params)
         return params
 
+    @cached_property
+    def _role_vars_full(self):
+        """Return a dict which includes all role variables.
+        The full transitive dependency chain variables are also included.
+        """
+        role_vars_full = {}
+        for dep in self._all_dependencies:
+            # only take 'exportable' vars from deps
+            role_vars_full = combine_vars(role_vars_full, dep.get_vars(include_params=False, only_exports=True))
+        # role_vars come from vars/ in a role
+        role_vars_full = combine_vars(role_vars_full, self._role_vars)
+        return role_vars_full
+
     def get_vars(self, dep_chain=None, include_params=True, only_exports=False):
         dep_chain = [] if dep_chain is None else dep_chain
-
-        all_vars = {}
 
         # get role_vars: from parent objects
         # TODO: is this right precedence for inherited role_vars?
         all_vars = self.get_inherited_vars(dep_chain, only_exports=only_exports)
 
-        # get exported variables from meta/dependencies
-        seen = []
-        for dep in self.get_all_dependencies():
-            # Avoid rerunning dupe deps since they can have vars from previous invocations and they accumulate in deps
-            # TODO: re-examine dep loading to see if we are somehow improperly adding the same dep too many times
-            if dep not in seen:
-                # only take 'exportable' vars from deps
-                all_vars = combine_vars(all_vars, dep.get_vars(include_params=False, only_exports=True))
-                seen.append(dep)
-
-        # role_vars come from vars/ in a role
-        all_vars = combine_vars(all_vars, self._role_vars)
+        # Add the cached role_vars (including vars from dependencies)
+        all_vars = combine_vars(all_vars, self._role_vars_full)
 
         if not only_exports:
             # include_params are 'inline variables' in role invocation. - {role: x, varname: value}
@@ -567,13 +578,19 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
         Returns a list of all deps, built recursively from all child dependencies,
         in the proper order in which they should be executed or evaluated.
         """
-        if self._all_dependencies is None:
+        return self._all_dependencies
 
-            self._all_dependencies = []
-            for dep in self.get_direct_dependencies():
-                for child_dep in dep.get_all_dependencies():
-                    self._all_dependencies.append(child_dep)
-                self._all_dependencies.append(dep)
+    @cached_property
+    def _all_dependencies(self):
+        self._all_dependencies = []
+        for dep in self.get_direct_dependencies():
+            for child_dep in dep._all_dependencies:
+                if child_dep in self._all_dependencies:
+                    self._all_dependencies.remove(child_dep)
+                self._all_dependencies.append(child_dep)
+            if dep in self._all_dependencies:
+                self._all_dependencies.remove(dep)
+            self._all_dependencies.append(dep)
 
         return self._all_dependencies
 
