@@ -208,7 +208,15 @@ def test_Request_open_username(urlopen_mock, install_opener_mock):
         if isinstance(handler, expected_handlers):
             found_handlers.append(handler)
     assert len(found_handlers) == 2
-    assert found_handlers[0].passwd.passwd[None] == {(('ansible.com', '/'),): ('user', None)}
+
+    expected = ('user', None)
+    result = found_handlers[0].passwd.passwd[None]
+
+    assert (
+        # see https://github.com/python/cpython/issues/155694
+        result == {(('ansible.com', '/'),): expected} or  # before fix
+        result == {((None, 'ansible.com', '/'),): expected}  # after fix
+    )
 
 
 def test_Request_open_username_in_url(urlopen_mock, install_opener_mock):
@@ -226,7 +234,15 @@ def test_Request_open_username_in_url(urlopen_mock, install_opener_mock):
     for handler in handlers:
         if isinstance(handler, expected_handlers):
             found_handlers.append(handler)
-    assert found_handlers[0].passwd.passwd[None] == {(('ansible.com', '/'),): ('user2', '')}
+
+    expected = ('user2', '')
+    result = found_handlers[0].passwd.passwd[None]
+
+    assert (
+        # see https://github.com/python/cpython/issues/155694
+        result == {(('ansible.com', '/'),): expected} or  # before fix
+        result == {((None, 'ansible.com', '/'),): expected}  # after fix
+    )
 
 
 def test_Request_open_username_force_basic(urlopen_mock, install_opener_mock):
