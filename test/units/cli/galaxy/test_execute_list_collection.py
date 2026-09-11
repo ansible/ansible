@@ -33,7 +33,8 @@ def cliargs(collections_paths=None, collection_name=None):
         'collections_path': collections_paths,
         'collection': collection_name,
         'type': 'collection',
-        'output_format': 'human'
+        'output_format': 'human',
+        'deduplicate': False,
     }
 
 
