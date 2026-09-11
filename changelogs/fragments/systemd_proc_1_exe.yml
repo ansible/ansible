@@ -1,0 +1,3 @@
+---
+bugfixes:
+    - setup - check if /proc/1/exe is symlinked to systemd binary (https://github.com/ansible/ansible/issues/35085).
