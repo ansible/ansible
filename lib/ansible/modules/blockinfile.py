@@ -318,13 +318,7 @@ def main():
     insertbefore = params['insertbefore']
     insertafter = params['insertafter']
     block = params['block']
-    marker = params['marker']
-    if marker.rstrip("\r\n") != marker:
-        module.deprecate(
-            "Appending a line separator to `marker` to control the block marker endings is not a supported pattern; "
-            "use the `line_separator` to control line endings instead.",
-            version="2.23",
-        )
+    marker = params['marker'].rstrip("\r\n")
 
     present = params['state'] == 'present'
 
