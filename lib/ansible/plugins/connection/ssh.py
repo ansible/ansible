@@ -667,7 +667,8 @@ class Connection(ConnectionBase):
             self.allow_executable = False
 
         # parser to discover 'passed options', used later on for pipelining resolution
-        self._tty_parser = argparse.ArgumentParser()
+        # exit_on_error=False so malformed args raise ArgumentError instead of calling sys.exit()
+        self._tty_parser = argparse.ArgumentParser(exit_on_error=False)
         self._tty_parser.add_argument('-t', action='count')
         self._tty_parser.add_argument('-o', action='append')
 
@@ -1594,7 +1595,11 @@ class Connection(ConnectionBase):
             if attr is not None:
                 opts.extend(self._split_ssh_args(attr))
 
-        args, dummy = self._tty_parser.parse_known_args(opts)
+        try:
+            args, dummy = self._tty_parser.parse_known_args(opts)
+        except argparse.ArgumentError:
+            # malformed args; cannot tell if a tty was requested, ssh itself will report the problem when the command runs
+            return False
 
         if args.t:
             return True
