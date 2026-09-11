@@ -31,6 +31,23 @@
       - |
         ([{'a': 1}] | groupby('a'))[0] | string == "(1, [{'a': 1}])"
 
+- name: test groupby filter with default parameter
+  vars:
+    test_data:
+      - name: apple
+        color: red
+      - name: banana
+      - name: cherry
+        color: red
+      - name: date
+  assert:
+    that:
+      - "(test_data | groupby('color', default='unknown'))[0].grouper == 'red'"
+      - "(test_data | groupby('color', default='unknown'))[0].list | length == 2"
+      - "(test_data | groupby('color', default='unknown'))[1].grouper == 'unknown'"
+      - "(test_data | groupby('color', default='unknown'))[1].list | length == 2"
+      - "(test_data | groupby('color', default='unknown') | map(attribute='grouper') | sort) == ['red', 'unknown']"
+
 - name: test updated default filter
   assert:
     that:
