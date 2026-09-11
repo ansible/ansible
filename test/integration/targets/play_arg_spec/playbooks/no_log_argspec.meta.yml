@@ -1,0 +1,13 @@
+argument_specs:
+  Test no_log redaction:
+    options:
+      vault_filter_var:
+        description: Test it is redacted by default.
+      inline_vault_1:
+        description: Test https://github.com/ansible/ansible/issues/79624.
+        no_log: True
+      inline_vault_2:
+        description: Test it is redacted by default.
+      no_log_var:
+        description: Test non-vault redaction.
+        no_log: True
