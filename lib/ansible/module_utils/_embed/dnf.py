@@ -11,6 +11,8 @@
 #
 # Requires-Python: ">=3.6"
 
+import contextlib
+import io
 import json
 import os
 import sys
@@ -811,13 +813,16 @@ def main():
         list_command = params.get('list_command')
         if not list_command:
             _exit_json({'failed': True, 'msg': 'No list_command specified for list operation'})
-        result = list_items(config, list_command)
+        with contextlib.redirect_stdout(io.StringIO()):
+            result = list_items(config, list_command)
 
     elif command == 'ensure':
-        result = ensure(config, params)
+        with contextlib.redirect_stdout(io.StringIO()):
+            result = ensure(config, params)
 
     elif command == 'update-cache':
-        result = update_cache_only(config)
+        with contextlib.redirect_stdout(io.StringIO()):
+            result = update_cache_only(config)
 
     else:
         _exit_json({'failed': True, 'msg': f'Unknown command: {command}'})
