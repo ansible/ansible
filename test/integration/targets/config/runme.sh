@@ -47,5 +47,10 @@ done
 # ensure we don't show default templates, but templated defaults
 [ "$(ansible-config init |grep '={{' -c )" -eq 0 ]
 
-# test seldom used '_and_origin' api 
+# test seldom used '_and_origin' api
 ansible-playbook match_option_methods.yml "$@"
+
+ansible --version | grep 'has compiled configs = False'
+"$ANSIBLE_TEST_SOURCE_ROOT/packaging/release.py" compile-config
+ansible --version | grep 'has compiled configs = True'
+rm -r "$ANSIBLE_TEST_SOURCE_ROOT/lib/ansible/config/_internal"
