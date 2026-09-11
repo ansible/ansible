@@ -1,0 +1,2 @@
+bugfixes:
+  - script - fix an issue where using become could prepend stdout with ``\r\n`` when running over the ssh connection plugin.
