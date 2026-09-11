@@ -1,0 +1,13 @@
+---
+# ArgSpec-only role (no tasks). Validation should follow role/import tags
+# without the forced always behavior.
+- hosts: localhost
+  gather_facts: false
+  roles:
+    - role: role_with_no_tasks
+      tags: empty_role
+      a_str: "empty role matching"
+
+    - role: role_with_no_tasks
+      tags: other_empty
+      a_str: "empty role non-matching"

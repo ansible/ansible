@@ -36,6 +36,7 @@ from ansible._internal import _task
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.playbook.handler import Handler
 from ansible.playbook.included_file import IncludedFile
+from ansible.playbook.role import prune_orphaned_role_argspec_validation
 from ansible.plugins.loader import action_loader
 from ansible.plugins.strategy import StrategyBase
 from ansible._internal._templating._engine import TemplateEngine
@@ -272,11 +273,15 @@ class StrategyModule(StrategyBase):
                             self._tqm._stats.increment('ok', host.name)
                         self._tqm.send_callback('v2_playbook_on_include', included_file)
 
+                    filtered_blocks = []
                     for new_block in new_blocks:
                         if is_handler:
                             for task in new_block.block:
                                 task.notified_hosts = included_file._hosts[:]
                             final_block = new_block
+                            for host in hosts_left:
+                                if host in included_file._hosts:
+                                    all_blocks[host].append(final_block)
                         else:
                             task_vars = self._variable_manager.get_vars(
                                 play=iterator._play,
@@ -284,10 +289,16 @@ class StrategyModule(StrategyBase):
                                 _hosts=self._hosts_cache,
                                 _hosts_all=self._hosts_cache_all,
                             )
-                            final_block = new_block.filter_tagged_tasks(task_vars)
-                        for host in hosts_left:
-                            if host in included_file._hosts:
-                                all_blocks[host].append(final_block)
+                            filtered_blocks.append((new_block.filter_tagged_tasks(task_vars), task_vars))
+
+                    if not is_handler:
+                        # new_blocks from one include share tag filtering vars from the include
+                        blocks_only = [b for b, _v in filtered_blocks]
+                        task_vars = filtered_blocks[0][1] if filtered_blocks else {}
+                        for final_block in prune_orphaned_role_argspec_validation(blocks_only, task_vars):
+                            for host in hosts_left:
+                                if host in included_file._hosts:
+                                    all_blocks[host].append(final_block)
                     display.debug("done collecting new blocks for %s" % included_file)
 
                 for host in failed_includes_hosts:
