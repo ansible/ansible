@@ -33,6 +33,7 @@
         that:
           - predicted_copies.results[index] is changed
           - predicted_copies.results[index].dest == item.expected
+          - predicted_copies.results[index].src == role_path ~ '/files/foo.txt'
           - not predicted_files.results[index].stat.exists
       loop: "{{ check_mode_destinations }}"
       loop_control:
@@ -60,9 +61,56 @@
           - unchanged_copies.results[index] is not changed
           - predicted_copies.results[index].dest == actual_copies.results[index].dest
           - unchanged_copies.results[index].dest == actual_copies.results[index].dest
+          - unchanged_copies.results[index].src == role_path ~ '/files/foo.txt'
       loop: "{{ check_mode_destinations }}"
       loop_control:
         index_var: index
+
+    - name: Create a symlink to a file with identical content
+      file:
+        src: "{{ check_mode_destinations[0].expected }}"
+        dest: "{{ remote_dir }}/check_mode_dest/link.txt"
+        state: link
+
+    - name: Follow the symlink when predicting an unchanged copy
+      copy:
+        src: "{{ role_path }}/files/foo.txt"
+        dest: "{{ remote_dir }}/check_mode_dest/link.txt"
+        follow: true
+      check_mode: true
+      register: unchanged_link
+
+    - name: Follow the symlink when performing an unchanged copy
+      copy:
+        src: "{{ role_path }}/files/foo.txt"
+        dest: "{{ remote_dir }}/check_mode_dest/link.txt"
+        follow: true
+      register: actual_link
+
+    - name: Verify the followed file module path remains authoritative
+      assert:
+        that:
+          - unchanged_link is not changed
+          - actual_link is not changed
+          - unchanged_link.dest == check_mode_destinations[0].expected
+          - actual_link.dest == check_mode_destinations[0].expected
+
+    - name: Reject content copied to an existing directory without a trailing slash
+      copy:
+        content: replacement
+        dest: "{{ remote_dir }}/check_mode_dest/directory"
+      check_mode: true
+      register: directory_failure
+      ignore_errors: true
+
+    - name: Verify an early failure retains the common result fields
+      assert:
+        that:
+          - directory_failure is failed
+          - directory_failure is not changed
+          - directory_failure.dest == remote_dir ~ '/check_mode_dest/directory'
+          - directory_failure.src is string
+          - directory_failure.msg == 'can not use content with a dir as dest'
 
     - name: Predict replacing the existing files with different content
       copy:

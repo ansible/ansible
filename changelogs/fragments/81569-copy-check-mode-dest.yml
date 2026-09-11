@@ -1,2 +1,2 @@
 bugfixes:
-  - copy - return the resolved destination when check mode predicts a file content change (https://github.com/ansible/ansible/issues/81569).
+  - copy - initialize common file-copy result fields and retain the resolved destination in check mode (https://github.com/ansible/ansible/issues/81569).
