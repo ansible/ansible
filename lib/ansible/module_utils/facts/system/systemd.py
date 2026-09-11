@@ -18,6 +18,8 @@
 from __future__ import annotations
 
 import typing as t
+import contextlib
+
 
 from ansible.module_utils.facts.collector import BaseFactCollector
 from ansible.module_utils.facts.system.service_mgr import ServiceMgrFactCollector
@@ -39,9 +41,16 @@ class SystemdFactCollector(BaseFactCollector):
             if rc != 0:
                 return systemd_facts
 
-            systemd_facts["systemd"] = {
-                "features": str(stdout.split("\n")[1]),
-                "version": int(stdout.split(" ")[1]),
-            }
+            systemd_version = stdout.split(" ")[1]
+
+            systemd_facts["systemd"] = {}
+            systemd_facts["systemd"]["features"] = stdout.split("\n")[1]
+            systemd_facts["systemd"]["full_version"] = str(
+                stdout.split(" ")[2].split(")")[0][1:],
+            )
+            with contextlib.suppress(ValueError):
+                systemd_version = int(systemd_version)
+
+            systemd_facts["systemd"]["version"] = systemd_version
 
         return systemd_facts
