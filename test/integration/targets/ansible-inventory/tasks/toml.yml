@@ -16,6 +16,17 @@
       - '"some_bool = true" in toml_in.stdout'
       - '"some_list = [" in toml_in.stdout'
 
+- name: test toml output with None values
+  command: ansible-inventory --list --toml -i {{ role_path }}/files/none_values.yml
+  register: toml_none
+  ignore_errors: true
+
+- assert:
+    that:
+      - toml_none is failed
+      - >
+        'cannot be represented in TOML' in toml_none.stderr
+      
 # DTFIX3: plug in variable visitor on TOML output and re-enable this test
 #- name: "test option: --toml with valid group name"
 #  command: ansible-inventory --list --toml -i {{ role_path }}/files/valid_sample.yml
