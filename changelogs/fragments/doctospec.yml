@@ -1,0 +1,4 @@
+minor_changes:
+  - Expanded documentation with the ability to specify paramter relations, like required_if, mutually_exclusive, required_toghether, etc
+  - Added function that will take a module documentation and transform into an argspec
+  - Action plugins base now can use doc_to_spec functino to validate parameters on controller (no need to round trip)
