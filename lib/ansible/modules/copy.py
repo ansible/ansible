@@ -112,11 +112,18 @@ options:
     version_added: '2.4'
   checksum:
     description:
-    - SHA1 checksum of the file being transferred.
+    - Expected checksum (in the algorithm given by O(checksum_algorithm)) of the file being transferred.
     - Used to validate that the copy of the file was successful.
     - If this is not provided, ansible will use the local calculated checksum of the src file.
     type: str
     version_added: '2.5'
+  checksum_algorithm:
+    description:
+    - Algorithm used to compute the file checksum for change detection and validation.
+    - Can be set via C(ANSIBLE_FILE_CHECKSUM_ALGORITHM).
+    type: str
+    default: sha1
+    version_added: '2.21'
 extends_documentation_fragment:
     - decrypt
     - files
@@ -238,7 +245,7 @@ md5sum:
     type: str
     sample: 2a5aeecc61dc98c4d780b14b330e3282
 checksum:
-    description: SHA1 checksum of the file after running copy.
+    description: Checksum of the file after running copy (based upon the value of O(checksum_algorithm) parameter).
     returned: success
     type: str
     sample: 6e642bb8dd5c2e027bf21dd923337cbb4214f827
@@ -518,10 +525,11 @@ def main():
     checksum_dest = None
     checksum_src = None
     md5sum_src = None
+    checksum_algorithm = module.params['checksum_algorithm']
 
     if os.path.isfile(src):
         try:
-            checksum_src = module.sha1(src)
+            checksum_src = module.file_checksum(src, checksum_algorithm)
         except OSError as ex:
             module.error_as_warning("Unable to calculate src checksum, assuming change.", exception=ex)
         try:
@@ -536,7 +544,8 @@ def main():
         module.fail_json(
             msg='Copied file does not match the expected checksum. Transfer failed.',
             checksum=checksum_src,
-            expected_checksum=checksum
+            expected_checksum=checksum,
+            checksum_algorithm=checksum_algorithm
         )
 
     # Special handling for recursive copy - create intermediate dirs
@@ -579,7 +588,7 @@ def main():
         if not force:
             module.exit_json(msg="file already exists", src=src, dest=dest, changed=False)
         if os.access(b_dest, os.R_OK) and os.path.isfile(b_dest):
-            checksum_dest = module.sha1(dest)
+            checksum_dest = module.file_checksum(dest, checksum_algorithm)
     else:
         if not os.path.exists(os.path.dirname(b_dest)):
             try:

@@ -91,4 +91,12 @@ options:
     type: str
     aliases: [ attr ]
     version_added: '2.3'
+  checksum_algorithm:
+    description:
+    - Algorithm used to compute file checksums for change detection and validation when the module supports it.
+    - The default can be overridden globally with the C(ANSIBLE_FILE_CHECKSUM_ALGORITHM) environment variable.
+    - When not set, the default is V(sha1) to maintain backward compatibility.
+    type: str
+    default: sha1
+    version_added: '2.21'
 """
