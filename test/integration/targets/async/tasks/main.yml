@@ -282,7 +282,18 @@
   - name: remove custom tmp dir after test
     file:
       path: '{{ custom_async_tmp }}'
-      state: absent
+
+- name: test async with $HOME variable expansion
+  command: echo "test"
+  async: 5
+  poll: 1
+  vars:
+    ansible_async_dir: "$HOME/.ansible_test_var_expansion"
+
+- name: verify $HOME was expanded and cleanup
+  file:
+    path: "{{ ansible_env.HOME }}/.ansible_test_var_expansion"
+    state: absent
 
 - name: Test that async has stdin
   command: >

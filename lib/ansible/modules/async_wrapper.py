@@ -222,7 +222,7 @@ def main():
     async_dir = os.environ.get('ANSIBLE_ASYNC_DIR', '~/.ansible_async')
 
     # setup job output directory
-    jobdir = os.path.expanduser(async_dir)
+    jobdir = os.path.expanduser(os.path.expandvars(async_dir))
     global job_path
     job_path = os.path.join(jobdir, jid)
 
