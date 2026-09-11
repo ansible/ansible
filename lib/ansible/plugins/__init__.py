@@ -42,17 +42,10 @@ PATH_CACHE = {}  # type: dict[str, list[_t_loader.PluginPathContext] | None]
 PLUGIN_PATH_CACHE = {}  # type: dict[str, dict[str, dict[str, _t_loader.PluginPathContext]]]
 
 
-def get_plugin_class(obj):
-    if isinstance(obj, str):
-        return obj.lower().replace('module', '')
-    else:
-        return obj.__class__.__name__.lower().replace('module', '')
-
-
 class _ConfigurablePlugin(t.Protocol):
     """Protocol to provide type-safe access to config for plugin-related mixins."""
 
-    def get_option(self, option: str, hostvars: dict[str, object] | None = None) -> t.Any: ...
+    def get_option(self, option: str, hostvars: dict[str, object] | None = None) -> object: ...
 
 
 class _AnsiblePluginInfoMixin(_plugin_info.HasPluginInfo):
@@ -160,6 +153,10 @@ class AnsiblePlugin(_AnsiblePluginInfoMixin, _ConfigurablePlugin, metaclass=abc.
         return option in self._options
 
     @property
+    def plugin_type(self):
+        return self.__class__.__name__.lower().replace('module', '')
+
+    @property
     def option_definitions(self):
         if (not hasattr(self, "_defs")) or self._defs is None:
             self._defs = C.config.get_configuration_definitions(plugin_type=self.plugin_type, name=self._load_name)
@@ -189,7 +186,7 @@ class AnsibleJinja2Plugin(AnsiblePlugin, metaclass=abc.ABCMeta):
     def plugin_type(self) -> str:
         ...
 
-    def _no_options(self, *args, **kwargs) -> t.NoReturn:
+    def _no_options(self, *args, **kwargs) -> t.Never:
         raise NotImplementedError()
 
     has_option = get_option = get_options = option_definitions = set_option = set_options = _no_options
