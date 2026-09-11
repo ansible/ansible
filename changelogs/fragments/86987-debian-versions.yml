@@ -1,0 +1,2 @@
+minor_changes:
+  - "version test: add version_type='debian' which uses the same rules dpkg (the Debian package manager) does to compare version strings"
