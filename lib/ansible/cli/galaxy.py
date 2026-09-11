@@ -1727,7 +1727,11 @@ class GalaxyCLI(CLI):
         wait = context.CLIARGS['wait']
         timeout = context.CLIARGS['import_timeout']
 
-        publish_collection(collection_path, self.api, wait, timeout)
+        api = self.api
+        if context.CLIARGS['api_key'] and isinstance(api.token, GalaxyToken) and not api.token.get():
+            api.token = GalaxyToken(token=context.CLIARGS['api_key'])
+
+        publish_collection(collection_path, api, wait, timeout)
 
     def execute_search(self):
         """ searches for roles on the Ansible Galaxy server"""

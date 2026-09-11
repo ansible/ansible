@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-galaxy collection publish - use the command-line token when the selected configured Galaxy server has no token, preserving other authentication methods (https://github.com/ansible/ansible/issues/81698).

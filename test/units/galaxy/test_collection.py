@@ -855,6 +855,93 @@ def test_build_files_manifest_sorted_by_name(collection_input):
     assert names == sorted(names)
 
 
+@pytest.mark.parametrize('server_arg, first_has_v1, expected_server', [
+    (None, True, 'server1'),
+    ('server1', True, 'server1'),
+    ('server2', True, 'server2'),
+    ('https://custom.example/api/', True, 'cmd_arg'),
+    (None, False, 'server2'),
+])
+@pytest.mark.parametrize('configured_token, cli_token', [
+    (None, 'cli-token'),
+    ('configured-token', 'cli-token'),
+    (None, None),
+])
+def test_publish_configured_server_token(
+    server_arg, first_has_v1, expected_server, configured_token, cli_token, collection_artifact, tmp_path, monkeypatch,
+):
+    """Publish uses the CLI token only when the selected server has no configured token."""
+    config_path = tmp_path / 'ansible.cfg'
+    config_lines = []
+    for server in ('server1', 'server2'):
+        config_lines.extend([f'[galaxy_server.{server}]', f'url=https://{server}.example/api/'])
+        if configured_token:
+            config_lines.append(f'token={configured_token}')
+    config_path.write_text('\n'.join(config_lines))
+    monkeypatch.setattr(C, 'config', manager.ConfigManager(str(config_path)))
+    monkeypatch.setattr(C, 'GALAXY_SERVER_LIST', ['server1', 'server2'])
+    monkeypatch.setattr(C, 'GALAXY_CACHE_DIR', str(tmp_path / 'cache'))
+    token_path = tmp_path / 'token.yml'
+    token_path.write_text('token: file-token\n')
+    monkeypatch.setattr(C, 'GALAXY_TOKEN_PATH', str(token_path))
+
+    requests = []
+
+    def open_url(url, **kwargs):
+        requests.append((url, kwargs))
+        if kwargs['method'] == 'POST':
+            return BytesIO(b'{"task": "v3/imports/1/"}')
+        versions = {'v3': 'v3/'}
+        if first_has_v1 or url != 'https://server1.example/api/':
+            versions['v1'] = 'v1/'
+        return BytesIO(json.dumps({'available_versions': versions}).encode())
+
+    monkeypatch.setattr(api, 'open_url', open_url)
+    artifact_path = collection_artifact[0]
+    args = ['ansible-galaxy', 'collection', 'publish', artifact_path, '--no-wait']
+    if server_arg:
+        args.extend(['--server', server_arg])
+    if cli_token:
+        args.extend(['--token', cli_token])
+    cli = GalaxyCLI(args=args)
+    cli.run()
+
+    assert cli.api.name == expected_server
+    expected_token = configured_token or cli_token
+    if expected_server == 'cmd_arg':
+        expected_token = cli_token or 'file-token'
+    expected_headers = {'Authorization': f'Token {expected_token}'} if expected_token else {}
+    uploads = [(url, kwargs) for url, kwargs in requests if kwargs['method'] == 'POST']
+    assert len(uploads) == 1
+    assert uploads[0][0] == f'{cli.api.api_server}v3/artifacts/collections/'
+    assert uploads[0][1]['headers'].get('Authorization') == expected_headers.get('Authorization')
+    assert cli.api.token.headers() == expected_headers
+    for server in cli.api_servers:
+        if server is not cli.api:
+            assert server.token.get() == configured_token
+    assert token_path.read_text() == 'token: file-token\n'
+
+
+@pytest.mark.parametrize('auth', [
+    token.BasicAuthToken('username', 'password'),
+    token.KeycloakToken(access_token='refresh-token', auth_url='https://auth.example/token'),
+])
+def test_publish_preserves_other_auth(auth, monkeypatch, tmp_path):
+    """The publish fallback does not replace other configured authentication methods."""
+    monkeypatch.setattr(C, 'GALAXY_CACHE_DIR', str(tmp_path / 'cache'))
+    server = api.GalaxyAPI(None, 'server1', 'https://server1.example/api/', token=auth)
+    cli = GalaxyCLI(args=['ansible-galaxy', 'collection', 'publish', 'collection.tar.gz', '--token', 'cli-token'])
+    cli.parse()
+    cli.lazy_role_api = MagicMock(api=server)
+    publish = MagicMock()
+    monkeypatch.setattr('ansible.cli.galaxy.publish_collection', publish)
+
+    cli.execute_publish()
+
+    assert server.token is auth
+    publish.assert_called_once_with(GalaxyCLI._resolve_path('collection.tar.gz'), server, True, 0)
+
+
 def test_publish_no_wait(galaxy_server, collection_artifact, monkeypatch):
     mock_display = MagicMock()
     monkeypatch.setattr(Display, 'display', mock_display)
