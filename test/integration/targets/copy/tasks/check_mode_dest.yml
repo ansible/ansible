@@ -1,0 +1,137 @@
+- name: Check destination results for single-file copies in check mode
+  vars:
+    check_mode_destinations:
+      - dest: "{{ remote_dir }}/check_mode_dest/file.txt"
+        expected: "{{ remote_dir }}/check_mode_dest/file.txt"
+      - dest: "{{ remote_dir }}/check_mode_dest/trailing/"
+        expected: "{{ remote_dir }}/check_mode_dest/trailing/foo.txt"
+      - dest: "{{ remote_dir }}/check_mode_dest/directory"
+        expected: "{{ remote_dir }}/check_mode_dest/directory/foo.txt"
+  block:
+    - name: Create destination directories
+      file:
+        path: "{{ item.expected | dirname }}"
+        state: directory
+      loop: "{{ check_mode_destinations }}"
+
+    - name: Predict copies to missing files
+      copy:
+        src: "{{ role_path }}/files/foo.txt"
+        dest: "{{ item.dest }}"
+      check_mode: true
+      loop: "{{ check_mode_destinations }}"
+      register: predicted_copies
+
+    - name: Check that predicted copies did not create files
+      stat:
+        path: "{{ item.expected }}"
+      loop: "{{ check_mode_destinations }}"
+      register: predicted_files
+
+    - name: Verify predicted destinations
+      assert:
+        that:
+          - predicted_copies.results[index] is changed
+          - predicted_copies.results[index].dest == item.expected
+          - predicted_copies.results[index].src == role_path ~ '/files/foo.txt'
+          - not predicted_files.results[index].stat.exists
+      loop: "{{ check_mode_destinations }}"
+      loop_control:
+        index_var: index
+
+    - name: Perform the copies
+      copy:
+        src: "{{ role_path }}/files/foo.txt"
+        dest: "{{ item.dest }}"
+      loop: "{{ check_mode_destinations }}"
+      register: actual_copies
+
+    - name: Predict copies to identical files
+      copy:
+        src: "{{ role_path }}/files/foo.txt"
+        dest: "{{ item.dest }}"
+      check_mode: true
+      loop: "{{ check_mode_destinations }}"
+      register: unchanged_copies
+
+    - name: Verify destinations agree across changed and unchanged copies
+      assert:
+        that:
+          - actual_copies.results[index] is changed
+          - unchanged_copies.results[index] is not changed
+          - predicted_copies.results[index].dest == actual_copies.results[index].dest
+          - unchanged_copies.results[index].dest == actual_copies.results[index].dest
+          - unchanged_copies.results[index].src == role_path ~ '/files/foo.txt'
+      loop: "{{ check_mode_destinations }}"
+      loop_control:
+        index_var: index
+
+    - name: Create a symlink to a file with identical content
+      file:
+        src: "{{ check_mode_destinations[0].expected }}"
+        dest: "{{ remote_dir }}/check_mode_dest/link.txt"
+        state: link
+
+    - name: Follow the symlink when predicting an unchanged copy
+      copy:
+        src: "{{ role_path }}/files/foo.txt"
+        dest: "{{ remote_dir }}/check_mode_dest/link.txt"
+        follow: true
+      check_mode: true
+      register: unchanged_link
+
+    - name: Follow the symlink when performing an unchanged copy
+      copy:
+        src: "{{ role_path }}/files/foo.txt"
+        dest: "{{ remote_dir }}/check_mode_dest/link.txt"
+        follow: true
+      register: actual_link
+
+    - name: Verify the followed file module path remains authoritative
+      assert:
+        that:
+          - unchanged_link is not changed
+          - actual_link is not changed
+          - unchanged_link.dest == check_mode_destinations[0].expected
+          - actual_link.dest == check_mode_destinations[0].expected
+
+    - name: Reject content copied to an existing directory without a trailing slash
+      copy:
+        content: replacement
+        dest: "{{ remote_dir }}/check_mode_dest/directory"
+      check_mode: true
+      register: directory_failure
+      ignore_errors: true
+
+    - name: Verify an early failure retains the common result fields
+      assert:
+        that:
+          - directory_failure is failed
+          - directory_failure is not changed
+          - directory_failure.dest == remote_dir ~ '/check_mode_dest/directory'
+          - directory_failure.src is string
+          - directory_failure.msg == 'can not use content with a dir as dest'
+
+    - name: Predict replacing the existing files with different content
+      copy:
+        content: replacement
+        dest: "{{ item.expected }}"
+      check_mode: true
+      loop: "{{ check_mode_destinations }}"
+      register: replacement_copies
+
+    - name: Check that predicted replacements did not modify the files
+      stat:
+        path: "{{ item.expected }}"
+      loop: "{{ check_mode_destinations }}"
+      register: original_files
+
+    - name: Verify replacement destinations and unchanged file contents
+      assert:
+        that:
+          - replacement_copies.results[index] is changed
+          - replacement_copies.results[index].dest == item.expected
+          - original_files.results[index].stat.checksum == actual_copies.results[index].checksum
+      loop: "{{ check_mode_destinations }}"
+      loop_control:
+        index_var: index
