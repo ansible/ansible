@@ -49,7 +49,7 @@ import urllib.request
 from contextlib import contextmanager
 from functools import partial
 from http import cookiejar
-from urllib.parse import unquote, urlparse, urlunparse
+from urllib.parse import unquote, urlparse, urlunparse, urlsplit
 from urllib.request import BaseHandler
 
 try:
@@ -1656,3 +1656,28 @@ def fetch_file(module, url, data=None, headers=None, method=None,
 def get_user_agent():
     """Returns a user agent used by open_url"""
     return u"ansible-httpget"
+
+
+def url_host_port(url):
+    """Return normalized (hostname, port) for remote URLs, else None."""
+    parts = urlsplit(url)
+    default_ports = {'http': 80, 'https': 443, 'ftp': 21, 'ftps': 990}
+    if parts.scheme not in default_ports:
+        return None
+
+    hostname = parts.hostname or ''
+    port = parts.port
+    if port is None:
+        port = default_ports[parts.scheme]
+
+    return hostname, port
+
+
+def urls_have_different_host_port(url_a, url_b):
+    """Return True when two remote URLs target different host/port pairs."""
+    host_port_a = url_host_port(url_a)
+    host_port_b = url_host_port(url_b)
+    if host_port_a is None or host_port_b is None:
+        return False
+
+    return host_port_a != host_port_b
