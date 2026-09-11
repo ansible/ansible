@@ -1,0 +1,2 @@
+minor_changes:
+- Add new utils function update_url_params to update url query parameters
