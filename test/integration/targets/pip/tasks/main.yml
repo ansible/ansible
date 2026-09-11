@@ -26,6 +26,8 @@
     - include_tasks: url_packages.yml
 
     - include_tasks: no_setuptools.yml
+
+    - include_tasks: pyproject_local_idempotency.yml
   always:
     - name: platform specific cleanup
       include_tasks: "{{ cleanup_filename }}"
