@@ -103,7 +103,6 @@ options:
     default: no
     version_added: '2.16'
   line_separator:
-    required: false
     description:
     - The type of line separator used when writing block lines in the file.
     - This will not impact how blocks are found, which will be found regardless of line endings.
