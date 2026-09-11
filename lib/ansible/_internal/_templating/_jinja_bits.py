@@ -70,6 +70,7 @@ from ansible.module_utils import _internal
 from ansible.module_utils._internal import _ambient_context, _dataclass_validation
 from ansible.plugins.loader import filter_loader, test_loader
 from ansible.vars.hostvars import HostVars, HostVarsVars
+from ansible.vars.container import VarsContainer
 from .._errors import _attribute_unavailable
 from ...module_utils.datatag import native_type_name
 
@@ -918,7 +919,7 @@ def _flatten_nodes(nodes: t.Iterable[t.Any]) -> t.Iterable[t.Any]:
 def _flatten_and_lazify_vars(mapping: c.Mapping) -> t.Iterable[c.Mapping]:
     """Prevent deeply-nested Jinja vars ChainMaps from being created by nested contexts and ensure that all top-level containers support lazy templating."""
     mapping_type = type(mapping)
-    if mapping_type is ChainMap:
+    if mapping_type in (ChainMap, VarsContainer):
         # noinspection PyUnresolvedReferences
         for m in mapping.maps:
             yield from _flatten_and_lazify_vars(m)
