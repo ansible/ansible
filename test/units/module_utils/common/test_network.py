@@ -12,6 +12,7 @@ from ansible.module_utils.common.network import (
     to_netmask,
     to_subnet,
     to_ipv6_network,
+    to_ipv6_subnet,
     is_masklen,
     is_netmask
 )
@@ -78,6 +79,15 @@ def test_to_ipv6_network():
     assert '2001:db8::' == to_ipv6_network('2001:db8::')
     assert '2001:0db8:85a3::' == to_ipv6_network('2001:0db8:85a3:0000:0000:8a2e:0370:7334')
     assert '2001:0db8:85a3::' == to_ipv6_network('2001:0db8:85a3:0:0:8a2e:0370:7334')
+
+
+@pytest.mark.parametrize('address, expected', [
+    ('2001:db8::', '2001:db8::'),
+    ('2001:0db8:85a3:0000:0000:8a2e:0370:7334', '2001:0db8:85a3:0000::'),
+    ('2001:0db8:85a3:0:0:8a2e:0370:7334', '2001:0db8:85a3:0::'),
+])
+def test_to_ipv6_subnet(address, expected):
+    assert expected == to_ipv6_subnet(address)
 
 
 def test_to_bits():
