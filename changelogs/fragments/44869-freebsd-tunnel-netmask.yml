@@ -1,0 +1,2 @@
+bugfixes:
+  - setup - use a FreeBSD point-to-point peer CIDR prefix to calculate the local IPv4 netmask (https://github.com/ansible/ansible/issues/44869).
