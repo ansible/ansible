@@ -1,0 +1,5 @@
+minor_changes:
+  - is_mac - add a ``strict`` keyword-only argument that anchors the validation
+    regex with ``\Z`` instead of ``$``, rejecting a MAC address with a trailing
+    newline. The default (``strict=False``) preserves the historical behavior
+    (https://github.com/ansible/ansible/pull/87420).
