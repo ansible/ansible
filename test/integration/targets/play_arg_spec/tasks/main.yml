@@ -116,7 +116,10 @@
   register: result
 
 - assert:
-    that: "{{ result.stdout is search('Validating arguments against arg spec Gather Facts') }}"
+    that:
+      - result.stdout is search('Validating arguments against arg spec Gather Facts')
+      - result.stdout is not search('SECRET')
+      - result.stdout is search('\$REDACTED\$')
 
 # Test compatibility with the play name keyword
 
@@ -195,3 +198,15 @@
 - assert:
     that:
       - result.stdout is not search("Validating arguments against arg spec Tagged Play")
+
+- name: Test no_log and vault argument spec compatibility
+  command: ansible-playbook {{ playbook }} --vault-password-file="{{ role_path }}/files/vaultpass"
+  vars:
+    playbook_name: no_log_argspec
+  register: result
+
+- assert:
+    that:
+      - result.stdout is search("Validating arguments against arg spec Test no_log redaction")
+      - result.stdout is not search("SECRET")
+      - result.stdout is search("\$REDACTED\$")

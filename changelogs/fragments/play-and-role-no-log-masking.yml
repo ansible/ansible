@@ -1,0 +1,4 @@
+minor_changes:
+  - >-
+    Role and play argument spec validation now supports ``no_log``. Variables labeled as ``no_log`` are redacted from masked output.
+    (https://github.com/ansible/ansible/issues/84498)
