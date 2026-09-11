@@ -1,0 +1,63 @@
+- name: Test setting password last changed days
+  when: ansible_facts.os_family in ['RedHat', 'Debian']
+  block:
+    - name: create user
+      user:
+        name: ansibulluser
+        state: present
+
+    - name: set password last changed days
+      user:
+        name: ansibulluser
+        password_expire_last_changed: 3652
+      register: pass_last_changed_1_0
+
+    - name: set password last changed days again
+      user:
+        name: ansibulluser
+        password_expire_last_changed: 3652
+      register: pass_last_changed_1_1
+
+    - name: validate result for password last changed days
+      assert:
+        that:
+          - pass_last_changed_1_0 is changed
+          - pass_last_changed_1_1 is not changed
+
+    - name: Get shadow data for ansibulluser
+      getent:
+        database: shadow
+        key: ansibulluser
+
+    - name: Ensure password last changed days were set properly
+      assert:
+        that:
+          - ansible_facts.getent_shadow['ansibulluser'][1] == '3652'
+
+    - name: set password last changed days to epoch
+      user:
+        name: ansibulluser
+        password_expire_last_changed: 0
+      register: pass_last_changed_2_0
+
+    - name: set password last changed days to epoch again
+      user:
+        name: ansibulluser
+        password_expire_last_changed: 0
+      register: pass_last_changed_2_1
+
+    - name: validate result for password last changed days at epoch
+      assert:
+        that:
+          - pass_last_changed_2_0 is changed
+          - pass_last_changed_2_1 is not changed
+
+    - name: Get shadow data for ansibulluser after epoch update
+      getent:
+        database: shadow
+        key: ansibulluser
+
+    - name: Ensure password last changed days were updated properly
+      assert:
+        that:
+          - ansible_facts.getent_shadow['ansibulluser'][1] == '0'
