@@ -1,0 +1,2 @@
+bugfixes:
+  - reboot - Previously, on FreeBSD the boot time was used to verify that a target really rebooted. Unfortunately, it's not a fixed value and may change e.g. due to NTP updates leading to sporadic issues. Therefore, ansible is using the boot_id sysctl now. (https://github.com/ansible/ansible/pull/82383)
