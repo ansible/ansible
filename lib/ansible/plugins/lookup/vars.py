@@ -16,7 +16,9 @@ DOCUMENTATION = """
         required: True
       default:
         description:
-            - What to return if a variable is undefined.
+            - The substitution only applies when trying to look up a variable which is not defined.
+              If the variable is defined, but templates to an undefined value, the default substitution will not apply.
+              Use the P(ansible.builtin.default#filter) filter to coerce those values instead.
             - If no default is set, it will result in an error if any of the variables is undefined.
     seealso:
     - plugin_type: lookup
