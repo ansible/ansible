@@ -1,0 +1,5 @@
+minor_changes:
+  - dnf, dnf5 - add the ``clean_requirements_on_remove`` option to remove the
+    dependencies made unneeded by a package removal without triggering a full
+    ``autoremove`` sweep of unrelated orphaned packages
+    (https://github.com/ansible/ansible/issues/87197).
