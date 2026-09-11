@@ -263,7 +263,15 @@ options:
     password_expire_min:
         description:
             - Minimum number of days between password change.
-            - Supported on Linux only.
+            - Supported on Linux systems where the underlying C(chage) utility supports C(-m/--mindays).
+            - On systems where C(chage -m) is supported, a warning is emitted noting that the feature has
+              been removed in upstream shadow-utils 4.20+.
+            - On systems where the underlying C(chage) utility does not support C(-m/--mindays)
+              (for example, shadow-utils 4.20 and later), using this parameter will result in a
+              task failure with a descriptive error message.
+              The C(chage -m) option and C(PASS_MIN_DAYS) in C(login.defs) were removed by the
+              shadow-utils project as a security measure with no replacement.
+              See U(https://github.com/shadow-maint/shadow/pull/1482).
         type: int
         version_added: "2.11"
     password_expire_warn:
@@ -904,6 +912,27 @@ class User(object):
 
         return False
 
+    def _chage_supports_mindays(self):
+        # check if this version of chage supports -m / --mindays
+        # shadow-utils 4.20+ removed this option as a security measure
+        command_name = 'chage'
+        chage_path = self.module.get_bin_path(command_name, True)
+
+        if not os.access(chage_path, os.X_OK):
+            return False
+
+        cmd = [chage_path, '--help']
+        (rc, data1, data2) = self.execute_command(cmd, obey_checkmode=False)
+        helpout = data1 + data2
+
+        # check if -m / --mindays is listed in the help output
+        lines = to_native(helpout).split('\n')
+        for line in lines:
+            if re.search(r'(-m\b|--mindays\b)', line):
+                return True
+
+        return False
+
     def modify_user_usermod(self):
 
         if self.local:
@@ -1169,6 +1198,22 @@ class User(object):
         return info
 
     def set_password_expire(self):
+        if self.password_expire_min is not None:
+            if not self._chage_supports_mindays():
+                self.module.fail_json(
+                    msg=(
+                        "password_expire_min is not supported on this system. "
+                        "The underlying chage utility does not support "
+                        "-m/--mindays."
+                    )
+                )
+            else:
+                self.module.warn(
+                    "password_expire_min has been removed in upstream shadow-utils 4.20+ "
+                    "(chage -m / PASS_MIN_DAYS) and will not be supported once the "
+                    "system shadow-utils package is upgraded."
+                )
+
         min_needs_change = self.password_expire_min is not None
         max_needs_change = self.password_expire_max is not None
         warn_needs_change = self.password_expire_warn is not None

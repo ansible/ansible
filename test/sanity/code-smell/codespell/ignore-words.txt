@@ -1,2 +1,3 @@
 afile  # commonly used variable name for "a file"
 astroid  # pylint's astroid
+chage  # command name for changing user password expiry information
