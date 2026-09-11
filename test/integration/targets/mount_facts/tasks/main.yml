@@ -180,6 +180,51 @@
           - static.ansible_facts.mount_points.values() | list | map(attribute='uuid') | unique | length > 0
       when: ansible_os_family not in ("Darwin", "FreeBSD")
 
+    - name: Find a resolvable UUID entry in fstab (Linux)
+      shell: "awk '!/^[[:space:]]*#/ && $1 ~ /^UUID=/ { print; exit }' /etc/fstab"
+      register: uuid_fstab_entry
+      changed_when: false
+      when: ansible_system == "Linux"
+
+    - name: Resolve the UUID fstab device (Linux)
+      command: "blkid --uuid {{ uuid_fstab_entry.stdout.split()[0].split('=', 1)[1] }}"
+      register: uuid_fstab_device
+      changed_when: false
+      failed_when: false
+      when:
+        - ansible_system == "Linux"
+        - uuid_fstab_entry.stdout | trim
+
+    - name: Test filtering a static UUID mount by its resolved device (Linux)
+      block:
+        - name: Create a temporary fstab source with the UUID entry
+          copy:
+            dest: "{{ remote_tmp_dir }}/mount_facts_uuid_fstab"
+            content: "{{ uuid_fstab_entry.stdout }}\n"
+
+        - name: Collect the UUID mount with an exact device filter
+          mount_facts:
+            sources:
+              - "{{ remote_tmp_dir }}/mount_facts_uuid_fstab"
+            devices:
+              - "{{ uuid_fstab_device.stdout | trim }}"
+          register: uuid_filtered
+
+        - name: Verify the UUID mount passed the device filter
+          assert:
+            that:
+              - uuid_filtered.ansible_facts.mount_points | length == 1
+              - (uuid_fstab_entry.stdout.split()[1]) in uuid_filtered.ansible_facts.mount_points
+      always:
+        - name: Remove the temporary fstab source
+          file:
+            path: "{{ remote_tmp_dir }}/mount_facts_uuid_fstab"
+            state: absent
+      when:
+        - ansible_system == "Linux"
+        - uuid_fstab_entry.stdout | trim
+        - uuid_fstab_device.rc | default(1) == 0
+
 - name: Test duplicate sources
   mount_facts:
     sources:
