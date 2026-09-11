@@ -130,6 +130,21 @@ class AnsiblePlugin(_AnsiblePluginInfoMixin, _ConfigurablePlugin, metaclass=abc.
             options[option] = self.get_option(option, hostvars=hostvars)
         return options
 
+    def get_ff_option(self, *options, hostvars=None, pc=None):
+        ''' convenience function for when plugins have not followed strict conventions (user/remote_user)
+            and/or relied on playcontext, which is not strictly up-to-date, especially in loops. '''
+        for option in options:
+            if self.has_option(option):
+                return self.get_option(option, hostvars)
+
+        # fallback to play context
+        if pc is not None:
+            for option in options:
+                if hasattr(pc, option):
+                    return getattr(pc, option)
+
+        raise KeyError(f"The {self.plugin_type} plugin '{self.ansible_name}' does not support any of these options: {', '.join(options)}")
+
     def set_option(self, option, value):
         self._options[option] = C.config.get_config_value(option, plugin_type=self.plugin_type, plugin_name=self._load_name, direct={option: value})
         self._origins[option] = 'Direct'
