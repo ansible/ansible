@@ -5,7 +5,6 @@
 from __future__ import annotations
 
 import decimal
-import itertools
 import operator
 import os
 
@@ -112,9 +111,7 @@ class FieldAttributeBase:
         self._variable_manager = None
         self._origin: Origin | None = None
 
-        # other internal params
-        self._validated = False
-        self._squashed = False
+        # indicates the field attributes has been inherited, templated and cached
         self._finalized = False
 
         # every object gets a random uuid:
@@ -149,7 +146,7 @@ class FieldAttributeBase:
             raise AnsibleAssertionError('ds (%s) should not be None but it is.' % ds)
 
         # cache the datastructure internally
-        setattr(self, '_ds', ds)
+        self._ds = ds
 
         # the variable manager class is used to manage and merge variables
         # down to a single dictionary for reference in templating, etc.
@@ -221,28 +218,25 @@ class FieldAttributeBase:
 
     def validate(self, all_vars=None):
         """ validation that is done at parse time, not load time """
-        if not self._validated:
-            # walk all fields in the object
-            for (name, attribute) in self.fattributes.items():
-                # run validator only if present
-                method = getattr(self, '_validate_%s' % name, None)
-                if method:
-                    method(attribute, name, getattr(self, name))
-                else:
-                    # and make sure the attribute is of the type it should be
-                    value = getattr(self, f'_{name}', Sentinel)
-                    if value is not None:
-                        if attribute.isa == 'string' and isinstance(value, (list, dict)):
-                            raise AnsibleParserError(
-                                "The field '%s' is supposed to be a string type,"
-                                " however the incoming data structure is a %s" % (name, type(value)), obj=value
-                            )
+        for (name, attribute) in self.fattributes.items():
+            if (value := getattr(self, f'_{name}', Sentinel)) is Sentinel:
+                continue
 
-        self._validated = True
+            if method := getattr(self, '_validate_%s' % name, None):
+                method(attribute, name, value)
+            else:
+                # FIXME move this to get_validated_value
+                # and make sure the attribute is of the type it should be
+                if value is not None:
+                    if attribute.isa == 'string' and isinstance(value, (list, dict)):
+                        raise AnsibleParserError(
+                            "The field '%s' is supposed to be a string type,"
+                            " however the incoming data structure is a %s" % (name, type(value)), obj=value
+                        )
 
     def _load_module_defaults(self, name, value):
         if value is None:
-            return
+            return []
 
         if not isinstance(value, list):
             value = [value]
@@ -411,17 +405,6 @@ class FieldAttributeBase:
             raise AnsibleParserError("Could not resolve action %s in module_defaults" % action_name)
         display.vvvvv("Could not resolve action %s in module_defaults" % action_name)
 
-    def squash(self):
-        """
-        Evaluates all attributes and sets them to the evaluated version,
-        so that all future accesses of attributes do not need to evaluate
-        parent attributes.
-        """
-        if not self._squashed:
-            for name in self.fattributes:
-                setattr(self, name, getattr(self, name))
-            self._squashed = True
-
     def copy(self):
         """
         Create a copy of this object and return it.
@@ -438,7 +421,6 @@ class FieldAttributeBase:
         new_me._loader = self._loader
         new_me._variable_manager = self._variable_manager
         new_me._origin = self._origin
-        new_me._validated = self._validated
         new_me._finalized = self._finalized
         new_me._uuid = self._uuid
 
@@ -510,20 +492,8 @@ class FieldAttributeBase:
 
     def set_to_context(self, name: str) -> t.Any:
         """ set to parent inherited value or Sentinel as appropriate"""
-
-        attribute = self.fattributes[name]
-        if isinstance(attribute, NonInheritableFieldAttribute):
-            # setting to sentinel will trigger 'default/default()' on getter
-            value = Sentinel
-        else:
-            try:
-                value = self._get_parent_attribute(name, omit=True)
-            except AttributeError:
-                # mostly playcontext as only tasks/handlers/blocks really resolve parent
-                value = Sentinel
-
-        setattr(self, name, value)
-        return value
+        setattr(self, name, Sentinel)
+        return getattr(self, name, Sentinel)
 
     def post_validate(self, templar: TemplateEngine) -> None:
         """
@@ -628,31 +598,6 @@ class FieldAttributeBase:
         except TypeError as ex:
             raise AnsibleParserError(f"Invalid variable name in vars specified for {self.__class__.__name__}.", obj=ds) from ex
 
-    def _extend_value(self, value, new_value, prepend=False):
-        """
-        Will extend the value given with new_value (and will turn both
-        into lists if they are not so already). The values are run through
-        a set to remove duplicate values.
-        """
-
-        if not isinstance(value, list):
-            value = [value]
-        if not isinstance(new_value, list):
-            new_value = [new_value]
-
-        # Due to where _extend_value may run for some attributes
-        # it is possible to end up with Sentinel in the list of values
-        # ensure we strip them
-        value = [v for v in value if v is not Sentinel]
-        new_value = [v for v in new_value if v is not Sentinel]
-
-        if prepend:
-            combined = new_value + value
-        else:
-            combined = value + new_value
-
-        return [i for i, dummy in itertools.groupby(combined) if i is not None]
-
     def dump_attrs(self):
         """
         Dumps all attributes to a dictionary
@@ -696,10 +641,10 @@ class Base(FieldAttributeBase):
     vars = NonInheritableFieldAttribute(isa='dict', priority=100, static=True, default=dict)
 
     # module default params
-    module_defaults = FieldAttribute(isa='list', extend=True, prepend=True)
+    module_defaults = FieldAttribute(isa='list', extend=True, prepend=True, default=list)
 
     # flags and misc. settings
-    environment = FieldAttribute(isa='list', extend=True, prepend=True)
+    environment = FieldAttribute(isa='list', listof=(dict,), extend=True, prepend=True, default=list)
     no_log = FieldAttribute(isa='bool', default=C.DEFAULT_NO_LOG)
     run_once = FieldAttribute(isa='bool')
     ignore_errors = FieldAttribute(isa='bool')
@@ -782,3 +727,13 @@ class Base(FieldAttributeBase):
             path_stack.append(task_dir)
 
         return path_stack
+
+    def _load_environment(self, attr, value):
+        # FIXME validate?
+        if value is None:
+            return []
+
+        if not isinstance(value, list):
+            return [value]
+
+        return value
