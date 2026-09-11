@@ -874,3 +874,7 @@
       - "'|commonpath expects' in commonpath_02.msg"
 
 - include_tasks: password_hash.yml
+
+- include_tasks: ppa_to_url.yml
+
+- include_tasks: url_to_ppa.yml
