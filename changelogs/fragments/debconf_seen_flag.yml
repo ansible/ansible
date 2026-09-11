@@ -1,0 +1,3 @@
+---
+bugfixes:
+    - debconf - convert datatype for value when vtype is seen (https://github.com/ansible/ansible/issues/85683).
