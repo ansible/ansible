@@ -1,0 +1,119 @@
+# Tests for the `line_separator` option, which controls the line endings used
+# for the marker and block lines written into the file.
+
+- name: line_separator tests
+  vars:
+    base_path: "{{ remote_tmp_dir_test }}/line_separator_"
+    line_seps:
+      - {sep: lf, eol: "\n"}
+      - {sep: cr, eol: "\r"}
+      - {sep: crlf, eol: "\r\n"}
+  block:
+    - name: create a block for each line_separator choice
+      blockinfile:
+        path: "{{ base_path }}{{ item.sep }}.txt"
+        create: true
+        line_separator: "{{ item.sep }}"
+        block: "line1{{ item.eol }}line2"
+      register: sep_insert
+      with_items: "{{ line_seps }}"
+
+    - name: run the same block again for each choice (idempotency)
+      blockinfile:
+        path: "{{ base_path }}{{ item.sep }}.txt"
+        create: true
+        line_separator: "{{ item.sep }}"
+        block: "line1{{ item.eol }}line2"
+      register: sep_reinsert
+      with_items: "{{ line_seps }}"
+
+    - name: read back each file
+      slurp:
+        src: "{{ base_path }}{{ item.sep }}.txt"
+      register: sep_slurp
+      with_items: "{{ line_seps }}"
+
+    - name: validate line endings and idempotency for each choice
+      assert:
+        that:
+          - item.0 is changed
+          - item.1 is not changed
+          - (item.2.content | b64decode) == expected
+      vars:
+        eol: "{{ item.0.item.eol }}"
+        expected: >-
+          {{ "# BEGIN ANSIBLE MANAGED BLOCK" ~ eol ~ "line1" ~ eol
+             ~ "line2" ~ eol ~ "# END ANSIBLE MANAGED BLOCK" ~ eol }}
+      loop: "{{ sep_insert.results | zip(sep_reinsert.results, sep_slurp.results) | list }}"
+      loop_control:
+        label: "{{ item.0.item.sep }}"
+
+    # The marker search normalizes each file line's ending before comparing, so an
+    # existing block is found and updated even when its line endings differ from the
+    # requested line_separator (rather than a duplicate block being appended).
+    - name: create a block written with crlf endings
+      blockinfile:
+        path: "{{ base_path }}convert.txt"
+        create: true
+        line_separator: crlf
+        block: "line1\r\nline2"
+
+    - name: rewrite the same block with lf endings
+      blockinfile:
+        path: "{{ base_path }}convert.txt"
+        line_separator: lf
+        block: "line1\nline2"
+      register: convert_result
+
+    - name: read back the converted file
+      slurp:
+        src: "{{ base_path }}convert.txt"
+      register: convert_slurp
+
+    - name: validate the crlf block was found and converted to lf without duplication
+      assert:
+        that:
+          - convert_result is changed
+          - (convert_slurp.content | b64decode) == "# BEGIN ANSIBLE MANAGED BLOCK\nline1\nline2\n# END ANSIBLE MANAGED BLOCK\n"
+
+    - name: insert a crlf block in check mode
+      blockinfile:
+        path: "{{ base_path }}check.txt"
+        create: true
+        line_separator: crlf
+        block: "line1\r\nline2"
+      check_mode: true
+      register: check_result
+
+    - name: stat the check-mode file
+      stat:
+        path: "{{ base_path }}check.txt"
+      register: check_stat
+
+    - name: validate check mode reports change without writing the file
+      assert:
+        that:
+          - check_result is changed
+          - not check_stat.stat.exists
+
+    - name: insert a crlf block with diff enabled
+      blockinfile:
+        path: "{{ base_path }}diff.txt"
+        create: true
+        line_separator: crlf
+        block: "line1\r\nline2"
+      diff: true
+      register: diff_result
+
+    - name: validate diff reflects the crlf line endings within the block
+      assert:
+        that:
+          - diff_result is changed
+          - diff_result.diff[0].after == "# BEGIN ANSIBLE MANAGED BLOCK\r\nline1\r\nline2\r\n# END ANSIBLE MANAGED BLOCK\r\n"
+
+  always:
+    - name: clean up line_separator test files
+      file:
+        path: "{{ base_path }}{{ item }}.txt"
+        state: absent
+      loop: "{{ (line_seps | map(attribute='sep') | list) + ['convert', 'diff'] }}"

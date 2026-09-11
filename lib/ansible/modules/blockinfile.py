@@ -102,6 +102,19 @@ options:
     type: bool
     default: no
     version_added: '2.16'
+  line_separator:
+    description:
+    - The type of line separator used when writing block lines in the file.
+    - This will not impact how blocks are found, which will be found regardless of line endings.
+    - This will not have any impact on line endings elsewhere in the entire file, only within the block.
+    type: str
+    default: os
+    version_added: '2.22'
+    choices:
+      os: Use C(os.linesep) as the line separator.
+      lf: Use C(\n), Line Feed, as the line separator.
+      cr: Use C(\r), Carriage Return, as the line separator.
+      crlf: Use C(\r\n), Carriage Return + Line Feed, as the line separator.
   encoding:
     description:
       - The character set in which the target file is encoded.
@@ -204,6 +217,9 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.text.converters import to_native
 
 
+_LINE_ENDINGS = dict(lf="\n", cr="\r", crlf="\r\n")
+
+
 def write_changes(module, contents, path, encoding=None):
 
     tmpfd, tmpfile = tempfile.mkstemp(dir=module.tmpdir)
@@ -254,6 +270,7 @@ def main():
             marker_end=dict(type='str', default='END'),
             append_newline=dict(type='bool', default=False),
             prepend_newline=dict(type='bool', default=False),
+            line_separator=dict(type='str', default='os', choices=['os', 'lf', 'cr', 'crlf']),
             encoding=dict(type='str', default='utf-8'),
         ),
         mutually_exclusive=[['insertbefore', 'insertafter']],
@@ -301,10 +318,10 @@ def main():
     insertbefore = params['insertbefore']
     insertafter = params['insertafter']
     block = params['block']
-    marker = params['marker']
+    marker = params['marker'].rstrip("\r\n")
     present = params['state'] == 'present'
 
-    line_separator = os.linesep
+    line_separator = _LINE_ENDINGS.get(params['line_separator'].lower(), os.linesep)
     blank_line = [line_separator]
 
     if not present and not path_exists:
@@ -333,6 +350,7 @@ def main():
 
     n0 = n1 = None
     for i, line in enumerate(lines):
+        line = line.rstrip("\r\n") + line_separator
         if line == marker0:
             n0 = i
         if line == marker1:
