@@ -365,3 +365,48 @@ class TestLoadListOfBlocks(unittest.TestCase, MixinForMocks):
         self.assertIsInstance(res, list)
         for block in res:
             self.assertIsInstance(block, Block)
+
+    def test_block_copy_parents(self):
+        ds = [
+            {
+                'block': [
+                    {'ping': None},
+                    {'import_tasks': '/dev/null/includes/other_test_include.yml'},
+                ]
+            },
+        ]
+        res = helpers.load_list_of_blocks(
+            ds,
+            play=self.mock_play,
+            variable_manager=self.mock_variable_manager,
+            loader=self.fake_include_loader,
+        )
+
+        block_orig = res[0]
+        block_copy = block_orig.copy()
+
+        assert isinstance(block_orig, Block)
+        assert isinstance(block_copy, Block)
+
+        task1_orig, task2_orig = block_orig.block
+        task1_copy, task2_copy = block_copy.block
+
+        assert isinstance(task1_orig, Task)
+        assert isinstance(task1_copy, Task)
+
+        assert isinstance(task2_orig, Block)
+        assert isinstance(task2_copy, Block)
+
+        assert isinstance(task1_orig._parent, Block)
+        assert task1_orig._parent is block_orig
+
+        assert isinstance(task1_copy._parent, Block)
+        assert task1_copy._parent is block_copy
+
+        assert isinstance(task2_orig._parent, TaskInclude)
+        assert task2_orig._parent._parent is block_orig
+
+        assert isinstance(task2_copy._parent, TaskInclude)
+        assert task2_copy._parent._parent is block_copy
+
+        assert task2_orig._parent is not task2_copy._parent
