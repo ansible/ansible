@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-galaxy - provide a clearer error message when a requested collection does not exist on any configured Galaxy server, instead of a misleading dependency resolution error (https://github.com/ansible/ansible/issues/87271).

@@ -579,7 +579,7 @@ def test_build_requirement_from_name_missing(galaxy_server, monkeypatch, tmp_pat
         ['namespace.collection'], None, artifacts_manager=concrete_artifact_cm
     )['collections']
 
-    expected = "Failed to resolve the requested dependencies map. Could not satisfy the following requirements:\n* namespace.collection:* (direct request)"
+    expected = "Collection 'namespace.collection' does not exist on"
     with pytest.raises(AnsibleError, match=re.escape(expected)):
         collection._resolve_depenency_map(requirements, [galaxy_server, galaxy_server], concrete_artifact_cm, None, False, True, False, False, False)
 
