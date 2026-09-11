@@ -1,0 +1,3 @@
+---
+bugfixes:
+    - cron - handle FileNotFoundError and OSError exception while writing cron file (https://github.com/ansible/ansible/issues/85726).
