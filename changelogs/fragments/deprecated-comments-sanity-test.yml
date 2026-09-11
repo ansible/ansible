@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - Replaced pylint ``deprecated-comment`` checker with a language-agnostic sanity test supporting multiple file types.
