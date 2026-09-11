@@ -1,0 +1,2 @@
+bugfixes:
+   - apt - honor ``allow_downgrade`` when removing packages so dependency-driven downgrades during ``state==absent`` no longer fail (https://github.com/ansible/ansible/issues/85804)
