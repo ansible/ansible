@@ -125,11 +125,12 @@ def read_docstring(filename, verbose=True, ignore_errors=True):
 
 def read_docstub(filename):
     """
-    Quickly find short_description using string methods instead of node parsing.
+    Quickly find short_description and deprecated using string methods instead of node parsing.
     This does not return a full set of documentation strings and is intended for
     operations like ansible-doc -l.
     """
 
+    is_deprecated = False
     in_documentation = False
     capturing = False
     indent_detection = ''
@@ -137,25 +138,36 @@ def read_docstub(filename):
 
     with open(filename, 'r') as t_module_data:
         for line in t_module_data:
-            if in_documentation:
-                # start capturing the stub until indentation returns
-                if capturing and line.startswith(indent_detection):
+            if not in_documentation:
+                if line.startswith('DOCUMENTATION') and ('=' in line or ':' in line):
+                    in_documentation = True
+                continue
+
+            if line.strip() in ("'''", '"""'):
+                in_documentation = False
+                break
+
+            if capturing:
+                if line.startswith(indent_detection):
                     doc_stub.append(line)
+                    continue
+                capturing = False
 
-                elif capturing and not line.startswith(indent_detection):
-                    break
+            if line.lstrip().startswith('short_description:'):
+                capturing = True
+                # Detect that the short_description continues on the next line if it's indented more
+                # than short_description itself.
+                indent_detection = ' ' * (len(line) - len(line.lstrip()) + 1)
+                doc_stub.append(line)
+                continue
 
-                elif line.lstrip().startswith('short_description:'):
-                    capturing = True
-                    # Detect that the short_description continues on the next line if it's indented more
-                    # than short_description itself.
-                    indent_detection = ' ' * (len(line) - len(line.lstrip()) + 1)
-                    doc_stub.append(line)
-
-            elif line.startswith('DOCUMENTATION') and ('=' in line or ':' in line):
-                in_documentation = True
+            if line.lstrip().startswith('deprecated:'):
+                is_deprecated = True
 
     short_description = r''.join(doc_stub).strip().rstrip('.')
     data = yaml.load(_tags.Origin(path=str(filename)).tag(short_description), Loader=AnsibleLoader)
+
+    if isinstance(data, dict):
+        data['deprecated'] = is_deprecated
 
     return data
