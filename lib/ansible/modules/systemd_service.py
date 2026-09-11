@@ -51,12 +51,14 @@ options:
         description:
             - Run C(daemon-reload) before doing any other operations, to make sure systemd has read any changes.
             - When set to V(true), runs C(daemon-reload) even if the module does not start or stop anything.
+            - Ignored when C(scope) is set to V(global).
         type: bool
         default: no
         aliases: [ daemon-reload ]
     daemon_reexec:
         description:
             - Run daemon_reexec command before doing any other operations, the systemd manager will serialize the manager state.
+            - Ignored when C(scope) is set to V(global).
         type: bool
         default: no
         aliases: [ daemon-reexec ]
@@ -384,6 +386,11 @@ def main():
 
     if module.params['force']:
         systemctl += " --force"
+
+    # Bus is not available when using the global scope
+    if module.params['scope'] == 'global':
+        module.params['daemon_reload'] = False
+        module.params['daemon_reexec'] = False
 
     rc = 0
     out = err = ''
