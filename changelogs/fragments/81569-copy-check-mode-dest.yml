@@ -1,0 +1,2 @@
+bugfixes:
+  - copy - return the resolved destination when check mode predicts a file content change (https://github.com/ansible/ansible/issues/81569).

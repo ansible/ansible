@@ -293,6 +293,7 @@ class ActionModule(ActionBase):
             if self._task.check_mode:
                 self._remove_tempfile_if_content_defined(content, content_tempfile)
                 result['changed'] = True
+                result['dest'] = dest_file
                 return result
 
             # Define a remote directory that we will copy the file to.
