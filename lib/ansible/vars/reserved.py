@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import collections.abc as c
 
+from ansible import constants as C
 from ansible.playbook import Play
 from ansible.playbook.block import Block
 from ansible.playbook.role import Role
@@ -32,7 +33,7 @@ display = Display()
 def get_reserved_names(include_private: bool = True) -> set[str]:
     """ this function returns the list of reserved names associated with play objects"""
 
-    public = set(TemplateEngine().environment.globals.keys())
+    public = set(TemplateEngine().environment.globals.keys()).union(C.INTERNAL_STATIC_VARS)
     private = set()
 
     # FIXME: find a way to 'not hardcode', possibly need role deps/includes
@@ -51,7 +52,6 @@ def get_reserved_names(include_private: bool = True) -> set[str]:
         public.add('local_action')
 
     # loop implies with_
-    # FIXME: remove after with_ is not only deprecated but removed
     if 'loop' in private or 'loop' in public:
         public.add('with_')
 
