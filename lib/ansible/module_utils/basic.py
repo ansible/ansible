@@ -1346,9 +1346,8 @@ class AnsibleModule(object):
         # These log args will be masked in log() if they contain any secrets.
         log_args = {key: to_text(value) for key, value in self._redact_no_log_params(self.argument_spec, self.params).items()}
 
-        msg = [f'{k}={v}' for k, v in log_args.items()]
-        if msg:
-            msg = 'Invoked with %s' % ' '.join(msg)
+        if log_args:
+            msg = f"Invoked with {' '.join([f'{k}={v}' for k, v in log_args.items()])}"
         else:
             msg = 'Invoked'
 
