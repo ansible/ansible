@@ -659,6 +659,9 @@ class TestLoadFileCommonArguments:
             path='/path/to/real_file',
             secontext=['unconfined_u', 'object_r', 'default_t', 's0'],
             attributes=None,
+            preserve_xattrs=None,
+            xattr_error_mode='fail',
+            _xattrs_data=None,
         ))
 
         # with the proper params specified, the returned dictionary should represent
