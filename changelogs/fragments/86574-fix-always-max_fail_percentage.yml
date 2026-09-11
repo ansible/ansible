@@ -1,0 +1,2 @@
+bugfixes:
+  - Fix ``max_fail_percentage`` when used with the ``always`` block (https://github.com/ansible/ansible/issues/86574)
