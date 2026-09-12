@@ -1,0 +1,121 @@
+- name: Test updating and removing blocks with {{ separator.name }} markers
+  vars:
+    separator_path: "{{ remote_tmp_dir_test }}/line_separator_{{ separator.name }}.txt"
+    separator_original: "before{{ separator.value }}# BEGIN ANSIBLE MANAGED BLOCK{{ separator.value }}old{{ separator.value }}# END ANSIBLE MANAGED BLOCK{{ separator.value }}after{{ separator.value }}"
+    separator_updated: "before{{ separator.value }}# BEGIN ANSIBLE MANAGED BLOCK{{ separator.value }}new{{ separator.value }}second{{ separator.value }}# END ANSIBLE MANAGED BLOCK{{ separator.value }}after{{ separator.value }}"
+  block:
+    - name: Create a file with {{ separator.name }} markers
+      copy:
+        dest: "{{ separator_path }}"
+        content: "{{ separator_original }}"
+
+    - name: Update the {{ separator.name }} block in check mode
+      blockinfile:
+        path: "{{ separator_path }}"
+        line_separator: "{{ separator.name }}"
+        block: "new\nsecond\n"
+      check_mode: true
+      diff: true
+      register: separator_check
+
+    - name: Read the file after check mode
+      slurp:
+        src: "{{ separator_path }}"
+      register: separator_content
+
+    - name: Check the predicted update and unchanged file
+      assert:
+        that:
+          - separator_check is changed
+          - separator_check.diff[0].after == separator_updated
+          - separator_content.content | b64decode == separator_original
+
+    - name: Update the existing {{ separator.name }} block
+      blockinfile:
+        path: "{{ separator_path }}"
+        line_separator: "{{ separator.name }}"
+        block: "new\nsecond\n"
+      register: separator_update
+
+    - name: Repeat the update
+      blockinfile:
+        path: "{{ separator_path }}"
+        line_separator: "{{ separator.name }}"
+        block: "new\nsecond\n"
+      register: separator_repeat
+
+    - name: Read the updated file
+      slurp:
+        src: "{{ separator_path }}"
+      register: separator_content
+
+    - name: Check replacement, idempotency, and preservation of surrounding {{ separator.name }} lines
+      assert:
+        that:
+          - separator_update is changed
+          - separator_repeat is not changed
+          - separator_content.content | b64decode == separator_updated
+
+    - name: Restore the original {{ separator.name }} file for removal
+      copy:
+        dest: "{{ separator_path }}"
+        content: "{{ separator_original }}"
+
+    - name: Remove the existing {{ separator.name }} block
+      blockinfile:
+        path: "{{ separator_path }}"
+        line_separator: "{{ separator.name }}"
+        state: absent
+      register: separator_remove
+
+    - name: Repeat the removal
+      blockinfile:
+        path: "{{ separator_path }}"
+        line_separator: "{{ separator.name }}"
+        state: absent
+      register: separator_remove_repeat
+
+    - name: Read the file after removal
+      slurp:
+        src: "{{ separator_path }}"
+      register: separator_content
+
+    - name: Check removal, idempotency, and preservation of surrounding {{ separator.name }} lines
+      assert:
+        that:
+          - separator_remove is changed
+          - separator_remove_repeat is not changed
+          - separator_content.content | b64decode == "before{{ separator.value }}after{{ separator.value }}"
+
+    - name: Create a file with no existing block
+      copy:
+        dest: "{{ separator_path }}"
+        content: "first{{ separator.value }}anchor{{ separator.value }}last"
+
+    - name: Insert after a multiline regular expression with blank lines
+      blockinfile: &insert_with_separator
+        path: "{{ separator_path }}"
+        line_separator: "{{ separator.name }}"
+        insertafter: '(?m)anchor'
+        prepend_newline: true
+        append_newline: true
+        block: "new\nsecond"
+      register: separator_insert
+
+    - name: Repeat insertion with blank lines
+      blockinfile: *insert_with_separator
+      register: separator_insert_repeat
+
+    - name: Read the inserted block
+      slurp:
+        src: "{{ separator_path }}"
+      register: separator_content
+
+    - name: Check insertion position, blank lines, and idempotency
+      vars:
+        expected_lines: [first, anchor, '', '# BEGIN ANSIBLE MANAGED BLOCK', new, second, '# END ANSIBLE MANAGED BLOCK', '', last]
+      assert:
+        that:
+          - separator_insert is changed
+          - separator_insert_repeat is not changed
+          - separator_content.content | b64decode == expected_lines | join(separator.value)

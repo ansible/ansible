@@ -1,0 +1,2 @@
+minor_changes:
+  - blockinfile - add a ``line_separator`` option to insert, update, and remove managed blocks in files with CR, LF, or CRLF line endings while preserving the surrounding file content (https://github.com/ansible/ansible/issues/85283).

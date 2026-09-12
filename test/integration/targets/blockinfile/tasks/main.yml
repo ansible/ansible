@@ -33,6 +33,14 @@
 - import_tasks: create_file.yml
 - import_tasks: create_dir.yml
 - import_tasks: preserve_line_endings.yml
+- name: Test explicit line separators
+  include_tasks: line_separator.yml
+  loop:
+    - { name: CR, value: "\r" }
+    - { name: LF, value: "\n" }
+    - { name: CRLF, value: "\r\n" }
+  loop_control:
+    loop_var: separator
 - import_tasks: block_without_trailing_newline.yml
 - import_tasks: file_without_trailing_newline.yml
 - import_tasks: diff.yml

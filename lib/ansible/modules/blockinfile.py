@@ -109,6 +109,17 @@ options:
     type: str
     default: utf-8
     version_added: '2.20'
+  line_separator:
+    description:
+      - The line separator used for marker lines and newlines added by the module.
+      - V(OS) uses the target operating system's line separator and preserves line separators within O(block).
+      - V(CR), V(LF), and V(CRLF) also convert line separators within O(block) to the selected separator.
+      - Set this to match the target file when editing files with non-native line endings.
+      - Existing lines outside the managed block are not converted.
+    type: str
+    choices: [ OS, CR, LF, CRLF ]
+    default: OS
+    version_added: '2.22'
 notes:
   - When using C(with_*) loops be aware that if you do not set a unique mark the block will be overwritten on each iteration.
   - As of Ansible 2.3, the O(dest) option has been changed to O(path) as default, but O(dest) still works as well.
@@ -194,6 +205,14 @@ EXAMPLES = r"""
     insertafter: '(?m)SID_LIST_LISTENER_DG =\n.*\(SID_LIST ='
     marker: "    <!-- {mark} ANSIBLE MANAGED BLOCK -->"
 
+- name: Update a Windows configuration file on a POSIX host while preserving CRLF line endings
+  ansible.builtin.blockinfile:
+    path: /srv/windows/application.conf
+    line_separator: CRLF
+    block: |
+      server=example.org
+      port=443
+
 """
 
 import re
@@ -255,6 +274,7 @@ def main():
             append_newline=dict(type='bool', default=False),
             prepend_newline=dict(type='bool', default=False),
             encoding=dict(type='str', default='utf-8'),
+            line_separator=dict(type='str', default='OS', choices=['OS', 'CR', 'LF', 'CRLF']),
         ),
         mutually_exclusive=[['insertbefore', 'insertafter']],
         add_file_common_args=True,
@@ -304,7 +324,7 @@ def main():
     marker = params['marker']
     present = params['state'] == 'present'
 
-    line_separator = os.linesep
+    line_separator = {'OS': os.linesep, 'CR': '\r', 'LF': '\n', 'CRLF': '\r\n'}[params['line_separator']]
     blank_line = [line_separator]
 
     if not present and not path_exists:
@@ -324,10 +344,13 @@ def main():
     marker1 = re.sub(r'{mark}', params['marker_end'], marker) + line_separator
 
     if present and block:
-        if not block.endswith(line_separator):
-            block += line_separator
-
-        blocklines = [marker0] + block.splitlines(True) + [marker1]
+        if params['line_separator'] == 'OS':
+            if not block.endswith(line_separator):
+                block += line_separator
+            blocklines = block.splitlines(True)
+        else:
+            blocklines = [line + line_separator for line in block.splitlines()]
+        blocklines = [marker0] + blocklines + [marker1]
     else:
         blocklines = []
 
@@ -345,9 +368,9 @@ def main():
                 match = insertre.search(original)
                 if match:
                     if insertafter:
-                        n0 = original.count('\n', 0, match.end())
+                        n0 = original.count(line_separator, 0, match.end())
                     elif insertbefore:
-                        n0 = original.count('\n', 0, match.start())
+                        n0 = original.count(line_separator, 0, match.start())
             else:
                 for i, line in enumerate(lines):
                     if insertre.search(line):
