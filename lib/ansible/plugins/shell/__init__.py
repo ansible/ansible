@@ -64,51 +64,51 @@ class ShellBase(AnsiblePlugin):
             pass
 
     @staticmethod
-    def _generate_temp_dir_name():
+    def _generate_temp_dir_name() -> str:
         return f'ansible-tmp-{uuid.uuid4()}'
 
-    def env_prefix(self, **kwargs):
+    def env_prefix(self, **kwargs) -> str:
         return ' '.join([f'{k}={self.quote(str(v))}' for k, v in kwargs.items()])
 
-    def join_path(self, *args):
+    def join_path(self, *args) -> str:
         return path_join(*args)
 
     # some shells (eg, powershell) are snooty about filenames/extensions, this lets the shell plugin have a say
-    def get_remote_filename(self, pathname):
+    def get_remote_filename(self, pathname: str) -> str:
         return basename(pathname.strip())
 
-    def path_has_trailing_slash(self, path):
+    def path_has_trailing_slash(self, path: str) -> bool:
         return path.endswith('/')
 
-    def chmod(self, paths, mode):
+    def chmod(self, paths: list[str], mode: str) -> str:
         cmd = ['chmod', mode]
         cmd.extend(paths)
         return self.join(cmd)
 
-    def chown(self, paths, user):
+    def chown(self, paths: list[str], user: str) -> str:
         cmd = ['chown', user]
         cmd.extend(paths)
         return self.join(cmd)
 
-    def chgrp(self, paths, group):
+    def chgrp(self, paths: list[str], group: str) -> str:
         cmd = ['chgrp', group]
         cmd.extend(paths)
         return self.join(cmd)
 
-    def set_user_facl(self, paths, user, mode):
+    def set_user_facl(self, paths: list[str], user: str, mode: str) -> str:
         """Only sets acls for users as that's really all we need"""
         cmd = ['setfacl', '-m', f'u:{user}:{mode}']
         cmd.extend(paths)
         return self.join(cmd)
 
-    def remove(self, path, recurse=False):
+    def remove(self, path: str, recurse: bool = False) -> str:
         cmd = ['rm', '-f']
         if recurse:
             cmd.append('-r')
         cmd.extend([self.quote(path), self._SHELL_REDIRECT_ALLNULL])
         return ' '.join(cmd)
 
-    def exists(self, path):
+    def exists(self, path: str) -> str:
         return ' '.join(['test', '-e', self.quote(path)])
 
     def mkdtemp(
@@ -221,9 +221,9 @@ class ShellBase(AnsiblePlugin):
         cmd = self.expand_user(user_home_path, username=username)
         return _ShellCommand(command=cmd, input_data=None)
 
-    def pwd(self):
+    def pwd(self) -> str:
         """Return the working directory after connecting"""
-        return f'echo {self._SHELL_SUB_LEFT}pwd{self._SHELL_SUB_RIGHT}'
+        return 'pwd'
 
     def build_module_command(self, env_string, shebang, cmd, arg_path=None):
         if shebang is None:
@@ -237,7 +237,7 @@ class ShellBase(AnsiblePlugin):
         ]
         return self.join([raw_cmd_part.strip() for raw_cmd_part in cmd_parts if raw_cmd_part])
 
-    def append_command(self, cmd, cmd_to_append):
+    def append_command(self, cmd: str, cmd_to_append: str) -> str:
         """Append an additional command if supported by the shell"""
 
         if self._SHELL_AND:
