@@ -35,6 +35,7 @@ DOCUMENTATION = """
         - The remote user is ignored, the user with which the ansible CLI was executed is used instead.
 """
 
+import contextlib
 import functools
 import getpass
 import os
@@ -53,6 +54,10 @@ from ansible.utils.display import Display
 from ansible.utils.path import unfrackpath
 
 display = Display()
+
+# Generous bound for waiting on a child to exit after terminate() during
+# exceptional cleanup; children normally exit immediately once terminated.
+_CLEANUP_WAIT_TIMEOUT = 10
 
 
 class Connection(ConnectionBase):
@@ -83,6 +88,54 @@ class Connection(ConnectionBase):
             self._connected = True
         return self
 
+    @staticmethod
+    def _cleanup_command_resources(p, pty_primary, stdin):
+        """Release resources owned by exec_command after a failure.
+
+        Idempotent: safe when nothing was created, when normal cleanup
+        already ran, or when the child already exited. Only expected OS
+        cleanup errors are suppressed so the primary exception survives.
+        """
+        if p is None:
+            # Popen itself failed: only raw descriptors may exist here,
+            # since the pre-handshake close below never ran.
+            if isinstance(stdin, int) and stdin >= 0:
+                with contextlib.suppress(OSError):
+                    os.close(stdin)
+            if pty_primary is not None:
+                with contextlib.suppress(OSError):
+                    os.close(pty_primary)
+            return
+        # Close the other half of the pty, if it was created and the
+        # normal path below did not already close it.
+        if pty_primary is not None:
+            with contextlib.suppress(OSError):
+                os.close(pty_primary)
+        for stream in (p.stdin, p.stdout, p.stderr):
+            if stream is not None:
+                with contextlib.suppress(OSError):
+                    stream.close()
+        # A child that is still alive must not be left running; terminate
+        # it, then reap it so no zombie remains.
+        try:
+            running = p.poll() is None
+        except OSError:
+            running = False
+        if running:
+            with contextlib.suppress(OSError):
+                p.terminate()
+            try:
+                p.wait(timeout=_CLEANUP_WAIT_TIMEOUT)
+            except subprocess.TimeoutExpired:
+                with contextlib.suppress(OSError):
+                    p.kill()
+                with contextlib.suppress(OSError):
+                    p.wait()
+        else:
+            # Already exited: reap so no zombie remains.
+            with contextlib.suppress(OSError):
+                p.wait()
+
     def exec_command(self, cmd: str, in_data: bytes | None = None, sudoable: bool = True) -> tuple[int, bytes, bytes]:
         """ run a command on the local host """
 
@@ -106,6 +159,7 @@ class Connection(ConnectionBase):
 
         pty_primary = None
         stdin = subprocess.PIPE
+        p = None
         if sudoable and self.become and self.become.expect_prompt() and not self.get_option('pipelining'):
             # Create a pty if sudoable for privilege escalation that needs it.
             # Falls back to using a standard pipe if this fails, which may
@@ -116,38 +170,41 @@ class Connection(ConnectionBase):
             except OSError as ex:
                 display.debug(f"Unable to open pty: {ex}")
 
-        p = subprocess.Popen(
-            cmd,
-            shell=isinstance(cmd, (str, bytes)),
-            executable=executable,
-            cwd=self.cwd,
-            stdin=stdin,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
+        try:
+            p = subprocess.Popen(
+                cmd,
+                shell=isinstance(cmd, (str, bytes)),
+                executable=executable,
+                cwd=self.cwd,
+                stdin=stdin,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
 
-        # if we created a pty, we can close the other half of the pty now, otherwise primary is stdin
-        if pty_primary is not None:
-            os.close(stdin)
+            # if we created a pty, we can close the other half of the pty now, otherwise primary is stdin
+            if pty_primary is not None:
+                os.close(stdin)
 
-        display.debug("done running command with Popen()")
+            display.debug("done running command with Popen()")
 
-        become_stdout_bytes, become_stderr_bytes = self._ensure_become_success(p, pty_primary, sudoable)
+            become_stdout_bytes, become_stderr_bytes = self._ensure_become_success(p, pty_primary, sudoable)
 
-        display.debug("getting output with communicate()")
-        stdout, stderr = p.communicate(in_data)
-        display.debug("done communicating")
+            display.debug("getting output with communicate()")
+            stdout, stderr = p.communicate(in_data)
+            display.debug("done communicating")
 
-        # preserve output from privilege escalation stage as `bytes`; it may contain actual output (eg `raw`) or error messages
-        stdout = become_stdout_bytes + stdout
-        stderr = become_stderr_bytes + stderr
+            # preserve output from privilege escalation stage as `bytes`; it may contain actual output (eg `raw`) or error messages
+            stdout = become_stdout_bytes + stdout
+            stderr = become_stderr_bytes + stderr
 
-        # finally, close the other half of the pty, if it was created
-        if pty_primary:
-            os.close(pty_primary)
+            # finally, close the other half of the pty, if it was created
+            if pty_primary:
+                os.close(pty_primary)
 
-        display.debug("done with local.exec_command()")
-        return p.returncode, stdout, stderr
+            display.debug("done with local.exec_command()")
+            return p.returncode, stdout, stderr
+        finally:
+            self._cleanup_command_resources(p, pty_primary, stdin)
 
     def _ensure_become_success(self, p: subprocess.Popen, pty_primary: int, sudoable: bool) -> tuple[bytes, bytes]:
         """
