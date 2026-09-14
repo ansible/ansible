@@ -27,6 +27,7 @@ from jinja2.environment import Environment
 
 from ansible._internal._templating import _lazy_containers
 from ansible.errors import AnsibleFilterError, AnsibleTypeError, AnsibleTemplatePluginError
+from ansible.module_utils._internal._secrets import _STRIP_CHARS as _SECRET_STRIP_CHARS, _MINIMUM_SECRET_LENGTH as _SECRET_MINIMUM_LENGTH
 from ansible.module_utils.datatag import native_type_name
 from ansible.module_utils.common.json import get_encoder, get_decoder
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
@@ -48,9 +49,29 @@ display = Display()
 UUID_NAMESPACE_ANSIBLE = uuid.UUID('361E6D51-FAEC-444A-9079-341386DA8E2E')
 
 
-def register_secret(secret: str) -> str:
+def register_secret(
+    secret: str,
+    *,
+    validation_action: t.Literal['error', 'warn', 'ignore'] = 'error',
+) -> str:
     if not isinstance(secret, str):
-        raise ValueError("Secret must be a string")
+        msg = "Secret must be a string"
+        if validation_action == 'error':
+            raise ValueError(msg)
+        elif validation_action == 'warn':
+            display.warning(msg)
+
+        return secret
+
+    trimmed_secret = secret.strip(_SECRET_STRIP_CHARS)
+    if len(trimmed_secret) < _SECRET_MINIMUM_LENGTH:
+        msg = f"Secret must be at least {_SECRET_MINIMUM_LENGTH} characters long after trimming whitespace"
+        if validation_action == 'error':
+            raise ValueError(msg)
+        elif validation_action == 'warn':
+            display.warning(msg)
+
+        return secret
 
     # FUTURE: any easy trickery to de-template-ify this case once the secret is registered?
     secrets.register_secret(secret)
