@@ -82,6 +82,10 @@ ANSIBLE_CONFIG=./test_ssh_defaults.cfg ansible-playbook verify_config.yml "$@"
 # `"Failed to connect to the host via ssh: command-line line 0: keyword controlpath extra arguments at end of line"`
 ANSIBLE_SSH_CONTROL_PATH='/tmp/ssh cp with spaces' ansible -m ping all -e ansible_connection=ssh -i test_connection.inventory "$@"
 
+# ensure malformed ssh args fail the task with ssh's own error instead of crashing the worker
+ansible -m ping all -e ansible_connection=ssh -e '{"ansible_ssh_extra_args": "-o ServerAliveInterval=30 -o"}' -i test_connection.inventory "$@" 2>&1 \
+    | grep 'Failed to connect to the host via ssh: command-line line 0: no argument after keyword'
+
 # Test that timeout on waiting on become is an unreachable error
 ansible-playbook test_unreachable_become_timeout.yml "$@"
 
