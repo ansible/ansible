@@ -15,7 +15,9 @@ set -eux
 export JUNIT_OUTPUT_DIR="${OUTPUT_DIR}"
 
 # Various simple role scenarios
+set -o pipefail
 ansible-playbook test.yml -i ../../inventory "$@" | tee "${OUTPUT_DIR}/out.txt"
+set +o pipefail
 [ "$(grep -c "SECRET" "${OUTPUT_DIR}/out.txt")" = "0" ]
 [ "$(grep -c "\\\$REDACTED\\\$ \\\$REDACTED\\\$" "${OUTPUT_DIR}/out.txt")" = 1 ]
 
