@@ -72,6 +72,12 @@
         dest: "{{ remote_dir }}/check_mode_dest/link.txt"
         state: link
 
+    - name: Read the symlink's normalized target path
+      stat:
+        path: "{{ remote_dir }}/check_mode_dest/link.txt"
+        follow: false
+      register: destination_link
+
     - name: Follow the symlink when predicting an unchanged copy
       copy:
         src: "{{ role_path }}/files/foo.txt"
@@ -92,8 +98,10 @@
         that:
           - unchanged_link is not changed
           - actual_link is not changed
-          - unchanged_link.dest == check_mode_destinations[0].expected
-          - actual_link.dest == check_mode_destinations[0].expected
+          - unchanged_link.dest == destination_link.stat.lnk_source
+          - actual_link.dest == unchanged_link.dest
+          - unchanged_link.dest == unchanged_link.path
+          - actual_link.dest == actual_link.path
 
     - name: Reject content copied to an existing directory without a trailing slash
       copy:
