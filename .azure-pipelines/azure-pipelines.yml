@@ -103,8 +103,8 @@ stages:
               test: rhel/10.2@3.12
             - name: RHEL 10.2 py314
               test: rhel/10.2@3.14
-            - name: FreeBSD 14.4
-              test: freebsd/14.4
+            - name: FreeBSD 14.5
+              test: freebsd/14.5
             - name: FreeBSD 15.1
               test: freebsd/15.1
           groups:
@@ -119,8 +119,8 @@ stages:
               test: rhel/9.8
             - name: RHEL 10.2
               test: rhel/10.2
-            - name: FreeBSD 14.4
-              test: freebsd/14.4
+            - name: FreeBSD 14.5
+              test: freebsd/14.5
             - name: FreeBSD 15.1
               test: freebsd/15.1
           groups:
