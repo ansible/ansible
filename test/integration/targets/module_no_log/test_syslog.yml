@@ -62,3 +62,35 @@
           # 2) the AnsibleModule.log method is not working
           - good_message in grep.stdout
           - bad_message not in grep.stdout
+
+    - name: Generate a unique marker for the sub option log entry
+      set_fact:
+        suboption_marker: "marker{{ 999999999999 | random }}"
+
+    - name: Run a module with no_log sub options too short to be registered as secrets
+      module_with_no_log_suboptions:
+        marker: "{{ suboption_marker }}"
+        secret: r7t
+        opts:
+          secret: q7z
+          plain: visible
+        entries:
+          - secret: z7q
+            plain: alsovisible
+
+    - name: Search for the sub option log entry
+      shell: "(grep -e '{{ suboption_marker }}' /var/log/syslog) || (journalctl | grep -e '{{ suboption_marker }}')"
+      changed_when: no
+      register: suboption_grep
+
+    - name: Verify no_log sub options were redacted from the log entry
+      assert:
+        that:
+          - "'Invoked with' in suboption_grep.stdout"
+          - "'r7t' not in suboption_grep.stdout"
+          - "'q7z' not in suboption_grep.stdout"
+          - "'z7q' not in suboption_grep.stdout"
+          - "\"'plain': 'visible'\" in suboption_grep.stdout"
+          - "\"'plain': 'alsovisible'\" in suboption_grep.stdout"
+          - "' secret=$REDACTED$' in suboption_grep.stdout"
+          - "\"'secret': '$REDACTED$'\" in suboption_grep.stdout"
