@@ -418,6 +418,8 @@
     value_some_jsonarg: {"foo": [1, 3, 3]}
     value_some_second_level: True
     value_third_level: 5
+    value_some_unregistered_secret1: SECRET1
+    value_some_unregistered_secret2: SECRET2
   tasks:
     - block:
       - include_role:
@@ -432,9 +434,15 @@
           some_jsonarg: "{{ value_some_jsonarg }}"
           some_dict_options:
             some_second_level: "{{ value_some_second_level }}"
+          some_secret: "{{ value_some_unregistered_secret1 }}"
           multi_level_option:
             second_level:
               third_level: "{{ value_third_level }}"
+            second_level_secret: "{{ value_some_unregistered_secret2 }}"
+
+      - name: Display value registered as no_log in the argument spec
+        debug:
+          msg: "{{ value_some_unregistered_secret1 }} {{ value_some_unregistered_secret2 }}"
       rescue:
         - debug: var=ansible_failed_result
         - fail:
