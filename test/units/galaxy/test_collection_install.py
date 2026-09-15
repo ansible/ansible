@@ -434,6 +434,42 @@ def test_build_requirement_from_tar_invalid_manifest(tmp_path_factory):
         Requirement.from_requirement_dict({'name': to_text(tar_path)}, concrete_artifact_cm)
 
 
+@pytest.mark.parametrize('namespace,name', [
+    ('ns', '../../../../tmp/evil'),
+    ('ns', '/tmp/evil'),
+    ('../../etc', 'evil'),
+    ('ns', 'has-a-dash'),
+])
+def test_build_requirement_from_tar_invalid_collection_name(namespace, name, tmp_path_factory):
+    test_dir = to_bytes(tmp_path_factory.mktemp('test-ÅÑŚÌβŁÈ Collections Input'))
+
+    json_data = to_bytes(json.dumps(
+        {
+            'collection_info': {
+                'namespace': namespace,
+                'name': name,
+                'version': '1.0.0',
+                'dependencies': {},
+            },
+            'format': 1,
+        }
+    ))
+
+    tar_path = os.path.join(test_dir, b'ansible-collections.tar.gz')
+    with tarfile.open(tar_path, 'w:gz') as tfile:
+        b_io = BytesIO(json_data)
+        tar_info = tarfile.TarInfo('MANIFEST.json')
+        tar_info.size = len(json_data)
+        tar_info.mode = S_IRWU_RG_RO
+        tfile.addfile(tarinfo=tar_info, fileobj=b_io)
+
+    concrete_artifact_cm = collection.concrete_artifact_manager.ConcreteArtifactsManager(test_dir, validate_certs=False)
+
+    expected = "invalid collection name"
+    with pytest.raises(AnsibleError, match=expected):
+        Requirement.from_requirement_dict({'name': to_text(tar_path)}, concrete_artifact_cm)
+
+
 def test_build_requirement_from_name(galaxy_server, monkeypatch, tmp_path_factory):
     mock_get_versions = MagicMock()
     mock_get_versions.return_value = ['2.1.9', '2.1.10']
