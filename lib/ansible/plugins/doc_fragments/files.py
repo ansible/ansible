@@ -91,4 +91,33 @@ options:
     type: str
     aliases: [ attr ]
     version_added: '2.3'
+  preserve_xattrs:
+    description:
+    - Control how Linux extended attributes (xattrs) on the destination are reconciled when the file is touched.
+    - V(target) keeps xattrs currently on the destination across the operation. This is the default for modules that have
+      a notion of an existing destination, and matches what M(ansible.builtin.atomic_move) does on the target file even
+      when this option is not set explicitly.
+    - V(source) replaces destination xattrs with the source file's xattrs. Only meaningful for modules that actually have
+      a source (for example, M(ansible.builtin.copy) and M(ansible.builtin.template)); other modules treat V(source) the
+      same as V(no).
+    - V(merge) keeps existing destination xattrs and overlays the source's xattrs on top, with the source winning on overlap.
+    - V(no) drops all xattrs on the destination. This is the pre-2.22 behavior when an atomic replace happens.
+    - The C(security.selinux) attribute is intentionally not touched through this option; SELinux contexts are managed with
+      O(seuser), O(serole), O(setype) and O(selevel).
+    - When this option is left unset, no error is raised on platforms or filesystems without xattr support. When it is set
+      explicitly, errors are reported according to O(xattr_error_mode).
+    type: str
+    choices: ['no', target, source, merge]
+    version_added: '2.22'
+  xattr_error_mode:
+    description:
+    - Behavior when xattrs cannot be read or written (unsupported platform, unsupported filesystem, permission denied).
+    - V(fail) aborts the task with an error.
+    - V(warn) emits a warning and continues.
+    - V(ignore) silently skips xattr handling.
+    - Only consulted when O(preserve_xattrs) is set explicitly; otherwise unsupported environments stay silent.
+    type: str
+    choices: [fail, warn, ignore]
+    default: fail
+    version_added: '2.22'
 """
