@@ -21,6 +21,7 @@ yumdnf_argument_spec = dict(
         best=dict(type="bool"),
         bugfix=dict(required=False, type='bool', default=False),
         cacheonly=dict(type='bool', default=False),
+        clean_requirements_on_remove=dict(type='bool', default=None),
         conf_file=dict(type='str'),
         disable_excludes=dict(type='str', default=None),
         disable_gpg_check=dict(type='bool', default=False),
@@ -70,6 +71,7 @@ class YumDnf(metaclass=ABCMeta):
         self.best = self.module.params['best']
         self.bugfix = self.module.params['bugfix']
         self.cacheonly = self.module.params['cacheonly']
+        self.clean_requirements_on_remove = self.module.params['clean_requirements_on_remove']
         self.conf_file = self.module.params['conf_file']
         self.disable_excludes = self.module.params['disable_excludes']
         self.disable_gpg_check = self.module.params['disable_gpg_check']

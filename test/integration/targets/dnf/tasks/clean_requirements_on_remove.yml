@@ -1,0 +1,61 @@
+- name: Test `clean_requirements_on_remove`
+  block:
+    - name: Ensure test packages are absent to start
+      dnf:
+        name:
+          - dinginessentail-with-hard-dep
+          - dinginessentail-hard-dep
+        state: absent
+
+    # Case 1: clean_requirements_on_remove=true removes the now-unneeded dependency
+    - name: Install parent package (pulls in its hard dependency)
+      dnf:
+        name: dinginessentail-with-hard-dep
+        state: present
+
+    - name: Verify the dependency was pulled in
+      command: rpm -q dinginessentail-hard-dep
+
+    - name: Remove parent with clean_requirements_on_remove=true
+      dnf:
+        name: dinginessentail-with-hard-dep
+        state: absent
+        clean_requirements_on_remove: true
+      register: remove_with_clean
+
+    - name: Check the orphaned dependency was also removed
+      command: rpm -q dinginessentail-hard-dep
+      register: dep_after_clean
+      failed_when: dep_after_clean.rc == 0
+
+    - name: Assert the removal was reported as changed
+      assert:
+        that:
+          - remove_with_clean is changed
+
+    # Case 2: without the option (default) the dependency is left behind (back-compat)
+    - name: Re-install parent package
+      dnf:
+        name: dinginessentail-with-hard-dep
+        state: present
+
+    - name: Remove parent without clean_requirements_on_remove (default behavior)
+      dnf:
+        name: dinginessentail-with-hard-dep
+        state: absent
+      register: remove_default
+
+    - name: Verify the dependency remains installed (unchanged default behavior)
+      command: rpm -q dinginessentail-hard-dep
+
+    - name: Assert the removal was reported as changed
+      assert:
+        that:
+          - remove_default is changed
+  always:
+    - name: Cleanup test packages
+      dnf:
+        name:
+          - dinginessentail-with-hard-dep
+          - dinginessentail-hard-dep
+        state: absent
