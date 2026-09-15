@@ -66,15 +66,26 @@ def _merge_spans(value: str, spans: list[tuple[int, int]]) -> list[tuple[int, in
     if not spans:
         return spans
     spans.sort()
-    merged = [(*spans[0], False)]  # start, end, absorbed_another
+
+    result: list[tuple[int, int]] = []
+    run_start, run_end = spans[0]
+    merged = False
+
     for start, end in spans[1:]:
-        last_start, last_end, _ = merged[-1]
-        if start <= last_end:
-            merged[-1] = (last_start, max(last_end, end), True)
-        else:
-            merged.append((start, end, False))
-    return [(start, end) for start, end, was_merged in merged
-            if was_merged or end - start > _MAXIMUM_SHORT_SECRET_LENGTH or _sits_at_boundary(value, start, end)]
+        if start <= run_end:  # overlaps or touches the current run: extend it in place
+            if end > run_end:
+                run_end = end
+            merged = True
+        else:  # gap: the run is complete, keep it if it qualifies, then open a new one
+            if merged or run_end - run_start > _MAXIMUM_SHORT_SECRET_LENGTH or _sits_at_boundary(value, run_start, run_end):
+                result.append((run_start, run_end))
+            run_start, run_end = start, end
+            merged = False
+
+    if merged or run_end - run_start > _MAXIMUM_SHORT_SECRET_LENGTH or _sits_at_boundary(value, run_start, run_end):
+        result.append((run_start, run_end))
+
+    return result
 
 
 def _probe_span(length: int) -> tuple[int, int]:
