@@ -47,7 +47,7 @@ class ShellBase(AnsiblePlugin):
         # Make sure all system_tmpdirs are absolute otherwise they'd be relative to the login dir
         # which is almost certainly going to fail in a cornercase.
         if not all(isabs(d) for d in normalized_paths):
-            raise AnsibleError(f'The configured system_tmpdirs contains a relative path: {normalized_paths}. Allsystem_tmpdirs must be absolute')
+            raise AnsibleError(f'The configured system_tmpdirs contains a relative path: {normalized_paths}. All system_tmpdirs must be absolute')
 
         self.set_option('system_tmpdirs', normalized_paths)
 
