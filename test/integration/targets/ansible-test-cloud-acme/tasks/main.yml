@@ -5,3 +5,47 @@
   with_items:
     - http://{{ acme_host }}:5000/
     - https://{{ acme_host }}:14000/dir
+
+- name: Read controller root
+  uri:
+    url: http://{{ acme_host }}:5000/
+    return_content: true
+    follow_redirects: "none"
+  register: root
+
+- name: Validate controller root
+  assert:
+    that:
+      - root.content == "ACME test environment controller"
+
+- name: Write CA certificate's root certificate
+  copy:
+    content: "{{ acme_endpoint_root_ca_certificate_content }}"
+    dest: "{{ acme_endpoint_root_ca_certificate_filename }}"
+    mode: "0600"
+
+- name: Read ACME directory
+  uri:
+    url: "{{ acme_directory }}"
+    return_content: true
+    follow_redirects: "none"
+    validate_certs: true
+    ca_path: "{{ acme_endpoint_root_ca_certificate_filename }}"
+  register: directory
+
+- name: Validate ACME directory
+  assert:
+    that:
+      - acme_directory == ('https://' ~ acme_host ~ ':14000/dir')
+      - "'json' in directory"
+      - "'keyChange' in directory.json"
+      - "'meta' in directory.json"
+      - "'caaIdentities' in directory.json.meta"
+      - "'externalAccountRequired' in directory.json.meta"
+      - "'profiles' in directory.json.meta"
+      - "'termsOfService' in directory.json.meta"
+      - "'newAccount' in directory.json"
+      - "'newNonce' in directory.json"
+      - "'newOrder' in directory.json"
+      - "'renewalInfo' in directory.json"
+      - "'revokeCert' in directory.json"
