@@ -374,7 +374,7 @@ class AnsibleSerializableDataclass(AnsibleSerializable, metaclass=abc.ABCMeta):
     @classmethod
     def _from_dict(cls, d: t.Dict[str, t.Any]) -> t.Self:
         # DTFIX-FUTURE: optimize this to avoid the dataclasses fields metadata and get_origin stuff at runtime
-        type_hints = t.get_type_hints(cls)
+        type_hints = _dataclass_validation.get_type_hints(cls)
         mutated_dict: dict[str, t.Any] | None = None
 
         for field in dataclasses.fields(cls):
