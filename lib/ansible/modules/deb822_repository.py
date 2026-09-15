@@ -113,11 +113,14 @@ options:
         type: bool
     signed_by:
         description:
-        - Either a URL to a GPG key, absolute path to a keyring file, one or
-          more fingerprints of keys either in the C(trusted.gpg) keyring or in
-          the keyrings in the C(trusted.gpg.d/) directory, or an ASCII armored
-          GPG public key block.
-        type: str
+        - A string or list of strings that can be one of the below.
+            - a URL to a GPG key
+            - the absolute path to a keyring file
+            - one or more fingerprints of keys either in the C(trusted.gpg) keyring or in
+              the keyrings in the C(trusted.gpg.d/) directory
+            - An ASCII armored GPG public key block.
+        type: list
+        elements: str
     suites:
         description:
         - >-
@@ -216,6 +219,18 @@ EXAMPLES = """
     components: stable
     architectures: amd64
     signed_by: https://download.example.com/linux/ubuntu/gpg
+
+- name: Add repo using multiple keys
+  deb822_repository:
+    name: example
+    types: deb
+    uris: https://download.example.com/linux/ubuntu
+    suites: '{{ ansible_distribution_release }}'
+    components: stable
+    architectures: amd64
+    signed_by:
+      - https://download.example.com/linux/ubuntu/gpg
+      - https://download.example-two.com/linux/ubuntu/gpg
 """
 
 RETURN = """
@@ -247,10 +262,18 @@ dest:
   sample: /etc/apt/sources.list.d/focal-archive.sources
 
 key_filename:
-  description: Path to the signed_by key file
+  description: Space delimited string of the Path(s) to the signed_by key file(s)
   returned: always
   type: str
-  sample: /etc/apt/keyrings/debian.gpg
+  sample: "/etc/apt/keyrings/debian.gpg"
+
+key_filenames:
+  description: List of strings of the Path(s) to the signed_by key file(s)
+  returned: state == present
+  type: list
+  elements: str
+  sample: ["/etc/apt/keyrings/debian.gpg", "/etc/apt/keyrings/ansible-test.gpg"]
+  version_added: '2.22'
 """
 
 import os
@@ -338,51 +361,153 @@ def format_field_name(v):
     return v.replace('_', '-').title()
 
 
-def is_armored(b_data):
+FINGERPRINT_RE = re.compile(r'^[A-Fa-f0-9]{4}(\s?[A-Fa-f0-9]{4}){9}!?$')
+
+
+def is_fingerprint(value: str) -> bool:
+    """
+    Check if a value is a GPG key fingerprint.
+
+    Fingerprints are 40 hex characters, optionally separated by spaces,
+    and optionally ending with '!' to indicate exact key matching.
+    Examples:
+        - "A1B2C3D4E5F6A1B2C3D4E5F6A1B2C3D4E5F6A1B2"
+        - "A1B2 C3D4 E5F6 A1B2 C3D4 E5F6 A1B2 C3D4 E5F6 A1B2"
+        - "A1B2C3D4E5F6A1B2C3D4E5F6A1B2C3D4E5F6A1B2!"
+    """
+    return bool(FINGERPRINT_RE.match(value.strip()))
+
+
+def is_armored(b_data: bytes) -> bool:
+    """
+    Checks if the PGP Header is in the binary data.
+    If so, it is an ASCII-armored PGP public key.
+    """
     return b'-----BEGIN PGP PUBLIC KEY BLOCK-----' in b_data
 
 
-def write_signed_by_key(module, v, slug):
-    changed = False
-    if os.path.isfile(v):
-        return changed, v, None
+PGP_BLOCK_ONLY_RE = re.compile(
+    r"""
+    \A
+    -----BEGIN\ PGP\ PUBLIC\ KEY\ BLOCK-----\n
+    (?:[A-Za-z0-9+/= ]*\n)*   # base64 and armor headers
+    -----END\ PGP\ PUBLIC\ KEY\ BLOCK-----\n?
+    \Z
+    """,
+    re.VERBOSE,)
 
-    b_data = None
 
-    parts = generic_urlparse(urlparse(v))
+def is_inline_key(value: str) -> bool:
+    """
+    Check if value is an ASCII-armored PGP public key.
+    """
+    value = value.strip("\n")
+    return bool(PGP_BLOCK_ONLY_RE.match(value))
+
+
+def dearmor_key(module, b_data):
+    """
+    Convert ASCII-armored key to binary format.
+    Returns binary key data.
+    """
+    gpg_path = module.get_bin_path('gpg', required=True)
+    rc, so, se = module.run_command(
+        [gpg_path, '--batch', '--yes', '--dearmor'],
+        data=b_data,
+        binary_data=True,
+        encoding=None,
+        check_rc=True,)
+    return so
+
+
+def fetch_key_data(module, key):
+    """
+    Fetch key data from URL or return raw PGP data.
+    Returns bytes.
+    """
+
+    # Check if it's a URL
+    parts = generic_urlparse(urlparse(key))
     if parts.scheme:
         try:
-            r = open_url(v, http_agent=get_user_agent())
+            r = open_url(key, http_agent=get_user_agent())
+            return r.read()
         except Exception as exc:
             raise RuntimeError('Could not fetch signed_by key.') from exc
+
+    # Must be raw PGP data
+    return to_bytes(key)
+
+
+def write_signed_by_key(module, v, slug):
+    """
+    Process signing keys from a list.
+    v: list of keys (URLs, file paths, fingerprints, or armored PGP public key)
+    Returns: (changed, signed_by_filename, signed_by_data, fingerprints)
+    """
+    changed = False
+
+    # Separate the signed_by values into lists by type
+    fingerprints = []
+    filepaths = []
+    urls = []
+    inline_keys = []
+    for key in v:
+        key = key.strip()
+        if is_fingerprint(key):
+            key = key.replace(" ", "")  # Remove whitespace from fingerprints
+            fingerprints.append(key)
+        elif os.path.isfile(key):
+            filepaths.append(key)
+        elif key.startswith("http"):
+            urls.append(key)
+        elif is_inline_key(key):
+            inline_keys.append(key)
         else:
-            b_data = r.read()
-    else:
-        # Not a file, nor a URL, just pass it through
-        return changed, None, v
+            module.fail_json(msg=f"Signed-by value {key} is not valid")
 
-    if not b_data:
-        return changed, v, None
+    # If only a single inline PGP key, return it directly
+    if len(inline_keys) == 1 and not (fingerprints or filepaths or urls):
+        return changed, None, inline_keys[0], []
+    # If only fingerprints, return them directly
+    if fingerprints and not (filepaths or urls or inline_keys):
+        return changed, None, None, fingerprints
+    # If only filepaths and fingerprints, return them directly
+    if filepaths and not (urls or inline_keys):
+        return changed, filepaths, None, fingerprints
 
-    tmpfd, tmpfile = tempfile.mkstemp(dir=module.tmpdir)
-    with os.fdopen(tmpfd, 'wb') as f:
-        f.write(b_data)
+    # Write URLS and inline keys to a file
+    if urls or inline_keys:
+        all_key_data = []
+        for key in urls + inline_keys:
+            key_data = fetch_key_data(module, key)
+            # Convert armored keys to binary for consistent format
+            if is_armored(key_data):
+                key_data = dearmor_key(module, key_data)
+            all_key_data.append(key_data)
+        combined_data = b''.join(all_key_data)
 
-    ext = 'asc' if is_armored(b_data) else 'gpg'
-    filename = make_signed_by_filename(slug, ext)
+        tmpfd, tmpfile = tempfile.mkstemp(dir=module.tmpdir)
+        with os.fdopen(tmpfd, 'wb') as f:
+            f.write(combined_data)
 
-    src_chksum = module.sha256(tmpfile)
-    dest_chksum = module.sha256(filename)
+        ext = 'gpg'  # Keys are always saved as binary .gpg file
+        filename = make_signed_by_filename(slug, ext)
 
-    if src_chksum != dest_chksum:
-        changed |= ensure_keyrings_dir(module)
-        if not module.check_mode:
-            module.atomic_move(tmpfile, filename)
-        changed |= True
+        src_chksum = module.sha256(tmpfile)
+        dest_chksum = module.sha256(filename)
 
-    changed |= module.set_mode_if_different(filename, S_IRWU_RG_RO, False)
+        if src_chksum != dest_chksum:
+            changed |= ensure_keyrings_dir(module)
+            if not module.check_mode:
+                module.atomic_move(tmpfile, filename)
+            changed = True
 
-    return changed, filename, None
+        changed |= module.set_mode_if_different(filename, S_IRWU_RG_RO, False)
+
+        if filename not in filepaths:
+            filepaths.append(filename)
+        return changed, filepaths, None, fingerprints
 
 
 def install_python_debian(module, deb_pkg_name):
@@ -462,7 +587,8 @@ def main():
                 'type': 'bool',
             },
             'signed_by': {
-                'type': 'str',
+                'type': 'list',
+                'elements': 'str',
             },
             'suites': {
                 'elements': 'str',
@@ -607,7 +733,8 @@ def main():
         )
 
     deb822 = Deb822()
-    signed_by_filename = None
+    output_key_filenames = None
+    output_key_filenames_list = None
     for key, value in sorted(params.items()):
         if value is None:
             continue
@@ -616,12 +743,28 @@ def main():
             value = format_bool(value)
         elif isinstance(value, int):
             value = to_native(value)
+        elif key == 'signed_by':
+            key_changed, signed_by_filename, signed_by_data, fingerprints = write_signed_by_key(module, value, slug)
+            changed |= key_changed
+
+            # Build the Signed-By value
+            if signed_by_data:
+                # Single inline PGP key (no fingerprints in this case)
+                value = signed_by_data
+            else:
+                # Combine keyring file path with fingerprints
+                signed_by_parts = []
+                if signed_by_filename:
+                    signed_by_parts.extend(signed_by_filename)
+                    output_key_filenames = ' '.join(signed_by_filename)
+                    output_key_filenames_list = signed_by_filename
+                signed_by_parts.extend(fingerprints)
+                value = ' '.join(signed_by_parts) if signed_by_parts else None
+
+            if value is None:
+                continue
         elif is_sequence(value):
             value = format_list(value)
-        elif key == 'signed_by':
-            key_changed, signed_by_filename, signed_by_data = write_signed_by_key(module, value, slug)
-            value = signed_by_filename or signed_by_data
-            changed |= key_changed
 
         if value.count('\n') > 0:
             value = format_multiline(value)
@@ -649,7 +792,8 @@ def main():
         repo=repo,
         changed=changed,
         dest=sources_filename,
-        key_filename=signed_by_filename,
+        key_filename=output_key_filenames,
+        key_filenames=output_key_filenames_list,
     )
 
 
