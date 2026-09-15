@@ -63,6 +63,8 @@
   loop:
     - git add ./
     - git commit -m 'add collections'
+    # tag consumed by reinstalling.yml's "version: v1.0.0" pin (issue #81687)
+    - git tag v1.0.0
 
 - name: Build the actual artifact for ansible_test.collection_1 for comparison
   command: "ansible-galaxy collection build ansible_test/collection_1 --output-path {{ galaxy_dir }}"
