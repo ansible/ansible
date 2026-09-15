@@ -43,7 +43,9 @@ def main():
             constraints = raw_constraints.strip()
             comment = requirement.group('comment')
 
-            is_pinned = re.search('^ *== *[0-9.]+(rc[0-9]+)?(\\.post[0-9]+)?$', constraints)
+            is_pinned = re.search('^ *== *[0-9.]+(rc[0-9]+)?(\\.post[0-9]+)?$', constraints) or re.search(
+                r'^ *@ https://github.com/[a-z]+/[a-z]+/archive/[0-9a-f]{40}.zip$', constraints
+            )
 
             if is_sanity:
                 sanity = frozen_sanity.setdefault(name, [])

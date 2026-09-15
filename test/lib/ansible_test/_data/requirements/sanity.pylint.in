@@ -1,2 +1,3 @@
+dill @ https://github.com/uqfoundation/dill/archive/2308ffb0d0c605b9c050fa4c9fd5793d65c67022.zip  # needed until dill released with 3.15 support
 pylint
 pyyaml  # needed for collection_detail.py
