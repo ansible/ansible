@@ -29,6 +29,7 @@ from units.mock.loader import DictDataLoader
 from ansible.release import __version__
 from ansible.parsing import vault
 from ansible import cli
+from ansible.errors import AnsibleError
 
 
 class TestCliVersion(unittest.TestCase):
@@ -364,3 +365,28 @@ class TestCliSetupVaultSecrets(unittest.TestCase):
         self.assertIsInstance(res, list)
         match = vault.match_secrets(res, ['some_vault_id'])[0][1]
         self.assertEqual(match.bytes, b'prompt1_password')
+
+
+class TestGetHostListEmptyInventory:
+    def setup_method(self):
+        self.mock_inventory = MagicMock()
+
+    @patch('ansible.cli.C.ERROR_ON_EMPTY_INVENTORY', True)
+    def test_get_host_list_empty_inventory_error_on(self):
+        """Test that AnsibleError is raised when ERROR_ON_EMPTY_INVENTORY is True and inventory is empty"""
+
+        self.mock_inventory.list_hosts.return_value = []
+
+        with pytest.raises(AnsibleError, match="No hosts found in inventory"):
+            cli.CLI.get_host_list(self.mock_inventory, None, 'all')
+
+    @patch('ansible.cli.C.ERROR_ON_EMPTY_INVENTORY', False)
+    @patch('ansible.cli.display.warning')
+    def test_get_host_list_empty_inventory_error_off(self, mock_warning):
+        """Test that warning is displayed when ERROR_ON_EMPTY_INVENTORY is False and inventory is empty"""
+        self.mock_inventory.list_hosts.side_effect = [[], []]
+
+        result = cli.CLI.get_host_list(self.mock_inventory, None, 'webservers')
+
+        mock_warning.assert_called_once()
+        assert result == []
