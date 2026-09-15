@@ -1,0 +1,29 @@
+---
+- name: Test 100% with 1 unreachable under threshold
+  hosts: testhost1,testhost2,testhost3,unreachable1
+  gather_facts: false
+  max_fail_percentage: 100%
+  tasks:
+    - name: Ping (unreachable1 will become unreachable)
+      ping:
+      # 1 unreachable / 4 total = 25% < 100%
+      # Play should continue
+
+    - name: Should execute 3 times
+      debug:
+        msg: "SHOULD_EXECUTE_3_TIMES"
+
+- name: Test 100% with all hosts unreachable (2/2 = 100%)
+  hosts: unreachable1,unreachable2
+  gather_facts: false
+  max_fail_percentage: 100%
+  tasks:
+    - name: Ping (both will be unreachable)
+      ping:
+      # 2 unreachable / 2 total = 100%
+      # 100% is NOT > 100%, so threshold NOT exceeded
+      # But all hosts are unreachable, so second task has no hosts to run on
+
+    - name: Should not execute (no hosts left, not threshold)
+      debug:
+        msg: "SHOULD_NOT_EXECUTE"
