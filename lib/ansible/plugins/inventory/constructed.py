@@ -83,6 +83,7 @@ import os
 
 from ansible import constants as C
 from ansible.errors import AnsibleParserError
+from ansible.inventory.group import to_safe_group_name
 from ansible.inventory.helpers import get_group_vars
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable
 from ansible.plugins.loader import cache_loader
@@ -94,6 +95,11 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
     """ constructs groups and vars using Jinja2 template expressions """
 
     NAME = 'constructed'
+
+    @staticmethod
+    def _sanitize_group_name(name: str) -> str:
+        """Return name normalized for use as a group name, warning if normalization changed it."""
+        return to_safe_group_name(name, force=True, silent=False)
 
     # implicit trust behavior is already added by the YAML parser invoked by the loader
 
