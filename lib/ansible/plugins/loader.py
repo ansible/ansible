@@ -526,7 +526,7 @@ class PluginLoader:
         paths_with_context = self._get_paths_with_context(subdirs=subdirs)
         return [path_with_context.path for path_with_context in paths_with_context]
 
-    def _load_config_defs(self, name, module, path):
+    def _load_config_defs(self, name, module, path, fqcn=None):
         """ Reads plugin docs to find configuration setting definitions, to push to config manager for later use """
 
         # plugins w/o class name don't support config
@@ -550,7 +550,7 @@ class PluginLoader:
                     add_fragments(dstring, path, fragment_loader=fragment_loader, is_module=(type_name == 'module'), section='DOCUMENTATION')
 
                     if 'options' in dstring and isinstance(dstring['options'], dict):
-                        C.config.initialize_plugin_configuration_definitions(type_name, name, dstring['options'])
+                        C.config.initialize_plugin_configuration_definitions(type_name, name, dstring['options'], fqcn=fqcn)
                         display.debug('Loaded config def from plugin (%s/%s)' % (type_name, name))
 
     def add_directory(self, directory, with_subdir=False):
@@ -1076,7 +1076,7 @@ class PluginLoader:
             self._module_cache[path] = self._load_module_source(python_module_name=plugin_load_context._python_module_name, path=path)
             found_in_cache = False
 
-        self._load_config_defs(resolved_type_name, self._module_cache[path], path)
+        self._load_config_defs(resolved_type_name, self._module_cache[path], path, fqcn=fq_name)
 
         obj = getattr(self._module_cache[path], self.class_name)
 
@@ -1243,7 +1243,7 @@ class PluginLoader:
             else:
                 module = self._module_cache[path]
 
-            self._load_config_defs(basename, module, path)
+            self._load_config_defs(basename, module, path, fqcn=fqcn)
 
             try:
                 obj = getattr(module, self.class_name)
