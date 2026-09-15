@@ -731,6 +731,13 @@ def common_environment() -> dict[str, str]:
 
     env.update(pass_vars(required=required, optional=optional))
 
+    if color_term := os.getenv('COLORTERM'):
+        # NOTE: The current terminal emulator may have this set to `truecolor`
+        # NOTE: which is important for setting different color defaults. This
+        # NOTE: may be evident in Kitty that does not interpret the bold ANSI
+        # NOTE: marker as bright like some of the others.
+        env['COLORTERM'] = color_term
+
     return env
 
 
