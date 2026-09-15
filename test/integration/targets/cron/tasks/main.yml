@@ -319,3 +319,19 @@
 
   - assert:
       that: not cron_file_stats.stat.exists
+
+- name: Add cron job with invalid cron_file path
+  ansible.builtin.cron:
+    name: "Bad cron entry"
+    job: "/usr/bin/true"
+    minute: "0"
+    cron_file: "bad/file"
+    user: root
+  ignore_errors: yes
+  register: non_existent_cron_file_job
+
+- name: Check if we fail due to invalid cron_file path
+  assert:
+    that:
+      - non_existent_cron_file_job.failed
+      - "'Unable to open' in non_existent_cron_file_job.msg"

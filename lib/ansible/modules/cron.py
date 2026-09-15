@@ -311,9 +311,15 @@ class CronTab:
         if backup_file:
             fileh = open(backup_file, 'wb')
         elif self.cron_file:
-            fileh = open(self.b_cron_file, 'wb')
+            try:
+                fileh = open(self.b_cron_file, 'wb')
+            except (OSError, FileNotFoundError) as ex:
+                self.module.fail_json(msg=f'Unable to open {self.cron_file} for writing: {to_native(ex)}')
         else:
-            filed, path = tempfile.mkstemp(prefix='crontab')
+            try:
+                filed, path = tempfile.mkstemp(prefix='crontab')
+            except OSError as ex:
+                self.module.fail_json(msg=f'Unable to create temporary file for writing crontab as {ex}')
             os.chmod(path, S_IRWU_RWG_RWO)
             fileh = os.fdopen(filed, 'wb')
 
@@ -662,7 +668,10 @@ def main():
 
     # if requested make a backup before making a change
     if backup and not module.check_mode:
-        (dummy, backup_file) = tempfile.mkstemp(prefix='crontab')
+        try:
+            (dummy, backup_file) = tempfile.mkstemp(prefix='crontab')
+        except OSError as ex:
+            module.fail_json(msg=f"Unable to create temporary file for backup: {to_native(ex)}")
         crontab.write(backup_file)
 
     if env:
