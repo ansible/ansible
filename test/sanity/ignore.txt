@@ -56,6 +56,24 @@ lib/ansible/module_utils/six/__init__.py pylint:trailing-comma-tuple
 lib/ansible/module_utils/six/__init__.py pylint:unidiomatic-typecheck
 lib/ansible/module_utils/six/__init__.py replace-urlopen
 lib/ansible/module_utils/urls.py replace-urlopen
+lib/ansible/parsing/vault/_methods/aes256.py import-3.13!skip # no error handling pattern for non-instance
+lib/ansible/parsing/vault/_methods/aes256.py import-3.14!skip # no error handling pattern for non-instance
+lib/ansible/parsing/vault/_methods/aes256.py import-3.15!skip # no error handling pattern for non-instance
+lib/ansible/parsing/vault/_methods/v2.py import-3.13!skip # no error handling pattern for non-instance
+lib/ansible/parsing/vault/_methods/v2.py import-3.14!skip # no error handling pattern for non-instance
+lib/ansible/parsing/vault/_methods/v2.py import-3.15!skip # no error handling pattern for non-instance
+lib/ansible/parsing/vault/_methods/v2b.py import-3.13!skip # no error handling pattern for non-instance
+lib/ansible/parsing/vault/_methods/v2b.py import-3.14!skip # no error handling pattern for non-instance
+lib/ansible/parsing/vault/_methods/v2b.py import-3.15!skip # no error handling pattern for non-instance
+lib/ansible/parsing/vault/_methods/v2c.py import-3.13!skip # no error handling pattern for non-instance
+lib/ansible/parsing/vault/_methods/v2c.py import-3.14!skip # no error handling pattern for non-instance
+lib/ansible/parsing/vault/_methods/v2c.py import-3.15!skip # no error handling pattern for non-instance
+lib/ansible/parsing/vault/_methods/v2d.py import-3.13!skip # no error handling pattern for non-instance
+lib/ansible/parsing/vault/_methods/v2d.py import-3.14!skip # no error handling pattern for non-instance
+lib/ansible/parsing/vault/_methods/v2d.py import-3.15!skip # no error handling pattern for non-instance
+lib/ansible/parsing/vault/_methods/v2e.py import-3.13!skip # no error handling pattern for non-instance
+lib/ansible/parsing/vault/_methods/v2e.py import-3.14!skip # no error handling pattern for non-instance
+lib/ansible/parsing/vault/_methods/v2e.py import-3.15!skip # no error handling pattern for non-instance
 lib/ansible/playbook/role/include.py pylint:arguments-renamed
 lib/ansible/plugins/action/normal.py action-plugin-docs # default action plugin for modules without a dedicated action plugin
 lib/ansible/plugins/cache/base.py ansible-doc!skip  # not a plugin, but a stub for backwards compatibility
@@ -266,6 +284,14 @@ test/units/module_utils/facts/test_facts.py mypy-3.15:assignment
 test/units/modules/mount_facts_data.py mypy-3.15:arg-type
 test/units/modules/test_apt.py mypy-3.15:name-match
 test/units/modules/test_mount_facts.py mypy-3.15:index
+test/units/parsing/vault/decrypt_test_data/aes256/secret1 trailing-newline
+test/units/parsing/vault/decrypt_test_data/rot13/secret1 trailing-newline
+test/units/parsing/vault/decrypt_test_data/v2/secret1 trailing-newline
+test/units/parsing/vault/decrypt_test_data/v2b/secret1 trailing-newline
+test/units/parsing/vault/decrypt_test_data/v2c/secret1 trailing-newline
+test/units/parsing/vault/decrypt_test_data/v2c/secret1_emptydata.ciphertext trailing-newline
+test/units/parsing/vault/decrypt_test_data/v2d/secret1 trailing-newline
+test/units/parsing/vault/decrypt_test_data/v2d/secret1_emptydata.ciphertext trailing-newline
 test/integration/targets/interpreter_discovery_python/library/test_non_python_interpreter.py shebang  # test needs non-standard shebang
 test/integration/targets/inventory_script/bad_shebang shebang  # test needs an invalid shebang
 test/integration/targets/ansible-test-sanity-pylint/ansible_collections/ns/col/plugins/lookup/deprecated.py pylint!skip  # validated as a collection
