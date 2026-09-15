@@ -6,6 +6,7 @@ from __future__ import annotations
 import atexit
 import decimal
 import configparser
+import copy
 import functools
 import os
 import os.path
@@ -27,6 +28,11 @@ from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.secrets import register_secrets
 from ansible.parsing.quoting import unquote
 from ansible.utils.path import cleanup_tmp_file, makedirs_safe, unfrackpath
+
+try:
+    from ansible.config._internal._base import config as base_config  # type: ignore[import-untyped]
+except ImportError:
+    base_config = None
 
 if t.TYPE_CHECKING:
     from ansible.template import Templar
@@ -368,7 +374,12 @@ class ConfigManager:
 
         self._config_file = conf_file
 
-        self._base_defs = self._read_config_yaml_file(defs_file or ('%s/base.yml' % os.path.dirname(__file__)))
+        if defs_file:
+            self._base_defs = self._read_config_yaml_file(defs_file)
+        elif base_config is not None:
+            self._base_defs = copy.deepcopy(base_config)
+        else:
+            self._base_defs = self._read_config_yaml_file('%s/base.yml' % os.path.dirname(__file__))
         _add_base_defs_deprecations(self._base_defs)
         _validate_secret_config_defs(self._base_defs)
 
