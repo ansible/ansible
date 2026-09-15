@@ -102,6 +102,19 @@ options:
     type: bool
     default: no
     version_added: '2.16'
+  line_separator:
+    description:
+    - The type of line separator used when writing block lines in the file.
+    - This will not impact how blocks are found, which will be found regardless of line endings.
+    - This will not have any impact on line endings elsewhere in the entire file, only within the block.
+    type: str
+    default: OS
+    version_added: '2.22'
+    choices:
+      OS: Use C(os.linesep) as the line separator.
+      LF: Use C(\n), Line Feed, as the line separator.
+      CR: Use C(\r), Carriage Return, as the line separator.
+      CRLF: Use C(\r\n), Carriage Return + Line Feed, as the line separator.
   encoding:
     description:
       - The character set in which the target file is encoded.
@@ -194,6 +207,14 @@ EXAMPLES = r"""
     insertafter: '(?m)SID_LIST_LISTENER_DG =\n.*\(SID_LIST ='
     marker: "    <!-- {mark} ANSIBLE MANAGED BLOCK -->"
 
+- name: Update a Windows configuration file on a POSIX host while preserving CRLF line endings
+  ansible.builtin.blockinfile:
+    path: /srv/windows/application.conf
+    line_separator: CRLF
+    block: |
+      server=example.org
+      port=443
+
 """
 
 import re
@@ -202,6 +223,9 @@ import tempfile
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.text.converters import to_native
+
+
+_LINE_ENDINGS = dict(LF="\n", CR="\r", CRLF="\r\n")
 
 
 def write_changes(module, contents, path, encoding=None):
@@ -255,6 +279,7 @@ def main():
             append_newline=dict(type='bool', default=False),
             prepend_newline=dict(type='bool', default=False),
             encoding=dict(type='str', default='utf-8'),
+            line_separator=dict(type='str', default='OS', choices=['OS', 'CR', 'LF', 'CRLF']),
         ),
         mutually_exclusive=[['insertbefore', 'insertafter']],
         add_file_common_args=True,
@@ -301,10 +326,10 @@ def main():
     insertbefore = params['insertbefore']
     insertafter = params['insertafter']
     block = params['block']
-    marker = params['marker']
+    marker = params['marker'].rstrip("\r\n")
     present = params['state'] == 'present'
 
-    line_separator = os.linesep
+    line_separator = _LINE_ENDINGS.get(params['line_separator'].upper(), os.linesep)
     blank_line = [line_separator]
 
     if not present and not path_exists:
@@ -324,15 +349,19 @@ def main():
     marker1 = re.sub(r'{mark}', params['marker_end'], marker) + line_separator
 
     if present and block:
-        if not block.endswith(line_separator):
-            block += line_separator
-
-        blocklines = [marker0] + block.splitlines(True) + [marker1]
+        if line_separator == os.linesep:
+            if not block.endswith(line_separator):
+                block += line_separator
+            blocklines = block.splitlines(True)
+        else:
+            blocklines = [line + line_separator for line in block.splitlines()]
+        blocklines = [marker0] + blocklines + [marker1]
     else:
         blocklines = []
 
     n0 = n1 = None
     for i, line in enumerate(lines):
+        line = line.rstrip("\r\n") + line_separator
         if line == marker0:
             n0 = i
         if line == marker1:
@@ -345,9 +374,9 @@ def main():
                 match = insertre.search(original)
                 if match:
                     if insertafter:
-                        n0 = original.count('\n', 0, match.end())
+                        n0 = original.count(line_separator, 0, match.end())
                     elif insertbefore:
-                        n0 = original.count('\n', 0, match.start())
+                        n0 = original.count(line_separator, 0, match.start())
             else:
                 for i, line in enumerate(lines):
                     if insertre.search(line):
