@@ -49,6 +49,8 @@
   - import_tasks: separate-git-dir.yml
   - import_tasks: forcefully-fetch-tag.yml
   - import_tasks: invalid-ref.yml
+  - include_tasks: reftable.yml
+    when: git_version.stdout is version(git_version_supporting_reftable, '>=')
   environment:
     HOME: >-
       {{ remote_tmp_dir }}
