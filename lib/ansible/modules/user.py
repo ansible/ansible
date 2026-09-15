@@ -1534,10 +1534,6 @@ class FreeBsdUser(User):
                 cmd.append('-k')
                 cmd.append(self.skeleton)
 
-            if self.umask is not None:
-                cmd.append('-K')
-                cmd.append('UMASK=' + self.umask)
-
         if self.shell is not None:
             cmd.append('-s')
             cmd.append(self.shell)
@@ -1552,14 +1548,6 @@ class FreeBsdUser(User):
                 cmd.append('0')
             else:
                 cmd.append(str(calendar.timegm(self.expires)))
-
-        if self.uid_min is not None:
-            cmd.append('-K')
-            cmd.append('UID_MIN=' + str(self.uid_min))
-
-        if self.uid_max is not None:
-            cmd.append('-K')
-            cmd.append('UID_MAX=' + str(self.uid_max))
 
         # system cannot be handled currently - should we error if its requested?
         # create the user
@@ -1624,10 +1612,6 @@ class FreeBsdUser(User):
             if self.skeleton is not None:
                 cmd.append('-k')
                 cmd.append(self.skeleton)
-
-            if self.umask is not None:
-                cmd.append('-K')
-                cmd.append('UMASK=' + self.umask)
 
         if self.group is not None:
             if not self.group_exists(self.group):
