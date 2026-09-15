@@ -5,9 +5,9 @@
   vars:
     base_path: "{{ remote_tmp_dir_test }}/line_separator_"
     line_seps:
-      - {sep: lf, eol: "\n"}
-      - {sep: cr, eol: "\r"}
-      - {sep: crlf, eol: "\r\n"}
+      - {sep: LF, eol: "\n"}
+      - {sep: CR, eol: "\r"}
+      - {sep: CRLF, eol: "\r\n"}
   block:
     - name: create a block for each line_separator choice
       blockinfile:
@@ -55,13 +55,13 @@
       blockinfile:
         path: "{{ base_path }}convert.txt"
         create: true
-        line_separator: crlf
+        line_separator: CRLF
         block: "line1\r\nline2"
 
     - name: rewrite the same block with lf endings
       blockinfile:
         path: "{{ base_path }}convert.txt"
-        line_separator: lf
+        line_separator: LF
         block: "line1\nline2"
       register: convert_result
 
@@ -80,7 +80,7 @@
       blockinfile:
         path: "{{ base_path }}check.txt"
         create: true
-        line_separator: crlf
+        line_separator: CRLF
         block: "line1\r\nline2"
       check_mode: true
       register: check_result
@@ -100,7 +100,7 @@
       blockinfile:
         path: "{{ base_path }}diff.txt"
         create: true
-        line_separator: crlf
+        line_separator: CRLF
         block: "line1\r\nline2"
       diff: true
       register: diff_result

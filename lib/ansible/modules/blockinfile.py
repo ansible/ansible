@@ -329,7 +329,7 @@ def main():
     marker = params['marker'].rstrip("\r\n")
     present = params['state'] == 'present'
 
-    line_separator = _LINE_ENDINGS.get(params['line_separator'].lower(), os.linesep)
+    line_separator = _LINE_ENDINGS.get(params['line_separator'].upper(), os.linesep)
     blank_line = [line_separator]
 
     if not present and not path_exists:
@@ -349,7 +349,7 @@ def main():
     marker1 = re.sub(r'{mark}', params['marker_end'], marker) + line_separator
 
     if present and block:
-        if params['line_separator'] == 'OS':
+        if line_separator == os.linesep:
             if not block.endswith(line_separator):
                 block += line_separator
             blocklines = block.splitlines(True)
