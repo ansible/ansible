@@ -21,3 +21,26 @@
       loop:
         - 0
         - 1
+
+- hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: Test gather_facts does not support async
+      gather_facts:
+      async: 10
+      register: result
+      ignore_errors: true
+
+    - assert:
+        that:
+          - result is failed
+          - result.msg is match "This action \(.*gather_facts\) does not support async\."
+
+    - name: Test slow setup can configure a longer timeout
+      gather_facts:
+        # The (legacy) setup module should be able to take longer than the async_wrapper initial sleep
+        gather_timeout: 15
+      vars:
+        ansible_facts_modules:
+          - setup
+          - success1
