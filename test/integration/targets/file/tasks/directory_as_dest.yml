@@ -24,6 +24,51 @@
     content: 'Hello World'
 
 #
+# edge cases that came up in the `copy` integration tests but not `file`
+#
+
+- name: create a new directory with a relative destination path
+  file:
+    path: "{{ lookup('password', '/dev/null', length=10) }}"
+    state: directory
+  register: relative_temp_dir
+
+- name: create a new directory with a destination path that ends in a slash
+  file:
+    path: '{{ remote_tmp_dir_test }}/ends_with_slash/'
+    state: directory
+
+- name: cleanup
+  file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - '{{ relative_temp_dir.path }}'
+    - '{{ remote_tmp_dir_test }}/ends_with_slash/'
+
+#
+# verify diff output
+#
+
+- name: make a directory and its parent directory
+  file:
+    path: "{{ remote_tmp_dir }}/foo/bar"
+    state: directory
+  diff: true
+  register: make_2_dirs
+
+- name: assert that both foo and foo/bar have their own diffs
+  assert:
+    that:
+      - (make_2_dirs.diff | length) == 2
+      - (make_2_dirs.diff | map(attribute='after') | map(attribute='path') | sort) == ["{{ remote_tmp_dir }}/foo", "{{ remote_tmp_dir }}/foo/bar"]
+
+- name: cleanup
+  file:
+    path: "{{ remote_tmp_dir }}/foo"
+    state: absent
+
+#
 # Error condition: specify a directory with state={link,file}, force=False
 #
 
