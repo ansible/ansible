@@ -236,8 +236,7 @@ class ActionModule(ActionBase):
         force = boolean(self._task.args.get('force', 'yes'), strict=False)
         raw = boolean(self._task.args.get('raw', 'no'), strict=False)
 
-        result = {}
-        result['diff'] = []
+        result = {'failed': False, 'changed': False, 'dest': dest, 'diff': [], 'src': source_full}
 
         # If the local file does not exist, get_real_file() raises AnsibleFileNotFound
         try:
@@ -276,6 +275,8 @@ class ActionModule(ActionBase):
                 # Append the relative source location to the destination and get remote stats again
                 dest_file = self._connection._shell.join_path(dest, source_rel)
                 dest_status = self._execute_remote_stat(dest_file, all_vars=task_vars, follow=follow, checksum=force)
+
+        result['dest'] = dest_file
 
         if dest_status['exists'] and not force:
             # remote_file exists so continue to next iteration.
@@ -390,6 +391,8 @@ class ActionModule(ActionBase):
             module_return['checksum'] = local_checksum
 
         result.update(module_return)
+        if 'path' in module_return and 'dest' not in module_return:
+            result['dest'] = module_return['path']
         return result
 
     def _create_content_tempfile(self, content):
