@@ -8,6 +8,7 @@
 - name: Record the output directory
   set_fact:
     remote_file: "{{ remote_dir }}/foo.txt"
+    remote_file_sha256: "{{ remote_dir }}/foo_sha256.txt"
 
 - name: Initiate a basic copy, and also test the mode
   copy:
@@ -91,6 +92,41 @@
       - "stat_results.stat.isreg == true"
       - "stat_results.stat.issock == false"
       - "stat_results.stat.checksum == ('foo.txt\n'|hash('sha1'))"
+
+- name: Copy with checksum algorithm (sha256)
+  copy:
+    src: foo.txt
+    dest: "{{ remote_file_sha256 }}"
+    mode: 0444
+    checksum_algorithm: sha256
+    checksum: "{{ ('foo.txt\n'|hash('sha256')) }}"
+  register: copy_result_sha256
+
+- debug:
+    var: copy_result_sha256.checksum
+
+- debug:
+    var: ("foo.txt\n"|hash('sha256'))
+
+- name: Assert that the checksum is correct
+  assert:
+    that:
+      - copy_result_sha256.checksum == ('foo.txt\n'|hash('sha256'))
+      - copy_result_sha256.checksum != ('foo.txt\n'|hash('sha1'))
+
+- name: Check module fails when checksum is incorrect
+  copy:
+    src: foo.txt
+    dest: "{{ remote_file_sha256 }}"
+    checksum_algorithm: invalid_algorithm
+  register: copy_result_sha256_incorrect
+  ignore_errors: true
+
+- name: Assert that the module fails when checksum is incorrect
+  assert:
+    that:
+      - copy_result_sha256_incorrect.failed
+      - "'has no attribute' in copy_result_sha256_incorrect.msg"
 
 - name: Test copying content with force=false when the dest already exists
   copy:
