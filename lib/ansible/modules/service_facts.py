@@ -296,41 +296,63 @@ class SystemctlScanService(BaseService):
                     status_val = fields[2]
 
                 service_name = fields[0]
-                if fields[3] == "running":
-                    state_val = "running"
+                if fields[3] in ["running", "failed"]:
+                    state_val = fields[3]
 
                 services[service_name] = {"name": service_name, "state": state_val, "status": status_val, "source": "systemd"}
 
     def _list_from_unit_files(self, systemctl_path, services):
 
         # now try unit files for complete picture and final 'status'
-        rc, stdout, stderr = self.module.run_command("%s list-unit-files --no-pager --type service --all" % systemctl_path, use_unsafe_shell=True)
+        rc, stdout, stderr = self.module.run_command(f"{systemctl_path} list-unit-files --no-pager --type service --all", use_unsafe_shell=True)
         if rc != 0:
-            self.module.warn("Could not get unit files data from systemd: %s" % stderr)
-        else:
-            for line in [svc_line for svc_line in stdout.split('\n') if '.service' in svc_line]:
-                # there is one more column (VENDOR PRESET) from `systemctl list-unit-files` for systemd >= 245
-                try:
-                    service_name, status_val = line.split()[:2]
-                except IndexError:
-                    self.module.fail_json(msg="Malformed output discovered from systemd list-unit-files: {0}".format(line))
-                if service_name not in services:
-                    rc, stdout, stderr = self.module.run_command("%s show %s --property=ActiveState" % (systemctl_path, service_name), use_unsafe_shell=True)
-                    state = 'unknown'
-                    if not rc and stdout != '':
-                        state = stdout.replace('ActiveState=', '').rstrip()
-                    services[service_name] = {"name": service_name, "state": state, "status": status_val, "source": "systemd"}
-                elif services[service_name]["status"] not in self.BAD_STATES:
-                    services[service_name]["status"] = status_val
+            self.module.warn(f"Could not get unit files data from systemd: {stderr}")
+            return
+
+        for line in [svc_line for svc_line in stdout.split('\n') if '.service' in svc_line]:
+            # there is one more column (VENDOR PRESET) from `systemctl list-unit-files` for systemd >= 245
+            try:
+                service_name, status_val = line.split()[:2]
+            except IndexError:
+                self.module.fail_json(msg=f"Malformed output discovered from systemd list-unit-files: {line}")
+
+            # Gather properties such as unitfilestate and activestate from the service
+            prop_dict = {
+                "UnitFileState": status_val,
+                "ActiveState": "unknown"
+            }
+            property_string = " ".join(f"--property={p}" for p in prop_dict)
+            rc, stdout, dummy = self.module.run_command(f"{systemctl_path} show {service_name} {property_string}", use_unsafe_shell=True)
+            if not rc and stdout != '':
+                for line in stdout.splitlines():
+                    if "=" in line:
+                        key, value = line.split("=", 1)
+                        if key in prop_dict:
+                            prop_dict[key] = value.rstrip()
+
+            if service_name not in services:
+                # Add the service to the services
+                services[service_name] = {
+                    "name": service_name,
+                    "state": prop_dict["ActiveState"],
+                    "status": prop_dict["UnitFileState"],
+                    "source": "systemd"
+                }
+            else:
+                # Update the status if the service is found in the unit files
+                # because it might be different from the status in the units list
+                services[service_name]["status"] = prop_dict["UnitFileState"]
 
     def gather_services(self):
 
         services = {}
-        if self.systemd_enabled():
-            systemctl_path = self.module.get_bin_path("systemctl", opt_dirs=["/usr/bin", "/usr/local/bin"])
-            if systemctl_path:
-                self._list_from_units(systemctl_path, services)
-                self._list_from_unit_files(systemctl_path, services)
+        if not self.systemd_enabled():
+            return services
+
+        systemctl_path = self.module.get_bin_path("systemctl", opt_dirs=["/usr/bin", "/usr/local/bin"])
+        if systemctl_path:
+            self._list_from_units(systemctl_path, services)
+            self._list_from_unit_files(systemctl_path, services)
 
         return services
 
