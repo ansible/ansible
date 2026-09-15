@@ -1,0 +1,29 @@
+---
+- name: Determine the DNF plugin path
+  command: "{{ ansible_facts.python_interpreter | default('/usr/bin/python3') }} -c \"import dnf.const; print(dnf.const.PLUGINPATH)\""
+  register: dnf_plugin_path
+  changed_when: false
+
+- block:
+    - name: Install a DNF plugin that writes unsolicited output to stdout
+      copy:
+        src: noisy_dnf_plugin.py
+        dest: "{{ dnf_plugin_path.stdout }}/noisy_dnf_plugin.py"
+        mode: '0644'
+
+    - name: Run the dnf module while the noisy plugin is loaded
+      dnf:
+        name: sos
+        state: present
+      register: dnf_noisy_plugin_result
+
+    - name: Verify the module succeeded despite the plugin's stdout output
+      assert:
+        that:
+          - dnf_noisy_plugin_result is not failed
+          - "'results' in dnf_noisy_plugin_result"
+  always:
+    - name: Remove the noisy DNF plugin
+      file:
+        path: "{{ dnf_plugin_path.stdout }}/noisy_dnf_plugin.py"
+        state: absent
