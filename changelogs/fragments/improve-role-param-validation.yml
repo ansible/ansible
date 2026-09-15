@@ -1,0 +1,7 @@
+bugfixes:
+- >-
+  Implicit role validate_argument_spec tasks now only validate documented role params.
+  Previously, all role params had to be documented, making it difficult to use
+  dependencies (which often specify role params for ansible-galaxy install) or overriding
+  variables not specific to the dependency (such as connection variables).
+  (https://github.com/ansible/ansible/issues/82154)
