@@ -9,7 +9,8 @@ for a compiled extension, without touching the registry semantics:
   redacted, with overlapping and adjacent spans merged into one placeholder, so no character that
   belongs to a secret occurrence is left visible and the number of secrets is not revealed
 * secrets of 4-6 characters are masked only at a word boundary (both neighbours non-alphanumeric or
-  the string edge); if the longest secret at a position is rejected a shorter one there may still apply
+  the string edge); a short secret that overlaps or is adjacent to another secret will be masked
+  unconditionally
 
 ``_Fixed4Matcher`` is a custom string matcher/registry implementation tuned for Ansible.
 
@@ -59,20 +60,32 @@ def _sits_at_boundary(value: str, start: int, end: int) -> bool:
     return boundary_left and boundary_right
 
 
-def _merge_spans(spans: list[tuple[int, int]]) -> list[tuple[int, int]]:
-    """Sort spans and merge any that overlap or touch into one, so one placeholder covers them all."""
-    if len(spans) < 2:
+def _merge_spans(value: str, spans: list[tuple[int, int]]) -> list[tuple[int, int]]:
+    """Sort and merge overlapping/touching spans into one placeholder each. A merged run is masked
+    unconditionally; a lone span is masked only if it is longer than a short secret or sits at a boundary."""
+    if not spans:
         return spans
     spans.sort()
-    merged = [spans[0]]
+
+    result: list[tuple[int, int]] = []
+    run_start, run_end = spans[0]
+    merged = False
+
     for start, end in spans[1:]:
-        last_start, last_end = merged[-1]
-        if start <= last_end:
-            if end > last_end:
-                merged[-1] = (last_start, end)
-        else:
-            merged.append((start, end))
-    return merged
+        if start <= run_end:  # overlaps or touches the current run: extend it in place
+            if end > run_end:
+                run_end = end
+            merged = True
+        else:  # gap: the run is complete, keep it if it qualifies, then open a new one
+            if merged or run_end - run_start > _MAXIMUM_SHORT_SECRET_LENGTH or _sits_at_boundary(value, run_start, run_end):
+                result.append((run_start, run_end))
+            run_start, run_end = start, end
+            merged = False
+
+    if merged or run_end - run_start > _MAXIMUM_SHORT_SECRET_LENGTH or _sits_at_boundary(value, run_start, run_end):
+        result.append((run_start, run_end))
+
+    return result
 
 
 def _probe_span(length: int) -> tuple[int, int]:
@@ -125,11 +138,11 @@ class _Fixed4Matcher:
         probes.add(word[probe_offset:probe_stop])
         secrets.add(word)
 
-    def spans(self, value: str, boundary_check: bool = True) -> list[tuple[int, int]]:
+    def spans(self, value: str, drop_overlapping: bool = True) -> list[tuple[int, int]]:
         """Find secret occurrences in ``value`` as (start, end) spans.
 
-        When ``boundary_check`` is True, applies leftmost-longest matching with boundary rules for
-        short secrets. When False, returns all overlapping occurrences.
+        When ``drop_overlapping`` is True, only the longest secret starting at each position is
+        returned (leftmost-longest); when False, every occurrence is returned, overlaps included.
         """
         value_len = len(value)
         spans: list[tuple[int, int]] = []
@@ -149,13 +162,9 @@ class _Fixed4Matcher:
                 if value[start:end] not in secrets:
                     continue
 
-                if boundary_check and length <= _MAXIMUM_SHORT_SECRET_LENGTH:
-                    if not _sits_at_boundary(value, start, end):
-                        continue
-
                 spans.append((start, end))
 
-                if boundary_check:
+                if drop_overlapping:
                     break
 
         return spans
@@ -218,9 +227,9 @@ class SecretMasker:
             spans = []
             with self._lock:
                 if self._forms:
-                    spans = self._matcher.spans(value, boundary_check=True)
+                    spans = self._matcher.spans(value)
 
-            spans = _merge_spans(spans)
+            spans = _merge_spans(value, spans)
             if not spans:
                 return value
 
@@ -248,7 +257,7 @@ class SecretMasker:
         spans = None
         with self._lock:
             if self._forms:
-                spans = self._matcher.spans(value, boundary_check=False)
+                spans = self._matcher.spans(value, drop_overlapping=False)
 
         if not spans:
             return _emptyfrozenset
