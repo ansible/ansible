@@ -53,6 +53,7 @@ from ansible.module_utils.ansible_release import __version__ as ansible_version
 from ansible.module_utils.common.collections import is_iterable
 from ansible.module_utils.common.yaml import yaml_dump, yaml_load
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
+from ansible.module_utils.urls import mask_url
 from ansible._internal._datatag._tags import TrustedAsTemplate
 from ansible.parsing.dataloader import DataLoader
 from ansible.playbook.role.requirement import RoleRequirement
@@ -784,7 +785,10 @@ class GalaxyCLI(CLI):
         def parse_role_req(requirement):
             if "include" not in requirement:
                 role = RoleRequirement.role_yaml_parse(requirement)
-                display.vvv("found role %s in yaml file" % to_text(role))
+                display_role = role.copy()
+                if "src" in display_role:
+                    display_role["src"] = mask_url(display_role["src"])
+                display.vvv(f"found role {display_role} in yaml file")
                 if "name" not in role and "src" not in role:
                     raise AnsibleError("Must specify name or src for role")
                 return [GalaxyRole(self.galaxy, self.lazy_role_api, **role)]
