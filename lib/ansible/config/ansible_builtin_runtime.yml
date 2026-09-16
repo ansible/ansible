@@ -49,6 +49,11 @@ plugin_routing:
       redirect: ansible.netcommon.network_cli
     persistent:
       redirect: ansible.netcommon.persistent
+    paramiko_ssh:
+      deprecation:
+        removed_in: "2.21"
+        why: Paramiko versions older than 3.3.2 and 3.4.1 will be incompatible with cryptography 48.0.0.
+        warning: Use ansible.builtin.ssh instead.
   modules:
     # test entry
     formerly_core_ping:
