@@ -103,8 +103,8 @@ options:
             - To create an account with a locked/disabled password on OpenBSD, set this to V('*************').
             - B(OS X/macOS:) Enter the cleartext password as the value. Be sure to take relevant security precautions.
             - On macOS, the password specified in the C(password) option will always be set, regardless of whether the user account already exists or not.
-            - Since macOS does not offer direct access to the hashed passwords, the M(ansible.builtin.user) module will always returns C(true)
-              when the password is supplied as an input.
+            - Since macOS does not offer direct access to the hashed passwords, the M(ansible.builtin.user) module will always return C(true)
+              when a password is supplied as an input.
         type: str
     state:
         description:
