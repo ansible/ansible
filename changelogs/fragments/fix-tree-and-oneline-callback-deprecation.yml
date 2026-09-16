@@ -1,0 +1,2 @@
+bugfixes:
+  - Add deprecation status to the tree and oneline callback DOCUMENTATION. (https://github.com/ansible/ansible/issues/87020)
