@@ -146,14 +146,14 @@ for ($i = 0; $i -lt 50; $i++) {
     Assert-True ($maskedInterleaved -ceq $expectedInterleaved) "secret registered after masking started was not masked at iteration $i"
 }
 
-# --- A new secret that changes an existing fail link is honoured (parity with test_registering_a_secret_that_changes_an_existing_fail_link) ---
+# --- A new secret that is a suffix of an existing one is matched without a rebuild ---
 Reset-Masker
 [Ansible.Secrets.SecretMasker]::RegisterSecret("abcdefgh-one")
 $failText = "xabcdefgh-two bcdefgh-two"
 Assert-True ([Ansible.Secrets.SecretMasker]::MaskString($failText, $sentinel) -ceq $failText) "no secret present, text must be unchanged"
 [Ansible.Secrets.SecretMasker]::RegisterSecret("bcdefgh-two")
 $maskedFail = [Ansible.Secrets.SecretMasker]::MaskString($failText, $sentinel)
-Assert-True ($maskedFail -ceq "xa$sentinel $sentinel") "secret that is a suffix of an existing path must be masked after registration, got '$maskedFail'"
+Assert-True ($maskedFail -ceq "xa$sentinel $sentinel") "secret that is a suffix of an existing secret must be masked after registration, got '$maskedFail'"
 
 # --- _RegisterAnsibleSecrets registers the controller's secrets without reporting them as new ---
 Reset-Masker

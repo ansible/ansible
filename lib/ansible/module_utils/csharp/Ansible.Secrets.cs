@@ -20,24 +20,26 @@ namespace Ansible.Secrets
         private const int MaximumShortSecretLength = 6;  // above this, mask unconditionally
         private const int MaximumSecretLength = 65536;  // trims to this length as a cap for registration and matching
         private static readonly char[] StripChars = new char[] { ' ', '\t', '\r', '\n' };  // stripped from both ends before registration
+        private const int AnchorLength = MinimumSecretLength;
+        private const int ProbeLength = 8;  // chars compared from the middle of a candidate before the full comparison
 
-        private readonly Node _root;
+        private readonly Dictionary<string, List<Bucket>> _scan;  // anchor -> buckets, longest first
         private readonly HashSet<string> _registered;
         private HashSet<string> _newSecrets;
-        private bool _dirty;
 
-        private sealed class Node
+        private sealed class Bucket
         {
-            public readonly Dictionary<char, Node> Children = new Dictionary<char, Node>();
-            public readonly int Depth;
-            public bool IsTerminal;  // a registered value ends here; its length in chars is Depth
-            public int CodePoints;  // length of that value in code points, the unit the length rules use
-            public Node Fail;  // longest proper suffix of this node's path that is also a path
-            public Node Output;  // nearest terminal node on the fail chain, excluding this node
+            public readonly int Length;  // in UTF-16 chars, like the spans
+            public readonly int ProbeOffset;
+            public readonly int ProbeSize;
+            public readonly HashSet<string> Probes = new HashSet<string>(StringComparer.Ordinal);
+            public readonly HashSet<string> Values = new HashSet<string>(StringComparer.Ordinal);
 
-            public Node(int depth)
+            public Bucket(int length)
             {
-                Depth = depth;
+                Length = length;
+                ProbeSize = Math.Min(ProbeLength, length);
+                ProbeOffset = Math.Max(0, length / 2 - ProbeSize / 2);
             }
         }
 
@@ -109,11 +111,9 @@ namespace Ansible.Secrets
 
         private SecretMasker()
         {
-            _root = new Node(0);
-            _root.Fail = _root;
+            _scan = new Dictionary<string, List<Bucket>>(StringComparer.Ordinal);
             _registered = new HashSet<string>(StringComparer.Ordinal);
             _newSecrets = new HashSet<string>(StringComparer.Ordinal);
-            _dirty = false;
         }
 
         private HashSet<string> DrainNewSecretsImpl()
@@ -156,7 +156,7 @@ namespace Ansible.Secrets
             // Copies behaviour of Python to strip whitespace and trim to the
             // maximum length before registering.
             secret = TrimToCodePoints(secret.Trim(StripChars), MaximumSecretLength);
-            if (CodePointCount(secret) < MinimumSecretLength)
+            if (CodePointCount(secret, 0, secret.Length) < MinimumSecretLength)
             {
                 return;
             }
@@ -184,31 +184,34 @@ namespace Ansible.Secrets
 
         private void AddValue(string value)
         {
-            Node node = _root;
-            foreach (char c in value)
+            string anchor = value.Substring(0, AnchorLength);
+
+            List<Bucket> buckets;
+            if (!_scan.TryGetValue(anchor, out buckets))
             {
-                Node child;
-                if (!node.Children.TryGetValue(c, out child))
-                {
-                    child = new Node(node.Depth + 1);
-                    node.Children[c] = child;
-                    _dirty = true;
-                }
-                node = child;
+                buckets = new List<Bucket>();
+                _scan[anchor] = buckets;
             }
 
-            if (!node.IsTerminal)
+            Bucket bucket = buckets.Find(b => b.Length == value.Length);
+            if (bucket == null)
             {
-                node.IsTerminal = true;
-                node.CodePoints = CodePointCount(value);
-                _dirty = true;
+                bucket = new Bucket(value.Length);
+                buckets.Add(bucket);
+
+                // Buckets are kept longest first so FindSpans reports the spans at one position
+                // longest first, the order MergeSpans relies on.
+                buckets.Sort((a, b) => b.Length.CompareTo(a.Length));
             }
+
+            bucket.Probes.Add(value.Substring(bucket.ProbeOffset, bucket.ProbeSize));
+            bucket.Values.Add(value);
         }
 
-        private static int CodePointCount(string value)
+        private static int CodePointCount(string value, int start, int end)
         {
-            int count = value.Length;
-            for (int i = 0; i < value.Length - 1; i++)
+            int count = end - start;
+            for (int i = start; i < end - 1; i++)
             {
                 if (char.IsSurrogatePair(value[i], value[i + 1]))
                 {
@@ -302,62 +305,18 @@ namespace Ansible.Secrets
             return sb == null ? value : sb.ToString();
         }
 
-        private void BuildLinks()
-        {
-            // Standard breadth first computation of the fail and output links.
-            Queue<Node> queue = new Queue<Node>();
-
-            foreach (Node child in _root.Children.Values)
-            {
-                child.Fail = _root;
-                child.Output = null;
-                queue.Enqueue(child);
-            }
-
-            while (queue.Count > 0)
-            {
-                Node node = queue.Dequeue();
-
-                foreach (KeyValuePair<char, Node> edge in node.Children)
-                {
-                    char c = edge.Key;
-                    Node child = edge.Value;
-
-                    Node fail = node.Fail;
-                    Node target;
-                    while (!fail.Children.TryGetValue(c, out target) && fail != _root)
-                    {
-                        fail = fail.Fail;
-                    }
-
-                    child.Fail = target ?? _root;
-                    child.Output = child.Fail.IsTerminal ? child.Fail : child.Fail.Output;
-                    queue.Enqueue(child);
-                }
-            }
-
-            _dirty = false;
-        }
-
         private string MaskStringImpl(string value, string maskPlaceholder)
         {
-            if (string.IsNullOrEmpty(value) || _registered.Count == 0)
+            if (string.IsNullOrEmpty(value) || _scan.Count == 0)
             {
                 return value;
             }
 
-            if (_dirty)
-            {
-                BuildLinks();
-            }
-
-            List<int[]> spans = FindSpans(value);
+            List<int[]> spans = MergeSpans(value, FindSpans(value));
             if (spans.Count == 0)
             {
                 return value;
             }
-
-            MergeSpans(spans);
 
             StringBuilder sb = new StringBuilder(value.Length);
             int valuePos = 0;
@@ -373,38 +332,41 @@ namespace Ansible.Secrets
         }
 
         /// <summary>
-        /// Every occurrence of every registered value in <paramref name="value"/> as [start, end) spans,
-        /// overlapping included, except short values that do not sit at a word boundary.
+        /// Every occurrence of every registered value in <paramref name="value"/> as [start, end) spans.
         /// </summary>
         private List<int[]> FindSpans(string value)
         {
             List<int[]> spans = new List<int[]>();
-            Node state = _root;
+            int valueLength = value.Length;
 
-            for (int i = 0; i < value.Length; i++)
+            // A value shorter than the anchor never enters the loop and yields no spans.
+            for (int start = 0; start <= valueLength - AnchorLength; start++)
             {
-                char c = value[i];
-
-                Node next;
-                while (!state.Children.TryGetValue(c, out next) && state != _root)
+                List<Bucket> buckets;
+                if (!_scan.TryGetValue(value.Substring(start, AnchorLength), out buckets))
                 {
-                    state = state.Fail;
+                    continue;
                 }
-                state = next ?? _root;
 
-                // every registered value ending at this index: the state's own then the shorter suffixes
-                Node hit = state.IsTerminal ? state : state.Output;
-                while (hit != null)
+                foreach (Bucket bucket in buckets)
                 {
-                    int start = i - hit.Depth + 1;
-                    int end = i + 1;
-
-                    if (hit.CodePoints > MaximumShortSecretLength || SitsAtBoundary(value, start, end))
+                    int end = start + bucket.Length;
+                    if (end > valueLength)
                     {
-                        spans.Add(new int[] { start, end });
+                        continue;
                     }
 
-                    hit = hit.Output;
+                    if (!bucket.Probes.Contains(value.Substring(start + bucket.ProbeOffset, bucket.ProbeSize)))
+                    {
+                        continue;
+                    }
+
+                    if (!bucket.Values.Contains(value.Substring(start, bucket.Length)))
+                    {
+                        continue;
+                    }
+
+                    spans.Add(new int[] { start, end });
                 }
             }
 
@@ -412,42 +374,70 @@ namespace Ansible.Secrets
         }
 
         /// <summary>
-        /// Sorts spans and merges any that overlap or touch into one, so one placeholder covers them all.
+        /// Merges overlapping/touching spans into one placeholder each and drops the runs that do not
+        /// qualify. Mirrors _merge_spans in _secrets.py, see there for the rules and examples.
         /// </summary>
-        private static void MergeSpans(List<int[]> spans)
+        private static List<int[]> MergeSpans(string value, List<int[]> spans)
         {
-            if (spans.Count < 2)
+            if (spans.Count == 0)
             {
-                return;
+                return spans;
             }
 
-            spans.Sort((a, b) => a[0] != b[0] ? a[0].CompareTo(b[0]) : a[1].CompareTo(b[1]));
+            List<int[]> result = new List<int[]>();
 
-            int merged = 0;
+            int runStart = spans[0][0];
+            int runEnd = spans[0][1];
+            bool keep = SpanIsQualified(value, runStart, runEnd);
+
             for (int i = 1; i < spans.Count; i++)
             {
-                int[] last = spans[merged];
-                int[] current = spans[i];
+                int start = spans[i][0];
+                int end = spans[i][1];
 
-                if (current[0] <= last[1])
+                if (start > runEnd)
                 {
-                    if (current[1] > last[1])
+                    // Current run is complete, start new run with the current span.
+                    if (keep)
                     {
-                        last[1] = current[1];
+                        result.Add(new int[] { runStart, runEnd });
                     }
+
+                    runStart = start;
+                    runEnd = end;
+                    keep = SpanIsQualified(value, start, end);
                 }
-                else
+                else if (end > runEnd)
                 {
-                    merged++;
-                    spans[merged] = current;
+                    // Span is inside or touching the current run and extends it.
+                    runEnd = end;
+                    keep = true;
+                }
+                else if (!keep)
+                {
+                    // Span lies inside the current run that is not qualified by its own merit.
+                    keep = SpanIsQualified(value, start, end);
                 }
             }
 
-            spans.RemoveRange(merged + 1, spans.Count - merged - 1);
+            if (keep)
+            {
+                result.Add(new int[] { runStart, runEnd });
+            }
+
+            return result;
         }
 
-        private static bool SitsAtBoundary(string value, int start, int end)
+        private static bool SpanIsQualified(string value, int start, int end)
         {
+            // Every code point is at most two chars, so a span longer than twice the limit in chars is
+            // long whatever it contains and the code points only need counting below that.
+            int length = end - start;
+            if (length > MaximumShortSecretLength * 2 || CodePointCount(value, start, end) > MaximumShortSecretLength)
+            {
+                return true;
+            }
+
             bool boundaryLeft = start == 0 || !IsAlphaNumeric(value, start - 1);
             bool boundaryRight = end == value.Length || !IsAlphaNumeric(value, end);
             return boundaryLeft && boundaryRight;
