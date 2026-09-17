@@ -1,0 +1,5 @@
+---
+bugfixes:
+- reboot - disable the connection plugin's automatic reconnection retries while sending the
+  reboot/shutdown command itself, so a connection dropped by the host actually rebooting is not
+  mistaken for a failed connection attempt and used to resend the reboot command a second time.
