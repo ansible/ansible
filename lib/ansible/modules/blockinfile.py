@@ -374,9 +374,9 @@ def main():
                 match = insertre.search(original)
                 if match:
                     if insertafter:
-                        n0 = original.count(line_separator, 0, match.end())
+                        n0 = original.count('\n', 0, match.end())
                     elif insertbefore:
-                        n0 = original.count(line_separator, 0, match.start())
+                        n0 = original.count('\n', 0, match.start())
             else:
                 for i, line in enumerate(lines):
                     if insertre.search(line):
@@ -395,9 +395,11 @@ def main():
         lines[n1:n0 + 1] = []
         n0 = n1
 
-    # Ensure there is a line separator before the block of lines to be inserted
+    # Ensure there is a line separator before the block of lines to be inserted.
+    # Any existing ending counts; only a line with no ending at all needs one.
+    # This avoids a ghost line when the preceding line's ending differs from line_separator.
     if n0 > 0:
-        if not lines[n0 - 1].endswith(line_separator):
+        if not lines[n0 - 1].endswith(("\n", "\r")):
             lines[n0 - 1] += line_separator
 
     # Before the block: check if we need to prepend a blank line

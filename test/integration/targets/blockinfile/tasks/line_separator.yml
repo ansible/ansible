@@ -48,9 +48,8 @@
       loop_control:
         label: "{{ item.0.item.sep }}"
 
-    # The marker search normalizes each file line's ending before comparing, so an
-    # existing block is found and updated even when its line endings differ from the
-    # requested line_separator (rather than a duplicate block being appended).
+    # An existing block is found and updated in place even when its endings differ
+    # from the requested line_separator, rather than a duplicate being appended.
     - name: create a block written with crlf endings
       blockinfile:
         path: "{{ base_path }}convert.txt"
@@ -111,9 +110,63 @@
           - diff_result is changed
           - diff_result.diff[0].after == "# BEGIN ANSIBLE MANAGED BLOCK\r\nline1\r\nline2\r\n# END ANSIBLE MANAGED BLOCK\r\n"
 
+    # A block written with a different line_separator leaves surrounding endings
+    # untouched (see #66461): a CRLF block in an LF file keeps the LF lines as LF.
+    - name: seed a file with lf surrounding content
+      copy:
+        content: "before\nmiddle\nafter\n"
+        dest: "{{ base_path }}preserve.txt"
+
+    - name: insert a crlf block without disturbing the lf surrounding lines
+      blockinfile:
+        path: "{{ base_path }}preserve.txt"
+        line_separator: CRLF
+        block: "line1\r\nline2"
+        insertbefore: BOF
+      register: preserve_result
+
+    - name: read back the preserved file
+      slurp:
+        src: "{{ base_path }}preserve.txt"
+      register: preserve_slurp
+
+    - name: validate only the block is crlf and the surrounding lf lines are intact
+      assert:
+        that:
+          - preserve_result is changed
+          - (preserve_slurp.content | b64decode) ==
+            "# BEGIN ANSIBLE MANAGED BLOCK\r\nline1\r\nline2\r\n# END ANSIBLE MANAGED BLOCK\r\nbefore\nmiddle\nafter\n"
+
+    # Inserting a CRLF block after an already-terminated LF line adds no ghost
+    # blank line, even though the LF ending differs from the requested separator.
+    - name: seed a file with lf surrounding content for insertafter
+      copy:
+        content: "before\nmiddle\nafter\n"
+        dest: "{{ base_path }}ghost.txt"
+
+    - name: insert a crlf block after an lf line
+      blockinfile:
+        path: "{{ base_path }}ghost.txt"
+        line_separator: CRLF
+        block: "line1\r\nline2"
+        insertafter: "middle"
+      register: ghost_result
+
+    - name: read back the insertafter file
+      slurp:
+        src: "{{ base_path }}ghost.txt"
+      register: ghost_slurp
+
+    - name: validate no ghost line was inserted between the lf line and the crlf block
+      assert:
+        that:
+          - ghost_result is changed
+          - (ghost_slurp.content | b64decode) ==
+            "before\nmiddle\n# BEGIN ANSIBLE MANAGED BLOCK\r\nline1\r\nline2\r\n# END ANSIBLE MANAGED BLOCK\r\nafter\n"
+
   always:
     - name: clean up line_separator test files
       file:
         path: "{{ base_path }}{{ item }}.txt"
         state: absent
-      loop: "{{ (line_seps | map(attribute='sep') | list) + ['convert', 'diff'] }}"
+      loop: "{{ (line_seps | map(attribute='sep') | list) + ['convert', 'diff', 'preserve', 'ghost'] }}"
