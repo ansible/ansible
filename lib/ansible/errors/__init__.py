@@ -364,16 +364,44 @@ class AnsibleAction(AnsibleRuntimeError, _error_utils.ContributesToTaskResult):
         return self._result
 
 
-class AnsibleActionSkip(AnsibleAction):
+class AnsibleActionSkip(AnsibleAction):  # deprecated: description='remove class AnsibleActionSkip', core_version='2.25'
     """
     An action runtime skip.
 
     This exception provides a result dictionary via the ContributesToTaskResult mixin.
+
+    DEPRECATED for removal in 2.25
     """
 
     def as_task_result(self, utr: _t_task.UnifiedTaskResult) -> _t_task.UnifiedTaskResult:
         utr = super().as_task_result(utr)
         utr.skipped = True
+        utr.msg = self.message
+
+        return utr
+
+    @property
+    def omit_failed_key(self) -> bool:
+        return True
+
+    @property
+    def omit_exception_key(self) -> bool:
+        return True
+
+
+class AnsibleActionNoCheckMode(AnsibleAction):
+    """
+    An action runtime indication of lack of check_mode support.
+
+    This exception provides a result dictionary via the ContributesToTaskResult mixin.
+
+    Replacement for AnsibleActionSkip that does not return skipped=True.
+    Available for use in ansible-core 2.23+.
+    """
+
+    def as_task_result(self, utr: _t_task.UnifiedTaskResult) -> _t_task.UnifiedTaskResult:
+        utr = super().as_task_result(utr)
+        utr.changed = False
         utr.msg = self.message
 
         return utr

@@ -174,7 +174,7 @@ class TestDetectionRegexes:
     def test_detect_core_library_path_re(self, testcase, result):
         assert amc.CORE_LIBRARY_PATH_RE.search(testcase).group('path') == result
 
-    @pytest.mark.parametrize('testcase', (p[0] for p in COLLECTION_PATHS))
+    @pytest.mark.parametrize('testcase', [p[0] for p in COLLECTION_PATHS])
     def test_no_detect_core_library_path_re(self, testcase):
         assert not amc.CORE_LIBRARY_PATH_RE.search(testcase)
 
@@ -182,6 +182,6 @@ class TestDetectionRegexes:
     def test_detect_collection_path_re(self, testcase, result):
         assert amc.COLLECTION_PATH_RE.search(testcase).group('path') == result
 
-    @pytest.mark.parametrize('testcase', (p[0] for p in CORE_PATHS))
+    @pytest.mark.parametrize('testcase', [p[0] for p in CORE_PATHS])
     def test_no_detect_collection_path_re(self, testcase):
         assert not amc.COLLECTION_PATH_RE.search(testcase)

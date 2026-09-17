@@ -36,6 +36,7 @@ from binascii import Error as BinasciiError
 from ansible.module_utils._internal._datatag import (
     AnsibleTagHelper, AnsibleTaggedObject, _AnsibleTagsMapping, _EmptyROInternalTagsMapping, _EMPTY_INTERNAL_TAGS_MAPPING,
 )
+from ansible.module_utils.secrets import register_secret
 from ansible._internal._templating import _jinja_common
 from ansible._internal._datatag._tags import Origin, VaultedValue, TrustedAsTemplate
 
@@ -323,6 +324,7 @@ class PromptVaultSecret(VaultSecret):
             self.confirm(b_vault_passwords[0], b_vault_password)
 
         if b_vault_passwords:
+            register_secret(to_text(b_vault_passwords[0], errors='surrogate_or_strict'))
             return b_vault_passwords[0]
 
         return None
@@ -422,6 +424,8 @@ class FileVaultSecret(VaultSecret):
         verify_secret_is_not_empty(vault_pass,
                                    msg='Invalid vault password was provided from file (%s)' % filename)
 
+        register_secret(to_text(vault_pass, errors='surrogate_or_strict'))
+
         return vault_pass
 
     def __repr__(self):
@@ -445,6 +449,8 @@ class ScriptVaultSecret(FileVaultSecret):
 
         empty_password_msg = 'Invalid vault password was provided from script (%s)' % filename
         verify_secret_is_not_empty(vault_pass, msg=empty_password_msg)
+
+        register_secret(to_text(vault_pass, errors='surrogate_or_strict'))
 
         return vault_pass
 
@@ -1448,6 +1454,8 @@ class EncryptedString(AnsibleTaggedObject):
             plaintext = AnsibleTagHelper.tag(plaintext, AnsibleTagHelper.tags(self) | {VaultedValue(ciphertext=self._ciphertext)})
 
             object.__setattr__(self, '_plaintext', plaintext)
+
+            register_secret(plaintext)
 
         return self._plaintext
 

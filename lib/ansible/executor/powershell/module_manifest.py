@@ -18,12 +18,21 @@ from importlib import import_module
 from ansible.module_utils.compat.version import LooseVersion
 
 from ansible import constants as C
+
 from ansible.module_utils.common.json import Direction, get_module_encoder
 from ansible.errors import AnsibleError, AnsibleFileNotFound
+from ansible.module_utils import secrets as _secrets
 from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.plugins.become import BecomeBase
 from ansible.plugins.become.runas import BecomeModule as RunasBecomeModule
 from ansible.plugins.loader import ps_module_utils_loader
+
+
+GZIP_AVAILABLE = True
+try:
+    import gzip
+except ImportError:
+    GZIP_AVAILABLE = False
 
 
 @dataclasses.dataclass(frozen=True)
@@ -423,6 +432,8 @@ def _create_powershell_wrapper(
         'Script': name_with_ext,
         'Environment': environment,
     }
+    secure_module_params: dict[str, t.Any] = {}
+
     if substyle != 'script':
         module_deps = finder.scan_module(
             module_data,
@@ -437,18 +448,21 @@ def _create_powershell_wrapper(
             else:
                 ps_deps.append(dep)
 
+        encoder = get_module_encoder(profile, Direction.CONTROLLER_TO_MODULE)
+        module_arg_json = json.dumps(module_args, cls=encoder)
+
         module_params |= {
-            'Variables': [
-                {
-                    'Name': 'complex_args',
-                    'Value': _prepare_module_args(module_args, profile),
-                    'Scope': 'Global',
-                },
-            ],
+            'ArgumentJSON': module_arg_json,
+            # FUTURE: Provide the profile to the module wrapper.
+            # 'ArgumentProfile': profile,
             'CSharpModules': cs_deps,
             'PowerShellModules': ps_deps,
             'ForModule': True,
         }
+
+        if 'Ansible.Secrets.cs' in cs_deps:
+            module_secrets = _secrets._secret_masker.secrets_in_json(module_arg_json)
+            secure_module_params['Secrets'] = list(module_secrets)
 
     if become_plugin or finder.become:
         become_script = 'become_wrapper.ps1'
@@ -524,6 +538,7 @@ def _create_powershell_wrapper(
         _ManifestAction(
             name='module_wrapper.ps1',
             params=module_params,
+            secure_params=secure_module_params,
         ),
     )
 
@@ -566,6 +581,18 @@ def _get_bootstrap_input(
     :param temp_path: The temporary path to use for the scripts if needed.
     :return: The input for bootstrap_wrapper.ps1 as a byte string.
     """
+    decompress_input = False
+    exec_input = json.dumps(dataclasses.asdict(manifest)).encode()
+
+    # We provide an opt-out config option in case there are unforeseen issues
+    # with compression.
+    if GZIP_AVAILABLE and C.config.get_config_value("_ANSIBALLZ_PWSH_COMPRESSION", variables={}):
+        compressed_input = gzip.compress(exec_input)
+        compressed_b64 = base64.b64encode(compressed_input)
+        if len(compressed_b64) < len(exec_input):
+            exec_input = compressed_b64
+            decompress_input = True
+
     bootstrap_manifest = {
         'name': 'exec_wrapper',
         'script': _get_powershell_script("exec_wrapper.ps1").decode(),
@@ -574,22 +601,13 @@ def _get_bootstrap_input(
             'MinPSVersion': min_ps_version,
             'TempPath': temp_path,
             'PwshPath': pwsh_interpreter,
+            'DecompressInput': decompress_input,
         },
     }
 
-    bootstrap_input = json.dumps(bootstrap_manifest, ensure_ascii=True)
-    exec_input = json.dumps(dataclasses.asdict(manifest))
-    return f"{bootstrap_input}\n\0\0\0\0\n{exec_input}".encode()
+    bootstrap_input = json.dumps(bootstrap_manifest, ensure_ascii=True).encode()
 
-
-def _prepare_module_args(module_args: dict[str, t.Any], profile: str) -> dict[str, t.Any]:
-    """
-    Serialize the module args with the specified profile and deserialize them with the Python built-in JSON decoder.
-    This is used to facilitate serializing module args with a different encoder (profile) than is used for the manifest.
-    """
-    encoder = get_module_encoder(profile, Direction.CONTROLLER_TO_MODULE)
-
-    return json.loads(json.dumps(module_args, cls=encoder))
+    return bootstrap_input + b"\n\0\0\0\0\n" + exec_input
 
 
 def _get_powershell_signed_hashlist(

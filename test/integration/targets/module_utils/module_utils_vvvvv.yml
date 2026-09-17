@@ -19,11 +19,11 @@
   - name: check no log values from fallback or default are masked
     assert:
       that:
-      - no_log_invocation.invocation.module_args.default_pass == 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER'
-      - no_log_invocation.invocation.module_args.explicit_pass == 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER'
-      - no_log_invocation.invocation.module_args.fallback_pass == 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER'
+      - no_log_invocation.invocation.module_args.default_pass == '$REDACTED$'
+      - no_log_invocation.invocation.module_args.explicit_pass == '$REDACTED$'
+      - no_log_invocation.invocation.module_args.fallback_pass == '$REDACTED$'
       - no_log_invocation.invocation.module_args.normal == 'plaintext'
-      - no_log_invocation.invocation.module_args.suboption.default_sub_pass == 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER'
-      - no_log_invocation.invocation.module_args.suboption.explicit_sub_pass == 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER'
-      - no_log_invocation.invocation.module_args.suboption.fallback_sub_pass == 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER'
+      - no_log_invocation.invocation.module_args.suboption.default_sub_pass == '$REDACTED$'
+      - no_log_invocation.invocation.module_args.suboption.explicit_sub_pass == '$REDACTED$'
+      - no_log_invocation.invocation.module_args.suboption.fallback_sub_pass == '$REDACTED$'
       - no_log_invocation.invocation.module_args.suboption.normal == 'plaintext'

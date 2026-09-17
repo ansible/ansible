@@ -138,7 +138,9 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         if self._task.async_val and not self._supports_async:
             raise AnsibleActionFail('This action (%s) does not support async.' % self._task.action)
         elif self._task.check_mode and not self._supports_check_mode:
-            raise AnsibleActionSkip('This action (%s) does not support check mode.' % self._task.action)
+            # deprecated: description='switch to AnsibleActionNoCheckMode' core_version='2.25'
+            raise AnsibleActionSkip(f'This action ({self._task.action}) does not support check mode.')
+            # raise AnsibleActionNoCheckMode(f'This action ({self._task.action}) does not support check mode.')
 
         # Error if invalid argument is passed
         if self._VALID_ARGS:
@@ -1458,6 +1460,8 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         # be sure to remove the BECOME-SUCCESS message now
         out = self._strip_success_message(out)
 
+        # Known limitation: under ANSIBLE_DEBUG the raw output is shown before any secrets in module output have been
+        # registered with the secret masker (that happens when the result is parsed), so they may be shown in plaintext.
         display.debug(u"_low_level_execute_command() done: rc=%d, stdout=%s, stderr=%s" % (rc, out, err))
         return dict(rc=rc, stdout=out, stdout_lines=out.splitlines(), stderr=err, stderr_lines=err.splitlines())
 

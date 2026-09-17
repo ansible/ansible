@@ -62,6 +62,7 @@ from ansible.module_utils.common.validation import (
     check_type_raw,
     check_type_str,
 )
+from ansible.module_utils.common.warnings import deprecate as _deprecate
 
 # Python2 & 3 way to get NoneType
 NoneType = type(None)
@@ -865,6 +866,12 @@ def sanitize_keys(obj, no_log_strings, ignore_keys=frozenset()):
 
     :returns: An object with sanitized keys.
     """
+    # TODO remove helper functions when removing this function
+    _deprecate(
+        msg="The `sanitize_keys()` function from `ansible.module_utils.common.parameters` is deprecated.",
+        version="2.25",
+        help_text="Secret values are now masked automatically. Use functions from `ansible.module_utils.secrets` if you need to handle secrets manually.",
+    )
 
     deferred_removals = deque()
 
@@ -906,6 +913,12 @@ def remove_values(value, no_log_strings):
     because of the potential to hit the maximum recursion depth when dealing with
     large amounts of data (see `issue #24560 <https://github.com/ansible/ansible/issues/24560>`_).
     """
+    # TODO remove helper functions when removing this function
+    _deprecate(
+        msg="The `remove_values()` function from `ansible.module_utils.common.parameters` is deprecated.",
+        version="2.25",
+        help_text="Secret values are now masked automatically. Use functions from `ansible.module_utils.secrets` if you need to handle secrets manually.",
+    )
 
     deferred_removals = deque()
 

@@ -406,6 +406,7 @@ class StrategyBase:
                         shared_loader_obj=plugin_loader.get_plugin_loader_namespace(),
                         worker_id=self._cur_worker,
                         cliargs=context.CLIARGS,
+                        stacktrace_dir=self._tqm.stacktrace_dir
                     )
                     self._workers[self._cur_worker] = worker_prc
                     self._tqm.send_callback('v2_runner_on_start', host, task)

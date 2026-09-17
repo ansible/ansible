@@ -180,12 +180,12 @@ def is_valid_identifier(value: str) -> bool:
 def cache[TValue](func: c.Callable[[], TValue]) -> c.Callable[[], TValue]:
     """Enforce exclusive access on a decorated function and cache the result."""
     storage: dict[None, TValue] = {}
-    sentinel = object()
+    cache_sentinel = object()
 
     @functools.wraps(func)
     def cache_func():
         """Cache the return value from func."""
-        if (value := storage.get(None, sentinel)) is sentinel:
+        if (value := storage.get(None, cache_sentinel)) is cache_sentinel:
             value = storage[None] = func()
 
         return value

@@ -1,0 +1,60 @@
+---
+- name: secret masking vault scenarios
+  hosts: testhost
+  gather_facts: false
+  tasks:
+    - name: load whole-file vaulted vars
+      include_vars: "{{ vaulted_vars_file }}"
+
+    - name: load inline !vault vars
+      include_vars: "{{ inline_vault_file }}"
+
+    - name: vaulted vars resolve to the known values in-playbook
+      assert:
+        that:
+          - vaulted_scalar == 'Vaultfilescalar0010Secret'
+          - vaulted_list[0] == 'Vaultfilelist0011Secret'
+          - vaulted_dict.nested_key == 'Vaultfiledict0012Secret'
+          - vaulted_int == 87654321
+          - notasecretkeyname == 'Vaultfilekeyval0014Secret'
+          - inline_vault_secret == 'Vaultinline0013Secret'
+          - vaulted_dict_in_list[0].nested_dict_key == 'Vaultdictinlist0015Secret'
+          - vaulted_list_in_dict.outer_key[0] == 'Vaultlistindict0016Secret'
+          - vaulted_deep.level_a[0].level_b[0] == 'Vaultdeep0017Secret'
+        quiet: true
+
+    - name: emit vaulted scalar
+      debug:
+        msg: "MARKER vault_scalar: {{ vaulted_scalar }}"
+
+    - name: emit vaulted list element
+      debug:
+        msg: "MARKER vault_list: {{ vaulted_list[0] }}"
+
+    - name: emit vaulted nested dict value
+      debug:
+        msg: "MARKER vault_dict: {{ vaulted_dict.nested_key }}"
+
+    - name: emit vaulted int (registered as its string form)
+      debug:
+        msg: "MARKER vault_int: {{ vaulted_int }}"
+
+    - name: emit vaulted value whose key is not a secret
+      debug:
+        msg: "MARKER vault_keyval: key=notasecretkeyname value={{ notasecretkeyname }}"
+
+    - name: emit inline !vault secret
+      debug:
+        msg: "MARKER vault_inline: {{ inline_vault_secret }}"
+
+    - name: emit secret from a dict nested in a list
+      debug:
+        msg: "MARKER vault_dict_in_list: {{ vaulted_dict_in_list[0].nested_dict_key }}"
+
+    - name: emit secret from a list nested in a dict value
+      debug:
+        msg: "MARKER vault_list_in_dict: {{ vaulted_list_in_dict.outer_key[0] }}"
+
+    - name: emit secret nested several levels deep through mixed types
+      debug:
+        msg: "MARKER vault_deep: {{ vaulted_deep.level_a[0].level_b[0] }}"

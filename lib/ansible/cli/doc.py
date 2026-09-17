@@ -892,7 +892,6 @@ class DocCLI(CLI, RoleMixin):
                     short_description=desc,
                     description=[
                         desc,
-                        '',
                         f"This is the Jinja builtin {plugin_type} plugin {short_name!r}.",
                         f"See: U(https://jinja.palletsprojects.com/en/stable/templates/#jinja-{plugin_type}s.{short_name})",
                     ],

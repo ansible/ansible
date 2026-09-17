@@ -27,10 +27,12 @@ from jinja2.environment import Environment
 
 from ansible._internal._templating import _lazy_containers
 from ansible.errors import AnsibleFilterError, AnsibleTypeError, AnsibleTemplatePluginError
+from ansible.module_utils._internal._secrets import _STRIP_CHARS as _SECRET_STRIP_CHARS, _MINIMUM_SECRET_LENGTH as _SECRET_MINIMUM_LENGTH
 from ansible.module_utils.datatag import native_type_name
 from ansible.module_utils.common.json import get_encoder, get_decoder
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.module_utils.common.collections import is_sequence
+from ansible.module_utils import secrets
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.template import accept_args_markers, accept_lazy_markers
 from ansible._internal._templating._jinja_common import MarkerError, UndefinedMarker, validate_arg_type
@@ -45,6 +47,40 @@ from ansible.utils.vars import merge_hash
 display = Display()
 
 UUID_NAMESPACE_ANSIBLE = uuid.UUID('361E6D51-FAEC-444A-9079-341386DA8E2E')
+
+
+def register_secret(
+    secret: str,
+    *,
+    validation_action: t.Literal['error', 'warn', 'ignore'] = 'error',
+) -> str:
+    if not isinstance(secret, str):
+        msg = "Secret must be a string"
+        if validation_action == 'error':
+            raise ValueError(msg)
+        elif validation_action == 'warn':
+            display.warning(msg)
+
+        return secret
+
+    trimmed_secret = secret.strip(_SECRET_STRIP_CHARS)
+    if len(trimmed_secret) < _SECRET_MINIMUM_LENGTH:
+        msg = f"Secret must be at least {_SECRET_MINIMUM_LENGTH} characters long after trimming whitespace"
+        if validation_action == 'error':
+            raise ValueError(msg)
+        elif validation_action == 'warn':
+            display.warning(msg)
+
+        return secret
+
+    # FUTURE: any easy trickery to de-template-ify this case once the secret is registered?
+    secrets.register_secret(secret)
+
+    return secret
+
+
+def mask_secrets(value: str, mask_placeholder='$REDACTED$') -> str:
+    return secrets.mask_secrets(value, mask_placeholder=mask_placeholder)
 
 
 @accept_lazy_markers
@@ -547,7 +583,7 @@ def flatten(mylist, levels=None, skip_nulls=True):
     return ret
 
 
-def subelements(obj, subelements, skip_missing=False):
+def subelements(obj, subelement_obj, skip_missing=False):
     """Accepts a dict or list of dicts, and a dotted accessor and produces a product
     of the element and the results of the dotted accessor
 
@@ -563,12 +599,12 @@ def subelements(obj, subelements, skip_missing=False):
     else:
         raise AnsibleFilterError('obj must be a list of dicts or a nested dict')
 
-    if isinstance(subelements, list):
-        subelement_list = subelements[:]
-    elif isinstance(subelements, str):
-        subelement_list = subelements.split('.')
+    if isinstance(subelement_obj, list):
+        subelement_list = subelement_obj[:]
+    elif isinstance(subelement_obj, str):
+        subelement_list = subelement_obj.split('.')
     else:
-        raise AnsibleTypeError('subelements must be a list or a string')
+        raise AnsibleTypeError(f'subelements must be a list or a string, got {type(subelement_obj)}')
 
     results = []
 
@@ -581,11 +617,15 @@ def subelements(obj, subelements, skip_missing=False):
                 if skip_missing:
                     values = []
                     break
-                raise AnsibleFilterError("could not find %r key in iterated item %r" % (subelement, values))
+                raise AnsibleFilterError(f"could not find {subelement!r} key in iterated item {values!r}")
             except TypeError as ex:
-                raise AnsibleTypeError("the key %s should point to a dictionary, got '%s'" % (subelement, values)) from ex
+                raise AnsibleTypeError(f"the key {subelement!r} should point to a dictionary, got {values!r}") from ex
         if not isinstance(values, list):
-            raise AnsibleTypeError("the key %r should point to a list, got %r" % (subelement, values))
+            if subelement_list:
+                raise AnsibleTypeError(f"the key {subelement!r} should point to a list, got {values!r}")
+            else:
+                raise AnsibleTypeError(f"Subelements in the object must be a list, got {type(values)}. "
+                                       "A list cannot be extracted, because subelements is empty.")
 
         for value in values:
             results.append((element, value))
@@ -733,6 +773,9 @@ class FilterModule(object):
 
     def filters(self):
         return {
+            'register_secret': register_secret,
+            'mask_secrets': mask_secrets,
+
             # base 64
             'b64decode': b64decode,
             'b64encode': b64encode,

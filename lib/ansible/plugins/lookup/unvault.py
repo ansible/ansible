@@ -34,6 +34,7 @@ RETURN = """
 """
 
 from ansible.errors import AnsibleParserError
+from ansible.module_utils.secrets import register_secrets
 from ansible.plugins.lookup import LookupBase
 from ansible.utils.display import Display
 
@@ -58,5 +59,7 @@ class LookupModule(LookupBase):
                 ret.append(self._loader.get_text_file_contents(lookupfile))
             else:
                 raise AnsibleParserError('Unable to find file matching "%s" ' % term)
+
+        register_secrets(ret)
 
         return ret

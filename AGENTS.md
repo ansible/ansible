@@ -59,6 +59,7 @@ gh pr view <number> --comments
 ```
 
 Look for comments from `ansibot` that contain:
+
 - Test failure details with specific error messages
 - File paths and line numbers for failures
 - Links to sanity test documentation (e.g., `[explain](https://docs.ansible.com/...`)
@@ -71,6 +72,7 @@ gh pr checks <number>
 ```
 
 This shows:
+
 - Overall CI status (pass/fail) with timing
 - Direct links to Azure DevOps build results
 - Individual job results (Sanity Test 1/2, Docker tests, Units, etc.)
@@ -101,6 +103,7 @@ When CI failures need deeper investigation beyond what's visible in ansibot comm
 The skill uses `hacking/azp/download.py` to download console logs into a directory named after the build ID.
 
 **After downloading, analyze the logs:**
+
 - Grep for common failure patterns: `grep -r "FAILED\|ERROR\|Traceback" <build_id>/`
 - Focus on logs from failed jobs identified in `gh pr checks` output
 - Compare error messages with ansibot comments to get full context

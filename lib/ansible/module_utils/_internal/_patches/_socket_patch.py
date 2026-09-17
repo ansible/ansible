@@ -22,7 +22,12 @@ class GetAddrInfoPatch(CallablePatch):
     @classmethod
     def is_patch_needed(cls) -> bool:
         with contextlib.suppress(OSError):
-            socket.getaddrinfo('127.0.0.1', _CustomInt(22))
+            socket.getaddrinfo(
+                '127.0.0.1',
+                _CustomInt(22),
+                family=socket.AF_INET,
+                type=socket.SOCK_STREAM,
+            )
             return False
 
         return True

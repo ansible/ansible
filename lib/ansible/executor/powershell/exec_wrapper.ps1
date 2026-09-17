@@ -5,6 +5,7 @@ using namespace System.Collections
 using namespace System.Collections.Generic
 using namespace System.Diagnostics.CodeAnalysis
 using namespace System.IO
+using namespace System.IO.Compression
 using namespace System.Linq
 using namespace System.Management.Automation
 using namespace System.Management.Automation.Language
@@ -25,7 +26,7 @@ param (
     $InputObject,
 
     [Parameter()]
-    [IDictionary]
+    [PSObject]
     $Manifest,
 
     [Parameter()]
@@ -47,6 +48,10 @@ param (
     [Parameter()]
     [string]
     $PwshPath,
+
+    [Parameter()]
+    [switch]
+    $DecompressInput,
 
     [Parameter()]
     [PSObject]
@@ -139,6 +144,10 @@ begin {
                 $encCommand
             )
 
+            # Switch parameters need to be converted to a boolean so they
+            # serialized properly in JSON
+            $PSBoundParameters['DecompressInput'] = $PSBoundParameters['DecompressInput'].IsPresent
+
             $execManifest = @{
                 name = 'exec_wrapper-respawn.ps1'
                 params = $PSBoundParameters
@@ -182,7 +191,7 @@ begin {
         }
     }
 
-    # $Script:AnsibleManifest = @{}  # Defined in process/end.
+    # $Script:AnsibleManifest = [PSCustomObject]@{}  # Defined in process/end.
     $Script:AnsibleShouldConstrain = if ($PSVersionTable.PSVersion -lt '6.0' -or $IsWindows) {
         [SystemPolicy]::GetSystemLockdownPolicy() -eq 'Enforce'
     }
@@ -215,33 +224,6 @@ begin {
     $Script:AnsibleTempScripts = [List[string]]::new()
     $Script:AnsibleClrFacadeSet = $false
 
-    Function Convert-JsonObject {
-        param(
-            [Parameter(Mandatory, ValueFromPipeline)]
-            [AllowNull()]
-            [object]
-            $InputObject
-        )
-
-        process {
-            # Using the full type name is important as PSCustomObject is an
-            # alias for PSObject which all piped objects are.
-            if ($InputObject -is [System.Management.Automation.PSCustomObject]) {
-                $value = @{}
-                foreach ($prop in $InputObject.PSObject.Properties) {
-                    $value[$prop.Name] = Convert-JsonObject -InputObject $prop.Value
-                }
-                $value
-            }
-            elseif ($InputObject -is [Array]) {
-                , @($InputObject | Convert-JsonObject)
-            }
-            else {
-                $InputObject
-            }
-        }
-    }
-
     Function Get-AnsibleScript {
         [CmdletBinding()]
         param (
@@ -258,7 +240,7 @@ begin {
             $SkipHashCheck
         )
 
-        if (-not $Script:AnsibleManifest.scripts.Contains($Name)) {
+        if (-not $Script:AnsibleManifest.scripts.PSObject.Properties.Match($Name)) {
             $err = [ErrorRecord]::new(
                 [Exception]::new("Could not find the script '$Name'."),
                 "ScriptNotFound",
@@ -267,7 +249,7 @@ begin {
             $PSCmdlet.ThrowTerminatingError($err)
         }
 
-        $scriptInfo = $Script:AnsibleManifest.scripts[$Name]
+        $scriptInfo = $Script:AnsibleManifest.scripts.$Name
         $scriptBytes = [Convert]::FromBase64String($scriptInfo.script)
         $scriptContents = [Encoding]::UTF8.GetString($scriptBytes)
 
@@ -378,16 +360,18 @@ begin {
         $Script:AnsibleManifest.actions = @($newActions | Select-Object)
 
         $actionName = $action.name
-        $actionParams = $action.params
+        $actionParams = @{}
         $actionScript = Get-AnsibleScript -Name $actionName -IncludeScriptBlock
 
-        foreach ($kvp in $action.secure_params.GetEnumerator()) {
-            if (-not $kvp.Value) {
+        foreach ($prop in $action.params.PSObject.Properties) {
+            $actionParams[$prop.Name] = $prop.Value
+        }
+        foreach ($prop in $action.secure_params.PSObject.Properties) {
+            if (-not $prop.Value) {
                 continue
             }
 
-            $name = $kvp.Key
-            $actionParams.$name = $kvp.Value | ConvertTo-SecureString -AsPlainText -Force
+            $actionParams[$prop.Name] = $prop.Value | ConvertTo-SecureString -AsPlainText -Force
         }
 
         [PSCustomObject]@{
@@ -747,13 +731,7 @@ begin {
         else {
             # Otherwise the first part of the input is the manifest json with the
             # chance for extra data afterwards.
-            $jsonParams = @{}
-            if ($IsCoreCLR) {
-                # PowerShell 7 parses an ISO 8601 date string into a DateTime object. As we
-                # want to preserve the original string we tell it using the DateKind param.
-                $jsonParams.DateKind = 'String'
-            }
-            $jsonPipeline = { ConvertFrom-Json @jsonParams | Convert-JsonObject }.GetSteppablePipeline()
+            $jsonPipeline = { ConvertFrom-Json }.GetSteppablePipeline()
             $jsonPipeline.Begin($true)
         }
     }
@@ -768,6 +746,7 @@ process {
         return
     }
 
+    $inputStream = $outputStream = $gzipStream = $null
     try {
         if ($actionPipeline) {
             # We received our manifest and started the action pipeline, redirect
@@ -784,6 +763,14 @@ process {
             if ($EncodeInputOutput) {
                 $jsonPipeline.Process([Encoding]::UTF8.GetString([Convert]::FromBase64String($InputObject)))
             }
+            elseif ($DecompressInput) {
+                $inputStream = [MemoryStream]::new([Convert]::FromBase64String($InputObject))
+                $gzipStream = [GZipStream]::new($inputStream, [CompressionMode]::Decompress)
+                $outputStream = [MemoryStream]::new()
+                $gzipStream.CopyTo($outputStream)
+
+                $jsonPipeline.Process([Encoding]::UTF8.GetString($outputStream.ToArray()))
+            }
             else {
                 $jsonPipeline.Process($InputObject)
             }
@@ -791,6 +778,11 @@ process {
     }
     catch {
         Write-AnsibleErrorJson -ErrorRecord $_
+    }
+    finally {
+        if ($inputStream) { $inputStream.Dispose() }
+        if ($outputStream) { $outputStream.Dispose() }
+        if ($gzipStream) { $gzipStream.Dispose() }
     }
 }
 

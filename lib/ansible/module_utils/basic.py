@@ -46,6 +46,8 @@ import tempfile
 import time
 import traceback
 
+from . import secrets as _secrets
+
 from collections.abc import (
     KeysView,
     Mapping,
@@ -57,23 +59,7 @@ from collections.abc import (
 )
 from functools import reduce
 
-try:
-    import syslog
-    HAS_SYSLOG = True
-except ImportError:
-    HAS_SYSLOG = False
-
 _UNSET = t.cast(t.Any, object())
-
-try:
-    from systemd import journal, daemon as systemd_daemon
-    # Makes sure that systemd.journal has method sendv()
-    # Double check that journal has method sendv (some packages don't)
-    # check if the system is running under systemd
-    has_journal = hasattr(journal, 'sendv') and systemd_daemon.booted()
-except (ImportError, AttributeError):
-    # AttributeError would be caused from use of .booted() if wrong systemd
-    has_journal = False
 
 HAVE_SELINUX = False
 try:
@@ -85,7 +71,9 @@ except ImportError:
 # Python2 & 3 way to get NoneType
 NoneType = type(None)
 
-from ._internal import _traceback, _errors, _debugging, _deprecator, _messages
+from ._internal import _traceback, _errors, _debugging, _deprecator, _messages, _logging
+# Re-export logging capability flags as public API for backward compatibility
+from ._internal._logging import HAS_SYSLOG, has_journal
 
 from .common.text.converters import (
     to_native,
@@ -172,6 +160,8 @@ from ansible.module_utils.common.warnings import (
     warn,
 )
 
+from ansible.module_utils._internal import _debug
+
 # Note: When getting Sequence from collections, it matches with strings. If
 # this matters, make sure to check for strings before checking for sequencetype
 SEQUENCETYPE = frozenset, KeysView, Sequence
@@ -248,6 +238,11 @@ def get_all_subclasses(cls):
 
 def heuristic_log_sanitize(data, no_log_values=None):
     """ Remove strings that look like passwords from log messages """
+    deprecate(
+        msg="The `heuristic_log_sanitize()` function from `ansible.module_utils.basic` is deprecated.",
+        version="2.25",
+        help_text="Secret values are now masked automatically. Use functions from `ansible.module_utils.secrets` if you need to handle secrets manually.",
+    )
     # Currently filters:
     # user:pass@foo/whatever and http://username:pass@wherever/foo
     # This code has false positives and consumes parts of logs that are
@@ -405,6 +400,7 @@ class AnsibleModule(object):
         self._legal_inputs = []
         self._options_context = list()
         self._tmpdir = None
+        self._new_secrets = _secrets._secret_masker.track_new_secrets()
 
         if add_file_common_args:
             for k, v in FILE_COMMON_ARGUMENTS.items():
@@ -450,7 +446,10 @@ class AnsibleModule(object):
             self.fail_json(msg=msg)
 
         if self.check_mode and not self.supports_check_mode:
-            self.exit_json(skipped=True, msg="remote module (%s) does not support check mode" % self._name)
+            self.exit_json(
+                skipped=True,  # deprecated: description='remove this skipped return', core_version='2.25'
+                msg="remote module (%s) does not support check mode" % self._name,
+            )
 
         # This is for backwards compatibility only.
         self._CHECK_ARGUMENT_TYPES_DISPATCHER = DEFAULT_TYPE_VALIDATORS
@@ -465,6 +464,10 @@ class AnsibleModule(object):
 
         # finally, make sure we're in a logical working dir
         self._set_cwd()
+
+        # Use system temp dir for module-level stacktraces. Using remote_tmp gets complicated with tasks
+        # as different or unprivileged users.
+        _debug.register_for_stacktrace()
 
     @property
     def tmpdir(self):
@@ -1250,115 +1253,101 @@ class AnsibleModule(object):
         # debug overrides to read args from file or cmdline
         self.params = _load_params()
 
-    def _log_to_syslog(self, msg):
-        if HAS_SYSLOG:
-            try:
-                module = 'ansible-%s' % self._name
-                facility = getattr(syslog, self._syslog_facility, syslog.LOG_USER)
-                syslog.openlog(str(module), 0, facility)
-                syslog.syslog(syslog.LOG_INFO, msg)
-            except (TypeError, ValueError) as e:
-                self.fail_json(
-                    msg='Failed to log to syslog (%s). To proceed anyway, '
-                        'disable syslog logging by setting no_target_syslog '
-                        'to True in your Ansible config.' % to_native(e),
-                    msg_to_log=msg,
-                )
-
     def debug(self, msg):
         if self._debug:
             self.log('[debug] %s' % msg)
 
     def log(self, msg, log_args=None):
 
-        if not self.no_log:
+        if self.no_log:
+            return
 
-            if log_args is None:
-                log_args = dict()
+        if not isinstance(msg, (bytes, str)):
+            raise TypeError("msg should be a string (got %s)" % type(msg))
 
-            module = 'ansible-%s' % self._name
-            if isinstance(module, bytes):
-                module = module.decode('utf-8', 'replace')
+        if isinstance(msg, bytes):
+            msg = msg.decode('utf-8', 'replace')
 
-            # 6655 - allow for accented characters
-            if not isinstance(msg, (bytes, str)):
-                raise TypeError("msg should be a string (got %s)" % type(msg))
+        if log_args:
+            log_args = {k: _secrets.mask_secrets(str(v)) for k, v in log_args.items()}
 
-            # We want journal to always take text type
-            # syslog takes bytes on py2, text type on py3
-            if isinstance(msg, bytes):
-                journal_msg = msg.decode('utf-8', 'replace')
-            else:
-                # TODO: surrogateescape is a danger here on Py3
-                journal_msg = msg
+        msg = _secrets.mask_secrets(msg)
 
-            if self._target_log_info:
-                journal_msg = ' '.join([self._target_log_info, journal_msg])
+        try:
+            _logging.log_to_system(
+                msg,
+                module_name=self._name,
+                log_args=log_args,
+                syslog_facility=self._syslog_facility,
+                target_log_info=self._target_log_info,
+            )
+        except (TypeError, ValueError) as e:
+            self.fail_json(
+                msg='Failed to log to syslog (%s). To proceed anyway, '
+                    'disable syslog logging by setting no_target_syslog '
+                    'to True in your Ansible config.' % to_native(e),
+                msg_to_log=msg,
+            )
 
-            # ensure we clean up secrets!
-            journal_msg = remove_values(journal_msg, self.no_log_values)
+    def _redact_no_log_params(
+        self,
+        argument_spec: Mapping[str, Mapping[str, t.Any]],
+        params: Mapping[str, t.Any],
+        prefix: str = '',
+    ) -> dict[str, t.Any]:
+        """Return a copy of ``params`` suitable for logging with ``no_log`` values replaced by a placeholder.
 
-            if has_journal:
-                journal_args = [("MODULE", os.path.basename(__file__))]
-                for arg in log_args:
-                    name, value = (arg.upper(), str(log_args[arg]))
-                    if name in (
-                        'PRIORITY', 'MESSAGE', 'MESSAGE_ID',
-                        'CODE_FILE', 'CODE_LINE', 'CODE_FUNC',
-                        'SYSLOG_FACILITY', 'SYSLOG_IDENTIFIER',
-                        'SYSLOG_PID',
-                    ):
-                        name = "_%s" % name
-                    journal_args.append((name, value))
+        Values are redacted by their position in ``argument_spec`` rather than by matching their content, so
+        ``no_log`` values that are too short or not a string to be registered as a secret are still hidden.
+        Sub options are processed recursively using the same rules as the top level parameters.
+        """
+        aliases = {alias: name for name, opts in argument_spec.items() for alias in opts.get('aliases') or ()}
+        redacted: dict[str, t.Any] = {}
 
-                try:
-                    if HAS_SYSLOG:
-                        # If syslog_facility specified, it needs to convert
-                        #  from the facility name to the facility code, and
-                        #  set it as SYSLOG_FACILITY argument of journal.send()
-                        facility = getattr(syslog,
-                                           self._syslog_facility,
-                                           syslog.LOG_USER) >> 3
-                        journal.send(MESSAGE=u"%s %s" % (module, journal_msg),
-                                     SYSLOG_FACILITY=facility,
-                                     **dict(journal_args))
-                    else:
-                        journal.send(MESSAGE=u"%s %s" % (module, journal_msg),
-                                     **dict(journal_args))
-                except OSError:
-                    # fall back to syslog since logging to journal failed
-                    self._log_to_syslog(journal_msg)
-            else:
-                self._log_to_syslog(journal_msg)
-
-    def _log_invocation(self):
-        """ log that ansible ran the module """
-        # TODO: generalize a separate log function and make log_invocation use it
-        # Sanitize possible password argument when logging.
-        log_args = dict()
-
-        for param in self.params:
-            canon = self.aliases.get(param, param)
-            arg_opts = self.argument_spec.get(canon, {})
+        for param, value in params.items():
+            arg_opts = argument_spec.get(aliases.get(param, param), {})
             no_log = arg_opts.get('no_log', None)
 
             # try to proactively capture password/passphrase fields
             if no_log is None and PASSWORD_MATCH.search(param):
-                log_args[param] = 'NOT_LOGGING_PASSWORD'
-                self.warn('Module did not set no_log for %s' % param)
+                value = '$REDACTED$'
+                self.warn(f'Module did not set no_log for {prefix}{param}')
             elif self.boolean(no_log):
-                log_args[param] = 'NOT_LOGGING_PARAMETER'
-            else:
-                param_val = self.params[param]
-                if not isinstance(param_val, (str, bytes)):
-                    param_val = str(param_val)
-                elif isinstance(param_val, str):
-                    param_val = param_val.encode('utf-8')
-                log_args[param] = heuristic_log_sanitize(param_val, self.no_log_values)
+                # We don't rely on the secret masker here because the value
+                # may have been set to anything (non-string/too short, etc) and
+                # historically we've always just blocked it out.
+                value = '$REDACTED$'
+            elif (sub_spec := arg_opts.get('options')) and value is not None:
+                wanted_type = arg_opts.get('type')
 
-        msg = ['%s=%s' % (to_native(arg), to_native(val)) for arg, val in log_args.items()]
-        if msg:
-            msg = 'Invoked with %s' % ' '.join(msg)
+                if wanted_type == 'dict' and isinstance(value, Mapping):
+                    value = self._redact_no_log_params(
+                        argument_spec=sub_spec,
+                        params=value,
+                        prefix=f'{prefix}{param}.',
+                    )
+                elif wanted_type == 'list' and arg_opts.get('elements') == 'dict' and isinstance(value, list):
+                    value = [
+                        self._redact_no_log_params(
+                            argument_spec=sub_spec,
+                            params=elem,
+                            prefix=f'{prefix}{param}[{idx}].'
+                        ) if isinstance(elem, Mapping) else elem
+                        for idx, elem in enumerate(value)
+                    ]
+
+            redacted[param] = value
+
+        return redacted
+
+    def _log_invocation(self) -> None:
+        """ log that ansible ran the module """
+        # TODO: generalize a separate log function and make log_invocation use it
+        # These log args will be masked in log() if they contain any secrets.
+        log_args = {key: to_text(value) for key, value in self._redact_no_log_params(self.argument_spec, self.params).items()}
+
+        if log_args:
+            msg = f"Invoked with {' '.join([f'{k}={v}' for k, v in log_args.items()])}"
         else:
             msg = 'Invoked'
 
@@ -1441,6 +1430,14 @@ class AnsibleModule(object):
     def _return_formatted(self, kwargs):
         _skip_stackwalk = True
 
+        if flushed := self._new_secrets.flush():
+            kwargs['_ansible_new_secrets'] = list(flushed)
+
+        # Technically process end is the same but in case this is ever run in
+        # a persisted process worker or multiple times in the same process we
+        # detach our secret tracker.
+        self._new_secrets.unregister()
+
         self.add_path_info(kwargs)
 
         if _PARSED_MODULE_ARGS.get('_ansible_inject_invocation', False):
@@ -1504,15 +1501,6 @@ class AnsibleModule(object):
         deprecations = get_deprecations()
         if deprecations:
             kwargs['deprecations'] = deprecations
-
-        # preserve bools/none from no_log
-        preserved = {k: v for k, v in kwargs.items() if v is None or isinstance(v, bool)}
-
-        # strip no_log collisions
-        kwargs = remove_values(kwargs, self.no_log_values)
-
-        # graft preserved values back on
-        kwargs.update(preserved)
 
         self._record_module_result(kwargs)
 
@@ -1842,37 +1830,6 @@ class AnsibleModule(object):
         except (shutil.Error, OSError) as ex:
             raise Exception(f'Could not write data to file {dest!r} from {src!r}.') from ex
 
-    def _clean_args(self, args):
-
-        if not self._clean:
-            # create a printable version of the command for use in reporting later,
-            # which strips out things like passwords from the args list
-            to_clean_args = args
-            if isinstance(args, bytes):
-                to_clean_args = to_text(args)
-            if isinstance(args, (str, bytes)):
-                to_clean_args = shlex.split(to_clean_args)
-
-            clean_args = []
-            is_passwd = False
-            for arg in (to_native(a) for a in to_clean_args):
-                if is_passwd:
-                    is_passwd = False
-                    clean_args.append('********')
-                    continue
-                if PASSWD_ARG_RE.match(arg):
-                    sep_idx = arg.find('=')
-                    if sep_idx > -1:
-                        clean_args.append('%s=********' % arg[:sep_idx])
-                        continue
-                    else:
-                        is_passwd = True
-                arg = heuristic_log_sanitize(arg, self.no_log_values)
-                clean_args.append(arg)
-            self._clean = ' '.join(shlex.quote(arg) for arg in clean_args)
-
-        return self._clean
-
     def run_command(self, args, check_rc=False, close_fds=True, executable=None, data=None, binary_data=False, path_prefix=None, cwd=None,
                     use_unsafe_shell=False, prompt_regex=None, environ_update=None, umask=None, encoding='utf-8', errors='surrogate_or_strict',
                     expand_user_and_vars=True, pass_fds=None, before_communicate_callback=None, ignore_invalid_cwd=True, handle_exceptions=True):
@@ -2049,7 +2006,10 @@ class AnsibleModule(object):
 
         try:
             if self._debug:
-                self.log('Executing: ' + self._clean_args(args))
+                # `args` is bytes (shell) or a list of bytes (non-shell) at this point;
+                # render a printable command line. log() masks any secrets in it.
+                printable_args = b' '.join(args) if isinstance(args, list) else args
+                self.log('Executing: ' + to_native(printable_args, errors='surrogate_or_strict'))
             cmd = subprocess.Popen(args, **kwargs)
             if before_communicate_callback:
                 before_communicate_callback(cmd)
@@ -2134,18 +2094,17 @@ class AnsibleModule(object):
             rc = cmd.returncode
         except OSError as ex:
             if handle_exceptions:
-                self.fail_json(rc=ex.errno, stdout='', stderr='', msg="Error executing command.", cmd=self._clean_args(args), exception=ex)
+                self.fail_json(rc=ex.errno, stdout='', stderr='', msg="Error executing command.", cmd=args, exception=ex)
             else:
                 raise
         except Exception as ex:
             if handle_exceptions:
-                self.fail_json(rc=257, stdout='', stderr='', msg="Error executing command.", cmd=self._clean_args(args), exception=ex)
+                self.fail_json(rc=257, stdout='', stderr='', msg="Error executing command.", cmd=args, exception=ex)
             else:
                 raise
 
         if rc != 0 and check_rc:
-            msg = heuristic_log_sanitize(stderr.rstrip(), self.no_log_values)
-            self.fail_json(cmd=self._clean_args(args), rc=rc, stdout=stdout, stderr=stderr, msg=msg)
+            self.fail_json(cmd=args, rc=rc, stdout=stdout, stderr=stderr, msg=to_native(stderr.rstrip(), errors='surrogate_or_strict'))
 
         if encoding is not None:
             return (rc, to_native(stdout, encoding=encoding, errors=errors),

@@ -1,0 +1,2 @@
+minor_changes:
+  - jsonfile cache plugin - add ``persist_metadata`` option to configure whether or not to preserve metadata like deprecation notices. Setting the option to ``False`` restores the filename and format used prior to ansible-core 2.19.

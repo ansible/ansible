@@ -29,7 +29,7 @@ from ansible.module_utils._internal._json._profiles import _fallback_to_str
 from ansible._internal._json._profiles import _cache_persistence
 from ansible.errors import AnsibleRuntimeError
 
-from ..mock.custom_types import CustomMapping, CustomSequence, CustomStr, CustomInt, CustomFloat
+from ..mock.custom_types import CustomMapping, CustomSequence, CustomSet, CustomStr, CustomInt, CustomFloat
 
 
 basic_values = (
@@ -50,6 +50,7 @@ basic_values = (
     CustomInt(42),
     CustomFloat(42.0),
     {1},
+    CustomSet([1]),  # a collections.abc.Set that is not a concrete set/frozenset (e.g. like dict_keys)
     dict(a=1),
     CustomMapping(dict(a=1)),
     {(1, 2): "three"},  # hashable non-scalar key
@@ -87,7 +88,7 @@ def test_cache_persistence_schema() -> None:
     # DTFIX5: ensure all types/attrs included in _profiles._common_module_response_types are represented here, since they can appear in cached responses
 
     expected_schema_id = 1
-    expected_schema_hash = "0bc4bec94abe6ec0f62fc9f45ea1099ea65b13f00a5e5de1699e0dbcf0de2b2c"
+    expected_schema_hash = "c4b0a620372e25bccba064860f942239615796328caff3e6cc85d397535641a9"
 
     test_hash = hashlib.sha256()
     test_hash.update(pathlib.Path(DataSet.PROFILE_DIR / _cache_persistence._Profile.profile_name).with_suffix('.txt').read_bytes())

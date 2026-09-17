@@ -1,0 +1,3 @@
+bugfixes:
+- >-
+  ``ansible-doc -t filter|test <plugin>`` - remove empty bullet point from the description.

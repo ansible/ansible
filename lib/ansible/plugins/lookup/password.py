@@ -135,6 +135,7 @@ import hashlib
 
 from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
+from ansible.module_utils.secrets import register_secret
 from ansible.parsing.splitter import parse_kv
 from ansible.plugins.lookup import LookupBase
 from ansible.utils.encrypt import BaseHash, do_encrypt, random_password, random_salt
@@ -406,6 +407,8 @@ class LookupModule(LookupBase):
                 if first_process:
                     # let other processes continue
                     _release_lock(lockfile)
+
+            register_secret(plaintext_password)
 
             if encrypt:
                 password = do_encrypt(plaintext_password, encrypt, salt=salt, ident=ident)

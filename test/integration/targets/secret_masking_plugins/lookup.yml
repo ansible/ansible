@@ -1,0 +1,10 @@
+---
+- name: lookup plugin secret registration
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: invoke the lookup_test lookup, which registers and masks secrets
+      assert:
+        that:
+          - lookup('lookup_test') == 'done'
+        quiet: true

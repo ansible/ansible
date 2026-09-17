@@ -1,0 +1,2 @@
+bugfixes:
+  - tempfile - reject prefix and suffix values that contain path components to prevent path traversal.

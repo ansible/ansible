@@ -4,9 +4,9 @@
   tasks:
     - name: Check no_log invocation results
       test_no_log:
-        explicit_pass: abc
+        explicit_pass: explicit_password
         suboption:
-          explicit_sub_pass: def
+          explicit_sub_pass: explicit_sub_password
       environment:
-        SECRET_ENV: ghi
-        SECRET_SUB_ENV: jkl
+        SECRET_ENV: fallback_password
+        SECRET_SUB_ENV: fallback_sub_password

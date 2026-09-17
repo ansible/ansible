@@ -1,0 +1,27 @@
+- hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: missing src with failed_when false
+      template:
+        src: does-not-exist.j2
+        dest: /tmp/out-does-not-exist
+      failed_when: false
+      register: result
+
+    - assert:
+        that:
+          - result is not failed
+          - result.failed_when_result == false
+          - "'Could not find or access' in result.msg"
+
+    - name: missing src with conditional failed_when
+      template:
+        src: does-not-exist.j2
+        dest: /tmp/out-does-not-exist
+      failed_when: "'Could not find or access' not in result.msg"
+      register: result
+
+    - assert:
+        that:
+          - result is not failed
+          - result.failed_when_result == false

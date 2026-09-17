@@ -258,6 +258,7 @@ def command_units(args: UnitsConfig) -> None:
 
         if not data_context().content.collection:
             cmd.append('--durations=25')
+            cmd.append('--pythonwarnings=error:Passing a non-Collection iterable to parametrize is deprecated')
 
         plugins = []
 

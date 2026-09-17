@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - Update ansible-test utility containers (http-test-container, pypi-test-container, ansible-test-utility-container).

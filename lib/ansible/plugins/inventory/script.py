@@ -63,9 +63,9 @@ EXAMPLES = r'''# fmt: code
    elif [ "$1" == "--host" ]; then
      # this should not normally be called by Ansible as we return _meta above
      if [ "$2" == "myhost.domain.com" ]; then
-        echo '{"_meta": {hostvars": {"myhost.domain.com": {"host_specific-test_var": "test-value"}}}}'
+        echo '{"_meta": {"hostvars": {"myhost.domain.com": {"host_specific-test_var": "test-value"}}}}'
      else
-        echo '{"_meta": {hostvars": {}}}'
+        echo '{"_meta": {"hostvars": {}}}'
      fi
    else
      echo "Invalid option: use --list or --host <hostname>"

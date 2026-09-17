@@ -14,10 +14,11 @@ Mapping types which are supported for recursion and runtime usage, such as in se
 These will be converted to a simple Python `dict` before serialization or storage as a variable.
 """
 
-INTERMEDIATE_ITERABLE_TYPES = (tuple, set, frozenset, c.Sequence)
+INTERMEDIATE_ITERABLE_TYPES = (tuple, c.Set, c.Sequence)
 """
 Iterable types which are supported for recursion and runtime usage, such as in serialization and templating.
 These will be converted to a simple Python `list` before serialization or storage as a variable.
+Using the abstract `Set` (rather than concrete `set`/`frozenset`) also covers set-like views such as `dict_keys`.
 CAUTION: Scalar types which are sequences should be excluded when using this.
 """
 

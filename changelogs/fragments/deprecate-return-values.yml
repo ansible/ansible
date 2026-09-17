@@ -1,0 +1,3 @@
+deprecated_features:
+  - task result - Returning ``skipped`` from a module or action plugin is deprecated and will be removed in ansible-core 2.25. Use task-level conditionals (``when:``) to control execution.
+  - action plugins - ``AnsibleActionSkip`` is deprecated and will be removed in ansible-core 2.25. A sanity test detects imports of this exception. Return a results dict from action plugins and don't include a ``skipped`` key, or raise ``AnsibleActionNoCheckMode`` if necessary.

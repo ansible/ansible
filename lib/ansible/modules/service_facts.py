@@ -512,7 +512,10 @@ def main():
         if svc:
             all_services.update(svc)
     if len(all_services) == 0:
-        results = dict(skipped=True, msg="Failed to find any services. This can be due to privileges or some other configuration issue.")
+        results = dict(
+            skipped=True,  # deprecated: description='remove this skipped return', core_version='2.25'
+            msg="Failed to find any services. This can be due to privileges or some other configuration issue.",
+        )
     else:
         results = dict(ansible_facts=dict(services=all_services))
     module.exit_json(**results)

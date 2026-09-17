@@ -21,6 +21,7 @@ import time
 
 from ansible.errors import AnsibleError, AnsiblePromptInterrupt, AnsiblePromptNoninteractive
 from ansible.module_utils.common.text.converters import to_text
+from ansible.module_utils.secrets import register_secret
 from ansible.plugins.action import ActionBase
 from ansible.utils.display import Display
 
@@ -143,5 +144,11 @@ class ActionModule(ActionBase):
         else:
             duration = round(duration, 2)
         result['stdout'] = "Paused for %s %s" % (duration, duration_unit)
-        result['user_input'] = to_text(user_input, errors='surrogate_or_strict')
+
+        user_input = to_text(user_input, errors='surrogate_or_strict')
+
+        if not echo and user_input:
+            register_secret(user_input)
+
+        result['user_input'] = user_input
         return result

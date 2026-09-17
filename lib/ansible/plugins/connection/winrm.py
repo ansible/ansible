@@ -46,6 +46,7 @@ DOCUMENTATION = """
             - name: ansible_winrm_pass
             - name: ansible_winrm_password
         type: str
+        secret: true
         aliases:
         - password  # Needed for --ask-pass to come through on delegation
       port:
@@ -640,10 +641,13 @@ class Connection(ConnectionBase):
                 log_stdout = log_stderr = '<censored due to no log>'
 
             if from_exec:
-                display.vvvvv(f'WINRM RESULT <Response code {rc}, out {log_stdout!r}, err {log_stderr!r}>', host=self._winrm_host)
+                display.vvvvv(f'WINRM RESULT <Response code {rc}>', host=self._winrm_host)
             display.vvvvvv('WINRM RC %d' % rc, host=self._winrm_host)
-            display.vvvvvv(f'WINRM STDOUT {log_stdout}', host=self._winrm_host)
-            display.vvvvvv(f'WINRM STDERR {log_stderr}', host=self._winrm_host)
+            # The raw output is only shown under ANSIBLE_DEBUG. Module output may contain secrets which are not
+            # registered with the secret masker until the result has been parsed by the action plugin, so displaying
+            # the raw output here at a normal verbosity level could leak them.
+            display.debug(f'WINRM STDOUT {log_stdout}')
+            display.debug(f'WINRM STDERR {log_stderr}')
 
             # This is done after logging so we can still see the raw stderr for
             # debugging purposes.

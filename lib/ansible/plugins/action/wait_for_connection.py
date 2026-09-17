@@ -69,8 +69,10 @@ class ActionModule(ActionBase):
         timeout = int(self._task.args.get('timeout', self.DEFAULT_TIMEOUT))
 
         if self._task.check_mode:
-            display.vvv("wait_for_connection: skipping for check_mode")
-            return dict(skipped=True)
+            display.vvv("wait_for_connection: not executing in check_mode")
+            return dict(skipped=True,  # deprecated: description='returning skipped from actions/modules' core_version='2.25'
+                        changed=False,
+                        msg='`wait_for_connection` did not execute due to check mode')
 
         result = super(ActionModule, self).run(tmp, task_vars)
         del tmp  # tmp no longer has any effect

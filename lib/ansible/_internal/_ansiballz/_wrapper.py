@@ -44,6 +44,7 @@ def _ansiballz_main(
     profile: str,
     date_time: datetime.datetime,
     extensions: dict[str, dict[str, object]],
+    secrets: frozenset[str],
     rlimit_nofile: int,
 ) -> None:
     import os
@@ -143,6 +144,7 @@ def _ansiballz_main(
             module_fqn=module_fqn,
             modlib_path=modlib_path,
             extensions=extensions,
+            secrets=secrets,
         )
 
     def debug(command: str, modlib_path: str, json_params: bytes) -> None:
@@ -228,6 +230,7 @@ def _ansiballz_main(
                 profile=profile,
                 module_fqn=module_fqn,
                 modlib_path=modlib_path,
+                secrets=secrets,
                 extensions=extensions,
             )
 

@@ -23,7 +23,7 @@ for datafile in glob.glob(os.path.join(os.path.dirname(__file__), 'fixtures/*.js
         TESTSETS.append(json.loads(f.read()))
 
 
-@pytest.mark.parametrize("stdin, testcase", product([{}], TESTSETS), ids=lambda x: x.get('name'), indirect=['stdin'])
+@pytest.mark.parametrize("stdin, testcase", list(product([{}], TESTSETS)), ids=lambda x: x.get('name'), indirect=['stdin'])
 def test_distribution_version(am, mocker, testcase):
     """tests the distribution parsing code of the Facts class
 

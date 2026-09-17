@@ -1,0 +1,5 @@
+- name: install pexpect for the prompt-driven scenarios
+  hosts: localhost
+  gather_facts: true
+  roles:
+    - setup_pexpect

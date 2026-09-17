@@ -1,0 +1,25 @@
+---
+- name: secret masking display egress scenarios
+  hosts: testhost
+  gather_facts: false
+
+  tasks:
+    # Important this comes before the rest because location of error
+    # in the output traceback may contain preceding lines, including
+    # the previous tasks plaintext value. The MARKERLINE comment must stay on the
+    # line immediately above the task so it lands in the error's source context.
+    # MARKERLINE Displayline0055Secret
+    - name: error sink
+      fail:
+        msg: MARKERERROR Displayerror0053Secret
+      ignore_errors: true
+
+    - name: MARKERBANNER Displaybanner0052Secret
+      debug:
+        msg: banner task body
+
+    - name: warning, deprecation and invocation sinks
+      display_probe:
+        warning: MARKERWARN Displaywarn0050Secret
+        deprecation: MARKERDEPR Displaydeprec0051Secret
+        invocation_arg: MARKERINVOKE Displayinvoke0054Secret

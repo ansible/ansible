@@ -4,11 +4,13 @@
 
 from __future__ import annotations
 
+from unittest import mock
+
 import pytest
 
 from ansible._internal._datatag._tags import Origin
 from ansible.module_utils.common.text.converters import to_native
-from ansible.plugins.filter.core import to_bool, to_uuid
+from ansible.plugins.filter.core import register_secret, to_bool, to_uuid
 from ansible.errors import AnsibleError
 from ansible.template import Templar, trust_as_template, is_trusted_as_template
 from ...test_utils.controller.display import emits_warnings
@@ -87,3 +89,56 @@ def test_from_yaml_origin() -> None:
         assert origin.description == "a unit test"
         assert origin.line_num == 44  # source string origin plus two blank lines
         assert origin.col_num == 6
+
+
+@pytest.mark.parametrize("secret", (
+    "abcd",
+    "  abcd  ",
+    "Longersecret0001",
+))
+def test_register_secret_valid(secret: str) -> None:
+    for validation_action in ("error", "warn", "ignore"):
+        with mock.patch("ansible.plugins.filter.core.secrets.register_secret") as m:
+            assert register_secret(secret, validation_action=validation_action) is secret
+
+        m.assert_called_once_with(secret)
+
+
+@pytest.mark.parametrize("secret, msg", (
+    (1234, "Secret must be a string"),
+    ("abc", "Secret must be at least 4 characters long after trimming whitespace"),
+    ("  abc  ", "Secret must be at least 4 characters long after trimming whitespace"),
+))
+def test_register_secret_invalid_error(secret: object, msg: str) -> None:
+    with mock.patch("ansible.plugins.filter.core.secrets.register_secret") as m:
+        with pytest.raises(ValueError, match=msg):
+            register_secret(secret)  # type: ignore[arg-type]
+
+        with pytest.raises(ValueError, match=msg):
+            register_secret(secret, validation_action="error")  # type: ignore[arg-type]
+
+    m.assert_not_called()
+
+
+@pytest.mark.parametrize("secret, msg", (
+    (1234, "Secret must be a string"),
+    ("abc", "Secret must be at least 4 characters long after trimming whitespace"),
+))
+def test_register_secret_invalid_warn(secret: object, msg: str) -> None:
+    with mock.patch("ansible.plugins.filter.core.secrets.register_secret") as m:
+        with emits_warnings(warning_pattern=msg):
+            assert register_secret(secret, validation_action="warn") == secret  # type: ignore[arg-type]
+
+    m.assert_not_called()
+
+
+@pytest.mark.parametrize("secret", (
+    1234,
+    "abc",
+))
+def test_register_secret_invalid_ignore(secret: object) -> None:
+    with mock.patch("ansible.plugins.filter.core.secrets.register_secret") as m:
+        with emits_warnings():
+            assert register_secret(secret, validation_action="ignore") == secret  # type: ignore[arg-type]
+
+    m.assert_not_called()

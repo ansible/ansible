@@ -1,0 +1,18 @@
+- hosts: localhost
+  gather_facts: false
+  vars:
+    ansible_connection: ssh
+    ansible_ssh_timeout: 3
+    ansible_sftp_extra_args: -S ssh
+    output_dir: "{{ lookup('env', 'OUTPUT_DIR') }}"
+  tasks:
+    - name: Test that escalation path is handled correctly
+      block:
+        - copy:
+            content: hello
+            dest: "{{ output_dir }}/file"
+          become: true
+      always:
+        - file:
+            path: "{{ output_dir }}/file"
+            state: absent

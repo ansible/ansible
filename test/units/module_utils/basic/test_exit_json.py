@@ -35,7 +35,7 @@ class TestAnsibleModuleExitJson:
          {'msg': 'message', 'datetime': DATETIME.isoformat(), 'invocation': EMPTY_INVOCATION}),
     )
 
-    @pytest.mark.parametrize('args, expected, stdin', ((a, e, {}) for a, e in DATA), indirect=['stdin'])
+    @pytest.mark.parametrize('args, expected, stdin', [(a, e, {}) for a, e in DATA], indirect=['stdin'])
     def test_exit_json_exits(self, am, capfd, args, expected):
         with pytest.raises(SystemExit) as ctx:
             am.exit_json(**args)
@@ -46,7 +46,7 @@ class TestAnsibleModuleExitJson:
         assert return_val == expected
 
     @pytest.mark.parametrize('args, expected, stdin',
-                             ((a, e, {}) for a, e in DATA if 'msg' in a),
+                             [(a, e, {}) for a, e in DATA if 'msg' in a],
                              indirect=['stdin'])
     def test_fail_json_exits(self, am, capfd, args, expected):
         with pytest.raises(SystemExit) as ctx:
@@ -98,42 +98,44 @@ class TestAnsibleModuleExitJson:
         assert ctx.value.args[0] == error_msg
 
 
-class TestAnsibleModuleExitValuesRemoved:
+class TestAnsibleModuleExitNewSecretsProvided:
     """
-    Test that ExitJson and FailJson remove password-like values
+    Test that ExitJson and FailJson provide the newly registered secrets
     """
-    OMIT = 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER'
 
     DATA = (
         (
             dict(username='person', password='$secret k3y'),
             dict(one=1, pwd='$secret k3y', url='https://username:password12345@foo.com/login/',
                  not_secret='following the leader', msg='here'),
-            dict(one=1, pwd=OMIT, url='https://username:password12345@foo.com/login/',
+            dict(one=1, pwd='$secret k3y', url='https://username:password12345@foo.com/login/',
                  not_secret='following the leader', msg='here',
-                 invocation=dict(module_args=dict(password=OMIT, token=None, username='person'))),
+                 invocation=dict(module_args=dict(password='$secret k3y', token=None, username='person')),
+                 _ansible_new_secrets=['$secret k3y']),
         ),
         (
             dict(username='person', password='password12345'),
             dict(one=1, pwd='$secret k3y', url='https://username:password12345@foo.com/login/',
                  not_secret='following the leader', msg='here'),
-            dict(one=1, pwd='$secret k3y', url='https://username:********@foo.com/login/',
+            dict(one=1, pwd='$secret k3y', url='https://username:password12345@foo.com/login/',
                  not_secret='following the leader', msg='here',
-                 invocation=dict(module_args=dict(password=OMIT, token=None, username='person'))),
+                 invocation=dict(module_args=dict(password='password12345', token=None, username='person')),
+                 _ansible_new_secrets=['password12345']),
         ),
         (
             dict(username='person', password='$secret k3y'),
             dict(one=1, pwd='$secret k3y', url='https://username:$secret k3y@foo.com/login/',
                  not_secret='following the leader', msg='here'),
-            dict(one=1, pwd=OMIT, url='https://username:********@foo.com/login/',
+            dict(one=1, pwd='$secret k3y', url='https://username:$secret k3y@foo.com/login/',
                  not_secret='following the leader', msg='here',
-                 invocation=dict(module_args=dict(password=OMIT, token=None, username='person'))),
+                 invocation=dict(module_args=dict(password='$secret k3y', token=None, username='person')),
+                 _ansible_new_secrets=['$secret k3y']),
         ),
     )
 
     @pytest.mark.parametrize('am, stdin, return_val, expected',
-                             (({'username': {}, 'password': {'no_log': True}, 'token': {'no_log': True}}, s, r, e)
-                              for s, r, e in DATA),
+                             [({'username': {}, 'password': {'no_log': True}, 'token': {'no_log': True}}, s, r, e)
+                              for s, r, e in DATA],
                              indirect=['am', 'stdin'])
     def test_exit_json_removes_values(self, am, capfd, return_val, expected):
         with pytest.raises(SystemExit):
@@ -143,8 +145,8 @@ class TestAnsibleModuleExitValuesRemoved:
         assert json.loads(out) == expected
 
     @pytest.mark.parametrize('am, stdin, return_val, expected',
-                             (({'username': {}, 'password': {'no_log': True}, 'token': {'no_log': True}}, s, r, e)
-                              for s, r, e in DATA),
+                             [({'username': {}, 'password': {'no_log': True}, 'token': {'no_log': True}}, s, r, e)
+                              for s, r, e in DATA],
                              indirect=['am', 'stdin'])
     def test_fail_json_removes_values(self, am, capfd, return_val, expected):
         expected['failed'] = True

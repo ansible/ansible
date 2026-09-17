@@ -1293,6 +1293,7 @@ class _CacheLoader(PluginLoader):
         if not plugin:
             raise AnsibleError(f'Unable to load the cache plugin {name!r}.')
 
+        # NOTE: jsonfile relies on the internal impl detail that the instance of the cache class is initialized at this point
         if plugin._persistent:
             return _cache.PluginInterposer(plugin)
 

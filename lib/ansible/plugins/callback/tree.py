@@ -25,16 +25,20 @@ DOCUMENTATION = """
     description:
         - "This callback is used by the Ansible (adhoc) command line option C(-t|--tree)."
         - This produces a JSON dump of events in a directory, a file for each host, the directory used MUST be passed as a command line option.
+    deprecated:
+      why: The P(ansible.builtin.tree#callback) callback is no longer recommended due to long term instability.
+      alternatives: Use a stable callback with test coverage, or consider vendoring and/or moving this plugin to a collection.
+      removed_in: "2.23"
 """
 
 import os
 
 from ansible.constants import TREE_DIR
 from ansible.executor.task_result import CallbackTaskResult
-from ansible.module_utils.common.text.converters import to_bytes
+from ansible.module_utils.common.text.converters import to_bytes, to_text
+from ansible.module_utils.secrets import mask_secrets
 from ansible.plugins.callback import CallbackBase
 from ansible.utils.path import makedirs_safe, unfrackpath
-from ansible.module_utils._internal import _deprecator
 
 
 class CallbackModule(CallbackBase):
@@ -47,14 +51,7 @@ class CallbackModule(CallbackBase):
     CALLBACK_NAME = 'tree'
     CALLBACK_NEEDS_ENABLED = True
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        self._display.deprecated(  # pylint: disable=ansible-deprecated-unnecessary-collection-name
-            msg='The tree callback plugin is deprecated.',
-            version='2.23',
-            deprecator=_deprecator.ANSIBLE_CORE_DEPRECATOR,  # entire plugin being removed; this improves the messaging
-        )
+    ANSIBLE_SUPPORTS_MASKING = True
 
     def set_options(self, task_keys=None, var_options=None, direct=None):
         """ override to set self.tree """
@@ -70,7 +67,8 @@ class CallbackModule(CallbackBase):
     def write_tree_file(self, hostname, buf):
         """ write something into treedir/hostname """
 
-        buf = to_bytes(buf)
+        # This callback opts in to receiving unmasked results, so any secrets must be redacted before they reach the file.
+        buf = to_bytes(mask_secrets(to_text(buf)))
         try:
             makedirs_safe(self.tree)
         except OSError as ex:

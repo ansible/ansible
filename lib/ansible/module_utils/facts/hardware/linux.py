@@ -674,6 +674,7 @@ class LinuxHardware(Hardware):
             'ids': self.get_device_links('/dev/disk/by-id'),
             'uuids': self.get_device_links('/dev/disk/by-uuid'),
             'labels': self.get_device_links('/dev/disk/by-label'),
+            'paths': self.get_device_links('/dev/disk/by-path'),
             'masters': self.get_all_device_owners(),
         }
 

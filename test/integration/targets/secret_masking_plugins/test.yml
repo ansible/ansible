@@ -1,0 +1,10 @@
+---
+- name: test plugin secret registration
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: invoke the test_test test, which registers and masks secrets
+      assert:
+        that:
+          - "'probe' is test_test"
+        quiet: true

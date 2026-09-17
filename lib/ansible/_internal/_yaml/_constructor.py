@@ -16,6 +16,7 @@ from ansible.parsing.vault import EncryptedString
 from ansible.utils.display import Display
 
 from ._errors import AnsibleConstructorError
+from ...module_utils.secrets import register_secret
 
 display = Display()
 
@@ -40,12 +41,13 @@ class AnsibleInstrumentedConstructor(_BaseConstructor):
 
     name: t.Any  # provided by the YAML parser, which retrieves it from the stream
 
-    def __init__(self, origin: Origin, trusted_as_template: bool) -> None:
+    def __init__(self, origin: Origin, trusted_as_template: bool, sensitive_source_data: bool = False) -> None:
         if not origin.line_num:
             origin = origin.replace(line_num=1)
 
         self._origin = origin
         self._trusted_as_template = trusted_as_template
+        self._sensitive_source_data = sensitive_source_data
         self._duplicate_key_mode = C.config.get_config_value('DUPLICATE_YAML_DICT_KEY')
 
         super().__init__()
@@ -65,6 +67,13 @@ class AnsibleInstrumentedConstructor(_BaseConstructor):
         # This is done before checking for duplicates to leverage existing error checking on the input node.
         mapping = super().construct_mapping(node, deep)
         keys = set()
+
+        if self._sensitive_source_data:
+            for k, v in mapping.items():
+                if isinstance(v, str):
+                    register_secret(v)
+                elif isinstance(v, (int, float)) and not isinstance(v, bool):
+                    register_secret(str(v))
 
         # Now that the node is known to be a valid mapping, handle any duplicate keys.
         for key_node, _value_node in node.value:
@@ -147,7 +156,16 @@ class AnsibleInstrumentedConstructor(_BaseConstructor):
     def construct_yaml_seq(self, node):
         data = self._node_position_info(node).tag([])
         yield data
-        data.extend(self.construct_sequence(node))
+        values = self.construct_sequence(node)
+
+        if self._sensitive_source_data:
+            for v in values:
+                if isinstance(v, str):
+                    register_secret(v)
+                elif isinstance(v, (int, float)) and not isinstance(v, bool):
+                    register_secret(str(v))
+
+        data.extend(values)
 
     def _resolve_and_construct_object(self, node):
         # use a copied node to avoid mutating existing node and tripping the recursion check in construct_object
@@ -188,10 +206,10 @@ class AnsibleInstrumentedConstructor(_BaseConstructor):
 class AnsibleConstructor(AnsibleInstrumentedConstructor):
     """Ansible constructor which supports Ansible custom behavior such as `Origin` tagging, as well as Ansible-specific YAML tags."""
 
-    def __init__(self, origin: Origin, trusted_as_template: bool) -> None:
+    def __init__(self, origin: Origin, trusted_as_template: bool, sensitive_source_data: bool = False) -> None:
         self._unsafe_depth = 0  # volatile state var used during recursive construction of a value tagged unsafe
 
-        super().__init__(origin=origin, trusted_as_template=trusted_as_template)
+        super().__init__(origin=origin, trusted_as_template=trusted_as_template, sensitive_source_data=sensitive_source_data)
 
     @property
     def trusted_as_template(self) -> bool:

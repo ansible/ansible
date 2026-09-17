@@ -38,6 +38,18 @@ DOCUMENTATION = """
           - key: fact_caching_timeout
             section: defaults
         type: integer
+      persist_metadata:
+        version_added: "2.22"
+        description:
+          - By default, the fact cache preserves internal metadata, including deprecation notices and variable origin.
+          - Setting this option to False will remove this information, and use the filename and format matching the behavior before ansible-core 2.19.
+        default: True
+        type: bool
+        env:
+          - name: ANSIBLE_CACHE_JSONFILE_PERSIST_METADATA
+        ini:
+          - key: persist_metadata
+            section: jsonfile_cache
 """
 
 import json
@@ -48,6 +60,11 @@ from ansible.plugins.cache import BaseFileCacheModule
 
 class CacheModule(BaseFileCacheModule):
     """A caching module backed by json files."""
+
+    # NOTE: This relies on core impl details about cache instantiation and the PluginLoader that can change at any time.
+    @property
+    def _persistent(self):
+        return self.get_option("persist_metadata")
 
     def _load(self, filepath: str) -> object:
         return json.loads(pathlib.Path(filepath).read_text())

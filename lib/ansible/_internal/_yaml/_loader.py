@@ -70,6 +70,7 @@ class AnsibleLoader(_YamlParser, AnsibleConstructor, Resolver):
             self,
             origin=_tags.Origin.get_or_create_tag(stream, self.name),
             trusted_as_template=_tags.TrustedAsTemplate.is_tagged_on(stream),
+            sensitive_source_data=_tags.SourceWasEncrypted.is_tagged_on(stream),
         )
 
         Resolver.__init__(self)

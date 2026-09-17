@@ -57,6 +57,7 @@ DOCUMENTATION = """
       password:
           description: Authentication password for the O(remote_user). Can be supplied as CLI option.
           type: string
+          secret: true
           vars:
               - name: ansible_password
               - name: ansible_ssh_pass
@@ -285,6 +286,7 @@ DOCUMENTATION = """
           description:
             - Private key contents in PEM format. Requires the C(SSH_AGENT) configuration to be enabled.
           type: string
+          secret: true
           env:
             - name: ANSIBLE_PRIVATE_KEY
           vars:
@@ -296,6 +298,7 @@ DOCUMENTATION = """
             - Private key passphrase, dependent on O(private_key).
             - This does NOT have any effect when used with O(private_key_file).
           type: string
+          secret: true
           env:
             - name: ANSIBLE_PRIVATE_KEY_PASSPHRASE
           vars:
@@ -567,11 +570,15 @@ def _ssh_retry[**P](
             try:
                 try:
                     return_tuple = func(self, *args, **kwargs)
+                    display.vvv(u'rc=%s' % return_tuple[0], host=self.host)
+                    # The raw output is only shown under ANSIBLE_DEBUG. Module output may contain secrets which are
+                    # not registered with the secret masker until the result has been parsed by the action plugin,
+                    # so displaying the raw output here at a normal verbosity level could leak them.
                     # TODO: this should come from task
                     if self._play_context.no_log:
-                        display.vvv(u'rc=%s, stdout and stderr censored due to no log' % return_tuple[0], host=self.host)
+                        display.debug(u'stdout and stderr censored due to no log')
                     else:
-                        display.vvv(str(return_tuple), host=self.host)
+                        display.debug(u'stdout and stderr: %s' % str(return_tuple[1:]))
                     # 0 = success
                     # 1-254 = remote command return code
                     # 255 could be a failure from the ssh command itself
@@ -660,7 +667,8 @@ class Connection(ConnectionBase):
             self.allow_executable = False
 
         # parser to discover 'passed options', used later on for pipelining resolution
-        self._tty_parser = argparse.ArgumentParser()
+        # exit_on_error=False so malformed args raise ArgumentError instead of calling sys.exit()
+        self._tty_parser = argparse.ArgumentParser(exit_on_error=False)
         self._tty_parser.add_argument('-t', action='count')
         self._tty_parser.add_argument('-o', action='append')
 
@@ -1108,12 +1116,9 @@ class Connection(ConnectionBase):
 
         p = None
 
-        if isinstance(cmd, (str, bytes)):
-            cmd = to_bytes(cmd)
-        else:
-            cmd = list(map(to_bytes, cmd))
-
         popen_kwargs = self._init_shm()
+
+        is_ssh = to_bytes(self.get_option('ssh_executable')) == cmd[0]
 
         if b_ssh_pass_cmd := self._sshpass_cmd():
             cmd[:0] = b_ssh_pass_cmd
@@ -1165,7 +1170,7 @@ class Connection(ConnectionBase):
         # only when using ssh. Otherwise, we can send initial data straight away.
 
         state = states.index('ready_to_send')
-        if to_bytes(self.get_option('ssh_executable')) in cmd and sudoable:
+        if is_ssh and sudoable:
             prompt = getattr(self.become, 'prompt', None)
             if prompt:
                 # We're requesting escalation with a password, so we have to
@@ -1248,6 +1253,8 @@ class Connection(ConnectionBase):
                             # not going to arrive until the persisted connection closes.
                             timeout = 1
                         b_tmp_stdout += b_chunk
+                        # Known limitation: under ANSIBLE_DEBUG the raw chunks are shown before any secrets in module output
+                        # have been registered with the secret masker, so they may be shown in plaintext.
                         display.debug(u"stdout chunk (state=%s):\n>>>%s<<<\n" % (state, to_text(b_chunk)))
                     elif key.fileobj == p.stderr:
                         b_chunk = p.stderr.read()
@@ -1588,7 +1595,11 @@ class Connection(ConnectionBase):
             if attr is not None:
                 opts.extend(self._split_ssh_args(attr))
 
-        args, dummy = self._tty_parser.parse_known_args(opts)
+        try:
+            args, dummy = self._tty_parser.parse_known_args(opts)
+        except argparse.ArgumentError:
+            # malformed args; cannot tell if a tty was requested, ssh itself will report the problem when the command runs
+            return False
 
         if args.t:
             return True

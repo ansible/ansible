@@ -44,3 +44,21 @@ export ANSIBLE_CACHE_PLUGIN_PREFIX="YOLO"
 ansible-playbook -i chroot_inventory_config.yml invalid_hostname_file_caches.yml "$@"
 
 ANSIBLE_CACHE_PLUGIN=dummy_file_cache_persistent ansible-playbook -i chroot_inventory_config.yml invalid_hostname_file_caches.yml "$@"
+
+# test user-facing jsonfile 'persistent' route specifically, which relies on internal implementation details
+export ANSIBLE_CACHE_PLUGIN=ansible.builtin.jsonfile \
+    ANSIBLE_CACHE_PLUGIN_CONNECTION="${OUTPUT_DIR}" \
+    ANSIBLE_CACHE_PLUGIN_PREFIX=legacy_ \
+    ANSIBLE_CACHE_JSONFILE_PERSIST_METADATA=false
+
+ansible localhost -m assert -a "that='TEST_FACT is undefined'"
+ansible localhost -m set_fact -a "cacheable='True' TEST_FACT='DEFINED'"
+ansible localhost -m assert -a "that='TEST_FACT is defined'"
+
+if [[ ! -f "$OUTPUT_DIR/legacy_localhost" ]]; then
+    echo "Missing expected cache filename"
+    exit 1
+elif ! grep -q "${OUTPUT_DIR}/legacy_localhost" -e '{"TEST_FACT": "DEFINED"}'; then
+    echo "Missing expected cache format"
+    exit 1
+fi
