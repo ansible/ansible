@@ -1,0 +1,4 @@
+minor_changes:
+  - ShellBase class - Switched to use uuid for the remote temporary directory
+bugfixes:
+  - ShellBase class - The basename method no longer trims the left side (significant) of the path base
