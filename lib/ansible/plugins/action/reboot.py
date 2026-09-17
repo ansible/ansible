@@ -332,14 +332,41 @@ class ActionModule(ActionBase):
         shutdown_command_args = self.get_shutdown_command_args(distribution)
         reboot_command = '{0} {1}'.format(shutdown_command, shutdown_command_args)
 
+        # Get the original reconnection_retries set on the connection so it can be restored after the
+        # reboot command is sent. Some connection plugins (e.g. ssh) retry a command that appears to have
+        # failed due to a lost connection. Since the reboot command is expected to sever the connection as
+        # the host shuts down, such a retry would resend the reboot/shutdown command to a host that may
+        # already be rebooting.
+        original_reconnection_retries = None
         try:
-            display.vvv("{action}: rebooting server...".format(action=self._task.action))
-            display.debug("{action}: rebooting server with command '{command}'".format(action=self._task.action, command=reboot_command))
-            reboot_result = self._low_level_execute_command(reboot_command, sudoable=self.DEFAULT_SUDOABLE)
-        except AnsibleConnectionFailure as e:
-            # If the connection is closed too quickly due to the system being shutdown, carry on
-            display.debug('{action}: AnsibleConnectionFailure caught and handled: {error}'.format(action=self._task.action, error=to_text(e)))
-            reboot_result['rc'] = 0
+            original_reconnection_retries = self._connection.get_option('reconnection_retries')
+        except KeyError:
+            display.debug("{action}: reconnection_retries connection option has not been set".format(action=self._task.action))
+
+        try:
+            if original_reconnection_retries is not None:
+                try:
+                    display.debug("{action}: setting reconnection_retries to 0 for reboot command".format(action=self._task.action))
+                    self._connection.set_option("reconnection_retries", 0)
+                except AttributeError:
+                    display.warning("Connection plugin does not allow reconnection_retries to be overridden")
+
+            try:
+                display.vvv("{action}: rebooting server...".format(action=self._task.action))
+                display.debug("{action}: rebooting server with command '{command}'".format(action=self._task.action, command=reboot_command))
+                reboot_result = self._low_level_execute_command(reboot_command, sudoable=self.DEFAULT_SUDOABLE)
+            except AnsibleConnectionFailure as e:
+                # If the connection is closed too quickly due to the system being shutdown, carry on
+                display.debug('{action}: AnsibleConnectionFailure caught and handled: {error}'.format(action=self._task.action, error=to_text(e)))
+                reboot_result['rc'] = 0
+        finally:
+            if original_reconnection_retries is not None:
+                try:
+                    display.debug("{action}: restoring reconnection_retries to original value of {value}".format(
+                        action=self._task.action, value=original_reconnection_retries))
+                    self._connection.set_option("reconnection_retries", original_reconnection_retries)
+                except AttributeError:
+                    display.warning("Connection plugin does not allow reconnection_retries to be restored")
 
         result['start'] = datetime.now(timezone.utc)
 
