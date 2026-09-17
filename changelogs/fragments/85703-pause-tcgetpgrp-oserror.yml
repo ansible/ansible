@@ -1,0 +1,2 @@
+bugfixes:
+  - pause - Fix ``[Errno 25] Inappropriate ioctl for device`` failures by treating a tty with no controlling terminal as non-interactive (https://github.com/ansible/ansible/issues/85703).

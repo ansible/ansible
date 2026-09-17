@@ -5,7 +5,9 @@
 from __future__ import annotations
 
 import datetime
+import errno
 import locale
+import os
 import sys
 import typing as t
 import unicodedata
@@ -14,6 +16,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from ansible.errors import AnsiblePromptNoninteractive
 from ansible.module_utils.datatag import deprecator_from_collection_name
 from ansible.module_utils._internal import _deprecator, _errors, _messages
 from ansible.utils.display import _LIBC, _MAX_INT, Display, get_text_width
@@ -145,6 +148,28 @@ def test_Display_display_lock_fork(monkeypatch, display_resource):
     monkeypatch.setattr(display, '_final_q', MagicMock())
     display.display('foo')
     lock.__enter__.assert_not_called()
+
+
+def test_Display_prompt_until_tty_without_controlling_terminal(monkeypatch, display_resource):
+    """A tty-backed stdin with no controlling terminal must be treated as non-interactive.
+
+    Regression test for https://github.com/ansible/ansible/issues/85703, where an
+    unhandled OSError (ENOTTY) from os.tcgetpgrp() surfaced as a raw
+    "[Errno 25] Inappropriate ioctl for device" task failure instead of the
+    expected non-interactive prompt handling.
+    """
+    display = Display()
+    monkeypatch.setattr(Display, '_stdin_fd', property(lambda self: 5))
+    monkeypatch.setattr(os, 'isatty', lambda fd: True)
+    monkeypatch.setattr(os, 'getpgrp', lambda: 1)
+
+    def tcgetpgrp_raises(fd):
+        raise OSError(errno.ENOTTY, 'Inappropriate ioctl for device')
+
+    monkeypatch.setattr(os, 'tcgetpgrp', tcgetpgrp_raises)
+
+    with pytest.raises(AnsiblePromptNoninteractive):
+        display.prompt_until('test prompt')
 
 
 def test_format_message_deprecation_with_multiple_details() -> None:

@@ -999,14 +999,21 @@ class Display(metaclass=Singleton):
             setupterm()
             self.setup_curses = True
 
-        if (
-            self._stdin_fd is None
-            or not os.isatty(self._stdin_fd)
-            # Compare the current process group to the process group associated
-            # with terminal of the given file descriptor to determine if the process
-            # is running in the background.
-            or os.getpgrp() != os.tcgetpgrp(self._stdin_fd)
-        ):
+        try:
+            if (
+                self._stdin_fd is None
+                or not os.isatty(self._stdin_fd)
+
+                # Compare the current process group to the process group associated
+                # with terminal of the given file descriptor to determine if the process
+                # is running in the background.
+                or os.getpgrp() != os.tcgetpgrp(self._stdin_fd)
+            ):
+                raise OSError
+        except OSError:
+            # A TTY with no controlling terminal (e.g. a pty not attached to a session)
+            # makes tcgetpgrp() raise OSError instead of answering the question; treat that
+            # the same as any other non-interactive stdin.
             raise AnsiblePromptNoninteractive('stdin is not interactive')
 
         # When seconds/interrupt_input/complete_input are all None, this does mostly the same thing as input/getpass,
