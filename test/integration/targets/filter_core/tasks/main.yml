@@ -556,6 +556,17 @@
       - "'salt_size must be an integer' in password_hash_1.msg"
       - password_hash_2 is failed
       - "'is not in the list of supported passlib algorithms' in password_hash_2.msg"
+
+- name: test using passlib with an unsupported hash type
+  set_fact:
+    foo: '{{"hey"|password_hash("msdcc")}}'
+  ignore_errors: yes
+  register: unsupported_hash_type
+
+- name: Ensure task/filter failed
+  assert:
+    that:
+      - unsupported_hash_type is failed
       - "'msdcc is not in the list of supported passlib algorithms' in unsupported_hash_type.msg"
 
 - name: Verify to_uuid throws on weird namespace

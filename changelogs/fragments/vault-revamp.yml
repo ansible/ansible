@@ -1,0 +1,5 @@
+major_changes:
+  - ansible-vault - New vault encryption methods are available (FIXME describe), selectable via the ``--vault-method`` CLI argument.
+  - ansible-vault - The default vault encryption method for new values has changed to (FIXME describe after deciding which).
+bugfixes:
+  - vault - Improved error messaging for unsupported vault methods and other invalid/corrupted vault data scenarios.
