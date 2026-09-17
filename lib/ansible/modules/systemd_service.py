@@ -336,9 +336,16 @@ def parse_systemctl_show(lines):
     return parsed
 
 
+def _build_cmd(base: list[str], *args: str, exclude: str | None = None) -> list[str]:
+    cmd = base.copy()
+    if exclude and exclude in cmd:
+        cmd.remove(exclude)
+    cmd.extend(args)
+    return cmd
+
+
 # ===========================================
 # Main control flow
-
 def main():
     # initialize
     module = AnsibleModule(
@@ -368,7 +375,8 @@ def main():
             if globpattern in unit:
                 module.fail_json(msg="This module does not currently support using glob patterns, found '%s' in service name: %s" % (globpattern, unit))
 
-    systemctl = module.get_bin_path('systemctl', True)
+    G = '--global'
+    systemctl = [module.get_bin_path('systemctl', True)]
 
     if os.getenv('XDG_RUNTIME_DIR') is None:
         os.environ['XDG_RUNTIME_DIR'] = '/run/user/%s' % os.geteuid()
@@ -377,13 +385,13 @@ def main():
     # if scope is 'system' or None, we can ignore as there is no extra switch.
     # The other choices match the corresponding switch
     if module.params['scope'] != 'system':
-        systemctl += " --%s" % module.params['scope']
+        systemctl.append(f"--{module.params['scope']}")
 
     if module.params['no_block']:
-        systemctl += " --no-block"
+        systemctl.append("--no-block")
 
     if module.params['force']:
-        systemctl += " --force"
+        systemctl.append("--force")
 
     rc = 0
     out = err = ''
@@ -395,7 +403,7 @@ def main():
 
     # Run daemon-reload first, if requested
     if module.params['daemon_reload'] and not module.check_mode:
-        (rc, out, err) = module.run_command("%s daemon-reload" % (systemctl))
+        (rc, out, err) = module.run_command(_build_cmd(systemctl, 'deamon-reload', exclude=G))
         if rc != 0:
             if is_chroot(module) or os.environ.get('SYSTEMD_OFFLINE') == '1':
                 module.warn('daemon-reload failed, but target is a chroot or systemd is offline. Continuing. Error was: %d / %s' % (rc, err))
@@ -404,7 +412,7 @@ def main():
 
     # Run daemon-reexec
     if module.params['daemon_reexec'] and not module.check_mode:
-        (rc, out, err) = module.run_command("%s daemon-reexec" % (systemctl))
+        (rc, out, err) = module.run_command(_build_cmd(systemctl, 'deamon-reexec', exclude=G))
         if rc != 0:
             if is_chroot(module) or os.environ.get('SYSTEMD_OFFLINE') == '1':
                 module.warn('daemon-reexec failed, but target is a chroot or systemd is offline. Continuing. Error was: %d / %s' % (rc, err))
@@ -417,8 +425,7 @@ def main():
         is_systemd = False
 
         # check service data, cannot error out on rc as it changes across versions, assume not found
-        (rc, out, err) = module.run_command("%s show '%s'" % (systemctl, unit))
-
+        (rc, out, err) = module.run_command(_build_cmd(systemctl, 'show', unit))
         if rc == 0 and not (request_was_ignored(out) or request_was_ignored(err)):
             # load return of systemctl show into dictionary for easy access and return
             if out:
@@ -438,10 +445,10 @@ def main():
 
             unit_base, sep, suffix = unit.partition('@')
             unit_search = '{unit_base}{sep}'.format(unit_base=unit_base, sep=sep)
-            (rc, out, err) = module.run_command("{systemctl} list-unit-files '{unit_search}*'".format(systemctl=systemctl, unit_search=unit_search))
+            (rc, out, err) = module.run_command(_build_cmd(systemctl, 'list-unit-files', f'{unit_search}*'))
             is_systemd = unit_search in out
 
-            (rc, out, err) = module.run_command("{systemctl} is-active '{unit}'".format(systemctl=systemctl, unit=unit))
+            (rc, out, err) = module.run_command(_build_cmd(systemctl, 'is-active', unit))
             result['status']['ActiveState'] = out.rstrip('\n')
 
         else:
@@ -459,13 +466,13 @@ def main():
                 "generated",
                 "transient"]
 
-            (rc, out, err) = module.run_command("%s is-enabled '%s'" % (systemctl, unit))
+            (rc, out, err) = module.run_command(_build_cmd(systemctl, "is-enabled", unit))
             if out.strip() in valid_enabled_states:
                 is_systemd = True
             else:
                 # fallback list-unit-files as show does not work on some systems (chroot)
                 # not used as primary as it skips some services (like those using init.d) and requires .service/etc notation
-                (rc, out, err) = module.run_command("%s list-unit-files '%s'" % (systemctl, unit))
+                (rc, out, err) = module.run_command(_build_cmd(systemctl, "list-unit-files", unit))
                 if rc == 0:
                     is_systemd = True
                 else:
@@ -480,7 +487,7 @@ def main():
         # mask/unmask the service, if requested, can operate on services before they are installed
         if module.params['masked'] is not None:
             # state is not masked unless systemd affirms otherwise
-            (rc, out, err) = module.run_command("%s is-enabled '%s'" % (systemctl, unit))
+            (rc, out, err) = module.run_command(_build_cmd(systemctl, "is-enabled", unit))
             masked = out.strip() == "masked"
 
             if masked != module.params['masked']:
@@ -491,7 +498,7 @@ def main():
                     action = 'unmask'
 
                 if not module.check_mode:
-                    (rc, out, err) = module.run_command("%s %s '%s'" % (systemctl, action, unit))
+                    (rc, out, err) = module.run_command(_build_cmd(systemctl, action, unit))
                     if rc != 0:
                         # some versions of system CAN mask/unmask non existing services, we only fail on missing if they don't
                         fail_if_missing(module, found, unit, msg='host')
@@ -510,7 +517,7 @@ def main():
 
             # do we need to enable the service?
             enabled = False
-            (rc, out, err) = module.run_command("%s is-enabled '%s' -l" % (systemctl, unit))
+            (rc, out, err) = module.run_command(_build_cmd(systemctl, "is-enabled", unit))
 
             # check systemctl result or if it is a init script
             if rc == 0:
@@ -538,7 +545,7 @@ def main():
             if enabled != module.params['enabled']:
                 result['changed'] = True
                 if not module.check_mode:
-                    (rc, out, err) = module.run_command("%s %s '%s'" % (systemctl, action, unit))
+                    (rc, out, err) = module.run_command(_build_cmd(systemctl, action, unit))
                     if rc != 0:
                         module.fail_json(msg="Unable to %s service %s: %s" % (action, unit, out + err))
 
@@ -546,7 +553,7 @@ def main():
 
         # set service state if requested
         if module.params['state'] is not None:
-            fail_if_missing(module, found, unit, msg="host")
+            fail_if_missing(module, found, unit, msg=f"need a service to set to {module.params['state']}")
 
             # default to desired state
             result['state'] = module.params['state']
@@ -570,7 +577,7 @@ def main():
                 if action:
                     result['changed'] = True
                     if not module.check_mode:
-                        (rc, out, err) = module.run_command("%s %s '%s'" % (systemctl, action, unit))
+                        (rc, out, err) = module.run_command(_build_cmd(systemctl, action, unit))
                         if rc != 0:
                             module.fail_json(msg="Unable to %s service %s: %s" % (action, unit, err))
             # check for chroot
