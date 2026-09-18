@@ -1,0 +1,2 @@
+minor_changes:
+  - CLI - Tools that execute tasks can now pass one or more ``-E`` options to define key-value pairs (k=v or YAML/JSON mapping) to be added to the ``environment`` task keyword for all hosts.
