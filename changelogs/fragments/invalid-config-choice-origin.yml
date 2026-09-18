@@ -1,2 +1,0 @@
-bugfixes:
-- config - Include the origin in error message indicating an invalid choice in a configuration value

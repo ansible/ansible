@@ -1,2 +1,0 @@
-removed_features:
-  - Remove deprecated ``ANSIBLE_CONNECTION_PATH`` option

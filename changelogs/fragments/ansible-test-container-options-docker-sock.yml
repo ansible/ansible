@@ -1,2 +1,0 @@
-bugfixes:
-- ansible-test - Only add volume bind mount for ``docker.sock`` when using docker

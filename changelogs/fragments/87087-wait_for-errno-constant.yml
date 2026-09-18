@@ -1,2 +1,0 @@
-bugfixes:
-  - wait_for - use ``errno.ENOENT`` symbolic constant instead of hardcoded value for improved code portability.

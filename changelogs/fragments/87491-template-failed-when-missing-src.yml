@@ -1,3 +1,0 @@
-bugfixes:
-  - template action - restore ``failed_when`` support when the template source file
-    is not found on the controller (https://github.com/ansible/ansible/issues/87491).

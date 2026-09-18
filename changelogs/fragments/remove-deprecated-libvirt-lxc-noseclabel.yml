@@ -1,2 +1,0 @@
-removed_features:
-  - Remove deprecated ``DEFAULT_LIBVIRT_LXC_NOSECLABEL`` option.
