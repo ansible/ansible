@@ -500,3 +500,49 @@
     - dest_is_existing_file_force is changed
     - dest_is_existing_file_force_stat.stat.exists
     - dest_is_existing_file_force_stat.stat.islnk
+
+# Regression test for https://github.com/ansible/ansible/issues/86146
+- name: Test replacing existing relative destination with symlink
+  block:
+    - name: Create relative target file
+      copy:
+        content: "relative target file"
+        dest: relative_target_file
+
+    - name: Create existing file at relative destination
+      copy:
+        content: "existing destination file"
+        dest: relative_link
+
+    - name: Replace existing relative file with symlink
+      file:
+        path: relative_link
+        src: relative_target_file
+        state: link
+        force: true
+        follow: false
+      register: replace_relative_file_with_link
+
+    - name: Stat replaced relative symlink
+      stat:
+        path: relative_link
+        follow: false
+      register: replaced_relative_link
+
+    - name: Ensure existing file was replaced with relative symlink
+      assert:
+        that:
+          - replace_relative_file_with_link is changed
+          - replaced_relative_link.stat.exists
+          - replaced_relative_link.stat.islnk
+          - replaced_relative_link.stat.lnk_target == 'relative_target_file'
+
+  always:
+    - name: Remove relative symlink test files
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - relative_link
+        - relative_target_file
+# End Test #86146
