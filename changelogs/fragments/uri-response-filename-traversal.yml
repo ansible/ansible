@@ -1,0 +1,4 @@
+bugfixes:
+  - uri - decode the URL path before deriving the destination filename in
+    ``get_response_filename`` so percent-encoded path separators cannot place
+    the downloaded file outside a ``dest`` directory.
