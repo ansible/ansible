@@ -388,6 +388,8 @@ class GalaxyCLI(CLI):
         if galaxy_type == 'collection':
             list_parser.add_argument('--format', dest='output_format', choices=('human', 'yaml', 'json'), default='human',
                                      help="Format to display the list of collections in.")
+            list_parser.add_argument('--deduplicate', dest='deduplicate', action='store_true',
+                                     help='List only the first of each FQCN using the configured path order.')
 
     def add_search_options(self, parser, parents=None):
         search_parser = parser.add_parser('search', parents=parents,
@@ -1640,11 +1642,14 @@ class GalaxyCLI(CLI):
             artifacts_manager.require_build_metadata = False
 
         output_format = context.CLIARGS['output_format']
+        deduplicate_fqcn = context.CLIARGS['deduplicate']
         collection_name = context.CLIARGS['collection']
-        default_collections_path = set(C.COLLECTIONS_PATHS)
-        collections_search_paths = (
-            set(context.CLIARGS['collections_path'] or []) | default_collections_path | set(self.collection_paths)
+        ordered_search_paths = (
+            list(context.CLIARGS['collections_path'] or [])
+            + C.COLLECTIONS_PATHS
+            + self.collection_paths
         )
+        collections_search_paths = set(ordered_search_paths)
         collections_in_paths = {}
 
         warnings = []
@@ -1667,9 +1672,22 @@ class GalaxyCLI(CLI):
             dedupe=False
         ))
 
+        def configuration_order(collection):
+            src = pathlib.Path(to_text(collection.src))
+            for path in ordered_search_paths:
+                if src.is_relative_to(path):
+                    return (ordered_search_paths.index(path), collection.src)
+            return (float("inf"), collection.src)
+
         seen = set()
+        seen_fqcn = set()
         fqcn_width, version_width = _get_collection_widths(collections)
-        for collection in sorted(collections, key=lambda c: c.src):
+        for collection in sorted(collections, key=configuration_order):
+            if deduplicate_fqcn:
+                if collection.fqcn in seen_fqcn:
+                    continue
+                seen_fqcn.add(collection.fqcn)
+
             collection_found = True
             collection_path = pathlib.Path(to_text(collection.src)).parent.parent.as_posix()
 
@@ -1691,7 +1709,7 @@ class GalaxyCLI(CLI):
         path_found = False
         for path in collections_search_paths:
             if not os.path.exists(path):
-                if path in default_collections_path:
+                if path in C.COLLECTIONS_PATHS:
                     # don't warn for missing default paths
                     continue
                 warnings.append("- the configured path {0} does not exist.".format(path))
