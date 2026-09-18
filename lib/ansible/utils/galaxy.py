@@ -28,6 +28,7 @@ from ansible.errors import AnsibleError
 from ansible.utils.display import Display
 from ansible.module_utils.common.process import get_bin_path
 from ansible.module_utils.common.text.converters import to_text, to_native
+from ansible.module_utils.urls import mask_url
 
 
 display = Display()
@@ -40,17 +41,21 @@ def scm_archive_collection(src, name=None, version='HEAD'):
 def scm_archive_resource(src, scm='git', name=None, version='HEAD', keep_scm_meta=False):
 
     def run_scm_cmd(cmd, tempdir):
+        ran = ""
+        for arg in cmd:
+            if arg.startswith(('http', 'https', 'git', 'hg', 'ssh')):
+                arg = mask_url(arg)
+            ran += f"{arg} "
+
+        stderr = ''
         try:
-            stdout = ''
-            stderr = ''
             popen = Popen(cmd, cwd=tempdir, stdout=PIPE, stderr=PIPE)
-            stdout, stderr = popen.communicate()
+            dummy, stderr = popen.communicate()
         except Exception as e:
-            ran = " ".join(cmd)
-            display.debug("ran %s:" % ran)
-            raise AnsibleError("when executing %s: %s" % (ran, to_native(e)))
+            display.debug(f"ran : {ran}")
+            raise AnsibleError(f"when executing {ran}: {to_native(e)}")
         if popen.returncode != 0:
-            raise AnsibleError("- command %s failed in directory %s (rc=%s) - %s" % (' '.join(cmd), tempdir, popen.returncode, to_native(stderr)))
+            raise AnsibleError(f"- command {ran} failed in directory {tempdir} (rc={popen.returncode}) - {to_native(stderr)}")
 
     if scm not in ['hg', 'git']:
         raise AnsibleError("- scm %s is not currently supported" % scm)
@@ -58,7 +63,7 @@ def scm_archive_resource(src, scm='git', name=None, version='HEAD', keep_scm_met
     try:
         scm_path = get_bin_path(scm)
     except (ValueError, OSError) as ex:
-        raise AnsibleError(f"Could not find/use {scm!r}, it is required to continue with installing {src!r}.") from ex
+        raise AnsibleError(f"Could not find/use {scm!r}, it is required to continue with installing {mask_url(src)!r}.") from ex
 
     tempdir = tempfile.mkdtemp(dir=C.DEFAULT_LOCAL_TMP)
     clone_cmd = [scm_path, 'clone']
