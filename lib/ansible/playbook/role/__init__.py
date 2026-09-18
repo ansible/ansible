@@ -601,10 +601,8 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
             block_list.extend(dep_blocks)
 
         for task_block in self._handler_blocks:
-            new_task_block = task_block.copy()
-            new_task_block._dep_chain = new_dep_chain
-            new_task_block._play = play
-            block_list.append(new_task_block)
+            task_block._dep_chain = new_dep_chain
+            block_list.append(task_block)
 
         return block_list
 
@@ -642,10 +640,8 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
             block_list.extend(dep_blocks)
 
         for task_block in self._task_blocks:
-            new_task_block = task_block.copy()
-            new_task_block._dep_chain = new_dep_chain
-            new_task_block._play = play
-            block_list.append(new_task_block)
+            task_block._dep_chain = new_dep_chain
+            block_list.append(task_block)
 
         eor_block = Block(play=play)
         eor_block._loader = self._loader
