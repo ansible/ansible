@@ -3161,7 +3161,7 @@ class BusyBox(User):
         if self.shell not in shells:
             self.module.warn(f"'{self.shell}' is not listed as a valid shell on the remote host.")
 
-    def _build_password_string(self, current_password=None):
+    def _build_password_string(self, current_password: str | None = None) -> str:
         """
         Build the appropriate password string based on the current password and
         module parameters.
@@ -3169,27 +3169,29 @@ class BusyBox(User):
         This method will return '*' at a minimum to avoid creating an enabled
         account with no password.
         """
-        lock = LOCK_INDICATOR if self.password_lock else ''
+        if self.password is None and self.password_lock is None and current_password is not None:
+            return current_password
 
-        # Order of precedence when choosing the password:
-        #   1. password from module parameters
-        #   2. current password
-        #   3. string to enable the account but without a password
-        password = '*'
         if self.password is not None:
             password = self.password
         elif current_password:
             password = current_password
-            if current_password == LOCK_INDICATOR:
-                # Special handling when the password is only a '!' to avoid
-                # unnecessary changes to the password to values like '!!' or '!*'.
-                lock = ''
-            elif current_password.startswith(LOCK_INDICATOR):
-                # Preserve the existing password but unlock the account even if
-                # no password hash was provided in the module parameters.
-                password = current_password.lstrip(LOCK_INDICATOR)
+        else:
+            password = '*'
 
-        return f'{lock}{password}'
+        currently_locked = bool(current_password) and current_password.startswith(LOCK_INDICATOR)
+
+        if self.password_lock is True:
+            if not password.startswith(LOCK_INDICATOR):
+                password = f'{LOCK_INDICATOR}{password}'
+        elif self.password_lock is False:
+            # Leave a lone '!' as-is so unlocking does not produce an empty field.
+            if password.startswith(LOCK_INDICATOR) and password != LOCK_INDICATOR:
+                password = password.removeprefix(LOCK_INDICATOR)
+        elif currently_locked and not password.startswith(LOCK_INDICATOR):
+            password = f'{LOCK_INDICATOR}{password}'
+
+        return password
 
     def create_user(self):
         cmd = [self.module.get_bin_path('adduser', True)]
@@ -3327,13 +3329,11 @@ class BusyBox(User):
                         if rc is not None and rc != 0:
                             self.module.fail_json(name=self.name, msg=err, rc=rc)
 
-        # Manage password
+        # Manage password.
         current_password = to_native(user_info[1])
-        new_password = self._build_password_string(current_password)
-        if self.update_password == 'always':
-            lock_status_mismatch = self.password_lock and not current_password.startswith('!')
-            password_changed = new_password != current_password
-            if lock_status_mismatch or password_changed:
+        if self.password is not None or self.password_lock is not None:
+            new_password = self._build_password_string(current_password)
+            if self.update_password == 'always' and new_password != current_password:
                 cmd = [self.module.get_bin_path('chpasswd', True), '--encrypted']
                 data = f'{self.name}:{new_password}'
                 rc, out, err = self.execute_command(cmd, data=data)
