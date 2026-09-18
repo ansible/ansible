@@ -212,6 +212,29 @@ def test_get_mount_facts(monkeypatch, set_file_content, get_mock_module):
     assert len(mount_facts.get_mount_facts(module)) == 7
 
 
+def test_get_device_by_uuid_strips_output(monkeypatch, get_mock_module):
+    module = get_mock_module({})
+    monkeypatch.setattr(module, "get_bin_path", mock_callable(return_value="/usr/bin/blkid"))
+    monkeypatch.setattr(mount_facts.subprocess, "check_output", mock_callable(return_value="/dev/sda1\n"))
+    mount_facts.get_device_by_uuid.cache_clear()
+
+    assert mount_facts.get_device_by_uuid(module, "abc") == "/dev/sda1"
+
+
+def test_get_mount_facts_filter_uuid_by_device(monkeypatch, set_file_content, get_mock_module):
+    set_file_content({"/etc/fstab": "UUID=abc /data ext4 defaults 0 0\n"})
+    monkeypatch.setattr(mount_facts, "get_mount_size", mock_callable(return_value=None))
+    monkeypatch.setattr(mount_facts.subprocess, "check_output", mock_callable(return_value="/dev/sda1\n"))
+    module = get_mock_module({"sources": ["/etc/fstab"], "devices": ["/dev/sda1"]})
+    monkeypatch.setattr(module, "get_bin_path", mock_callable(return_value="/usr/bin/blkid"))
+    mount_facts.get_device_by_uuid.cache_clear()
+
+    results = mount_facts.get_mount_facts(module)
+
+    assert len(results) == 1
+    assert results[0]["mount"] == "/data"
+
+
 @pytest.mark.parametrize("filter_name, filter_value, source, mount_info", [
     ("devices", "proc", rhel9_4.mtab_parsed[0][2], rhel9_4.mtab_parsed[0][-1]),
     ("fstypes", "proc", rhel9_4.mtab_parsed[0][2], rhel9_4.mtab_parsed[0][-1]),
