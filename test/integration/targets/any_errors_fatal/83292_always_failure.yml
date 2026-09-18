@@ -1,0 +1,22 @@
+---
+- name: Keep always failures terminal after a rescued run_once task
+  hosts: testhost,testhost2
+  gather_facts: false
+  tasks:
+    - name: Recover then fail in always for each host
+      block:
+        - name: Fail once
+          ansible.builtin.fail:
+          run_once: true
+      rescue:
+        - name: Rescue both hosts before always failure
+          ansible.builtin.debug:
+            msg: 83292 always failure rescue {{ inventory_hostname }}
+      always:
+        - name: Fail always for each host
+          ansible.builtin.fail:
+            msg: 83292 always failure always {{ inventory_hostname }}
+
+    - name: Do not continue after a failed always section
+      ansible.builtin.debug:
+        msg: SHOULD NOT HAPPEN
