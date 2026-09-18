@@ -15,6 +15,7 @@ from io import StringIO
 from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.facts.utils import get_file_content
 from ansible.module_utils.facts.collector import BaseFactCollector
+from ansible.module_utils.facts.timeout import timeout, TimeoutError
 
 
 class LocalFactCollector(BaseFactCollector):
@@ -34,6 +35,13 @@ class LocalFactCollector(BaseFactCollector):
             return local_facts
 
         local = {}
+
+        # NOTE: gather_timeout applies per local fact script, not globally across all facts.
+        # If multiple local fact scripts are slow, the total gather time may exceed the
+        # configured timeout value (potentially up to timeout × number_of_fact_scripts).
+        # Each fact script is guaranteed not to exceed the timeout duration.
+        # A future enhancement could implement a global timeout across all fact gathering.
+
         # go over .fact files, run executables, read rest, skip bad with warning and note
         for fn in sorted(glob.glob(fact_path + '/*.fact')):
             # use filename for key where it will sit under local facts
@@ -48,11 +56,10 @@ class LocalFactCollector(BaseFactCollector):
                 continue
             if executable_fact:
                 try:
-                    # run it
-                    rc, out, err = module.run_command(fn)
+                    rc, out, err = timeout(module.run_command)(fn)
                     if rc != 0:
                         failed = 'Failure executing fact script (%s), rc: %s, err: %s' % (fn, rc, err)
-                except OSError as e:
+                except (OSError, TimeoutError) as e:
                     failed = 'Could not execute fact script (%s): %s' % (fn, to_text(e))
 
                 if failed is not None:
