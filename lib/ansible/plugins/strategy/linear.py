@@ -255,9 +255,9 @@ class StrategyModule(StrategyBase):
                         is_handler = False
                         try:
                             if included_file._is_role:
-                                new_ir = self._copy_included_file(included_file)
+                                ir = included_file._task
 
-                                new_blocks, handler_blocks = new_ir.get_block_list(
+                                new_blocks, handler_blocks = ir.get_block_list(
                                     play=iterator._play,
                                     variable_manager=self._variable_manager,
                                     loader=self._loader,
@@ -293,9 +293,12 @@ class StrategyModule(StrategyBase):
 
                                 included_tasks.extend(final_block.get_tasks())
 
-                                for host in hosts_left:
-                                    if host in included_file._hosts:
-                                        all_blocks[host].append(final_block)
+                                for hv in included_file._hvs:
+                                    if hv.host in hosts_left:
+                                        fb_copy = final_block.copy(exclude_parent=True)
+                                        fb_copy._parent = final_block._parent
+                                        fb_copy.vars |= hv.vars
+                                        all_blocks[hv.host].append(fb_copy)
 
                             display.debug("done iterating over new_blocks loaded from include file")
                         except AnsibleParserError:
@@ -315,8 +318,8 @@ class StrategyModule(StrategyBase):
                         else:
                             # since we skip incrementing the stats when the task result is
                             # first processed, we do so now for each host in the list
-                            for host in included_file._hosts:
-                                self._tqm._stats.increment('ok', host.name)
+                            for hv in included_file._hvs:
+                                self._tqm._stats.increment('ok', hv.host.name)
                             self._tqm.send_callback('v2_playbook_on_include', included_file)
 
                     for host in failed_includes_hosts:

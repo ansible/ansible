@@ -1,0 +1,2 @@
+bugfixes:
+- includes - Looped hostvars in includes no longer breaks task serialization (https://github.com/ansible/ansible/issues/36978)
