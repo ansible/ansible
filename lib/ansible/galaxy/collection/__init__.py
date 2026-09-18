@@ -791,13 +791,11 @@ def validate_collection_name(name):  # type: (str) -> str
     :return: The input value, required for argparse validation.
     """
     collection, dummy, dummy = name.partition(':')
-    if AnsibleCollectionRef.is_valid_collection_name(collection):
-        return name
-
-    raise AnsibleError("Invalid collection name '%s', "
-                       "name must be in the format <namespace>.<collection>. \n"
-                       "Please make sure namespace and collection name contains "
-                       "characters from [a-zA-Z0-9_] only." % name)
+    try:
+        AnsibleCollectionRef.assert_valid_collection_name(collection)
+    except ValueError as e:
+        raise AnsibleError(to_native(e)) from e
+    return name
 
 
 # NOTE: imported in ansible.cli.galaxy
