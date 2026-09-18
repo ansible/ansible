@@ -16,6 +16,8 @@ from ansible.module_utils.common.text.formatters import bytes_to_human
         (0.5, u'0.50 Bytes'),
         (0.54, u'0.54 Bytes'),
         (1024, u'1.00 KB'),
+        (1048575, u'1.00 MB'),
+        (1073741823, u'1.00 GB'),
         (1025, u'1.00 KB'),
         (1536, u'1.50 KB'),
         (1790, u'1.75 KB'),
