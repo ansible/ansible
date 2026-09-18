@@ -1,0 +1,8 @@
+bugfixes:
+  - ansiballz - Eagerly load the JSON serialization profile in the module loader
+    to prevent ``FileNotFoundError`` when ``exit_json()`` attempts to resolve
+    the profile after the ansiballz zip payload has been deleted by
+    ``do_cleanup_files()``. Additionally, the ansiballz zip payload extraction
+    now uses ``scriptdir`` (under ``remote_tmp``) instead of the system tempdir,
+    with a fallback for permission errors
+    (https://github.com/ansible/ansible/issues/86738).
