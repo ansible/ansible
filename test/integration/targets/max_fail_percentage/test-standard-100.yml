@@ -1,0 +1,46 @@
+---
+- name: Test 100% with 0 failures
+  hosts: local
+  gather_facts: false
+  max_fail_percentage: 100%
+  tasks:
+    - debug:
+        msg: "{{ inventory_hostname }} live"
+
+
+- name: Test 100% with 1 failure
+  hosts: local
+  gather_facts: false
+  max_fail_percentage: 100%
+  tasks:
+    - name: Intentionally fail one host
+      fail:
+        msg: intentional failure
+      when: inventory_hostname == 'testhost1'
+
+    - name: Should run 9 times
+      debug:
+        msg: "SHOULD_EXECUTE_9_TIMES"
+
+
+- name: Test 100% with all fails
+  hosts: local
+  gather_facts: false
+  max_fail_percentage: 100%
+  tasks:
+    - name: Intentionally fail 4/9 hosts (testhost1 dead from previous play)
+      fail:
+        msg: intentional failure 1/2
+      when: inventory_hostname in ['testhost2', 'testhost3', 'testhost4', 'testhost5']
+
+    - name: Should run 5 times
+      debug:
+        msg: "{{ 'SHOULD_EXECUTE' ~ '_5_TIMES' }}"
+
+    - name: Intentionally fail the rest
+      fail:
+        msg: intentional failure the rest
+
+    - name: Should never run
+      debug:
+        msg: "SHOULD_NOT_EXECUTE"
