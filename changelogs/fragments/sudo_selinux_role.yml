@@ -1,0 +1,2 @@
+minor_changes:
+  - become method 'sudo' now allows using an selinux_role parameter.
