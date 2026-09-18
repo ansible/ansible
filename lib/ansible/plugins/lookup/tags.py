@@ -5,7 +5,7 @@ from __future__ import annotations
 DOCUMENTATION = r"""
   name: tags
   author: Ansible Core Team
-  version_added: "2.22"
+  version_added: "2.23"
   short_description: show a value's data tags
   description:
     - Show a list of any Tags associaated with the input value

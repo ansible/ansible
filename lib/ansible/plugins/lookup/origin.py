@@ -5,7 +5,7 @@ from __future__ import annotations
 DOCUMENTATION = r"""
   name: origin
   author: Ansible Core Team
-  version_added: "2.22"
+  version_added: "2.23"
   short_description: show value's origin
   description:
     - Show the origin of the current value(s)
