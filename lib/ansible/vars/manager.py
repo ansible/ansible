@@ -580,8 +580,13 @@ class VariableManager:
         try:
             host_cache = self._fact_cache.get(host)
         except KeyError:
-            # We get to set this as new
-            host_cache = facts
+            # We get to set this as new. Copy first: a caller may reuse the same
+            # mapping for several hosts (the strategy broadcasts one templated
+            # run_once ``set_fact``/``gather_facts`` result object to every host),
+            # and without a copy each of those hosts would alias one dict that a
+            # later in-place ``|=`` below then leaks across. See
+            # https://github.com/ansible/ansible/issues/87415
+            host_cache = dict(facts)
         else:
             if not isinstance(host_cache, MutableMapping):
                 raise TypeError('The object retrieved for {0} must be a MutableMapping but was'
