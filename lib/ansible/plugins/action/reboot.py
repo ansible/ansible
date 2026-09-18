@@ -52,7 +52,7 @@ class ActionModule(ActionBase):
     BOOT_TIME_COMMANDS = {
         'freebsd': '/sbin/sysctl kern.boottime',
         'openbsd': '/sbin/sysctl kern.boottime',
-        'macosx': 'who -b',
+        'macosx': '/usr/sbin/sysctl kern.boottime',
         'solaris': 'who -b',
         'sunos': 'who -b',
         'vmkernel': 'grep booted /var/log/vmksummary.log | tail -n 1',
