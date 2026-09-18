@@ -51,7 +51,7 @@
         that:
           - skip_broken_res.msg == 'Nothing to do'
           - skip_broken_res.rc == 0
-          - skip_broken_res.results == []
+          - skip_broken_res.transactions == []
 
     - name: Remove all test packages
       dnf:
@@ -89,7 +89,7 @@
       assert:
         that:
           - skip_broken_res.rc == 0
-          - skip_broken_res.results|length == 2
+          - skip_broken_res.transactions|length == 2
           # FIXME: The following assertions have always been broken. Fix the code and/or test as needed.
           # - 'skip_broken_res.results|select("contains", "Installed: broken-a-1.2.4")|length > 0'
           # - 'skip_broken_res.results|select("contains", "Installed: broken-d-1.2.5")|length > 0'
@@ -132,7 +132,7 @@
       assert:
         that:
           - res is changed
-          - res.results|select("contains", pkg_state ~ " broken-a-1.2.3")|length > 0
+          - res.transactions|select("contains", pkg_state ~ " broken-a-1.2.3")|length > 0
 
     # Still case 2, but with broken package to test skip_broken
     # skip_broken: false
@@ -185,7 +185,7 @@
       assert:
         that:
           - res is changed
-          - res.results|select("contains", pkg_state ~ " broken-a-1.2.3")|length > 0
+          - res.transactions|select("contains", pkg_state ~ " broken-a-1.2.3")|length > 0
 
     # Case 3 still, with broken package and skip_broken tests like above.
     - name: Install an older known broken version of broken-a, allow_downgrade=true, skip_broken=false
@@ -272,7 +272,7 @@
     - assert:
         that:
           - nobest.rc == 0
-          - nobest.results == []
+          - nobest.transactions == []
 
     # Case 6: Current or older version already installed (no version specified
     # in our pkg_spec) and we're requesting present, not latest.

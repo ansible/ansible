@@ -1,0 +1,4 @@
+deprecated_features:
+  - dnf - The ``results`` return value is deprecated and will be removed in ansible-core 2.25. Use ``transactions`` instead.
+  - dnf - The ``failures`` return value is deprecated and will be removed in ansible-core 2.25. Use ``transaction_errors`` instead.
+  - include_vars - The ``message`` return value is deprecated and will be removed in ansible-core 2.25. Use ``msg`` instead.
