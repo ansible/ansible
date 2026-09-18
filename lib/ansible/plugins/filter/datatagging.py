@@ -20,7 +20,7 @@ def do_tag(data, tag):
         case 'vault':
             data = VaultedValue().tag(data)
         case _:
-            raise AnsibleOptionsError(f"The tag filter recieved invalid option {tag}, valid options are: encrypted, trust and vault.")
+            raise AnsibleOptionsError(f"The tag filter received invalid option {tag}, valid options are: encrypted, trust and vault.")
     return data
 
 
@@ -41,7 +41,7 @@ def do_untag(data, tag):
         case 'vault':
             data = AnsibleTagHelper.untag(data, VaultedValue)
         case _:
-            raise AnsibleOptionsError(f"The untag filter recieved invalid option {tag}, valid options are: encrypted, origin, trust and vault.")
+            raise AnsibleOptionsError(f"The untag filter received invalid option {tag}, valid options are: encrypted, origin, trust and vault.")
     return AnsibleTagHelper.untag(data)
 
 
