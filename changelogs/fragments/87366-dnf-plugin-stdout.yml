@@ -1,0 +1,2 @@
+bugfixes:
+  - dnf - Prevent dnf informational output written to stdout by a DNF plugin (such as ``kpatch-dnf``) from causing JSON parsing issues with the embedded DNF helper script (https://github.com/ansible/ansible/issues/87366).

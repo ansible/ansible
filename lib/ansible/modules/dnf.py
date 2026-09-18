@@ -398,6 +398,7 @@ from ansible.module_utils.urls import fetch_file
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.respawn import get_env_with_pythonpath, probe_interpreters_for_module
 from ansible.module_utils.embed import EmbedManager
+from ansible.module_utils.json_utils import _filter_non_json_lines
 from ansible.module_utils.yumdnf import YumDnf, yumdnf_argument_spec
 
 
@@ -484,7 +485,7 @@ class DnfModule(YumDnf):
             )
 
             if stdout:
-                return json.loads(stdout)
+                return json.loads(_filter_non_json_lines(stdout))
             else:
                 return {
                     'failed': True,
