@@ -1,2 +1,470 @@
 ancestor: 2.21.0
-releases: {}
+releases:
+  2.22.0b1:
+    changes:
+      breaking_changes:
+      - AnsibleModule - ``log()`` and the automatic invocation logging now only redact
+        values registered as secrets (such as ``no_log`` option values) and no longer
+        apply the ``heuristic_log_sanitize()`` heuristics, for example ``user:password@host``
+        in URLs is no longer rewritten unless the password is a registered secret.
+        ``no_log`` and password-like options are logged as ``$REDACTED$`` instead
+        of ``NOT_LOGGING_PARAMETER`` or ``NOT_LOGGING_PASSWORD``.
+      - AnsibleModule - ``run_command()`` no longer rewrites the ``cmd`` value in
+        a failure result to replace password-like arguments (such as ``--password=...``)
+        with ``********``, and the ``msg`` value is no longer passed through ``heuristic_log_sanitize()``.
+        Registered secrets in these values are still redacted in output. Modules that
+        pass a secret on the command line which is not a ``no_log`` option should
+        register it with ``ansible.module_utils.secrets.register_secret()``.
+      - 'Module options that are marked as ``no_log: true`` will no longer be redacted
+        literally as ``"VALUE_SPECIFIED_IN_NO_LOG_PARAMETER"`` in the module result
+        and ``invocation.module_args``. Instead, the actual value is registered as
+        a secret and is only redacted in generated output, allowing these values to
+        be used by subsequent tasks without any loss of data. The value is still redacted
+        in callback output and module logging. Playbooks or tests that check for the
+        ``VALUE_SPECIFIED_IN_NO_LOG_PARAMETER`` placeholder in results should be updated.'
+      - ansible-config - all actions now default to ``-t all``, so configuration files
+        using sections owned by plugins (for example, ``[ssh_connection]``) are no
+        longer reported as unknown sections, and keys within those sections are actually
+        validated. Use ``-t base`` to retain the previous behavior (https://github.com/ansible/ansible/issues/86398).
+      - uri - response keys are no longer rewritten to strip ``no_log`` values (previously
+        done with ``sanitize_keys()``); registered secrets are masked in output instead.
+      bugfixes:
+      - Add deprecation status to the tree and oneline callback DOCUMENTATION. (https://github.com/ansible/ansible/issues/87020)
+      - Fix ``validate_argspec`` when tags are defined on the play. The ``always``
+        tag is only added if the play has no tags.
+      - Internal patch framework - Defer failure on missing target patch attribute
+        until `is_patch_needed` validator has confirmed that the behavior to be patched
+        is present.
+      - The user module, now unlinks target ssh key files if they are symlinks to
+        avoid overwriting their sources.
+      - The user module, will no longer remove existing public key files in check
+        mode.
+      - '``--start-at-task`` - fix starting at the requested task instead of starting
+        at the next block or play. Play level tasks run first. (https://github.com/ansible/ansible/issues/86268)'
+      - '``ansible-doc -t filter|test <plugin>`` - remove empty bullet point from
+        the description.'
+      - ansible-galaxy - Fix attempting to download the collection again if the response
+        from the server is shorter than expected, instead of failing due to the mismatched
+        artifact hash on the first attempt. (https://github.com/ansible/ansible/pull/86025)
+      - ansible-test - Allow root to use sudo on managed Alpine instances.
+      - ansible-test - Ensure the bundled debugpy module from VSCode is available
+        in the ``--dev-debug-on-demand`` environment.
+      - ansible-test - Fix target filtering to preserve user-specified versions that
+        are not in the completion configuration.
+      - ansible-test - Only add volume bind mount for ``docker.sock`` when using docker
+      - ansible-test remote alias - Alias values for ``--controller`` and ``--target``
+        are properly resolved for ``remote``. Previously, remote alias values (e.g.
+        ``fedora/latest``) resolved to the correct name only for the legacy ``--remote``
+        arg, failing with an unknown image error for the newer args.
+      - apt_key module now masks authentication information in all displays and returns
+        of uri information.
+      - apt_repository - treat a source line whose type is valid but which has fewer
+        than two following fields (for example a bare ``deb``) as invalid instead
+        of raising an ``IndexError`` while parsing sources.list files.
+      - apt_repository - validate the line in sources.list (https://github.com/ansible/ansible/issues/85715).
+      - async - fix error message when the async task did not complete within the
+        requested time.
+      - basic.py - Fix typo in deprecation message for use of the ``get_platform``
+        function.
+      - cli - handle empty value for PAGER (https://github.com/ansible/ansible/issues/86898).
+      - collection loader - Fix the collection loader logic to correctly return Python
+        module when calling ``pkgutil.iter_modules`` with a package that is inside
+        a collection path and contains compiled Python extension modules.
+      - config - Include the origin in error message indicating an invalid choice
+        in a configuration value
+      - config - use correct key value for inject_invocation setting (https://github.com/ansible/ansible/issues/86999).
+      - delegate_to - reject a literal empty hostname consistently with a template
+        that resolves to an empty hostname (https://github.com/ansible/ansible/issues/84332).
+      - distribution facts - classify UnionTech OS Server (UOS Server) as ``RedHat``
+        ``os_family`` instead of ``Debian``. UOS Server is RPM-based and built on
+        top of openAnolis (A version, codename ``kongzi``) or openEuler (E version,
+        codename ``fuyu``), and advertises ``PLATFORM_ID="platform:uel*"`` in ``/etc/os-release``.
+        The Debian-based Desktop edition is unchanged (https://github.com/ansible/ansible/issues/86957).
+      - dnf5 module - Set the dnf ``destdir`` configuration option from ``download_dir``
+        when ``download_only`` is true, as documented.
+      - encrypt - fix bcrypt salt string formatting on musl libc by ensuring it is
+        always zero-padded to 2 digits (https://github.com/ansible/ansible/issues/87180).
+      - free strategy - Fix ``IndexError`` when hosts become unreachable during playbook
+        execution (https://github.com/ansible/ansible/issues/87027).
+      - free strategy - prevent hanging on skipping a task using ``--step`` (https://github.com/ansible/ansible/issues/86656)
+      - get_url module now masks authentication information in all displays and returns
+        of uri information.
+      - getent - fail with error when service is provided on platforms using busybox
+        like alpine (https://github.com/ansible/ansible/issues/85568).
+      - git - fix ``force`` parameter to properly preserve local commits when set
+        to ``false`` and fail with a clear error message (https://github.com/ansible/ansible/issues/83367)
+      - git - remove redundant error checks after `run_command(check_rc=True)`
+      - git - use the branch configured in ``.gitmodules`` or the remote HEAD instead
+        of hardcoding ``master`` when ``track_submodules=yes`` (https://github.com/ansible/ansible/issues/77691).
+      - meta pseudo-action - Fixed callback args passed to ``v2_runner_on_skipped``
+        when any ``meta`` action was skipped by a ``when`` condition; added test coverage.
+        A previous regression caused the callback dispatch to be omitted and a warning
+        issued.
+      - module_utils - ``check_type_int`` now raises the documented ``TypeError``
+        (instead of an uncaught ``OverflowError``) for the string values ``inf``,
+        ``-inf`` and ``Infinity``, which ``decimal.Decimal`` accepts but cannot be
+        converted to an ``int``.
+      - module_utils - ``is_netmask`` now rejects non-contiguous netmasks such as
+        ``255.255.0.255``, where each octet is individually valid but the mask is
+        not a contiguous run of network bits followed by host bits (https://github.com/ansible/ansible/pull/87235).
+      - module_utils - ``mask_url`` now masks the password in URLs that contain a
+        password but no username, such as ``redis://:password@host``, instead of returning
+        them unmasked.
+      - module_utils - fix module initialization failures on QNX Neutrino 6.5.0 by
+        specifying IPv4 stream socket hints in the ``socket.getaddrinfo`` integer-subclass
+        compatibility probe (https://github.com/ansible/ansible/issues/87496).
+      - module_utils sanitize_keys and remove_value functions now sort their input
+        to ensure matching subsets are always obscured.
+      - module_utils.urls now all errors mask in line url authentication information.
+      - module_utils/basic.py - Fix ``AnsibleModule.run_command()`` to handle ``None``
+        return from non-blocking pipe reads (https://github.com/ansible/ansible/issues/86920).
+      - parallel fact gathering - fix hang caused by corrupt async job files.
+      - pip - resolve relative virtualenv paths consistently, including when used
+        with chdir (https://github.com/ansible/ansible/issues/81522, https://github.com/ansible/ansible/issues/84905).
+      - powershell exec_wrapper - fix handling when multiple pwsh executables match
+        by selecting the first result (https://github.com/ansible/ansible/issues/87228).
+      - rpm_key - Fix module failure when fetching GPG keys from FTP URLs (https://github.com/ansible/ansible/issues/83321).
+      - rpm_key - ensure a trailing newline is present on PGP armor data before passing
+        it to librpm for parsing, fixing failures on systems where ``pgpParsePkts``
+        requires it (https://github.com/ansible/ansible/issues/87303).
+      - rpm_key module now masks authentication information in all displays and returns
+        of uri information.
+      - serialization - Preserve ``fold`` on tagged ``datetime.time`` and ``datetime.datetime``
+        instances.
+      - ssh connection - fix an issue with become when ``sftp_extra_args``/``scp_extra_args``
+        would contain the value of ``ssh_executable`` (https://github.com/ansible/ansible/issues/87272)
+      - ssh connection plugin - malformed ``ssh_args``/``ssh_common_args``/``ssh_extra_args``
+        (e.g. a trailing ``-o`` with no value) no longer crash the worker process
+        ("A worker was found in a dead state"); the ssh client's own error is reported
+        instead.
+      - ssh-agent - cap agent response size to match OpenSSH limits
+      - ssh-agent - fix partial socket reads
+      - ssh-agent - fix wire format serialization for zero-length values
+      - su become plugin - Add recognition of password failure for BusyBox version
+        of ``su``.
+      - subelements - fix error message when an empty subelements is provided (https://github.com/ansible/ansible/issues/87398).
+      - sudo become plugin is now compatible with sudo-rs (rust implementation).
+      - task results - The ``invocation`` item result key omitted from registered
+        values for looped task results, unless enabled via ``INJECT_INVOCATION``.
+        Previously, it was deleted from registered non-loop results and only available
+        to callbacks.
+      - tempfile - reject prefix and suffix values that contain path components to
+        prevent path traversal.
+      - template action - restore ``failed_when`` support when the template source
+        file is not found on the controller (https://github.com/ansible/ansible/issues/87491).
+      - uri - Enable multipart/form-data requests over 2GB (https://github.com/ansible/ansible/issues/76666)
+      - uri module now masks authentication information in all displays and returns
+        of uri information.
+      - url lookup now masks authentication information in all displays and returns
+        of uri information.
+      - user - On BusyBox systems, warn when an invalid shell is specified (https://github.com/ansible/ansible/pull/86342)
+      - user - fix ``move_home`` on BusyBox/Alpine to move existing home contents
+        before rewriting ``/etc/passwd`` (https://github.com/ansible/ansible/pull/87044).
+      - user - warn if move_home is true and home directory does not exist (https://github.com/ansible/ansible/issues/37398).
+      - wait_for - use ``errno.ENOENT`` symbolic constant instead of hardcoded value
+        for improved code portability.
+      deprecated_features:
+      - AGNOSTIC_BECOME_PROMPT setting, no external tools should need this any more.
+      - Deprecate is_module in get_docstring API in favor of passing ``plugin_type='module'``.
+      - '``ansible.module_utils.six`` - A runtime deprecation warning is now emitted
+        when importing the ``six`` compatibility library, deprecated in ansible-core
+        2.21 and planned for removal in ansible-core 2.24 (https://github.com/ansible/ansible/issues/86789).
+
+        '
+      - action plugins - ``AnsibleActionSkip`` is deprecated and will be removed in
+        ansible-core 2.25. A sanity test detects imports of this exception. Return
+        a results dict from action plugins and don't include a ``skipped`` key, or
+        raise ``AnsibleActionNoCheckMode`` if necessary.
+      - ansible.utils.cmd_functions.run_cmd - the ``live`` argument is deprecated
+        and will be removed in ansible-core 2.25 because it writes the subprocess
+        output directly to stdout/stderr, bypassing the built-in secret masking applied
+        to captured output. Callers that need to stream output live should run the
+        subprocess themselves and are responsible for masking any secrets.
+      - module_utils - the ``heuristic_log_sanitize()`` function in ``ansible.module_utils.basic``
+        is deprecated and will be removed in ansible-core 2.25. Secret values are
+        now masked automatically, use functions from the ``ansible.module_utils.secrets``
+        module to handle secrets manually.
+      - module_utils - the ``remove_values()`` and ``sanitize_keys()`` functions in
+        ``ansible.module_utils.common.parameters`` are deprecated and will be removed
+        in ansible-core 2.25. Secret values are now masked automatically, use functions
+        from the ``ansible.module_utils.secrets`` module to handle secrets manually.
+      - task result - Returning ``skipped`` from a module or action plugin is deprecated
+        and will be removed in ansible-core 2.25. Use task-level conditionals (``when:``)
+        to control execution.
+      known_issues:
+      - Secret masking - when ``ANSIBLE_DEBUG=1`` is set, the raw stdout and stderr
+        of commands executed on the target, including module results, are displayed
+        before the secrets contained in the module result have been registered for
+        masking. Secrets which are only known to the module, such as ``no_log`` option
+        values, may therefore be shown in plaintext in debug output.
+      major_changes:
+      - Secret masking - Ansible now automatically redacts known secret values from
+        the output it generates, such as ``display`` output (including verbose, warning,
+        deprecation, and error output), module logging, and task results passed to
+        callback plugins. Masking is non-destructive; the real value remains available
+        to tasks, conditionals, and registered variables, only the rendered output
+        is redacted with ``$REDACTED$``. Secrets shorter than 4 characters are never
+        masked, secrets of 4 to 6 characters are only masked when they appear as a
+        whole word or when they overlap or are adjacent to another secret, and secrets
+        longer than 65536 characters are matched on their first 65536 characters.
+      - Secret masking - add the ``ansible.module_utils.secrets`` public API for working
+        with secrets manually. It provides ``register_secret`` and ``register_secrets``
+        to register values that should be redacted from masked output, and ``mask_secrets``
+        to redact any registered secrets from a string. The API can be used on the
+        controller and in Python modules; the new ``Ansible.Secrets`` C# module_util
+        provides the equivalent ``[Ansible.Secrets.SecretMasker]::RegisterSecret()``
+        and ``MaskString()`` methods for PowerShell modules. Secrets registered inside
+        a module or worker process are propagated back to the controller so they are
+        also masked there.
+      - ansible - Add support for Python 3.15.
+      - ansible - Drop support for Python 3.12 on the controller.
+      - 'callback plugins - callback plugin authors should opt into the new secret
+        masking behaviour by setting the class attribute ``ANSIBLE_SUPPORTS_MASKING
+        = True``. A callback that sets this receives the unmasked task result and
+        must ensure any secrets are redacted before they are written, either by emitting
+        output through ``Display`` which masks automatically, or by passing the values
+        through ``ansible.module_utils.secrets.mask_secrets()`` before writing them
+        elsewhere. Callbacks that do not set the attribute continue to receive task
+        results with any registered secrets replaced by ``$REDACTED$``, matching the
+        redacted results they receive today. This implicit masking exists only for
+        backwards compatibility with existing callbacks and will be removed in a future
+        release, at which point all callbacks will receive unmasked results and must
+        mask them manually if not using ``Display``. Task-level ``no_log: true`` continues
+        to censor the entire result regardless of this attribute.'
+      minor_changes:
+      - Add new OrderedSet class for situations a unique ordered list is needed
+      - Role and play argument spec validation now supports ``no_log``. Variables
+        labeled as ``no_log`` are redacted from masked output. (https://github.com/ansible/ansible/issues/84498)
+      - Secret masking - add the internal ``_SECRETS_INPUT_FILES`` config option to
+        pre-seed values to redact from the output of ``ansible``, ``ansible-playbook``,
+        and ``ansible-console``. Each file is YAML or JSON containing a mapping with
+        a ``version`` key (currently only ``1``) and a ``secrets`` key listing the
+        string values to mask. A file with the executable bit set is run instead of
+        read, and its stdout is parsed as the document.
+      - 'Secret masking - the following values are now automatically registered as
+        secrets and redacted from masked output: vault passwords provided by prompt,
+        file, or script; the decrypted plaintext of vault encrypted values and every
+        string or numeric value in a vault encrypted vars file; passwords entered
+        for ``--ask-pass`` and ``--ask-become-pass``; ``no_log`` module option values;
+        the ``become_pass`` option of the ``sudo``, ``su``, and ``runas`` become plugins;
+        the ``password``, ``private_key``, and ``private_key_passphrase`` options
+        of the ``ssh`` connection plugin; the ``password`` option of the ``winrm``
+        and ``psrp`` connection plugins and the ``certificate_key_password`` option
+        of ``psrp``; the ``password`` option of the ``url`` lookup; the values returned
+        by the ``password`` and ``unvault`` lookups; the secret passed to the ``vault``
+        and ``unvault`` filters; the user input of the ``pause`` action when ``echo``
+        is ``false``; and values entered for a play ``vars_prompt`` when ``private``
+        is ``true`` (the default).'
+      - ansible-galaxy - sort the FILES.json for ansible galaxy build based on name.
+        (https://github.com/ansible/ansible/issues/82792).
+      - ansible-test - Added a timeout callback that dumps thread stacks when the
+        test execution deadline defined by ``ansible-test env --timeout`` is approaching.
+      - ansible-test - Generate ``dist_info`` when running tests.
+      - ansible-test - Remove support for Windows Server 2016 managed remote.
+      - ansible-test - Replace Alpine 3.23 container and remote with 3.24.
+      - ansible-test - Replace Fedora 43 container and remote with 44.
+      - ansible-test - Replace FreeBSD 14.4 remote with 14.5.
+      - ansible-test - Replace FreeBSD 15.0 remote with 15.1.
+      - ansible-test - Replace RHEL 10.1 remote with 10.2.
+      - ansible-test - Replace RHEL 9.7 remote with 9.8.
+      - ansible-test - Replace Ubuntu 22.04 container and remote with 26.04.
+      - ansible-test - Update ansible-test utility containers (http-test-container,
+        pypi-test-container, ansible-test-utility-container).
+      - ansible-test - Update sanity test requirements.
+      - ansible-test - Upgrade ``coverage`` for Python 3.10 and later.
+      - ansible-test - Upgrade the distro-specific test containers.
+      - config - add a ``secret`` boolean keyword to plugin configuration option definitions.
+        When set to ``true``, the resolved value of the option is automatically registered
+        as a secret for output masking, regardless of the source it was set from (env,
+        ini, vars, CLI, or plugin arguments). It is only supported for the ``str``,
+        ``string``, and ``list`` types (string elements of a list are registered);
+        using it with any other type raises an error when the plugin configuration
+        is loaded.
+      - debugging - Add signal (``USR1``) handler to provide insight into executing
+        code stacks (https://github.com/ansible/ansible/issues/84451)
+      - distribution facts - add the ``ansible_distribution_cpe_name`` fact, exposing
+        the ``CPE_NAME`` published in the os-release file when the distribution provides
+        one.
+      - dnf - clarify that the ``exclude`` parameter works with all ``state`` values,
+        not just ``present`` and ``latest`` (https://github.com/ansible/ansible/issues/87026)
+      - dnf5 - clarify that the ``exclude`` parameter works with all ``state`` values,
+        not just ``present`` and ``latest`` (https://github.com/ansible/ansible/issues/87026)
+      - filter - ``regex_escape`` implement ``re_type=posix_extended`` for POSIX ERE
+        literal escaping (https://github.com/ansible/ansible/pull/86949).
+      - is_mac - add a ``strict`` keyword-only argument that anchors the validation
+        regex with ``\Z`` instead of ``$``, rejecting a MAC address with a trailing
+        newline. The default (``strict=False``) preserves the historical behavior
+        (https://github.com/ansible/ansible/pull/87420).
+      - jsonfile cache plugin - add ``persist_metadata`` option to configure whether
+        or not to preserve metadata like deprecation notices. Setting the option to
+        ``False`` restores the filename and format used prior to ansible-core 2.19.
+      - mask_url function in module_utils to allow for masking of auth data embedded
+        in urls.
+      - module_utils.urls - Added ``is_fetch_success()`` function for protocol-aware
+        success detection of ``fetch_url()`` responses.
+      - parallel fact gathering - the async wrapper now considers the timeout when
+        determining whether to kill the process running the module. Previously, a
+        5 second sleep occurred twice before checking if the job had remaining time.
+      - psrp connection plugin - Remove explicit error handling support for Windows
+        Server 2016.
+      - setup module now adds 'by-path' information to device_links.
+      - ssh connection plugin - inspect ``SSH_ASKPASS_PROMPT`` in ``SSH_ASKPASS``
+        script for reliability (https://github.com/ansible/ansible/issues/86319)
+      - ssh, winrm, and psrp connection plugins - the raw stdout and stderr of executed
+        commands are no longer displayed at increased verbosity (``-vvv`` for ``ssh``,
+        ``-vvvvv`` for ``winrm`` and ``psrp``), only the return code is shown. Module
+        output can contain secrets, such as ``no_log`` option values, which are only
+        registered for masking once the result has been parsed, so displaying the
+        raw output before then could leak them. The raw output is still available
+        with ``ANSIBLE_DEBUG=1`` if needed for debugging purposes.
+      - task results - Python and Powershell modules do not include the ``invocation``
+        task result key by default. Injection of the ``invocation`` task result key
+        for Python and Powershell modules may be enabled with the var-settable ``INJECT_INVOCATION``
+        config item. Most callbacks mask ``invocation`` when displaying a task or
+        loop item result.
+      - url `multipart/form-data` - Replace Python ``email`` multipart generator with
+        custom generator, allowing for binary content without ``Content-Transfer-Encoding``
+      - user - add support for move_home in Alpine Linux (https://github.com/ansible/ansible/issues/85521).
+      - validate-modules sanity test - allow lookups to use ``positional`` to mark
+        which options are actually positional arguments, similar to test and filter
+        plugins (https://github.com/ansible/ansible/pull/86986).
+      - windows - Compress input data sent over for module execution to reduce the
+        amount of data transferred per module execution.
+      - winrm connection plugin - improved error message to include target host when
+        stdin transfer fails (https://github.com/ansible/ansible/issues/86749)
+      - worker process - When controller and forked child workers must share a TTY,
+        the ``WORKER_SESSION_ISOLATION`` config item can be set to ``false`` (via
+        variable/config/envvar) to disable forked worker session isolation.
+      release_summary: '| Release Date: 2026-09-18
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.22/porting_guides/porting_guide_core_2.22.html>`__
+
+        '
+      removed_features:
+      - Remove deprecated ``ANSIBLE_CONNECTION_PATH`` option
+      - Remove deprecated ``DEFAULT_LIBVIRT_LXC_NOSECLABEL`` option.
+      - url/uri - remove deprecated use of ``yes``/``no`` values for the ``follow_redirects``
+        option (https://github.com/ansible/ansible/issues/86790)
+      - yum_repository - Removed deprecated parameters.
+      security_fixes:
+      - ansible-galaxy install - Ensure role requirements are passed as positional
+        arguments to :command:`git clone`. Previously, a malicious role author could
+        inject arbitrary git configuration in role dependencies. (CVE-2026-11332)
+      - 'psrp - Do not log raw stdout/stderr on verbosity 5 when task has ``no_log:
+        true`` set'
+      - 'winrm - Do not log raw stdout/stderr on verbosity 5 when task has ``no_log:
+        true`` set'
+    codename: Thank You
+    fragments:
+    - 2.22.0b1_summary.yaml
+    - 77691-git-track-submodules-branch.yml
+    - 81522-pip-virtualenv-relative-chdir.yml
+    - 82792-sort-entries-in-FILES_json.yml
+    - 83321-rpm-key-ftp-support.yml
+    - 83367-git-force-local-commits.yml
+    - 84332-delegate-to-empty-host.yml
+    - 84451-debug-stack-output.yml
+    - 85568-getent-service-error.yml
+    - 86243-user-busybox-shell-warn.yml
+    - 86319-ssh_askpass_prompt.yml
+    - 86398-ansible-config-validate-default-all.yml
+    - 86656-fix-step-in-free-strat.yml
+    - 86749-winrm-stdin-error-message.yml
+    - 86790-remove-deprecated-vals-follow-redirects.yml
+    - 86920-fix-run-command-none-read.yml
+    - 86937-git-rm-redundant-err-checks.yml
+    - 86957-uniontechos-server-redhat-family.yml
+    - 86986-validate-modules-positional-lookup.yml
+    - 87026-clarify-dnf-exclude-docs.yml
+    - 87027-free-strategy-indexerror.yml
+    - 87044-user-alpine-move-home-ordering.yml
+    - 87087-wait_for-errno-constant.yml
+    - 87180-crypt-fixes.yml
+    - 87235-is_netmask-contiguous.yml
+    - 87272-ssh-connection-escalation.yml
+    - 87304-rpm_key-armor-trailing-newline.yml
+    - 87420-is_mac-trailing-newline.yml
+    - 87491-template-failed-when-missing-src.yml
+    - 87498-fix-getaddrinfo-patch-detection.yml
+    - agnostic_deprecation.yml
+    - alpine_user_mod.yml
+    - ansible-doc-jinja2-synopsis.yml
+    - ansible-galaxy-retry-IncompleteRead-download.yml
+    - ansible-test-alpine.yml
+    - ansible-test-container-options-docker-sock.yml
+    - ansible-test-container-update.yml
+    - ansible-test-coverage.yml
+    - ansible-test-dist-info.yml
+    - ansible-test-fedora-44.yml
+    - ansible-test-freebsd.yml
+    - ansible-test-managed-alpine-sudo.yml
+    - ansible-test-rhel.yml
+    - ansible-test-sanity-test-requirements.yml
+    - ansible-test-target-filtering.yml
+    - ansible-test-timeout-callback.yml
+    - ansible-test-ubuntu-2604.yml
+    - ansible-test-update-distro-containers.yml
+    - ansible-test-windows-server-2016.yml
+    - apt_repository-validate-source-indexerror.yml
+    - apt_repository.yml
+    - bump-freebsd-15-0-to-15-1.yml
+    - check_type_int-inf.yml
+    - collection-loader-extensions.yml
+    - configurable_invocation.yml
+    - configurable_worker_session_isolation.yml
+    - core_ci_remote_alias.yml
+    - deprecate-return-values.yml
+    - deprecate-six.yml
+    - disk_fact_paths.yml
+    - distribution-cpe-name-fact.yml
+    - dnf5-download_dir-download_only.yml
+    - doc_string_dep.yml
+    - fix-async-timeout-msg.yml
+    - fix-cloning-malformed-role-requirements.yml
+    - fix-short-timeout-async-wrapper.yml
+    - fix-tree-and-oneline-callback-deprecation.yml
+    - get-platform-deprecation-typo.yml
+    - inject_invocation.yml
+    - invalid-config-choice-origin.yml
+    - jsonfile-cache-persistent.yml
+    - mask_inurl_auth.yml
+    - mask_url-password-auth.yml
+    - mask_url.yml
+    - meta_skipped_callback_args.yml
+    - multipart-generator.yaml
+    - orderedset.yml
+    - pager.yml
+    - patch_resilience.yml
+    - play-and-role-no-log-masking.yml
+    - powershell-exec-wrapper-select-first.yml
+    - psrp-2016.yml
+    - python-support.yml
+    - regex_escape-posix_extended.yml
+    - remove-deprecated-connection-path.yml
+    - remove-deprecated-libvirt-lxc-noseclabel.yml
+    - sensitive-data-masking.yml
+    - sort_obfuscation.yml
+    - ssh-agent-hardening.yml
+    - ssh-tty-parser-worker-crash.yml
+    - start-at-task-fact-gathering.yml
+    - su-fail-messages.yml
+    - subelements.yml
+    - sudo_rs_compat.yml
+    - tagged-time-datetime-fold.yml
+    - tempfile-path-traversal.yml
+    - test-debugpy-path.yml
+    - user_local_user.yml
+    - user_sshkeys_symlink.yml
+    - v2.22.0-initial-commit.yaml
+    - windows-compression.yml
+    - winrm-psrp-nolog.yml
+    - yum_repo_deprecated.yml
+    plugins:
+      filter:
+      - description: Redact registered secrets from a string
+        name: mask_secrets
+        namespace: null
+      - description: Register a value as a secret so it is masked in output
+        name: register_secret
+        namespace: null
+    release_date: '2026-09-17'
