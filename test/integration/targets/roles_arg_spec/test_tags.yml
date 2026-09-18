@@ -1,11 +1,34 @@
 ---
+# Test 1: Tagged role with matching tag - validation should run
 - hosts: localhost
   gather_facts: false
   tasks:
-      - name: "Tag test #1"
+      - name: "Tagged role with matching tag"
         import_role:
             name: a
         vars:
-            a_str: "tag test #1"
+            a_str: "tagged role matching"
         tags:
             - foo
+
+# Test 2: Tagged role with non-matching tag - validation should NOT run
+- hosts: localhost
+  gather_facts: false
+  tasks:
+      - name: "Tagged role with non-matching tag"
+        import_role:
+            name: a
+        vars:
+            a_str: "tagged role non-matching"
+        tags:
+            - baz
+
+# Test 3: Untagged role - validation runs only when no tag filter is active
+- hosts: localhost
+  gather_facts: false
+  tasks:
+      - name: "Untagged role"
+        import_role:
+            name: a
+        vars:
+            a_str: "untagged role"
