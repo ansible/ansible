@@ -6,6 +6,22 @@ DOCUMENTATION = """
     name: ini
     version_added: "2.4"
     short_description: Uses an Ansible INI file as inventory source.
+    options:
+      allowed_extensions:
+        description:
+            - This option filters which inventroy source files will be processed by this plugin by matching the file extension.
+            - Passing an empty string C('') as part of this list allows matching files without an extension.
+            - For backwards compatiblity, setting to an empty list or C(null) will enable all extensions,
+              this is not recommended and will be removed in the future.
+        version_added: "2.21"
+        type: list
+        elements: str
+        default: ['ini', '']
+        ini:
+           - section: inventory_plugin_ini
+             key: allowed_extensions
+        env:
+           - name: ANSIBLE_INVENTORY_PLUGIN_INI_EXT
     description:
         - INI file based inventory, sections are groups or group related with special C(:modifiers).
         - Entries in sections C([group_1]) are hosts, members of the group.
@@ -73,10 +89,11 @@ host4 # same host as above, but member of 2 groups, will inherit vars from both
 """
 
 import ast
-import os
 import re
 import typing as t
 import warnings
+
+from pathlib import Path
 
 from ansible.inventory.group import to_safe_group_name
 from ansible.plugins.inventory import BaseFileInventoryPlugin
@@ -106,8 +123,14 @@ class InventoryModule(BaseFileInventoryPlugin):
         self._origin: Origin | None = None
 
     def verify_file(self, path):
-        # hardcode exclusion for TOML to prevent partial parsing of things we know we don't want
-        return super().verify_file(path) and os.path.splitext(path)[1] != '.toml'
+
+        valid = super().verify_file(path)
+
+        p = Path(path)
+        allowed = self.get_option('allowed_extensions')
+        if valid and allowed:
+            valid = p.suffix.lstrip('.') in allowed
+        return valid
 
     def parse(self, inventory, loader, path: str, cache=True):
 
@@ -321,10 +344,10 @@ class InventoryModule(BaseFileInventoryPlugin):
 
         # Try to process anything remaining as a series of key=value pairs.
         variables = {}
-        for t in tokens[1:]:
-            if '=' not in t:
-                self._raise_error("Expected key=value host variable assignment, got: %s" % (t))
-            (k, v) = t.split('=', 1)
+        for token in tokens[1:]:
+            if '=' not in token:
+                self._raise_error(f"Expected key=value host variable assignment, got: {token}")
+            k, v = token.split('=', 1)
             variables[self._origin.tag(k)] = self._parse_value(v)
 
         return hostnames, port, variables
