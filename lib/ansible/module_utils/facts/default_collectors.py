@@ -40,6 +40,7 @@ from ansible.module_utils.facts.system.chroot import ChrootFactCollector
 from ansible.module_utils.facts.system.cmdline import CmdLineFactCollector
 from ansible.module_utils.facts.system.distribution import DistributionFactCollector
 from ansible.module_utils.facts.system.date_time import DateTimeFactCollector
+from ansible.module_utils.facts.system.fqdn import FQDNFactCollector
 from ansible.module_utils.facts.system.env import EnvFactCollector
 from ansible.module_utils.facts.system.dns import DnsFactCollector
 from ansible.module_utils.facts.system.fips import FipsFactCollector
@@ -117,6 +118,7 @@ _general = [
     CmdLineFactCollector,
     DateTimeFactCollector,
     EnvFactCollector,
+    FQDNFactCollector,
     LoadAvgFactCollector,
     SshPubKeyFactCollector,
     UserFactCollector,
