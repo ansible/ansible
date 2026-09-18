@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-test - Remove support for Windows Server 2016 managed remote.

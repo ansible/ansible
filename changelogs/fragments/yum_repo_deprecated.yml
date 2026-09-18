@@ -1,3 +1,0 @@
----
-removed_features:
-    - yum_repository - Removed deprecated parameters.

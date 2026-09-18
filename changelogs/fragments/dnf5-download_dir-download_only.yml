@@ -1,3 +1,0 @@
-bugfixes:
-    - dnf5 module - Set the dnf ``destdir`` configuration option from ``download_dir``
-      when ``download_only`` is true, as documented.

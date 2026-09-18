@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-test - Replace Alpine 3.23 container and remote with 3.24.

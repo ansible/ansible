@@ -1,3 +1,0 @@
----
-bugfixes:
-    - config - use correct key value for inject_invocation setting (https://github.com/ansible/ansible/issues/86999).

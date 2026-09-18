@@ -1,2 +1,0 @@
-deprecated_features:
-  - AGNOSTIC_BECOME_PROMPT setting, no external tools should need this any more.

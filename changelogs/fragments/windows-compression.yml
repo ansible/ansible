@@ -1,5 +1,0 @@
-minor_changes:
-  - >-
-    windows - Compress input data sent over for module execution to reduce the amount of data transferred per module
-    execution.
-    

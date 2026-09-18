@@ -1,3 +1,0 @@
----
-bugfixes:
-    - user - warn if move_home is true and home directory does not exist (https://github.com/ansible/ansible/issues/37398).

@@ -1,3 +1,0 @@
----
-bugfixes:
-    - subelements - fix error message when an empty subelements is provided (https://github.com/ansible/ansible/issues/87398).

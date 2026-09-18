@@ -1,2 +1,0 @@
-minor_changes:
-  - distribution facts - add the ``ansible_distribution_cpe_name`` fact, exposing the ``CPE_NAME`` published in the os-release file when the distribution provides one.

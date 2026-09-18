@@ -1,2 +1,0 @@
-bugfixes:
-  - module_utils sanitize_keys and remove_value functions now sort their input to ensure matching subsets are always obscured.

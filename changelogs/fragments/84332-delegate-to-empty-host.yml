@@ -1,3 +1,0 @@
-bugfixes:
-  - delegate_to - reject a literal empty hostname consistently with a template
-    that resolves to an empty hostname (https://github.com/ansible/ansible/issues/84332).

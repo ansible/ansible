@@ -1,2 +1,0 @@
-minor_changes:
-  - setup module now adds 'by-path' information to device_links.

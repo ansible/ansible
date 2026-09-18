@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-test - Upgrade ``coverage`` for Python 3.10 and later.
