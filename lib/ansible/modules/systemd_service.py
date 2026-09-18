@@ -90,6 +90,9 @@ attributes:
     platform:
         platforms: posix
 notes:
+    - O(scope=global) only manages unit file state, such as enabling, disabling, and masking.
+      It cannot query or change runtime state, so O(daemon_reload), O(daemon_reexec), and O(state) have no effect in that scope,
+      since there is no running "global" service manager instance to connect to.
     - O(state), O(enabled), O(masked) requires O(name).
     - Before 2.4 you always required O(name).
     - Globs are not supported in name, in other words, C(postgres*.service).
@@ -385,6 +388,11 @@ def main():
     if module.params['force']:
         systemctl += " --force"
 
+    # The global scope has no running service manager instance to connect to, so systemctl
+    # rejects any verb that needs one (show, cat, daemon-reload, daemon-reexec, is-active, status, ...).
+    # Only unit-file-based verbs (is-enabled, list-unit-files, enable, disable, mask, unmask) work with it.
+    global_scope = module.params['scope'] == 'global'
+
     rc = 0
     out = err = ''
     result = dict(
@@ -395,31 +403,42 @@ def main():
 
     # Run daemon-reload first, if requested
     if module.params['daemon_reload'] and not module.check_mode:
-        (rc, out, err) = module.run_command("%s daemon-reload" % (systemctl))
-        if rc != 0:
-            if is_chroot(module) or os.environ.get('SYSTEMD_OFFLINE') == '1':
-                module.warn('daemon-reload failed, but target is a chroot or systemd is offline. Continuing. Error was: %d / %s' % (rc, err))
-            else:
-                module.fail_json(msg='failure %d during daemon-reload: %s' % (rc, err))
+        if global_scope:
+            # Nothing to reload: there is no running global service manager instance.
+            module.warn('daemon_reload is not supported with scope=global, as there is no running service manager instance to reload. Skipping.')
+        else:
+            (rc, out, err) = module.run_command("%s daemon-reload" % (systemctl))
+            if rc != 0:
+                if is_chroot(module) or os.environ.get('SYSTEMD_OFFLINE') == '1':
+                    module.warn('daemon-reload failed, but target is a chroot or systemd is offline. Continuing. Error was: %d / %s' % (rc, err))
+                else:
+                    module.fail_json(msg='failure %d during daemon-reload: %s' % (rc, err))
 
     # Run daemon-reexec
     if module.params['daemon_reexec'] and not module.check_mode:
-        (rc, out, err) = module.run_command("%s daemon-reexec" % (systemctl))
-        if rc != 0:
-            if is_chroot(module) or os.environ.get('SYSTEMD_OFFLINE') == '1':
-                module.warn('daemon-reexec failed, but target is a chroot or systemd is offline. Continuing. Error was: %d / %s' % (rc, err))
-            else:
-                module.fail_json(msg='failure %d during daemon-reexec: %s' % (rc, err))
+        if global_scope:
+            # Nothing to re-execute: there is no running global service manager instance.
+            module.warn('daemon_reexec is not supported with scope=global, as there is no running service manager instance to re-execute. Skipping.')
+        else:
+            (rc, out, err) = module.run_command("%s daemon-reexec" % (systemctl))
+            if rc != 0:
+                if is_chroot(module) or os.environ.get('SYSTEMD_OFFLINE') == '1':
+                    module.warn('daemon-reexec failed, but target is a chroot or systemd is offline. Continuing. Error was: %d / %s' % (rc, err))
+                else:
+                    module.fail_json(msg='failure %d during daemon-reexec: %s' % (rc, err))
 
     if unit:
         found = False
         is_initd = sysv_exists(unit)
         is_systemd = False
 
-        # check service data, cannot error out on rc as it changes across versions, assume not found
-        (rc, out, err) = module.run_command("%s show '%s'" % (systemctl, unit))
+        if not global_scope:
+            # check service data, cannot error out on rc as it changes across versions, assume not found
+            (rc, out, err) = module.run_command("%s show '%s'" % (systemctl, unit))
 
-        if rc == 0 and not (request_was_ignored(out) or request_was_ignored(err)):
+        # `show` never works for the global scope, so fall straight through to the
+        # unit-file-based detection below, which is what enable/disable/mask/unmask also rely on.
+        if not global_scope and rc == 0 and not (request_was_ignored(out) or request_was_ignored(err)):
             # load return of systemctl show into dictionary for easy access and return
             if out:
                 result['status'] = parse_systemctl_show(to_native(out).split('\n'))
@@ -433,7 +452,7 @@ def main():
                     module.fail_json(msg="Error loading unit file '%s': %s" % (unit, result['status']['LoadError']))
 
         # Workaround for https://github.com/ansible/ansible/issues/71528
-        elif err and rc == 1 and 'Failed to parse bus message' in err:
+        elif not global_scope and err and rc == 1 and 'Failed to parse bus message' in err:
             result['status'] = parse_systemctl_show(to_native(out).split('\n'))
 
             unit_base, sep, suffix = unit.partition('@')
@@ -468,9 +487,11 @@ def main():
                 (rc, out, err) = module.run_command("%s list-unit-files '%s'" % (systemctl, unit))
                 if rc == 0:
                     is_systemd = True
-                else:
+                elif not global_scope:
                     # Check for systemctl command
                     module.run_command(systemctl, check_rc=True)
+                # else: the unit file lookup came up empty, so the unit simply does not exist.
+                # There is no live instance to sanity-check systemctl against in this scope.
 
         # Does service exist?
         found = is_systemd or is_initd
@@ -510,7 +531,13 @@ def main():
 
             # do we need to enable the service?
             enabled = False
-            (rc, out, err) = module.run_command("%s is-enabled '%s' -l" % (systemctl, unit))
+            # `-l`/`--full` also lists the unit's installed symlinks, which needs a running
+            # service manager instance and is therefore rejected for the global scope. The
+            # plain enabled/disabled state checked below does not need that information anyway.
+            if global_scope:
+                (rc, out, err) = module.run_command("%s is-enabled '%s'" % (systemctl, unit))
+            else:
+                (rc, out, err) = module.run_command("%s is-enabled '%s' -l" % (systemctl, unit))
 
             # check systemctl result or if it is a init script
             if rc == 0:
