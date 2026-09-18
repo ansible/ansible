@@ -132,3 +132,10 @@
     - name: the second file value is now a registered secret too (proves lazy re-evaluation)
       debug:
         msg: "MARKER lazy_second: {{ lazy_second_secret }}"
+
+    # --- registration failure: the value was never registered so it cannot be masked, the error output must
+    # not show the source of the template containing it.
+    - name: register_secret failure does not display the source of the template
+      debug:
+        msg: "{{ 'Zq1' | register_secret }}"
+      ignore_errors: true
