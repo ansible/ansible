@@ -1,0 +1,3 @@
+bugfixes:
+  - parallel fact gathering - wait indefinitely when ``gather_timeout`` is unspecified instead of 5 seconds.
+  - parallel fact gathering - allow the setup module to handle its own timeout. Previously, it would fail if it exceeded 5 seconds, regardless of ``gather_timeout``.
