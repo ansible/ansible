@@ -1,0 +1,3 @@
+---
+bugfixes:
+    - service_facts - report correct status when service is in failed state under systemd (https://github.com/ansible/ansible/issues/81115).
