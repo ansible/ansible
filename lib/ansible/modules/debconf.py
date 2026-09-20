@@ -40,7 +40,7 @@ notes:
       and you may need to check how your package is handled.
     - Also note C(dpkg-reconfigure) is a 3-phase process. It invokes the
       control scripts from the C(/var/lib/dpkg/info) directory with the
-      C(<package>.prerm  reconfigure <version>),
+      C(<package>.prerm reconfigure <version>),
       C(<package>.config reconfigure <version>) and C(<package>.postinst control <version>) arguments.
     - The main issue is that the C(<package>.config reconfigure) step for many packages
       will first reset the debconf database (overriding changes made by this module) by

@@ -17,7 +17,7 @@ description:
 options:
   free_form:
     description:
-        - This module takes a free form command, as a string. There is not an actual option named "free form".  See the examples!
+        - This module takes a free form command, as a string. There is not an actual option named "free form". See the examples!
         - V(flush_handlers) makes Ansible run any handler tasks which have thus far been notified. Ansible inserts these tasks internally at certain
           points to implicitly trigger handler runs (after pre/post tasks, the final role execution, and the main tasks section of your plays).
         - V(refresh_inventory) (added in Ansible 2.0) reloads inventory sources and the host and group structure based on those sources.

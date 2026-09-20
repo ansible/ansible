@@ -12,7 +12,7 @@ module: sysvinit
 author:
     - "Ansible Core Team"
 version_added: "2.6"
-short_description:  Manage SysV services.
+short_description: Manage SysV services.
 description:
     - Controls services on target hosts that use the SysV init system.
 options:

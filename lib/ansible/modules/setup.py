@@ -82,8 +82,8 @@ description:
       automatically.
     - This module is also supported for Windows targets.
 extends_documentation_fragment:
-  -  action_common_attributes
-  -  action_common_attributes.facts
+  - action_common_attributes
+  - action_common_attributes.facts
 attributes:
     check_mode:
         support: full

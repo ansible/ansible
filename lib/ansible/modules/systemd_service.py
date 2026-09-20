@@ -11,7 +11,7 @@ module: systemd_service
 author:
     - Ansible Core Team
 version_added: "2.2"
-short_description:  Manage systemd units
+short_description: Manage systemd units
 description:
     - Controls systemd units (services, timers, and so on) on remote hosts.
     - M(ansible.builtin.systemd) is renamed to M(ansible.builtin.systemd_service) to better reflect the scope of the module.

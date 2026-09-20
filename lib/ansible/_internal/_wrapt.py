@@ -517,7 +517,7 @@ class PartialCallableObjectProxy(ObjectProxy):
             return self, args
 
         self, args = _unpack_self(*args)
-    
+
         _args = self._self_args + args
 
         _kwargs = dict(self._self_kwargs)
@@ -580,7 +580,7 @@ class _FunctionWrapperBase(ObjectProxy):
             if binder is None:
                 return self
 
-            descriptor =  binder(instance, owner)
+            descriptor = binder(instance, owner)
 
             return self.__bound_function_wrapper__(descriptor, instance,
                     self._self_wrapper, self._self_enabled,

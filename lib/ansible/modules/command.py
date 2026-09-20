@@ -60,7 +60,7 @@ options:
     description:
       - Passes the command as a list rather than a string.
       - Use O(argv) to avoid quoting values that would otherwise be interpreted incorrectly (for example "user name").
-      - Only the string (free form) or the list (argv) form can be provided, not both.  One or the other must be provided.
+      - Only the string (free form) or the list (argv) form can be provided, not both. One or the other must be provided.
     version_added: "2.6"
   creates:
     type: path
@@ -96,19 +96,19 @@ options:
     type: bool
     default: yes
 notes:
-    -  If you want to run a command through the shell (say you are using C(<), C(>), C(|), and so on),
-       you actually want the M(ansible.builtin.shell) module instead.
-       Parsing shell metacharacters can lead to unexpected commands being executed if quoting is not done correctly so it is more secure to
-       use the M(ansible.builtin.command) module when possible.
-    -  O(creates), O(removes), and O(chdir) can be specified after the command.
-       For instance, if you only want to run a command if a certain file does not exist, use this.
-    -  Check mode is supported when passing O(creates) or O(removes). If running in check mode and either of these are specified, the module will
-       check for the existence of the file and report the correct changed status. If these are not supplied, the task will return RV(ignore:changed=False).
-    -  The O(ignore:executable) parameter is removed since version 2.4. If you have a need for this parameter, use the M(ansible.builtin.shell) module instead.
-    -  For Windows targets, use the M(ansible.windows.win_command) module instead.
-    -  For rebooting systems, use the M(ansible.builtin.reboot) or M(ansible.windows.win_reboot) module.
-    -  If the command returns non UTF-8 data, it must be encoded to avoid issues. This may necessitate using M(ansible.builtin.shell) so the output
-       can be piped through C(base64).
+    - If you want to run a command through the shell (say you are using C(<), C(>), C(|), and so on),
+      you actually want the M(ansible.builtin.shell) module instead.
+      Parsing shell metacharacters can lead to unexpected commands being executed if quoting is not done correctly so it is more secure to
+      use the M(ansible.builtin.command) module when possible.
+    - O(creates), O(removes), and O(chdir) can be specified after the command.
+      For instance, if you only want to run a command if a certain file does not exist, use this.
+    - Check mode is supported when passing O(creates) or O(removes). If running in check mode and either of these are specified, the module will
+      check for the existence of the file and report the correct changed status. If these are not supplied, the task will return RV(ignore:changed=False).
+    - The O(ignore:executable) parameter is removed since version 2.4. If you have a need for this parameter, use the M(ansible.builtin.shell) module instead.
+    - For Windows targets, use the M(ansible.windows.win_command) module instead.
+    - For rebooting systems, use the M(ansible.builtin.reboot) or M(ansible.windows.win_reboot) module.
+    - If the command returns non UTF-8 data, it must be encoded to avoid issues. This may necessitate using M(ansible.builtin.shell) so the output
+      can be piped through C(base64).
 seealso:
 - module: ansible.builtin.raw
 - module: ansible.builtin.script

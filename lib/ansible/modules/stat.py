@@ -53,8 +53,8 @@ options:
     default: no
     version_added: '2.20'
 extends_documentation_fragment:
-  -  action_common_attributes
-  -  checksum_common
+  - action_common_attributes
+  - checksum_common
 attributes:
     check_mode:
         support: full

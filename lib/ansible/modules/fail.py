@@ -43,7 +43,7 @@ attributes:
         support: none
     delegation:
         details: Aside from C(register) and/or in combination with C(delegate_facts), it has little effect.
-        support:  partial
+        support: partial
     platform:
         platforms: all
 seealso:

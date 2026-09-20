@@ -42,7 +42,7 @@ options:
         hard: The O(path) is a hard link to the specified O(src).
         link: The O(path) is a symbolic link to the specified O(src). Other options can be applied depending on O(follow) setting,
               depending on filesystem support. For example, O(mode) and O(owner) are often not applicable on the link itself.
-        touch: If the O(path) does not exist, an empty file will be created.  Otherwise, an existing file or directory will
+        touch: If the O(path) does not exist, an empty file will be created. Otherwise, an existing file or directory will
                receive updated file access and modification times (similar to the way V(touch) works from the command line).
                As such, this will always result in a V(changed) state.
   src:
