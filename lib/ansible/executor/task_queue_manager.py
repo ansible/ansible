@@ -540,8 +540,7 @@ class TaskQueueManager:
                 for arg in args:
                     # FIXME: add play/task cleaners
                     if isinstance(arg, HostTaskResult):
-                        mask_result = not callback_plugin.ANSIBLE_SUPPORTS_MASKING
-                        copied_tr = CallbackTaskResult(host=arg.host, task=arg.task, utr=arg.utr, mask_result=mask_result)
+                        copied_tr = CallbackTaskResult(host=arg.host, task=arg.task, utr=arg.utr)
                         new_args.append(copied_tr)
                         # this state hack requires that no callback ever accepts > 1 TaskResult object
                         callback_plugin._current_task_result = copied_tr

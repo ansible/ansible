@@ -40,3 +40,14 @@ if [[ "$include_skipped" != *skip_reason* ]]; then
     echo "Failed to omit display_skipped_hosts (default true)"
     exit 1
 fi
+
+# test that task results handed to callbacks have registered secrets masked in the result structure itself.
+for format in json yaml; do
+    OUTDIR="${OUTPUT_DIR}/secret_masking_${format}"
+
+    rm -rf "${OUTDIR}"
+    mkdir -p "${OUTDIR}"
+    MASKING_PROBE_OUTPUT="${OUTDIR}" ANSIBLE_STDOUT_CALLBACK=masking_probe ANSIBLE_CALLBACK_RESULT_FORMAT="${format}" ansible-playbook secret_masking.yml
+    tail -n +1 "${OUTDIR}"/*  # helps with debugging by showing the output in full before the diff check
+    diff -ru "secret_masking_expected/${format}" "${OUTDIR}"
+done

@@ -1,0 +1,14 @@
+{
+    "changed": true,
+    "cmd": "printf 'MARKER_STDOUT %s END\\n' \"${LINES_SECRET}\"\nprintf 'MARKER_STDERR %s END\\n' \"${LINES_SECRET}\" >&2\n",
+    "msg": "",
+    "rc": 0,
+    "stderr": "MARKER_STDERR $REDACTED$ END",
+    "stderr_lines": [
+        "MARKER_STDERR $REDACTED$ END"
+    ],
+    "stdout": "MARKER_STDOUT $REDACTED$ END",
+    "stdout_lines": [
+        "MARKER_STDOUT $REDACTED$ END"
+    ]
+}
