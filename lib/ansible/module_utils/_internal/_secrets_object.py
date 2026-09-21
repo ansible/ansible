@@ -68,7 +68,7 @@ class _Walker:
     def __init__(self, masker: SecretMasker, placeholder: str, lines_keys: dict[str, str]) -> None:
         self._masker = masker
         self._placeholder = placeholder
-        self._lines_keys = lines_keys
+        self._lines_items = tuple(lines_keys.items())
         self._tracked_keys = frozenset(lines_keys) | frozenset(lines_keys.values())
 
     def mask(self, value: _t.Any) -> _t.Any:
@@ -113,13 +113,20 @@ class _Walker:
         out = {}
         changed = False
 
+        # Maps the lines keys to their corresponding source text keys so we can
+        # re-mask the lines values based on the masked text entries.
+        lines_mapping = self._get_derived_lines_keys(value)
+
         # As the keys may be masked themselves, this tracks the mapping from
         # the original keys to the their new name.
         tracked = {}
 
         for key, item in value.items():
             new_key = self.mask(key)
-            new_item = self.mask(item)
+
+            # If the key is part of the derived lines mapping, we pretend it is
+            # not masked as it will be re-masked if the source text changed.
+            new_item = item if key in lines_mapping else self.mask(item)
 
             if new_key is not key or new_item is not item:
                 changed = True
@@ -136,13 +143,30 @@ class _Walker:
 
             out[new_key] = new_item
 
+            # Need to keep track of the original key names when redoing the lines values later.
             if key in self._tracked_keys:
                 tracked[key] = new_key
 
-        if tracked:
-            self._rebuild_lines(value, out, tracked)
+        for lines_key, text_key in lines_mapping.items():
+            masked_text = out[tracked[text_key]]
+
+            # If the text did not change then we don't need to update the lines value.
+            if masked_text is not value[text_key]:
+                out[tracked[lines_key]] = AnsibleTagHelper.tag_copy(value[lines_key], masked_text.splitlines())
 
         return out if changed else value
+
+    def _get_derived_lines_keys(self, value: _c.Mapping) -> dict[str, str]:
+        derived: dict[str, str] = {}
+
+        for text_key, lines_key in self._lines_items:
+            text = value.get(text_key)
+
+            # Only consider lines values that are actually derived from their corresponding text entry.
+            if isinstance(text, str) and value.get(lines_key) == text.splitlines():
+                derived[lines_key] = text_key
+
+        return derived
 
     def _mask_sequence(self, value: _c.Sequence) -> _c.Sequence:
         out: list = []
@@ -157,23 +181,3 @@ class _Walker:
             out.append(new_item)
 
         return out if changed else value
-
-    def _rebuild_lines(self, original: _c.Mapping, masked: dict, tracked: dict) -> None:
-        for original_key, lines_key in self._lines_keys.items():
-            if original_key not in tracked or lines_key not in tracked:
-                continue
-
-            original_text = original[original_key]
-            masked_text = masked[tracked[original_key]]
-
-            # Only rebuild if original text has changed and was a string
-            if masked_text is original_text or not isinstance(original_text, str):
-                continue
-
-            # We also verify that the lines values was actually derived from the original text in case something
-            # else manually set this key.
-            if original[lines_key] != original_text.splitlines():
-                continue
-
-            new_lines = masked_text.splitlines()
-            masked[tracked[lines_key]] = AnsibleTagHelper.tag_copy(original[lines_key], new_lines)
