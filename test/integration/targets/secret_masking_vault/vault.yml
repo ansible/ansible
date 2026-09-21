@@ -9,11 +9,15 @@
     - name: load inline !vault vars
       include_vars: "{{ inline_vault_file }}"
 
+    - name: load whole-file vaulted JSON vars (exercises the legacy JSON decode path)
+      include_vars: "{{ json_vault_file }}"
+
     - name: vaulted vars resolve to the known values in-playbook
       assert:
         that:
           - vaulted_scalar == 'Vaultfilescalar0010Secret'
           - vaulted_list[0] == 'Vaultfilelist0011Secret'
+          - vaulted_list[1] == 76543210
           - vaulted_dict.nested_key == 'Vaultfiledict0012Secret'
           - vaulted_int == 87654321
           - notasecretkeyname == 'Vaultfilekeyval0014Secret'
@@ -21,6 +25,8 @@
           - vaulted_dict_in_list[0].nested_dict_key == 'Vaultdictinlist0015Secret'
           - vaulted_list_in_dict.outer_key[0] == 'Vaultlistindict0016Secret'
           - vaulted_deep.level_a[0].level_b[0] == 'Vaultdeep0017Secret'
+          - jsonscalarkey == 'Vaultjson0018Secret'
+          - jsonnumberkey == 65432109
         quiet: true
 
     - name: emit vaulted scalar
@@ -30,6 +36,10 @@
     - name: emit vaulted list element
       debug:
         msg: "MARKER vault_list: {{ vaulted_list[0] }}"
+
+    - name: emit vaulted list int element (registered as its string form)
+      debug:
+        msg: "MARKER vault_list_int: {{ vaulted_list[1] }}"
 
     - name: emit vaulted nested dict value
       debug:
@@ -58,3 +68,11 @@
     - name: emit secret nested several levels deep through mixed types
       debug:
         msg: "MARKER vault_deep: {{ vaulted_deep.level_a[0].level_b[0] }}"
+
+    - name: emit secret from a vaulted JSON string value
+      debug:
+        msg: "MARKER vault_jsonstr: {{ jsonscalarkey }}"
+
+    - name: emit secret from a vaulted JSON number (registered as its string form)
+      debug:
+        msg: "MARKER vault_jsonnum: {{ jsonnumberkey }}"
