@@ -12,6 +12,10 @@ def match_origin(data, origin=Origin.UNKNOWN):
     return origin == str(Origin.get_tag(data))
 
 
+def not_is_trusted(data):
+    return not is_trusted(data)
+
+
 def was_encrypted(data):
     return SourceWasEncrypted.is_tagged_on(data)
 
@@ -22,4 +26,5 @@ class TestModule(object):
             'encrypted': was_encrypted,
             'origin': match_origin,
             'trusted': is_trusted,
+            'unsafe': not_is_trusted,
         }
