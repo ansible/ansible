@@ -1,6 +1,7 @@
 vaulted_scalar: Vaultfilescalar0010Secret
 vaulted_list:
   - Vaultfilelist0011Secret
+  - 76543210
 vaulted_dict:
   nested_key: Vaultfiledict0012Secret
 vaulted_int: 87654321
