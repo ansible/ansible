@@ -1,0 +1,53 @@
+- name: Install hello for cache and autoremove tests
+  apt:
+    name: hello
+    state: present
+
+- name: Mark hello as automatically installed
+  command: apt-mark auto hello
+
+- block:
+    - name: Check autoremove with a cache validity interval
+      apt:
+        autoremove: true
+        cache_valid_time: 86400
+      check_mode: true
+      register: autoremove_check
+
+    - name: Verify that check mode finds the unused package
+      assert:
+        that:
+          - autoremove_check is changed
+          - "'hello' in autoremove_check.stdout"
+
+    - name: Autoremove with cache update options
+      apt:
+        autoremove: true
+        update_cache: true
+        cache_valid_time: 86400
+      register: autoremove_result
+
+    - name: Verify that check mode left the package for removal
+      assert:
+        that:
+          - autoremove_result is changed
+          - "'hello' in autoremove_result.stdout"
+
+    - name: Check that autoremove is idempotent
+      apt:
+        autoremove: true
+        update_cache: true
+        cache_valid_time: 86400
+      check_mode: true
+      register: autoremove_again
+
+    - name: Verify there are no unused packages left
+      assert:
+        that:
+          - autoremove_again is not changed
+
+  always:
+    - name: Remove hello after the autoremove test
+      apt:
+        name: hello
+        state: absent
