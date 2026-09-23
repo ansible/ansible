@@ -1,8 +1,2 @@
 bugfixes:
-  - vars - ``VariableManager.set_host_facts()`` now copies the given facts
-    mapping when a host has no prior cached facts, instead of storing the
-    caller's object directly. Broadcasting one templated ``run_once``
-    ``set_fact``/``gather_facts`` result to every host (via the strategy's
-    ``CACHEABLE_FACT`` loop) previously aliased a single dict across hosts, so a
-    later per-host fact update leaked onto the other hosts in the play
-    (https://github.com/ansible/ansible/issues/87415).
+  - ansible_facts - initial facts from ``run_once`` tasks no longer reference the same object and can be updated for individual hosts
