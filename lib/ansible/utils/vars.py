@@ -36,6 +36,25 @@ from ansible.parsing.splitter import parse_kv
 
 ADDITIONAL_PY2_KEYWORDS = frozenset(("True", "False", "None"))
 
+JINJA_KEYWORDS = frozenset(
+    {
+        # scalar singletons (see jinja2.nodes.Name.can_assign)
+        'true',
+        'false',
+        'none',
+        'True',
+        'False',
+        'None',
+        # other
+        'not',  # unary operator always applicable to names
+    }
+)
+"""Names which have special meaning to Jinja and cannot be resolved as variable names."""
+
+_VARIABLE_NAME_HELP_TEXT = (
+    'Variable names must be strings starting with a letter or underscore character, and contain only letters, numbers and underscores.'
+)
+
 _MAXSIZE = 2 ** 32
 cur_id = 0
 node_mac = ("%012x" % uuid.getnode())[:12]
@@ -238,6 +257,8 @@ def load_options_vars(version):
 
 
 def _isidentifier_PY3(ident):
+    # deprecated: description='Use validate_variable_name instead.' core_version='2.23'
+
     if not isinstance(ident, string_types):
         return False
 
@@ -273,3 +294,19 @@ portable between the two. The following changes were made:
 
 Originally posted at http://stackoverflow.com/a/29586366
 """
+
+
+def validate_variable_name(name: object) -> None:
+    """Validate the given variable name is valid, raising an AnsibleError if it is not."""
+    if isinstance(name, str) and name.isidentifier() and name.isascii() and name not in JINJA_KEYWORDS:
+        return
+
+    if isinstance(name, (str, int, float, bool, type(None))):
+        key_description = f'name {str(name)!r}'  # show common scalar key names as strings
+    else:
+        key_description = 'name'
+
+    if not isinstance(name, str):
+        key_description += f' of type {type(name).__name__!r}'  # show the type name of all non-string keys
+
+    raise AnsibleError(f'Invalid variable {key_description}. {_VARIABLE_NAME_HELP_TEXT}', obj=name)
