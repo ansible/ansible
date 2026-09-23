@@ -36,3 +36,22 @@ def test_mask_url(url, wanted):
 
     for notmasked in wanted:
         assert notmasked in masked
+
+
+@pytest.mark.parametrize(
+    'url',
+    (
+        ('http://secretuser:secretpassword＠badunicodeat.com:80/file.html?nothing=something'),
+        ('http://secretuser:@badunicodeslash.com:443／file.html'),
+        ('http://secretuser@badunicodecolon.com：80'),
+        ('http://:secretpassword＠badunicodequestion.com:00/file.html？this=breaksparse'),
+    )
+)
+def test_mask_url_exceptions(url):
+
+    try:
+        masked = mask_url(url)
+    except Exception as e:
+        masked = ''
+        assert 'secret' not in str(e)
+    assert 'secret' not in masked
