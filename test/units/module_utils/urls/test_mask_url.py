@@ -41,21 +41,10 @@ def test_mask_url(url, wanted):
 @pytest.mark.parametrize(
     'url',
     (
-        ('http://secretuser:secretpassword＠badunicodeat.com:80/file.html?nothing=something'),
-        ('http://secretuser:@badunicodeslash.com:443／file.html'),
-        ('http://secretuser@badunicodecolon.com：80'),
-        ('http://:secretpassword＠badunicodequestion.com:00/file.html？this=breaksparse'),
-    )
-)
-def test_mask_url_exceptions(url):
-    with pytest.raises(ValueError, match="^(?!.*secret).*$"):
-        mask_url(url)
-
-
-@pytest.mark.parametrize(
-    'url',
-    (
-        # `urlparse` rejects all of these
+        'http://secretuser:secretpassword＠badunicodeat.com:80/file.html?nothing=something',
+        'http://secretuser:@badunicodeslash.com:443／file.html',
+        'http://secretuser@badunicodecolon.com：80',
+        'http://:secretpassword＠badunicodequestion.com:00/file.html？this=breaksparse',
         'https://[::1/index.html',
         'https://example.com]:443/index.html',
         'https://[fe80::1:8080/index.html',
@@ -74,6 +63,6 @@ def test_mask_url_exceptions(url):
         'https://secretuser:secret@pass@[::1/index.html',
     )
 )
-def test_mask_url_unparsable_without_userinfo(url):
-    with pytest.raises(ValueError):
+def test_mask_url_exceptions(url):
+    with pytest.raises(ValueError, match="^(?!.*secret).*$"):
         mask_url(url)
