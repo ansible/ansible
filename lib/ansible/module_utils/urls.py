@@ -325,7 +325,11 @@ def mask_url(url: str) -> str:
         if (parsed_url := urlparse(url)) and not parsed_url.username and not parsed_url.password:
             return url
     except Exception as e:
-        raise type(e)('mask_url encountered problem parsing the url')
+        try:
+            raise type(e)(str(e).replace(url, mask))
+        except:
+            # last resort, can happen with unicode normalization in url
+            raise type(e)('mask_url could not parse the url provided')
 
     netloc: str
     if parsed_url.password:
