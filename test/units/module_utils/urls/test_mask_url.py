@@ -60,13 +60,11 @@ def test_mask_url_exceptions(url):
 @pytest.mark.parametrize(
     'url',
     (
-        # `urlparse` rejects all of these, and none carries a userinfo, so each must survive intact
-        # in order to stay useful for diagnostics
+        # `urlparse` rejects all of these
         'https://[::1/index.html',
         'https://example.com]:443/index.html',
         'https://[fe80::1:8080/index.html',
         '//[::1/index.html',
-        # urls that `urlparse` rejects outright
         'https://secretuser:secretpass@[::1/index.html',
         'https://secretuser@[::1/index.html',
         'ftp://secretuser:secretpass@[fe80::1:8080/pub/file.txt',
