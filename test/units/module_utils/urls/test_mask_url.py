@@ -55,3 +55,32 @@ def test_mask_url_exceptions(url):
         masked = ''
         assert 'secret' not in str(e)
     assert 'secret' not in masked
+
+
+@pytest.mark.parametrize(
+    'url',
+    (
+        # `urlparse` rejects all of these, and none carries a userinfo, so each must survive intact
+        # in order to stay useful for diagnostics
+        'https://[::1/index.html',
+        'https://example.com]:443/index.html',
+        'https://[fe80::1:8080/index.html',
+        '//[::1/index.html',
+        # urls that `urlparse` rejects outright
+        'https://secretuser:secretpass@[::1/index.html',
+        'https://secretuser@[::1/index.html',
+        'ftp://secretuser:secretpass@[fe80::1:8080/pub/file.txt',
+        'https://:secretpass@::1]/index.html',
+        'https://secretuser:secretpass@[::1',
+        # a scheme-relative url has no scheme to anchor on
+        '//secretuser:secretpass@[::1/index.html',
+        # only `/` ends the authority, so a `?` or `#` cannot hide the userinfo
+        'https://[::1secretuser:sec?retpass@host/index.html',
+        'https://secretuser:secretpass@[::1#fragment',
+        # the last `@` separates userinfo from host, matching how urlparse splits it
+        'https://secretuser:secret@pass@[::1/index.html',
+    )
+)
+def test_mask_url_unparsable_without_userinfo(url):
+    with pytest.raises(ValueError):
+        mask_url(url)
