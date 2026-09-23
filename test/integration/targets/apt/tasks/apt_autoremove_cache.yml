@@ -1,3 +1,41 @@
+- name: Check that a cache-only request retains its existing result
+  apt:
+    update_cache: true
+    cache_valid_time: 86400
+  register: cache_only_result
+
+- name: Verify the cache-only result has no cleanup output
+  assert:
+    that:
+      - cache_only_result.cache_updated is defined
+      - cache_only_result.cache_update_time is defined
+      - cache_only_result.stdout is not defined
+
+- name: Autoclean with cache update options
+  apt:
+    autoclean: true
+    update_cache: true
+    cache_valid_time: 86400
+  register: autoclean_result
+
+- name: Verify autoclean ran after checking the cache
+  assert:
+    that:
+      - autoclean_result.stdout is defined
+      - autoclean_result.stderr is defined
+
+- name: Check autoclean with a cache validity interval
+  apt:
+    autoclean: true
+    cache_valid_time: 86400
+  check_mode: true
+  register: autoclean_check
+
+- name: Verify autoclean ran in check mode
+  assert:
+    that:
+      - autoclean_check.stdout is defined
+
 - name: Install hello for cache and autoremove tests
   apt:
     name: hello
