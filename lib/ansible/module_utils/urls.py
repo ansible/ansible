@@ -43,6 +43,7 @@ import socket
 import tempfile
 import traceback
 import types  # pylint: disable=unused-import
+import unicodedata
 import urllib.error
 import urllib.request
 
@@ -325,11 +326,11 @@ def mask_url(url: str) -> str:
         if (parsed_url := urlparse(url)) and not parsed_url.username and not parsed_url.password:
             return url
     except Exception as e:
-        try:
-            raise type(e)(str(e).replace(url, mask))
-        except:
-            # last resort, can happen with unicode normalization in url
-            raise type(e)('mask_url could not parse the url provided')
+        msg = 'mask_url could not parse the url provided'
+        # skip replace on unicode issues
+        if unicodedata.is_normalized('NFKC', url):
+            msg = f'{msg}: {str(e).replace(url, mask)}'
+        raise type(e)(msg)
 
     netloc: str
     if parsed_url.password:
