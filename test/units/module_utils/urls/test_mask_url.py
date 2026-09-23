@@ -48,13 +48,8 @@ def test_mask_url(url, wanted):
     )
 )
 def test_mask_url_exceptions(url):
-
-    try:
-        masked = mask_url(url)
-    except Exception as e:
-        masked = ''
-        assert 'secret' not in str(e)
-    assert 'secret' not in masked
+    with pytest.raises(ValueError, match="^(?!.*secret).*$"):
+        mask_url(url)
 
 
 @pytest.mark.parametrize(
