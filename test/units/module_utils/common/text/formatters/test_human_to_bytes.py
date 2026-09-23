@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import pytest
 
-from ansible.module_utils.common.text.formatters import human_to_bytes
+from ansible.module_utils.common.text.formatters import bytes_to_human, human_to_bytes
 
 
 NUM_IN_METRIC = {
@@ -255,3 +255,42 @@ def test_human_to_bytes_non_ascii_number(test_input):
     expected = "can't interpret following string"
     with pytest.raises(ValueError, match=expected):
         human_to_bytes(test_input)
+
+
+@pytest.mark.parametrize(
+    'input_data,isbits,expected',
+    [
+        ('1 byte', False, 1),
+        ('1 bytes', False, 1),
+        ('2 Bytes', False, 2),
+        ('2 kilobytes', False, 2 * NUM_IN_METRIC['K']),
+        ('3 Megabytes', False, 3 * NUM_IN_METRIC['M']),
+        ('8 bits', True, 8),
+        ('2 kilobits', True, 2 * NUM_IN_METRIC['K']),
+    ]
+)
+def test_human_to_bytes_plural_unit_name(input_data, isbits, expected):
+    """Accept the plural of a spelled-out unit name, which bytes_to_human() writes for sizes below 1K."""
+    assert human_to_bytes(input_data, isbits=isbits) == expected
+
+
+@pytest.mark.parametrize(
+    'input_data,isbits',
+    [
+        ('2 kilobits', False),
+        ('2 kilobytes', True),
+        ('2 bits', False),
+        ('2 bytes', True),
+    ]
+)
+def test_human_to_bytes_plural_unit_name_wrong_isbits(input_data, isbits):
+    """Keep rejecting a plural unit name that does not match isbits."""
+    with pytest.raises(ValueError, match="Value is not a valid string"):
+        human_to_bytes(input_data, isbits=isbits)
+
+
+@pytest.mark.parametrize('size', [0, 1, 1023, 1024, 1536, 2 ** 20, 5 * 2 ** 30])
+@pytest.mark.parametrize('isbits', [False, True])
+def test_human_to_bytes_reads_bytes_to_human(size, isbits):
+    """Parse every string bytes_to_human() produces back into the original size."""
+    assert human_to_bytes(bytes_to_human(size, isbits=isbits), isbits=isbits) == size

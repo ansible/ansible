@@ -103,7 +103,9 @@ def human_to_bytes(number, default_unit=None, isbits=False):
         if unit_group is None:
             raise ValueError(f"human_to_bytes() can't interpret a valid unit for {range_key}")
         isbits_flag = 1 if isbits else 0
-        if unit.lower() == unit_group[isbits_flag][0]:
+        unit_name = unit_group[isbits_flag][0]
+        # Accept the plural as well, since bytes_to_human() writes 'Bytes' and 'bits' for sizes below 1K.
+        if unit.lower() in (unit_name, unit_name + 's'):
             pass
         elif unit != unit_group[isbits_flag][1]:
             raise ValueError("human_to_bytes() failed to convert %s. Value is not a valid string (%s)" % (number, expect_message))
