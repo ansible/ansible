@@ -138,9 +138,12 @@ options:
   executable:
     description:
       - The explicit executable or pathname for the C(crontab) executable.
+      - For example V(fcrontab), on systems using C(fcron).
+      - If not an absolute path, the normal mechanism for resolving binary paths will be used.
       - May cause unexpected issues if it is not a 'vixie cron' conformant variant.
     type: path
     default: crontab
+    version_added: "2.23"
 requirements:
   - cron (any 'vixie cron' conformant variant, like cronie)
 notes:
@@ -253,7 +256,7 @@ class CronTab:
         self.lines = []
         self.ansible = "#Ansible: "
         self.n_existing = ''
-        self.cron_cmd = self.module.get_bin_path(module.params['executable'], required=True)
+        self.cron_cmd = shlex.quote(self.module.get_bin_path(module.params['executable'], required=True))
 
         if cron_file:
 
@@ -529,9 +532,9 @@ class CronTab:
         user = ''
         if self.user:
             if platform.system() == 'SunOS':
-                return "su %s -c '%s -l'" % (shlex.quote(self.user), shlex.quote(self.cron_cmd))
+                return "su %s -c '%s -l'" % (shlex.quote(self.user), self.cron_cmd)
             if platform.system() == 'AIX':
-                return "%s -l %s" % (shlex.quote(self.cron_cmd), shlex.quote(self.user))
+                return "%s -l %s" % (self.cron_cmd, shlex.quote(self.user))
             if platform.system() == 'HP-UX':
                 return "%s %s %s" % (self.cron_cmd, '-l', shlex.quote(self.user))
             if pwd.getpwuid(os.getuid())[0] != self.user:

@@ -320,17 +320,26 @@
   - assert:
       that: not cron_file_stats.stat.exists
 
-- name: Add a cron task using an explicit crontab executable
+# BusyBox dispatches on argv[0], so a renamed copy of its crontab applet does not work
+- name: Use a crontab executable installed under a different name (#85584)
+  when: ansible_distribution != 'Alpine'
   block:
   - name: Locate the crontab executable
     command: which crontab
     register: crontab_bin
 
-  - name: Add cron task with executable set to the full path of crontab
+  - name: Copy crontab to an executable with a different name
+    copy:
+      src: '{{ crontab_bin.stdout }}'
+      dest: '{{ remote_dir }}/fcrontab'
+      remote_src: yes
+      mode: preserve
+
+  - name: Add cron task using the renamed executable
     cron:
       name: test executable cron task
       job: 'date > {{ remote_dir }}/cron_canary_executable'
-      executable: '{{ crontab_bin.stdout }}'
+      executable: '{{ remote_dir }}/fcrontab'
     register: add_cron_task_executable
 
   - name: Get the crontab entries
@@ -346,4 +355,9 @@
   - name: Remove the cron task
     cron:
       name: test executable cron task
+      state: absent
+
+  - name: Remove the renamed executable
+    file:
+      path: '{{ remote_dir }}/fcrontab'
       state: absent
