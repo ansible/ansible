@@ -2,7 +2,6 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import annotations
 
-import fcntl
 import io
 import os
 import pickle
@@ -11,10 +10,9 @@ import socket
 import sys
 import time
 import traceback
+import typing as t
 import errno
 import json
-
-from contextlib import contextmanager
 
 from ansible import constants as C
 from ansible.cli.arguments import option_helpers as opt_help
@@ -23,12 +21,63 @@ from ansible.module_utils.connection import Connection, ConnectionError, send_da
 from ansible.module_utils.service import fork_process
 from ansible.module_utils._internal._json._profiles import _tagless
 from ansible.playbook.play_context import PlayContext
+from ansible.plugins.connection import (
+    _get_persistent_connection_lock_path,
+    _get_persistent_connection_socket_path,
+    _persistent_connection_lock,
+)
 from ansible.plugins.loader import connection_loader, init_plugin_loader
 from ansible.utils.path import unfrackpath, makedirs_safe
 from ansible.utils.display import Display
 from ansible.utils.jsonrpc import JsonRpcServer
 
 display = Display()
+
+
+class _ConnectionProcessRpc:
+    """Expose controller-owned operations on a persistent connection."""
+
+    def __init__(self, connection: t.Any, socket_path: str) -> None:
+        self.connection = connection
+        self.socket_path = socket_path
+
+    def set_options_ansible_connection_cli_stub(
+        self,
+        options: dict[str, t.Any],
+        play_context_data: str,
+        task_uuid: str,
+    ) -> dict[str, t.Any]:
+        """Synchronize task-specific connection state in a single RPC."""
+        messages = [('vvvv', 'found existing local domain socket, using it!')]
+        result: dict[str, t.Any] = {}
+        set_options_failed = False
+
+        try:
+            try:
+                self.connection.set_options(direct=options)
+            except Exception:
+                set_options_failed = True
+                raise ConnectionError('Unable to decode JSON from response set_options. See the debug log for more information.') from None
+
+            if update_play_context := getattr(self.connection, 'update_play_context', None):
+                update_play_context(play_context_data)
+            if set_check_prompt := getattr(self.connection, 'set_check_prompt', None):
+                set_check_prompt(task_uuid)
+        except Exception as exc:
+            result.update({
+                'error': to_text(exc),
+                'exception': traceback.format_exc(),
+            })
+
+        connection_messages = self.connection.pop_messages()
+        if not set_options_failed:
+            messages.extend(connection_messages)
+        result.update({
+            'messages': messages,
+            'socket_path': self.socket_path,
+        })
+
+        return result
 
 
 def read_stream(byte_stream):
@@ -39,21 +88,6 @@ def read_stream(byte_stream):
         raise Exception("EOF found before data was complete")
 
     return data
-
-
-@contextmanager
-def file_lock(lock_path):
-    """
-    Uses contextmanager to create and release a file lock based on the
-    given path. This allows us to create locks using `with file_lock()`
-    to prevent deadlocks related to failure to unlock properly.
-    """
-
-    lock_fd = os.open(lock_path, os.O_RDWR | os.O_CREAT, 0o600)
-    fcntl.lockf(lock_fd, fcntl.LOCK_EX)
-    yield
-    fcntl.lockf(lock_fd, fcntl.LOCK_UN)
-    os.close(lock_fd)
 
 
 class ConnectionProcess(object):
@@ -98,6 +132,7 @@ class ConnectionProcess(object):
 
             self.connection._socket_path = self.socket_path
             self.srv.register(self.connection)
+            self.srv.register(_ConnectionProcessRpc(self.connection, self.socket_path))
             messages.extend([('vvvv', msg) for msg in sys.stdout.getvalue().splitlines()])
 
             self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
@@ -184,7 +219,7 @@ class ConnectionProcess(object):
     def shutdown(self):
         """ Shuts down the local domain socket
         """
-        lock_path = unfrackpath("%s/.ansible_pc_lock_%s" % os.path.split(self.socket_path))
+        lock_path = _get_persistent_connection_lock_path(self.socket_path)
         if os.path.exists(self.socket_path):
             try:
                 if self.sock:
@@ -253,19 +288,17 @@ def main(args=None):
         })
 
     if rc == 0:
-        ssh = connection_loader.get('ssh', class_only=True)
         ansible_playbook_pid = args.playbook_pid
         task_uuid = args.task_uuid
-        cp = ssh._create_control_path(play_context.remote_addr, play_context.port, play_context.remote_user, play_context.connection, ansible_playbook_pid)
         # create the persistent connection dir if need be and create the paths
         # which we will be using later
         tmp_path = unfrackpath(C.PERSISTENT_CONTROL_PATH_DIR)
         makedirs_safe(tmp_path)
 
-        socket_path = unfrackpath(cp % dict(directory=tmp_path))
-        lock_path = unfrackpath("%s/.ansible_pc_lock_%s" % os.path.split(socket_path))
+        socket_path = _get_persistent_connection_socket_path(play_context, ansible_playbook_pid)
+        lock_path = _get_persistent_connection_lock_path(socket_path)
 
-        with file_lock(lock_path):
+        with _persistent_connection_lock(lock_path):
             if not os.path.exists(socket_path):
                 messages.append(('vvvv', 'local domain socket does not exist, starting it'))
                 original_path = os.getcwd()
