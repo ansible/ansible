@@ -11,6 +11,8 @@ repo_dir="${temp_dir}/repo"
 pull_dir="${temp_dir}/pull"
 temp_log="${temp_dir}/pull.log"
 
+script_location="${PWD}"
+
 ansible-playbook setup.yml -i ../../inventory
 
 cleanup="$(pwd)/cleanup.yml"
@@ -81,6 +83,40 @@ function pass_tests_multi {
 	fi
 }
 
+function pass_tests_file_exist {
+	if ! grep 'File does not exist' "${temp_log}"; then
+		cat "${temp_log}"
+		echo "Tried to run nonexisting playbook"
+		exit 1
+	fi
+}
+
+function pass_tests_file_not_accessible {
+	if ! grep 'File is not readable' "${temp_log}"; then
+		cat "${temp_log}"
+		echo "Tried to run not accessible playbook"
+		exit 1
+	fi
+	if grep MAGICKEYWORD "${temp_log}"; then
+		cat "${temp_log}"
+		echo "Managed to run not accessible playbook"
+		exit 1
+	fi
+}
+
+function pass_tests_file_not_in_repo {
+	if ! grep 'File is not in the source repository' "${temp_log}"; then
+		cat "${temp_log}"
+		echo "Tried to run playbook not in source repository"
+		exit 1
+	fi
+	if grep MAGICKEYWORD "${temp_log}"; then
+		cat "${temp_log}"
+		echo "Managed to run playbook not in source repository"
+		exit 1
+	fi
+}
+
 export ANSIBLE_INVENTORY
 export ANSIBLE_HOST_PATTERN_MISMATCH
 
@@ -138,6 +174,24 @@ echo 'test run on changes, yaml result format'
 change_repo
 ANSIBLE_CALLBACK_RESULT_FORMAT='yaml' ansible-pull -d "${pull_dir}" -U "${repo_dir}" --only-if-changed "$@" | tee "${temp_log}"
 pass_tests
+
+# run tests for file permissions
+set +o pipefail
+
+ANSIBLE_CONFIG='' ansible-pull -d "${pull_dir}" -U "${repo_dir}" "$@" "nonexistent.yml" 2>&1 | tee "${temp_log}"
+pass_tests_file_exist
+
+unreadable_file="${PWD}/unreadable.txt"
+cp "${script_location}/pull-integration-test/local.yml" "${unreadable_file}"
+chmod 000 "${unreadable_file}"
+ANSIBLE_CONFIG='' ansible-pull -d "${pull_dir}" -U "${repo_dir}" "$@" "${unreadable_file}" 2>&1 | tee "${temp_log}"
+pass_tests_file_not_accessible
+
+pathtrav="$(echo "${PWD}" | sed -E 's|^|..|;s|[^/]+|..|g')"
+ANSIBLE_CONFIG='' ansible-pull -d "${pull_dir}" -U "${repo_dir}" "$@" "${pathtrav}${script_location}/pull-integration-test/local.yml" 2>&1 | tee "${temp_log}"
+pass_tests_file_not_in_repo
+
+set -o pipefail
 
 if [ "${ORIG_CONFIG}" != "" ]; then
   export ANSIBLE_CONFIG="${ORIG_CONFIG}"
