@@ -57,7 +57,7 @@ def register_secret(
     if not isinstance(secret, str):
         msg = "Secret must be a string"
         if validation_action == 'error':
-            raise ValueError(msg)
+            raise AnsibleFilterError(msg, show_content=False)
         elif validation_action == 'warn':
             display.warning(msg)
 
@@ -67,7 +67,7 @@ def register_secret(
     if len(trimmed_secret) < _SECRET_MINIMUM_LENGTH:
         msg = f"Secret must be at least {_SECRET_MINIMUM_LENGTH} characters long after trimming whitespace"
         if validation_action == 'error':
-            raise ValueError(msg)
+            raise AnsibleFilterError(msg, show_content=False)
         elif validation_action == 'warn':
             display.warning(msg)
 

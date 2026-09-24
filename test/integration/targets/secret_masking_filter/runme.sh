@@ -55,4 +55,30 @@ for marker in "${markers[@]}"; do
     fi
 done
 
+# A failed registration cannot mask the value, so the error output must not display the source of the template containing it.
+if ! grep -qF -- "Secret must be at least 4 characters" "${LOG}"; then
+    echo "FAIL: expected register_secret failure message not found" >&2
+    exit 1
+fi
+if grep -q -- "Zq1" "${LOG}"; then
+    echo "FAIL: value of a failed register_secret template was displayed" >&2
+    exit 1
+fi
+
+# The same check for a registration failure raised while templating a play keyword rather than by a task.
+PLAY_KEYWORD_LOG="${OUTPUT_DIR}/filter_play_keyword.log"
+
+if ansible-playbook filter_play_keyword.yml -i ../../inventory "$@" 2>&1 | tee "${PLAY_KEYWORD_LOG}"; then
+    echo "FAIL: play with a failed register_secret in a play keyword should have failed" >&2
+    exit 1
+fi
+if ! grep -qF -- "Secret must be at least 4 characters" "${PLAY_KEYWORD_LOG}"; then
+    echo "FAIL: expected register_secret failure message not found in play keyword output" >&2
+    exit 1
+fi
+if grep -q -- "Zq2" "${PLAY_KEYWORD_LOG}"; then
+    echo "FAIL: value of a failed register_secret template in a play keyword was displayed" >&2
+    exit 1
+fi
+
 echo "All secret masking filter scenarios passed."

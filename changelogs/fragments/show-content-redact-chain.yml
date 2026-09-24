@@ -1,0 +1,6 @@
+bugfixes:
+  - >-
+    errors - when any exception in an error's cause chain was raised with ``show_content=False``, the annotated source lines are now redacted
+    for every exception in the chain, not just the one that requested it. Previously the outer exceptions wrapping it, such as the task or template
+    error, still displayed the source lines and could reveal the content the inner error deemed sensitive. The origin (file, line, and column) is still
+    shown so the error can be located.
