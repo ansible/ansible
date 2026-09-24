@@ -26,6 +26,15 @@ from ansible.utils.path import unfrackpath
 
 from ansible._internal._datatag._tags import TrustedAsTemplate, Origin
 
+HAS_COMPILED_CONFIGS = False
+try:
+    from ansible.config._internal import _base, _ansible_builtin_runtime  # type: ignore[import-untyped]
+    HAS_COMPILED_CONFIGS = True
+except ImportError:
+    pass
+else:
+    del _base, _ansible_builtin_runtime
+
 
 #
 # Special purpose OptionParsers
@@ -292,7 +301,10 @@ def version(prog=None):
     gitinfo = _gitinfo()
     if gitinfo:
         result[0] = "{0} {1}".format(result[0], gitinfo)
+
     result.append("  config file = %s" % C.CONFIG_FILE)
+    result.append(f"  has compiled configs = {HAS_COMPILED_CONFIGS}")
+
     if C.DEFAULT_MODULE_PATH is None:
         cpath = "Default w/o overrides"
     else:
