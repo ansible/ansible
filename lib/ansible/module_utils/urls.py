@@ -327,10 +327,10 @@ def mask_url(url: str) -> str:
             return url
     except Exception as e:
         msg = 'mask_url could not parse the url provided'
-        # skip replace on unicode issues
+        # skip replace on unicode issues, specially since they can be subsets of url.
         if unicodedata.is_normalized('NFKC', url):
             msg = f'{msg}: {str(e).replace(url, mask)}'
-        raise type(e)(msg)
+        raise ValueError(msg)
 
     netloc: str
     if parsed_url.password:
