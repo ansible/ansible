@@ -36,3 +36,33 @@ def test_mask_url(url, wanted):
 
     for notmasked in wanted:
         assert notmasked in masked
+
+
+@pytest.mark.parametrize(
+    'url',
+    (
+        'http://secretuser:secretpassword＠badunicodeat.com:80/file.html?nothing=something',
+        'http://secretuser:@badunicodeslash.com:443／file.html',
+        'http://secretuser@badunicodecolon.com：80',
+        'http://:secretpassword＠badunicodequestion.com:00/file.html？this=breaksparse',
+        'https://[::1/index.html',
+        'https://example.com]:443/index.html',
+        'https://[fe80::1:8080/index.html',
+        '//[::1/index.html',
+        'https://secretuser:secretpass@[::1/index.html',
+        'https://secretuser@[::1/index.html',
+        'ftp://secretuser:secretpass@[fe80::1:8080/pub/file.txt',
+        'https://:secretpass@::1]/index.html',
+        'https://secretuser:secretpass@[::1',
+        # a scheme-relative url has no scheme to anchor on
+        '//secretuser:secretpass@[::1/index.html',
+        # only `/` ends the authority, so a `?` or `#` cannot hide the userinfo
+        'https://[::1secretuser:sec?retpass@host/index.html',
+        'https://secretuser:secretpass@[::1#fragment',
+        # the last `@` separates userinfo from host, matching how urlparse splits it
+        'https://secretuser:secret@pass@[::1/index.html',
+    )
+)
+def test_mask_url_exceptions(url):
+    with pytest.raises(ValueError, match="^(?!.*secret).*$"):
+        mask_url(url)
