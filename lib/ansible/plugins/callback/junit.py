@@ -144,8 +144,6 @@ class CallbackModule(CallbackBase):
     CALLBACK_NAME = 'junit'
     CALLBACK_NEEDS_ENABLED = True
 
-    ANSIBLE_SUPPORTS_MASKING = True
-
     def __init__(self) -> None:
         super(CallbackModule, self).__init__()
 
@@ -189,7 +187,7 @@ class CallbackModule(CallbackBase):
             if args:
                 name += ' ' + args
 
-        # This callback opts in to receiving unmasked results, so any secrets must be redacted before they reach the report.
+        # Results are already masked; this also covers the task and play names written to the report.
         self._task_data[uuid] = TaskData(uuid, mask_secrets(name), path, play, action)
 
     def _finish_task(self, status: str, result: IncludedFile | CallbackTaskResult) -> None:

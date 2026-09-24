@@ -1,0 +1,33 @@
+
+    changed: true
+    msg: All items completed
+    results:
+    -   ansible_loop_var: item
+        changed: true
+        cmd: |-
+            printf 'MARKER_LOOP1_STDOUT %s END\n' "${LINES_SECRET}"
+            printf 'MARKER_LOOP1_STDERR %s END\n' "${LINES_SECRET}" >&2
+        item: 1
+        msg: ''
+        rc: 0
+        stderr: MARKER_LOOP1_STDERR $REDACTED$ END
+        stderr_lines:
+        - MARKER_LOOP1_STDERR $REDACTED$ END
+        stdout: MARKER_LOOP1_STDOUT $REDACTED$ END
+        stdout_lines:
+        - MARKER_LOOP1_STDOUT $REDACTED$ END
+    -   ansible_loop_var: item
+        changed: true
+        cmd: |-
+            printf 'MARKER_LOOP2_STDOUT %s END\n' "${LINES_SECRET}"
+            printf 'MARKER_LOOP2_STDERR %s END\n' "${LINES_SECRET}" >&2
+        item: 2
+        msg: ''
+        rc: 0
+        stderr: MARKER_LOOP2_STDERR $REDACTED$ END
+        stderr_lines:
+        - MARKER_LOOP2_STDERR $REDACTED$ END
+        stdout: MARKER_LOOP2_STDOUT $REDACTED$ END
+        stdout_lines:
+        - MARKER_LOOP2_STDOUT $REDACTED$ END
+
