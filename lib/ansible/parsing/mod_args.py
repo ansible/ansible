@@ -22,12 +22,16 @@ __metaclass__ = type
 import ansible.constants as C
 from ansible.errors import AnsibleParserError, AnsibleError, AnsibleAssertionError
 from ansible.module_utils.six import string_types
+from ansible.module_utils.common.jinja import is_possibly_all_template
 from ansible.module_utils.common.text.converters import to_text
 from ansible.parsing.splitter import parse_kv, split_args
 from ansible.plugins.loader import module_loader, action_loader
 from ansible.template import Templar
+from ansible.utils.display import Display
 from ansible.utils.fqcn import add_internal_fqcns
 from ansible.utils.sentinel import Sentinel
+
+display = Display()
 
 
 # For filtering out modules correctly below
@@ -151,31 +155,33 @@ class ModuleArgsParser:
         arguments can be fuzzy.  Deal with all the forms.
         '''
 
-        additional_args = {} if additional_args is None else additional_args
-
         # final args are the ones we'll eventually return, so first update
         # them with any additional args specified, which have lower priority
         # than those which may be parsed/normalized next
         final_args = dict()
-        if additional_args:
-            if isinstance(additional_args, string_types):
-                templar = Templar(loader=None)
-                if templar.is_template(additional_args):
-                    final_args['_variable_params'] = additional_args
-                else:
-                    raise AnsibleParserError("Complex args containing variables cannot use bare variables (without Jinja2 delimiters), "
-                                             "and must use the full variable style ('{{var_name}}')")
+
+        if additional_args is not Sentinel:
+            if isinstance(additional_args, string_types) and is_possibly_all_template(additional_args):
+                final_args['_variable_params'] = additional_args
             elif isinstance(additional_args, dict):
                 final_args.update(additional_args)
+            elif additional_args is None:
+                display.deprecated(
+                    msg="Ignoring empty task `args` keyword. A mapping or template which resolves to a mapping is required.",
+                    version="2.23",
+                )
             else:
-                raise AnsibleParserError('Complex args must be a dictionary or variable string ("{{var}}").')
+                raise AnsibleParserError(
+                    'The value of the task `args` keyword is invalid. A mapping or template which resolves to a mapping is required.',
+                    obj=additional_args,
+                )
 
         # how we normalize depends if we figured out what the module name is
         # yet.  If we have already figured it out, it's a 'new style' invocation.
         # otherwise, it's not
 
         if action is not None:
-            args = self._normalize_new_style_args(thing, action)
+            args = self._normalize_new_style_args(thing, action, additional_args)
         else:
             (action, args) = self._normalize_old_style_args(thing)
 
@@ -201,7 +207,7 @@ class ModuleArgsParser:
 
         return (action, final_args)
 
-    def _normalize_new_style_args(self, thing, action):
+    def _normalize_new_style_args(self, thing, action, additional_args):
         '''
         deals with fuzziness in new style module invocations
         accepting key=value pairs and dictionaries, and returns
@@ -221,6 +227,15 @@ class ModuleArgsParser:
             # form is like: copy: src=a dest=b
             check_raw = action in FREEFORM_ACTIONS
             args = parse_kv(thing, check_raw=check_raw)
+            args_keys = set(args) - {'_raw_params'}
+
+            if args_keys and additional_args is not Sentinel:
+                kv_args = ', '.join(repr(arg) for arg in sorted(args_keys))
+
+                display.deprecated(
+                    msg=f"Merging legacy k=v args ({kv_args}) into task args. Include all task args in the task `args` mapping.",
+                    version="2.23",
+                )
         elif thing is None:
             # this can happen with modules which take no params, like ping:
             args = None
@@ -246,6 +261,7 @@ class ModuleArgsParser:
 
         if isinstance(thing, dict):
             # form is like:  action: { module: 'copy', src: 'a', dest: 'b' }
+            display.deprecated("Using a mapping for `action` is deprecated. Use a string value for `action`.", version='2.23')
             thing = thing.copy()
             if 'module' in thing:
                 action, module_args = self._split_module_string(thing['module'])
@@ -282,7 +298,7 @@ class ModuleArgsParser:
         # This is the standard YAML form for command-type modules. We grab
         # the args and pass them in as additional arguments, which can/will
         # be overwritten via dict updates from the other arg sources below
-        additional_args = self._task_ds.get('args', dict())
+        additional_args = self._task_ds.get('args', Sentinel)
 
         # We can have one of action, local_action, or module specified
         # action
