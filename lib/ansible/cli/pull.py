@@ -33,18 +33,52 @@ display = Display()
 
 
 class PullCLI(CLI):
-    """ Used to pull a remote copy of ansible on each managed node,
-        each set to run via cron and update playbook source via a source repository.
-        This inverts the default *push* architecture of ansible into a *pull* architecture,
-        which has near-limitless scaling potential.
+    """
+    Used to pull a remote copy of ansible on each managed node,
+    each set to run via cron and update playbook source via a source repository.
+    This inverts the default *push* architecture of ansible into a *pull* architecture,
+    which has near-limitless scaling potential.
 
-        None of the CLI tools are designed to run concurrently with themselves,
-        you should use an external scheduler and/or locking to ensure there are no clashing operations.
+    .. deprecated:: 2.22
+       The ``ansible-pull`` CLI is deprecated and will be removed in ansible-core 2.25.
+       Users should migrate to a simple shell script or playbook combining ``git`` and ``ansible-playbook``.
 
-        The setup playbook can be tuned to change the cron frequency, logging locations, and parameters to ansible-pull.
-        This is useful both for extreme scale-out and periodic remediation.
-        Usage of the 'fetch' module to retrieve logs from ansible-pull runs would be an
-        excellent way to gather and analyze remote logs from ansible-pull.
+    Migration
+    ---------
+    Instead of using ``ansible-pull``, use a shell script to clone/pull the repository
+    and execute ``ansible-playbook`` locally against localhost.
+
+    Example Bash migration script:
+
+    .. code-block:: bash
+
+        #!/usr/bin/env bash
+        set -euo pipefail
+
+        REPO_URL="https://github.com/example/infra.git"
+        CHECKOUT_DIR="/var/lib/ansible/local"
+        PLAYBOOK="local.yml"
+
+        # Clone or update repository
+        if [ ! -d "${CHECKOUT_DIR}/.git" ]; then
+            git clone --depth 1 "${REPO_URL}" "${CHECKOUT_DIR}"
+        else
+            git -C "${CHECKOUT_DIR}" pull --ff-only
+        fi
+
+        # Run playbook targeting localhost with local connection
+        ansible-playbook -i localhost, -c local "${CHECKOUT_DIR}/${PLAYBOOK}" "$@"
+
+    For further alternatives and multi-host mapping examples, refer to
+    https://github.com/sivel/ansible-pull and https://github.com/ansible/ansible/issues/86889.
+
+    None of the CLI tools are designed to run concurrently with themselves,
+    you should use an external scheduler and/or locking to ensure there are no clashing operations.
+
+    The setup playbook can be tuned to change the cron frequency, logging locations, and parameters to ansible-pull.
+    This is useful both for extreme scale-out and periodic remediation.
+    Usage of the 'fetch' module to retrieve logs from ansible-pull runs would be an
+    excellent way to gather and analyze remote logs from ansible-pull.
     """
 
     name = 'ansible-pull'
@@ -162,6 +196,15 @@ class PullCLI(CLI):
         """ use Runner lib to do SSH things """
 
         super(PullCLI, self).run()
+
+        display.deprecated(
+            msg="The `ansible-pull` CLI is deprecated and will be removed in a future release.",
+            version="2.25",
+            help_text=(
+                "Users should migrate to using a shell script or playbook combining "
+                "`git` and `ansible-playbook` (see https://github.com/ansible/ansible/issues/86889)."
+            ),
+        )
 
         # log command line
         now = datetime.datetime.now()
