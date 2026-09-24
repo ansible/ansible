@@ -57,6 +57,7 @@ class MixinForMocks(object):
         self.mock_variable_manager.get_vars.return_value = dict()
 
         self.mock_block = MagicMock(name='MockBlock')
+        self.mock_block._parent = None
 
         # On macOS /etc is actually /private/etc, tests fail when performing literal /etc checks
         self.fake_role_loader = DictDataLoader({os.path.join(os.path.realpath("/etc"), "ansible/roles/bogus_role/tasks/main.yml"): """
