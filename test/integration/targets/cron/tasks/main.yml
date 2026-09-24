@@ -320,7 +320,7 @@
   - assert:
       that: not cron_file_stats.stat.exists
 
-# BusyBox dispatches on argv[0], so a renamed copy of its crontab applet does not work
+# BusyBox dispatches on argv[0], so its crontab applet cannot be reached under another name
 - name: Use a crontab executable installed under a different name (#85584)
   when: ansible_distribution != 'Alpine'
   block:
@@ -328,12 +328,11 @@
     command: which crontab
     register: crontab_bin
 
-  - name: Copy crontab to an executable with a different name
-    copy:
+  - name: Link crontab to an executable with a different name
+    file:
       src: '{{ crontab_bin.stdout }}'
       dest: '{{ remote_dir }}/fcrontab'
-      remote_src: yes
-      mode: preserve
+      state: link
 
   - name: Add cron task using the renamed executable
     cron:
