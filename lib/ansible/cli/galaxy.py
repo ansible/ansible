@@ -53,6 +53,7 @@ from ansible.module_utils.ansible_release import __version__ as ansible_version
 from ansible.module_utils.common.collections import is_iterable
 from ansible.module_utils.common.yaml import yaml_dump, yaml_load
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
+from ansible.module_utils.urls import mask_url
 from ansible._internal._datatag._tags import TrustedAsTemplate
 from ansible.parsing.dataloader import DataLoader
 from ansible.playbook.role.requirement import RoleRequirement
@@ -784,9 +785,14 @@ class GalaxyCLI(CLI):
         def parse_role_req(requirement):
             if "include" not in requirement:
                 role = RoleRequirement.role_yaml_parse(requirement)
-                display.vvv("found role %s in yaml file" % to_text(role))
                 if "name" not in role and "src" not in role:
                     raise AnsibleError("Must specify name or src for role")
+                display_role = role.copy()
+                if "src" in display_role:
+                    display_role["src"] = mask_url(display_role["src"])
+                if "name" in display_role:
+                    display_role["name"] = mask_url(display_role["name"])
+                display.vvv(f"found role {display_role} in yaml file")
                 return [GalaxyRole(self.galaxy, self.lazy_role_api, **role)]
             else:
                 b_include_path = to_bytes(requirement["include"], errors="surrogate_or_strict")
@@ -1466,12 +1472,13 @@ class GalaxyCLI(CLI):
         force = context.CLIARGS['force'] or force_deps
 
         for role in requirements:
+            role_name = mask_url(role.name)
             # only process roles in roles files when names matches if given
             if role_file and context.CLIARGS['args'] and role.name not in context.CLIARGS['args']:
-                display.vvv('Skipping role %s' % role.name)
+                display.vvv(f'Skipping role {role_name}')
                 continue
 
-            display.vvv('Processing role %s ' % role.name)
+            display.vvv(f'Processing role {role_name}')
 
             # query the galaxy API for the role data
 
@@ -1479,11 +1486,11 @@ class GalaxyCLI(CLI):
                 if role.install_info['version'] != role.version or force:
                     if force:
                         display.display('- changing role %s from %s to %s' %
-                                        (role.name, role.install_info['version'], role.version or "unspecified"))
+                                        (role_name, role.install_info['version'], role.version or "unspecified"))
                         role.remove()
                     else:
                         display.warning('- %s (%s) is already installed - use --force to change version to %s' %
-                                        (role.name, role.install_info['version'], role.version or "unspecified"))
+                                        (role_name, role.install_info['version'], role.version or "unspecified"))
                         continue
                 else:
                     if not force:
@@ -1493,7 +1500,7 @@ class GalaxyCLI(CLI):
             try:
                 installed = role.install()
             except AnsibleError as e:
-                display.warning(u"- %s was NOT installed successfully: %s " % (role.name, to_text(e)))
+                display.warning(f"- {role_name} was NOT installed successfully: {to_text(e)}")
                 self.exit_without_ignore()
                 continue
 
@@ -1536,7 +1543,7 @@ class GalaxyCLI(CLI):
                                     display.display('- dependency %s is already installed, skipping.' % dep_role.name)
 
             if not installed:
-                display.warning("- %s was NOT installed successfully." % role.name)
+                display.warning(f"- {role_name} was NOT installed successfully.")
                 self.exit_without_ignore()
 
         return 0
