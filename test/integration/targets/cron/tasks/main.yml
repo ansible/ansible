@@ -319,3 +319,31 @@
 
   - assert:
       that: not cron_file_stats.stat.exists
+
+- name: Add a cron task using an explicit crontab executable
+  block:
+  - name: Locate the crontab executable
+    command: which crontab
+    register: crontab_bin
+
+  - name: Add cron task with executable set to the full path of crontab
+    cron:
+      name: test executable cron task
+      job: 'date > {{ remote_dir }}/cron_canary_executable'
+      executable: '{{ crontab_bin.stdout }}'
+    register: add_cron_task_executable
+
+  - name: Get the crontab entries
+    command: crontab -l
+    register: crontab_entries
+
+  - assert:
+      that:
+        - add_cron_task_executable is changed
+        - "'test executable cron task' in crontab_entries.stdout"
+
+  always:
+  - name: Remove the cron task
+    cron:
+      name: test executable cron task
+      state: absent
