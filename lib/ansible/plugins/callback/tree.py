@@ -51,8 +51,6 @@ class CallbackModule(CallbackBase):
     CALLBACK_NAME = 'tree'
     CALLBACK_NEEDS_ENABLED = True
 
-    ANSIBLE_SUPPORTS_MASKING = True
-
     def set_options(self, task_keys=None, var_options=None, direct=None):
         """ override to set self.tree """
 
@@ -67,7 +65,7 @@ class CallbackModule(CallbackBase):
     def write_tree_file(self, hostname, buf):
         """ write something into treedir/hostname """
 
-        # This callback opts in to receiving unmasked results, so any secrets must be redacted before they reach the file.
+        # Results are already masked; this also covers anything else written to the file.
         buf = to_bytes(mask_secrets(to_text(buf)))
         try:
             makedirs_safe(self.tree)

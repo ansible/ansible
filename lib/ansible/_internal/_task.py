@@ -987,7 +987,6 @@ class UnifiedTaskResult:
         for_callback: bool = False,
         for_round_trip: bool = False,
         censor_callback_result: bool = False,
-        mask_callback_result: bool = False,
     ) -> dict[str, object]:
         result: dict[str, t.Any] = {
             self._result_key_magic(result_key): value
@@ -1023,14 +1022,13 @@ class UnifiedTaskResult:
                         for_callback=for_callback,
                         for_round_trip=for_round_trip,
                         censor_callback_result=censor_callback_result or loop_result.no_log,
-                        mask_callback_result=mask_callback_result,
                     )
                     for loop_result in self.loop_results
                 ]
             )
 
         if for_callback:
-            result = _vars._transform_to_native_types_for_callback(result, mask_values=mask_callback_result)
+            result = _vars.transform_to_native_types(result)
 
         return result
 
