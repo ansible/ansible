@@ -50,7 +50,7 @@ class ActionModule(ActionBase):
     DEPRECATED_ARGS = {}  # type: dict[str, str]
 
     BOOT_TIME_COMMANDS = {
-        'freebsd': '/sbin/sysctl kern.boottime',
+        'freebsd': '/sbin/sysctl -x kern.boot_id',
         'openbsd': '/sbin/sysctl kern.boottime',
         'macosx': 'who -b',
         'solaris': 'who -b',
