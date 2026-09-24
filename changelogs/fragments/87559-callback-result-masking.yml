@@ -1,0 +1,5 @@
+major_changes:
+  - >-
+    callback plugins - task results passed to callback plugins now always have any registered secrets replaced with ``$REDACTED$``, so callbacks no
+    longer need to mask the result themselves. The ``ANSIBLE_SUPPORTS_MASKING`` callback class attribute introduced in ansible-core 2.22.0b1 to opt into
+    receiving unmasked results has been removed and is now ignored.
