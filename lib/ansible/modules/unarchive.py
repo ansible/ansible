@@ -251,10 +251,13 @@ import re
 import stat
 import time
 from functools import partial
+from pathlib import Path
+from typing import Iterator, cast
 from zipfile import ZipFile
 
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.collections import OrderedSet
 from ansible.module_utils.common.process import get_bin_path
 from ansible.module_utils.common.locale import get_best_parsable_locale
 from ansible.module_utils.urls import fetch_file
@@ -423,6 +426,8 @@ class ZipArchive(object):
 
             archive.close()
         return self._files_in_archive
+
+    files_created_by_archive = files_in_archive
 
     def _valid_time_stamp(self, timestamp_str):
         """ Return a valid time object from the given time string """
@@ -875,6 +880,26 @@ class TgzArchive(object):
 
         return self._files_in_archive
 
+    @property
+    def files_created_by_archive(self) -> Iterator[str]:
+        """Return an iterator of files created implicitly or explicitly by the archive.
+
+        When listing the files in an archive, archives can include files in directories
+        while excluding the containing directory. This property includes those implicitly
+        created directories so that their metadata can be properly set.
+        """
+        files_created = cast(OrderedSet[str], OrderedSet())
+        for file in self.files_in_archive:
+            filepath = Path(file)
+            files_created.add(str(filepath))
+            for parent in filepath.parents:
+                files_created.add(str(parent))
+
+        files_created.discard('.')
+        files_created.discard('..')
+
+        yield from files_created
+
     def is_unarchived(self):
         cmd = [self.cmd_path, '--diff', '-C', self.b_dest]
         if self.zipflag:
@@ -1147,29 +1172,10 @@ def main():
     # Run only if we found differences (idempotence) or diff was missing
     if res_args.get('diff', True) and not module.check_mode:
         # do we need to change perms?
-        top_folders = []
-        for filename in handler.files_in_archive:
+        for filename in handler.files_created_by_archive:
             file_args['path'] = os.path.join(b_dest, to_bytes(filename, errors='surrogate_or_strict'))
 
-            try:
-                res_args['changed'] = module.set_fs_attributes_if_different(file_args, res_args['changed'], expand=False)
-            except OSError as ex:
-                module.fail_json("Unexpected error when accessing exploded file.", exception=ex, **res_args)
-
-            if '/' in filename:
-                top_folder_path = filename.split('/')[0]
-                if top_folder_path not in top_folders:
-                    top_folders.append(top_folder_path)
-
-        # make sure top folders have the right permissions
-        # https://github.com/ansible/ansible/issues/35426
-        if top_folders:
-            for f in top_folders:
-                file_args['path'] = "%s/%s" % (dest, f)
-                try:
-                    res_args['changed'] = module.set_fs_attributes_if_different(file_args, res_args['changed'], expand=False)
-                except OSError as ex:
-                    module.fail_json("Unexpected error when accessing exploded file.", exception=ex, **res_args)
+            res_args['changed'] = module.set_fs_attributes_if_different(file_args, res_args['changed'], expand=False)
 
     if module.params['list_files']:
         res_args['files'] = handler.files_in_archive
