@@ -102,4 +102,7 @@ ansible ssh -m raw -a whoami -i test_connection.inventory -vvvvv -e ansible_ssh_
 
 ansible-playbook test_escalation_check.yml "$@"
 
+# test factors that impact pipelining
+ansible-playbook test_pipelining.yml "$@"
+
 echo PASS
