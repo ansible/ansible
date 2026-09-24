@@ -1034,13 +1034,13 @@ def test_missing_cache_dir(cache_dir):
     cache_file = os.path.join(cache_dir, 'api.json')
     with open(cache_file) as fd:
         actual_cache = fd.read()
-    assert actual_cache == '{"version": 1}'
+    assert actual_cache == '{"version": 2}'
     assert stat.S_IMODE(os.stat(cache_file).st_mode) == 0o600
 
 
 def test_existing_cache(cache_dir):
     cache_file = os.path.join(cache_dir, 'api.json')
-    cache_file_contents = '{"version": 1, "test": "json"}'
+    cache_file_contents = '{"version": 2, "test": "json"}'
     with open(cache_file, mode='w') as fd:
         fd.write(cache_file_contents)
         os.chmod(cache_file, 0o655)
@@ -1059,8 +1059,8 @@ def test_existing_cache(cache_dir):
     'value',
     '{"de" "finit" "ely" [\'invalid"]}',
     '[]',
-    '{"version": 2, "test": "json"}',
-    '{"version": 2, "key": "ÅÑŚÌβŁÈ"}',
+    '{"version": 1, "test": "json"}',
+    '{"version": 1, "key": "ÅÑŚÌβŁÈ"}',
 ])
 def test_cache_invalid_cache_content(content, cache_dir):
     cache_file = os.path.join(cache_dir, 'api.json')
@@ -1072,7 +1072,7 @@ def test_cache_invalid_cache_content(content, cache_dir):
 
     with open(cache_file) as fd:
         actual_cache = fd.read()
-    assert actual_cache == '{"version": 1}'
+    assert actual_cache == '{"version": 2}'
     assert stat.S_IMODE(os.stat(cache_file).st_mode) == 0o664
 
 
@@ -1097,7 +1097,7 @@ def test_cache_complete_pagination(cache_dir, monkeypatch):
     with open(cache_file) as fd:
         final_cache = json.loads(fd.read())
 
-    cached_server = final_cache['galaxy.server.com:']
+    cached_server = final_cache['galaxy.server.com:/api/']
     cached_collection = cached_server['/api/v3/collections/namespace/collection/versions/']
     cached_versions = [r['version'] for r in cached_collection['results']]
 
@@ -1126,7 +1126,7 @@ def test_cache_complete_pagination_v3(cache_dir, monkeypatch):
     with open(cache_file) as fd:
         final_cache = json.loads(fd.read())
 
-    cached_server = final_cache['galaxy.server.com:']
+    cached_server = final_cache['galaxy.server.com:/api/']
     cached_collection = cached_server['/api/v3/collections/namespace/collection/versions/']
     cached_versions = [r['version'] for r in cached_collection['results']]
 
@@ -1164,8 +1164,8 @@ def test_cache_flaky_pagination(cache_dir, monkeypatch):
         final_cache = json.loads(fd.read())
 
     assert final_cache == {
-        'version': 1,
-        'galaxy.server.com:': {
+        'version': 2,
+        'galaxy.server.com:/api/': {
             'modified': {
                 'namespace.collection': responses[0]['updated_at']
             }
@@ -1190,7 +1190,7 @@ def test_cache_flaky_pagination(cache_dir, monkeypatch):
     with open(cache_file) as fd:
         final_cache = json.loads(fd.read())
 
-    cached_server = final_cache['galaxy.server.com:']
+    cached_server = final_cache['galaxy.server.com:/api/']
     cached_collection = cached_server['/api/v3/collections/namespace/collection/versions/']
     cached_versions = [r['version'] for r in cached_collection['results']]
 
@@ -1250,17 +1250,17 @@ def test_clear_cache(cache_dir):
 
     with open(cache_file) as fd:
         actual_cache = fd.read()
-    assert actual_cache == '{"version": 1}'
+    assert actual_cache == '{"version": 2}'
     assert stat.S_IMODE(os.stat(cache_file).st_mode) == 0o600
 
 
 @pytest.mark.parametrize(['url', 'expected'], [
-    ('http://hostname/path', 'hostname:'),
-    ('http://hostname:80/path', 'hostname:80'),
+    ('http://hostname/path', 'hostname:/path'),
+    ('http://hostname:80/path', 'hostname:80/path'),
     ('https://testing.com:invalid', 'testing.com:'),
     ('https://testing.com:1234', 'testing.com:1234'),
-    ('https://username:password@testing.com/path', 'testing.com:'),
-    ('https://username:password@testing.com:443/path', 'testing.com:443'),
+    ('https://username:password@testing.com/path', 'testing.com:/path'),
+    ('https://username:password@testing.com:443/path', 'testing.com:443/path'),
 ])
 def test_cache_id(url, expected):
     actual = galaxy_api.get_cache_id(url)
