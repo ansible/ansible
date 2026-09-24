@@ -317,6 +317,22 @@
     that:
     - not fail_bad_tar_actual.stat.exists
 
+- name: setup tarball with an invalid collection name in its metadata - {{ test_id }}
+  script: build_bad_name_tar.py {{ galaxy_dir | quote }}
+
+- name: try to install a collection whose metadata declares an invalid name - {{ test_id }}
+  command: ansible-galaxy collection install '{{ galaxy_dir }}/badname-test-1.0.0.tar.gz' {{ galaxy_verbosity }}
+  register: fail_bad_name
+  failed_when: false
+  environment:
+    ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
+
+- name: assert the invalid collection name was rejected with a clear error - {{ test_id }}
+  assert:
+    that:
+    - fail_bad_name.rc != 0
+    - "'invalid collection name' in fail_bad_name.stderr"
+
 - name: install a collection from a URI - {{ test_id }}
   command: ansible-galaxy collection install {{ amanda }}/artifacts/namespace4-name-1.0.0.tar.gz {{ galaxy_verbosity }}
   register: install_uri
