@@ -2,7 +2,7 @@
   vars:
     canary: Found variable using reserved name
   block:
-  - shell: ansible-playbook '{{[ role_path, "tasks", item.file ~ ".yml"] | path_join }}'
+  - shell: ansible-playbook '{{[ role_path, "tasks", item.file ~ ".yml"] | path_join }}' -i nohost,
     environment:
       ANSIBLE_LOCALHOST_WARNING: 0
       ANSIBLE_FORCE_COLOR: 0
@@ -19,7 +19,7 @@
     - file: set_fact
       name: lookup
     - file: include_vars
-      name: query
+      name: hostvars
     register: play_out
 
   - name: check they all complain about bad defined var
