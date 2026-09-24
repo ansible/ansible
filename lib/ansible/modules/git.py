@@ -489,7 +489,7 @@ def set_git_ssh_env(key_file, ssh_opts, git_version, module):
     if key_file:
         key_opt = '-i %s' % key_file
         if key_opt not in ssh_opts:
-            ssh_opts += '  %s' % key_opt
+            ssh_opts += ' %s' % key_opt
 
         ikey = 'IdentitiesOnly=yes'
         if ikey not in ssh_opts:

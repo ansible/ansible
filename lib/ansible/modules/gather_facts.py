@@ -11,9 +11,9 @@ module: gather_facts
 version_added: 2.8
 short_description: Gathers facts about remote hosts
 extends_documentation_fragment:
-  -  action_common_attributes
-  -  action_common_attributes.facts
-  -  action_common_attributes.flow
+  - action_common_attributes
+  - action_common_attributes.facts
+  - action_common_attributes.flow
 description:
      - This module takes care of executing the R(configured facts modules,FACTS_MODULES), the default is to use the M(ansible.builtin.setup) module.
      - This module is automatically called by playbooks to gather useful variables about remote hosts that can be used in playbooks.

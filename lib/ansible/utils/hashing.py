@@ -75,11 +75,11 @@ checksum_s = secure_hash_s
 
 def md5s(data):
     if not _md5:
-        raise ValueError('MD5 not available.  Possibly running in FIPS mode')
+        raise ValueError('MD5 not available. Possibly running in FIPS mode')
     return secure_hash_s(data, _md5)
 
 
 def md5(filename):
     if not _md5:
-        raise ValueError('MD5 not available.  Possibly running in FIPS mode')
+        raise ValueError('MD5 not available. Possibly running in FIPS mode')
     return secure_hash(filename, _md5)

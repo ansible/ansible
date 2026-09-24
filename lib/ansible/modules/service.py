@@ -10,7 +10,7 @@ DOCUMENTATION = r"""
 ---
 module: service
 version_added: "0.1"
-short_description:  Manage services
+short_description: Manage services
 description:
     - Controls services on remote hosts. Supported init systems include BSD init,
       OpenRC, SysV, Solaris SMF, systemd, upstart.
@@ -21,7 +21,7 @@ description:
       (such as M(ansible.builtin.systemd) and M(ansible.builtin.sysvinit)).
       This allows management of a heterogeneous environment of machines without creating a specific task for
       each service manager. The module to be executed is determined by the O(use) option, which defaults to the
-      service manager discovered by M(ansible.builtin.setup).  If M(ansible.builtin.setup) was not yet run, this module may run it.
+      service manager discovered by M(ansible.builtin.setup). If M(ansible.builtin.setup) was not yet run, this module may run it.
     - For Windows targets, use the M(ansible.windows.win_service) module instead.
 options:
     name:
@@ -86,8 +86,8 @@ options:
         default: auto
         version_added: 2.2
 extends_documentation_fragment:
-  -  action_common_attributes
-  -  action_common_attributes.flow
+  - action_common_attributes
+  - action_common_attributes.flow
 attributes:
     action:
         support: full
@@ -531,7 +531,7 @@ class LinuxService(Service):
 
         # couldn't find anything yet
         if self.svc_cmd is None and not self.svc_initscript:
-            self.module.fail_json(msg='cannot find \'service\' binary or init script for service,  possible typo in service name?, aborting')
+            self.module.fail_json(msg='cannot find \'service\' binary or init script for service, possible typo in service name?, aborting')
 
         if location.get('initctl', False):
             self.svc_initctl = location['initctl']

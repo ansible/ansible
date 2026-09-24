@@ -204,7 +204,7 @@ def count(seq: _c.Iterable) -> dict[_c.Hashable, int]:
         help_text="Use `collections.Counter` from the Python standard library instead.",
     )
     if not is_iterable(seq):
-        raise Exception('Argument provided  is not an iterable')
+        raise Exception('Argument provided is not an iterable')
     counters: dict[_c.Hashable, int] = {}
     for elem in seq:
         counters[elem] = counters.get(elem, 0) + 1

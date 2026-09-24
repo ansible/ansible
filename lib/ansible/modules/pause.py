@@ -40,9 +40,9 @@ options:
     version_added: 2.5
 author: "Tim Bielawa (@tbielawa)"
 extends_documentation_fragment:
-  -  action_common_attributes
-  -  action_common_attributes.conn
-  -  action_common_attributes.flow
+  - action_common_attributes
+  - action_common_attributes.conn
+  - action_common_attributes.flow
 attributes:
     action:
         support: full

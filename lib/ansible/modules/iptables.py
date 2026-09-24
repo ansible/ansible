@@ -517,7 +517,7 @@ EXAMPLES = r"""
   ansible.builtin.iptables:
     chain: "{{ item }}"
     flush: yes
-  with_items:  [ 'INPUT', 'FORWARD', 'OUTPUT' ]
+  with_items: [ 'INPUT', 'FORWARD', 'OUTPUT' ]
 
 - name: Iptables flush nat
   ansible.builtin.iptables:

@@ -18,7 +18,7 @@ description:
     - This modules manages packages on a target without specifying a package manager module (like M(ansible.builtin.dnf), M(ansible.builtin.apt), ...).
       It is convenient to use in an heterogeneous environment of machines without having to create a specific task for
       each package manager. M(ansible.builtin.package) calls behind the module for the package manager used by the operating system
-      discovered by the module M(ansible.builtin.setup).  If M(ansible.builtin.setup) was not yet run, M(ansible.builtin.package) will run it.
+      discovered by the module M(ansible.builtin.setup). If M(ansible.builtin.setup) was not yet run, M(ansible.builtin.package) will run it.
     - This module acts as a proxy to the underlying package manager module. While all arguments will be passed to the
       underlying module, not all modules support the same arguments. This documentation only covers the minimum intersection
       of module arguments that all packaging modules support.
@@ -45,8 +45,8 @@ options:
 requirements:
     - Whatever is required for the package plugins specific for each system.
 extends_documentation_fragment:
-  -  action_common_attributes
-  -  action_common_attributes.flow
+  - action_common_attributes
+  - action_common_attributes.flow
 attributes:
     action:
         support: full

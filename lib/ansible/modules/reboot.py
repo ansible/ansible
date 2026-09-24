@@ -80,8 +80,8 @@ options:
     default: '[determined based on target OS]'
     version_added: '2.11'
 extends_documentation_fragment:
-  -  action_common_attributes
-  -  action_common_attributes.flow
+  - action_common_attributes
+  - action_common_attributes.flow
 attributes:
     action:
         support: full

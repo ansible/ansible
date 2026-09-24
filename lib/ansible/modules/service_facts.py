@@ -15,8 +15,8 @@ description:
 version_added: "2.5"
 requirements: ["Any of the following supported init systems: systemd, sysv, upstart, openrc, AIX SRC"]
 extends_documentation_fragment:
-  -  action_common_attributes
-  -  action_common_attributes.facts
+  - action_common_attributes
+  - action_common_attributes.facts
 attributes:
     check_mode:
         support: full
