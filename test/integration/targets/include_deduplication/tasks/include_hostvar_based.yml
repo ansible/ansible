@@ -1,0 +1,6 @@
+- set_fact:
+    host_based_check: true
+
+- assert:
+    that:
+      - hostvars|dictsort|selectattr('1.host_based_check', 'defined')|map(attribute='0') == groups.all
