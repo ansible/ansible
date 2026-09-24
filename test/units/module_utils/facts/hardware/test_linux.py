@@ -195,3 +195,50 @@ class TestFactsLinuxHardwareGetMountFacts(unittest.TestCase):
         lh = linux.LinuxHardware(module=module, load_on_init=False)
         sg_inq_serial = lh._get_sg_inq_serial('/usr/bin/sg_inq', 'nvme0n1')
         self.assertEqual(sg_inq_serial, None)
+
+
+class TestFactsLinuxHardwareGetLvmFacts(unittest.TestCase):
+
+    @patch('ansible.module_utils.facts.hardware.linux.os.getuid', return_value=0)
+    def test_get_lvm_facts_duplicate_names_debug_and_single_warning(self, mock_getuid):
+        module = Mock()
+        module.get_bin_path = Mock(side_effect=lambda path: path)
+        module.run_command = Mock(side_effect=[
+            (
+                0,
+                'vg0,1,2,0,wz--n-,10.00,5.00\n'
+                'vg0,1,2,0,wz--n-,20.00,10.00\n'
+                'vg1,1,1,0,wz--n-,30.00,15.00',
+                '',
+            ),
+            (
+                0,
+                'lv0,vg0,-wi-a-----,1.00,,,,,\n'
+                'lv0,vg1,-wi-a-----,2.00,,,,,',
+                '',
+            ),
+            (0, '', ''),
+        ])
+        lh = linux.LinuxHardware(module=module, load_on_init=False)
+
+        lvm_facts = lh.get_lvm_facts()
+
+        self.assertEqual(lvm_facts['lvm']['vgs']['vg0']['size_g'], '20.00')
+        self.assertEqual(lvm_facts['lvm']['lvs']['lv0']['size_g'], '2.00')
+        self.assertEqual(lvm_facts['lvm']['lvs']['lv0']['vg'], 'vg1')
+        self.assertEqual(lvm_facts['lvm']['vgs']['vg0']['lvs']['lv0']['size_g'], '1.00')
+        self.assertEqual(lvm_facts['lvm']['vgs']['vg1']['lvs']['lv0']['size_g'], '2.00')
+        self.assertEqual(module.warn.call_count, 1)
+        module.warn.assert_called_with(
+            "Duplicate LVM names were encountered while gathering LVM facts; "
+            "overwrites applied: vgs=1, lvs=1."
+        )
+        self.assertEqual(module.debug.call_count, 2)
+        module.debug.assert_any_call(
+            "Duplicate LVM volume group name 'vg0' encountered while gathering LVM facts; "
+            "overwriting existing ansible_facts['lvm']['vgs'] entry with line: vg0,1,2,0,wz--n-,20.00,10.00"
+        )
+        module.debug.assert_any_call(
+            "Duplicate LVM logical volume name 'lv0' encountered while gathering LVM facts; "
+            "overwriting existing ansible_facts['lvm']['lvs'] entry with line: lv0,vg1,-wi-a-----,2.00,,,,,"
+        )
