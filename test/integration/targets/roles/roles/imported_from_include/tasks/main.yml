@@ -1,4 +1,22 @@
+---
+- debug: var=inherit_var
+- debug: var=inherit_default
+- debug: var=inherit_playbook
+- debug: var=inherit_include
+- debug: var=include_default_var
 - assert:
     that:
-      - inherit_var is defined
-      - inherit_default is defined
+      - inherit_var == 'var'
+      - inherit_default == 'default'
+      - inherit_playbook == 'playbook'
+      - inherit_include == 'include'
+      - include_default_var == 'include_default_var'
+  when: (overwritten is undefined) or (not overwritten)
+- assert:
+    that:
+      - inherit_var == 'overwritten_as_well'
+      - inherit_default == 'overwritten'
+      - inherit_playbook == 'playbook'
+      - inherit_include == 'include'
+      - include_default_var == 'overwritten_again'
+  when: (overwritten is defined) and overwritten
