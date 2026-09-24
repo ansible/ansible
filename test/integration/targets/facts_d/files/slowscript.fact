@@ -1,0 +1,4 @@
+#!/bin/sh
+# This script sleeps for 30 seconds to test gather_timeout
+sleep 30
+echo '{"slow_script_completed": true}'
