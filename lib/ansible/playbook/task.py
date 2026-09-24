@@ -43,8 +43,10 @@ from ansible._internal._templating._jinja_bits import is_possibly_all_template, 
 from ansible._internal._templating._engine import TemplateEngine, TemplateOptions
 from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.utils.display import Display
-
 from ansible.utils.vars import validate_variable_name
+
+if t.TYPE_CHECKING:
+    from ansible.vars.manager import V
 
 __all__ = ['Task']
 
@@ -592,7 +594,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
     def _resolve_conditional(
         self,
         conditional: list[str | bool],
-        variables: dict[str, t.Any],
+        variables: V,
     ) -> bool:
         """Loops through the conditionals set on this object, returning False if any of them evaluate as such."""
 
@@ -601,7 +603,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
     def _resolve_conditional_with_item(
         self,
         conditional: list[str | bool],
-        variables: dict[str, t.Any],
+        variables: V,
     ) -> tuple[bool, object]:
         """Loops through the conditionals set on this object, returning False if any of them evaluate as such, as well as the condition that was False."""
 
