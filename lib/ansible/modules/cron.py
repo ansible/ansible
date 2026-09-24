@@ -256,7 +256,7 @@ class CronTab:
         self.lines = []
         self.ansible = "#Ansible: "
         self.n_existing = ''
-        self.cron_cmd = shlex.quote(self.module.get_bin_path(module.params['executable'], required=True))
+        self.cron_cmd = self.module.get_bin_path(module.params['executable'], required=True)
 
         if cron_file:
 
@@ -532,9 +532,9 @@ class CronTab:
         user = ''
         if self.user:
             if platform.system() == 'SunOS':
-                return "su %s -c '%s -l'" % (shlex.quote(self.user), self.cron_cmd)
+                return "su %s -c '%s -l'" % (shlex.quote(self.user), shlex.quote(self.cron_cmd))
             if platform.system() == 'AIX':
-                return "%s -l %s" % (self.cron_cmd, shlex.quote(self.user))
+                return "%s -l %s" % (shlex.quote(self.cron_cmd), shlex.quote(self.user))
             if platform.system() == 'HP-UX':
                 return "%s %s %s" % (self.cron_cmd, '-l', shlex.quote(self.user))
             if pwd.getpwuid(os.getuid())[0] != self.user:
