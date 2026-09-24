@@ -144,6 +144,8 @@ class TestSuite:
     system_out: str | None = None
     system_err: str | None = None
 
+    url: str | None = None
+
     def __post_init__(self):
         if self.timestamp and self.timestamp.tzinfo != datetime.timezone.utc:
             raise ValueError(f'timestamp.tzinfo must be {datetime.timezone.utc!r}')
@@ -189,6 +191,7 @@ class TestSuite:
             name=self.name,
             package=self.package,
             skipped=self.skipped,
+            url=self.url,
             tests=self.tests,
             time=self.time,
             timestamp=self.timestamp.replace(tzinfo=None).isoformat(timespec='seconds') if self.timestamp else None,
