@@ -1,0 +1,5 @@
+---
+minor_changes:
+  - vars_prompt now supports a `validate` regex key for input validation. If a value (e.g. from `--extra-vars`) does not match the pattern, a validation error is raised.
+  - The `validate` key can be used to ensure that user input meets specific criteria before proceeding with the playbook execution.
+  - This feature enhances user input validation, allowing for more robust playbook execution by preventing invalid inputs from being accepted.

@@ -139,13 +139,46 @@ class PlaybookExecutor:
                             salt = var.get("salt", None)
                             unsafe = boolean(var.get("unsafe", False))
 
-                            if vname not in self._variable_manager.extra_vars:
-                                if self._tqm:
-                                    self._tqm.send_callback('v2_playbook_on_vars_prompt', vname, private, prompt, encrypt, confirm, salt_size, salt,
-                                                            default, unsafe)
-                                    play.vars[vname] = display.do_var_prompt(vname, private, prompt, encrypt, confirm, salt_size, salt, default, unsafe)
-                                else:  # we are either in --list-<option> or syntax check
-                                    play.vars[vname] = default
+                            # Get existing value from all sources (extra-vars, vars_files, inventory, etc.)
+                            existing_value = self._variable_manager.get_vars(play=play).get(vname)
+
+                            # Validate regex if present
+                            validate_pattern = var.get("validate")
+                            if existing_value is not None:
+                                if validate_pattern:
+                                    import re
+                                    if not re.fullmatch(validate_pattern, str(existing_value)):
+                                        raise ValueError(
+                                            f"Invalid value for '{vname}': '{existing_value}' does not match pattern: {validate_pattern}"
+                                        )
+                                # Assign existing value and skip prompt
+                                play.vars[vname] = existing_value
+                                continue
+
+                            # Prompt user since variable is not defined
+                            if self._tqm:
+                                self._tqm.send_callback(
+                                    'v2_playbook_on_vars_prompt',
+                                    vname, private, prompt, encrypt, confirm,
+                                    salt_size, salt, default, unsafe
+                                )
+
+                            answer = display.do_var_prompt(
+                                vname, private, prompt, encrypt, confirm,
+                                salt_size, salt, default, unsafe
+                            )
+
+                            # Validate the prompted value
+                            if validate_pattern:
+                                import re
+                                while not re.fullmatch(validate_pattern, answer):
+                                    display.display(f"Invalid input. Must match: {validate_pattern}", color='red')
+                                    answer = display.do_var_prompt(
+                                        vname, private, prompt, encrypt, confirm,
+                                        salt_size, salt, default, unsafe
+                                    )
+
+                            play.vars[vname] = answer
 
                     # Post validate so any play level variables are templated
                     all_vars = self._variable_manager.get_vars(play=play)
