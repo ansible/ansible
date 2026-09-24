@@ -100,7 +100,9 @@ class VaultCLI(CLI):
         encrypt_parser.set_defaults(func=self.execute_encrypt)
         encrypt_parser.add_argument('args', help='Filename', metavar='file_name', nargs='*')
 
-        enc_str_parser = subparsers.add_parser('encrypt_string', help='Encrypt a string', parents=[common, output, vault_id])
+        enc_str_parser = subparsers.add_parser('encrypt_string', help='Encrypt a string', parents=[common, output, vault_id],
+                                                   description='Encrypt a string for use as a value in YAML. '
+                                                               'Encrypted strings cannot be used as mapping keys.')
         enc_str_parser.set_defaults(func=self.execute_encrypt_string)
         enc_str_parser.add_argument('args', help='String to encrypt', metavar='string_to_encrypt', nargs='*')
         enc_str_parser.add_argument('-p', '--prompt', dest='encrypt_string_prompt',
