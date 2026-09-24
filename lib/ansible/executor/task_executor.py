@@ -736,7 +736,7 @@ class TaskExecutor:
                 async_failed_utr.failed = True
                 async_failed_utr.async_result = async_utr.as_result_dict()
 
-                if async_failed_utr.async_result.pop("ansible_parsed", None):
+                if async_utr.ansible_parsed:
                     async_failed_utr.msg = "async task did not complete within the requested time - %ss" % self._task.async_val
                 else:
                     async_failed_utr.msg = "async task produced unparsable results"
