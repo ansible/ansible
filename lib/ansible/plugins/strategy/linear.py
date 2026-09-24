@@ -49,6 +49,9 @@ display = Display()
 
 class StrategyModule(StrategyBase):
 
+    # ``linear.run`` propagates failed ``run_once`` tasks after processing results.
+    ALLOW_BASE_RUN_ONCE_FAILURE_PROPAGATION = False
+
     def _get_next_task_lockstep(self, hosts: list[Host], iterator: PlayIterator) -> list[tuple[Host, Task]]:
         """
         Returns a list of (host, task) tuples, where the task may
@@ -354,8 +357,26 @@ class StrategyModule(StrategyBase):
                 if mark_hosts_failed and (failed_hosts or unreachable_hosts):
                     for host in hosts_left:
                         if host.name not in failed_hosts:
-                            self._tqm._failed_hosts[host.name] = True
+                            state_when_failed = iterator.get_host_state(host)
+                            has_rescue_path = iterator.is_any_block_rescuing(state_when_failed)
                             iterator.mark_host_failed(host)
+                            if (
+                                run_once
+                                and has_rescue_path
+                            ):
+                                # ``mark_host_failed`` appends every host it moves out of
+                                # the active task state.  A synthetic run_once host must be
+                                # visible to rescue/always task variables, just like the
+                                # executing host restored by StrategyBase result handling.
+                                iterator._play._removed_hosts.remove(host.name)
+                            # A failed ``run_once`` task can move a host that did not
+                            # execute the task into RESCUE.  Keep it out of the TQM
+                            # failed-host set until the iterator reaches a terminal
+                            # failed state, so max_fail_percentage does not abort a
+                            # play before the rescue block can run.
+                            if not run_once or iterator.is_failed(host):
+                                self._tqm._failed_hosts[host.name] = True
+                            failed_hosts.append(host.name)
                 display.debug("done checking for any_errors_fatal")
 
                 display.debug("checking for max_fail_percentage")
