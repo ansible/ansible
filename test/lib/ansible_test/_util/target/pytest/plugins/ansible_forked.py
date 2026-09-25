@@ -62,7 +62,7 @@ def run_child(item, nextitem, result_path):  # type: (Item, Item | None, str) ->
 
 def run_parent(item, pid, result_path):  # type: (Item, int, str) -> list[TestReport]
     """Wait for the child process to exit and return the test reports. Called in the parent process."""
-    exit_code = waitstatus_to_exitcode(os.waitpid(pid, 0)[1])
+    exit_code = os.waitstatus_to_exitcode(os.waitpid(pid, 0)[1])
 
     reports: list[TestReport]
 
@@ -85,17 +85,3 @@ def run_parent(item, pid, result_path):  # type: (Item, int, str) -> list[TestRe
             warnings.warn_explicit(warning.message, warning.category, warning.filename, warning.lineno)
 
     return reports
-
-
-def waitstatus_to_exitcode(status):  # type: (int) -> int
-    """Convert a wait status to an exit code."""
-    # This function was added in Python 3.9.
-    # See: https://docs.python.org/3/library/os.html#os.waitstatus_to_exitcode
-
-    if os.WIFEXITED(status):
-        return os.WEXITSTATUS(status)
-
-    if os.WIFSIGNALED(status):
-        return -os.WTERMSIG(status)
-
-    raise ValueError(status)

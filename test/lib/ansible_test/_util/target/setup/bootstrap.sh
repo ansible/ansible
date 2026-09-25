@@ -388,11 +388,7 @@ bootstrap_remote_rhel_9()
 {
     optimize_dnf
 
-    if [ "${python_version}" = "3.9" ]; then
-        py_pkg_prefix="python3"
-    else
-        py_pkg_prefix="python${python_version}"
-    fi
+    py_pkg_prefix="python${python_version}"
 
     packages="
         gcc

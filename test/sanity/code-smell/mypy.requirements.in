@@ -2,7 +2,7 @@ mypy == 1.19.1  # skipping mypy 1.20.x, more work needed to support mypy 2.x
 cryptography  # type stubs not published separately
 jinja2  # type stubs not published separately
 packaging  # type stubs not published separately
-pytest < 9 # type stubs not published separately, pytest 9 drops support for Python 3.9
+pytest # type stubs not published separately
 pytest-mock  # type stubs not published separately
 resolvelib  # type stubs not published separately
 tomli  # type stubs not published separately, required for toml inventory plugin

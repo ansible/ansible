@@ -20,12 +20,8 @@ from ansible.module_utils._internal._patches import _sys_intern_patch, _socket_p
 _sys_intern_patch.SysInternPatch.patch()
 _socket_patch.GetAddrInfoPatch.patch()  # DTFIX-FUTURE: consider replacing this with a socket import shim that installs the patch
 
-if sys.version_info >= (3, 10):
-    # Using slots for reduced memory usage and improved performance.
-    _tag_dataclass_kwargs = dict(frozen=True, repr=False, kw_only=True, slots=True)
-else:
-    # deprecated: description='always use dataclass slots and keyword-only args' python_version='3.9'
-    _tag_dataclass_kwargs = dict(frozen=True, repr=False)
+# Using slots for reduced memory usage and improved performance.
+_tag_dataclass_kwargs = dict(frozen=True, repr=False, kw_only=True, slots=True)
 
 _T = t.TypeVar('_T')
 _TAnsibleSerializable = t.TypeVar('_TAnsibleSerializable', bound='AnsibleSerializable')

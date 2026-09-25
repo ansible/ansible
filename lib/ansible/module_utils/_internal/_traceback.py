@@ -59,8 +59,7 @@ def maybe_extract_traceback(exception: BaseException, event: TracebackEvent) -> 
     if not is_traceback_enabled(event):
         return None
 
-    # deprecated: description='use the single-arg version of format_traceback' python_version='3.9'
-    tb_lines = traceback.format_exception(type(exception), exception, exception.__traceback__)
+    tb_lines = traceback.format_exception(exception)
 
     return ''.join(tb_lines)
 
