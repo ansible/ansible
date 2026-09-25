@@ -1,0 +1,4 @@
+deprecated_features:
+  - conditionals - Conditional expressions (such as ``when`` in playbook tasks or ``that`` in the ``assert`` action) which are a literal ``None`` or an empty string
+    evaluate as True and issue a deprecation warning. This behavior will be removed in Ansible Core 2.23.
+    Such expressions should be removed or corrected to always ensure a strictly boolean (True or False) result.
