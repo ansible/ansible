@@ -403,7 +403,7 @@ def main():
 
     # Run daemon-reload first, if requested
     if module.params['daemon_reload'] and not module.check_mode:
-        (rc, out, err) = module.run_command(_build_cmd(systemctl, 'deamon-reload', exclude=G))
+        (rc, out, err) = module.run_command(_build_cmd(systemctl, 'daemon-reload', exclude=G))
         if rc != 0:
             if is_chroot(module) or os.environ.get('SYSTEMD_OFFLINE') == '1':
                 module.warn('daemon-reload failed, but target is a chroot or systemd is offline. Continuing. Error was: %d / %s' % (rc, err))
@@ -412,7 +412,7 @@ def main():
 
     # Run daemon-reexec
     if module.params['daemon_reexec'] and not module.check_mode:
-        (rc, out, err) = module.run_command(_build_cmd(systemctl, 'deamon-reexec', exclude=G))
+        (rc, out, err) = module.run_command(_build_cmd(systemctl, 'daemon-reexec', exclude=G))
         if rc != 0:
             if is_chroot(module) or os.environ.get('SYSTEMD_OFFLINE') == '1':
                 module.warn('daemon-reexec failed, but target is a chroot or systemd is offline. Continuing. Error was: %d / %s' % (rc, err))
