@@ -1,0 +1,2 @@
+deprecated_features:
+  - templating - Test plugins which return a non-boolean result are deprecated; the result is coerced to a boolean for now, but test plugins must have a boolean result in ansible-core 2.23 and later.
