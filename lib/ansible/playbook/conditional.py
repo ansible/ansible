@@ -68,8 +68,16 @@ class Conditional:
         that was false.
         """
         for conditional in self.when:
-            if conditional is None or conditional == "":
-                res = True
+            if conditional in (None, ""):
+                _allow_broken_conditionals = C.config.get_config_value('ALLOW_BROKEN_CONDITIONALS')
+                if _allow_broken_conditionals:
+                    display.deprecated(
+                        msg="Empty conditional expression was evaluated as True.",
+                        version="2.23",
+                    )
+                    res = True
+                else:
+                    raise AnsibleError("Empty conditional expressions are not allowed.")
             elif isinstance(conditional, bool):
                 res = conditional
             else:

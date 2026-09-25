@@ -52,3 +52,14 @@
     - assert:
         that:
           - result.stdout | replace('\n', '') is search("conditional check.+failed.+was of type 'int'")
+
+    - name: validate empty conditional error
+      command: ansible-playbook empty_conditional.yml
+      environment:
+        ANSIBLE_ALLOW_BROKEN_CONDITIONALS: 1
+      register: result
+      ignore_errors: true
+
+    - assert:
+        that:
+          - result.stderr | replace('\n', '') is search("Empty conditional expression was evaluated as True.")
