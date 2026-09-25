@@ -1,0 +1,37 @@
+- name: Test a specially built tarball
+  debug:
+    msg: "Creating tarball with arguments: {{ tarfile_arguments }}"
+
+- name: Create tarball
+  script: build_bad_tar.py {{ galaxy_dir | quote }} {{ tarfile_arguments }}
+
+- name: Try to install the tarball
+  command: ansible-galaxy collection install '{{ galaxy_dir }}/suspicious-test-1.0.0.tar.gz' {{ galaxy_verbosity }}
+  register: fail_bad_tar
+  ignore_errors: true
+  environment:
+    ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
+
+- name: Get the result of the install attempt
+  stat:
+    path: '{{ galaxy_dir }}/ansible_collections/suspicious'
+  register: fail_bad_tar_actual
+
+- name: Remove collection if it was installed
+  file:
+    path: '{{ galaxy_dir }}/ansible_collections'
+    state: absent
+  when: cleanup | default(True)
+
+- name: Assert the expected result
+  assert:
+    msg: "{{ rc_msg }}{{ stderr_msg }}{{ stdout_msg }}"
+    that:
+      - fail_bad_tar.rc == expected_rc
+      - fail_bad_tar.stderr is search(expected_error)
+      - fail_bad_tar.stdout is search(expected_stdout)
+      - (expected_rc == 0) | ternary(fail_bad_tar_actual.stat.exists, not fail_bad_tar_actual.stat.exists)
+  vars:
+    rc_msg: "Expected rc: {{ expected_rc }}"
+    stderr_msg: "{{ (expected_error == '') | ternary('', ', error: ' ~ expected_error) }}"
+    stdout_msg: "{{ (expected_stdout == '') | ternary('', ', stdout: ' ~ expected_error) }}"

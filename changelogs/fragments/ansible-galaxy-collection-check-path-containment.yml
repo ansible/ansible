@@ -1,0 +1,4 @@
+security_fixes:
+- >-
+  ``ansible-galaxy collection install`` - fix validating ``FILES.json`` entries are
+  contained in the collection before creating them. (CVE-2026-89091)
