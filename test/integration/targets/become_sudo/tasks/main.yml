@@ -113,14 +113,12 @@
             name: "{{ testlocales | map( 'regex_replace', '^(\\w{2})_.+', 'language-pack-\\1') | list }}"
 
         - name: Actually test sudo with locales
+          become_method: sudo
+          become_user: '{{ target_user_name }}'
+          become_exe: /tmp/sudoshim.sh
+          become_flags: '{{ default_become_flags }} {{ intermediate_flags }}'
           vars:
-            ansible_become: yes
-            ansible_become_method: sudo
-            ansible_become_user: '{{ target_user_name }}'
             ansible_become_password: '{{ intermediate_user_password }}'
-            ansible_become_exe: /tmp/sudoshim.sh
-            ansible_become_flags: '{{ default_become_flags }} {{ intermediate_flags }}'
-            ansible_local_become_strip_preamble: true
           environment:
             LC_ALL: '{{item}}'
             LANG: '{{item}}'
