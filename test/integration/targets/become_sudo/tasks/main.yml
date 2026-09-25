@@ -108,15 +108,19 @@
             name: locales
             state: present
 
-        - name: install language packs
+        - name: install language packs (also generates locales)
           apt:
             name: "{{ testlocales | map( 'regex_replace', '^(\\w{2})_.+', 'language-pack-\\1') | list }}"
 
-        - name: Generate locales
-          shell: locale-gen
-
         - name: Actually test sudo with locales
-          become_method: sudo
+          vars:
+            ansible_become: yes
+            ansible_become_method: sudo
+            ansible_become_user: '{{ target_user_name }}'
+            ansible_become_password: '{{ intermediate_user_password }}'
+            ansible_become_exe: /tmp/sudoshim.sh
+            ansible_become_flags: '{{ default_become_flags }} {{ intermediate_flags }}'
+            ansible_local_become_strip_preamble: true
           environment:
             LC_ALL: '{{item}}'
             LANG: '{{item}}'
