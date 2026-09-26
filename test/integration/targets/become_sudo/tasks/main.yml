@@ -116,12 +116,8 @@
           become_method: sudo
           become_user: '{{ target_user_name }}'
           become_exe: /tmp/sudoshim.sh
-          become_flags: '{{ default_become_flags }} {{ intermediate_flags }}'
+          become_flags: '{{ default_become_flags }} {{ intermediate_flags }} --set-lang "{{item}}"'
           vars:
             ansible_become_password: '{{ intermediate_user_password }}'
-          environment:
-            LC_ALL: '{{item}}'
-            LANG: '{{item}}'
-            LANGUAGE: '{{item}}'
-          shell: whoami
+          shell: 'whoami && echo "${LANG} is lang and ${LC_ALL} is lc_all"'
           loop: '{{ testlocales }}'
