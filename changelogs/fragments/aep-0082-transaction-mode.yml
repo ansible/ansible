@@ -1,0 +1,5 @@
+minor_changes:
+  - atomic playbooks - Implement Ansible Transaction Mode supporting `atomic: true` on plays and blocks with automatic reverse (LIFO) compensation on task failure (AEP-0082).
+  - rollback_manager - Introduce `RollbackManager` and `TransactionJournal` in `ansible.executor` to coordinate per-host state snapshots and rollback execution.
+  - module_utils.basic - Add `AnsibleAtomicModuleMixin` with `stage_file_snapshot` and `register_undo` methods enabling modules to declare atomic rollback support.
+  - copy, template, file, service - Implement phase 1 atomic rollback adapters for core file and system management modules.

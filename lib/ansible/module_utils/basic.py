@@ -362,7 +362,8 @@ class AnsibleModule(object):
     def __init__(self, argument_spec, bypass_checks=False, no_log=False,
                  mutually_exclusive=None, required_together=None,
                  required_one_of=None, add_file_common_args=False,
-                 supports_check_mode=False, required_if=None, required_by=None):
+                 supports_check_mode=False, required_if=None, required_by=None,
+                 supports_atomic=False):
 
         """
         Common code for quickly building an ansible module in Python
@@ -375,6 +376,8 @@ class AnsibleModule(object):
         self._name = os.path.basename(__file__)  # initialize name until we can parse from options
         self.argument_spec = argument_spec
         self.supports_check_mode = supports_check_mode
+        self.supports_atomic = supports_atomic
+        self._undo_action = None
         self.check_mode = False
         self.bypass_checks = bypass_checks
         self.no_log = no_log
@@ -1513,9 +1516,38 @@ class AnsibleModule(object):
         encoder = _json.get_module_encoder(_ANSIBLE_PROFILE, _json.Direction.MODULE_TO_CONTROLLER)
         print('\n%s' % json.dumps(o, cls=encoder))
 
+    def register_undo(self, module, action, parameters, requires_become=False, become_user=None):
+        """Register compensating undo action for Ansible Transaction Mode (AEP-0082)."""
+        self._undo_action = {
+            "module": module,
+            "action": action,
+            "parameters": parameters,
+            "requires_become": requires_become,
+            "become_user": become_user,
+        }
+
+    def stage_file_snapshot(self, path):
+        """Snapshot file via zero-overhead hardlink or copy before modification."""
+        if not os.path.exists(path):
+            return None
+        staging_dir = os.environ.get("ANSIBLE_JOURNAL_STAGING_DIR") or tempfile.gettempdir()
+        os.makedirs(staging_dir, exist_ok=True)
+        filename = os.path.basename(path)
+        snapshot_dest = os.path.join(staging_dir, f"{filename}.bak_{os.getpid()}")
+        try:
+            os.link(path, snapshot_dest)
+        except OSError:
+            shutil.copy2(path, snapshot_dest)
+        return snapshot_dest
+
     def exit_json(self, **kwargs) -> t.NoReturn:
         """ return from the module, without error """
         _skip_stackwalk = True
+
+        if hasattr(self, 'supports_atomic'):
+            kwargs['_ansible_supports_atomic'] = self.supports_atomic
+            if getattr(self, '_undo_action', None):
+                kwargs['_ansible_undo'] = self._undo_action
 
         self.do_cleanup_files()
         self._return_formatted(kwargs)

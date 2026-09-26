@@ -43,6 +43,9 @@ TASK_ATTRIBUTE_OVERRIDES = (
     'delegate_to',
     'no_log',
     'remote_user',
+    'atomic',
+    'rollback_policy',
+    'journal_storage',
 )
 
 RESET_VARS = (
@@ -110,6 +113,11 @@ class PlayContext(Base):
 
     # "PlayContext.force_handlers should not be used, the calling code should be using play itself instead"
     force_handlers = FieldAttribute(isa='bool', default=False)
+
+    # Transaction Mode attributes (AEP-0082)
+    atomic = FieldAttribute(isa='bool', default=False)
+    rollback_policy = FieldAttribute(isa='string', default='strict')
+    journal_storage = FieldAttribute(isa='string', default='memory')
 
     def __init__(self, play=None, passwords=None, connection_lockfd=None):
         # Note: play is really not optional.  The only time it could be omitted is when we create

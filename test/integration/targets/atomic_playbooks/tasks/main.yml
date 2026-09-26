@@ -1,0 +1,37 @@
+---
+# Integration test for Ansible Transaction Mode (AEP-0082)
+- name: Test Atomic Rollback on Health Check Failure
+  hosts: localhost
+  gather_facts: false
+  atomic: true
+  rollback_policy: strict
+
+  tasks:
+    - name: 0. Ensure target clean
+      ansible.builtin.file:
+        path: /tmp/ansible_atomic_test_app.conf
+        state: absent
+
+    - name: 1. Deploy initial configuration
+      ansible.builtin.copy:
+        dest: /tmp/ansible_atomic_test_app.conf
+        content: "version=1.0\nstatus=ok\n"
+
+    - name: 2. Savepoint before speculative upgrade
+      ansible.builtin.checkpoint:
+        name: baseline_v1
+
+    - name: 3. Deploy broken v2 configuration (speculative change)
+      ansible.builtin.copy:
+        dest: /tmp/ansible_atomic_test_app.conf
+        content: "version=2.0\nstatus=broken\n"
+
+    - name: 4. Synthetic health verification gate (expected failure)
+      ansible.builtin.assert:
+        that:
+          - false
+        fail_msg: "Simulated health check failure: cluster health check endpoint 500"
+
+    - name: 5. Unreachable task if rollback works correctly
+      ansible.builtin.debug:
+        msg: "This task must never execute"
