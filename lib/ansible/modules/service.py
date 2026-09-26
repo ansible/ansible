@@ -1098,6 +1098,8 @@ class FreeBsdService(Service):
             self.action = "onestop"
         if self.action == "reload":
             self.action = "onereload"
+        if self.action == "restart":
+            self.action = "onerestart"
 
         ret = self.execute_command("%s %s %s %s" % (self.svc_cmd, self.arguments, self.name, self.action))
 
