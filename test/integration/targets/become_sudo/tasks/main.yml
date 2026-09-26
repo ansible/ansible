@@ -82,3 +82,42 @@
         that:
           - custom_flags.stdout.strip() == test_user_name
           - no_user.stdout.strip() == "root"
+
+- name: Test sudo with i18n, required for sudo-rs, only ubuntu
+  when:
+    - ansible_facts['system'] == 'Linux'
+    - ansible_facts['distribution'] == 'Ubuntu'
+  vars:
+    testlocales:
+      - ar_EG.UTF-8   # كَلِمَةُ الْسِّرِ
+      - fr_FR.UTF-8   # Mot de passe
+      - es_ES.UTF-8   # Contraseña
+      - de_DE.UTF-8   # Passwort
+      - ja_JP.UTF-8   # パスワード
+      - km_KH.UTF-8   # ពាក្យសម្ងាត់
+      - th_TH.UTF-8   # Sหัสผ่าน
+      - tr_TR.UTF-8   # Şifre
+      - uk_UA.UTF-8   # Пароль
+      - vi_VN.UTF-8   # Mật khẩu 
+  block:
+    - name: Setup the locales
+      become: yes
+      block:
+        - name: ensure debian locales package is available
+          apt:
+            name: locales
+            state: present
+
+        - name: install language packs (also generates locales)
+          apt:
+            name: "{{ testlocales | map( 'regex_replace', '^(\\w{2})_.+', 'language-pack-\\1') | list }}"
+
+        - name: Actually test sudo with locales
+          become_method: sudo
+          become_user: '{{ target_user_name }}'
+          become_exe: /tmp/sudoshim.sh
+          become_flags: '{{ default_become_flags }} {{ intermediate_flags }} --set-lang "{{item}}"'
+          vars:
+            ansible_become_password: '{{ intermediate_user_password }}'
+          shell: 'whoami && echo "${LANG} is lang and ${LC_ALL} is lc_all"'
+          loop: '{{ testlocales }}'
