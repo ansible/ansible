@@ -1,0 +1,2 @@
+bugfixes:
+  - service - Align the FreeBSD service class with the documented behaviour by mapping the "restart" action to "onerestart" (https://github.com/ansible/ansible/issues/84793 https://github.com/ansible/ansible/pull/87585).
