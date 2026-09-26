@@ -15,13 +15,8 @@ import typing as t
 
 _write_generated_code_to_disk = False
 
-# deprecated: description='types.UnionType is available in Python 3.10' python_version='3.9'
-try:
-    _union_type: type | None = types.UnionType  # type: ignore[attr-defined]
-    _union_types: tuple = (t.Union, types.UnionType)  # type: ignore[attr-defined]
-except AttributeError:
-    _union_type = None  # type: ignore[assignment]
-    _union_types = (t.Union,)  # type: ignore[assignment]
+_union_type: type | None = types.UnionType  # type: ignore[attr-defined]
+_union_types: tuple = (t.Union, types.UnionType)  # type: ignore[attr-defined]
 
 
 def inject_post_init_validation(cls: type, allow_subclasses=False) -> None:
