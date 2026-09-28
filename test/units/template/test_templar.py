@@ -54,7 +54,7 @@ class BaseTemplar(object):
             "/path/to/my_file.txt": "foo\n",
         })
         self.templar = Templar(loader=self.fake_loader, variables=self.test_vars)
-        self._ansible_context = AnsibleContext(self.templar.environment, {}, {}, {})
+        self._ansible_context = AnsibleContext(self.templar._environment, {}, {}, {})
 
     def is_unsafe(self, obj):
         return self._ansible_context._is_unsafe(obj)
