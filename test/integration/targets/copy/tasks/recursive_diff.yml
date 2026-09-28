@@ -28,6 +28,8 @@
         - { path: 'file1.txt', content: 'initial content 1' }
         - { path: 'subdir1/file2.txt', content: 'initial content 2' }
         - { path: 'subdir2/file3.txt', content: 'initial content 3' }
+        # never modified, to cover the unchanged file code path
+        - { path: 'subdir1/unchanged.txt', content: 'unchanged content' }
       delegate_to: localhost
 
     - name: Create destination directory
@@ -52,6 +54,32 @@
         - { path: 'subdir2/file3.txt', content: 'modified content 3' }
       delegate_to: localhost
 
+    - name: Recursive copy with changes but without diff mode
+      copy:
+        src: "{{ test_dir.path }}/src/"
+        dest: "{{ test_dir.path }}/dest/"
+      diff: false
+      register: no_diff_mode_result
+      delegate_to: localhost
+
+    - name: Verify an ordinary recursive copy does not include a diff
+      assert:
+        that:
+          - no_diff_mode_result is changed
+          - no_diff_mode_result.diff is not defined
+        fail_msg: "A recursive copy without diff mode must not add a diff key to the result"
+        success_msg: "No diff key was added without diff mode"
+
+    - name: Modify source files again to create changes
+      copy:
+        dest: "{{ test_dir.path }}/src/{{ item.path }}"
+        content: "{{ item.content }}"
+      loop:
+        - { path: 'file1.txt', content: 'updated content 1' }
+        - { path: 'subdir1/file2.txt', content: 'updated content 2' }
+        - { path: 'subdir2/file3.txt', content: 'updated content 3' }
+      delegate_to: localhost
+
     - name: Recursive copy with diff enabled
       copy:
         src: "{{ test_dir.path }}/src/"
@@ -64,25 +92,20 @@
       assert:
         that:
           - recursive_diff_result is changed
-          - "'diff' in recursive_diff_result"
-          - "recursive_diff_result.diff is iterable"
-          - "recursive_diff_result.diff | length > 0"
-        fail_msg: "Recursive copy should produce diff output when diff=yes"
-        success_msg: "Recursive copy produced diff output"
-
-    - name: Verify diffs are accumulated for multiple files
-      assert:
-        that:
-          - "recursive_diff_result.diff | length >= 3"
-        fail_msg: "Expected at least 3 diffs (one per modified file), got {{ recursive_diff_result.diff | length }}"
-        success_msg: "Found {{ recursive_diff_result.diff | length }} diffs as expected"
+          - recursive_diff_result.diff is defined
+          # exactly one diff per changed file, the unchanged file must not add any
+          - recursive_diff_result.diff | length == 3
+          - recursive_diff_result.diff[0].before is defined
+          - recursive_diff_result.diff[0].after is defined
+        fail_msg: "Expected 3 diffs (one per changed file), got: {{ recursive_diff_result.diff | default('none') }}"
+        success_msg: "One diff per changed file was returned"
 
     - name: Verify diff content contains expected changes
       assert:
         that:
-          - "'modified content' in (recursive_diff_result.diff | map(attribute='after') | join(' '))"
-        fail_msg: "Diff output should contain the modified content"
-        success_msg: "Diff output contains expected modified content"
+          - "'updated content' in (recursive_diff_result.diff | map(attribute='after') | join(' '))"
+        fail_msg: "Diff output should contain the updated content"
+        success_msg: "Diff output contains expected updated content"
 
     - name: Test idempotency - second copy should not produce diffs
       copy:
@@ -92,12 +115,13 @@
       register: idempotent_diff_result
       delegate_to: localhost
 
-    - name: Verify idempotent copy has no meaningful diffs
+    - name: Verify idempotent copy has no diff
       assert:
         that:
           - idempotent_diff_result is not changed
-        fail_msg: "Second copy should be idempotent (no changes)"
-        success_msg: "Second copy correctly shows no changes"
+          - idempotent_diff_result.diff is not defined
+        fail_msg: "Second copy should be idempotent and must not contain a diff key"
+        success_msg: "Second copy correctly shows no changes and no diff"
 
   always:
     - name: Clean up test directory

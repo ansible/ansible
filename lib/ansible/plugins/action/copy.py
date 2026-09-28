@@ -522,7 +522,7 @@ class ActionModule(ActionBase):
 
         implicit_directories = set()
         # Initialize diff list to accumulate diffs from all files in recursive copies
-        result['diff'] = []
+        diffs = []
 
         for source_full, source_rel in source_files['files']:
             # copy files over.  This happens first as directories that have
@@ -545,9 +545,12 @@ class ActionModule(ActionBase):
             while (source_rel := os.path.dirname(source_rel)) != '':
                 implicit_directories.add(source_rel)
 
-            # Accumulate diffs from this file copy
-            if 'diff' in module_return:
-                result['diff'].extend(module_return['diff'])
+            # The type of the "diff" key depends on whether the file changed:
+            # - for changed files, _copy_file() returns a list of diffs
+            # - for unchanged files, it invokes the file module, which returns a dict
+            diff = module_return.get('diff')
+            if isinstance(diff, list):
+                diffs.extend(diff)
 
             module_executed = True
             changed = changed or module_return.get('changed', False)
@@ -609,11 +612,10 @@ class ActionModule(ActionBase):
             if 'path' in result and 'dest' not in result:
                 result['dest'] = result['path']
         else:
-            # Preserve accumulated diffs when updating result for recursive copies
-            saved_diff = result.get('diff', [])
             result.update(dict(dest=dest, src=source, changed=changed))
-            if saved_diff:
-                result['diff'] = saved_diff
+            # Include accumulated diffs, but preserve result shape of ordinary copies (no empty diff key)
+            if diffs:
+                result['diff'] = diffs
 
         # Delete tmp path
         self._remove_tmp_path(self._connection._shell.tmpdir)
