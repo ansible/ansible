@@ -80,14 +80,14 @@ def post_process_whens(result, task, templar, task_vars):
     cond = None
     if task.changed_when:
         with templar.set_temporary_context(available_variables=task_vars):
-            cond = Conditional(loader=templar._loader)
+            cond = Conditional(loader=templar._dataloader)
             cond.when = task.changed_when
             result['changed'] = cond.evaluate_conditional(templar, templar.available_variables)
 
     if task.failed_when:
         with templar.set_temporary_context(available_variables=task_vars):
             if cond is None:
-                cond = Conditional(loader=templar._loader)
+                cond = Conditional(loader=templar._dataloader)
             cond.when = task.failed_when
             failed_when_result = cond.evaluate_conditional(templar, templar.available_variables)
             result['failed_when_result'] = result['failed'] = failed_when_result
