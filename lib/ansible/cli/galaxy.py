@@ -950,7 +950,7 @@ class GalaxyCLI(CLI):
 
         loader = DataLoader()
         templar = Templar(loader, variables={'required_config': required_config, 'optional_config': optional_config})
-        templar.environment.filters['comment_ify'] = comment_ify
+        templar._environment.filters['comment_ify'] = comment_ify
 
         meta_value = templar.template(meta_template)
 
