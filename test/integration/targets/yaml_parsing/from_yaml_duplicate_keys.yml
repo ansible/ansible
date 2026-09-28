@@ -15,8 +15,10 @@
   tasks:
     # when `mode` is undefined the filter argument is omitted entirely,
     # so the DUPLICATE_YAML_DICT_KEY configuration setting applies instead
+    # ignore errors so the from_yaml_all task below still runs in the failure modes
     - debug:
         msg: "{{ blob | from_yaml(duplicate_key_mode=mode) if mode is defined else blob | from_yaml }}"
+      ignore_errors: true
 
     - debug:
         msg: "{{ (blob_all | from_yaml_all(duplicate_key_mode=mode) if mode is defined else blob_all | from_yaml_all) | list }}"

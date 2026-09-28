@@ -8,7 +8,7 @@ from ansible.module_utils._internal._datatag import AnsibleTagHelper
 from ansible.module_utils.common.yaml import HAS_LIBYAML
 from ansible._internal._datatag import _tags
 
-from ._constructor import AnsibleConstructor, AnsibleInstrumentedConstructor
+from ._constructor import AnsibleConstructor, AnsibleInstrumentedConstructor, DuplicateKeyMode
 
 if HAS_LIBYAML:
     from yaml.cyaml import CParser
@@ -48,7 +48,7 @@ class _YamlParser(_Parser):
 class AnsibleInstrumentedLoader(_YamlParser, AnsibleInstrumentedConstructor, Resolver):
     """Ansible YAML loader which supports Ansible custom behavior such as `Origin` tagging, but no Ansible-specific YAML tags."""
 
-    def __init__(self, stream: str | bytes | _io.IOBase, duplicate_key_mode: str | None = None) -> None:
+    def __init__(self, stream: str | bytes | _io.IOBase, duplicate_key_mode: DuplicateKeyMode | None = None) -> None:
         _YamlParser.__init__(self, stream)
 
         AnsibleInstrumentedConstructor.__init__(

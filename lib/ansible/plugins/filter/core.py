@@ -25,7 +25,6 @@ from random import Random, SystemRandom, shuffle
 from jinja2.filters import do_map, do_select, do_selectattr, do_reject, do_rejectattr, pass_environment, sync_do_groupby
 from jinja2.environment import Environment
 
-from ansible import constants as C
 from ansible._internal._templating import _lazy_containers
 from ansible.errors import AnsibleFilterError, AnsibleTypeError, AnsibleTemplatePluginError
 from ansible.module_utils._internal._secrets import _STRIP_CHARS as _SECRET_STRIP_CHARS, _MINIMUM_SECRET_LENGTH as _SECRET_MINIMUM_LENGTH
@@ -38,6 +37,7 @@ from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.template import accept_args_markers, accept_lazy_markers
 from ansible._internal._templating._jinja_common import MarkerError, UndefinedMarker, validate_arg_type
 from ansible._internal._yaml import _loader as _yaml_loader
+from ansible._internal._yaml._constructor import DuplicateKeyMode
 from ansible._internal._yaml._dumper import VaultDecryptionContext, VaultBehaviors
 from ansible.utils.display import Display
 from ansible.utils.encrypt import do_encrypt, PASSLIB_AVAILABLE
@@ -298,37 +298,41 @@ def regex_escape(string, re_type='python'):
 
 
 def _configurable_loader(duplicate_key_mode: str | None = None) -> t.Callable[..., _yaml_loader.AnsibleInstrumentedLoader]:
+    """Validate `duplicate_key_mode` and return a YAML loader which applies it, deferring to the DUPLICATE_YAML_DICT_KEY config option when unset."""
     if duplicate_key_mode is None:
         return _yaml_loader.AnsibleInstrumentedLoader
 
-    valid_modes = C.config.get_configuration_definition('DUPLICATE_YAML_DICT_KEY')['choices']
-
-    if duplicate_key_mode not in valid_modes:
-        raise AnsibleFilterError(
-            f'Invalid duplicate_key_mode ({duplicate_key_mode!r}).',
-            help_text=f'Valid values are: {", ".join(valid_modes)}.',
+    if duplicate_key_mode not in DuplicateKeyMode:
+        raise AnsibleTemplatePluginError(
+            message=f'Invalid duplicate_key_mode ({duplicate_key_mode!r}).',
+            help_text=f'Valid values are: {", ".join(DuplicateKeyMode)}.',
+            obj=duplicate_key_mode,
         )
 
-    return functools.partial(_yaml_loader.AnsibleInstrumentedLoader, duplicate_key_mode=duplicate_key_mode)
+    return functools.partial(_yaml_loader.AnsibleInstrumentedLoader, duplicate_key_mode=DuplicateKeyMode(duplicate_key_mode))
 
 
-def from_yaml(data, duplicate_key_mode: str | None = None):
+def from_yaml(data, /, *, duplicate_key_mode: str | None = None):
+    loader = _configurable_loader(duplicate_key_mode=duplicate_key_mode)  # validate the mode even when the input is not deserialized
+
     if data is None:
         return None
 
     if isinstance(data, str):
-        return yaml.load(data, Loader=_configurable_loader(duplicate_key_mode=duplicate_key_mode))  # type: ignore[arg-type]
+        return yaml.load(data, Loader=loader)  # type: ignore[arg-type]
 
     display.deprecated(f"The from_yaml filter ignored non-string input of type {native_type_name(data)!r}.", version='2.23', obj=data)
     return data
 
 
-def from_yaml_all(data, /, duplicate_key_mode: str | None = None):
+def from_yaml_all(data, /, *, duplicate_key_mode: str | None = None):
+    loader = _configurable_loader(duplicate_key_mode=duplicate_key_mode)  # validate the mode even when the input is not deserialized
+
     if data is None:
         return []  # backward compatibility; ensure consistent result between classic/native Jinja for None/empty string input
 
     if isinstance(data, str):
-        return yaml.load_all(data, Loader=_configurable_loader(duplicate_key_mode=duplicate_key_mode))  # type: ignore[arg-type]
+        return yaml.load_all(data, Loader=loader)  # type: ignore[arg-type]
 
     display.deprecated(f"The from_yaml_all filter ignored non-string input of type {native_type_name(data)!r}.", version='2.23', obj=data)
     return data

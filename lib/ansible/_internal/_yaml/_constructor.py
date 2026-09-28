@@ -4,6 +4,8 @@ import abc
 import copy
 import typing as t
 
+from enum import StrEnum, auto
+
 from yaml import Node, ScalarNode
 from yaml.constructor import SafeConstructor
 from yaml.resolver import BaseResolver
@@ -21,6 +23,14 @@ from ...module_utils.secrets import register_secret
 display = Display()
 
 _TRUSTED_AS_TEMPLATE: t.Final[TrustedAsTemplate] = TrustedAsTemplate()
+
+
+class DuplicateKeyMode(StrEnum):
+    """Behavior to apply when a duplicate mapping key is encountered. Mirrors the choices for the DUPLICATE_YAML_DICT_KEY config option."""
+
+    error = auto()
+    warn = auto()
+    ignore = auto()
 
 
 class _BaseConstructor(SafeConstructor, metaclass=abc.ABCMeta):
@@ -41,14 +51,23 @@ class AnsibleInstrumentedConstructor(_BaseConstructor):
 
     name: t.Any  # provided by the YAML parser, which retrieves it from the stream
 
-    def __init__(self, origin: Origin, trusted_as_template: bool, sensitive_source_data: bool = False, duplicate_key_mode: str | None = None) -> None:
+    def __init__(
+        self,
+        origin: Origin,
+        trusted_as_template: bool,
+        sensitive_source_data: bool = False,
+        duplicate_key_mode: DuplicateKeyMode | None = None,
+    ) -> None:
         if not origin.line_num:
             origin = origin.replace(line_num=1)
+
+        if duplicate_key_mode is None:
+            duplicate_key_mode = C.config.get_config_value('DUPLICATE_YAML_DICT_KEY')
 
         self._origin = origin
         self._trusted_as_template = trusted_as_template
         self._sensitive_source_data = sensitive_source_data
-        self._duplicate_key_mode = duplicate_key_mode if duplicate_key_mode else C.config.get_config_value('DUPLICATE_YAML_DICT_KEY')
+        self._duplicate_key_mode = DuplicateKeyMode(duplicate_key_mode)  # coerce to reject unsupported values instead of silently ignoring duplicates
 
         super().__init__()
 
@@ -80,10 +99,10 @@ class AnsibleInstrumentedConstructor(_BaseConstructor):
             if (key := self.construct_object(key_node, deep=deep)) in keys:
                 msg = f'Found duplicate mapping key {key!r}.'
 
-                if self._duplicate_key_mode == 'error':
+                if self._duplicate_key_mode == DuplicateKeyMode.error:
                     raise AnsibleConstructorError(problem=msg, problem_mark=key_node.start_mark)
 
-                if self._duplicate_key_mode == 'warn':
+                if self._duplicate_key_mode == DuplicateKeyMode.warn:
                     display.warning(msg=msg, obj=key, help_text='Using last defined value only.')
 
             keys.add(key)

@@ -17,6 +17,7 @@
 - assert:
     that:
       - filter_error.stdout is contains("Found duplicate mapping key 'foo'")
+      - filter_error.stdout is contains("Found duplicate mapping key 'qux'")
       - filter_error.rc == 2
 
 - name: Test from_yaml duplicate_key_mode=ignore
