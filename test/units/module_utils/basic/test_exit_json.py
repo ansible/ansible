@@ -5,7 +5,6 @@
 from __future__ import annotations
 
 import json
-import sys
 import datetime
 import typing as t
 
@@ -90,10 +89,7 @@ class TestAnsibleModuleExitJson:
         with pytest.raises(TypeError) as ctx:
             am.fail_json()
 
-        if sys.version_info >= (3, 10):
-            error_msg = "AnsibleModule.fail_json() missing 1 required positional argument: 'msg'"
-        else:
-            error_msg = "fail_json() missing 1 required positional argument: 'msg'"
+        error_msg = "AnsibleModule.fail_json() missing 1 required positional argument: 'msg'"
 
         assert ctx.value.args[0] == error_msg
 

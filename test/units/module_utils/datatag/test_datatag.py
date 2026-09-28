@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import builtins
 import collections.abc as c
 import copy
 import dataclasses
@@ -11,7 +10,6 @@ import json
 
 import unittest.mock
 import pickle
-import sys
 
 import pytest
 
@@ -46,11 +44,7 @@ from ansible.module_utils._internal._datatag import (
 from ansible.module_utils._internal._datatag._tags import Deprecated
 from ansible.module_utils.datatag import native_type_name
 
-if sys.version_info >= (3, 9):
-    from typing import get_type_hints
-else:
-    # 3.8 needs the typing_extensions version of get_type_hints for `include_extras`
-    from typing_extensions import get_type_hints
+from typing import get_type_hints
 
 
 @dataclasses.dataclass(**_tag_dataclass_kwargs)
@@ -266,12 +260,6 @@ def _default_id_func(obj: object) -> str:
         res = "(with generator)"
 
     return res
-
-
-if sys.version_info < (3, 10):
-    # deprecated: description='ditch zip(strict) polyfill' python_version='3.10'
-    def zip(*args, **_kwargs):
-        return builtins.zip(*args)
 
 
 @dataclasses.dataclass(frozen=True)
@@ -657,7 +645,7 @@ class TestDatatagTarget(AutoParamSupport):
             expect_slots = False
         elif issubclass(value, AnsibleSerializableDataclass) or value == AnsibleSerializableDataclass:
             assert dataclasses.is_dataclass(value)  # everything extending AnsibleSerializableDataclass must be a dataclass
-            expect_slots = sys.version_info >= (3, 10)  # 3.10+ dataclasses have attributes (and support slots)
+            expect_slots = True  # dataclasses have attributes (and support slots)
         else:
             expect_slots = True  # normal types have attributes (and slots)
 

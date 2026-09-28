@@ -55,7 +55,7 @@ class EventFactory:
 
     def _get_formatted_traceback(self, exception: BaseException) -> str | None:
         if self._include_traceback:
-            return ''.join(_sys_traceback.format_exception(type(exception), exception, exception.__traceback__, chain=False))
+            return ''.join(_sys_traceback.format_exception(exception, chain=False))
 
         return None
 

@@ -261,13 +261,7 @@ from ansible.module_utils.urls import fetch_file
 
 from shlex import quote
 from zipfile import BadZipFile
-
-try:
-    from functools import cache
-except ImportError:
-    # Python < 3.9
-    from functools import lru_cache
-    cache = lru_cache(maxsize=None)
+from functools import cache
 
 # String from tar that shows the tar contents are different from the
 # filesystem

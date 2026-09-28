@@ -83,27 +83,6 @@ class AnsibleUnwantedChecker(BaseChecker):
     )
 
     unwanted_imports = {
-        # see https://docs.python.org/3/library/collections.abc.html
-        # deprecated: description='remove collections check now that Python 3.9 is no longer supported' core_version='2.23'
-        'collections': UnwantedEntry(
-            'collections.abc',
-            names=(
-                'MappingView',
-                'ItemsView',
-                'KeysView',
-                'ValuesView',
-                'Mapping', 'MutableMapping',
-                'Sequence', 'MutableSequence',
-                'Set', 'MutableSet',
-                'Container',
-                'Hashable',
-                'Sized',
-                'Callable',
-                'Iterable',
-                'Iterator',
-            )
-        ),
-
         'ansible.module_utils.six': UnwantedEntry(
             'the Python standard library equivalent'
         ),
