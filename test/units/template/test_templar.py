@@ -19,11 +19,13 @@ from __future__ import annotations
 
 from jinja2.runtime import Context
 
+import pytest
 import unittest
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleUndefinedVariable, AnsibleAssertionError
 from ansible.plugins.loader import init_plugin_loader
+from ansible import template as template_module
 from ansible.template import Templar, AnsibleContext, AnsibleEnvironment, AnsibleUndefined
 from ansible.utils.unsafe_proxy import AnsibleUnsafe, wrap_var
 from units.mock.loader import DictDataLoader
@@ -452,3 +454,70 @@ def test_unsafe_lookup_no_conversion():
         convert_data=False,
     )
     assert getattr(res, '__UNSAFE__', False)
+
+
+class _UnknownType:
+    """A type the templating system knows nothing about."""
+
+
+@pytest.fixture
+def collected_warnings(monkeypatch):
+    """Collect warnings issued by the template module.
+
+    The module level `display` reference is replaced rather than patching the shared `Display`
+    singleton, which would leave an instance attribute behind that shadows `Display.warning`.
+    """
+    warnings = []
+
+    class _CollectingDisplay:
+        def warning(self, msg, *args, **kwargs):
+            warnings.append(msg)
+
+    monkeypatch.setattr(template_module, 'display', _CollectingDisplay())
+
+    return warnings
+
+
+@pytest.mark.parametrize('variables', (
+    {'var0': _UnknownType()},
+    {'var0': [_UnknownType()]},
+    {'var0': {'key': _UnknownType()}},
+    {'var0': ({'key': [_UnknownType()]},)},
+))
+def test_unknown_type_warning(collected_warnings, variables):
+    """An unknown type must be reported, including when nested in supported containers."""
+    Templar(None, variables=variables).template('{{ var0 }}')
+
+    assert collected_warnings == ["Encountered unknown type '_UnknownType' during template operation. "
+                                  "Use supported types to avoid unexpected behavior."]
+
+
+def test_unknown_type_result_unchanged(collected_warnings):
+    """The diagnostic must not alter the template result."""
+    templar = Templar(None, variables={'var0': [1, 'two'], 'var1': _UnknownType()})
+
+    assert templar.template('{{ var0 }}') == [1, 'two']
+    assert isinstance(templar.template('{{ var1 }}'), str)
+
+
+@pytest.mark.parametrize('expression', (
+    '{{ var_str }}',
+    '{{ var_int }}',
+    '{{ var_list }}',
+    '{{ var_dict }}',
+    '{{ var_dict.items() | list }}',
+    '{{ range(3) | list }}',
+    '{{ var_dict.get | type_debug }}',
+    '{{ undef() | default("blah") }}',
+    '{{ var_str | upper }}',
+    '{{ now() }}',
+))
+def test_known_types_not_reported(collected_warnings, expression):
+    """Types produced by supported templating constructs must not be reported."""
+    init_plugin_loader()
+
+    variables = dict(var_str='blah', var_int=1, var_list=[1, 'two'], var_dict={'key': 'value'})
+
+    Templar(None, variables=variables).template(expression)
+
+    assert not collected_warnings

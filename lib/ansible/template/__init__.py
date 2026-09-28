@@ -24,16 +24,19 @@ import os
 import pwd
 import re
 import time
+import types
 
 from collections.abc import Iterator, Sequence, Mapping, MappingView, MutableMapping
 from contextlib import contextmanager
 from numbers import Number
 from traceback import format_exc
 
+from jinja2.environment import TemplateModule
 from jinja2.exceptions import TemplateSyntaxError, UndefinedError, SecurityError
 from jinja2.loaders import FileSystemLoader
 from jinja2.nativetypes import NativeEnvironment
-from jinja2.runtime import Context, StrictUndefined
+from jinja2.nodes import EvalContext
+from jinja2.runtime import Context, StrictUndefined, Undefined
 
 from ansible import constants as C
 from ansible.errors import (
@@ -496,6 +499,90 @@ def _fail_on_undefined(data):
     return data
 
 
+@functools.lru_cache(maxsize=None)
+def _known_template_types():
+    """Return the exact types and the base types known to the templating system.
+
+    The exact types are consulted first, since they cover everything Ansible itself produces.
+    The base types are only consulted for a type which is not an exact match, to avoid
+    reporting subclasses of supported types (introduced by collections, for example).
+
+    These are imported lazily to avoid a circular import, and because the result is only
+    needed when the unknown type diagnostic is enabled.
+    """
+    from ansible.parsing.yaml.objects import AnsibleMapping, AnsibleSequence, AnsibleUnicode, AnsibleVaultEncryptedUnicode
+    from ansible.vars.hostvars import HostVars, HostVarsVars
+
+    exact_types = frozenset((
+        # types supported by Ansible variable storage
+        type(None), bool, bytes, dict, float, int, list, set, str, tuple,
+        datetime.date, datetime.datetime, datetime.time,
+        # Ansible wrapper types which appear in variable storage and template results
+        AnsibleMapping, AnsibleSequence, AnsibleUnicode, AnsibleVaultEncryptedUnicode,
+        AnsibleUnsafeBytes, AnsibleUnsafeText, NativeJinjaText, NativeJinjaUnsafeText,
+        AnsibleUndefined, StrictUndefined,
+        # types which a template expression can legitimately resolve to
+        HostVars,  # example: hostvars
+        HostVarsVars,  # example: hostvars.localhost
+        type,  # example: range(20) | list  # triggered on retrieval of `range` type from globals
+        range,  # example: range(20) | list  # triggered when returning a `range` instance from a call
+        types.FunctionType,  # example: undef() | default("blah")
+        types.MethodType,  # example: ansible_facts.get | type_debug
+        functools.partial,
+        type(''.startswith),  # example: inventory_hostname.upper | type_debug  # resolves `builtin_function_or_method`
+        TemplateModule,  # example: '{% import "importme.j2" as im %}{{ im | type_debug }}'
+        EvalContext,  # passed into filters/tests by Jinja via @pass_eval_context
+    ))
+
+    # only consulted when the exact type match above fails
+    # `type` is excluded, since using it as a base would treat every class object as known
+    base_types = tuple((exact_types - {type}) | {Undefined})
+
+    return exact_types, base_types
+
+
+def _check_known_types(data):
+    """Recursively warn about types in a finalized template result which are unknown to the templating system.
+
+    Only the container types Ansible supports in variable storage are traversed. Types such as
+    `HostVars` are deliberately not traversed, even though they are mappings, since doing so would
+    realize the entire structure behind them.
+
+    `Display.warning` deduplicates, so an unknown type is reported once per process rather than
+    once per template operation.
+    """
+    exact_types, base_types = _known_template_types()
+
+    def check(value):
+        value_type = type(value)
+
+        if value_type not in exact_types and not isinstance(value, base_types):
+            display.warning(
+                f'Encountered unknown type {value_type.__name__!r} during template operation. '
+                'Use supported types to avoid unexpected behavior.'
+            )
+
+        if isinstance(value, dict):
+            for key, item in value.items():
+                check(key)
+                check(item)
+        elif isinstance(value, (list, tuple, set, frozenset)):
+            for item in value:
+                check(item)
+
+    check(data)
+
+    return data
+
+
+def _check_unknown_types(finalize):
+    """Wrap `finalize` with the unknown type diagnostic."""
+    def wrapper(*args, **kwargs):
+        return _check_known_types(finalize(*args, **kwargs))
+
+    return functools.update_wrapper(wrapper, finalize)
+
+
 @_unroll_iterator
 def _ansible_finalize(thing):
     """A custom finalize function for jinja2, which prevents None from being
@@ -530,7 +617,7 @@ class AnsibleEnvironment(NativeEnvironment):
         self.trim_blocks = True
 
         self.undefined = AnsibleUndefined
-        self.finalize = _ansible_finalize
+        self.finalize = _check_unknown_types(_ansible_finalize)
 
 
 class AnsibleNativeEnvironment(AnsibleEnvironment):
@@ -538,7 +625,7 @@ class AnsibleNativeEnvironment(AnsibleEnvironment):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.finalize = _unroll_iterator(_fail_on_undefined)
+        self.finalize = _check_unknown_types(_unroll_iterator(_fail_on_undefined))
 
 
 class Templar:
