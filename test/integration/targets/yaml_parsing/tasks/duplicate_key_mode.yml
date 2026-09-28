@@ -1,5 +1,5 @@
 - name: Test from_yaml duplicate_key_mode=warn
-  command: ansible-playbook {{ verbosity }} {{ role_path }}/from_yaml_filter.yml -e mode=warn
+  command: ansible-playbook {{ verbosity }} {{ role_path }}/from_yaml_duplicate_keys.yml -e mode=warn
   register: filter_warn
 
 - assert:
@@ -10,7 +10,7 @@
       - filter_warn.rc == 0
 
 - name: Test from_yaml duplicate_key_mode=error
-  command: ansible-playbook {{ verbosity }} {{ role_path }}/from_yaml_filter.yml -e mode=error
+  command: ansible-playbook {{ verbosity }} {{ role_path }}/from_yaml_duplicate_keys.yml -e mode=error
   failed_when: filter_error.rc != 2
   register: filter_error
 
@@ -20,7 +20,7 @@
       - filter_error.rc == 2
 
 - name: Test from_yaml duplicate_key_mode=ignore
-  command: ansible-playbook {{ verbosity }} {{ role_path }}/from_yaml_filter.yml -e mode=ignore
+  command: ansible-playbook {{ verbosity }} {{ role_path }}/from_yaml_duplicate_keys.yml -e mode=ignore
   register: filter_ignore
 
 - assert:
@@ -30,7 +30,7 @@
       - filter_ignore.rc == 0
 
 - name: Test duplicate_key_mode=ignore overrides ANSIBLE_DUPLICATE_YAML_DICT_KEY=error
-  command: ansible-playbook {{ verbosity }} {{ role_path }}/from_yaml_filter.yml -e mode=ignore
+  command: ansible-playbook {{ verbosity }} {{ role_path }}/from_yaml_duplicate_keys.yml -e mode=ignore
   environment:
     ANSIBLE_DUPLICATE_YAML_DICT_KEY: error
   register: filter_beats_config_error
@@ -42,7 +42,7 @@
       - filter_beats_config_error.rc == 0
 
 - name: Test duplicate_key_mode=error overrides ANSIBLE_DUPLICATE_YAML_DICT_KEY=ignore
-  command: ansible-playbook {{ verbosity }} {{ role_path }}/from_yaml_filter.yml -e mode=error
+  command: ansible-playbook {{ verbosity }} {{ role_path }}/from_yaml_duplicate_keys.yml -e mode=error
   failed_when: filter_beats_config_ignore.rc != 2
   environment:
     ANSIBLE_DUPLICATE_YAML_DICT_KEY: ignore
@@ -54,7 +54,7 @@
       - filter_beats_config_ignore.rc == 2
 
 - name: Test ANSIBLE_DUPLICATE_YAML_DICT_KEY applies when duplicate_key_mode is omitted
-  command: ansible-playbook {{ verbosity }} {{ role_path }}/from_yaml_filter.yml
+  command: ansible-playbook {{ verbosity }} {{ role_path }}/from_yaml_duplicate_keys.yml
   failed_when: filter_config_fallback.rc != 2
   environment:
     ANSIBLE_DUPLICATE_YAML_DICT_KEY: error
@@ -66,7 +66,7 @@
       - filter_config_fallback.rc == 2
 
 - name: Test from_yaml with an invalid duplicate_key_mode
-  command: ansible-playbook {{ verbosity }} {{ role_path }}/from_yaml_filter.yml -e mode=bogus
+  command: ansible-playbook {{ verbosity }} {{ role_path }}/from_yaml_duplicate_keys.yml -e mode=bogus
   failed_when: filter_invalid.rc != 2
   register: filter_invalid
 

@@ -34,7 +34,7 @@
 
 
 - name: test duplicate_key_mode on the from_yaml/from_yaml_all filters
-  import_tasks: from_yaml_filter.yml
+  import_tasks: duplicate_key_mode.yml
 
 - name: test unsafe YAMLism
   import_tasks: unsafe.yml
