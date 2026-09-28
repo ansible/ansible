@@ -41,14 +41,14 @@ class AnsibleInstrumentedConstructor(_BaseConstructor):
 
     name: t.Any  # provided by the YAML parser, which retrieves it from the stream
 
-    def __init__(self, origin: Origin, trusted_as_template: bool, sensitive_source_data: bool = False) -> None:
+    def __init__(self, origin: Origin, trusted_as_template: bool, sensitive_source_data: bool = False, duplicate_key_mode: str | None = None) -> None:
         if not origin.line_num:
             origin = origin.replace(line_num=1)
 
         self._origin = origin
         self._trusted_as_template = trusted_as_template
         self._sensitive_source_data = sensitive_source_data
-        self._duplicate_key_mode = C.config.get_config_value('DUPLICATE_YAML_DICT_KEY')
+        self._duplicate_key_mode = duplicate_key_mode if duplicate_key_mode else C.config.get_config_value('DUPLICATE_YAML_DICT_KEY')
 
         super().__init__()
 

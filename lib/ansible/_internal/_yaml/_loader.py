@@ -48,13 +48,14 @@ class _YamlParser(_Parser):
 class AnsibleInstrumentedLoader(_YamlParser, AnsibleInstrumentedConstructor, Resolver):
     """Ansible YAML loader which supports Ansible custom behavior such as `Origin` tagging, but no Ansible-specific YAML tags."""
 
-    def __init__(self, stream: str | bytes | _io.IOBase) -> None:
+    def __init__(self, stream: str | bytes | _io.IOBase, duplicate_key_mode: str | None = None) -> None:
         _YamlParser.__init__(self, stream)
 
         AnsibleInstrumentedConstructor.__init__(
             self,
             origin=_tags.Origin.get_or_create_tag(stream, self.name),
             trusted_as_template=_tags.TrustedAsTemplate.is_tagged_on(stream),
+            duplicate_key_mode=duplicate_key_mode,
         )
 
         Resolver.__init__(self)
