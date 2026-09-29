@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-connection - ensure that the connection persistent directory has private permissions. This covers the corner case in which the preceding directories do not exist or do not have private enough permissions.
