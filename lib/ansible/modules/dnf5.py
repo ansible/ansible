@@ -602,7 +602,7 @@ class Dnf5Module(YumDnf):
         conf.installroot = self.installroot
         conf.use_host_config = True  # needed for installroot
         conf.cacheonly = "all" if self.cacheonly else "none"
-        if self.download_dir:
+        if self.download_only and self.download_dir:
             conf.destdir = self.download_dir
 
         if self.enable_plugin:
