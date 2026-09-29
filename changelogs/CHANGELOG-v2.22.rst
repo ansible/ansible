@@ -4,6 +4,25 @@ ansible-core 2.22 "Thank You" Release Notes
 
 .. contents:: Topics
 
+v2.22.0b2
+=========
+
+Release Summary
+---------------
+
+| Release Date: 2026-09-29
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.22/porting_guides/porting_guide_core_2.22.html>`__
+
+Major Changes
+-------------
+
+- callback plugins - task results passed to callback plugins now always have any registered secrets replaced with ``$REDACTED$``, so callbacks no longer need to mask the result themselves. The ``ANSIBLE_SUPPORTS_MASKING`` callback class attribute introduced in ansible-core 2.22.0b1 to opt into receiving unmasked results has been removed and is now ignored.
+
+Bugfixes
+--------
+
+- ansible-connection - ensure that the connection persistent directory has private permissions. This covers the corner case in which the preceding directories do not exist or do not have private enough permissions.
+
 v2.22.0b1
 =========
 
