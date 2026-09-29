@@ -237,16 +237,20 @@ class SecretMasker:
             for tracker in self._new_secret_trackers:
                 tracker._new_secrets.update(new)
 
-    def mask_string(self, value: str, /, *, mask_placeholder: str = "$REDACTED$") -> str:
+    def mask_string(self, value: str, /, *, mask_placeholder: str = "$REDACTED$", acquire_lock: bool = True) -> str:
         """Masks any registered secret in the provided string with the provided placeholder. Returns the masked string."""
         if not value:
             return value
 
         try:
             spans = []
-            with self._lock:
-                if self._forms:
-                    spans = self._matcher.spans(value)
+
+            if acquire_lock:
+                with self._lock:
+                    if self._forms:
+                        spans = self._matcher.spans(value)
+            elif self._forms:
+                spans = self._matcher.spans(value)
 
             spans = _merge_spans(value, spans)
             if not spans:

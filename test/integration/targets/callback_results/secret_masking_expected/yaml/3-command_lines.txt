@@ -1,0 +1,12 @@
+
+    changed: true
+    cmd: |-
+        printf 'MARKER_STDOUT %s END\n' "${LINES_SECRET}"
+        printf 'MARKER_STDERR %s END\n' "${LINES_SECRET}" >&2
+    msg: ''
+    rc: 0
+    stderr: MARKER_STDERR $REDACTED$ END
+    stderr_lines: <omitted>
+    stdout: MARKER_STDOUT $REDACTED$ END
+    stdout_lines: <omitted>
+

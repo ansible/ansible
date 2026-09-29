@@ -292,3 +292,10 @@ for strategy in free ansible.builtin.free host_pinned; do
     done
 done
 rm -f non_lockstep_test.out
+
+# Ensure registered secrets are redacted in the rendered output for both result formats
+export ANSIBLE_CALLBACK_RESULT_FORMAT=json
+run_test secret_masking_json secret_masking.yml
+export ANSIBLE_CALLBACK_RESULT_FORMAT=yaml
+run_test secret_masking_yaml secret_masking.yml
+export ANSIBLE_CALLBACK_RESULT_FORMAT=json

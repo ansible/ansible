@@ -1,0 +1,14 @@
+
+    changed: false
+    msg:
+        float: $REDACTED$
+        int: $REDACTED$
+        keys:
+            $REDACTED$: first
+            $REDACTED$ (2): second
+        nested:
+        - MARKER_JSON $REDACTED$
+        -   deeper:
+                key: MARKER_YAML $REDACTED$
+        simple: MARKER_SIMPLE $REDACTED$
+
