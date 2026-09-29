@@ -1,2 +1,2 @@
 bugfixes:
-  - service - disabled services were not restarting. Using ``state=restarted`` on FreeBSD and DragonflyBSD now restarts disabled tasks (https://github.com/ansible/ansible/issues/84793).
+  - service - disabled services were not restarting. Using ``state=restarted`` on FreeBSD and DragonflyBSD now restarts disabled services (https://github.com/ansible/ansible/issues/84793).
