@@ -660,3 +660,9 @@ fi
 ansible-vault view vault-with-spaces --vault-password-file password-with-spaces
 # vault password doesn't start and end with whitespace (backwards compatibility)
 ansible-vault view vault-without-spaces --vault-password-file password-with-spaces
+
+## ansible-vault edit should not re-encrypt with a diffrent password
+# edit vault with 'wrong' password
+EDITOR="sed -i -e '\$aEDITED'" ansible-vault edit vault-without-spaces --vault-password-file password-with-spaces
+# check the password didn't change
+ansible-vault view vault-without-spaces --vault-password-file password-without-spaces
