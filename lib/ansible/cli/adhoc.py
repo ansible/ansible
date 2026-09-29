@@ -84,8 +84,11 @@ class AdHocCLI(CLI):
         if not module_args:
             module_args = parse_kv(module_args_raw, check_raw=check_raw)
 
-        mytask = {'action': {'module': context.CLIARGS['module_name'], 'args': module_args},
-                  'timeout': context.CLIARGS['task_timeout']}
+        mytask = dict(
+            action=context.CLIARGS['module_name'],
+            args=module_args,
+            timeout=context.CLIARGS['task_timeout'],
+        )
 
         # avoid adding to tasks that don't support it, unless set, then give user an error
         if context.CLIARGS['module_name'] not in C._ACTION_ALL_INCLUDE_ROLE_TASKS and any(frozenset((async_val, poll))):
