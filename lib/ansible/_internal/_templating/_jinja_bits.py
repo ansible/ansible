@@ -1,8 +1,3 @@
-# -*- coding: utf-8 -*-
-# Copyright (c) 2025 Ansible Project
-# Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
-"""Lightweight Jinja template detection helpers which do not require a Jinja environment."""
-
 from __future__ import annotations
 
 JINJA2_OVERRIDE = '#jinja2:'
@@ -30,7 +25,7 @@ def _starts_and_ends_with_jinja_delimiters(value):
     return False
 
 
-def is_possibly_all_template(value):
+def _is_possibly_all_template(value):
     """
     A lightweight check to determine if the given string looks like it contains *only* a template, even if that template is invalid.
     Returns `True` if the given string starts with a Jinja overrides header or if it starts and ends with Jinja template delimiters.

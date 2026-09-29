@@ -20,7 +20,7 @@ from __future__ import annotations
 import ansible.constants as C
 from ansible.errors import AnsibleParserError, AnsibleError, AnsibleAssertionError
 from ansible.module_utils.six import string_types
-from ansible.module_utils.common.jinja import is_possibly_all_template
+from ansible._internal._templating._jinja_bits import _is_possibly_all_template
 from ansible.module_utils.common.text.converters import to_text
 from ansible.parsing.splitter import parse_kv, split_args
 from ansible.plugins.loader import module_loader, action_loader
@@ -160,7 +160,7 @@ class ModuleArgsParser:
         final_args = dict()
 
         if additional_args is not Sentinel:
-            if isinstance(additional_args, string_types) and is_possibly_all_template(additional_args):
+            if isinstance(additional_args, string_types) and _is_possibly_all_template(additional_args):
                 final_args['_variable_params'] = additional_args
             elif isinstance(additional_args, dict):
                 final_args.update(additional_args)
