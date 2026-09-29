@@ -663,6 +663,6 @@ ansible-vault view vault-without-spaces --vault-password-file password-with-spac
 
 ## ansible-vault edit should not re-encrypt with a different password
 # edit vault with 'wrong' password
-EDITOR="sed -i -e '\$aEDITED'" ansible-vault edit vault-without-spaces --vault-password-file password-with-spaces
+EDITOR="./append-edit.sh" ansible-vault edit vault-without-spaces --vault-password-file password-with-spaces
 # check the password didn't change
 ansible-vault view vault-without-spaces --vault-password-file password-without-spaces
