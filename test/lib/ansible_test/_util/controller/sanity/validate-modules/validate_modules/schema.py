@@ -670,6 +670,10 @@ def list_dict_option_schema(for_collection, plugin_type):
             'cli': [cli_schema],
             'keyword': [keyword_schema],
             'deprecated': deprecated_schema,
+            # Only honored by ansible-core 2.22 and later. It is accepted here
+            # so a collection documenting it can still pass this sanity test
+            # when run under older ansible-core versions.
+            'secret': bool,
         })
 
     suboption_schema = dict(basic_option_schema)
