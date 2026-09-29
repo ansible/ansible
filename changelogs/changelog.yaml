@@ -1358,6 +1358,28 @@ releases:
     - mask_url.yml
     - tempfile-path-traversal.yml
     release_date: '2026-08-31'
+  2.19.14rc1:
+    changes:
+      bugfixes:
+      - ansible-connection - ensure that the connection persistent directory has private
+        permissions. This covers the corner case in which the preceding directories
+        do not exist or do not have private enough permissions.
+      - ansible-test - Do not fail the ``validate-modules`` sanity test when a plugin
+        documents an option with the ``secret`` key. The key is only honored by ansible-core
+        2.22 and later, where it masks the option value in output. It is ignored by
+        earlier versions, but is now accepted by the sanity test so a collection can
+        document it while still testing against those versions.
+      release_summary: '| Release Date: 2026-09-29
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.19/porting_guides/porting_guide_core_2.19.html>`__
+
+        '
+    codename: What Is and What Should Never Be
+    fragments:
+    - 2.19.14rc1_summary.yaml
+    - ansible-test-validate-modules-secret.yml
+    - ensure_conn_cli_dir_perms.yml
+    release_date: '2026-09-29'
   2.19.1rc1:
     changes:
       bugfixes:

@@ -4,6 +4,21 @@ ansible-core 2.19 "What Is and What Should Never Be" Release Notes
 
 .. contents:: Topics
 
+v2.19.14rc1
+===========
+
+Release Summary
+---------------
+
+| Release Date: 2026-09-29
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.19/porting_guides/porting_guide_core_2.19.html>`__
+
+Bugfixes
+--------
+
+- ansible-connection - ensure that the connection persistent directory has private permissions. This covers the corner case in which the preceding directories do not exist or do not have private enough permissions.
+- ansible-test - Do not fail the ``validate-modules`` sanity test when a plugin documents an option with the ``secret`` key. The key is only honored by ansible-core 2.22 and later, where it masks the option value in output. It is ignored by earlier versions, but is now accepted by the sanity test so a collection can document it while still testing against those versions.
+
 v2.19.13
 ========
 
