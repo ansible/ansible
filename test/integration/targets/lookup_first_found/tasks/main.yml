@@ -68,6 +68,18 @@
       - template_result is succeeded
       - lookup('file', '/tmp/sample.txt') == 'world'
 
+- name: ensure subdir option pins the files subdir for template tasks
+  template:
+    src: "{{ lookup('first_found', 'findme.txt', subdir='files') }}"
+    dest: /tmp/sample_subdir.txt
+  register: template_subdir_result
+
+- name: check the result of template task with pinned subdir
+  assert:
+    that:
+      - template_subdir_result is succeeded
+      - lookup('file', '/tmp/sample_subdir.txt') == 'under files subdir'
+
 - name: ensure that files subdir is used when searching for files using include_tasks
   include_tasks: "{{ lookup('first_found', 'findme.yml') }}"
 

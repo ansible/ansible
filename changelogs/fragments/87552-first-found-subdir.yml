@@ -1,0 +1,4 @@
+minor_changes:
+  - first_found lookup - add a ``subdir`` option to pin the searched subdirectory
+    (``files``, ``templates`` or ``vars``) instead of deriving it from the enclosing
+    task action (https://github.com/ansible/ansible/issues/87552).

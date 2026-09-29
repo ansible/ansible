@@ -45,6 +45,18 @@ DOCUMENTATION = """
           - When V(True) and C(lookup) or C(query) specifies O(ignore:errors='ignore'), no file found will return an empty
             list and other potential errors return V(None) or empty list depending on the template call
             (in other words return values of C(lookup) vs C(query)).
+      subdir:
+        description:
+          - Pin the subdirectory searched for relative paths, instead of deriving it from the enclosing task's action.
+          - By default, tasks whose action name contains V(template) search the C(templates) subdirectory,
+            actions containing V(var) search C(vars), and anything else searches C(files).
+          - Set this option to search a different subdirectory regardless of the enclosing task.
+        type: str
+        choices:
+          files: Search the C(files) subdirectory.
+          templates: Search the C(templates) subdirectory.
+          vars: Search the C(vars) subdirectory.
+        version_added: "2.23"
     seealso:
       - ref: playbook_task_paths
         description: Search paths used for relative paths/files.
@@ -244,6 +256,12 @@ class LookupModule(LookupBase):
 
         subdir += "s"  # convert to the matching directory name
         self.set_options(var_options=variables, direct=kwargs)
+
+        pinned_subdir = self.get_option('subdir')
+        if pinned_subdir is not None:
+            if pinned_subdir not in ('files', 'templates', 'vars'):
+                raise AnsibleError(f"Invalid 'subdir' value {pinned_subdir!r}. Must be one of 'files', 'templates' or 'vars'.")
+            subdir = pinned_subdir
 
         if not terms:
             terms = self.get_option('files')
