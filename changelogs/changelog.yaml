@@ -455,3 +455,26 @@ releases:
         name: register_secret
         namespace: null
     release_date: '2026-09-17'
+  2.22.0b2:
+    changes:
+      bugfixes:
+      - ansible-connection - ensure that the connection persistent directory has private
+        permissions. This covers the corner case in which the preceding directories
+        do not exist or do not have private enough permissions.
+      major_changes:
+      - callback plugins - task results passed to callback plugins now always have
+        any registered secrets replaced with ``$REDACTED$``, so callbacks no longer
+        need to mask the result themselves. The ``ANSIBLE_SUPPORTS_MASKING`` callback
+        class attribute introduced in ansible-core 2.22.0b1 to opt into receiving
+        unmasked results has been removed and is now ignored.
+      release_summary: '| Release Date: 2026-09-29
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.22/porting_guides/porting_guide_core_2.22.html>`__
+
+        '
+    codename: Thank You
+    fragments:
+    - 2.22.0b2_summary.yaml
+    - 87559-callback-result-masking.yml
+    - ensure_conn_cli_dir_perms.yml
+    release_date: '2026-09-29'
