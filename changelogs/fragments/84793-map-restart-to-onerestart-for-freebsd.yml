@@ -1,2 +1,2 @@
 bugfixes:
-  - service - Align the FreeBSD service class with the documented behaviour by mapping the "restart" action to "onerestart" (https://github.com/ansible/ansible/issues/84793 https://github.com/ansible/ansible/pull/87585).
+  - service - disabled services were not restarting. Using ``state=restarted`` on FreeBSD and DragonflyBSD now restarts disabled tasks (https://github.com/ansible/ansible/issues/84793).

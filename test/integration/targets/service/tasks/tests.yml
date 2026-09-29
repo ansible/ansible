@@ -225,14 +225,10 @@
     - name: start the ansible test service
       service: name=ansible_test state=started
 
-    - name: check that the service is running
-      shell: 'ps -p $(cat /var/run/ansible_test_service.pid)'
-      register: cmdline
-      failed_when: cmdline is failed or '/usr/sbin/ansible_test_service' not in cmdline.stdout
-
-    - name: fetch PID for ansible_test service (before restart)
-      command: 'cat /var/run/ansible_test_service.pid'
+    - name: check that the ansible_test service is running and get the PID (before restart)
+      command: 'pgrep -f /usr/sbin/ansible_test_service'
       register: pid_before_restart
+      failed_when: pid_before_restart.rc != 0
 
     - name: restart the ansible test service
       service: name=ansible_test state=restarted
@@ -252,6 +248,7 @@
       fail:
       when: pid_before_restart.stdout == pid_after_restart.stdout
 
+  always:
     - name: stop the ansible test service
       service: name=ansible_test state=stopped
       register: stop_result
