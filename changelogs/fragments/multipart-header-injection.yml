@@ -1,0 +1,2 @@
+security_fixes:
+  - urls - escape CR, LF and double-quote characters in ``multipart/form-data`` field names, filenames and content types so they cannot break out of a part header and inject additional headers or parts (CWE-93).
