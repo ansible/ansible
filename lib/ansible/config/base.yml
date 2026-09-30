@@ -1462,6 +1462,10 @@ GALAXY_IGNORE_CERTS:
   description:
     - If set to yes, ansible-galaxy will not validate TLS certificates.
       This can be useful for testing against a server with a self-signed certificate.
+    - This is the global default. Each entry under :ref:`galaxy_server_list` can override it
+      with ``validate_certs`` in the corresponding ``[galaxy_server.<id>]`` section
+      (or ``ANSIBLE_GALAXY_SERVER_<ID>_VALIDATE_CERTS``). Per-server ``validate_certs`` defaults
+      to true unless ``--ignore-certs`` / this setting applies.
   env: [{name: ANSIBLE_GALAXY_IGNORE}]
   ini:
   - {key: ignore_certs, section: galaxy}
