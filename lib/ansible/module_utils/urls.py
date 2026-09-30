@@ -1055,6 +1055,19 @@ _DEFAULT_MIME_TYPE = b'application/octet-stream'
 _TEXT_CONTENT_TYPE = b'text/plain'
 
 
+def _escape_multipart_param(value: bytes) -> bytes:
+    """Escape CR, LF and the double-quote so a value cannot break out of a
+    quoted ``multipart/form-data`` parameter and inject extra headers or parts,
+    per RFC 7578 and the WHATWG HTML form-data serialization rules.
+    """
+    return value.replace(b'\r', b'%0D').replace(b'\n', b'%0A').replace(b'"', b'%22')
+
+
+def _escape_header_value(value: bytes) -> bytes:
+    """Neutralize CR/LF in a raw header value so it cannot inject extra headers."""
+    return value.replace(b'\r', b'%0D').replace(b'\n', b'%0A')
+
+
 class _MultipartReader(io.RawIOBase):
     """File-like reader for streaming multipart content without materializing in memory.
 
@@ -1223,10 +1236,10 @@ class _Multipart:
 
         if part['cte']:
             buf.write(b'Content-Transfer-Encoding: ' + part['cte'] + self._nl)
-        disposition = b'form-data; name="%s"' % part['name']
+        disposition = b'form-data; name="%s"' % _escape_multipart_param(part['name'])
         if part['filename']:
-            disposition += b'; filename="%s"' % part['filename']
-        buf.write(b'Content-Type: ' + part['ct'] + self._nl)
+            disposition += b'; filename="%s"' % _escape_multipart_param(part['filename'])
+        buf.write(b'Content-Type: ' + _escape_header_value(part['ct']) + self._nl)
         buf.write(b'Content-Disposition: ' + disposition + self._nl)
         buf.write(self._nl)
 

@@ -114,3 +114,23 @@ def test_bad_mime(mocker):
     mocker.patch('mimetypes.guess_type', side_effect=TypeError)
     content_type, b_data = prepare_multipart(fields)
     assert b'Content-Type: application/octet-stream' in b_data
+
+
+def test_no_header_injection():
+    # Field names, filenames and mime types must not be able to inject extra
+    # headers or parts via embedded CR/LF or double-quote characters (RFC 7578).
+    fields = {
+        'field"\r\nX-Injected: name': 'value',
+        'file': {
+            'content': 'data',
+            'filename': 'evil"\r\nX-Injected: filename\r\n\r\ninjected-body',
+            'mime_type': 'text/plain\r\nX-Injected: mime',
+        },
+    }
+    content_type, b_data = prepare_multipart(fields)
+
+    # no attacker-controlled value produced a CR/LF-prefixed header line
+    assert b'\r\nX-Injected:' not in b_data
+    assert b'name="field%22%0D%0AX-Injected: name"' in b_data
+    assert b'filename="evil%22%0D%0AX-Injected: filename%0D%0A%0D%0Ainjected-body"' in b_data
+    assert b'Content-Type: text/plain%0D%0AX-Injected: mime\r\n' in b_data
