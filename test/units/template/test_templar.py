@@ -488,8 +488,11 @@ def test_unknown_type_warning(collected_warnings, variables):
     """An unknown type must be reported, including when nested in supported containers."""
     Templar(None, variables=variables).template('{{ var0 }}')
 
-    assert collected_warnings == ["Encountered unknown type '_UnknownType' during template operation. "
-                                  "Use supported types to avoid unexpected behavior."]
+    assert collected_warnings == [
+        "Encountered unknown type '_UnknownType' during template operation. "
+        "Use supported types to avoid unexpected behavior. To troubleshoot further, "
+        "please upgrade to Ansible core 2.19 or later to find out more about the "
+        "origin of this type."]
 
 
 def test_unknown_type_result_unchanged(collected_warnings):
