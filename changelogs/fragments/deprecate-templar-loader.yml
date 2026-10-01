@@ -1,0 +1,2 @@
+deprecated_features:
+  - Templar - direct access to the ``Templar._loader`` internal attribute is deprecated, use ``Templar.copy_with_new_env`` to create a new instance instead.
