@@ -31,7 +31,7 @@ def get_reserved_names(include_private: bool = True) -> set[str]:
     """ this function returns the list of reserved names associated with play objects"""
 
     templar = Templar(loader=None)
-    public = set(templar.environment.globals.keys())
+    public = set(templar._environment.globals.keys())
     private = set()
     result = set()
 
