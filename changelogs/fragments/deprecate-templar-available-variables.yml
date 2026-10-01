@@ -1,0 +1,2 @@
+deprecated_features:
+  - Templar - direct access to the ``Templar._available_variables`` internal attribute is deprecated, use the public ``available_variables`` property instead.
