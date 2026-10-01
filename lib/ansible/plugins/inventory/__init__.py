@@ -347,7 +347,7 @@ class Constructable(object):
         else:
             t.available_variables = variables
 
-        return t.template('%s%s%s' % (t.environment.variable_start_string, template, t.environment.variable_end_string),
+        return t.template('%s%s%s' % (t._environment.variable_start_string, template, t._environment.variable_end_string),
                           disable_lookups=disable_lookups)
 
     def _set_composite_vars(self, compose, variables, host, strict=False):
