@@ -63,3 +63,14 @@
     - assert:
         that:
           - result.stderr | replace('\n', '') is search("Empty conditional expression was evaluated as True.")
+
+    - name: validate empty conditional error with disabled broken conditionals
+      command: ansible-playbook empty_conditional.yml
+      environment:
+        ANSIBLE_ALLOW_BROKEN_CONDITIONALS: 0
+      register: result
+      ignore_errors: true
+
+    - assert:
+        that:
+          - result.stdout | replace('\n', '') is search("Empty conditional expressions are not allowed.")
