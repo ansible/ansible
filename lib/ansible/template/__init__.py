@@ -577,7 +577,8 @@ def _check_known_types(data):
         if value_type not in exact_types and not isinstance(value, base_types):
             display.warning(
                 f'Encountered unknown type {value_type.__name__!r} during template operation. '
-                'Use supported types to avoid unexpected behavior.'
+                'Use supported types to avoid unexpected behavior. '
+                'To troubleshoot further, please upgrade to Ansible core 2.19 or later to find out more about the origin of this type.'
             )
 
         if isinstance(value, dict):
