@@ -360,3 +360,41 @@
     file:
       path: '{{ remote_dir }}/fcrontab'
       state: absent
+
+- name: Use an executable that's not cron to make sure real cron didn't run
+  when: ansible_distribution != 'Alpine'
+  block:
+  - name: Ensure no cron task
+    cron:
+      name: test bad executable cron task
+      state: absent
+
+  - name: Locate the echo executale
+    command: which echo
+    register:
+      echo_bin: _task.result.stdout
+
+  - name: Add cron task using the echo executable
+    cron:
+      name: test bad executable cron task
+      job: 'date > {{ remote_dir }}/cron_canary_executable'
+      executable: '{{ echo_bin }}'
+    register: fake_cron
+
+  - name: Add cron task using the real cron executable
+    cron:
+      name: test executable cron task
+      job: 'date > {{ remote_dir }}/cron_canary_executable'
+    register: true_cron
+
+  - name: Assert that fake cron didn't actually do anything
+    assert:
+      that:
+      - fake_cron is changed  # this is a phantom 'change'
+      - true_cron is changed  # the actual change
+
+  always:
+  - name: Clean up the cron task
+    cron:
+      name: test bad executable cron task
+      state: absent
