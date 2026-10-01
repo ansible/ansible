@@ -1,0 +1,4 @@
+minor_changes:
+  - Templar - a warning is now emitted when a type unknown to the templating system is encountered in a finalized
+    template result, since such types are not guaranteed to behave correctly. The warning is emitted once per
+    unknown type per process and does not change the template result.
