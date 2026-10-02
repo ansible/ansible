@@ -11,7 +11,7 @@ import pytest
 from ansible._internal._datatag._tags import Origin
 from ansible.module_utils.common.text.converters import to_native
 from ansible.plugins.filter.core import register_secret, to_bool, to_uuid
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, AnsibleFilterError
 from ansible.template import Templar, trust_as_template, is_trusted_as_template
 from ...test_utils.controller.display import emits_warnings
 
@@ -111,10 +111,10 @@ def test_register_secret_valid(secret: str) -> None:
 ))
 def test_register_secret_invalid_error(secret: object, msg: str) -> None:
     with mock.patch("ansible.plugins.filter.core.secrets.register_secret") as m:
-        with pytest.raises(ValueError, match=msg):
+        with pytest.raises(AnsibleFilterError, match=msg):
             register_secret(secret)  # type: ignore[arg-type]
 
-        with pytest.raises(ValueError, match=msg):
+        with pytest.raises(AnsibleFilterError, match=msg):
             register_secret(secret, validation_action="error")  # type: ignore[arg-type]
 
     m.assert_not_called()

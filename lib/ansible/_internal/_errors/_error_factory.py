@@ -1,10 +1,31 @@
 from __future__ import annotations as _annotations
 
+from ansible._internal._errors import _error_utils
 from ansible.module_utils._internal import _errors, _messages
 
 
 class ControllerEventFactory(_errors.EventFactory):
     """Factory for creating `Event` instances from `BaseException` instances on the controller."""
+
+    @classmethod
+    def from_exception(cls, exception: BaseException, include_traceback: bool) -> _messages.Event:
+        # If any exception in the cause chain has requested content not be shown, redact the annotated source lines for
+        # the entire chain. Outer exceptions typically reference the same source (e.g. the task or template) that the inner
+        # exception deemed sensitive, so redacting only the inner exception's source context would still leak it.
+        with _error_utils.RedactAnnotatedSourceContext.when(cls._redact_source_context(exception)):
+            return super().from_exception(exception, include_traceback)
+
+    @staticmethod
+    def _redact_source_context(exception: BaseException | None) -> bool:
+        from ansible.errors import AnsibleError
+
+        while exception:
+            if isinstance(exception, AnsibleError) and not exception._show_content:
+                return True
+
+            exception = exception.__cause__
+
+        return False
 
     def _get_msg(self, exception: BaseException) -> str | None:
         from ansible.errors import AnsibleError
