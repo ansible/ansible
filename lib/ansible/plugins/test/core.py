@@ -35,6 +35,7 @@ from ansible.template import accept_args_markers
 from ansible.parsing.vault import is_encrypted_file, VaultHelper, VaultLib
 from ansible.utils.display import Display
 from ansible.utils.version import SemanticVersion
+from ansible.utils.dversion import Version as DebianVersion
 
 try:
     from packaging.version import Version as PEP440Version
@@ -209,6 +210,7 @@ def version_compare(value, version, operator='eq', strict=None, version_type=Non
         'semver': SemanticVersion,
         'semantic': SemanticVersion,
         'pep440': PEP440Version,
+        'debian': DebianVersion,
     }
 
     if strict is not None and version_type is not None:
