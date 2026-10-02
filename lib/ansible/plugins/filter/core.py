@@ -37,6 +37,7 @@ from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.template import accept_args_markers, accept_lazy_markers
 from ansible._internal._templating._jinja_common import MarkerError, UndefinedMarker, validate_arg_type
 from ansible._internal._yaml import _loader as _yaml_loader
+from ansible._internal._yaml._constructor import DuplicateKeyMode
 from ansible._internal._yaml._dumper import VaultDecryptionContext, VaultBehaviors
 from ansible.utils.display import Display
 from ansible.utils.encrypt import do_encrypt, PASSLIB_AVAILABLE
@@ -296,23 +297,42 @@ def regex_escape(string, re_type='python'):
             raise AnsibleFilterError(f'Invalid regex type ({re_type})')
 
 
-def from_yaml(data):
+def _configurable_loader(duplicate_key_mode: str | None = None) -> t.Callable[..., _yaml_loader.AnsibleInstrumentedLoader]:
+    """Validate `duplicate_key_mode` and return a YAML loader which applies it, deferring to the DUPLICATE_YAML_DICT_KEY config option when unset."""
+    if duplicate_key_mode is None:
+        return _yaml_loader.AnsibleInstrumentedLoader
+
+    if duplicate_key_mode not in DuplicateKeyMode:
+        raise AnsibleTemplatePluginError(
+            message=f'Invalid duplicate_key_mode ({duplicate_key_mode!r}).',
+            help_text=f'Valid values are: {", ".join(DuplicateKeyMode)}.',
+            obj=duplicate_key_mode,
+        )
+
+    return functools.partial(_yaml_loader.AnsibleInstrumentedLoader, duplicate_key_mode=DuplicateKeyMode(duplicate_key_mode))
+
+
+def from_yaml(data, /, *, duplicate_key_mode: str | None = None):
+    loader = _configurable_loader(duplicate_key_mode=duplicate_key_mode)  # validate the mode even when the input is not deserialized
+
     if data is None:
         return None
 
     if isinstance(data, str):
-        return yaml.load(data, Loader=_yaml_loader.AnsibleInstrumentedLoader)  # type: ignore[arg-type]
+        return yaml.load(data, Loader=loader)  # type: ignore[arg-type]
 
     display.deprecated(f"The from_yaml filter ignored non-string input of type {native_type_name(data)!r}.", version='2.23', obj=data)
     return data
 
 
-def from_yaml_all(data):
+def from_yaml_all(data, /, *, duplicate_key_mode: str | None = None):
+    loader = _configurable_loader(duplicate_key_mode=duplicate_key_mode)  # validate the mode even when the input is not deserialized
+
     if data is None:
         return []  # backward compatibility; ensure consistent result between classic/native Jinja for None/empty string input
 
     if isinstance(data, str):
-        return yaml.load_all(data, Loader=_yaml_loader.AnsibleInstrumentedLoader)  # type: ignore[arg-type]
+        return yaml.load_all(data, Loader=loader)  # type: ignore[arg-type]
 
     display.deprecated(f"The from_yaml_all filter ignored non-string input of type {native_type_name(data)!r}.", version='2.23', obj=data)
     return data
