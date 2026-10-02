@@ -1,0 +1,2 @@
+bugfixes:
+  - argument spec validation - make sure that all ``no_log`` parameters are processed even if some arguments have values of the wrong type (https://github.com/ansible/ansible/pull/81672).
