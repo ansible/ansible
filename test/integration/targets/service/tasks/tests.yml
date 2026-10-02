@@ -210,6 +210,54 @@
       - "disable_result.enabled == false"
       - "disable_result is changed"
 
+- name: "Test restart behavior under FreeBSD #84793"
+  when: ansible_distribution == 'FreeBSD'
+  block:
+    - name: disable the ansible test service
+      service: name=ansible_test enabled=no
+      register: disable_result
+
+    - name: assert that the service is disabled
+      assert:
+        that:
+          - "disable_result.enabled == false"
+
+    - name: start the ansible test service
+      service: name=ansible_test state=started
+
+    - name: check that the ansible_test service is running and get the PID (before restart)
+      command: 'pgrep -f /usr/sbin/ansible_test_service'
+      register: pid_before_restart
+      failed_when: pid_before_restart.rc != 0
+
+    - name: restart the ansible test service
+      service: name=ansible_test state=restarted
+      register: restart_result
+
+    - name: assert that the service was restarted
+      assert:
+        that:
+          - "restart_result.state == 'started'"
+          - "restart_result is changed"
+
+    - name: fetch PID for ansible_test service (after restart)
+      command: 'cat /var/run/ansible_test_service.pid'
+      register: pid_after_restart
+
+    - name: "check that PIDs aren't the same"
+      fail:
+      when: pid_before_restart.stdout == pid_after_restart.stdout
+
+  always:
+    - name: stop the ansible test service
+      service: name=ansible_test state=stopped
+      register: stop_result
+
+    - name: check that the service is stopped
+      shell: 'ps -p {{ pid_after_restart.stdout }}'
+      register: cmdline
+      failed_when: cmdline is not failed or '/usr/sbin/ansible_test_service' in cmdline.stdout
+
 - name: try to enable a broken service
   service: name=ansible_broken_test enabled=yes
   register: broken_enable_result
