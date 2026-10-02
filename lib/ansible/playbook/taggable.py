@@ -43,7 +43,7 @@ class Taggable:
 
     _RESERVED = frozenset(['tagged', 'all', 'untagged'])
     untagged = frozenset(['untagged'])
-    tags = FieldAttribute(isa='list', default=list, listof=(str, int), extend=True)
+    tags = FieldAttribute(isa='list', default=list, listof=(str, int), extend=True, static=True)
 
     def _load_tags(self, attr, ds):
 
