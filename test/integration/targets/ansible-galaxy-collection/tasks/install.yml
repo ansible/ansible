@@ -317,6 +317,50 @@
     that:
     - not fail_bad_tar_actual.stat.exists
 
+- name: setup tarball with an invalid collection name in its metadata - {{ test_id }}
+  script: build_bad_name_tar.py {{ galaxy_dir | quote }}
+
+- name: try to install a collection whose metadata declares an invalid name - {{ test_id }}
+  command: ansible-galaxy collection install '{{ galaxy_dir }}/badname-test-1.0.0.tar.gz' {{ galaxy_verbosity }}
+  register: fail_bad_name
+  failed_when: false
+  environment:
+    ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
+
+- name: assert the invalid collection name was rejected with a clear error - {{ test_id }}
+  assert:
+    that:
+    - fail_bad_name.rc != 0
+    - "'invalid collection name' in fail_bad_name.stderr"
+
+- name: write a requirements file that renames a collection to a path - {{ test_id }}
+  copy:
+    dest: '{{ galaxy_dir }}/badname_req.yml'
+    content: |
+      collections:
+      - source: {{ galaxy_dir }}/badname-test-1.0.0.tar.gz
+        name: {{ galaxy_dir }}/outside.renamed
+        type: file
+
+- name: try to install a collection the requirements file renamed to a path - {{ test_id }}
+  command: ansible-galaxy collection install -r '{{ galaxy_dir }}/badname_req.yml' {{ galaxy_verbosity }}
+  register: fail_renamed_name
+  failed_when: false
+  environment:
+    ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
+
+- name: get result of the renamed collection install - {{ test_id }}
+  stat:
+    path: '{{ galaxy_dir }}/outside'
+  register: fail_renamed_name_actual
+
+- name: assert the renamed collection was rejected and nothing was written outside the collections dir - {{ test_id }}
+  assert:
+    that:
+    - fail_renamed_name.rc != 0
+    - "'invalid collection name' in fail_renamed_name.stderr"
+    - not fail_renamed_name_actual.stat.exists
+
 - name: install a collection from a URI - {{ test_id }}
   command: ansible-galaxy collection install {{ amanda }}/artifacts/namespace4-name-1.0.0.tar.gz {{ galaxy_verbosity }}
   register: install_uri
