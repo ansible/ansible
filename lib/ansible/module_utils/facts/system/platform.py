@@ -16,7 +16,6 @@
 from __future__ import annotations
 
 import re
-import socket
 import platform
 import typing as t
 
@@ -49,11 +48,8 @@ class PlatformFactCollector(BaseFactCollector):
 
         platform_facts['python_version'] = platform.python_version()
 
-        platform_facts['fqdn'] = socket.getfqdn()
         platform_facts['hostname'] = platform.node().split('.')[0]
         platform_facts['nodename'] = platform.node()
-
-        platform_facts['domain'] = '.'.join(platform_facts['fqdn'].split('.')[1:])
 
         arch_bits = platform.architecture()[0]
 
