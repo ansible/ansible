@@ -383,7 +383,7 @@
 
     - name: Add cron task using the real cron executable
       cron:
-        name: test executable cron task
+        name: test bad executable cron task
         job: 'date > {{ remote_dir }}/cron_canary_executable'
       register: true_cron
 
