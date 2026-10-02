@@ -1,0 +1,4 @@
+minor_changes:
+  - cron - add an ``executable`` option to allow specifying an explicit
+    executable or pathname for the ``crontab`` command
+    (https://github.com/ansible/ansible/issues/85584).

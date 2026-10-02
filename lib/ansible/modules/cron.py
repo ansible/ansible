@@ -135,6 +135,15 @@ options:
       - If specified, the environment variable will be inserted before the declaration of specified environment variable.
     type: str
     version_added: "2.1"
+  executable:
+    description:
+      - The explicit executable or pathname for the C(crontab) executable.
+      - For example V(fcrontab), on systems using C(fcron).
+      - If not an absolute path, the normal mechanism for resolving binary paths will be used.
+      - May cause unexpected issues if it is not a 'vixie cron' conformant variant.
+    type: path
+    default: crontab
+    version_added: "2.23"
 requirements:
   - cron (any 'vixie cron' conformant variant, like cronie)
 notes:
@@ -247,7 +256,7 @@ class CronTab:
         self.lines = []
         self.ansible = "#Ansible: "
         self.n_existing = ''
-        self.cron_cmd = self.module.get_bin_path('crontab', required=True)
+        self.cron_cmd = self.module.get_bin_path(module.params['executable'], required=True)
 
         if cron_file:
 
@@ -585,6 +594,7 @@ def main():
             env=dict(type='bool', default=False),
             insertafter=dict(type='str'),
             insertbefore=dict(type='str'),
+            executable=dict(type='path', default='crontab'),
         ),
         supports_check_mode=True,
         mutually_exclusive=[
