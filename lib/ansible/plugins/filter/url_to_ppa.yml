@@ -1,0 +1,32 @@
+DOCUMENTATION:
+  name: url_to_ppa
+  author: ansible core team
+  version_added: "2.21"
+  short_description: convert a URL to a PPA URI
+  description:
+    - Converts a URL to a PPA URI.
+  positional: _input
+  options:
+    _input:
+      description:
+        - A URL to convert to a PPA URI.
+        - The input can be in the format of https://launchpad.net/~user/+archive/ubuntu/package
+          or https://ppa.launchpad.net/user/package/ubuntu.
+        - The tilde (~) in the user name is optional in the input.
+      type: string
+      required: true
+  seealso:
+    - plugin_type: module
+      plugin: ansible.builtin.deb822_repository
+EXAMPLES: |
+
+  # => ppa:user/package
+  {{ 'https://launchpad.net/~user/+archive/ubuntu/package' | url_to_ppa }}
+
+  # => ppa:user/package
+  {{ 'https://ppa.launchpad.net/user/package/ubuntu' | url_to_ppa }}
+
+RETURN:
+  _value:
+    description: The PPA URI.
+    type: string
