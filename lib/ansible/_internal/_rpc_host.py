@@ -24,7 +24,7 @@ _server_ready: threading.Event = threading.Event()
 class LocalNotAProcess(BaseProcess):
     """Minimal BaseProcess impl that runs `target` locally in a thread instead of a subprocess."""
 
-    def __init__(self, *posargs, target, args, **kwargs):
+    def __init__(self, *posargs, target: t.Callable[..., t.Any], args: tuple[t.Any, ...], **kwargs) -> None:
         super().__init__(*posargs, **kwargs)
 
         self._args = args
@@ -32,7 +32,7 @@ class LocalNotAProcess(BaseProcess):
         self._target = target
         self._tpe = DaemonThreadPoolExecutor()
 
-    def start(self):
+    def start(self) -> None:
         if threading.current_thread() is not threading.main_thread():
             # temporary signal patch is only safe under the main thread; guaranteed to be restored before it can be used
             raise RuntimeError("Local RPC server must be started from the main thread.")
@@ -45,9 +45,13 @@ class LocalNotAProcess(BaseProcess):
 
             # the only target this should see is _run_server
             # start cannot return until Server.serve_forever is called (our custom subclass sets the _server_ready event)
-            self._tpe.submit(self._target, *self._args, **self._kwargs)
+            future = self._tpe.submit(self._target, *self._args, **self._kwargs)
 
             if not _server_ready.wait(5):
+                # if the server thread already exited, its Future carries the real failure; surface that instead of a generic timeout
+                if future.done() and (exception := future.exception()):
+                    raise exception
+
                 raise TimeoutError("Local RPC server did not start.")
         finally:
             signal.signal = original_signal  # always restore default signal impl
