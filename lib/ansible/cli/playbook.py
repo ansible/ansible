@@ -209,7 +209,7 @@ class PlaybookCLI(CLI):
 
                         all_vars = variable_manager.get_vars(play=play)
                         for block in play.compile():
-                            block = block.filter_tagged_tasks(all_vars)
+                            block.filter_tagged_tasks(all_vars)
                             if not block.has_tasks():
                                 continue
                             taskmsg += _process_block(block)
