@@ -202,6 +202,7 @@ class VariableManager:
         def _combine_and_track(data, new_data, source):
             # FIXME: this no longer does any tracking, only a slight optimization for empty new_data
             if new_data == {}:
+                display.debug(f"Combining {len(new_data)} vars from {source}")
                 return data
 
             return combine_vars(data, new_data)
@@ -215,7 +216,7 @@ class VariableManager:
             # get role defaults (lowest precedence)
             for role in play.roles:
                 if role.public:
-                    all_vars = _combine_and_track(all_vars, role.get_default_vars(), "role '%s' defaults" % role.name)
+                    all_vars = _combine_and_track(all_vars, role.get_default_vars(), f"role '{role!r}' defaults")
 
         if task:
             # set basedirs
@@ -232,7 +233,10 @@ class VariableManager:
             # (v1) made sure each task had a copy of its roles default vars
             # TODO: investigate why we need play or include_role check?
             if task._role is not None and (play or task.action in C._ACTION_INCLUDE_ROLE):
-                all_vars = _combine_and_track(all_vars, task._role.get_default_vars(dep_chain=task.get_dep_chain()), "role '%s' defaults" % task._role.name)
+                default_vars = task._role.get_default_vars(dep_chain=task.get_dep_chain())
+                all_vars = _combine_and_track(all_vars,
+                                              default_vars,
+                                              f"role '{task._role!r}' defaults")
 
         if host:
             # THE 'all' group and the rest of groups for a host, used below
@@ -385,7 +389,7 @@ class VariableManager:
             # We now merge in all exported vars from all roles in the play (very high precedence)
             for role in play.roles:
                 if role.public:
-                    all_vars = _combine_and_track(all_vars, role.get_vars(include_params=False, only_exports=True), "role '%s' exported vars" % role.name)
+                    all_vars = _combine_and_track(all_vars, role.get_vars(include_params=False, only_exports=True), f"role '{role!r}' exported vars")
 
         # next, we merge in the vars from the role, which will specifically
         # follow the role dependency chain, and then we merge in the tasks
@@ -393,7 +397,7 @@ class VariableManager:
         if task:
             if task._role:
                 all_vars = _combine_and_track(all_vars, task._role.get_vars(task.get_dep_chain(), include_params=False, only_exports=False),
-                                              "role '%s' all vars" % task._role.name)
+                                              f"role '{task._role!r}' all vars")
             all_vars = _combine_and_track(all_vars, task.get_vars(), "task vars")
 
         # next, we merge in the vars cache (include vars) and nonpersistent
