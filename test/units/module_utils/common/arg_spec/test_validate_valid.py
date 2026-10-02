@@ -296,6 +296,27 @@ VALID_SPECS = [
         set(('param',)),
     ),
     (
+        'no-log-default-bool',
+        {'force': {'type': 'bool', 'no_log': True, 'default': True}},
+        {},
+        {'force': True},
+        set(('force',)),
+    ),
+    (
+        'no-log-default-list',
+        {'tokens': {'type': 'list', 'no_log': True, 'default': ['abcd1234']}},
+        {},
+        {'tokens': ['abcd1234']},
+        set(('tokens',)),
+    ),
+    (
+        'no-log-fallback-int',
+        {'port': {'type': 'int', 'no_log': True, 'fallback': (lambda: 12345678,)}},
+        {},
+        {'port': 12345678},
+        set(('port',)),
+    ),
+    (
         'elements',
         {'numbers': {'type': 'list', 'elements': 'int'}},
         {'numbers': [55, 33, 34, '22']},
