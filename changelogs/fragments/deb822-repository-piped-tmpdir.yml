@@ -1,0 +1,3 @@
+bugfixes:
+  - deb822_repository module - the sources and key files are now staged only when their content
+    actually differs from the destination, and the temporary file is removed if the write fails.
