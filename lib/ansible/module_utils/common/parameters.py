@@ -317,7 +317,7 @@ def _list_no_log_values(argument_spec, params):
             # Find the value for the no_log'd param
             no_log_object = params.get(arg_name, None)
 
-            if no_log_object:
+            if no_log_object is not None:
                 try:
                     no_log_values.update(_return_datastructure_name(no_log_object))
                 except TypeError as e:
