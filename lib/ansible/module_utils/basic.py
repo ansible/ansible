@@ -1632,7 +1632,7 @@ class AnsibleModule(object):
         Most uses of this function can use the module.sha1 function instead.
         """
         if 'md5' not in AVAILABLE_HASH_ALGORITHMS:
-            raise ValueError('MD5 not available.  Possibly running in FIPS mode')
+            raise ValueError('MD5 not available. Possibly running in FIPS mode')
         return self.digest_from_file(filename, 'md5')
 
     def sha1(self, filename):
