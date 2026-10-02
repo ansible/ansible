@@ -26,10 +26,18 @@ from ansible.executor.task_result import CallbackTaskResult
 from ansible.playbook.task_include import TaskInclude
 from ansible.plugins.callback import CallbackBase
 from ansible.utils.color import colorize, hostcolor
+from ansible.utils.display import get_text_width
 from ansible.utils.fqcn import add_internal_fqcns
 
 if _t.TYPE_CHECKING:
     from ansible.playbook.included_file import IncludedFile
+
+
+def _host_display_width(text):
+    try:
+        return get_text_width(text)
+    except EnvironmentError:
+        return len(text)
 
 
 class CallbackModule(CallbackBase):
@@ -310,12 +318,13 @@ class CallbackModule(CallbackBase):
         self._display.banner("PLAY RECAP")
 
         hosts = sorted(stats.processed.keys())
+        host_width = max(26, max((_host_display_width(h) for h in hosts), default=0))
         for h in hosts:
             t = stats.summarize(h)
 
             self._display.display(
                 u"%s : %s %s %s %s %s %s %s" % (
-                    hostcolor(h, t),
+                    hostcolor(h, t, width=host_width),
                     colorize(u'ok', t['ok'], C.COLOR_OK),
                     colorize(u'changed', t['changed'], C.COLOR_CHANGED),
                     colorize(u'unreachable', t['unreachable'], C.COLOR_UNREACHABLE),
@@ -329,7 +338,7 @@ class CallbackModule(CallbackBase):
 
             self._display.display(
                 u"%s : %s %s %s %s %s %s %s" % (
-                    hostcolor(h, t, False),
+                    hostcolor(h, t, False, width=host_width),
                     colorize(u'ok', t['ok'], None),
                     colorize(u'changed', t['changed'], None),
                     colorize(u'unreachable', t['unreachable'], None),
