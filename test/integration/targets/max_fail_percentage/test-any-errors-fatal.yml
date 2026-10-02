@@ -1,0 +1,55 @@
+---
+- name: Test any_errors_fatal takes precedence over max_fail_percentage
+  hosts: testhost1,testhost2,testhost3,testhost4,testhost5
+  gather_facts: false
+  max_fail_percentage: 100%
+  any_errors_fatal: true
+  tasks:
+    - block:
+        - name: Fail 1 host (20% << 100%, but any_errors_fatal should stop)
+          fail:
+            msg: intentional failure
+          when: inventory_hostname == 'testhost1'
+
+        - name: Should not execute due to any_errors_fatal
+          debug:
+            msg: "{{ 'ANY_ERRORS_FATAL' ~ '_SHOULD_NOT_EXECUTE' }}"
+
+      rescue:
+        - name: Recover from any_errors_fatal
+          meta: clear_host_errors
+
+- name: Test any_errors_fatal stops play even with low failure percentage
+  hosts: testhost6,testhost7,testhost8,testhost9,testhost10
+  gather_facts: false
+  max_fail_percentage: 50%
+  any_errors_fatal: true
+  tasks:
+    - block:
+        - name: Fail 1 host (10% << 50%, but any_errors_fatal should stop)
+          fail:
+            msg: intentional failure
+          when: inventory_hostname == 'testhost6'
+
+        - name: Should not execute due to any_errors_fatal
+          debug:
+            msg: "{{ 'ANY_ERRORS_FATAL' ~ '_LOW_PERCENT_SHOULD_NOT_EXECUTE' }}"
+
+      rescue:
+        - name: Recover from any_errors_fatal
+          meta: clear_host_errors
+
+- name: Test max_fail_percentage works when any_errors_fatal is false
+  hosts: testhost2,testhost3,testhost4
+  gather_facts: false
+  max_fail_percentage: 50%
+  any_errors_fatal: false
+  tasks:
+    - name: Fail 1 host (33% < 50%)
+      fail:
+        msg: intentional failure
+      when: inventory_hostname == 'testhost2'
+
+    - name: Should execute on remaining hosts when any_errors_fatal is false
+      debug:
+        msg: "{{ 'ANY_ERRORS_FATAL' ~ '_EXECUTED_WHEN_FALSE' }}"

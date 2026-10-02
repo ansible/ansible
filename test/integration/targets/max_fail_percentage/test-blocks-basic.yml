@@ -1,0 +1,40 @@
+---
+- name: Test threshold not exceeded in block without rescue/always
+  hosts: testhost1,testhost2,testhost3,testhost4,testhost5
+  gather_facts: false
+  max_fail_percentage: 50%
+  tasks:
+    - name: Block with 40% failure (2/5)
+      block:
+        - name: Fail 2 out of 5 hosts
+          fail:
+            msg: intentional failure
+          when: inventory_hostname in ['testhost1', 'testhost2']
+
+        - name: Should execute 3 times
+          debug:
+            msg: "BLOCK_THRESHOLD_NOT_EXCEEDED"
+
+    - name: Task after block should execute
+      debug:
+        msg: "AFTER_BLOCK_NOT_EXCEEDED"
+
+- name: Test threshold exceeded in block without rescue/always
+  hosts: testhost6,testhost7,testhost8
+  gather_facts: false
+  max_fail_percentage: 50%
+  tasks:
+    - name: Block with 67% failure (2/3)
+      block:
+        - name: Fail 2 out of 3 hosts
+          fail:
+            msg: intentional failure
+          when: inventory_hostname in ['testhost6', 'testhost7']
+
+        - name: Should not execute
+          debug:
+            msg: "BLOCK_SHOULD_NOT_EXECUTE"
+
+    - name: Task after block should not execute
+      debug:
+        msg: "AFTER_BLOCK_SHOULD_NOT_EXECUTE"

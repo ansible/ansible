@@ -1,0 +1,21 @@
+---
+- name: Test 0% with 0 failures
+  hosts: local
+  gather_facts: false
+  max_fail_percentage: 0%
+  tasks:
+    - debug:
+        msg: "{{ inventory_hostname }} live"
+
+- name: Test 0% with 1 failure
+  hosts: local
+  gather_facts: false
+  max_fail_percentage: 0%
+  tasks:
+    - name: Intentionally fail one host
+      fail:
+        msg: intentional failure
+      when: inventory_hostname == 'testhost1'
+    - name: Should never run
+      debug:
+        msg: "SHOULD_NOT_EXECUTE"
