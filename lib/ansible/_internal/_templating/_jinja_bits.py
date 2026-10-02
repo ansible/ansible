@@ -918,7 +918,8 @@ def _flatten_nodes(nodes: t.Iterable[t.Any]) -> t.Iterable[t.Any]:
 def _flatten_and_lazify_vars(mapping: c.Mapping) -> t.Iterable[c.Mapping]:
     """Prevent deeply-nested Jinja vars ChainMaps from being created by nested contexts and ensure that all top-level containers support lazy templating."""
     mapping_type = type(mapping)
-    if mapping_type is ChainMap:
+    mapping_base_type = mapping_type.__base__
+    if ChainMap in (mapping_type, mapping_base_type):
         # noinspection PyUnresolvedReferences
         for m in mapping.maps:
             yield from _flatten_and_lazify_vars(m)
