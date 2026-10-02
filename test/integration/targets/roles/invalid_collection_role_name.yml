@@ -1,0 +1,8 @@
+# Test that including a collection role with invalid name characters
+# raises a clear error message (https://github.com/ansible/ansible/issues/75023)
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: include role with invalid collection role name (dash in role name)
+      include_role:
+        name: "namespace.my_collection.autoupdate-apt"
