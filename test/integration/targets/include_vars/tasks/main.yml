@@ -100,13 +100,14 @@
   register: invalid_extensions_results
   ignore_errors: True
 
+- debug: var=non_existent_dir_results
 - name: verify all parameters are validated
   assert:
     that:
       - "invalid_ignore_files is failed"
       - "'option must be a list' in invalid_ignore_files.msg"
       - "non_existent_dir_results is failed"
-      - "'directory does not exist' in non_existent_dir_results.message"
+      - "'is not a directory' in non_existent_dir_results.message"
       - "invalid_option_results is failed"
       - "'is not a valid option' in invalid_option_results.msg"
       - "invalid_files_dir_results is failed"
@@ -322,3 +323,59 @@
     that:
       - "test_depth.ansible_included_var_files|length == 8"
       - "test_depth_var.keys()|length == 8"
+
+- name: Setup relative dir resolution test
+  vars:
+    var_file: ~/test_vars.yml
+    var_content: hello
+  block:
+    - name: Create vars
+      copy:
+        dest: "{{ var_file }}"
+        content: "a_var: {{ var_content }}"
+        mode: '0644'
+      delegate_to: localhost
+
+    - include_vars:
+        file: "{{ var_file }}"
+
+    - assert:
+        that:
+          - a_var == var_content
+  always:
+    - name: Clean up vars file
+      file:
+        path: "{{ var_file }}"
+        state: absent
+
+- name: Setup relative dir resolution test for a directory
+  vars:
+    var_dir: ~/test_vars_dir
+    var_file: "{{ var_dir }}/test_vars.yml"
+    dirvar_content: hello_dir
+  block:
+    - name: Create vars dir
+      file:
+        path: "{{ var_dir }}"
+        state: directory
+        mode: '0755'
+      delegate_to: localhost
+
+    - name: Create vars file in dir
+      copy:
+        dest: "{{ var_file }}"
+        content: "a_dir_var: {{ dirvar_content }}"
+        mode: '0644'
+      delegate_to: localhost
+
+    - include_vars:
+        dir: "{{ var_dir }}"
+
+    - assert:
+        that:
+          - a_dir_var == dirvar_content
+  always:
+    - name: Clean up vars dir
+      file:
+        path: "{{ var_dir }}"
+        state: absent
