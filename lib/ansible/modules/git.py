@@ -364,32 +364,6 @@ def relocate_repo(module, result, repo_dir, old_repo_dir, worktree_dir):
             raise Exception('Unable to move git dir.') from ex
 
 
-def head_splitter(headfile, remote, module=None, fail_on_error=False):
-    """Extract the head reference"""
-    # https://github.com/ansible/ansible-modules-core/pull/907
-
-    res = None
-    if os.path.exists(headfile):
-        rawdata = None
-        try:
-            with open(headfile, 'r') as f:
-                rawdata = f.readline()
-        except Exception:
-            if fail_on_error and module:
-                module.fail_json(msg="Unable to read %s" % headfile)
-        if rawdata:
-            try:
-                rawdata = rawdata.replace('refs/remotes/%s' % remote, '', 1)
-                refparts = rawdata.split(' ')
-                newref = refparts[-1]
-                nrefparts = newref.split('/', 2)
-                res = nrefparts[-1].rstrip('\n')
-            except Exception:
-                if fail_on_error and module:
-                    module.fail_json(msg="Unable to split head from '%s'" % rawdata)
-    return res
-
-
 def unfrackgitpath(path):
     if path is None:
         return None
@@ -717,7 +691,7 @@ def get_sha_hash(module: AnsibleModule, git_path: str, remote: str, version: str
     return version
 
 
-def get_remote_head(git_path, module, dest, version, remote, bare):
+def get_remote_head(git_path, module, dest, version, remote):
     cloning = False
     cwd = None
     tag = False
@@ -732,7 +706,7 @@ def get_remote_head(git_path, module, dest, version, remote, bare):
             # cloning the repo, just get the remote's HEAD version
             cmd = '%s ls-remote %s -h HEAD' % (git_path, remote)
         else:
-            head_branch = get_head_branch(git_path, module, dest, remote, bare)
+            head_branch = get_head_branch(git_path, module, dest, remote)
             cmd = '%s ls-remote %s -h refs/heads/%s' % (git_path, remote, head_branch)
     elif is_remote_branch(git_path, module, dest, remote, version):
         cmd = '%s ls-remote %s -h refs/heads/%s' % (git_path, remote, version)
@@ -852,32 +826,18 @@ def get_repo_path(dest, bare):
     return repo_path
 
 
-def get_head_branch(git_path, module, dest, remote, bare=False):
-    """
-    Determine what branch HEAD is associated with.  This is partly
-    taken from lib/ansible/utils/__init__.py.  It finds the correct
-    path to .git/HEAD and reads from that file the branch that HEAD is
-    associated with.  In the case of a detached HEAD, this will look
-    up the branch in .git/refs/remotes/<remote>/HEAD.
-    """
-    try:
-        repo_path = get_repo_path(dest, bare)
-    except (OSError, ValueError) as ex:
-        # No repo path found
-        # ``.git`` file does not have a valid format for detached Git dir.
-        module.fail_json(
-            msg='Current repo does not have a valid reference to a '
-            'separate Git dir or it refers to the invalid path',
-            details=str(ex),
-            exception=ex,
-        )
-    # Read .git/HEAD for the name of the branch.
-    # If we're in a detached HEAD state, look up the branch associated with
-    # the remote HEAD in .git/refs/remotes/<remote>/HEAD
-    headfile = os.path.join(repo_path, "HEAD")
+def get_head_branch(git_path, module, dest, remote):
+    """Return the branch associated with HEAD, or remote HEAD when detached."""
+    ref = 'HEAD'
     if is_not_a_branch(git_path, module, dest):
-        headfile = os.path.join(repo_path, 'refs', 'remotes', remote, 'HEAD')
-    branch = head_splitter(headfile, remote, module=module, fail_on_error=True)
+        ref = 'refs/remotes/%s/HEAD' % remote
+    cmd = [git_path, 'symbolic-ref', '--short', ref]
+    rc, out, err = module.run_command(cmd, cwd=dest)
+    if rc != 0:
+        module.fail_json(msg="Failed to determine HEAD branch", stdout=out, stderr=err, rc=rc)
+    branch = out.strip()
+    if ref != 'HEAD':
+        branch = branch[len(remote) + 1:]
     return branch
 
 
@@ -1365,7 +1325,7 @@ def main():
         # * we're doing a check mode test
         # In those cases we do an ls-remote
         if module.check_mode or not allow_clone:
-            remote_head = get_remote_head(git_path, module, dest, version, repo, bare)
+            remote_head = get_remote_head(git_path, module, dest, version, repo)
             result.update(changed=True, after=remote_head)
             if module._diff:
                 diff = get_diff(module, git_path, dest, repo, remote, depth, bare, result['before'], result['after'], refspec, force)
@@ -1413,7 +1373,7 @@ def main():
         result.update(remote_url_changed=remote_url_changed)
 
         if module.check_mode:
-            remote_head = get_remote_head(git_path, module, dest, version, remote, bare)
+            remote_head = get_remote_head(git_path, module, dest, version, remote)
             result.update(changed=(result['before'] != remote_head or remote_url_changed), after=remote_head)
             # FIXME: This diff should fail since the new remote_head is not fetched yet?!
             if module._diff:
