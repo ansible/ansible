@@ -251,6 +251,33 @@ def test_build_requirement_from_path_with_manifest(version, collection_artifact)
     assert actual.ver == to_text(version)
 
 
+def test_build_requirement_from_path_invalid_collection_name(collection_artifact, monkeypatch):
+    mock_display = MagicMock()
+    monkeypatch.setattr(Display, 'display', mock_display)
+
+    manifest_path = os.path.join(collection_artifact[0], b'MANIFEST.json')
+    manifest_value = json.dumps({
+        'collection_info': {
+            'namespace': 'namespace',
+            'name': '/tmp/evil',
+            'version': '1.0.0',
+            'dependencies': {},
+        }
+    })
+    with open(manifest_path, 'wb') as manifest_obj:
+        manifest_obj.write(to_bytes(manifest_value))
+
+    tmp_path = os.path.join(os.path.split(collection_artifact[1])[0], b'temp')
+    concrete_artifact_cm = collection.concrete_artifact_manager.ConcreteArtifactsManager(tmp_path, validate_certs=False)
+    actual = Requirement.from_dir_path_as_unknown(collection_artifact[0], concrete_artifact_cm)
+
+    # An installed collection is identified by its path, so unusable metadata is ignored rather than fatal.
+    assert actual.namespace == u'ansible_namespace'
+    assert actual.name == u'collection'
+    assert actual.src == collection_artifact[0]
+    assert actual.ver == u'*'
+
+
 def test_build_requirement_from_path_invalid_manifest(collection_artifact):
     manifest_path = os.path.join(collection_artifact[0], b'MANIFEST.json')
     with open(manifest_path, 'wb') as manifest_obj:
@@ -468,6 +495,23 @@ def test_build_requirement_from_tar_invalid_collection_name(namespace, name, tmp
     expected = "invalid collection name"
     with pytest.raises(AnsibleError, match=expected):
         Requirement.from_requirement_dict({'name': to_text(tar_path)}, concrete_artifact_cm)
+
+
+@pytest.mark.parametrize('req_name', [
+    '/tmp/evil.suspicious',
+    'ns.../../../../tmp/evil',
+    '../../etc.evil',
+])
+def test_build_requirement_from_tar_renamed_by_requirement(req_name, collection_artifact):
+    tmp_path = os.path.join(os.path.split(collection_artifact[1])[0], b'temp')
+    concrete_artifact_cm = collection.concrete_artifact_manager.ConcreteArtifactsManager(tmp_path, validate_certs=False)
+
+    # A requirement entry must not be able to rename a collection into an install path of its choosing.
+    req = {'name': req_name, 'type': 'file', 'source': to_text(collection_artifact[1])}
+
+    expected = "invalid collection name"
+    with pytest.raises(AnsibleError, match=expected):
+        Requirement.from_requirement_dict(req, concrete_artifact_cm)
 
 
 def test_build_requirement_from_name(galaxy_server, monkeypatch, tmp_path_factory):

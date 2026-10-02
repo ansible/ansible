@@ -258,6 +258,10 @@ class ConcreteArtifactsManager:
 
         If the collection is virtual, ``None`` is returned instead
         of a string.
+
+        It raises a ValueError if the metadata does not declare a
+        valid collection name, so that callers which only treat the
+        metadata as a hint can fall back to the on-disk path.
         """
         if collection.is_virtual:
             # NOTE: should it be something like "<virtual>"?
@@ -268,7 +272,7 @@ class ConcreteArtifactsManager:
             self._get_direct_collection_name(collection),
         ))
         if not AnsibleCollectionRef.is_valid_collection_name(fqcn):
-            raise AnsibleError(
+            raise ValueError(
                 "Collection metadata at '%s' specifies an invalid collection name '%s'. The namespace and name "
                 "must be in the format <namespace>.<name> and contain characters from [a-zA-Z0-9_] only."
                 % (to_native(collection.src), fqcn)
