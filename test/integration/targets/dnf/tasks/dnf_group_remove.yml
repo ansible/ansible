@@ -23,7 +23,7 @@
   assert:
     that:
         - "'changed' in dnf_result"
-        - "'results' in dnf_result"
+        - "'transactions' in dnf_result"
 
 - name: remove the group
   dnf:
@@ -42,7 +42,7 @@
     that:
         - "'changed' in dnf_result"
         - "'msg' in dnf_result"
-        - "'results' in dnf_result"
+        - "'transactions' in dnf_result"
 
 - name: remove the group again
   dnf:
@@ -60,7 +60,7 @@
     that:
         - "'changed' in dnf_result"
         - "'msg' in dnf_result"
-        - "'results' in dnf_result"
+        - "'transactions' in dnf_result"
 
 - name: check mode remove the group again
   dnf:
@@ -78,7 +78,7 @@
   assert:
     that:
         - "'changed' in dnf_result"
-        - "'results' in dnf_result"
+        - "'transactions' in dnf_result"
 
 - name: install a group and a package to test
   dnf:
@@ -102,7 +102,7 @@
   assert:
     that:
         - "'changed' in dnf_result"
-        - "'results' in dnf_result"
+        - "'transactions' in dnf_result"
 
 - name: remove the group along with the package
   dnf:
@@ -120,7 +120,7 @@
     that:
         - "'changed' in dnf_result"
         - "'msg' in dnf_result"
-        - "'results' in dnf_result"
+        - "'transactions' in dnf_result"
 
 - name: check mode remove the group along with the package
   dnf:
@@ -138,4 +138,4 @@
   assert:
     that:
         - "'changed' in dnf_result"
-        - "'results' in dnf_result"
+        - "'transactions' in dnf_result"
