@@ -242,8 +242,10 @@ class TaskExecutor:
 
                     self._final_q.send_callback('v2_runner_item_on_ok', self._host, self._task, utr)
 
-            # update the connection value on the original task to reflect the resolved value
-            self._update_task_connection()
+        # Update the original task only after the loop is complete. Each loop
+        # item uses a task copy; mutating the original between items changes the
+        # connection magic vars seen by subsequent iterations.
+        self._update_task_connection()
 
         if last_loop_task:
             # FUTURE: hide this in Task/LoopContext once they're fully implemented
