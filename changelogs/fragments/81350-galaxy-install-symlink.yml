@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-galaxy - replace an existing collection symlink when force installing a collection.
