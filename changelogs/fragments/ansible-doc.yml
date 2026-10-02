@@ -1,0 +1,3 @@
+---
+bugfixes:
+    - ansible-doc - use plugin documentation to list deprecated plugins.
