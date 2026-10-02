@@ -1,5 +1,4 @@
 minor_changes:
   - pip - remove double spaces in output message (https://github.com/ansible/ansible/pull/87557).
   - service - remove double spaces in output message (https://github.com/ansible/ansible/pull/87557).
-  - git - remove double spaces generated command line (https://github.com/ansible/ansible/pull/87557).
-  - common/collections module utils - remove double spaces in exception message (https://github.com/ansible/ansible/pull/87557).
+  - ansible.utils.hashing.md5, ansible.utils.hashing.md5s - remove double spaces in exception message (https://github.com/ansible/ansible/pull/87557).

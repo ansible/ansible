@@ -120,7 +120,7 @@ options:
     default: false
     version_added: "2.17"
 extends_documentation_fragment:
-  - action_common_attributes
+  -  action_common_attributes
 attributes:
     check_mode:
         support: full
