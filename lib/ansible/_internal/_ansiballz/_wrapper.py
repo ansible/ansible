@@ -235,7 +235,7 @@ def _ansiballz_main(
             )
 
         else:
-            print(f'FATAL: Unknown debug command {command!r}.  Doing nothing.')
+            print(f'FATAL: Unknown debug command {command!r}. Doing nothing.')
 
     #
     # See comments in the debug() method for information on debugging

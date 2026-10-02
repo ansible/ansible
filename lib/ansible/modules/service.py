@@ -531,7 +531,7 @@ class LinuxService(Service):
 
         # couldn't find anything yet
         if self.svc_cmd is None and not self.svc_initscript:
-            self.module.fail_json(msg='cannot find \'service\' binary or init script for service,  possible typo in service name?, aborting')
+            self.module.fail_json(msg='cannot find \'service\' binary or init script for service, possible typo in service name?, aborting')
 
         if location.get('initctl', False):
             self.svc_initctl = location['initctl']
