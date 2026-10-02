@@ -233,7 +233,7 @@ class RoleMixin(object):
         :returns: A set of tuples consisting of: role name, collection name, collection path
         """
         found = set()
-        b_colldirs = list_collection_dirs(coll_filter=collection_filter)
+        b_colldirs = list_collection_dirs(coll_filter=collection_filter, include_internal=False)
         for b_path in b_colldirs:
             path = to_text(b_path, errors='surrogate_or_strict')
             if not (collname := _get_collection_name_from_path(b_path)):
@@ -795,11 +795,7 @@ class DocCLI(CLI, RoleMixin):
         DocCLI._prep_loader(plugin_type)
 
         coll_filter = self._get_collection_filter()
-        plugins = _list_plugins_with_info(plugin_type, coll_filter)
-
-        # Remove the internal ansible._protomatter plugins if getting all plugins
-        if not coll_filter:
-            plugins = {k: v for k, v in plugins.items() if not k.startswith('ansible._protomatter.')}
+        plugins = _list_plugins_with_info(plugin_type, coll_filter, include_internal=False)
 
         # get appropriate content depending on option
         if content == 'dir':
