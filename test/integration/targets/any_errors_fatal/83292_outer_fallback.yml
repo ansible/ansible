@@ -1,0 +1,31 @@
+---
+- name: Let an outer rescue catch an inner run_once failure
+  hosts: testhost,testhost2
+  gather_facts: false
+  max_fail_percentage: '{{ max_fail_pct | default(100) }}'
+  tasks:
+    - name: Outer block with the rescue fallback
+      block:
+        - name: Inner block without a rescue section
+          block:
+            - name: Fail once in the inner block
+              ansible.builtin.fail:
+              run_once: true
+
+            - name: Do not continue inside the failed inner block
+              ansible.builtin.debug:
+                msg: SHOULD NOT HAPPEN
+      rescue:
+        - name: Rescue both hosts in the outer block
+          ansible.builtin.assert:
+            that:
+              - ansible_play_hosts | sort == ['testhost', 'testhost2']
+              - ansible_play_batch | sort == ['testhost', 'testhost2']
+            success_msg: 83292 outer fallback rescue {{ inventory_hostname }}
+
+    - name: Continue both hosts after the outer rescue
+      ansible.builtin.assert:
+        that:
+          - ansible_play_hosts | sort == ['testhost', 'testhost2']
+          - ansible_play_batch | sort == ['testhost', 'testhost2']
+        success_msg: 83292 outer fallback recovered {{ inventory_hostname }}
