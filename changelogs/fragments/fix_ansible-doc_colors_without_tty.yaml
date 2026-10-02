@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-doc - don't write ansi escape sequences without interactive tty / respect ANSIBLE_COLOR
