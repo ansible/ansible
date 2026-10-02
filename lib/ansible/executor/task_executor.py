@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import itertools
 import os
+import pickle
 import time
 import json
 import pathlib
@@ -28,11 +29,16 @@ from ansible.module_utils.datatag import native_type_name
 from ansible._internal._datatag._tags import TrustedAsTemplate
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.common.text.converters import to_text, to_native
-from ansible.module_utils.connection import write_to_stream
+from ansible.module_utils.connection import Connection, ConnectionError, write_to_stream
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins import get_plugin_class
 from ansible.plugins.action import ActionBase
-from ansible.plugins.connection import ConnectionBase
+from ansible.plugins.connection import (
+    ConnectionBase,
+    _get_persistent_connection_lock_path,
+    _get_persistent_connection_socket_path,
+    _persistent_connection_lock,
+)
 from ansible.plugins.loader import become_loader, cliconf_loader, connection_loader, httpapi_loader, netconf_loader, terminal_loader, PluginLoadContext
 from ansible._internal._templating._jinja_plugins import _invoke_lookup, _DirectCall
 from ansible._internal._templating._engine import TemplateEngine
@@ -1008,10 +1014,47 @@ class TaskExecutor:
 CLI_STUB_NAME = 'ansible_connection_cli_stub.py'
 
 
-def start_connection(play_context, options, task_uuid):
+def start_connection(
+    play_context: PlayContext,
+    options: dict[str, t.Any],
+    task_uuid: t.Any,
+) -> str:
     """
     Starts the persistent connection
     """
+
+    result = None
+    socket_path = _get_persistent_connection_socket_path(play_context, os.getppid())
+    lock_path = _get_persistent_connection_lock_path(socket_path)
+
+    # The helper creates the lock before binding the socket, and bind() exposes the path before listen() makes it ready.
+    # Wait for either indication of connection creation, then recheck the socket while holding the shared lock.
+    if os.path.exists(socket_path) or os.path.exists(lock_path):
+        with _persistent_connection_lock(lock_path):
+            if os.path.exists(socket_path):
+                try:
+                    result = Connection(socket_path).set_options_ansible_connection_cli_stub(
+                        options=options,
+                        play_context_data=to_text(pickle.dumps(play_context.dump_attrs())),
+                        task_uuid=to_text(task_uuid),
+                    )
+                except ConnectionError as exc:
+                    if getattr(exc, 'code', None) == -32601 or not os.path.exists(socket_path):
+                        result = None
+                    else:
+                        result = {
+                            'error': to_text(exc),
+                            'exception': traceback.format_exc(),
+                        }
+
+    if result is None:
+        result = _start_connection_cli_stub(play_context, options, task_uuid)
+
+    return _handle_connection_result(play_context, result)
+
+
+def _start_connection_cli_stub(play_context: PlayContext, options: dict[str, t.Any], task_uuid: t.Any) -> dict[str, t.Any]:
+    """Start the connection helper and return its result."""
 
     env = os.environ.copy()
     env.update({
@@ -1052,6 +1095,11 @@ def start_connection(play_context, options, task_uuid):
         except json.decoder.JSONDecodeError:
             result = {'error': to_text(stderr, errors='surrogate_then_replace')}
 
+    return result
+
+
+def _handle_connection_result(play_context: PlayContext, result: dict[str, t.Any]) -> str:
+    """Dispatch connection messages and return the socket path or raise an error."""
     if 'messages' in result:
         for level, message in result['messages']:
             if level == 'log':
