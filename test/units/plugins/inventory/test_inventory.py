@@ -17,22 +17,21 @@
 
 from __future__ import annotations
 
+import os
 import string
 import textwrap
 
-from unittest import mock
+from units.mock.loader import DictDataLoader
+from units.mock.path import mock_unfrackpath_noop
+from unittest import mock, TestCase
 
 from ansible import constants as C
-import unittest
+from ansible.module_utils.common.sentinel import Sentinel
 from ansible.module_utils.common.text.converters import to_text
-from units.mock.path import mock_unfrackpath_noop
-
 from ansible.inventory.manager import InventoryManager, split_host_pattern
 
-from units.mock.loader import DictDataLoader
 
-
-class TestInventory(unittest.TestCase):
+class TestInventory(TestCase):
 
     patterns = {
         'a': ['a'],
@@ -115,7 +114,18 @@ class TestInventory(unittest.TestCase):
             )
 
 
-class TestInventoryPlugins(unittest.TestCase):
+class TestInventoryPlugins(TestCase):
+
+    def setUp(self):
+        # ensure ini plugin will read __file__
+        self._oldenv = os.environ.get('ANSIBLE_INVENTORY_PLUGIN_INI_EXT', Sentinel)
+        os.environ['ANSIBLE_INVENTORY_PLUGIN_INI_EXT'] = 'ini, py,'
+
+    def tearDown(self):
+        if self._oldenv is Sentinel:
+            del os.environ['ANSIBLE_INVENTORY_PLUGIN_INI_EXT']
+        else:
+            os.environ['ANSIBLE_INVENTORY_PLUGIN_INI_EXT'] = self._oldenv
 
     def test_empty_inventory(self):
         inventory = self._get_inventory('')

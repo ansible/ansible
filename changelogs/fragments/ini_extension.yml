@@ -1,0 +1,2 @@
+minor_changes:
+  - ini inventory - The plugin now has an 'allowed_extensions' option to specify which extensions the plugin will consider as an inventory source. It defaults to '.ini' and '' (no extension), which should cover most usage. For the previous behavior of matching files regardless of extension, this is not recommended and only available to ensure backwards compatibility. 
