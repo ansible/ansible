@@ -1,0 +1,2 @@
+bugfixes:
+  - setup - Apply gather_timeout to individual custom fact files in /etc/ansible/facts.d/. Total execution time may exceed the timeout when multiple fact files are present (https://github.com/ansible/ansible/issues/87028).
