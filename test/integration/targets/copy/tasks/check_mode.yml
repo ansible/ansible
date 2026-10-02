@@ -161,3 +161,5 @@
         - real_file_attribute is changed
         - "check_mode_file_attribute_stat.stat.mode == '0444'"
         - "real_file_attribute_stat.stat.mode == '0666'"
+
+- import_tasks: check_mode_dest.yml
