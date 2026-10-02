@@ -4,3 +4,22 @@
     - name: fileglob should be empty
       assert:
         that: q("fileglob", seed) | length == 0
+
+    - name: Test ignore_missing
+      vars:
+        query_with_warnings: "query('fileglob', 'missing/file')"
+        query_without_warnings: "query('fileglob', 'missing/file', ignore_missing=true)"
+        warning: "Unable to find 'missing' in expected paths"
+      block:
+        - name: Test a warning is given for a missing path
+          command: ansible localhost -m debug -a msg="{{ '{{' + query_with_warnings + '}}' }}"
+          register: warn_for_missing
+
+        - name: Test ignoring the warning
+          command: ansible localhost -m debug -a msg="{{ '{{' + query_without_warnings + '}}' }}"
+          register: ignore_missing
+
+        - assert:
+            that:
+              - warning in warn_for_missing.stderr
+              - warning not in ignore_missing.stderr
