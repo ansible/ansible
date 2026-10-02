@@ -1,8 +1,12 @@
 - hosts: localhost
   gather_facts: false
   tasks:
-  - name: task fails due to overriding q, but we should also see warning
-    debug:
-      msg:  "{{q('pipe', 'pwd')}}"
-    vars:
-      q: jinja2 uses me internally
+  - name: will fail, but we just recover
+    block:
+    - name: task fails due to overriding q, but we should also see warning
+      debug:
+        msg:  "{{q('pipe', 'pwd')}}"
+      vars:
+        q: jinja2 uses me internally, alias to query
+    rescue:
+      - debug: msg=allsgood
