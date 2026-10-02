@@ -28,3 +28,7 @@ ansible localhost -m assert -a '{"that": "ansible_facts.distribution is defined"
 ansible --flush-cache localhost -m debug -a "msg={{ ansible_facts }}" | grep '"msg": {}'
 # test meta end_play
 ansible localhost -m include_role -a name=end_play
+# test environment variable setting with -E option (basic KEY=VALUE)
+ansible localhost -m gather_facts -a 'gather_subset="env"' -E 'TEST_ENV_VAR=ansible_test_value' | grep '"TEST_ENV_VAR": "ansible_test_value"'
+# test environment variable setting with -E option (YAML/JSON format)
+ansible localhost -m gather_facts -a 'gather_subset="env"' -E '{"TEST_JSON_VAR": "json_test_value"}' | grep '"TEST_JSON_VAR": "json_test_value"'
