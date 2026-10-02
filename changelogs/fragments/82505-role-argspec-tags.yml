@@ -1,0 +1,2 @@
+bugfixes:
+  - Role argument spec validation - the implicit validation task no longer runs for roles that have no tasks selected by tags (https://github.com/ansible/ansible/issues/82505).
