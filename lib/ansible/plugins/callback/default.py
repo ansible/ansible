@@ -265,7 +265,7 @@ class CallbackModule(CallbackBase):
         self._clean_results(result.result, result.task.action)
         if self._run_is_verbose(result):
             msg += " => %s" % self._dump_results(result.result)
-        self._display.display(msg, color=color)
+        self._display.display(msg, color=color, flush=True)
 
     def v2_runner_item_on_failed(self, result: CallbackTaskResult) -> None:
         if self._last_task_banner != result.task._uuid:
@@ -280,7 +280,8 @@ class CallbackModule(CallbackBase):
         self._display.display(
             msg + " (item=%s) => %s" % (self._get_item_label(result.result), self._dump_results(result.result)),
             color=C.COLOR_ERROR,
-            stderr=self.get_option('display_failed_stderr')
+            stderr=self.get_option('display_failed_stderr'),
+            flush=True,
         )
 
     def v2_runner_item_on_skipped(self, result: CallbackTaskResult) -> None:
@@ -294,7 +295,7 @@ class CallbackModule(CallbackBase):
             msg = "skipping: [%s] => (item=%s) " % (result.host.get_name(), self._get_item_label(result.result))
             if self._run_is_verbose(result):
                 msg += " => %s" % self._dump_results(result.result)
-            self._display.display(msg, color=C.COLOR_SKIP)
+            self._display.display(msg, color=C.COLOR_SKIP, flush=True)
 
     def v2_playbook_on_include(self, included_file: IncludedFile) -> None:
         if not self.get_option("display_included_hosts"):
