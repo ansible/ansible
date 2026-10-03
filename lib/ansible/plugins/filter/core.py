@@ -548,6 +548,16 @@ def extract(environment: Environment, item, container, morekeys=None):
     return value
 
 
+def b32encode(string, encoding='utf-8', urlsafe=True):
+    # Base32 is always urlsafe. Adding urlsafe param as a noop to match b64encode.
+    return to_text(base64.b32encode(to_bytes(string, encoding=encoding, errors='surrogate_or_strict')))
+
+
+def b32decode(string, encoding='utf-8', urlsafe=True):
+    # Base32 is always urlsafe. Adding urlsafe param as a noop to match b64decode.
+    return to_text(base64.b32decode(to_bytes(string, errors='surrogate_or_strict')), encoding=encoding)
+
+
 def b64encode(string, encoding='utf-8', urlsafe=False):
     func = base64.b64encode
     if urlsafe:
@@ -775,6 +785,10 @@ class FilterModule(object):
         return {
             'register_secret': register_secret,
             'mask_secrets': mask_secrets,
+
+            # base 32
+            'b32decode': b32decode,
+            'b32encode': b32encode,
 
             # base 64
             'b64decode': b64decode,
