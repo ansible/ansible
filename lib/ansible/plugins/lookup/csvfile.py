@@ -22,6 +22,7 @@ DOCUMENTATION = r"""
         description:  column to search in (0 indexed).
         default: 0
         type: int
+        secret: false
         version_added: "2.17"
       default:
         description: what to return if the value is not found in the file.

@@ -856,6 +856,20 @@ class ModuleValidator(Validator):
                 for alias in data['aliases']:
                     add_option_alias_name(alias, option)
 
+            if all((
+                    self.plugin_type != "module", data.get('secret') is None,
+                    is_potential_secret_option(option),
+                    data.get('type') not in ("path", "bool", "boolean"), data.get('choices') is None,
+            )):
+                msg = "Argument '%s' in documentation could be a secret, though doesn't have `secret` set" % option
+                if context:
+                    msg += " found in %s" % " -> ".join(context)
+                self.reporter.error(
+                    path=self.object_path,
+                    code='secret-needed',
+                    msg=msg,
+                )
+
         for normalized_name, options in normalized_option_alias_names.items():
             if len(options) < 2:
                 continue
