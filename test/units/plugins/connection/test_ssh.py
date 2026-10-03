@@ -24,7 +24,7 @@ import pytest
 
 
 import unittest
-from unittest.mock import patch, MagicMock, PropertyMock
+from unittest.mock import patch, MagicMock, PropertyMock, mock_open
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
 import shlex
 from ansible.module_utils.common.text.converters import to_bytes
@@ -231,6 +231,16 @@ class TestConnectionBaseClass(unittest.TestCase):
         conn._bare_run.side_effect = [(1, 'stdout', 'some errors'), (0, '', '')]
         conn.put_file('/path/to/in/file', '/path/to/dest/file')
         conn._bare_run.assert_called_with('some command to run', None, checkrc=False)
+        conn._bare_run.side_effect = None
+
+        # Test that when every smart method fails, the error reports each of them
+        conn.exec_command = MagicMock(return_value=(1, b'', b'dd errors'))
+        conn._bare_run.side_effect = [(1, 'stdout', 'sftp errors'), (2, 'stdout', 'scp errors')] * 10  # put_file is retried
+        with patch('builtins.open', mock_open(read_data=b'data')):
+            with pytest.raises(AnsibleError) as excinfo:
+                conn.put_file('/path/to/in/file', '/path/to/dest/file')
+        for expected in ('sftp (rc=1)', 'sftp errors', 'scp (rc=2)', 'scp errors', 'piped (rc=1)', 'dd errors'):
+            assert expected in str(excinfo.value)
         conn._bare_run.side_effect = None
 
         # Test that a non-zero rc raises an error

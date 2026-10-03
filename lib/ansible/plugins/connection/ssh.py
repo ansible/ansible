@@ -1425,6 +1425,7 @@ class Connection(ConnectionBase):
 
         # NOTE: if passing a list to build_command, no need to quote those paths,
         # for strings use shlex.quote for local/controller and self._shell.quote for target
+        failures = []
         for method in methods:
             returncode = stdout = stderr = None
             match method:
@@ -1467,12 +1468,13 @@ class Connection(ConnectionBase):
                     display.warning(u'%s transfer mechanism failed on %s. Use ANSIBLE_DEBUG=1 to see detailed information' % (method, host))
                     display.debug(u'%s' % to_text(stdout))
                     display.debug(u'%s' % to_text(stderr))
+                failures.append("%s (rc=%s):\n%s\n%s" % (method, returncode, to_native(stdout), to_native(stderr)))
 
         if returncode == 255:
             raise AnsibleConnectionFailure("Failed to connect to the host via %s: %s" % (method, to_native(stderr)))
         else:
-            raise AnsibleError("failed to transfer file to %s %s:\n%s\n%s" %
-                               (to_native(in_path), to_native(out_path), to_native(stdout), to_native(stderr)))
+            raise AnsibleError("failed to transfer file to %s %s:\n%s" %
+                               (to_native(in_path), to_native(out_path), "\n".join(failures)))
 
     def _escape_win_path(self, path: str) -> str:
         """ converts a Windows path to one that's supported by SFTP and SCP """
