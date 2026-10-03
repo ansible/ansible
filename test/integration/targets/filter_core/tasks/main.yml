@@ -198,6 +198,17 @@
     list_with_nulls: [1, None, [3, [4, [5]], 6], 7]
     list_with_subnulls: [1, 2, [None, [4, [5]], 6], 7]
 
+- name: Test base32 filter
+  assert:
+    that:
+    - "'Ansible - くらとみ\n' | b32encode == 'IFXHG2LCNRSSALJA4OAY7Y4CRHRYDKHDQG7QU==='"
+    - "'IFXHG2LCNRSSALJA4OAY7Y4CRHRYDKHDQG7QU===' | b32decode == 'Ansible - くらとみ\n'"
+    - "'Ansible - くらとみ\n' | b32encode(encoding='utf-16-le') == 'IEAG4ADTABUQAYQANQAGKABAAAWQAIAAJ4YISMDIGB7TACQA'"
+    - "'IEAG4ADTABUQAYQANQAGKABAAAWQAIAAJ4YISMDIGB7TACQA' | b32decode(encoding='utf-16-le') == 'Ansible - くらとみ\n'"
+    - "'https://www.python.org/example-1' | b32encode() == 'https://www.python.org/example-1' | b32encode(urlsafe=True)"
+    - "'https://www.python.org/example-1' | b32encode(urlsafe=True) == 'NB2HI4DTHIXS653XO4XHA6LUNBXW4LTPOJTS6ZLYMFWXA3DFFUYQ===='"
+    - "'NB2HI4DTHIXS653XO4XHA6LUNBXW4LTPOJTS6ZLYMFWXA3DFFUYQ====' | b32decode(urlsafe=True) == 'https://www.python.org/example-1'"
+
 - name: Test base64 filter
   assert:
     that:

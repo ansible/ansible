@@ -1,0 +1,49 @@
+DOCUMENTATION:
+  name: b32decode
+  author: ansible core team
+  version_added: 'historical'
+  short_description: Decode a Base32 string
+  description:
+    - Base32 decoding function.
+    - The return value is a string.
+    - Trying to store a binary blob in a string most likely corrupts the binary. To Base32 decode a binary blob,
+      use the I(base32) command and pipe the encoded data through standard input.
+      For example, in the M(ansible.builtin.shell) module, ``cmd="base32 --decode > myfile.bin" stdin="{{ encoded }}"``.
+  positional: _input
+  options:
+    _input:
+      description: A Base32 string to decode.
+      type: string
+      required: true
+    encoding:
+      description:
+        - The encoding to use to transform from a text string to a byte string.
+        - Defaults to using 'utf-8'.
+      type: string
+      required: false
+    urlsafe:
+      description:
+        - Noop to align with b64decode syntax. Base32 is always urlsafe.
+      type: bool
+      default: true
+      required: false
+
+EXAMPLES: |
+  # Base32 decode a string
+  lola: "{{ 'NRXWYYI=' | b32decode }}"
+
+  # Base32 decode the content of 'b32stuff' variable
+  stuff: "{{ b32stuff | b32decode }}"
+
+  # Base32 decode the content with different encoding
+  stuff: "{{ 'IEAG4ADTABUQAYQANQAGKABAAAWQAIAAJ4YISMDIGB7TACQA' | b32decode(encoding='utf-16-le') }}"
+  # => 'Ansible - くらとみ\n'
+
+  # URL-Safe Base32 decoding
+  stuff: "{{ 'NB2HI4DTHIXS653XO4XHA6LUNBXW4LTPOJTS6ZLYMFWXA3DFFUYQ====' | b32decode(urlsafe=True) }}"
+  # => 'https://www.python.org/example-1'
+
+RETURN:
+  _value:
+    description: The contents of the Base32 encoded string.
+    type: string
