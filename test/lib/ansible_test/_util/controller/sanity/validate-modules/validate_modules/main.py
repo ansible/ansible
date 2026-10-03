@@ -108,6 +108,7 @@ LOOSE_ANSIBLE_VERSION = LooseVersion('.'.join(ansible_version.split('.')[:3]))
 
 
 def is_potential_secret_option(option_name):
+    option_name = option_name.lower()
     if not NO_LOG_REGEX.search(option_name):
         return False
     # If this is a count, type, algorithm, timeout, filename, or name, it is probably not a secret
