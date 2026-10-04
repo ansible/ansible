@@ -76,11 +76,11 @@
 - name: Check that list ignores metadata that is not a valid collection name
   vars:
     dir_fqcn: dev.collection2
-    collection_dir: "{{ galaxy_dir }}/dev/ansible_collections/dev/collection2"
+    collection2: "{{ galaxy_dir }}/dev/ansible_collections/dev/collection2"
   block:
     - name: give dev.collection2 a name that is not a valid collection name
       lineinfile:
-        path: "{{ collection_dir }}/galaxy.yml"
+        path: "{{ collection2 }}/galaxy.yml"
         regexp: '^name: .*'
         line: 'name: /tmp/evil'
 
@@ -98,11 +98,11 @@
           - dir_fqcn in invalid_metadata_list.stdout
       vars:
         warning_text: >-
-          Collection at '{{ collection_dir }}' has a MANIFEST.json or galaxy.yml file but it contains invalid metadata.
+          Collection at '{{ collection2 }}' has a MANIFEST.json or galaxy.yml file but it contains invalid metadata.
   always:
     - name: restore the name of dev.collection2
       lineinfile:
-        path: "{{ collection_dir }}/galaxy.yml"
+        path: "{{ collection2 }}/galaxy.yml"
         regexp: '^name: .*'
         line: 'name: collection2'
 
