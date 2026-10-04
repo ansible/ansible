@@ -34,6 +34,8 @@ from collections.abc import Mapping
 from contextlib import contextmanager
 from fnmatch import fnmatch
 
+from ansible.config.manager import _SECRET_ALLOWED_TYPES
+
 from antsibull_docs_parser import dom
 from antsibull_docs_parser.parser import parse, Context
 
@@ -860,7 +862,7 @@ class ModuleValidator(Validator):
             if all((
                     self.plugin_type != "module", data.get('secret') is None,
                     is_potential_secret_option(option),
-                    data.get('type') not in ("path", "bool", "boolean"), data.get('choices') is None,
+                    data.get('type') in _SECRET_ALLOWED_TYPES, data.get('choices') is None,
             )):
                 msg = "Argument '%s' in documentation could be a secret, though doesn't have `secret` set" % option
                 if context:
