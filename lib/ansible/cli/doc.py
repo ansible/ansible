@@ -609,6 +609,12 @@ class DocCLI(CLI, RoleMixin):
     def post_process_args(self, options):
         options = super(DocCLI, self).post_process_args(options)
 
+        if options.type != 'role':
+            if options.roles_path != C.DEFAULT_ROLES_PATH:
+                display.warning('--roles-path is only used with --type role.')
+            if options.entry_point:
+                display.warning('--entry-point is only used with --type role.')
+
         display.verbosity = options.verbosity
 
         return options
