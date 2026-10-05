@@ -1,0 +1,2 @@
+bugfixes:
+  - module_utils.mask_url - handle exceptions on parseurl to avoid disclosing url itself.
