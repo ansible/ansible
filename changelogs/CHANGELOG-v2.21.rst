@@ -4,13 +4,13 @@ ansible-core 2.21 "The Rain Song" Release Notes
 
 .. contents:: Topics
 
-v2.21.5rc1
-==========
+v2.21.5
+=======
 
 Release Summary
 ---------------
 
-| Release Date: 2026-09-29
+| Release Date: 2026-10-05
 | `Porting Guide <https://docs.ansible.com/ansible-core/2.21/porting_guides/porting_guide_core_2.21.html>`__
 
 Bugfixes
