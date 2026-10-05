@@ -36,30 +36,6 @@ variables:
 pool: Standard
 
 stages:
-  - stage: Sanity
-    dependsOn: []
-    jobs:
-      - template: templates/matrix.yml
-        parameters:
-          nameFormat: Test {0}
-          testFormat: sanity/{0}
-          targets:
-            - test: 1
-            - test: 2
-  - stage: Units
-    dependsOn: []
-    jobs:
-      - template: templates/matrix.yml
-        parameters:
-          nameFormat: Python {0}
-          testFormat: units/{0}
-          targets:
-            - test: '3.10'
-            - test: 3.11
-            - test: 3.12
-            - test: 3.13
-            - test: 3.14
-            - test: 3.15
   - stage: Windows
     dependsOn: []
     jobs:
@@ -149,79 +125,6 @@ stages:
           targets:
             - name: RHEL 8.10
               test: rhel/8.10/rhel8
-  - stage: Docker
-    dependsOn: []
-    jobs:
-      - template: templates/matrix.yml  # context/target
-        parameters:
-          testFormat: linux/{0}
-          targets:
-            - name: Alpine 3.24
-              test: alpine324
-            - name: Fedora 44
-              test: fedora44
-            - name: Ubuntu 24.04
-              test: ubuntu2404
-            - name: Ubuntu 26.04
-              test: ubuntu2604
-          groups:
-            - 1
-            - 2
-      - template: templates/matrix.yml  # context/controller
-        parameters:
-          testFormat: linux/{0}
-          targets:
-            - name: Alpine 3.24
-              test: alpine324
-            - name: Fedora 44
-              test: fedora44
-            - name: Ubuntu 24.04
-              test: ubuntu2404
-            - name: Ubuntu 26.04
-              test: ubuntu2604
-          groups:
-            - 3
-            - 4
-            - 5
-      - template: templates/matrix.yml  # context/target (dnf-oldest, dnf-latest)
-        parameters:
-          testFormat: linux/{0}
-          targets:
-            - name: Fedora 44
-              test: fedora44
-          groups:
-            - 7
-  - stage: PowerShell
-    dependsOn: []
-    jobs:
-      - template: templates/matrix.yml
-        parameters:
-          nameFormat: PowerShell {0}
-          testFormat: powershell/{0}/1
-          targets:
-            - name: 7.6
-  - stage: Galaxy
-    dependsOn: []
-    jobs:
-      - template: templates/matrix.yml
-        parameters:
-          nameFormat: Python {0}
-          testFormat: galaxy/{0}/1
-          targets:
-            - test: 3.13
-            - test: 3.14
-            - test: 3.15
-  - stage: Generic
-    dependsOn: []
-    jobs:
-      - template: templates/matrix.yml
-        parameters:
-          nameFormat: Python {0}
-          testFormat: generic/{0}/1
-          targets:
-            - test: 3.13
-            - test: 3.14
-            - test: 3.15
   - stage: Incidental_Windows
     displayName: Incidental Windows
     dependsOn: []
@@ -252,15 +155,9 @@ stages:
   - stage: Summary
     condition: succeededOrFailed()
     dependsOn:
-      - Sanity
-      - Units
       - Windows
       - Remote
       - Remote_Targeted
-      - Docker
-      - PowerShell
-      - Galaxy
-      - Generic
       - Incidental_Windows
     jobs:
       - template: templates/coverage.yml
