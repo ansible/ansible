@@ -36,3 +36,45 @@ def test_mask_url(url, wanted):
 
     for notmasked in wanted:
         assert notmasked in masked
+
+
+_ipv6 = 'Invalid IPv6 URL'
+
+
+@pytest.mark.parametrize(
+    'url, expected',
+    (
+        ('http://secretuser:secretpassword＠badunicodeat.com:80/file.html?nothing=something', None),
+        ('http://secretuser:@badunicodeslash.com:443／file.html', None),
+        ('http://secretuser@badunicodecolon.com：80', None),
+        ('http://:secretpassword＠badunicodequestion.com:00/file.html？this=breaksparse', None),
+        ('https://[::1/index.html', _ipv6),
+        ('https://example.com]:443/index.html', _ipv6),
+        ('https://[fe80::1:8080/index.html', _ipv6),
+        ('//[::1/index.html', _ipv6),
+        ('https://secretuser:secretpass@[::1/index.html', _ipv6),
+        ('https://secretuser@[::1/index.html', _ipv6),
+        ('ftp://secretuser:secretpass@[fe80::1:8080/pub/file.txt', _ipv6),
+        ('https://:secretpass@::1]/index.html', _ipv6),
+        ('https://secretuser:secretpass@[::1', _ipv6),
+        # a scheme-relative url has no scheme to anchor on
+        ('//secretuser:secretpass@[::1/index.html', _ipv6),
+        # only `/` ends the authority, so a `?` or `#` cannot hide the userinfo
+        ('https://[::1secretuser:sec?retpass@host/index.html', _ipv6),
+        ('https://secretuser:secretpass@[::1#fragment', _ipv6),
+        # the last `@` separates userinfo from host, matching how urlparse splits it
+        ('https://secretuser:secret@pass@[::1/index.html', _ipv6),
+        # combine!
+        ('http://:secretpassword＠[::1/:01/badunicodeat/file.html？this=breaksparse', None),
+    )
+)
+def test_mask_url_exceptions(url, expected):
+    with pytest.raises(ValueError, match="^(?!.*secret).*$") as e:
+        mask_url(url)
+
+    msg = str(e)
+    if expected is None:
+        assert "ValueError('mask_url could not parse the url provided')" in msg
+    else:
+        assert 'mask_url could not parse the url provided' in msg
+        assert expected in msg
