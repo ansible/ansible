@@ -4,13 +4,13 @@ ansible-core 2.20 "Good Times Bad Times" Release Notes
 
 .. contents:: Topics
 
-v2.20.10rc1
-===========
+v2.20.10
+========
 
 Release Summary
 ---------------
 
-| Release Date: 2026-09-29
+| Release Date: 2026-10-05
 | `Porting Guide <https://docs.ansible.com/ansible-core/2.20/porting_guides/porting_guide_core_2.20.html>`__
 
 Bugfixes
