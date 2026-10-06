@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Security;
 using System.Text;
@@ -16,16 +15,25 @@ namespace Ansible.Secrets
         private static SecretMasker _instance = new SecretMasker();
 
         // If any of these are changed we need to ensure that _secrets.py is updated to match.
-        private const int MinimumSecretLength = 4;  // below this, not registered at all
-        private const int MaximumShortSecretLength = 6;  // above this, mask unconditionally
-        private const int MaximumSecretLength = 65536;  // trims to this length as a cap for registration and matching
         private static readonly char[] StripChars = new char[] { ' ', '\t', '\r', '\n' };  // stripped from both ends before registration
-        private const int AnchorLength = MinimumSecretLength;
+        private const int AnchorLength = 4;  // values at least this long are indexed by their first AnchorLength chars
         private const int ProbeLength = 8;  // chars compared from the middle of a candidate before the full comparison
 
         private readonly Dictionary<string, List<Bucket>> _scan;  // anchor -> buckets, longest first
+        private readonly Dictionary<char, List<ShortBucket>> _shortIndex;  // values shorter than the anchor: first char -> buckets, longest first
         private readonly HashSet<string> _registered;
         private HashSet<string> _newSecrets;
+
+        private sealed class ShortBucket
+        {
+            public readonly int Length;
+            public readonly HashSet<string> Values = new HashSet<string>(StringComparer.Ordinal);
+
+            public ShortBucket(int length)
+            {
+                Length = length;
+            }
+        }
 
         private sealed class Bucket
         {
@@ -112,6 +120,7 @@ namespace Ansible.Secrets
         private SecretMasker()
         {
             _scan = new Dictionary<string, List<Bucket>>(StringComparer.Ordinal);
+            _shortIndex = new Dictionary<char, List<ShortBucket>>();
             _registered = new HashSet<string>(StringComparer.Ordinal);
             _newSecrets = new HashSet<string>(StringComparer.Ordinal);
         }
@@ -153,10 +162,10 @@ namespace Ansible.Secrets
                 return;
             }
 
-            // Copies behaviour of Python to strip whitespace and trim to the
-            // maximum length before registering.
-            secret = TrimToCodePoints(secret.Trim(StripChars), MaximumSecretLength);
-            if (CodePointCount(secret, 0, secret.Length) < MinimumSecretLength)
+            // Copies behaviour of Python to strip whitespace before registering and
+            // to ignore a value that is empty afterwards.
+            secret = secret.Trim(StripChars);
+            if (secret.Length == 0)
             {
                 return;
             }
@@ -184,6 +193,27 @@ namespace Ansible.Secrets
 
         private void AddValue(string value)
         {
+            if (value.Length < AnchorLength)
+            {
+                List<ShortBucket> shortBuckets;
+                if (!_shortIndex.TryGetValue(value[0], out shortBuckets))
+                {
+                    shortBuckets = new List<ShortBucket>();
+                    _shortIndex[value[0]] = shortBuckets;
+                }
+
+                ShortBucket shortBucket = shortBuckets.Find(b => b.Length == value.Length);
+                if (shortBucket == null)
+                {
+                    shortBucket = new ShortBucket(value.Length);
+                    shortBuckets.Add(shortBucket);
+                    shortBuckets.Sort((a, b) => b.Length.CompareTo(a.Length));
+                }
+
+                shortBucket.Values.Add(value);
+                return;
+            }
+
             string anchor = value.Substring(0, AnchorLength);
 
             List<Bucket> buckets;
@@ -206,37 +236,6 @@ namespace Ansible.Secrets
 
             bucket.Probes.Add(value.Substring(bucket.ProbeOffset, bucket.ProbeSize));
             bucket.Values.Add(value);
-        }
-
-        private static int CodePointCount(string value, int start, int end)
-        {
-            int count = end - start;
-            for (int i = start; i < end - 1; i++)
-            {
-                if (char.IsSurrogatePair(value[i], value[i + 1]))
-                {
-                    count--;
-                    i++;
-                }
-            }
-
-            return count;
-        }
-
-        private static string TrimToCodePoints(string value, int maxCodePoints)
-        {
-            if (value.Length <= maxCodePoints)
-            {
-                return value;
-            }
-
-            int index = 0;
-            for (int count = 0; count < maxCodePoints && index < value.Length; count++)
-            {
-                index += char.IsSurrogatePair(value, index) ? 2 : 1;
-            }
-
-            return index < value.Length ? value.Substring(0, index) : value;
         }
 
         /// <summary>
@@ -307,12 +306,12 @@ namespace Ansible.Secrets
 
         private string MaskStringImpl(string value, string maskPlaceholder)
         {
-            if (string.IsNullOrEmpty(value) || _scan.Count == 0)
+            if (string.IsNullOrEmpty(value) || _registered.Count == 0)
             {
                 return value;
             }
 
-            List<int[]> spans = MergeSpans(value, FindSpans(value));
+            List<int[]> spans = MergeSpans(FindSpans(value));
             if (spans.Count == 0)
             {
                 return value;
@@ -370,14 +369,49 @@ namespace Ansible.Secrets
                 }
             }
 
+            if (_shortIndex.Count == 0)
+            {
+                return spans;
+            }
+
+            for (int start = 0; start < valueLength; start++)
+            {
+                List<ShortBucket> shortBuckets;
+                if (!_shortIndex.TryGetValue(value[start], out shortBuckets))
+                {
+                    continue;
+                }
+
+                foreach (ShortBucket bucket in shortBuckets)
+                {
+                    int end = start + bucket.Length;
+                    if (end <= valueLength && bucket.Values.Contains(value.Substring(start, bucket.Length)))
+                    {
+                        spans.Add(new int[] { start, end });
+                    }
+                }
+            }
+
+            // The anchored scan emits spans in start order, the sort restores that order after the short pass.
+            if (spans.Count > 0)
+            {
+                spans.Sort(CompareSpans);
+            }
+
             return spans;
         }
 
+        private static int CompareSpans(int[] a, int[] b)
+        {
+            int result = a[0].CompareTo(b[0]);
+            return result != 0 ? result : a[1].CompareTo(b[1]);
+        }
+
         /// <summary>
-        /// Merges overlapping/touching spans into one placeholder each and drops the runs that do not
-        /// qualify. Mirrors _merge_spans in _secrets.py, see there for the rules and examples.
+        /// Merges overlapping/touching spans (sorted by start) into one placeholder each. Mirrors
+        /// _merge_spans in _secrets.py.
         /// </summary>
-        private static List<int[]> MergeSpans(string value, List<int[]> spans)
+        private static List<int[]> MergeSpans(List<int[]> spans)
         {
             if (spans.Count == 0)
             {
@@ -388,7 +422,6 @@ namespace Ansible.Secrets
 
             int runStart = spans[0][0];
             int runEnd = spans[0][1];
-            bool keep = SpanIsQualified(value, runStart, runEnd);
 
             for (int i = 1; i < spans.Count; i++)
             {
@@ -397,77 +430,19 @@ namespace Ansible.Secrets
 
                 if (start > runEnd)
                 {
-                    // Current run is complete, start new run with the current span.
-                    if (keep)
-                    {
-                        result.Add(new int[] { runStart, runEnd });
-                    }
-
+                    result.Add(new int[] { runStart, runEnd });
                     runStart = start;
                     runEnd = end;
-                    keep = SpanIsQualified(value, start, end);
                 }
                 else if (end > runEnd)
                 {
-                    // Span is inside or touching the current run and extends it.
                     runEnd = end;
-                    keep = true;
-                }
-                else if (!keep)
-                {
-                    // Span lies inside the current run that is not qualified by its own merit.
-                    keep = SpanIsQualified(value, start, end);
                 }
             }
 
-            if (keep)
-            {
-                result.Add(new int[] { runStart, runEnd });
-            }
+            result.Add(new int[] { runStart, runEnd });
 
             return result;
-        }
-
-        private static bool SpanIsQualified(string value, int start, int end)
-        {
-            // Every code point is at most two chars, so a span longer than twice the limit in chars is
-            // long whatever it contains and the code points only need counting below that.
-            int length = end - start;
-            if (length > MaximumShortSecretLength * 2 || CodePointCount(value, start, end) > MaximumShortSecretLength)
-            {
-                return true;
-            }
-
-            bool boundaryLeft = start == 0 || !IsAlphaNumeric(value, start - 1);
-            bool boundaryRight = end == value.Length || !IsAlphaNumeric(value, end);
-            return boundaryLeft && boundaryRight;
-        }
-
-        /// <summary>
-        /// Matches Python's str.isalnum for the character at <paramref name="index"/>: any letter or number
-        /// category, with a surrogate pair classified as the code point it encodes.
-        /// </summary>
-        private static bool IsAlphaNumeric(string value, int index)
-        {
-            if (index > 0 && char.IsLowSurrogate(value[index]) && char.IsHighSurrogate(value[index - 1]))
-            {
-                index--;
-            }
-
-            switch (CharUnicodeInfo.GetUnicodeCategory(value, index))
-            {
-                case UnicodeCategory.UppercaseLetter:
-                case UnicodeCategory.LowercaseLetter:
-                case UnicodeCategory.TitlecaseLetter:
-                case UnicodeCategory.ModifierLetter:
-                case UnicodeCategory.OtherLetter:
-                case UnicodeCategory.DecimalDigitNumber:
-                case UnicodeCategory.LetterNumber:
-                case UnicodeCategory.OtherNumber:
-                    return true;
-                default:
-                    return false;
-            }
         }
     }
 }

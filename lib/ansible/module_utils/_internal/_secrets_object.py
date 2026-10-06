@@ -4,7 +4,7 @@ import collections.abc as _c
 import typing as _t
 
 from ansible.module_utils._internal._datatag import AnsibleTaggedObject, AnsibleTagHelper
-from ansible.module_utils._internal._secrets import _MINIMUM_SECRET_LENGTH, AnsibleSecretMaskError, SecretMasker, _secret_masker
+from ansible.module_utils._internal._secrets import AnsibleSecretMaskError, SecretMasker, _secret_masker
 
 _K = _t.TypeVar("_K")
 _V = _t.TypeVar("_V")
@@ -90,10 +90,6 @@ class _Walker:
 
         if isinstance(value, (int, float)):
             text = str(value)
-
-            if len(text) < _MINIMUM_SECRET_LENGTH:
-                return value
-
             masked = self._masker.mask_string(text, mask_placeholder=self._placeholder, acquire_lock=False)
 
             return value if masked is text else masked
