@@ -233,7 +233,7 @@ import sys
 import tempfile
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.common.file import S_IRWU_RWG_RWO
+from ansible.module_utils.common.file import S_IRWU_RWG_RWO, is_executable
 from ansible.module_utils.common.text.converters import to_bytes, to_native
 
 
@@ -256,7 +256,13 @@ class CronTab:
         self.lines = []
         self.ansible = "#Ansible: "
         self.n_existing = ''
-        self.cron_cmd = self.module.get_bin_path(module.params['executable'], required=True)
+        executable = module.params['executable']
+        if not os.path.isabs(executable):
+            # an absolute path is used as given, searching PATH for it would be meaningless
+            executable = module.get_bin_path(executable)
+        if not executable or not (os.path.isfile(executable) and is_executable(executable)):
+            module.fail_json(msg="Cannot find crontab executable '%s'." % module.params['executable'])
+        self.cron_cmd = executable
 
         if cron_file:
 
