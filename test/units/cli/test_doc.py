@@ -134,6 +134,7 @@ def test_legacy_modules_list():
     result = obj._list_plugins('module', module_loader)
     assert len(result) > 0
 
+
 def test_role_options_warn_when_used_for_non_roles():
     warnings = []
     display.warning = warnings.append

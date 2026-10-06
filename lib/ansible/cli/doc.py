@@ -575,7 +575,6 @@ class DocCLI(CLI, RoleMixin):
         self.parser.add_argument("-j", "--json", action="store_true", default=False, dest='json_format',
                                  help='Change output into json format.')
 
-        # TODO: warn if not used with -t roles
         # role-specific options
         self.parser.add_argument("-r", "--roles-path", dest='roles_path', default=C.DEFAULT_ROLES_PATH,
                                  type=opt_help.unfrack_path(pathsep=True),
@@ -585,7 +584,6 @@ class DocCLI(CLI, RoleMixin):
         # exclusive modifiers
         exclusive = self.parser.add_mutually_exclusive_group()
 
-        # TODO: warn if not used with -t roles
         exclusive.add_argument("-e", "--entry-point", dest="entry_point",
                                help="Select the entry point for role(s).")
 
