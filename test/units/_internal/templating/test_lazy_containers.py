@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import collections.abc as c
 import copy
+import dataclasses
 import re
 import sys
 import typing as t
@@ -369,9 +370,9 @@ def test_lazy_list_adapter_operators(template, variables, expected) -> None:
     ('tuple() + l1', 'can only concatenate tuple (not "_AnsibleLazyTemplateList") to tuple', TypeError),  # __radd__ (relies on tuple.__add__)
     ('tuple() + d1', 'can only concatenate tuple (not "_AnsibleLazyTemplateDict") to tuple', TypeError),  # relies on tuple.__add__
     ('l1.pop(42)', "pop index out of range", IndexError),
-    ('type(l1)([])', 'Direct construction of lazy containers is not supported.', UnsupportedConstructionMethodError),
-    ('type(t1)([])', 'Direct construction of lazy containers is not supported.', UnsupportedConstructionMethodError),
-    ('type(d1)({})', 'Direct construction of lazy containers is not supported.', UnsupportedConstructionMethodError),
+    ('type(l1)([])', [], list),
+    ('type(t1)([])', (), tuple),
+    ('type(d1)({})', {}, dict),
 ], ids=str)
 def test_lazy_container_operators(expression: str, expected_value: t.Any, expected_type: type) -> None:
     """
@@ -883,6 +884,63 @@ def test_lazy_copies(value: list | dict, deep: bool, template_context: TemplateC
     assert all((base_type.__getitem__(copied, key) is base_type.__getitem__(original, key)) != deep for key in keys)
     assert (copied._templar is original._templar) != deep
     assert (copied._lazy_options is original._lazy_options) != deep
+
+
+@pytest.mark.parametrize('convert', (dataclasses.asdict, dataclasses.astuple))
+@pytest.mark.parametrize('value, expected', (
+    ('hello world', 'hello world'),
+    ([VALUE_TO_TEMPLATE], ['hello']),
+    ({'value': VALUE_TO_TEMPLATE}, {'value': 'hello'}),
+    ((VALUE_TO_TEMPLATE,), ('hello',)),
+    ({'nested': [(VALUE_TO_TEMPLATE, {'value': VALUE_TO_TEMPLATE})]}, {'nested': [('hello', {'value': 'hello'})]}),
+    ([], []),
+    ({}, {}),
+    ((), ()),
+))
+def test_dataclass_conversion(convert: t.Callable, value: t.Any, expected: t.Any, template_context: TemplateContext) -> None:
+    @dataclasses.dataclass
+    class Data:
+        value: t.Any
+
+    lazy = _AnsibleLazyTemplateMixin._try_create(value)
+    result = convert(Data(lazy))
+    converted = result['value'] if convert is dataclasses.asdict else result[0]
+
+    assert converted == expected
+
+    def check_container_types(actual: t.Any, expected: t.Any) -> None:
+        if type(expected) in (list, dict, tuple):
+            assert type(actual) is type(expected)
+
+            if isinstance(expected, dict):
+                for key in expected:
+                    check_container_types(actual[key], expected[key])
+            else:
+                for item, expected_item in zip(actual, expected):
+                    check_container_types(item, expected_item)
+
+    check_container_types(converted, expected)
+
+
+@pytest.mark.parametrize('as_iterator', (False, True))
+@pytest.mark.parametrize('container_type, contents, expected', (
+    (_AnsibleLazyTemplateList, [VALUE_TO_TEMPLATE], [VALUE_TO_TEMPLATE]),
+    (_AnsibleLazyTemplateDict, [('key', VALUE_TO_TEMPLATE)], {'key': VALUE_TO_TEMPLATE}),
+    (_AnsibleLazyAccessTuple, [VALUE_TO_TEMPLATE], (VALUE_TO_TEMPLATE,)),
+))
+def test_native_construction(container_type: type, contents: list, expected: t.Any, as_iterator: bool) -> None:
+    # Reconstruction must work without a template context and must not template its contents.
+    result = container_type(iter(contents) if as_iterator else contents)
+
+    assert type(result) is type(expected)
+    assert result == expected
+
+
+def test_native_dict_construction_kwargs() -> None:
+    result = _AnsibleLazyTemplateDict({'key': 'old'}, key='new', other='value')
+
+    assert type(result) is dict  # pylint: disable=unidiomatic-typecheck
+    assert result == {'key': 'new', 'other': 'value'}
 
 
 def test_lazy_template_mixin_init() -> None:

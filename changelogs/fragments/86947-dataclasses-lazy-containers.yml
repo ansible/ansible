@@ -1,0 +1,2 @@
+bugfixes:
+  - templating - allow ``dataclasses.asdict`` and ``dataclasses.astuple`` to reconstruct lazy containers in filter plugins (https://github.com/ansible/ansible/issues/86947).

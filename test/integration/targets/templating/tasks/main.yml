@@ -51,6 +51,28 @@
       - r is failed
       - "'keyword argument repeated' in r.msg"
 
+- name: Ensure dataclass conversion supports lazy containers in filter plugins
+  vars:
+    literal: hello world
+    mylist: [a, b]
+    mydict:
+      first: hello
+      second: world
+    nested:
+      values:
+        - '{{ mylist }}'
+        - '{{ mydict }}'
+  assert:
+    that:
+      - (literal | dataclass_asdict) == {'value':'hello world'}
+      - (mylist | dataclass_asdict) == {'value':['a', 'b']}
+      - (mydict | dataclass_asdict) == {'value':{'first':'hello', 'second':'world'}}
+      - ((1, 2) | dataclass_asdict) == {'value':(1, 2)}
+      - (nested | dataclass_asdict) == {'value':{'values':[['a', 'b'], {'first':'hello', 'second':'world'}]}}
+      - (mylist | dataclass_astuple) == (['a', 'b'],)
+      - (mydict | dataclass_astuple) == ({'first':'hello', 'second':'world'},)
+      - ((1, 2) | dataclass_astuple) == ((1, 2),)
+
 - name: ensure nested indirect templating is lazy (only recurse to render containers with templated when one is leaving the template system)
   vars:
     tripwire_file: "{{ output_dir ~ '/bang' }}"

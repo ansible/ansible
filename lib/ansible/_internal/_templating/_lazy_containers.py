@@ -228,6 +228,13 @@ class _AnsibleLazyTemplateMixin:
 class _AnsibleLazyTemplateDict(_AnsibleTaggedDict, _AnsibleLazyTemplateMixin):
     __slots__ = _AnsibleLazyTemplateMixin._SLOTS
 
+    def __new__(cls, contents: t.Iterable | _LazyValueSource, /, **kwargs) -> t.Any:
+        if not isinstance(contents, (_AnsibleLazyTemplateDict, _LazyValueSource)):
+            # Third-party code can reconstruct containers with type(value)(iterable), e.g. dataclasses.asdict.
+            return cls._native_type(contents, **kwargs)
+
+        return super().__new__(cls)
+
     def __init__(self, contents: t.Iterable | _LazyValueSource, /, **kwargs) -> None:
         if isinstance(contents, _AnsibleLazyTemplateDict):
             super().__init__(dict.items(contents), **kwargs)
@@ -370,6 +377,13 @@ class _AnsibleLazyTemplateDict(_AnsibleTaggedDict, _AnsibleLazyTemplateMixin):
 @t.final  # consumers of lazy collections rely heavily on the concrete types being final
 class _AnsibleLazyTemplateList(_AnsibleTaggedList, _AnsibleLazyTemplateMixin):
     __slots__ = _AnsibleLazyTemplateMixin._SLOTS
+
+    def __new__(cls, contents: t.Iterable | _LazyValueSource, /) -> t.Any:
+        if not isinstance(contents, (_AnsibleLazyTemplateList, _LazyValueSource)):
+            # Reconstructed contents have no lazy state to preserve.
+            return cls._native_type(contents)
+
+        return super().__new__(cls)
 
     def __init__(self, contents: t.Iterable | _LazyValueSource, /) -> None:
         if isinstance(contents, _AnsibleLazyTemplateList):
@@ -553,14 +567,14 @@ class _AnsibleLazyAccessTuple(_AnsibleTaggedTuple, _AnsibleLazyTemplateMixin):
 
     # nonempty __slots__ not supported for subtype of 'tuple'
 
-    def __new__(cls, contents: t.Iterable | _LazyValueSource, /) -> t.Self:
+    def __new__(cls, contents: t.Iterable | _LazyValueSource, /) -> t.Any:
         if isinstance(contents, _AnsibleLazyAccessTuple):
             return super().__new__(cls, tuple.__iter__(contents))
 
         if isinstance(contents, _LazyValueSource):
             return super().__new__(cls, contents.source)
 
-        raise UnsupportedConstructionMethodError()
+        return cls._native_type(contents)
 
     def __init__(self, contents: t.Iterable | _LazyValueSource, /) -> None:
         _AnsibleLazyTemplateMixin.__init__(self, contents)
