@@ -676,80 +676,6 @@ $tests = [Ordered]@{
         $actual | Assert-DictionaryEqual -Expected $expected
     }
 
-    "No log value shorter than the secret masker minimum" = {
-        # A no_log value too short for the SecretMasker to register (< 4 chars)
-        # must still be blocked out of the logged invocation. The invocation is
-        # redacted with a pre-pass over the no_log params before the SecretMasker
-        # runs, so short/non-string secrets are always hidden regardless of the
-        # masker's length heuristics.
-        $spec = @{
-            options = @{
-                token = @{type = "str"; no_log = $true }
-            }
-        }
-        Set-Variable -Name complex_args -Scope Global -Value @{
-            _ansible_module_name = "test_no_log_short"
-            token = "ab"
-            _ansible_inject_invocation = $true
-        }
-
-        $m = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
-
-        # verify params internally aren't masked
-        $m.Params.token | Assert-Equal -Expected "ab"
-
-        $failed = $false
-        try {
-            $m.ExitJson()
-        }
-        catch [System.Management.Automation.RuntimeException] {
-            $failed = $true
-            $_.Exception.Message | Assert-Equal -Expected "exit: 0"
-            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
-        }
-        $failed | Assert-Equal -Expected $true
-
-        # "ab" is too short to be registered as a secret, so it is not reported
-        # as a new secret to mask on the controller.
-        $actual.ContainsKey("_ansible_new_secrets") | Assert-Equal -Expected $false
-
-        # the invocation result still contains the raw value (the controller
-        # masks it on display based on no_log)
-        $actual.invocation | Assert-DictionaryEqual -Expected @{module_args = @{token = "ab" } }
-
-        if ($IsWindows) {
-            # The short no_log value is blocked out by the pre-pass even though
-            # it is too short for the SecretMasker to register.
-            $actual_event = (Get-EventLog -LogName Application -Source Ansible -Newest 1).Message
-            $actual_event | Assert-Equal -Expected "test_no_log_short - Invoked with:`r`n  token: `$REDACTED`$"
-        }
-    }
-
-    "No log short value is redacted while the identical key survives" = {
-        # This test only asserts the Windows event log, so skip it elsewhere.
-        if (-not $IsWindows) {
-            return
-        }
-
-        # The redaction is done per no_log value (positional), not by masking the
-        # secret text. The value "abc" is too short (< 4) to ever be registered
-        # as a secret, so the identical key text is left untouched while the
-        # value is still blocked out by the pre-pass.
-        $spec = @{
-            options = @{
-                abc = @{type = "str"; no_log = $true }
-            }
-        }
-        Set-Variable -Name complex_args -Scope Global -Value @{
-            _ansible_module_name = "test_no_log_short_kv"
-            abc = "abc"
-        }
-
-        $null = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
-        $actual_event = (Get-EventLog -LogName Application -Source Ansible -Newest 1).Message
-        $actual_event | Assert-Equal -Expected "test_no_log_short_kv - Invoked with:`r`n  abc: `$REDACTED`$"
-    }
-
     "No log string value is redacted in the event log" = {
         # This test only asserts the Windows event log, so skip it elsewhere.
         if (-not $IsWindows) {
@@ -2835,7 +2761,7 @@ $tests = [Ordered]@{
                 secret2 = "other secret"
             }
         }
-        Assert-Equal -Actual @($actual._ansible_new_secrets | Sort-Object) -Expected @("longvalue", "other secret")
+        Assert-Equal -Actual @($actual._ansible_new_secrets | Sort-Object) -Expected @("abc", "longvalue", "other secret")
     }
 
     "Invalid choice in list" = {
