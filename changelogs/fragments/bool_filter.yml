@@ -1,0 +1,5 @@
+minor_changes:
+  - bool filter - The filter now always returns a boolean value, so ``None`` input results in ``False`` instead of ``None``.
+deprecated_features:
+  - bool filter - Support for coercing unrecognized input values (including None) has been deprecated.
+    Consult the filter documentation for acceptable values, or consider use of the ``truthy`` and ``falsy`` tests.
