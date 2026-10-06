@@ -659,7 +659,7 @@ class Templar:
     '''
 
     def __init__(self, loader, variables=None):
-        self._loader = loader
+        self._dataloader = loader
         self._variables = {} if variables is None else variables
 
         self._fail_on_undefined_errors = C.DEFAULT_UNDEFINED_VAR_BEHAVIOR
@@ -778,6 +778,27 @@ class Templar:
         )
 
         self.available_variables = variables
+
+    @property
+    def _loader(self):
+        """Deprecated. Use `copy_with_new_env` to create a new instance."""
+        # Abused by cloud.common, community.general and felixfontein.tools collections to create a new Templar instance.
+        display.deprecated(
+            msg='Direct access to the `_loader` internal attribute is deprecated. Use `copy_with_new_env` to create a new instance.',
+            version='2.23',
+        )
+
+        return self._dataloader
+
+    @_loader.setter
+    def _loader(self, loader):
+        """Deprecated. Use `copy_with_new_env` to create a new instance."""
+        display.deprecated(
+            msg='Direct access to the `_loader` internal attribute is deprecated. Use `copy_with_new_env` to create a new instance.',
+            version='2.23',
+        )
+
+        self._dataloader = loader
 
     @contextmanager
     def set_temporary_context(self, **kwargs):
@@ -942,7 +963,7 @@ class Templar:
         return self._lookup(name, *args, **kwargs)
 
     def _lookup(self, name, /, *args, **kwargs):
-        instance = lookup_loader.get(name, loader=self._loader, templar=self)
+        instance = lookup_loader.get(name, loader=self._dataloader, templar=self)
 
         if instance is None:
             raise AnsibleError("lookup plugin (%s) not found" % name)
