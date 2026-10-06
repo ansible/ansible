@@ -299,6 +299,27 @@ def _unroll_iterator(func):
     return functools.update_wrapper(wrapper, func)
 
 
+def _wrap_test(name, func):
+    """Wrapper function, that intercepts the result of a test plugin
+    and ensures it is a boolean, deprecating any other result type.
+    """
+    def wrapper(*args, **kwargs):
+        ret = func(*args, **kwargs)
+
+        if not isinstance(ret, bool):
+            display.deprecated(
+                msg=f'The test plugin {name!r} returned a non-boolean result of type {type(ret)!r}. '
+                    'Test plugins must have a boolean result.',
+                version='2.23',
+            )
+
+            ret = bool(ret)
+
+        return ret
+
+    return functools.update_wrapper(wrapper, func)
+
+
 def _wrap_native_text(func):
     """Wrapper function, that intercepts the result of a filter
     and wraps it into NativeJinjaText which is then used
@@ -456,6 +477,9 @@ class JinjaPluginIntercept(MutableMapping):
             else:
                 # conditionally unroll iterators/generators to avoid having to use `|list` after every filter
                 func = _unroll_iterator(func)
+        elif self._pluginloader.type == 'test':
+            # tests must return a boolean
+            func = _wrap_test(key, func)
 
         return func
 
