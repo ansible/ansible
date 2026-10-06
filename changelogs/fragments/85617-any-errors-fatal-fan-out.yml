@@ -1,0 +1,10 @@
+bugfixes:
+  - any_errors_fatal - do not strand a host that never entered the task batch
+    where the fatal error occurred (for example because it diverged earlier
+    via a conditional ``include_tasks``/``include_role``). Such hosts were
+    previously swept into the fatal failure with no path back into a
+    ``rescue`` section, and were silently dropped from the rest of the play
+    with no error shown (https://github.com/ansible/ansible/issues/85617).
+  - max_fail_percentage - fix the same class of bug as above, where a host
+    that never participated in the batch whose failure rate tripped
+    ``max_fail_percentage`` could also be stranded.

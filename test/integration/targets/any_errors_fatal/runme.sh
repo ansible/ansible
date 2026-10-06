@@ -47,3 +47,17 @@ ansible-playbook -i inventory "$@" 80981.yml | tee out.txt
 [ "$(grep -c 'SHOULD NOT HAPPEN' out.txt)" -eq 0 ]
 [ "$(grep -c 'rescuedd' out.txt)" -eq 2 ]
 [ "$(grep -c 'recovered' out.txt)" -eq 2 ]
+
+# https://github.com/ansible/ansible/issues/85617
+# any_errors_fatal must not strand a host that never entered the rescued block
+# (e.g. because it diverged earlier via a conditional include_tasks).
+ansible-playbook -i inventory "$@" 85617.yml | tee out.txt
+[ "$(grep -c 'SHOULD HAPPEN' out.txt)" -eq 2 ]
+
+# same bug, but for max_fail_percentage instead of any_errors_fatal.
+ansible-playbook -i inventory "$@" 85617_max_fail_percentage.yml | tee out.txt
+[ "$(grep -c 'SHOULD HAPPEN' out.txt)" -eq 1 ]
+
+# any_errors_fatal + force_handlers together must not strand a diverged host either.
+ansible-playbook -i inventory "$@" 85617_force_handlers.yml | tee out.txt
+[ "$(grep -c 'SHOULD HAPPEN' out.txt)" -eq 2 ]
