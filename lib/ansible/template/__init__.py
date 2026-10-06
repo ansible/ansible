@@ -565,7 +565,7 @@ class Templar:
 
     def __init__(self, loader, variables=None):
         self._loader = loader
-        self._available_variables = {} if variables is None else variables
+        self._variables = {} if variables is None else variables
 
         self._fail_on_undefined_errors = C.DEFAULT_UNDEFINED_VAR_BEHAVIOR
 
@@ -648,7 +648,7 @@ class Templar:
 
     @property
     def available_variables(self):
-        return self._available_variables
+        return self._variables
 
     @available_variables.setter
     def available_variables(self, variables):
@@ -661,7 +661,28 @@ class Templar:
 
         if not isinstance(variables, Mapping):
             raise AnsibleAssertionError("the type of 'variables' should be a Mapping but was a %s" % (type(variables)))
-        self._available_variables = variables
+        self._variables = variables
+
+    @property
+    def _available_variables(self):
+        """Deprecated. Use `available_variables` instead."""
+        # Commonly abused by numerous collection lookup plugins and the Ceph Ansible `config_template` action.
+        display.deprecated(
+            msg='Direct access to the `_available_variables` internal attribute is deprecated. Use `available_variables` instead.',
+            version='2.23',
+        )
+
+        return self.available_variables
+
+    @_available_variables.setter
+    def _available_variables(self, variables):
+        """Deprecated. Use `available_variables` instead."""
+        display.deprecated(
+            msg='Direct access to the `_available_variables` internal attribute is deprecated. Use `available_variables` instead.',
+            version='2.23',
+        )
+
+        self.available_variables = variables
 
     @contextmanager
     def set_temporary_context(self, **kwargs):
@@ -725,8 +746,8 @@ class Templar:
             only_one = self.SINGLE_VAR.match(variable)
             if only_one:
                 var_name = only_one.group(1)
-                if var_name in self._available_variables:
-                    resolved_val = self._available_variables[var_name]
+                if var_name in self._variables:
+                    resolved_val = self._variables[var_name]
                     if isinstance(resolved_val, NON_TEMPLATED_TYPES):
                         return resolved_val
                     elif resolved_val is None:
@@ -801,7 +822,7 @@ class Templar:
         if isinstance(variable, string_types):
             contains_filters = "|" in variable
             first_part = variable.split("|")[0].split(".")[0].split("[")[0]
-            if (contains_filters or first_part in self._available_variables) and self.environment.variable_start_string not in variable:
+            if (contains_filters or first_part in self._variables) and self.environment.variable_start_string not in variable:
                 return "%s%s%s" % (self.environment.variable_start_string, variable, self.environment.variable_end_string)
 
         # the variable didn't meet the conditions to be converted,
@@ -841,7 +862,7 @@ class Templar:
         loop_terms = listify_lookup_plugin_terms(terms=args, templar=self, fail_on_undefined=True, convert_bare=False)
         # safely catch run failures per #5059
         try:
-            ran = instance.run(loop_terms, variables=self._available_variables, **kwargs)
+            ran = instance.run(loop_terms, variables=self._variables, **kwargs)
         except (AnsibleUndefinedVariable, UndefinedError) as e:
             raise AnsibleUndefinedVariable(e)
         except AnsibleOptionsError as e:
