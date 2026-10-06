@@ -506,7 +506,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
     def get_default_vars(self, dep_chain=None):
         default_vars_full = self._default_vars_full
 
-        # Note: In case of a depchain we need to recompute the default vars everytime (not use cache) to include the parent's default vars
+        # Note: In case of a depchain we need to recompute the default vars every time (not use cache) to include the parent's default vars
         if dep_chain:
             for parent in dep_chain:
                 default_vars_full = combine_vars(default_vars_full, parent._default_vars)
