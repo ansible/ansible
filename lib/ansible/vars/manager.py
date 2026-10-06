@@ -393,7 +393,7 @@ class VariableManager:
         if task:
             if task._role:
                 all_vars = _combine_and_track(all_vars, task._role.get_vars(task.get_dep_chain(), include_params=False, only_exports=False),
-                                                "role '%s' all vars" % task._role.name)
+                                              "role '%s' all vars" % task._role.name)
             all_vars = _combine_and_track(all_vars, task.get_vars(), "task vars")
 
         # next, we merge in the vars cache (include vars) and nonpersistent
