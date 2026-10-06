@@ -1,0 +1,23 @@
+---
+- hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: Verify to_bool
+      assert:
+        that:
+          - (true|bool)==true
+          - ("TrUe"|bool)==true
+          - (1|bool)==true
+          - ('1'|bool)==true
+          - ('on'|bool)==true
+          - (false|bool)==false
+          - ("FaLsE"|bool)==false
+          - (0|bool)==false
+          - ('0'|bool)==false
+          - ('off'|bool)==false
+          # deprecated scenarios
+          - (None|bool)==false
+          - (1.0|bool)==true
+          - (0.0|bool)==false
+          - (7|bool)==false
+          - ({}|bool)==false
