@@ -23,8 +23,11 @@ from collections import defaultdict
 from unittest import mock
 
 import unittest
+
+import pytest
+
 from ansible.errors import AnsibleError
-from ansible.utils.vars import combine_vars, merge_hash
+from ansible.utils.vars import combine_vars, merge_hash, validate_variable_name
 from ansible.vars.manager import VarsWithSources
 
 
@@ -285,3 +288,44 @@ class TestVariableUtils(unittest.TestCase):
             "b": high['b'] + [1, 1, 2]
         }
         self.assertEqual(merge_hash(low, high, True, 'prepend_rp'), expected)
+
+
+@pytest.mark.parametrize("name", ["foo", "foo1_23", "_foo", "pass", "continue", "TRUE"])
+def test_validate_variable_name_valid(name):
+    """Verify valid variable names, including Python keywords which are not Jinja keywords, are accepted."""
+    assert validate_variable_name(name) is None
+
+
+@pytest.mark.parametrize("name", ["true", "false", "none", "True", "False", "None", "not"])
+def test_validate_variable_name_jinja_keyword(name):
+    """Verify names with special meaning to Jinja are rejected."""
+    with pytest.raises(AnsibleError) as error:
+        validate_variable_name(name)
+
+    assert f"Invalid variable name {name!r}." in str(error.value)
+
+
+@pytest.mark.parametrize("name", ["foo ", " foo", "1234", "1234abc", "", "   ", "foo bar", "no-dashed-names-for-you", "křížek"])
+def test_validate_variable_name_invalid(name):
+    """Verify names which are not valid ASCII Python identifiers are rejected."""
+    with pytest.raises(AnsibleError) as error:
+        validate_variable_name(name)
+
+    assert f"Invalid variable name {name!r}." in str(error.value)
+
+
+@pytest.mark.parametrize("name, type_name", [(1, "int"), (1.1, "float"), (True, "bool"), (None, "NoneType")])
+def test_validate_variable_name_invalid_scalar_type(name, type_name):
+    """Verify non-string scalar names are rejected, with both the name and its type reported."""
+    with pytest.raises(AnsibleError) as error:
+        validate_variable_name(name)
+
+    assert f"Invalid variable name {str(name)!r} of type {type_name!r}." in str(error.value)
+
+
+def test_validate_variable_name_invalid_non_scalar_type():
+    """Verify non-scalar names are rejected, with only the type reported."""
+    with pytest.raises(AnsibleError) as error:
+        validate_variable_name(["foo"])
+
+    assert "Invalid variable name of type 'list'." in str(error.value)

@@ -19,12 +19,16 @@ from __future__ import annotations
 
 from collections.abc import Mapping, MutableMapping
 
+from ansible.errors import AnsibleError
 from ansible.inventory.group import Group, InventoryObjectType
 from ansible.parsing.utils.addresses import patterns
-from ansible.utils.vars import combine_vars, get_unique_id
+from ansible.utils.display import Display
+from ansible.utils.vars import combine_vars, get_unique_id, validate_variable_name, _VARIABLE_NAME_HELP_TEXT
 
 
 __all__ = ['Host']
+
+display = Display()
 
 
 class Host:
@@ -144,6 +148,14 @@ class Host:
         return removed
 
     def set_variable(self, key, value):
+        try:
+            validate_variable_name(key)
+        except AnsibleError:
+            display.deprecated(
+                msg=f'Accepting inventory variable with invalid name {key!r}. {_VARIABLE_NAME_HELP_TEXT}',
+                version='2.23',
+            )
+
         if key in self.vars and isinstance(self.vars[key], MutableMapping) and isinstance(value, Mapping):
             self.vars = combine_vars(self.vars, {key: value})
         else:

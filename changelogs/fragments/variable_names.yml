@@ -1,0 +1,2 @@
+deprecated_features:
+  - inventory plugins - Setting invalid Ansible variable names in inventory plugins is deprecated.
