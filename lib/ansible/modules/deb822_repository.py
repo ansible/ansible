@@ -393,12 +393,8 @@ def write_signed_by_key(module, v, slug):
     ext = 'asc' if is_armored(b_data) else 'gpg'
     filename = make_signed_by_filename(slug, ext)
 
-    if hashlib.sha256(b_data).hexdigest() != module.sha256(filename):
-        changed |= ensure_keyrings_dir(module)
-        if not module.check_mode:
-            write_bytes_atomically(module, filename, b_data)
-        changed |= True
-
+    changed |= ensure_keyrings_dir(module)
+    changed |= write_file_if_changed(module, filename, b_data)
     changed |= module.set_mode_if_different(filename, S_IRWU_RG_RO, False)
 
     return changed, filename, None
