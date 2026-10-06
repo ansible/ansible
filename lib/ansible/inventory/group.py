@@ -25,7 +25,7 @@ from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.module_utils.common.text.converters import to_native, to_text
 from ansible.utils.display import Display
-from ansible.utils.vars import combine_vars
+from ansible.utils.vars import combine_vars, validate_variable_name, _VARIABLE_NAME_HELP_TEXT
 
 display = Display()
 
@@ -249,6 +249,14 @@ class Group:
         return removed
 
     def set_variable(self, key, value):
+
+        try:
+            validate_variable_name(key)
+        except AnsibleError:
+            display.deprecated(
+                msg=f'Accepting inventory variable with invalid name {key!r}. {_VARIABLE_NAME_HELP_TEXT}',
+                version='2.23',
+            )
 
         if key == 'ansible_group_priority':
             self.set_priority(int(value))
