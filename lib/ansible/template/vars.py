@@ -47,7 +47,7 @@ class AnsibleJ2Vars(ChainMap):
             # object which fails only after its first usage allowing us to
             # do lazy evaluation and passing it into filters/tests that
             # operate on such objects.
-            return self._templar.environment.undefined(
+            return self._templar._environment.undefined(
                 hint=f"{variable}: {e.message}",
                 name=varname,
                 exc=AnsibleUndefinedVariable,

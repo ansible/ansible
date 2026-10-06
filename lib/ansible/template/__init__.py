@@ -684,23 +684,23 @@ class Templar:
 
         environment_class = AnsibleNativeEnvironment if C.DEFAULT_JINJA2_NATIVE else AnsibleEnvironment
 
-        self.environment = environment_class(
+        self._environment = environment_class(
             extensions=self._get_extensions(),
             loader=FileSystemLoader(loader.get_basedir() if loader else '.'),
         )
-        self.environment.template_class.environment_class = environment_class
+        self._environment.template_class.environment_class = environment_class
 
         # Custom globals
-        self.environment.globals['lookup'] = self._lookup
-        self.environment.globals['query'] = self.environment.globals['q'] = self._query_lookup
-        self.environment.globals['now'] = self._now_datetime
-        self.environment.globals['undef'] = self._make_undefined
+        self._environment.globals['lookup'] = self._lookup
+        self._environment.globals['query'] = self._environment.globals['q'] = self._query_lookup
+        self._environment.globals['now'] = self._now_datetime
+        self._environment.globals['undef'] = self._make_undefined
 
         # the current rendering context under which the templar class is working
         self.cur_context = None
 
         # this regex is re-compiled each time variable_start_string and variable_end_string are possibly changed
-        self._compile_single_var(self.environment)
+        self._compile_single_var(self._environment)
 
         self.jinja2_native = C.DEFAULT_JINJA2_NATIVE
 
@@ -719,11 +719,11 @@ class Templar:
         # We need to use __new__ to skip __init__, mainly not to create a new
         # environment there only to override it below
         new_env = object.__new__(environment_class)
-        new_env.__dict__.update(self.environment.__dict__)
+        new_env.__dict__.update(self._environment.__dict__)
 
         new_templar = object.__new__(Templar)
         new_templar.__dict__.update(self.__dict__)
-        new_templar.environment = new_env
+        new_templar._environment = new_env
 
         new_templar.jinja2_native = environment_class is AnsibleNativeEnvironment
 
@@ -818,6 +818,28 @@ class Templar:
 
         self._dataloader = loader
 
+    @property
+    def environment(self):
+        """Deprecated. Consider using `copy_with_new_env` or passing `overrides` to `template`."""
+        display.deprecated(
+            msg='Direct access to the `environment` attribute is deprecated. '
+                'Consider using `copy_with_new_env` or passing `overrides` to `template`.',
+            version='2.23',
+        )
+
+        return self._environment
+
+    @environment.setter
+    def environment(self, environment):
+        """Deprecated. Consider using `copy_with_new_env` or passing `overrides` to `template`."""
+        display.deprecated(
+            msg='Direct access to the `environment` attribute is deprecated. '
+                'Consider using `copy_with_new_env` or passing `overrides` to `template`.',
+            version='2.23',
+        )
+
+        self._environment = environment
+
     @contextmanager
     def set_temporary_context(self, **kwargs):
         """Context manager used to set temporary templating context, without having to worry about resetting
@@ -828,12 +850,12 @@ class Templar:
         """
         mapping = {
             'available_variables': self,
-            'searchpath': self.environment.loader,
+            'searchpath': self._environment.loader,
         }
         original = {}
 
         for key, value in kwargs.items():
-            obj = mapping.get(key, self.environment)
+            obj = mapping.get(key, self._environment)
             try:
                 original[key] = getattr(obj, key)
                 if value is not None:
@@ -845,7 +867,7 @@ class Templar:
         yield
 
         for key in original:
-            obj = mapping.get(key, self.environment)
+            obj = mapping.get(key, self._environment)
             setattr(obj, key, original[key])
 
     def template(self, variable, convert_bare=False, preserve_trailing_newlines=True, escape_backslashes=True, fail_on_undefined=None, overrides=None,
@@ -896,7 +918,7 @@ class Templar:
                 disable_lookups=disable_lookups,
                 convert_data=convert_data,
             )
-            self._compile_single_var(self.environment)
+            self._compile_single_var(self._environment)
 
             return result
 
@@ -930,7 +952,7 @@ class Templar:
     def is_template(self, data):
         '''lets us know if data has a template'''
         if isinstance(data, string_types):
-            return is_template(data, self.environment)
+            return is_template(data, self._environment)
         elif isinstance(data, (list, tuple)):
             for v in data:
                 if self.is_template(v):
@@ -944,7 +966,7 @@ class Templar:
     templatable = is_template
 
     def is_possibly_template(self, data, overrides=None):
-        data, env = _create_overlay(data, overrides, self.environment)
+        data, env = _create_overlay(data, overrides, self._environment)
         return is_possibly_template(data, env)
 
     def _convert_bare_variable(self, variable):
@@ -956,8 +978,8 @@ class Templar:
         if isinstance(variable, string_types):
             contains_filters = "|" in variable
             first_part = variable.split("|")[0].split(".")[0].split("[")[0]
-            if (contains_filters or first_part in self._variables) and self.environment.variable_start_string not in variable:
-                return "%s%s%s" % (self.environment.variable_start_string, variable, self.environment.variable_end_string)
+            if (contains_filters or first_part in self._variables) and self._environment.variable_start_string not in variable:
+                return "%s%s%s" % (self._environment.variable_start_string, variable, self._environment.variable_end_string)
 
         # the variable didn't meet the conditions to be converted,
         # so just return it as-is
@@ -1089,7 +1111,7 @@ class Templar:
         try:
             # NOTE Creating an overlay that lives only inside do_template means that overrides are not applied
             # when templating nested variables in AnsibleJ2Vars where Templar.environment is used, not the overlay.
-            data, myenv = _create_overlay(data, overrides, self.environment)
+            data, myenv = _create_overlay(data, overrides, self._environment)
             # in case delimiters change
             self._compile_single_var(myenv)
 

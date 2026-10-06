@@ -65,7 +65,7 @@ def test_non_boolean_test_result_in_template(deprecations):
 
     assert templar.template("{{ 'anything' is nonbool }}") is True
 
-    deprecations.assert_called_once()
+    assert deprecations.call_count == 2
 
     assert "The test plugin 'nonbool' returned a non-boolean result" in deprecations.call_args.kwargs['msg']
 
