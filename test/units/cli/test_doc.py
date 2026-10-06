@@ -5,7 +5,7 @@ import pytest
 from ansible import constants as C
 from ansible.cli.doc import DocCLI, RoleMixin
 from ansible.plugins.loader import module_loader, init_plugin_loader
-
+from ansible.cli.doc import display
 
 C.ANSIBLE_NOCOLOR = True
 TTY_IFY_DATA = {
@@ -133,3 +133,27 @@ def test_legacy_modules_list():
     obj.parse()
     result = obj._list_plugins('module', module_loader)
     assert len(result) > 0
+
+def test_role_options_warn_when_used_for_non_roles():
+    warnings = []
+    display.warning = warnings.append
+    try:
+        DocCLI(args=['ansible-doc', '--roles-path', '/tmp/roles', '--entry-point', 'main']).parse()
+    finally:
+        del display.warning
+
+    assert [w for w in warnings if 'running the development version' not in w] == [
+        '--roles-path is only used with --type role.',
+        '--entry-point is only used with --type role.',
+    ]
+
+
+def test_role_options_do_not_warn_for_roles():
+    warnings = []
+    display.warning = warnings.append
+    try:
+        DocCLI(args=['ansible-doc', '--type', 'role', '--roles-path', '/tmp/roles', '--entry-point', 'main']).parse()
+    finally:
+        del display.warning
+
+    assert [w for w in warnings if 'running the development version' not in w] == []
