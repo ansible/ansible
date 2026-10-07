@@ -13,7 +13,14 @@ ansible-inventory --list -i inventories/invalid_var_names.yml 2>&1 | tee out.txt
 grep out.txt -e "\[DEPRECATION WARNING\]: Accepting inventory variable with invalid name 'var-"
 grep out.txt -e "\[DEPRECATION WARNING\]: Accepting inventory variable with invalid name 'group-"
 
-ansible-playbook args_empty.yml
+ansible-playbook args_empty.yml 2>&1 | tee out.txt
+grep out.txt -e "\[DEPRECATION WARNING\]: Using a mapping for"
+grep out.txt -e "\[DEPRECATION WARNING\]: Merging legacy k=v args"
+tr -s '[:space:]' ' ' < out.txt > out_unwrapped.txt
+grep out_unwrapped.txt -e "Using a mapping for \`action\` is deprecated. Use a string value for \`action\`."
+grep out_unwrapped.txt -e "Merging legacy k=v args ('kv1') into task args. Include all task args in the task \`args\` mapping."
+grep out_unwrapped.txt -e "Merging legacy k=v args ('kv1', 'kv2') into task args. Include all task args in the task \`args\` mapping."
+grep out_unwrapped.txt -e "Ignoring empty task \`args\` keyword. A mapping or template which resolves to a mapping is required."
 
 ansible-playbook to_bool.yml
 
@@ -23,32 +30,27 @@ grep out.txt -e "\[DEPRECATION WARNING\]: The from_yaml filter ignored non-strin
 
 ansible-playbook non_boolean_test_plugins.yml 2>&1 | tee out.txt
 grep out.txt -e "\[DEPRECATION WARNING\]: The test plugin 'passthru' returned a non-boolean result"
-# the warning text is wrapped to the terminal width, so unwrap it before matching the full message
 tr -s '[:space:]' ' ' < out.txt > out_unwrapped.txt
 grep out_unwrapped.txt -e "The test plugin 'passthru' returned a non-boolean result of type <class 'str'>"
 grep out_unwrapped.txt -e "The test plugin 'passthru' returned a non-boolean result of type <class 'int'>"
 
 ansible-playbook available_variables.yml 2>&1 | tee out.txt
 grep out.txt -e "\[DEPRECATION WARNING\]: Direct access to the"
-# the warning text is wrapped to the terminal width, so unwrap it before matching the full message
 tr -s '[:space:]' ' ' < out.txt > out_unwrapped.txt
 grep out_unwrapped.txt -e "Direct access to the \`_available_variables\` internal attribute is deprecated. Use \`available_variables\` instead."
 
 ansible-playbook loader.yml 2>&1 | tee out.txt
 grep out.txt -e "\[DEPRECATION WARNING\]: Direct access to the"
-# the warning text is wrapped to the terminal width, so unwrap it before matching the full message
 tr -s '[:space:]' ' ' < out.txt > out_unwrapped.txt
 grep out_unwrapped.txt -e "Direct access to the \`_loader\` internal attribute is deprecated. Use \`copy_with_new_env\` to create a new instance."
 
 ansible-playbook environment.yml 2>&1 | tee out.txt
 grep out.txt -e "\[DEPRECATION WARNING\]: Direct access to the"
-# the warning text is wrapped to the terminal width, so unwrap it before matching the full message
 tr -s '[:space:]' ' ' < out.txt > out_unwrapped.txt
 grep out_unwrapped.txt -e "Direct access to the \`environment\` attribute is deprecated. Consider using \`copy_with_new_env\` or passing \`overrides\` to \`template\`."
 
 ansible-playbook unknown_type.yml 2>&1 | tee out.txt
 grep out.txt -e "\[WARNING\]: Encountered unknown type 'UnknownType' during template operation."
-# the warning text is wrapped to the terminal width, so unwrap it before matching the full message
 tr -s '[:space:]' ' ' < out.txt > out_unwrapped.txt
 grep out_unwrapped.txt -e "Encountered unknown type 'UnknownType' during template operation. Use supported types to avoid unexpected behavior."
 
