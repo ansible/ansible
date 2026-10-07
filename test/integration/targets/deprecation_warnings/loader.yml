@@ -1,0 +1,8 @@
+---
+- hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: Access the deprecated Templar._loader attribute from a lookup plugin
+      assert:
+        that:
+          - lookup('loader') == 'from the deprecated getter'

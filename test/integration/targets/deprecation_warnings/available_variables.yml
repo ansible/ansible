@@ -1,0 +1,8 @@
+---
+- hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: Access the deprecated Templar._available_variables attribute from a lookup plugin
+      assert:
+        that:
+          - lookup('available_variables') == 'from the deprecated setter'
