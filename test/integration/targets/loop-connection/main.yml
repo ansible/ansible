@@ -31,3 +31,56 @@
       that:
       - connected_test.results[0].stderr == "ran - 1"
       - connected_test.results[1].stderr == "ran - 2"
+
+  - name: test loop reusing connection with templated ansible_host
+    include_tasks: connection_log_test.yml
+    vars:
+      hosts:
+      - host-a
+      - host-a
+      expected:
+      - connect host-a
+      - close host-a
+
+  - name: test loop reusing connections for alternating hosts
+    include_tasks: connection_log_test.yml
+    vars:
+      hosts:
+      - host-a
+      - host-b
+      - host-a
+      - host-b
+      expected:
+      - connect host-a
+      - connect host-b
+      - close host-a
+      - close host-b
+
+  - name: test least recently used connection is closed past the cache limit
+    include_tasks: connection_log_test.yml
+    vars:
+      hosts:
+      - host-1
+      - host-2
+      - host-3
+      - host-4
+      - host-5
+      - host-1  # reused, makes host-2 the least recently used
+      - host-6  # evicts host-2
+      - host-2  # new connection, evicts host-3
+      expected:
+      - connect host-1
+      - connect host-2
+      - connect host-3
+      - connect host-4
+      - connect host-5
+      - close host-2
+      - connect host-6
+      - close host-3
+      - connect host-2
+      # remaining connections are closed in least recently used order
+      - close host-4
+      - close host-5
+      - close host-1
+      - close host-6
+      - close host-2

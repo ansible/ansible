@@ -1,0 +1,7 @@
+bugfixes:
+  - >-
+    task executor - Fix connection reuse across loop items when ``ansible_host`` is templated. (https://github.com/ansible/ansible/issues/87019).
+  - >-
+    task executor - Fix cleanup of dropped connections across loop items when a different ``ansible_host`` was targeted per iteration. All created
+    connections in the loop will be closed when the task finished rather than the last loop iteration's connection only
+    (https://github.com/ansible/ansible/issues/87019).

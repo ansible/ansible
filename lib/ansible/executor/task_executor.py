@@ -58,6 +58,9 @@ _DELEGATED_CONNECTION_PLUGIN_VAR_NAMES = frozenset({
     'ansible_connection',
 })
 
+# maximum number of connections a task keeps open for reuse across loop items
+_MAX_CACHED_CONNECTIONS = 5
+
 __all__ = ['TaskExecutor']
 
 
@@ -83,7 +86,8 @@ class TaskExecutor:
         self._play_context = play_context
         self._loader = loader
         self._shared_loader_obj = shared_loader_obj
-        self._connection = None
+        self._connection: ConnectionBase | None = None
+        self._connection_pool: dict[tuple[str, str], ConnectionBase] = {}
         self._final_q = final_q
         self._variable_manager = variable_manager
         self._loop_eval_error: Exception | None = None
@@ -132,12 +136,22 @@ class TaskExecutor:
 
             return utr
         finally:
-            try:
-                self._connection.close()
-            except AttributeError:
-                pass
-            except Exception as e:
-                display.debug(u"error closing connection: %s" % to_text(e))
+            connections = list(self._connection_pool.values())
+
+            # the current connection may not be cached, e.g. the local
+            # connection used for persistent connection actions
+            if self._connection is not None and not any(c is self._connection for c in connections):
+                connections.append(self._connection)
+
+            for connection in connections:
+                self._close_connection(connection)
+
+    @staticmethod
+    def _close_connection(connection: ConnectionBase) -> None:
+        try:
+            connection.close()
+        except Exception as e:
+            display.debug(u"error closing connection: %s" % to_text(e))
 
     def _get_loop_items(self) -> list[t.Any] | None:
         """
@@ -477,19 +491,32 @@ class TaskExecutor:
         else:
             current_connection = self._task.connection
 
-        # get the connection and the handler for this execution
-        if (not self._connection or
-                not getattr(self._connection, 'connected', False) or
-                not self._connection.matches_name([current_connection]) or
-                # pc compare, left here for old plugins, but should be irrelevant for those
-                # using get_option, since they are cleared each iteration.
-                self._play_context.remote_addr != self._connection._play_context.remote_addr):
-            self._connection = self._get_connection(cvars, connection_templar, current_connection)
+        # get the connection and the handler for this execution, connections are
+        # cached by the plugin name and the templated remote_addr so they can be
+        # reused across loop items. self._play_context.remote_addr contains the
+        # post templated values.
+        # https://github.com/ansible/ansible/issues/87019
+        connection_key = (current_connection, self._play_context.remote_addr)
+        connection = self._connection_pool.pop(connection_key, None)
+        if connection is None or not getattr(connection, 'connected', False):
+            if connection is not None:
+                self._close_connection(connection)
+
+            # close the least recently used connection when at capacity, this
+            # prevents a large loop building up too many connections if each
+            # iteration is a unique remote_addr.
+            if len(self._connection_pool) >= _MAX_CACHED_CONNECTIONS:
+                self._close_connection(self._connection_pool.pop(next(iter(self._connection_pool))))
+
+            connection = self._get_connection(cvars, connection_templar, current_connection)
         else:
             # if connection is reused, its _play_context is no longer valid and needs
             # to be replaced with the one templated above, in case other data changed
-            self._connection._play_context = self._play_context
-            self._set_become_plugin(cvars, connection_templar, self._connection)
+            connection._play_context = self._play_context
+            self._set_become_plugin(cvars, connection_templar, connection)
+
+        # (re)insert so the dict order reflects the most recently used connection
+        self._connection = self._connection_pool[connection_key] = connection
 
         plugin_vars = self._set_connection_options(cvars, connection_templar)
 
