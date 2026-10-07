@@ -87,7 +87,7 @@ class TaskExecutor:
         self._loader = loader
         self._shared_loader_obj = shared_loader_obj
         self._connection: ConnectionBase | None = None
-        self._connection_pool: dict[tuple[str, str], ConnectionBase] = {}
+        self._connection_pool: dict[tuple[str, str | None, str], ConnectionBase] = {}
         self._final_q = final_q
         self._variable_manager = variable_manager
         self._loop_eval_error: Exception | None = None
@@ -492,11 +492,13 @@ class TaskExecutor:
             current_connection = self._task.connection
 
         # get the connection and the handler for this execution, connections are
-        # cached by the plugin name and the templated remote_addr so they can be
-        # reused across loop items. self._play_context.remote_addr contains the
-        # post templated values.
+        # cached by the plugin name, delegated host, and the templated remote_addr
+        # so they can be reused across loop items. self._play_context.remote_addr
+        # contains the post templated values but under delegation it is templated
+        # with the task host's vars rather than the delegated host's, so the
+        # resolved delegate_to is needed to keep delegated hosts apart.
         # https://github.com/ansible/ansible/issues/87019
-        connection_key = (current_connection, self._play_context.remote_addr)
+        connection_key = (current_connection, self._task.delegate_to, self._play_context.remote_addr)
         connection = self._connection_pool.pop(connection_key, None)
         if connection is None or not getattr(connection, 'connected', False):
             if connection is not None:

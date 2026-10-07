@@ -1,0 +1,46 @@
+- hosts: localhost
+  gather_facts: false
+  tasks:
+  - name: reset connection log
+    file:
+      path: '{{ dummy_connection_log }}'
+      state: absent
+
+# ansible_host is templated with the task host's vars when building the play
+# context remote_addr, so each delegated host resolves to host1.example.com there
+# and we test our connection key in the loop also uses the delegated host correctly.
+- hosts: host1
+  gather_facts: false
+  tasks:
+  - name: run command over each delegated host
+    raw: connection_log_test
+    delegate_to: '{{ item }}'
+    loop:
+    - host1
+    - host2
+    - host1
+    - host2
+
+- hosts: localhost
+  gather_facts: false
+  vars:
+    expected:
+    - connect host1.example.com
+    - connect host2.example.com
+    - close host1.example.com
+    - close host2.example.com
+  tasks:
+  - name: get connection log
+    set_fact:
+      actual: '{{ lookup("file", dummy_connection_log).splitlines() }}'
+
+  - name: display connection log
+    debug:
+      msg:
+        actual: '{{ actual }}'
+        expected: '{{ expected }}'
+
+  - name: assert connections were opened and closed as expected
+    assert:
+      that:
+      - actual == expected
