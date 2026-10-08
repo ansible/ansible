@@ -258,7 +258,7 @@ class _ComputedReqKindsMixin:
         req_version = art_mgr.get_direct_collection_version(tmp_inst_req)
         try:
             req_name = art_mgr.get_direct_collection_fqcn(tmp_inst_req)
-        except TypeError as err:
+        except (TypeError, ValueError) as err:
             # Looks like installed/source dir but isn't: doesn't have valid metadata.
             display.warning(
                 u"Collection at '{path!s}' has a {manifest_json!s} "
@@ -471,7 +471,20 @@ class _ComputedReqKindsMixin:
         tmp_inst_req = cls(req_name, req_version, req_source, req_type, req_signature_sources)
 
         if req_type not in {'galaxy', 'subdirs'} and req_name is None:
-            req_name = art_mgr.get_direct_collection_fqcn(tmp_inst_req)  # TODO: fix the cache key in artifacts manager?
+            try:
+                req_name = art_mgr.get_direct_collection_fqcn(tmp_inst_req)  # TODO: fix the cache key in artifacts manager?
+            except ValueError as err:
+                raise AnsibleError(to_native(err)) from err
+
+        if req_name is not None and not AnsibleCollectionRef.is_valid_collection_name(req_name):
+            # NOTE: the name decides where a collection gets installed, so it must be an FQCN
+            # NOTE: whether it came from the artifact metadata or from the requirement entry.
+            raise AnsibleError(
+                "The collection requirement entry has an invalid collection name '{name!s}'. "
+                'A collection name must be in the format <namespace>.<name> and contain '
+                'characters from [a-zA-Z0-9_] only.'.
+                format(name=to_native(req_name)),
+            )
 
         if req_type not in {'galaxy', 'subdirs'} and req_version == '*':
             req_version = art_mgr.get_direct_collection_version(tmp_inst_req)
