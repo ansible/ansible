@@ -318,7 +318,7 @@ class ParseResultDottedDict(dict):
         return [self.get(k, None) for k in ('scheme', 'netloc', 'path', 'params', 'query', 'fragment')]
 
 
-def mask_url(url: str, register: bool = True) -> str:
+def mask_url(url: str, *, register_secrets: bool = True) -> str:
     """
     Safely display a url by masking confidential data
     from a string or the result from urlparse/split
