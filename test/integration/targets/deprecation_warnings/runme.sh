@@ -22,7 +22,14 @@ grep out_unwrapped.txt -e "Merging legacy k=v args ('kv1') into task args. Inclu
 grep out_unwrapped.txt -e "Merging legacy k=v args ('kv1', 'kv2') into task args. Include all task args in the task \`args\` mapping."
 grep out_unwrapped.txt -e "Ignoring empty task \`args\` keyword. A mapping or template which resolves to a mapping is required."
 
-ansible-playbook to_bool.yml
+ansible-playbook to_bool.yml 2>&1 | tee out.txt
+grep out.txt -e "\[DEPRECATION WARNING\]: The \`bool\` filter coerced invalid value"
+tr -s '[:space:]' ' ' < out.txt > out_unwrapped.txt
+grep out_unwrapped.txt -e "The \`bool\` filter coerced invalid value None (NoneType) to False."
+grep out_unwrapped.txt -e "The \`bool\` filter coerced invalid value 1.0 (float) to True."
+grep out_unwrapped.txt -e "The \`bool\` filter coerced invalid value 0.0 (float) to False."
+grep out_unwrapped.txt -e "The \`bool\` filter coerced invalid value 7 (int) to False."
+grep out_unwrapped.txt -e "The \`bool\` filter coerced invalid value {} (dict) to False."
 
 ansible-playbook from_yaml.yml 2>&1 | tee out.txt
 grep out.txt -e "\[DEPRECATION WARNING\]: The from_yaml_all filter ignored non-string"
