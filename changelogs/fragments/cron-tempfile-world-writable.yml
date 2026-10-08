@@ -1,0 +1,2 @@
+bugfixes:
+  - cron - restrict write permissions on the temporary file staged for ``crontab`` installation to the owner so a local user cannot tamper with its contents before it is installed.

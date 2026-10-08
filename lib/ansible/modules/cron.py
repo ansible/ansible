@@ -224,7 +224,7 @@ import sys
 import tempfile
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.common.file import S_IRWU_RWG_RWO
+from ansible.module_utils.common.file import S_IRWU_RG_RO
 from ansible.module_utils.common.text.converters import to_bytes, to_native
 
 
@@ -314,7 +314,7 @@ class CronTab:
             fileh = open(self.b_cron_file, 'wb')
         else:
             filed, path = tempfile.mkstemp(prefix='crontab')
-            os.chmod(path, S_IRWU_RWG_RWO)
+            os.chmod(path, S_IRWU_RG_RO)
             fileh = os.fdopen(filed, 'wb')
 
         fileh.write(to_bytes(self.render()))
