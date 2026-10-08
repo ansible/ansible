@@ -68,6 +68,8 @@ from ansible.module_utils.basic import missing_required_lib
 from ansible.module_utils.common.collections import Mapping, OrderedSet, is_sequence
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.module_utils.compat import typing as _t
+from ansible.module_utils.secrets import register_secret
+
 
 try:
     import ssl
@@ -316,10 +318,11 @@ class ParseResultDottedDict(dict):
         return [self.get(k, None) for k in ('scheme', 'netloc', 'path', 'params', 'query', 'fragment')]
 
 
-def mask_url(url: str) -> str:
+def mask_url(url: str, register: bool = True) -> str:
     """
     Safely display a url by masking confidential data
     from a string or the result from urlparse/split
+    if register is true, the masked data will also be registered as a secret
     """
     mask = '****'
     try:
@@ -335,8 +338,13 @@ def mask_url(url: str) -> str:
     netloc: str
     if parsed_url.password:
         netloc = parsed_url.netloc.replace(f'{parsed_url.username}:{parsed_url.password}@', f'{mask}:{mask}@')
+        if register:
+            register_secret(parsed_url.password)
+            register_secret(parsed_url.username)
     else:
         netloc = parsed_url.netloc.replace(f'{parsed_url.username}@', f'{mask}@')
+        if register:
+            register_secret(parsed_url.username)
 
     return urlunparse(parsed_url._replace(netloc=netloc))
 
