@@ -10,15 +10,12 @@ DOCUMENTATION = """
     short_description: Run tasks over Microsoft's WinRM
     description:
         - Run commands or put/fetch on a target via WinRM
-        - This plugin allows extra arguments to be passed that are supported by the protocol but not explicitly defined here.
-          They should take the form of variables declared with the following pattern C(ansible_winrm_<option>).
     version_added: "2.0"
     extends_documentation_fragment:
         - connection_pipelining
     requirements:
         - pywinrm (python library)
     options:
-      # figure out more elegant 'delegation'
       remote_addr:
         description:
             - Address of the windows machine
@@ -80,9 +77,18 @@ DOCUMENTATION = """
            - List of winrm transports to attempt to use (ssl, plaintext, kerberos, etc)
            - If None (the default) the plugin will try to automatically guess the correct list. It will use
              V(kerberos) if the username looks like a UPN V(user@domain), otherwise it will use V(basic).
-           - The choices available depend on your version of pywinrm
+           - V(plaintext) and V(ssl) are aliases for V(basic) authentication over a HTTP or HTTPS connection
+             respectively, V(ssl) can also be used for V(certificate) authentication if O(cert_pem) is set.
         type: list
-        elements: string
+        elements: str
+        choices:
+          - basic
+          - certificate
+          - ntlm
+          - kerberos
+          - credssp
+          - plaintext
+          - ssl
         vars:
           - name: ansible_winrm_transport
       kerberos_command:
@@ -94,7 +100,7 @@ DOCUMENTATION = """
       kinit_args:
         description:
         - Extra arguments to pass to C(kinit) when getting the Kerberos authentication ticket.
-        - By default no extra arguments are passed into C(kinit) unless I(ansible_winrm_kerberos_delegation) is also
+        - By default no extra arguments are passed into C(kinit) unless O(kerberos_delegation) is also
           set. In that case C(-f) is added to the C(kinit) args so a forwardable ticket is retrieved.
         - If set, the args will overwrite any existing defaults for C(kinit), including C(-f) for a delegated ticket.
         type: str
@@ -150,14 +156,172 @@ DOCUMENTATION = """
             - Setting the difference between the operation and the read timeout to 10 seconds
               aligns it to the defaults used in the winrm-module and the PSRP-module which also
               uses 10 seconds (30 seconds for read timeout and 20 seconds for operation timeout)
-            - Corresponds to the C(operation_timeout_sec) and
-              C(read_timeout_sec) args in pywinrm so avoid setting these vars
-              with this one.
-            - The default value is whatever is set in the installed version of
-              pywinrm.
+            - If set, this overrides both O(operation_timeout_sec) and
+              O(read_timeout_sec) so avoid setting those options with this one.
         vars:
           - name: ansible_winrm_connection_timeout
         type: int
+      operation_timeout_sec:
+        description:
+            - The WS-Man operation timeout in seconds that runs on the managed
+              Windows host.
+            - This value must be less than O(read_timeout_sec).
+            - See O(connection_timeout) for more information on how the
+              operation and read timeouts interact.
+            - This option is ignored if O(connection_timeout) is set.
+        default: 20
+        type: int
+        vars:
+          - name: ansible_winrm_operation_timeout_sec
+      read_timeout_sec:
+        description:
+            - The HTTP read timeout in seconds that the Ansible controller will
+              wait for a response from the Windows host.
+            - This value must be greater than O(operation_timeout_sec).
+            - See O(connection_timeout) for more information on how the
+              operation and read timeouts interact.
+            - This option is ignored if O(connection_timeout) is set.
+        default: 30
+        type: int
+        vars:
+          - name: ansible_winrm_read_timeout_sec
+      server_cert_validation:
+        description:
+            - The HTTPS server certificate validation behaviour.
+            - V(validate) will validate the server certificate against the CA
+              trust store and check that the certificate matches the hostname
+              requested.
+            - V(ignore) will skip all certificate validation checks. This is not
+              recommended outside of testing as it disables the server identity
+              verification checks.
+            - O(ca_trust_path) can be used to specify a custom CA trust store
+              to use for the validation.
+        choices:
+          - validate
+          - ignore
+        default: validate
+        type: str
+        vars:
+          - name: ansible_winrm_server_cert_validation
+      ca_trust_path:
+        description:
+            - The path to a PEM encoded CA bundle or an OpenSSL CA directory to
+              use when validating the server certificate.
+            - If not set, the C(REQUESTS_CA_BUNDLE) or C(CURL_CA_BUNDLE)
+              environment variables are used if present, falling back to the
+              default CA trust store of the C(requests) Python library.
+            - This option is ignored if O(server_cert_validation) is V(ignore).
+        type: path
+        vars:
+          - name: ansible_winrm_ca_trust_path
+      cert_pem:
+        description:
+            - The path to a PEM encoded certificate to use for authentication
+              when O(transport) is V(certificate).
+            - Use O(cert_key_pem) to specify the path to the PEM encoded private
+              key for this certificate.
+        type: path
+        vars:
+          - name: ansible_winrm_cert_pem
+      cert_key_pem:
+        description:
+            - The path to a PEM encoded private key to use for authentication
+              when O(transport) is V(certificate).
+            - The private key must not be encrypted as pywinrm only supports
+              plaintext keys.
+            - Use O(cert_pem) to specify the path to the PEM encoded certificate
+              for this key.
+        type: path
+        vars:
+          - name: ansible_winrm_cert_key_pem
+      message_encryption:
+        description:
+            - Controls WinRM message encryption, which is separate from the
+              TLS encryption used when O(scheme) is V(https).
+            - Only the V(ntlm), V(kerberos), and V(credssp) transports support
+              message encryption.
+            - V(auto) uses message encryption only when connecting over
+              V(http) with a transport that supports it. Over V(https) the
+              TLS layer already encrypts the data.
+            - V(always) requires message encryption even over V(https) and will
+              fail if the transport does not support it, for example V(basic)
+              or V(certificate).
+            - V(never) disables message encryption even over V(http). This is
+              only recommended for debugging as all data will be sent in the
+              clear.
+        choices:
+          - auto
+          - always
+          - never
+        default: auto
+        type: str
+        vars:
+          - name: ansible_winrm_message_encryption
+      proxy:
+        description:
+            - The proxy URL to use when connecting to the Windows host.
+            - If not set, the proxy settings from the environment are used.
+            - Set to the string V(None) to disable the use of any proxy,
+              including any proxy settings from the environment.
+        type: str
+        vars:
+          - name: ansible_winrm_proxy
+      credssp_disable_tlsv1_2:
+        description:
+            - Disables the use of TLSv1.2 on the CredSSP authentication
+              channel when O(transport) is V(credssp).
+        type: bool
+        default: false
+        vars:
+          - name: ansible_winrm_credssp_disable_tlsv1_2
+        deprecated:
+          why: All supported Windows versions support TLSv1.2 so there is no longer a reason to disable it.
+          version: "2.26"
+          alternatives: Remove the option, TLSv1.2 is always used for the CredSSP authentication channel.
+      kerberos_delegation:
+        description:
+            - Requests a forwardable Kerberos ticket so the credentials can be
+              delegated to another server from the Windows host, also known as
+              unconstrained delegation.
+            - This can be used to overcome the double hop problem with WinRM.
+            - If O(kerberos_mode) is V(manual), the ticket obtained by the user
+              must already be forwardable for delegation to work.
+        type: bool
+        default: false
+        vars:
+          - name: ansible_winrm_kerberos_delegation
+      kerberos_hostname_override:
+        description:
+            - The hostname to use in the Service Principal Name (SPN) when
+              requesting the Kerberos service ticket.
+            - By default the hostname from O(remote_addr) is used. This allows
+              Ansible to connect to an IP address or alias but authenticate
+              using the DNS name of the Windows host.
+            - Only used when O(transport) is V(kerberos).
+        type: str
+        vars:
+          - name: ansible_winrm_kerberos_hostname_override
+      kerberos_service:
+        description:
+            - The service part of the Service Principal Name (SPN) used when
+              requesting the Kerberos service ticket.
+            - Only used when O(transport) is V(kerberos).
+        default: HTTP
+        type: str
+        vars:
+          - name: ansible_winrm_service
+          - name: ansible_winrm_kerberos_service
+      send_cbt:
+        description:
+            - Sends the Channel Binding Token (CBT) when authenticating with
+              the V(ntlm) or V(kerberos) transports over V(https).
+            - CBT binds the TLS channel to the authentication exchange to
+              protect against man in the middle attacks.
+            - This should only be disabled for debugging purposes.
+        type: bool
+        default: true
+        vars:
+          - name: ansible_winrm_send_cbt
 """
 
 import base64
@@ -173,7 +337,6 @@ import time
 import typing as t
 import xml.etree.ElementTree as ET
 
-from inspect import getfullargspec
 from urllib.parse import urlunsplit
 
 HAVE_KERBEROS = False
@@ -189,7 +352,6 @@ from ansible.errors import AnsibleError, AnsibleConnectionFailure
 from ansible.errors import AnsibleFileNotFound
 from ansible.executor.powershell.module_manifest import _bootstrap_powershell_script
 from ansible.module_utils.json_utils import _filter_non_json_lines
-from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.plugins.connection import ConnectionBase
 from ansible.plugins.shell import ShellBase
@@ -242,7 +404,6 @@ class Connection(ConnectionBase):
     module_implementation_preferences = ('.ps1', '.exe', '')
     allow_executable = False
     has_pipelining = True
-    allow_extras = True
 
     def __init__(self, *args: t.Any, **kwargs: t.Any) -> None:
 
@@ -292,12 +453,6 @@ class Connection(ConnectionBase):
         self._winrm_transport = self.get_option('transport')
         self._winrm_connection_timeout = self.get_option('connection_timeout')
 
-        if hasattr(winrm, 'FEATURE_SUPPORTED_AUTHTYPES'):
-            self._winrm_supported_authtypes = set(winrm.FEATURE_SUPPORTED_AUTHTYPES)
-        else:
-            # for legacy versions of pywinrm, use the values we know are supported
-            self._winrm_supported_authtypes = set(['plaintext', 'ssl', 'kerberos'])
-
         # calculate transport if needed
         if self._winrm_transport is None or self._winrm_transport[0] is None:
             # TODO: figure out what we want to do with auto-transport selection in the face of NTLM/Kerb/CredSSP/Cert/Basic
@@ -306,12 +461,6 @@ class Connection(ConnectionBase):
                 self._winrm_transport = ['kerberos']
             else:
                 self._winrm_transport = ['ssl'] if self._winrm_scheme == 'https' else ['plaintext']
-
-        unsupported_transports = set(self._winrm_transport).difference(self._winrm_supported_authtypes)
-
-        if unsupported_transports:
-            raise AnsibleError('The installed version of WinRM does not support transport(s) %s' %
-                               to_native(list(unsupported_transports), nonstring='simplerepr'))
 
         # if kerberos is among our transports and there's a password specified, we're managing the tickets
         kinit_mode = self.get_option('kerberos_mode')
@@ -323,23 +472,30 @@ class Connection(ConnectionBase):
         elif kinit_mode == "manual":
             self._kerb_managed = False
 
-        # arg names we're going passing directly
-        internal_kwarg_mask = {'self', 'endpoint', 'transport', 'username', 'password', 'scheme', 'path', 'kinit_mode', 'kinit_cmd'}
+        self._winrm_kwargs = dict(
+            username=self._winrm_user,
+            password=self._winrm_pass,
+            service=self.get_option('kerberos_service'),
+            cert_pem=self.get_option('cert_pem'),
+            cert_key_pem=self.get_option('cert_key_pem'),
+            server_cert_validation=self.get_option('server_cert_validation'),
+            kerberos_delegation=self.get_option('kerberos_delegation'),
+            read_timeout_sec=self.get_option('read_timeout_sec'),
+            operation_timeout_sec=self.get_option('operation_timeout_sec'),
+            kerberos_hostname_override=self.get_option('kerberos_hostname_override'),
+            message_encryption=self.get_option('message_encryption'),
+            credssp_disable_tlsv1_2=self.get_option('credssp_disable_tlsv1_2'),
+            send_cbt=self.get_option('send_cbt'),
+        )
 
-        self._winrm_kwargs = dict(username=self._winrm_user, password=self._winrm_pass)
-        argspec = getfullargspec(Protocol.__init__)
-        supported_winrm_args = set(argspec.args)
-        supported_winrm_args.update(internal_kwarg_mask)
-        passed_winrm_args = {v.replace('ansible_winrm_', '') for v in self.get_option('_extras')}
-        unsupported_args = passed_winrm_args.difference(supported_winrm_args)
+        # pywinrm falls back to the environment settings for these two if they
+        # are not explicitly set, so only pass them through when the user has
+        # set them.
+        if ca_trust_path := self.get_option('ca_trust_path'):
+            self._winrm_kwargs['ca_trust_path'] = ca_trust_path
 
-        # warn for kwargs unsupported by the installed version of pywinrm
-        for arg in unsupported_args:
-            display.warning("ansible_winrm_{0} unsupported by pywinrm (is an up-to-date version of pywinrm installed?)".format(arg))
-
-        # pass through matching extras, excluding the list we want to treat specially
-        for arg in passed_winrm_args.difference(internal_kwarg_mask).intersection(supported_winrm_args):
-            self._winrm_kwargs[arg] = self.get_option('_extras')['ansible_winrm_%s' % arg]
+        if proxy := self.get_option('proxy'):
+            self._winrm_kwargs['proxy'] = None if proxy.lower() == 'none' else proxy
 
     # Until pykerberos has enough goodies to implement a rudimentary kinit/klist, simplest way is to let each connection
     # auth itself with a private CCACHE.
@@ -368,7 +524,7 @@ class Connection(ConnectionBase):
             kinit_args = [to_text(a) for a in shlex.split(kinit_args) if a.strip()]
             kinit_cmdline.extend(kinit_args)
 
-        elif boolean(self.get_option('_extras').get('ansible_winrm_kerberos_delegation', False)):
+        elif self.get_option('kerberos_delegation'):
             kinit_cmdline.append('-f')
 
         kinit_cmdline.append(principal)

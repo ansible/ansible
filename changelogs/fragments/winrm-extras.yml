@@ -1,0 +1,7 @@
+minor_changes:
+  - winrm - Removed the connection plugin extras variable lookup. All ``ansible_winrm_*`` variables that were previously
+    passed through to pywinrm are now explicitly documented connection plugin options with the same variable names. Existing
+    inventories should continue to work unchanged.
+deprecated_features:
+  - winrm - The ``credssp_disable_tlsv1_2`` option (``ansible_winrm_credssp_disable_tlsv1_2``) is deprecated and will be
+    removed in ansible-core 2.26. All supported Windows versions support TLSv1.2 so there is no reason to disable it.
