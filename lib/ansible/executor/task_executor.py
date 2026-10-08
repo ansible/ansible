@@ -652,7 +652,7 @@ class TaskExecutor:
 
         task_keys = self._get_connection_task_keys()
         var_options = _resolve_connection_option_variables(connection_class, cvars, connection_templar)
-        connection_key = _get_connection_key(connection_class, task_keys, var_options)
+        connection_key = _get_connection_key(connection_class, task_keys, var_options, self._play_context.remote_addr)
 
         connection = self._connection_pool.pop(connection_key, None)
         if connection is None or not getattr(connection, 'connected', False):

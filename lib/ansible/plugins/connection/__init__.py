@@ -78,6 +78,7 @@ def _get_connection_key(
     connection: type[ConnectionBase],
     task_keys: dict[str, t.Any],
     var_options: dict[str, t.Any],
+    remote_addr: str | None,
 ) -> str:
     """
     Get a key that identifies a connection from the plugin class and the
@@ -87,6 +88,7 @@ def _get_connection_key(
         connection: The connection plugin class.
         task_keys: A dictionary of task-specific keys used to configure the connection.
         var_options: A dictionary of variable options resolved for the connection.
+        remote_addr: The templated PlayContext.remote_addr for the task.
     """
     # FUTURE: Look at making this a ConnectionBase cls method to have a public
     # way for connection plugin to define its own unique connection key.
@@ -107,7 +109,14 @@ def _get_connection_key(
     # ansible_connection, e.g. ssh vs ansible.builtin.ssh. A connection_plugins/
     # adjacent plugin could theoretically share the same module and class name so
     # instead we use the id(connection) to uniquely identify the plugin chosen.
-    option_inputs = repr((id(connection), option_task_keys, sorted(var_options.items())))
+    #
+    # The remote_addr is included for legacy plugins that read the address from
+    # PlayContext rather than a plugin option. Without it, a plugin with no option
+    # sourced from the host vars would share the same key across different
+    # delegated hosts in a loop and reuse a connection to the wrong host. For
+    # plugins that do define a remote_addr option this is redundant as it is
+    # derived from the same vars that are already in var_options.
+    option_inputs = repr((id(connection), remote_addr, option_task_keys, sorted(var_options.items())))
 
     return hashlib.sha256(option_inputs.encode(errors='surrogatepass')).hexdigest()
 
