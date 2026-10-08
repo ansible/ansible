@@ -1,0 +1,7 @@
+- name: Test register_secret failure outside of a task does not leak literal value
+  hosts: "{{ 'Zq2' | register_secret }}"
+  gather_facts: false
+  tasks:
+    - name: this task must never run
+      fail:
+        msg: the play should have failed before running any tasks
