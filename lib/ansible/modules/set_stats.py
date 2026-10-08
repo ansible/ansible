@@ -63,7 +63,7 @@ EXAMPLES = r"""
   ansible.builtin.set_stats:
     data:
       packages_installed: 31
-    per_host: yes
+    per_host: true
 
 - name: Aggregating random stats for all hosts using complex arguments
   ansible.builtin.set_stats:
@@ -71,11 +71,11 @@ EXAMPLES = r"""
       one_stat: 11
       other_stat: "{{ local_var * 2 }}"
       another_stat: "{{ some_registered_var.results | map(attribute='ansible_facts.some_fact') | list }}"
-    per_host: no
+    per_host: false
 
 - name: Setting stats (not aggregating)
   ansible.builtin.set_stats:
     data:
       the_answer: 42
-    aggregate: no
+    aggregate: false
 """
