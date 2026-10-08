@@ -23,7 +23,7 @@ from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.common.sentinel import Sentinel
 from ansible.module_utils.common.text.converters import to_text
 from ansible.parsing.dataloader import DataLoader
-from ansible.playbook.attribute import Attribute, FieldAttribute, NonInheritableFieldAttribute
+from ansible.playbook.attribute import Attribute, FieldAttribute, NonInheritableFieldAttribute, _RemovedFieldAttribute
 from ansible.plugins.loader import module_loader, action_loader
 from ansible.utils.collection_loader._collection_finder import _get_collection_metadata, AnsibleCollectionRef
 from ansible.utils.display import Display
@@ -96,6 +96,12 @@ class FieldAttributeBase:
         fattributes = {}
         for class_obj in reversed(cls.__mro__):
             for name, attr in list(class_obj.__dict__.items()):
+                if isinstance(attr, _RemovedFieldAttribute):
+                    # an inherited field attribute removed by a derived class
+                    removed = fattributes.pop(name, None)
+                    if removed and removed.alias:
+                        fattributes.pop(removed.alias, None)
+                    continue
                 if not isinstance(attr, Attribute):
                     continue
                 fattributes[name] = attr

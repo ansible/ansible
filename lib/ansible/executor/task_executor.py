@@ -838,9 +838,8 @@ class TaskExecutor:
                 )
 
             # Backwards compat for connection plugins that don't support become plugins
-            # Just do this unconditionally for now, we could move it inside of the
-            # AttributeError above later
-            self._play_context.set_become_plugin(become_plugin.name)
+            # deprecated: description='stop populating the removed PlayContext._become_plugin storage' core_version='2.26'
+            self._play_context._become_plugin = become_plugin.name  # set directly rather than via the deprecated set_become_plugin()
 
     def _set_plugin_options(self, plugin_type, variables, templar, task_keys):
         try:
@@ -908,12 +907,19 @@ class TaskExecutor:
             varnames.extend(self._set_plugin_options('become', variables, templar, task_keys))
 
             # FOR BACKWARDS COMPAT:
-            for option in ('become_user', 'become_flags', 'become_exe', 'become_pass'):
+            for option in ('become_user', 'become_pass'):
                 try:
                     setattr(self._play_context, option, self._connection.become.get_option(option))
                 except KeyError:
                     pass  # some plugins don't support all base flags
-            self._play_context.prompt = self._connection.become.prompt
+
+            # deprecated: description='stop populating the removed PlayContext become_flags, become_exe and prompt attributes' core_version='2.26'
+            for option in ('become_flags', 'become_exe'):
+                try:
+                    self._play_context._set_field(option, self._connection.become.get_option(option))
+                except KeyError:
+                    pass  # some plugins don't support all base flags
+            self._play_context._set_field('prompt', self._connection.become.prompt)
 
         # deals with networking sub_plugins (network_cli/httpapi/netconf)
         sub = getattr(self._connection, '_sub_plugin', None)

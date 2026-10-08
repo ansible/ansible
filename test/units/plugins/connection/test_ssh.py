@@ -37,9 +37,6 @@ class TestConnectionBaseClass(unittest.TestCase):
 
     def test_plugins_connection_ssh_module(self):
         play_context = PlayContext()
-        play_context.prompt = (
-            '[sudo via ansible, key=ouzmdnewuhucvuaabtjmweasarviygqq] password: '
-        )
         in_stream = StringIO()
 
         self.assertIsInstance(ssh.Connection(play_context, in_stream), ssh.Connection)

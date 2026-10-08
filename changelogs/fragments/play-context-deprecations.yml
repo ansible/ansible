@@ -1,0 +1,6 @@
+deprecated_features:
+  - PlayContext - the ``become_exe``, ``become_flags``, ``connection_lockfd``, ``force_handlers``, ``prompt``, ``start_at_task``, ``step`` and ``success_key``
+    attributes and the ``set_become_plugin()`` method are deprecated and will be removed in ansible-core 2.26. They are still populated until then,
+    but accessing them emits a deprecation warning naming the plugin responsible. Use the task, play, become plugin or ``context.CLIARGS`` values instead.
+    Set ``ANSIBLE_DISPLAY_TRACEBACK=deprecated`` to see a traceback showing exactly where the deprecated attribute is being accessed.
+  - connection plugins - the ``connection_lock()`` and ``connection_unlock()`` methods on ``ConnectionBase`` are deprecated and will be removed in ansible-core 2.26.

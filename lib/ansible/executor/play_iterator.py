@@ -22,6 +22,7 @@ import fnmatch
 from enum import IntEnum, IntFlag
 
 from ansible import constants as C
+from ansible import context
 from ansible.errors import AnsibleAssertionError
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.playbook.block import Block
@@ -215,34 +216,37 @@ class PlayIterator:
         self.handlers = [h for b in self._play.handlers for h in b.block]
 
         self._host_states = {}
-        start_at_matched = False
+
+        # set if a task matching --start-at-task is found in this play, so the
+        # TQM knows future plays shouldn't try to advance
+        self.start_at_matched = False
+        start_at_task = None if start_at_done else context.CLIARGS.get('start_at_task')
         batch = inventory.get_hosts(self._play.hosts, order=self._play.order)
         self.batch_size = len(batch)
         for host in batch:
             self.set_state_for_host(host.name, HostState(blocks=self._blocks))
             # if we're looking to start at a specific task, iterate through
             # the tasks for this host until we find the specified task
-            if play_context.start_at_task is not None and not start_at_done:
+            if start_at_task is not None:
                 while True:
                     (s, task) = self.get_next_task_for_host(host, peek=True)
                     if s.run_state == IteratingStates.COMPLETE:
                         break
-                    if task.name == play_context.start_at_task or (task.name and fnmatch.fnmatch(task.name, play_context.start_at_task)) or \
-                       task.get_name() == play_context.start_at_task or fnmatch.fnmatch(task.get_name(), play_context.start_at_task):
-                        start_at_matched = True
+                    if task.name == start_at_task or (task.name and fnmatch.fnmatch(task.name, start_at_task)) or \
+                       task.get_name() == start_at_task or fnmatch.fnmatch(task.get_name(), start_at_task):
+                        self.start_at_matched = True
                         break
                     self.set_state_for_host(host.name, s)
 
                 # finally, reset the host's state to IteratingStates.SETUP
-                if start_at_matched:
+                if self.start_at_matched:
                     self._host_states[host.name].did_start_at_task = True
                     self._host_states[host.name].run_state = IteratingStates.SETUP
 
-        if start_at_matched:
-            # we have our match, so clear the start_at_task field on the
-            # play context to flag that we've started at a task (and future
-            # plays won't try to advance)
-            play_context.start_at_task = None
+        if self.start_at_matched:
+            # the deprecated attribute was historically cleared once a match was found, preserve that until removal
+            # deprecated: description='stop clearing the removed PlayContext.start_at_task attribute' core_version='2.26'
+            play_context._set_field('start_at_task', None)
 
         self.end_play = False
         self.cur_task = 0

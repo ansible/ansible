@@ -19,9 +19,11 @@
 
 from __future__ import annotations
 
+import typing as t
+
 from ansible import constants as C
 from ansible import context
-from ansible.playbook.attribute import FieldAttribute
+from ansible.playbook.attribute import FieldAttribute, NonInheritableFieldAttribute, _DeprecatedFieldAttribute
 from ansible.playbook.base import Base
 from ansible.utils.display import Display
 
@@ -73,43 +75,75 @@ class PlayContext(Base):
 
     _post_validate_object = True
 
-    # base
-    module_compression = FieldAttribute(isa='string', default=C.DEFAULT_MODULE_COMPRESSION)
-    shell = FieldAttribute(isa='string')
-    executable = FieldAttribute(isa='string', default=C.DEFAULT_EXECUTABLE)
-
-    # connection fields, some are inherited from Base:
-    # (connection, port, remote_user, environment, no_log)
-    remote_addr = FieldAttribute(isa='string')
-    password = FieldAttribute(isa='string')
+    # Attributes inherited from Base, redeclared here so PlayContext lists everything it exposes. These must match the
+    # Base definition unless noted otherwise. When one of these is removed it must be replaced with
+    # _RemovedFieldAttribute, as simply deleting the declaration would expose the Base attribute again.
+    name = NonInheritableFieldAttribute(isa='string', default='', always_post_validate=True)
+    connection = FieldAttribute(isa='string', default=context.cliargs_deferred_get('connection'))
+    port = FieldAttribute(isa='int')
+    remote_user = FieldAttribute(isa='string', default=context.cliargs_deferred_get('remote_user'))
+    vars = NonInheritableFieldAttribute(isa='dict', priority=100, static=True, default=dict)
+    module_defaults = FieldAttribute(isa='list', extend=True, prepend=True)
+    environment = FieldAttribute(isa='list', extend=True, prepend=True)
+    no_log = FieldAttribute(isa='bool', default=C.DEFAULT_NO_LOG)
+    run_once = FieldAttribute(isa='bool')
+    ignore_errors = FieldAttribute(isa='bool')
+    ignore_unreachable = FieldAttribute(isa='bool')
+    check_mode = FieldAttribute(isa='bool', default=context.cliargs_deferred_get('check'))
+    diff = FieldAttribute(isa='bool', default=context.cliargs_deferred_get('diff'))
+    any_errors_fatal = FieldAttribute(isa='bool', default=C.ANY_ERRORS_FATAL)
+    throttle = FieldAttribute(isa='int', default=0)
+    debugger = FieldAttribute(isa='string')
+    # the connection timeout (-T), not the task timeout keyword which Base defines under the same name
     timeout = FieldAttribute(isa='int', default=C.DEFAULT_TIMEOUT)
-    connection_user = FieldAttribute(isa='string')
-    private_key_file = FieldAttribute(isa='string', default=C.DEFAULT_PRIVATE_KEY_FILE)
-    pipelining = FieldAttribute(isa='bool', default=C.ANSIBLE_PIPELINING)
-
-    # networking modules
-    network_os = FieldAttribute(isa='string')
-
-    # FIXME: docker - remove these
-    docker_extra_args = FieldAttribute(isa='string')
-
-    # ???
-    connection_lockfd = FieldAttribute(isa='int')
-
-    # privilege escalation fields
+    # the become fields have no CLI defaults here, the CLI values arrive through the task/play overrides
     become = FieldAttribute(isa='bool')
     become_method = FieldAttribute(isa='string')
     become_user = FieldAttribute(isa='string')
+    # deprecated: description='replace the deprecated PlayContext attribute with _RemovedFieldAttribute' core_version='2.26'
+    become_flags = _DeprecatedFieldAttribute(
+        isa='string', default=C.DEFAULT_BECOME_FLAGS, version='2.26',
+        help_text="Use the become plugin's 'become_flags' option instead, e.g. connection.become.get_option('become_flags').",
+    )
+    become_exe = _DeprecatedFieldAttribute(
+        isa='string', default=C.DEFAULT_BECOME_EXE, version='2.26',
+        help_text="Use the become plugin's 'become_exe' option instead, e.g. connection.become.get_option('become_exe').",
+    )
+
+    # Attributes defined only by PlayContext. These can simply be deleted when removed.
+    module_compression = FieldAttribute(isa='string', default=C.DEFAULT_MODULE_COMPRESSION)
+    shell = FieldAttribute(isa='string')
+    executable = FieldAttribute(isa='string', default=C.DEFAULT_EXECUTABLE)
+    remote_addr = FieldAttribute(isa='string')
+    password = FieldAttribute(isa='string')
+    connection_user = FieldAttribute(isa='string')
+    private_key_file = FieldAttribute(isa='string', default=C.DEFAULT_PRIVATE_KEY_FILE)
+    pipelining = FieldAttribute(isa='bool', default=C.ANSIBLE_PIPELINING)
+    network_os = FieldAttribute(isa='string')
+    docker_extra_args = FieldAttribute(isa='string')
     become_pass = FieldAttribute(isa='string')
-    become_exe = FieldAttribute(isa='string', default=C.DEFAULT_BECOME_EXE)
-    become_flags = FieldAttribute(isa='string', default=C.DEFAULT_BECOME_FLAGS)
-    prompt = FieldAttribute(isa='string')
-
-    start_at_task = FieldAttribute(isa='string')
-    step = FieldAttribute(isa='bool', default=False)
-
-    # "PlayContext.force_handlers should not be used, the calling code should be using play itself instead"
-    force_handlers = FieldAttribute(isa='bool', default=False)
+    # deprecated: description='remove the deprecated PlayContext attribute' core_version='2.26'
+    connection_lockfd = _DeprecatedFieldAttribute(isa='int', version='2.26')
+    prompt = _DeprecatedFieldAttribute(
+        isa='string', version='2.26',
+        help_text="Use the become plugin's 'prompt' attribute instead, e.g. connection.become.prompt.",
+    )
+    start_at_task = _DeprecatedFieldAttribute(
+        isa='string', version='2.26',
+        help_text="Use the command line option instead, e.g. ansible.context.CLIARGS.get('start_at_task').",
+    )
+    step = _DeprecatedFieldAttribute(
+        isa='bool', default=False, version='2.26',
+        help_text="Use the command line option instead, e.g. ansible.context.CLIARGS.get('step').",
+    )
+    # 2.7 was the last version of Ansible where this attribute was relevant. No
+    # public collections reference it, we don't add help_text because there is
+    # no public alterantive.
+    force_handlers = _DeprecatedFieldAttribute(isa='bool', default=False, version='2.26')
+    success_key = _DeprecatedFieldAttribute(
+        isa='string', default='', version='2.26',
+        help_text="Use the become plugin's 'success_key' attribute instead, e.g. connection.become.success_key.",
+    )
 
     def __init__(self, play=None, passwords=None, connection_lockfd=None):
         # Note: play is really not optional.  The only time it could be omitted is when we create
@@ -124,19 +158,14 @@ class PlayContext(Base):
         self.password = passwords.get('conn_pass', '')
         self.become_pass = passwords.get('become_pass', '')
 
-        self._become_plugin = None
-
-        self.prompt = ''
-        self.success_key = ''
+        self._become_plugin = None  # deprecated: description='remove the deprecated PlayContext attribute' core_version='2.26'
 
         # a file descriptor to be used during locking operations
-        self.connection_lockfd = connection_lockfd
+        self._connection_lockfd = connection_lockfd  # deprecated: description='remove the deprecated PlayContext attribute' core_version='2.26'
 
         # set options before play to allow play to override them
         if context.CLIARGS:
             self.set_attributes_from_cli()
-        else:
-            self._internal_verbosity = 0
 
         if play:
             self.set_attributes_from_play(play)
@@ -153,7 +182,14 @@ class PlayContext(Base):
                     setattr(self, flag, plugin.get_option(flag))
 
     def set_attributes_from_play(self, play):
-        self.force_handlers = play.force_handlers
+        self._force_handlers = play.force_handlers  # deprecated: description='remove the deprecated PlayContext attribute' core_version='2.26'
+
+    def _set_field(self, name: str, value: t.Any) -> None:
+        """Set a field attribute, populating deprecated attributes without triggering their deprecation warning."""
+        if isinstance(self.fattributes[name], _DeprecatedFieldAttribute):
+            setattr(self, f'_{name}', value)
+        else:
+            setattr(self, name, value)
 
     def set_attributes_from_cli(self):
         """
@@ -167,10 +203,10 @@ class PlayContext(Base):
         # From the command line.  These should probably be used directly by plugins instead
         # For now, they are likely to be moved to FieldAttribute defaults
         self.private_key_file = context.CLIARGS.get('private_key_file')  # Else default
-        self._internal_verbosity = context.CLIARGS.get('verbosity')  # Else default
 
         # Not every cli that uses PlayContext has these command line args so have a default
-        self.start_at_task = context.CLIARGS.get('start_at_task', None)  # Else default
+        # deprecated: description='remove the deprecated PlayContext attribute' core_version='2.26'
+        self._start_at_task = context.CLIARGS.get('start_at_task', None)
 
     def set_task_and_variable_override(self, task, variables, templar):
         """
@@ -188,7 +224,7 @@ class PlayContext(Base):
         # connection fields based on their values
         for attr in TASK_ATTRIBUTE_OVERRIDES:
             if (attr_val := getattr(task, attr, None)) is not None:
-                setattr(new_info, attr, attr_val)
+                new_info._set_field(attr, attr_val)
 
         # next, use the MAGIC_VARIABLE_MAPPING dictionary to update this
         # connection info object with 'magic' variables from the variable list.
@@ -251,10 +287,10 @@ class PlayContext(Base):
                 # if delegation task ONLY use delegated host vars, avoid delegated FOR host vars
                 if task.delegate_to is not None:
                     if isinstance(delegated_vars, dict) and variable_name in delegated_vars:
-                        setattr(new_info, attr, delegated_vars[variable_name])
+                        new_info._set_field(attr, delegated_vars[variable_name])
                         attrs_considered.append(attr)
                 elif variable_name in variables:
-                    setattr(new_info, attr, variables[variable_name])
+                    new_info._set_field(attr, variables[variable_name])
                     attrs_considered.append(attr)
                 # no else, as no other vars should be considered
 
@@ -305,7 +341,14 @@ class PlayContext(Base):
 
         return new_info
 
+    # deprecated: description='remove the deprecated PlayContext attribute' core_version='2.26'
     def set_become_plugin(self, plugin):
+        display.deprecated(
+            msg='The PlayContext.set_become_plugin() method is deprecated.',
+            version='2.26',
+            help_text="Use the connection plugin's set_become_plugin() method instead, e.g. connection.set_become_plugin(become_plugin).",
+        )
+
         self._become_plugin = plugin
 
     def update_vars(self, variables):
