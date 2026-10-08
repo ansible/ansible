@@ -135,6 +135,15 @@ options:
       - If specified, the environment variable will be inserted before the declaration of specified environment variable.
     type: str
     version_added: "2.1"
+  executable:
+    description:
+      - The explicit executable or pathname for the C(crontab) executable.
+      - For example V(fcrontab), on systems using C(fcron).
+      - If not an absolute path, the normal mechanism for resolving binary paths will be used.
+      - May cause unexpected issues if it is not a 'vixie cron' conformant variant.
+    type: path
+    default: crontab
+    version_added: "2.23"
 requirements:
   - cron (any 'vixie cron' conformant variant, like cronie)
 notes:
@@ -224,7 +233,7 @@ import sys
 import tempfile
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.common.file import S_IRWU_RWG_RWO
+from ansible.module_utils.common.file import S_IRWU_RWG_RWO, is_executable
 from ansible.module_utils.common.text.converters import to_bytes, to_native
 
 
@@ -247,7 +256,13 @@ class CronTab:
         self.lines = []
         self.ansible = "#Ansible: "
         self.n_existing = ''
-        self.cron_cmd = self.module.get_bin_path('crontab', required=True)
+        executable = module.params['executable']
+        if not os.path.isabs(executable):
+            # an absolute path is used as given, searching PATH for it would be meaningless
+            executable = module.get_bin_path(executable)
+        if not executable or not (os.path.isfile(executable) and is_executable(executable)):
+            module.fail_json(msg="Cannot find crontab executable '%s'." % module.params['executable'])
+        self.cron_cmd = executable
 
         if cron_file:
 
@@ -585,6 +600,7 @@ def main():
             env=dict(type='bool', default=False),
             insertafter=dict(type='str'),
             insertbefore=dict(type='str'),
+            executable=dict(type='path', default='crontab'),
         ),
         supports_check_mode=True,
         mutually_exclusive=[

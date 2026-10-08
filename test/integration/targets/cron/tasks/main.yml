@@ -319,3 +319,108 @@
 
   - assert:
       that: not cron_file_stats.stat.exists
+
+# BusyBox dispatches on argv[0], so its crontab applet cannot be reached under another name
+- name: Use an explicitly specified crontab executable (#85584)
+  when: ansible_facts["distribution"] != "Alpine"
+  vars:
+    cron_executables:
+      - '{{ crontab_bin.stdout }}'
+      - '{{ remote_dir }}/fcrontab'
+  block:
+    - name: Locate the crontab executable
+      shell: command -v crontab
+      register: crontab_bin
+      changed_when: false
+
+    - name: Link crontab to an executable with a different name
+      file:
+        src: '{{ crontab_bin.stdout }}'
+        dest: '{{ remote_dir }}/fcrontab'
+        state: link
+
+    - name: Add a cron task for each way of specifying the executable
+      cron:
+        name: 'test executable cron task {{ item }}'
+        job: 'date > {{ remote_dir }}/cron_canary_executable'
+        executable: '{{ item }}'
+      loop: '{{ cron_executables }}'
+      register: add_cron_task_executable
+
+    - name: Get the crontab entries
+      command: crontab -l
+      register: crontab_entries
+      changed_when: false
+
+    - assert:
+        that:
+          - item is changed
+          - "'test executable cron task ' ~ item.item in crontab_entries.stdout"
+      loop: '{{ add_cron_task_executable.results }}'
+      loop_control:
+        label: '{{ item.item }}'
+
+    - name: Fail on an executable that cannot be resolved
+      cron:
+        name: test unresolvable executable cron task
+        job: 'date > {{ remote_dir }}/cron_canary_executable'
+        executable: '{{ item }}'
+      loop:
+        - '{{ remote_dir }}/no_such_crontab'
+        - '{{ crontab_bin.stdout }} -u root'
+        - crontab -u root
+      register: unresolvable_executable
+      ignore_errors: yes
+
+    - assert:
+        that:
+          - item is failed
+          - "'Cannot find crontab executable' in item.msg"
+      loop: '{{ unresolvable_executable.results }}'
+      loop_control:
+        label: '{{ item.item }}'
+
+  always:
+    - name: Remove the cron tasks
+      cron:
+        name: 'test executable cron task {{ item }}'
+        state: absent
+      loop: '{{ cron_executables }}'
+
+    - name: Remove the renamed executable
+      file:
+        path: '{{ remote_dir }}/fcrontab'
+        state: absent
+
+- name: Use an executable that's not cron to make sure real cron didn't run
+  when: ansible_facts["distribution"] != "Alpine"
+  block:
+    - name: Ensure no cron task
+      cron:
+        name: test bad executable cron task
+        state: absent
+
+    - name: Add cron task using the echo executable
+      cron:
+        name: test bad executable cron task
+        job: 'date > {{ remote_dir }}/cron_canary_executable'
+        executable: echo
+      register: fake_cron
+
+    - name: Add cron task using the real cron executable
+      cron:
+        name: test bad executable cron task
+        job: 'date > {{ remote_dir }}/cron_canary_executable'
+      register: true_cron
+
+    - name: Assert that fake cron didn't actually do anything
+      assert:
+        that:
+          - fake_cron is changed  # this is a phantom 'change'
+          - true_cron is changed  # the actual change
+
+  always:
+    - name: Clean up the cron task
+      cron:
+        name: test bad executable cron task
+        state: absent
