@@ -1,0 +1,8 @@
+---
+- hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: Access the deprecated Templar.environment attribute from a lookup plugin
+      assert:
+        that:
+          - lookup('environment') == 'from the deprecated getter'

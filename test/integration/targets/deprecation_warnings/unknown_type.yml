@@ -1,0 +1,13 @@
+---
+- hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: Template a type unknown to the templating system
+      debug:
+        msg: "{{ 'ignored' | unknown_type }}"
+      register: unknown_type_result
+
+    - name: Verify the diagnostic did not alter the template result
+      assert:
+        that:
+          - unknown_type_result.msg == 'unknown-type-result'
