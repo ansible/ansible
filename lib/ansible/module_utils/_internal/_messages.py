@@ -80,6 +80,7 @@ class Event(_datatag.AnsibleSerializableDataclass):
     help_text: _t.Optional[str] = None
     chain: _t.Optional[EventChain] = None
     events: _t.Optional[_t.Tuple[Event, ...]] = None
+    redact_source_context: bool = False
 
 
 _dataclass_validation.inject_post_init_validation(EventChain, EventChain._validation_allow_subclasses)
