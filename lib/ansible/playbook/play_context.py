@@ -122,6 +122,15 @@ class PlayContext(Base):
     network_os = FieldAttribute(isa='string')
     docker_extra_args = FieldAttribute(isa='string')
     become_pass = FieldAttribute(isa='string')
+    # only ever populated from the ssh entries in MAGIC_VARIABLE_MAPPING, nothing in ansible-core reads them from here
+    ssh_executable = FieldAttribute(isa='string')
+    ssh_common_args = FieldAttribute(isa='string')
+    sftp_extra_args = FieldAttribute(isa='string')
+    scp_extra_args = FieldAttribute(isa='string')
+    ssh_extra_args = FieldAttribute(isa='string')
+    ssh_transfer_method = FieldAttribute(isa='string')
+    # only ever populated from the task via TASK_ATTRIBUTE_OVERRIDES, nothing reads it from here
+    delegate_to = FieldAttribute(isa='string')
     # deprecated: description='remove the deprecated PlayContext attribute' core_version='2.26'
     connection_lockfd = _DeprecatedFieldAttribute(isa='int', version='2.26')
     prompt = _DeprecatedFieldAttribute(
@@ -155,8 +164,8 @@ class PlayContext(Base):
         if passwords is None:
             passwords = {}
 
-        self.password = passwords.get('conn_pass', '')
-        self.become_pass = passwords.get('become_pass', '')
+        self._set_field('password', passwords.get('conn_pass', ''))
+        self._set_field('become_pass', passwords.get('become_pass', ''))
 
         self._become_plugin = None  # deprecated: description='remove the deprecated PlayContext attribute' core_version='2.26'
 
@@ -170,23 +179,19 @@ class PlayContext(Base):
         if play:
             self.set_attributes_from_play(play)
 
-    def set_attributes_from_plugin(self, plugin):
-        # generic derived from connection plugin, temporary for backwards compat, in the end we should not set play_context properties
-
-        # get options for plugins
-        options = C.config.get_configuration_definitions(plugin.plugin_type, plugin._load_name)
-        for option in options:
-            if option:
-                flag = options[option].get('name')
-                if flag:
-                    setattr(self, flag, plugin.get_option(flag))
-
     def set_attributes_from_play(self, play):
         self._force_handlers = play.force_handlers  # deprecated: description='remove the deprecated PlayContext attribute' core_version='2.26'
 
     def _set_field(self, name: str, value: t.Any) -> None:
-        """Set a field attribute, populating deprecated attributes without triggering their deprecation warning."""
-        if isinstance(self.fattributes[name], _DeprecatedFieldAttribute):
+        """
+        Set a field attribute, populating deprecated ones without triggering their deprecation warning.
+        Names which are not (or no longer) fields are ignored, so TASK_ATTRIBUTE_OVERRIDES and MAGIC_VARIABLE_MAPPING
+        need not change when an attribute is removed.
+        """
+        if (attribute := self.fattributes.get(name)) is None:
+            return  # unknown, or removed via _RemovedFieldAttribute which excludes it from fattributes
+
+        if isinstance(attribute, _DeprecatedFieldAttribute):
             setattr(self, f'_{name}', value)
         else:
             setattr(self, name, value)
@@ -198,11 +203,11 @@ class PlayContext(Base):
         lower precedence than those set on the play or host.
         """
         if context.CLIARGS.get('timeout', False):
-            self.timeout = int(context.CLIARGS['timeout'])
+            self._set_field('timeout', int(context.CLIARGS['timeout']))
 
         # From the command line.  These should probably be used directly by plugins instead
         # For now, they are likely to be moved to FieldAttribute defaults
-        self.private_key_file = context.CLIARGS.get('private_key_file')  # Else default
+        self._set_field('private_key_file', context.CLIARGS.get('private_key_file'))  # Else default
 
         # Not every cli that uses PlayContext has these command line args so have a default
         # deprecated: description='remove the deprecated PlayContext attribute' core_version='2.26'
@@ -277,7 +282,7 @@ class PlayContext(Base):
             # setup shell
             for exe_var in C.MAGIC_VARIABLE_MAPPING.get('executable'):
                 if exe_var in variables:
-                    setattr(new_info, 'executable', variables.get(exe_var))
+                    new_info._set_field('executable', variables.get(exe_var))
 
         attrs_considered = []
         for (attr, variable_names) in C.MAGIC_VARIABLE_MAPPING.items():
@@ -302,7 +307,7 @@ class PlayContext(Base):
 
         # make sure we get port defaults if needed
         if new_info.port is None and C.DEFAULT_REMOTE_PORT is not None:
-            new_info.port = int(C.DEFAULT_REMOTE_PORT)
+            new_info._set_field('port', int(C.DEFAULT_REMOTE_PORT))
 
         # special overrides for the connection setting
         if len(delegated_vars) > 0:
@@ -316,28 +321,28 @@ class PlayContext(Base):
                 remote_addr_local = new_info.remote_addr in C.LOCALHOST
                 inv_hostname_local = delegated_vars.get('inventory_hostname') in C.LOCALHOST
                 if remote_addr_local and inv_hostname_local:
-                    setattr(new_info, 'connection', 'local')
+                    new_info._set_field('connection', 'local')
                 elif getattr(new_info, 'connection', None) == 'local' and (not remote_addr_local or not inv_hostname_local):
-                    setattr(new_info, 'connection', C.DEFAULT_TRANSPORT)
+                    new_info._set_field('connection', C.DEFAULT_TRANSPORT)
 
         # we store original in 'connection_user' for use of network/other modules that fallback to it as login user
         # connection_user to be deprecated once connection=local is removed for, as local resets remote_user
         if new_info.connection == 'local':
             if not new_info.connection_user:
-                new_info.connection_user = new_info.remote_user
+                new_info._set_field('connection_user', new_info.remote_user)
 
         # for case in which connection plugin still uses pc.remote_addr and in it's own options
         # specifies 'default: inventory_hostname', but never added to vars:
         if new_info.remote_addr == 'inventory_hostname':
-            new_info.remote_addr = variables.get('inventory_hostname')
+            new_info._set_field('remote_addr', variables.get('inventory_hostname'))
             display.warning('The "%s" connection plugin has an improperly configured remote target value, '
                             'forcing "inventory_hostname" templated value instead of the string' % new_info.connection)
 
         if task.check_mode is not None:
-            new_info.check_mode = task.check_mode
+            new_info._set_field('check_mode', task.check_mode)
 
         if task.diff is not None:
-            new_info.diff = task.diff
+            new_info._set_field('diff', task.diff)
 
         return new_info
 

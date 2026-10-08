@@ -801,9 +801,6 @@ class TaskExecutor:
 
         self._set_become_plugin(cvars, templar, connection)
 
-        # Also backwards compat call for those still using play_context
-        self._play_context.set_attributes_from_plugin(connection)
-
         return connection
 
     def _set_become_plugin(self, cvars, templar, connection):
