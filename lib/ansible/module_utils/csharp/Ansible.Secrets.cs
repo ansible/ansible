@@ -19,8 +19,8 @@ namespace Ansible.Secrets
         private const int AnchorLength = 4;  // values at least this long are indexed by their first AnchorLength chars
         private const int ProbeLength = 8;  // chars compared from the middle of a candidate before the full comparison
 
-        private readonly Dictionary<string, List<Bucket>> _scan;  // anchor -> buckets, longest first
-        private readonly Dictionary<char, List<ShortBucket>> _shortIndex;  // values shorter than the anchor: first char -> buckets, longest first
+        private readonly Dictionary<string, List<Bucket>> _scan;  // anchor -> buckets
+        private readonly Dictionary<char, List<ShortBucket>> _shortIndex;  // values shorter than the anchor: first char -> buckets
         private readonly HashSet<string> _registered;
         private HashSet<string> _newSecrets;
 
@@ -207,7 +207,6 @@ namespace Ansible.Secrets
                 {
                     shortBucket = new ShortBucket(value.Length);
                     shortBuckets.Add(shortBucket);
-                    shortBuckets.Sort((a, b) => b.Length.CompareTo(a.Length));
                 }
 
                 shortBucket.Values.Add(value);
@@ -228,10 +227,6 @@ namespace Ansible.Secrets
             {
                 bucket = new Bucket(value.Length);
                 buckets.Add(bucket);
-
-                // Buckets are kept longest first so FindSpans reports the spans at one position
-                // longest first, the order MergeSpans relies on.
-                buckets.Sort((a, b) => b.Length.CompareTo(a.Length));
             }
 
             bucket.Probes.Add(value.Substring(bucket.ProbeOffset, bucket.ProbeSize));

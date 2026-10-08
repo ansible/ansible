@@ -30,7 +30,6 @@ for a compiled extension, without touching the registry semantics:
 from __future__ import annotations
 
 import json.encoder as _json_encoder
-import operator as _operator
 import typing as _t
 
 from ansible.module_utils._internal._concurrent._fork_safe_lock import ForkSafeLock
@@ -39,9 +38,9 @@ from ansible.module_utils._internal._concurrent._fork_safe_lock import ForkSafeL
 _emptyfrozenset: frozenset[str] = frozenset()
 
 # Bucket layout: (length, probe_offset, probe_stop, probes, secrets)
-# All secrets of one length sharing one 4-char anchor prefix. Visited longest-first for
-# leftmost-longest matching. The probe is compared before the full secret so a near-miss
-# costs the probe slice rather than the full length.
+# All secrets of one length sharing one 4-char anchor prefix. Every bucket is visited so
+# overlapping secrets are all reported and merged into one span. The probe is compared
+# before the full secret so a near-miss costs the probe slice rather than the full length.
 _Bucket = tuple[int, int, int, set[str], set[str]]
 
 # Short Bucket layout: (length, secrets)
@@ -96,16 +95,16 @@ class _Fixed4Matcher:
 
     Each anchor owns one bucket per distinct secret length, holding the probes and the
     secrets of that length as sets, so a candidate is resolved with two set lookups
-    instead of a walk over every secret sharing the anchor. Buckets are visited longest
-    first for leftmost-longest matching.
+    instead of a walk over every secret sharing the anchor. Every bucket is visited so
+    overlapping secrets of different lengths are all reported; the caller merges them.
     """
 
     def __init__(self) -> None:
-        # anchor -> buckets, longest first
+        # anchor -> buckets
         self._scan: dict[str, list[_Bucket]] = {}
         # anchor -> length -> bucket
         self._buckets: dict[str, dict[int, _Bucket]] = {}
-        # words shorter than the anchor: first char -> short buckets, longest first
+        # words shorter than the anchor: first char -> short buckets
         self._short_index: dict[str, list[_ShortBucket]] = {}
 
     def add(self, word: str) -> None:
@@ -119,7 +118,6 @@ class _Fixed4Matcher:
                     break
             else:
                 short_buckets.append((word_len, {word}))
-                short_buckets.sort(key=_operator.itemgetter(0), reverse=True)
             return
 
         anchor = word[:_ANCHOR_LEN]
@@ -133,8 +131,6 @@ class _Fixed4Matcher:
             bucket = (word_len, offset, offset + size, set(), set())
             by_length[word_len] = bucket
             anchor_buckets.append(bucket)
-            # Sorted for _merge_spans which expects spans ordered by length descending.
-            anchor_buckets.sort(key=_operator.itemgetter(0), reverse=True)
 
         length, probe_offset, probe_stop, probes, secrets = bucket
         probes.add(word[probe_offset:probe_stop])
