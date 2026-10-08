@@ -338,12 +338,12 @@ def mask_url(url: str, *, register_secrets: bool = True) -> str:
     netloc: str
     if parsed_url.password:
         netloc = parsed_url.netloc.replace(f'{parsed_url.username}:{parsed_url.password}@', f'{mask}:{mask}@')
-        if register:
+        if register_secrets:
             register_secret(parsed_url.password)
             register_secret(parsed_url.username)
     else:
         netloc = parsed_url.netloc.replace(f'{parsed_url.username}@', f'{mask}@')
-        if register:
+        if register_secrets:
             register_secret(parsed_url.username)
 
     return urlunparse(parsed_url._replace(netloc=netloc))
