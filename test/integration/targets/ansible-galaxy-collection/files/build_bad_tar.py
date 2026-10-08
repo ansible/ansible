@@ -10,7 +10,6 @@ import hashlib
 import io
 import json
 import os
-import sys
 import tarfile
 from ansible.module_utils.common.file import S_IRWXU_RXG_RXO
 
