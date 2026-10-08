@@ -10,7 +10,7 @@ import typing as t
 import pytest
 
 from unittest.mock import MagicMock
-from ansible.errors import AnsibleConnectionFailure, AnsibleError, AnsibleOptionsError
+from ansible.errors import AnsibleConnectionFailure, AnsibleError
 from ansible.module_utils.common.text.converters import to_bytes
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.loader import connection_loader
