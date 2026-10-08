@@ -77,8 +77,16 @@ DOCUMENTATION = """
            - List of winrm transports to attempt to use (ssl, plaintext, kerberos, etc)
            - If None (the default) the plugin will try to automatically guess the correct list. It will use
              V(kerberos) if the username looks like a UPN V(user@domain), otherwise it will use V(basic).
-           - V(plaintext) and V(ssl) are aliases for V(basic) authentication over a HTTP or HTTPS connection
-             respectively, V(ssl) can also be used for V(certificate) authentication if O(cert_pem) is set.
+           - V(basic) is Basic authentication which only works for local accounts.
+           - V(certificate) is Certificate authentication which only works for local accounts and over HTTPS endpoints.
+           - V(ntlm) is NTLM authentication and works for both local and domain accounts. NTLM is an older protocol
+             and should only be used over HTTPS endpoints.
+           - V(kerberos) is Kerberos authentication which only works for domain accounts. This is a secure protocol
+             and is safe to use over HTTP.
+           - V(credssp) is CredSSP authentication which works for both local and domain accounts. It will delegate
+             the user's credentials to the remote server, only use if the target host is trusted.
+           - V(plaintext) is an alias for V(basic) authentication over HTTP.
+           - V(ssl) is an alias for V(basic) over HTTPS or V(certificate) if O(cert_pem) is set.
         type: list
         elements: str
         choices:
