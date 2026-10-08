@@ -12,6 +12,18 @@ options:
     description: The address used to identify the connection in the connection log.
     vars:
     - name: ansible_host
+  remote_user:
+    description: The user used to identify the connection in the connection log.
+    vars:
+    - name: ansible_user
+    keyword:
+    - name: remote_user
+  port:
+    description:
+    - The port used to identify the connection in the connection log.
+    - This has no keyword entry so is only set from the task port keyword
+      through the option name.
+    type: int
   connection_log:
     description: Path to a file to log when the connection is opened and closed.
     vars:
@@ -33,7 +45,10 @@ class Connection(ConnectionBase):
     def _log(self, action):
         if connection_log := self.get_option('connection_log'):
             with open(connection_log, mode='a') as fd:
-                fd.write(f"{action} {self.get_option('remote_addr')}\n")
+                fd.write(
+                    f"{action} remote_addr={self.get_option('remote_addr')} "
+                    f"remote_user={self.get_option('remote_user')} port={self.get_option('port')}\n"
+                )
 
     def _connect(self):
         self._log('connect')

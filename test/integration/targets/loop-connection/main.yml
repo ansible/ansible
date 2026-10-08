@@ -32,55 +32,140 @@
       - connected_test.results[0].stderr == "ran - 1"
       - connected_test.results[1].stderr == "ran - 2"
 
+  # the tests above also write to the connection log
+  - name: reset connection log
+    file:
+      path: '{{ dummy_connection_log }}'
+      state: absent
+
   - name: test loop reusing connection with templated ansible_host
-    include_tasks: connection_log_test.yml
+    raw: connection_log_test
     vars:
-      hosts:
-      - host-a
-      - host-a
+      ansible_connection: ns.name.dummy
+      ansible_host: '{{ item }}'
+    loop:
+    - host-a
+    - host-a
+
+  - name: assert connection log
+    include_tasks: connection_log_assert.yml
+    vars:
       expected:
-      - connect host-a
-      - close host-a
+      - connect remote_addr=host-a remote_user=None port=None
+      - close remote_addr=host-a remote_user=None port=None
 
   - name: test loop reusing connections for alternating hosts
-    include_tasks: connection_log_test.yml
+    raw: connection_log_test
     vars:
-      hosts:
-      - host-a
-      - host-b
-      - host-a
-      - host-b
+      ansible_connection: ns.name.dummy
+      ansible_host: '{{ item }}'
+    loop:
+    - host-a
+    - host-b
+    - host-a
+    - host-b
+
+  - name: assert connection log
+    include_tasks: connection_log_assert.yml
+    vars:
       expected:
-      - connect host-a
-      - connect host-b
-      - close host-a
-      - close host-b
+      - connect remote_addr=host-a remote_user=None port=None
+      - connect remote_addr=host-b remote_user=None port=None
+      - close remote_addr=host-a remote_user=None port=None
+      - close remote_addr=host-b remote_user=None port=None
 
   - name: test least recently used connection is closed past the cache limit
-    include_tasks: connection_log_test.yml
+    raw: connection_log_test
     vars:
-      hosts:
-      - host-1
-      - host-2
-      - host-3
-      - host-4
-      - host-5
-      - host-1  # reused, makes host-2 the least recently used
-      - host-6  # evicts host-2
-      - host-2  # new connection, evicts host-3
+      ansible_connection: ns.name.dummy
+      ansible_host: '{{ item }}'
+    loop:
+    - host-1
+    - host-2
+    - host-3
+    - host-4
+    - host-5
+    - host-1  # reused, makes host-2 the least recently used
+    - host-6  # evicts host-2
+    - host-2  # new connection, evicts host-3
+
+  - name: assert connection log
+    include_tasks: connection_log_assert.yml
+    vars:
       expected:
-      - connect host-1
-      - connect host-2
-      - connect host-3
-      - connect host-4
-      - connect host-5
-      - close host-2
-      - connect host-6
-      - close host-3
-      - connect host-2
+      - connect remote_addr=host-1 remote_user=None port=None
+      - connect remote_addr=host-2 remote_user=None port=None
+      - connect remote_addr=host-3 remote_user=None port=None
+      - connect remote_addr=host-4 remote_user=None port=None
+      - connect remote_addr=host-5 remote_user=None port=None
+      - close remote_addr=host-2 remote_user=None port=None
+      - connect remote_addr=host-6 remote_user=None port=None
+      - close remote_addr=host-3 remote_user=None port=None
+      - connect remote_addr=host-2 remote_user=None port=None
       # remaining connections are closed in least recently used order
-      - close host-4
-      - close host-5
-      - close host-1
-      - close host-6
-      - close host-2
+      - close remote_addr=host-4 remote_user=None port=None
+      - close remote_addr=host-5 remote_user=None port=None
+      - close remote_addr=host-1 remote_user=None port=None
+      - close remote_addr=host-6 remote_user=None port=None
+      - close remote_addr=host-2 remote_user=None port=None
+
+  - name: test loop with a different connection option variable per item
+    raw: connection_log_test
+    vars:
+      ansible_connection: ns.name.dummy
+      ansible_host: host-a
+      ansible_user: '{{ item }}'
+    loop:
+    - user-1
+    - user-2
+    - user-1
+
+  - name: assert connection log
+    include_tasks: connection_log_assert.yml
+    vars:
+      expected:
+      - connect remote_addr=host-a remote_user=user-1 port=None
+      - connect remote_addr=host-a remote_user=user-2 port=None
+      # user-1 was reused last so user-2 is the least recently used
+      - close remote_addr=host-a remote_user=user-2 port=None
+      - close remote_addr=host-a remote_user=user-1 port=None
+
+  - name: test loop with a different connection option keyword per item
+    raw: connection_log_test
+    remote_user: '{{ item }}'
+    vars:
+      ansible_connection: ns.name.dummy
+      ansible_host: host-a
+    loop:
+    - user-1
+    - user-2
+    - user-1
+
+  - name: assert connection log
+    include_tasks: connection_log_assert.yml
+    vars:
+      expected:
+      - connect remote_addr=host-a remote_user=user-1 port=None
+      - connect remote_addr=host-a remote_user=user-2 port=None
+      - close remote_addr=host-a remote_user=user-2 port=None
+      - close remote_addr=host-a remote_user=user-1 port=None
+
+  - name: test loop with a different keyword only option per item
+    raw: connection_log_test
+    port: '{{ item }}'
+    vars:
+      ansible_connection: ns.name.dummy
+      ansible_host: host-a
+    loop:
+    - 1
+    - 2
+    - 1
+
+  - name: assert connection log
+    include_tasks: connection_log_assert.yml
+    vars:
+      expected:
+      - connect remote_addr=host-a remote_user=None port=1
+      - connect remote_addr=host-a remote_user=None port=2
+      - close remote_addr=host-a remote_user=None port=2
+      - close remote_addr=host-a remote_user=None port=1

@@ -1,15 +1,3 @@
-- name: reset connection log
-  file:
-    path: '{{ dummy_connection_log }}'
-    state: absent
-
-- name: run command over each host
-  raw: connection_log_test
-  vars:
-    ansible_connection: ns.name.dummy
-    ansible_host: '{{ item }}'
-  loop: '{{ hosts }}'
-
 - name: get connection log
   set_fact:
     actual: '{{ lookup("file", dummy_connection_log).splitlines() }}'
@@ -24,3 +12,9 @@
   assert:
     that:
     - actual == expected
+
+- name: reset connection log for the next test
+  file:
+    path: '{{ dummy_connection_log }}'
+    state: absent
+  delegate_to: localhost

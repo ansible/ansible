@@ -32,7 +32,7 @@ from ansible.module_utils.connection import write_to_stream
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins import get_plugin_class
 from ansible.plugins.action import ActionBase
-from ansible.plugins.connection import ConnectionBase
+from ansible.plugins.connection import ConnectionBase, _get_connection_key, _resolve_connection_option_variables
 from ansible.plugins.loader import become_loader, cliconf_loader, connection_loader, httpapi_loader, netconf_loader, terminal_loader, PluginLoadContext
 from ansible._internal._templating._jinja_plugins import _invoke_lookup, _DirectCall
 from ansible._internal._templating._engine import TemplateEngine
@@ -87,7 +87,7 @@ class TaskExecutor:
         self._loader = loader
         self._shared_loader_obj = shared_loader_obj
         self._connection: ConnectionBase | None = None
-        self._connection_pool: dict[tuple[str, str | None, str], ConnectionBase] = {}
+        self._connection_pool: dict[str, ConnectionBase] = {}
         self._final_q = final_q
         self._variable_manager = variable_manager
         self._loop_eval_error: Exception | None = None
@@ -369,7 +369,7 @@ class TaskExecutor:
         on the specified host (which may be the delegated_to host) and handles
         the retry/until and block rescue/always execution
         """
-        task_ctx = TaskContext.current()
+        task_ctx = t.cast(TaskContext, TaskContext.current())
 
         self._calculate_delegate_to()
 
@@ -475,69 +475,7 @@ class TaskExecutor:
                 utr.include_args = include_args
                 return utr
 
-        # setup cvars copy, used for all connection related templating
-        if self._task.delegate_to:
-            # use vars from delegated host (which already include task vars) instead of original host
-            cvars = task_ctx.task_vars.get('ansible_delegated_vars', {}).get(self._task.delegate_to, {})
-        else:
-            # just use normal host vars
-            cvars = task_ctx.task_vars
-
-        connection_templar = task_ctx.task_templar.extend(variables=cvars)  # should be managed by a context!
-
-        # use magic var if it exists, if not, let task inheritance do it's thing.
-        if cvars.get('ansible_connection') is not None:
-            current_connection = connection_templar.template(cvars['ansible_connection'])
-        else:
-            current_connection = self._task.connection
-
-        # get the connection and the handler for this execution, connections are
-        # cached by the plugin name, delegated host, and the templated remote_addr
-        # so they can be reused across loop items. self._play_context.remote_addr
-        # contains the post templated values but under delegation it is templated
-        # with the task host's vars rather than the delegated host's, so the
-        # resolved delegate_to is needed to keep delegated hosts apart.
-        # https://github.com/ansible/ansible/issues/87019
-        connection_key = (current_connection, self._task.delegate_to, self._play_context.remote_addr)
-        connection = self._connection_pool.pop(connection_key, None)
-        if connection is None or not getattr(connection, 'connected', False):
-            if connection is not None:
-                self._close_connection(connection)
-
-            # close the least recently used connection when at capacity, this
-            # prevents a large loop building up too many connections if each
-            # iteration is a unique remote_addr.
-            if len(self._connection_pool) >= _MAX_CACHED_CONNECTIONS:
-                self._close_connection(self._connection_pool.pop(next(iter(self._connection_pool))))
-
-            connection = self._get_connection(cvars, connection_templar, current_connection)
-        else:
-            # if connection is reused, its _play_context is no longer valid and needs
-            # to be replaced with the one templated above, in case other data changed
-            connection._play_context = self._play_context
-            self._set_become_plugin(cvars, connection_templar, connection)
-
-        # (re)insert so the dict order reflects the most recently used connection
-        self._connection = self._connection_pool[connection_key] = connection
-
-        plugin_vars = self._set_connection_options(cvars, connection_templar)
-
-        # update with connection info (i.e ansible_host/ansible_user)
-        self._connection.update_vars(task_ctx.task_vars)
-
-        # TODO: eventually remove as pc is taken out of the resolution path
-        # feed back into pc to ensure plugins not using get_option can get correct value
-        self._connection._play_context = self._play_context.set_task_and_variable_override(
-            task=self._task,
-            variables=task_ctx.task_vars,
-            templar=task_ctx.task_templar,
-        )
-
-        # TODO: eventually remove this block as this should be a 'consequence' of 'forced_local' modules, right now rely on remote_is_local connection
-        # special handling for python interpreter for network_os, default to ansible python unless overridden
-        if 'ansible_python_interpreter' not in cvars and 'ansible_network_os' in cvars and getattr(self._connection, '_remote_is_local', False):
-            # this also avoids 'python discovery'
-            cvars['ansible_python_interpreter'] = sys.executable
+        current_connection, connection_vars = self._prepare_connection(task_ctx)
 
         # get handler
         self._handler, _module_context = self._get_action_handler_with_module_context(templar=task_ctx.task_templar)
@@ -671,7 +609,7 @@ class TaskExecutor:
             )
 
             # note: here for callbacks that rely on this info to display delegation
-            for plugin_var_name in plugin_vars:
+            for plugin_var_name in connection_vars:
                 if plugin_var_name not in _DELEGATED_CONNECTION_PLUGIN_VAR_NAMES:
                     continue
 
@@ -682,6 +620,81 @@ class TaskExecutor:
         # and return
         display.debug("attempt loop complete, returning result")
         return utr
+
+    def _prepare_connection(self, task_ctx: TaskContext) -> tuple[str, list[str]]:
+        """
+        Select or create the connection for this task/loop item and set its
+        options. Sets self._connection and returns the connection name and the
+        plugin vars used.
+        """
+        # setup cvars copy, used for all connection related templating
+        if self._task.delegate_to:
+            # use vars from delegated host (which already include task vars) instead of original host
+            cvars = task_ctx.task_vars.get('ansible_delegated_vars', {}).get(self._task.delegate_to, {})
+        else:
+            # just use normal host vars
+            cvars = task_ctx.task_vars
+
+        connection_templar = task_ctx.task_templar.extend(variables=cvars)  # should be managed by a context!
+
+        # use magic var if it exists, if not, let task inheritance do it's thing.
+        if cvars.get('ansible_connection') is not None:
+            current_connection = connection_templar.template(cvars['ansible_connection'])
+        else:
+            current_connection = t.cast(str, self._task.connection)
+
+        # We use a combination of the connection plugin class and the plugin options to define a
+        # unique key for caching and reusing connections across loop iterations.
+        # https://github.com/ansible/ansible/issues/87019
+        connection_class = self._shared_loader_obj.connection_loader.get(current_connection, class_only=True)
+        if not connection_class:
+            raise AnsibleError("the connection plugin '%s' was not found" % current_connection)
+
+        task_keys = self._get_connection_task_keys()
+        var_options = _resolve_connection_option_variables(connection_class, cvars, connection_templar)
+        connection_key = _get_connection_key(connection_class, task_keys, var_options)
+
+        connection = self._connection_pool.pop(connection_key, None)
+        if connection is None or not getattr(connection, 'connected', False):
+            if connection is not None:
+                self._close_connection(connection)
+
+            # close the least recently used connection when at capacity, this
+            # prevents a large loop building up too many connections if each
+            # iteration is a unique remote_addr.
+            if len(self._connection_pool) >= _MAX_CACHED_CONNECTIONS:
+                self._close_connection(self._connection_pool.pop(next(iter(self._connection_pool))))
+
+            connection = self._get_connection(cvars, connection_templar, current_connection)
+        else:
+            # if connection is reused, its _play_context is no longer valid and needs
+            # to be replaced with the one templated above, in case other data changed
+            connection._play_context = self._play_context
+            self._set_become_plugin(cvars, connection_templar, connection)
+
+        # (re)insert so the dict order reflects the most recently used connection
+        self._connection = self._connection_pool[connection_key] = connection
+
+        plugin_vars = self._set_connection_options(cvars, connection_templar, task_keys, var_options)
+
+        # update with connection info (i.e ansible_host/ansible_user)
+        self._connection.update_vars(task_ctx.task_vars)
+
+        # TODO: eventually remove as pc is taken out of the resolution path
+        # feed back into pc to ensure plugins not using get_option can get correct value
+        self._connection._play_context = self._play_context.set_task_and_variable_override(
+            task=self._task,
+            variables=task_ctx.task_vars,
+            templar=task_ctx.task_templar,
+        )
+
+        # TODO: eventually remove this block as this should be a 'consequence' of 'forced_local' modules, right now rely on remote_is_local connection
+        # special handling for python interpreter for network_os, default to ansible python unless overridden
+        if 'ansible_python_interpreter' not in cvars and 'ansible_network_os' in cvars and getattr(self._connection, '_remote_is_local', False):
+            # this also avoids 'python discovery'
+            cvars['ansible_python_interpreter'] = sys.executable
+
+        return current_connection, plugin_vars
 
     def _poll_async_result(self, utr: UnifiedTaskResult, templar: TemplateEngine, task_vars: dict[str, t.Any]) -> UnifiedTaskResult:
         """
@@ -896,15 +909,8 @@ class TaskExecutor:
 
         return option_vars
 
-    def _set_connection_options(self, variables, templar):
-
-        # keep list of variable names possibly consumed
-        varnames = []
-
-        # grab list of usable vars for this plugin
-        option_vars = C.config.get_plugin_vars('connection', self._connection._load_name)
-        varnames.extend(option_vars)
-
+    def _get_connection_task_keys(self) -> dict[str, t.Any]:
+        """Get the task keywords used to set the connection plugin options."""
         task_keys = self._task.dump_attrs()
 
         # The task_keys 'timeout' attr is the task's timeout, not the connection timeout.
@@ -921,8 +927,18 @@ class TaskExecutor:
         # Prevent task retries from overriding connection retries
         del task_keys['retries']
 
+        return task_keys
+
+    def _set_connection_options(self, variables, templar, task_keys: dict[str, t.Any], var_options: dict[str, t.Any]):
+
+        # keep list of variable names possibly consumed
+        varnames = []
+
+        # grab list of usable vars for this plugin
+        option_vars = C.config.get_plugin_vars('connection', self._connection._load_name)
+        varnames.extend(option_vars)
+
         # set options with 'templated vars' specific to this plugin and dependent ones
-        var_options = self._connection._resolve_option_variables(variables, templar)
         self._connection.set_options(task_keys=task_keys, var_options=var_options)
         varnames.extend(self._set_plugin_options('shell', variables, templar, task_keys))
 

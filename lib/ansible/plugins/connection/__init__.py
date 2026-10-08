@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import collections.abc as c
 import fcntl
+import hashlib
 import os
 import shlex
 import typing as t
@@ -23,6 +24,7 @@ from ansible.plugins.shell import ShellBase
 from ansible.utils.display import Display
 from ansible.plugins.loader import connection_loader, get_shell_plugin
 from ansible.utils.path import unfrackpath
+from ansible._internal._templating._engine import TemplateEngine
 
 display = Display()
 
@@ -36,6 +38,78 @@ class ConnectionKwargs(t.TypedDict):
     task_uuid: str
     ansible_playbook_pid: str
     shell: t.NotRequired[ShellBase]
+
+
+def _resolve_connection_option_variables(
+    connection: type[ConnectionBase] | ConnectionBase,
+    variables: c.Mapping[str, t.Any],
+    templar: TemplateEngine,
+) -> dict[str, t.Any]:
+    """
+    Return a dict of variable -> templated value, for any variables that
+    match options registered by the connection plugin.
+    """
+    # create dict of 'templated vars'
+    var_options: dict[str, t.Any] = {
+        '_extras': {},
+    }
+    for var_name in C.config.get_plugin_vars('connection', connection._load_name):
+        if var_name in variables:
+            try:
+                var_options[var_name] = templar.template(variables[var_name])
+            except AnsibleValueOmittedError:
+                pass
+
+    # add extras if plugin supports them, the extras_prefix property is not
+    # used as this may be called with the class rather than an instance
+    if connection.allow_extras:
+        extras_prefix = connection._extras_prefix or connection._load_name.split('.')[-1]
+        for var_name in variables:
+            if var_name.startswith(f'ansible_{extras_prefix}_') and var_name not in var_options:
+                try:
+                    var_options['_extras'][var_name] = templar.template(variables[var_name])
+                except AnsibleValueOmittedError:
+                    pass
+
+    return var_options
+
+
+def _get_connection_key(
+    connection: type[ConnectionBase],
+    task_keys: dict[str, t.Any],
+    var_options: dict[str, t.Any],
+) -> str:
+    """
+    Get a key that identifies a connection from the plugin class and the
+    inputs used to set the connection plugin options.
+
+    Args:
+        connection: The connection plugin class.
+        task_keys: A dictionary of task-specific keys used to configure the connection.
+        var_options: A dictionary of variable options resolved for the connection.
+    """
+    # FUTURE: Look at making this a ConnectionBase cls method to have a public
+    # way for connection plugin to define its own unique connection key.
+
+    keyword_names = set()
+    for option_name, option_def in C.config.get_configuration_definitions('connection', connection._load_name).items():
+        keyword_names.add(option_name)
+        keyword_names.update(option_def.get('aliases', ()))
+        keyword_names.update(keyword['name'] for keyword in option_def.get('keyword', ()))
+
+    # FUTURE: Maybe also check env var options in case something in process
+    # changed them, e.g callback plugin, action plugin with future iteration.
+    # Probably not worth the hassle and could be considered unsupported.
+
+    option_task_keys = sorted((k, v) for k, v in task_keys.items() if k in keyword_names)
+
+    # The _load_name could be different across loops depending on the format of
+    # ansible_connection, e.g. ssh vs ansible.builtin.ssh. A connection_plugins/
+    # adjacent plugin could theoretically share the same module and class name so
+    # instead we use the id(connection) to uniquely identify the plugin chosen.
+    option_inputs = repr((id(connection), option_task_keys, sorted(var_options.items())))
+
+    return hashlib.sha256(option_inputs.encode(errors='surrogatepass')).hexdigest()
 
 
 def ensure_connect[T, **P](
@@ -276,33 +350,6 @@ class ConnectionBase(AnsiblePlugin):
             if value is not None:
                 display.debug('Set connection var {0} to {1}'.format(varname, value))
                 variables[varname] = value
-
-    def _resolve_option_variables(self, variables, templar):
-        """
-        Return a dict of variable -> templated value, for any variables that
-        that match options registered by this plugin.
-        """
-        # create dict of 'templated vars'
-        var_options = {
-            '_extras': {},
-        }
-        for var_name in C.config.get_plugin_vars('connection', self._load_name):
-            if var_name in variables:
-                try:
-                    var_options[var_name] = templar.template(variables[var_name])
-                except AnsibleValueOmittedError:
-                    pass
-
-        # add extras if plugin supports them
-        if getattr(self, 'allow_extras', False):
-            for var_name in variables:
-                if var_name.startswith(f'ansible_{self.extras_prefix}_') and var_name not in var_options:
-                    try:
-                        var_options['_extras'][var_name] = templar.template(variables[var_name])
-                    except AnsibleValueOmittedError:
-                        pass
-
-        return var_options
 
     def is_pipelining_enabled(self, wrap_async: bool = False) -> bool:
 

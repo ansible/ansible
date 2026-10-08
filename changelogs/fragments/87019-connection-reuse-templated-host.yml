@@ -1,7 +1,12 @@
 bugfixes:
   - >-
-    task executor - Fix connection reuse across loop items when ``ansible_host`` is templated. (https://github.com/ansible/ansible/issues/87019).
+    task executor - Fix connection reuse across loop items when ``ansible_host`` is templated
+    (https://github.com/ansible/ansible/issues/87019).
   - >-
-    task executor - Fix cleanup of dropped connections across loop items when a different ``ansible_host`` was targeted per iteration. All created
-    connections in the loop will be closed when the task finished rather than the last loop iteration's connection only
+    task executor - Only reuse a connection across loop items when the connection plugin options are the same. Previously a loop that
+    changed connection options per item, like ``ansible_user``, ``ansible_port``, or a plugin specific host variable like
+    ``ansible_psrp_host``, with the same ``ansible_host`` would reuse the first item's connection and the options it connected with.
+  - >-
+    task executor - Close all connections created by a task within a loop rather than only the last loop item's connection.
+    Up to 5 connections are kept open for reuse across the loop items
     (https://github.com/ansible/ansible/issues/87019).
