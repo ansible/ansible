@@ -29,9 +29,38 @@ from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleActionFail, AnsibleFileNotFound
 from ansible.module_utils.basic import FILE_COMMON_ARGUMENTS
 from ansible.module_utils.common.text.converters import to_bytes, to_text
+from ansible.module_utils.common.xattrs import encode_xattrs, read_xattrs, xattrs_supported
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
 from ansible.utils.hashing import checksum
+
+
+def _xattrs_wanted_from_source(mode):
+    """Return True if the action plugin needs to read source xattrs for this mode."""
+    return mode in ('source', 'merge')
+
+
+def _collect_local_xattrs(path, error_mode):
+    """Read xattrs from a local controller-side file and return ``{name: base64-str}``.
+
+    Returns ``None`` when xattrs are unsupported. Errors are turned into
+    AnsibleActionFail when *error_mode* is ``fail``; otherwise the caller decides.
+    """
+    if not xattrs_supported():
+        if error_mode == 'fail':
+            raise AnsibleActionFail(
+                'preserve_xattrs requires a controller platform with xattr support (Linux).'
+            )
+        return None
+    try:
+        xattrs = read_xattrs(path)
+    except OSError as ex:
+        if error_mode == 'fail':
+            raise AnsibleActionFail(
+                f'could not read xattrs from controller-side source {path!r}: {ex}'
+            ) from ex
+        return None
+    return encode_xattrs(xattrs) if xattrs else {}
 
 
 # Supplement the FILE_COMMON_ARGUMENTS with arguments that are specific to file
@@ -284,6 +313,15 @@ class ActionModule(ActionBase):
         # Generate a hash of the local file.
         local_checksum = checksum(source_full)
 
+        # Collect source xattrs once on the controller; the same payload is shipped to either
+        # the copy module (full path) or the file module (short-circuit path) so xattrs land
+        # on the destination regardless of whether the file content actually changed.
+        preserve_xattrs_mode = self._task.args.get('preserve_xattrs')
+        xattr_error_mode = self._task.args.get('xattr_error_mode', 'fail')
+        xattrs_payload = None
+        if _xattrs_wanted_from_source(preserve_xattrs_mode):
+            xattrs_payload = _collect_local_xattrs(source_full, xattr_error_mode)
+
         if local_checksum != dest_status['checksum']:
             # The checksums don't match and we will change or error out.
 
@@ -345,6 +383,9 @@ class ActionModule(ActionBase):
             if lmode:
                 new_module_args['mode'] = lmode
 
+            if xattrs_payload is not None:
+                new_module_args['_xattrs_data'] = xattrs_payload
+
             module_return = self._execute_module(module_name='ansible.legacy.copy', module_args=new_module_args, task_vars=task_vars)
 
         else:
@@ -382,6 +423,12 @@ class ActionModule(ActionBase):
 
             if lmode:
                 new_module_args['mode'] = lmode
+
+            # When content matches but xattrs may differ, hand the collected source xattrs to
+            # the file module so set_fs_attributes_if_different can reconcile them without
+            # falling back to a full copy. This keeps recursive copies fast.
+            if xattrs_payload is not None:
+                new_module_args['_xattrs_data'] = xattrs_payload
 
             # Execute the file module.
             module_return = self._execute_module(module_name='ansible.legacy.file', module_args=new_module_args, task_vars=task_vars)
@@ -427,7 +474,7 @@ class ActionModule(ActionBase):
         del tmp  # tmp no longer has any effect
 
         # ensure user is not setting internal parameters
-        for internal in ('_original_basename', '_diff_peek'):
+        for internal in ('_original_basename', '_diff_peek', '_xattrs_data'):
             if self._task.args.get(internal, None) is not None:
                 raise AnsibleActionFail(f'Invalid parameter specified: "{internal}"')
 
