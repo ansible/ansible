@@ -126,7 +126,8 @@ def test_deprecated_field_attribute_overrides_inherited(deprecated):
 
 
 @pytest.mark.parametrize('accessor, expected_help_text', (
-    (_messages.PluginInfo(resolved_name='ns.col.thing', type=_messages.PluginType.ACTION), "Use new instead. Accessed by 'ns.col.thing'."),
+    (_messages.PluginInfo(resolved_name='ns.col.thing', type=_messages.PluginType.ACTION), "Use new instead. Accessed by action plugin 'ns.col.thing'."),
+    (_messages.PluginInfo(resolved_name='ns.col', type=None), "Use new instead. Accessed by 'ns.col'."),
     (_deprecator.ANSIBLE_CORE_DEPRECATOR, 'Use new instead.'),
     (None, 'Use new instead.'),
 ))

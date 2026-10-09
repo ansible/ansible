@@ -3,6 +3,9 @@ deprecated_features:
     attributes and the ``set_become_plugin()`` method are deprecated and will be removed in ansible-core 2.26. They are still populated until then,
     but accessing them emits a deprecation warning naming the plugin responsible. Use the task, play, become plugin or ``context.CLIARGS`` values instead.
     Set ``ANSIBLE_DISPLAY_TRACEBACK=deprecated`` to see a traceback showing exactly where the deprecated attribute is being accessed.
+  - PlayContext - the ``any_errors_fatal``, ``debugger``, ``environment``, ``ignore_errors``, ``ignore_unreachable``, ``module_defaults``, ``run_once`` and
+    ``throttle`` attributes are deprecated and will be removed in ansible-core 2.26. They were inherited from the play keywords but never populated on the
+    play context, use the task's attributes instead.
   - connection plugins - the ``connection_lock()`` and ``connection_unlock()`` methods on ``ConnectionBase`` are deprecated and will be removed in ansible-core 2.26.
 removed_features:
   - connection plugins - a ``name`` key on a connection plugin option is no longer used to set the option's value on the play context. No public connection plugin

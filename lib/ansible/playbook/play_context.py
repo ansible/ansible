@@ -83,17 +83,9 @@ class PlayContext(Base):
     port = FieldAttribute(isa='int')
     remote_user = FieldAttribute(isa='string', default=context.cliargs_deferred_get('remote_user'))
     vars = NonInheritableFieldAttribute(isa='dict', priority=100, static=True, default=dict)
-    module_defaults = FieldAttribute(isa='list', extend=True, prepend=True)
-    environment = FieldAttribute(isa='list', extend=True, prepend=True)
     no_log = FieldAttribute(isa='bool', default=C.DEFAULT_NO_LOG)
-    run_once = FieldAttribute(isa='bool')
-    ignore_errors = FieldAttribute(isa='bool')
-    ignore_unreachable = FieldAttribute(isa='bool')
     check_mode = FieldAttribute(isa='bool', default=context.cliargs_deferred_get('check'))
     diff = FieldAttribute(isa='bool', default=context.cliargs_deferred_get('diff'))
-    any_errors_fatal = FieldAttribute(isa='bool', default=C.ANY_ERRORS_FATAL)
-    throttle = FieldAttribute(isa='int', default=0)
-    debugger = FieldAttribute(isa='string')
     # the connection timeout (-T), not the task timeout keyword which Base defines under the same name
     timeout = FieldAttribute(isa='int', default=C.DEFAULT_TIMEOUT)
     # the become fields have no CLI defaults here, the CLI values arrive through the task/play overrides
@@ -109,27 +101,59 @@ class PlayContext(Base):
         isa='string', default=C.DEFAULT_BECOME_EXE, version='2.26',
         help_text="Use the become plugin's 'become_exe' option instead, e.g. connection.become.get_option('become_exe').",
     )
+    module_defaults = _DeprecatedFieldAttribute(
+        isa='list', extend=True, prepend=True, version='2.26',
+        help_text="Never populated on PlayContext, use the task's 'module_defaults' attribute instead, e.g. task.module_defaults.",
+    )
+    environment = _DeprecatedFieldAttribute(
+        isa='list', extend=True, prepend=True, version='2.26',
+        help_text="Never populated on PlayContext, use the task's 'environment' attribute instead, e.g. task.environment.",
+    )
+    run_once = _DeprecatedFieldAttribute(
+        isa='bool', version='2.26',
+        help_text="Never populated on PlayContext, use the task's 'run_once' attribute instead, e.g. task.run_once.",
+    )
+    ignore_errors = _DeprecatedFieldAttribute(
+        isa='bool', version='2.26',
+        help_text="Never populated on PlayContext, use the task's 'ignore_errors' attribute instead, e.g. task.ignore_errors.",
+    )
+    ignore_unreachable = _DeprecatedFieldAttribute(
+        isa='bool', version='2.26',
+        help_text="Never populated on PlayContext, use the task's 'ignore_unreachable' attribute instead, e.g. task.ignore_unreachable.",
+    )
+    any_errors_fatal = _DeprecatedFieldAttribute(
+        isa='bool', default=C.ANY_ERRORS_FATAL, version='2.26',
+        help_text="Never populated on PlayContext, use the task's 'any_errors_fatal' attribute instead, e.g. task.any_errors_fatal.",
+    )
+    throttle = _DeprecatedFieldAttribute(
+        isa='int', default=0, version='2.26',
+        help_text="Never populated on PlayContext, use the task's 'throttle' attribute instead, e.g. task.throttle.",
+    )
+    debugger = _DeprecatedFieldAttribute(
+        isa='string', version='2.26',
+        help_text="Never populated on PlayContext, use the task's 'debugger' attribute instead, e.g. task.debugger.",
+    )
 
     # Attributes defined only by PlayContext. These can simply be deleted when removed.
-    module_compression = FieldAttribute(isa='string', default=C.DEFAULT_MODULE_COMPRESSION)
     shell = FieldAttribute(isa='string')
     executable = FieldAttribute(isa='string', default=C.DEFAULT_EXECUTABLE)
     remote_addr = FieldAttribute(isa='string')
     password = FieldAttribute(isa='string')
     connection_user = FieldAttribute(isa='string')
     private_key_file = FieldAttribute(isa='string', default=C.DEFAULT_PRIVATE_KEY_FILE)
-    pipelining = FieldAttribute(isa='bool', default=C.ANSIBLE_PIPELINING)
     network_os = FieldAttribute(isa='string')
     docker_extra_args = FieldAttribute(isa='string')
     become_pass = FieldAttribute(isa='string')
-    # only ever populated from the ssh entries in MAGIC_VARIABLE_MAPPING, nothing in ansible-core reads them from here
+    # These are populated from MAGIC_VARIABLE_MAPPING or TASK_ATTRIBUTE_OVERRIDES and fed back into the task vars by
+    # update_vars(). A new mechanism for deprecating those mapping vars is needed before these can be deprecated.
+    module_compression = FieldAttribute(isa='string', default=C.DEFAULT_MODULE_COMPRESSION)
+    pipelining = FieldAttribute(isa='bool', default=C.ANSIBLE_PIPELINING)
     ssh_executable = FieldAttribute(isa='string')
     ssh_common_args = FieldAttribute(isa='string')
     sftp_extra_args = FieldAttribute(isa='string')
     scp_extra_args = FieldAttribute(isa='string')
     ssh_extra_args = FieldAttribute(isa='string')
     ssh_transfer_method = FieldAttribute(isa='string')
-    # only ever populated from the task via TASK_ATTRIBUTE_OVERRIDES, nothing reads it from here
     delegate_to = FieldAttribute(isa='string')
     # deprecated: description='remove the deprecated PlayContext attribute' core_version='2.26'
     connection_lockfd = _DeprecatedFieldAttribute(isa='int', version='2.26')

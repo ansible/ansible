@@ -10,6 +10,7 @@ import pytest
 from ansible import constants as C
 from ansible import context
 from ansible.cli.arguments import option_helpers as opt_help
+from ansible.playbook.attribute import FieldAttribute, _DeprecatedFieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.play_context import PlayContext
 from ansible.playbook.play import Play
@@ -92,9 +93,15 @@ def test_play_context(mocker, parser, reset_cli_args):
 
 
 def _attribute_definition(attribute):
-    """Return a comparable form of a field attribute definition, treating deferred CLI defaults by what they refer to."""
     definition = dict(vars(attribute))
     definition['type'] = type(attribute)
+
+    # a deprecated override must still match the Base definition it wraps
+    if isinstance(attribute, _DeprecatedFieldAttribute):
+        definition['type'] = FieldAttribute
+
+        for key in ('_version', '_help_text', '_msg'):
+            del definition[key]
 
     # If the default is a callable with a closure, it is a deferred CLI default, so we remove it for comparison.
     if callable(default := definition['default']) and getattr(default, '__closure__', None):

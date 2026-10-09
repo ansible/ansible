@@ -232,7 +232,7 @@ class _DeprecatedFieldAttribute(FieldAttribute):
         # None when the accessor is neither core nor a collection plugin (e.g. a script, test or role-local plugin)
         accessor = _deprecator._path_as_plugininfo(frame.f_code.co_filename)
         if accessor and accessor != _deprecator.ANSIBLE_CORE_DEPRECATOR:
-            accessed_by = f"Accessed by {accessor.resolved_name!r}."
+            accessed_by = f"Accessed by {accessor.type} plugin {accessor.resolved_name!r}." if accessor.type else f"Accessed by {accessor.resolved_name!r}."
             help_text = f'{help_text} {accessed_by}' if help_text else accessed_by
 
         display.deprecated(
