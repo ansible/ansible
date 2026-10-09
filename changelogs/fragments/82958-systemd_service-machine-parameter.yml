@@ -1,0 +1,5 @@
+---
+minor_changes:
+  - |-
+    systemd_service - Add the `machine` parameter to connect systemd to the
+    session bus of a specific user in a local container or on the local host.
