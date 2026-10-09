@@ -25,7 +25,7 @@
 
 - name: Assert the expected result
   assert:
-    msg: "{{ rc_msg }}{{ stderr_msg }}{{ stdout_msg }}"
+    fail_msg: "{{ rc_msg }}{{ stderr_msg }}{{ stdout_msg }}"
     that:
       - fail_bad_tar.rc == expected_rc
       - fail_bad_tar.stderr is search(expected_error)
@@ -34,4 +34,4 @@
   vars:
     rc_msg: "Expected rc: {{ expected_rc }}"
     stderr_msg: "{{ (expected_error == '') | ternary('', ', error: ' ~ expected_error) }}"
-    stdout_msg: "{{ (expected_stdout == '') | ternary('', ', stdout: ' ~ expected_error) }}"
+    stdout_msg: "{{ (expected_stdout == '') | ternary('', ', stdout: ' ~ expected_stdout) }}"

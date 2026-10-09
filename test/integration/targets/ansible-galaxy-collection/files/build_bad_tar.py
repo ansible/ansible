@@ -99,7 +99,7 @@ def add_dir(tar_file, dir_name, symlink_linkname=None, update_files=True):
         'name': dir_name,
         'ftype': 'dir',
         'chksum_type': 'sha256',
-        'chsum_sha256': None,
+        'chksum_sha256': None,
         'format': 1,
     })
 
