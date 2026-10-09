@@ -19,6 +19,7 @@ from ansible.errors import AnsibleError
 from ansible.executor.playbook_executor import PlaybookExecutor
 from ansible.module_utils.common.text.converters import to_bytes
 from ansible.playbook.block import Block
+from ansible.playbook.role import prune_orphaned_role_argspec_validation
 from ansible.plugins.loader import add_all_plugin_dirs
 from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.utils.collection_loader._collection_finder import _get_collection_name_from_path, _get_collection_playbook_path
@@ -208,8 +209,12 @@ class PlaybookCLI(CLI):
                             return taskmsg
 
                         all_vars = variable_manager.get_vars(play=play)
+                        filtered_blocks = []
                         for block in play.compile():
                             block = block.filter_tagged_tasks(all_vars)
+                            if block.has_tasks():
+                                filtered_blocks.append(block)
+                        for block in prune_orphaned_role_argspec_validation(filtered_blocks, all_vars):
                             if not block.has_tasks():
                                 continue
                             taskmsg += _process_block(block)
