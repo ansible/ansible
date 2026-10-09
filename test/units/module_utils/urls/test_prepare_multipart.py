@@ -114,3 +114,22 @@ def test_bad_mime(mocker):
     mocker.patch('mimetypes.guess_type', side_effect=TypeError)
     content_type, b_data = prepare_multipart(fields)
     assert b'Content-Type: application/octet-stream' in b_data
+
+
+def test_filename_header_param_escaped():
+    fields = {'upload': {'content': 'file_content', 'filename': 'ok.txt"\r\nX-Injected: pwned'}}
+    content_type, b_data = prepare_multipart(fields)
+    assert b'filename="ok.txt%22%0D%0AX-Injected: pwned"' in b_data
+    assert b'\r\nX-Injected: pwned' not in b_data
+
+
+def test_field_name_header_param_escaped():
+    fields = {'a"\r\nContent-Disposition: form-data; name="role': 'value'}
+    content_type, b_data = prepare_multipart(fields)
+    assert b'name="a%22%0D%0AContent-Disposition: form-data; name=%22role"' in b_data
+    assert b_data.count(b'\r\nContent-Disposition: ') == 1
+
+
+def test_mime_type_with_crlf():
+    fields = {'foo': {'content': 'foo', 'mime_type': 'text/plain\r\nX-Injected: pwned'}}
+    pytest.raises(ValueError, prepare_multipart, fields)

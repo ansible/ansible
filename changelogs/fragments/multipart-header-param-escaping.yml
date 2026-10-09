@@ -1,0 +1,2 @@
+bugfixes:
+  - module_utils.urls - escape ``"``, CR and LF in the ``name`` and ``filename`` parameters of generated ``multipart/form-data`` part headers, and reject a ``mime_type`` containing CR or LF, so these values can no longer inject part headers.

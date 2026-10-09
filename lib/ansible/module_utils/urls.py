@@ -1054,6 +1054,21 @@ _CHUNK_SIZE = 65536
 _DEFAULT_MIME_TYPE = b'application/octet-stream'
 _TEXT_CONTENT_TYPE = b'text/plain'
 
+# Percent-encodings applied to quoted multipart header parameters, per the HTML5
+# form submission algorithm. Matches what browsers send.
+_HEADER_PARAM_ESCAPES = (
+    (b'\r', b'%0D'),
+    (b'\n', b'%0A'),
+    (b'"', b'%22'),
+)
+
+
+def _escape_header_param(value: bytes) -> bytes:
+    """Percent-encode CR, LF and double quotes in a quoted multipart header parameter."""
+    for char, replacement in _HEADER_PARAM_ESCAPES:
+        value = value.replace(char, replacement)
+    return value
+
 
 class _MultipartReader(io.RawIOBase):
     """File-like reader for streaming multipart content without materializing in memory.
@@ -1169,6 +1184,9 @@ class _Multipart:
             raise ValueError('only one of filepath or content can be supplied')
         if not filepath and not content:
             raise ValueError('one of filepath or content must be supplied')
+        if b'\r' in ct or b'\n' in ct:
+            # emitted as a bare header value, so it cannot be escaped like the quoted params
+            raise ValueError('mime_type cannot contain CR or LF')
         self._parts.append({
             'name': name,
             'filename': filename,
@@ -1223,9 +1241,9 @@ class _Multipart:
 
         if part['cte']:
             buf.write(b'Content-Transfer-Encoding: ' + part['cte'] + self._nl)
-        disposition = b'form-data; name="%s"' % part['name']
+        disposition = b'form-data; name="%s"' % _escape_header_param(part['name'])
         if part['filename']:
-            disposition += b'; filename="%s"' % part['filename']
+            disposition += b'; filename="%s"' % _escape_header_param(part['filename'])
         buf.write(b'Content-Type: ' + part['ct'] + self._nl)
         buf.write(b'Content-Disposition: ' + disposition + self._nl)
         buf.write(self._nl)
