@@ -8,10 +8,9 @@ for a compiled extension, without touching the registry semantics:
 * every occurrence of every secret is found (overlapping included) and the union of the spans is
   redacted, with overlapping and adjacent spans merged into one placeholder, so no character that
   belongs to a secret occurrence is left visible and the number of secrets is not revealed
-* secrets of 4-6 characters are masked only at a word boundary (both neighbours non-alphanumeric or
-  the string edge); a short secret that overlaps or is adjacent to another secret will be masked
-  unconditionally. An occurrence lying entirely inside another is not counted as an overlap, but if
-  the inner secret qualified by itself it will qualify the outer run to be safe
+* there is no minimum or maximum length and no word boundary rule: whatever was registered is redacted
+  wherever it appears. Surrounding whitespace is stripped before registration and a value that strips
+  to nothing is ignored
 
 ``_Fixed4Matcher`` is a custom string matcher/registry implementation tuned for Ansible.
 
@@ -19,15 +18,18 @@ for a compiled extension, without touching the registry semantics:
   a sliding window scan of the data it is attempting to mask; a hit is verified against the full secrets
   registered under that anchor with slice lookups.
 * before the full comparison, ``_PROBE_LEN`` characters from the middle of the candidate are checked
-  against teh middles of the registered secrets of that length, so a near-miss costs the probe rather
+  against the middles of the registered secrets of that length, so a near-miss costs the probe rather
   than the full length whatever the secret looks like (shared prefixes and suffixes such as PEM headers
   do not help an attacker trying to overload the matching with long secrets that are not present)
+* secrets shorter than the anchor cannot be indexed by it and are kept in a second index keyed by
+  their first character. When any exist a second scan looks the character at each position up in
+  that index and verifies the candidates with slice lookups; its cost does not depend on how many
+  short secrets there are and nothing is paid when there are none
 """
 
 from __future__ import annotations
 
 import json.encoder as _json_encoder
-import operator as _operator
 import typing as _t
 
 from ansible.module_utils._internal._concurrent._fork_safe_lock import ForkSafeLock
@@ -36,79 +38,39 @@ from ansible.module_utils._internal._concurrent._fork_safe_lock import ForkSafeL
 _emptyfrozenset: frozenset[str] = frozenset()
 
 # Bucket layout: (length, probe_offset, probe_stop, probes, secrets)
-# All secrets of one length sharing one 4-char anchor prefix. Visited longest-first for
-# leftmost-longest matching. The probe is compared before the full secret so a near-miss
-# costs the probe slice rather than the full length.
+# All secrets of one length sharing one 4-char anchor prefix. Every bucket is visited so
+# overlapping secrets are all reported and merged into one span. The probe is compared
+# before the full secret so a near-miss costs the probe slice rather than the full length.
 _Bucket = tuple[int, int, int, set[str], set[str]]
+
+# Short Bucket layout: (length, secrets)
+# Each short bucket holds all secrets of a particular length that are shorter than the anchor.
+_ShortBucket = tuple[int, set[str]]
 
 
 # If any of these are changed we need to ensure that Ansible.Secrets.cs is updated to match.
-_MINIMUM_SECRET_LENGTH = 4  # below this, not registered at all
-_MAXIMUM_SHORT_SECRET_LENGTH = 6  # above this, mask unconditionally
-_MAXIMUM_SECRET_LENGTH = 65536  # trims to this length as a cap for registration and matching
 _STRIP_CHARS = " \t\r\n"  # stripped from both ends before registration
 
-_ANCHOR_LEN = _MINIMUM_SECRET_LENGTH  # Keeping these two the same means we only need 1 sliding window scan
+_ANCHOR_LEN = 4  # secrets at least this long are indexed by their first _ANCHOR_LEN chars
 _PROBE_LEN = 8  # chars compared from the middle of a candidate before the full comparison
 
 
-def _sits_at_boundary(value: str, start: int, end: int) -> bool:
-    """Return True if the candidate at value[start:end] is at a word boundary."""
-    at_beginning = start == 0
-    at_end = end == len(value)
-    boundary_left = at_beginning or not value[start - 1].isalnum()
-    boundary_right = at_end or not value[end].isalnum()
-    return boundary_left and boundary_right
-
-
-def _span_is_qualified(value: str, start: int, end: int) -> bool:
-    """Return True if the occurrence at value[start:end] qualified on its own."""
-    return end - start > _MAXIMUM_SHORT_SECRET_LENGTH or _sits_at_boundary(value, start, end)
-
-
-def _merge_spans(value: str, spans: list[tuple[int, int]]) -> list[tuple[int, int]]:
-    """Merge overlapping/touching spans into one placeholder each and drop the runs that do not qualify."""
+def _merge_spans(spans: list[tuple[int, int]]) -> list[tuple[int, int]]:
+    """Merge overlapping/touching spans (sorted by start) into one placeholder each."""
     if not spans:
         return spans
 
     result: list[tuple[int, int]] = []
-
-    # A run being tracked is a contiguous sequence of overlapping or touching spans.
     run_start, run_end = spans[0]
-    keep = _span_is_qualified(value, run_start, run_end)
 
     for start, end in spans[1:]:
         if start > run_end:
-            # The current run in progress is complete as the new span starts after it. Append the
-            # completed run if it qualified and start tracking the new run with this span.
-            if keep:
-                result.append((run_start, run_end))
+            result.append((run_start, run_end))
             run_start, run_end = start, end
-            keep = _span_is_qualified(value, start, end)
         elif end > run_end:
-            # The current span starts inside, or is adjacent to the current run AND it extends
-            # beyond the run. We treat secrets that overlap or touch as qualified, regardless of
-            # length or word boundary, so we extend the current run and mark it to be kept.
-            #   ["pass","private"] in "passprivate": (0,4) then (4,11) -> one run (0,11)
-            #   ["abab"] in "ababab": (0,4) then (2,6) -> one run (0,6)
             run_end = end
-            keep = True
-        elif not keep:
-            # The current run does not qualify by itself (too short and not at a word boundary).
-            # The current span lies entirely inside the run and may qualify on its own. If the
-            # inner span qualifies on its own, we redact the whole run to be safe.
-            #   ["abcd-x","abcd"] in " abcd-xy":
-            #       (1,7) fails on the "y" (short + word boundary)
-            #       (1,5) passes the word boundary ("-" is non-alphanumeric)
-            #       As the inner span qualifies on its own, the whole run IS masked.
-            #   ["abcdef","abcd"] in " abcdefg":
-            #       (1,7) fails on the "g" (short + word boundary)
-            #       (1,5) fails on the "e" as well
-            #       This run does not qualify and IS NOT masked
-            keep = _span_is_qualified(value, start, end)
 
-    if keep:
-        result.append((run_start, run_end))
+    result.append((run_start, run_end))
 
     return result
 
@@ -133,19 +95,31 @@ class _Fixed4Matcher:
 
     Each anchor owns one bucket per distinct secret length, holding the probes and the
     secrets of that length as sets, so a candidate is resolved with two set lookups
-    instead of a walk over every secret sharing the anchor. Buckets are visited longest
-    first for leftmost-longest matching.
+    instead of a walk over every secret sharing the anchor. Every bucket is visited so
+    overlapping secrets of different lengths are all reported; the caller merges them.
     """
 
     def __init__(self) -> None:
-        # anchor -> buckets, longest first
+        # anchor -> buckets
         self._scan: dict[str, list[_Bucket]] = {}
         # anchor -> length -> bucket
         self._buckets: dict[str, dict[int, _Bucket]] = {}
+        # words shorter than the anchor: first char -> short buckets
+        self._short_index: dict[str, list[_ShortBucket]] = {}
 
     def add(self, word: str) -> None:
         """Add a word to the matcher."""
         word_len = len(word)
+        if word_len < _ANCHOR_LEN:
+            short_buckets = self._short_index.setdefault(word[0], [])
+            for length, words in short_buckets:
+                if length == word_len:
+                    words.add(word)
+                    break
+            else:
+                short_buckets.append((word_len, {word}))
+            return
+
         anchor = word[:_ANCHOR_LEN]
 
         by_length = self._buckets.setdefault(anchor, {})
@@ -157,8 +131,6 @@ class _Fixed4Matcher:
             bucket = (word_len, offset, offset + size, set(), set())
             by_length[word_len] = bucket
             anchor_buckets.append(bucket)
-            # Sorted for _merge_spans which expects spans ordered by length descending.
-            anchor_buckets.sort(key=_operator.itemgetter(0), reverse=True)
 
         length, probe_offset, probe_stop, probes, secrets = bucket
         probes.add(word[probe_offset:probe_stop])
@@ -185,6 +157,27 @@ class _Fixed4Matcher:
                     continue
 
                 spans.append((start, end))
+
+        if not self._short_index:
+            return spans
+
+        # While we do enumerate the value again, benchmarking found that the time enumerating the
+        # str is negligible compared to the actual operations done in the enumeration. The code
+        # is cleaner by separating the anchored scan from the short index scan and it removes this
+        # check from the hot path if no short secrets are registered.
+        index_get = self._short_index.get
+        for start in range(value_len):
+            short_buckets = index_get(value[start])
+            if not short_buckets:
+                continue
+
+            for length, words in short_buckets:
+                if value[start : start + length] in words:
+                    spans.append((start, start + length))
+
+        # The anchored scan emits spans in start order, the sort restores that order after the short pass.
+        if spans:
+            spans.sort()
 
         return spans
 
@@ -221,14 +214,13 @@ class SecretMasker:
                 # Surrounding whitespace is not part of the secret: values often
                 # arrive with a trailing newline (vaulted files, stdin) but are used
                 # stripped. The stripped value matches every occurrence the original
-                # would have, plus the stripped uses.
+                # would have, plus the stripped uses. A value that strips to nothing
+                # is ignored as an empty needle would match everywhere.
                 # FUTURE: Look into string normalisation \u00e9 vs \u0065\u0301, etc. to avoid
                 # leaking secrets that are equivalent but not identical. Would require logic
                 # on the masking side either to normalise and mutate the input or to register
                 # multiple normalised forms of each secret.
-                trimmed = secret.strip(_STRIP_CHARS)[:_MAXIMUM_SECRET_LENGTH]
-
-                if len(trimmed) < _MINIMUM_SECRET_LENGTH:
+                if not (trimmed := secret.strip(_STRIP_CHARS)):
                     continue
 
                 if self._add(trimmed):
@@ -252,7 +244,7 @@ class SecretMasker:
             elif self._forms:
                 spans = self._matcher.spans(value)
 
-            spans = _merge_spans(value, spans)
+            spans = _merge_spans(spans)
             if not spans:
                 return value
 
@@ -293,7 +285,7 @@ class SecretMasker:
         return frozenset(json_forms.get(form, form) for form in (value[start:end] for start, end in spans))
 
     def _add(self, secret: str) -> bool:
-        """Register ``secret`` (already length-checked and trimmed) and every form it can appear in.
+        """Register ``secret`` (already stripped and non-empty) and every form it can appear in.
 
         Returns False if ``secret`` was already registered. A form shared with another secret (a
         secret that is itself the JSON-escaped form of another) is only handed to the matcher once.
