@@ -1,0 +1,2 @@
+bugfixes:
+  - inventory's remove_host should now work correctly.
