@@ -10,7 +10,8 @@ IFS=', ' read -r -a pythons <<< "${options}"
 for python in "${pythons[@]}"; do
   echo "*** Checking Python ${python} ***"
 
-  if ansible-test units --truncate 0 --target-python "venv/${python}" "${@}" > output.log 2>&1 ; then
+  # NOTE: at least one verbosity level (-v) is needed so "PASSED" results appear in the output
+  if ansible-test units --truncate 0 --target-python "venv/${python}" -v "${@}" > output.log 2>&1 ; then
     cat output.log
     echo "Unit tests on Python ${python} did not fail as expected. See output above."
     exit 1
