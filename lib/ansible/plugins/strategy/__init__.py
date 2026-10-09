@@ -46,6 +46,7 @@ from ansible.playbook.play_context import PlayContext
 from ansible.playbook.task import Task
 from ansible.playbook.task_include import TaskInclude
 from ansible.plugins import loader as plugin_loader
+from ansible.plugins.connection import _resolve_connection_option_variables
 from ansible._internal._templating._engine import TemplateEngine
 from ansible.utils.display import Display
 from ansible.utils.fqcn import add_internal_fqcns
@@ -991,7 +992,7 @@ class StrategyBase:
                 del self._active_connections[target_host]
             else:
                 connection = plugin_loader.connection_loader.get(play_context.connection, play_context, os.devnull)
-                var_options = connection._resolve_option_variables(all_vars, templar)
+                var_options = _resolve_connection_option_variables(connection, all_vars, templar)
                 connection.set_options(task_keys=task.dump_attrs(), var_options=var_options)
                 play_context.set_attributes_from_plugin(connection)
 

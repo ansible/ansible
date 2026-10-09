@@ -1,0 +1,11 @@
+- hosts: localhost
+  gather_facts: false
+  tasks:
+  - name: the same plugin loaded by its short name and FQCN should share a connection
+    raw: echo hi
+    vars:
+      ansible_connection: '{{ item }}'
+    loop:
+    - local
+    - ansible.builtin.local
+    - local

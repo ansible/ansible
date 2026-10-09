@@ -1,0 +1,63 @@
+- hosts: host1
+  gather_facts: false
+  tasks:
+  - name: reset connection log
+    file:
+      path: '{{ dummy_connection_log }}'
+      state: absent
+    delegate_to: localhost
+
+  - name: test loop delegating to hosts with an ansible_host templated from host specific vars
+    raw: connection_log_test
+    delegate_to: '{{ item }}'
+    loop:
+    - host1
+    - host2
+    - host1
+    - host2
+
+  - name: assert connection log
+    include_tasks: connection_log_assert.yml
+    vars:
+      expected:
+      - connect remote_addr=host1.example.com remote_user=None port=None
+      - connect remote_addr=host2.example.com remote_user=None port=None
+      - close remote_addr=host1.example.com remote_user=None port=None
+      - close remote_addr=host2.example.com remote_user=None port=None
+
+  - name: test loop delegating to hosts with their own connection option variables
+    raw: connection_log_test
+    delegate_to: '{{ item }}'
+    loop:
+    - host3
+    - host4
+    - host3
+
+  - name: assert connection log
+    include_tasks: connection_log_assert.yml
+    vars:
+      expected:
+      - connect remote_addr=host3.example.com remote_user=user-3 port=None
+      - connect remote_addr=host4.example.com remote_user=user-4 port=None
+      # host3 was reused last so host4 is the least recently used
+      - close remote_addr=host4.example.com remote_user=user-4 port=None
+      - close remote_addr=host3.example.com remote_user=user-3 port=None
+
+  - name: test loop delegating to hosts with a connection option keyword
+    raw: connection_log_test
+    delegate_to: '{{ item }}'
+    remote_user: keyword-user
+    loop:
+    - host1
+    - host2
+    - host1
+
+  - name: assert connection log
+    include_tasks: connection_log_assert.yml
+    vars:
+      expected:
+      - connect remote_addr=host1.example.com remote_user=keyword-user port=None
+      - connect remote_addr=host2.example.com remote_user=keyword-user port=None
+      # host1 was reused last so host2 is the least recently used
+      - close remote_addr=host2.example.com remote_user=keyword-user port=None
+      - close remote_addr=host1.example.com remote_user=keyword-user port=None
