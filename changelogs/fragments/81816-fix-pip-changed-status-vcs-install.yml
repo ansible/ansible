@@ -1,0 +1,2 @@
+bugfixes:
+  - pip - Incorrect changed status was returned in case of installation from VCS where the target commit was different but the version was the same. The fix now evaluates also the commits used for installation from VCS (https://github.com/ansible/ansible/issues/81751).
