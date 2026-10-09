@@ -18,6 +18,7 @@
 from __future__ import annotations
 
 import os
+from dataclasses import dataclass, field
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
@@ -35,6 +36,12 @@ from ansible.vars.manager import VariableManager
 display = Display()
 
 
+@dataclass(frozen=True, slots=True)
+class HV:
+    host: Host
+    vars: dict = field(compare=False, hash=False)
+
+
 class IncludedFile:
     """Recombines include task results from multiple hosts into consolidated IncludedFile objects.
 
@@ -44,18 +51,26 @@ class IncludedFile:
     IncludedFile, allowing the strategy to load and process the included tasks once for all affected hosts.
     """
 
-    def __init__(self, filename, args, vars, task, is_role: bool = False) -> None:
+    def __init__(self, filename, args, task, is_role: bool = False) -> None:
         self._filename = filename
         self._args = args
-        self._vars = vars
         self._task = task
-        self._hosts: list[Host] = []
+        self._hvs: set[HV] = set()
         self._is_role = is_role
         self._results: list[HostTaskResult] = []
 
-    def add_host(self, host: Host) -> None:
-        if host not in self._hosts:
-            self._hosts.append(host)
+    @property
+    def _hosts(self) -> list[Host]:
+        return sorted((hv.host for hv in self._hvs), key=lambda host: host.name)
+
+    @property
+    def _vars(self) -> dict:
+        display.deprecated("The `IncludedFile._vars` attribute is no longer used.", version="2.25")
+        return {}
+
+    def add_host(self, host: HV) -> None:
+        if host not in self._hvs:
+            self._hvs.add(host)
             return
 
         raise ValueError()
@@ -66,12 +81,11 @@ class IncludedFile:
 
         return (other._filename == self._filename and
                 other._args == self._args and
-                other._vars == self._vars and
                 other._task._uuid == self._task._uuid and
                 other._task._parent._uuid == self._task._parent._uuid)
 
     def __repr__(self):
-        return "%s (args=%s vars=%s): %s" % (self._filename, self._args, self._vars, self._hosts)
+        return "%s (args=%s): %s" % (self._filename, self._args, self._hosts)
 
     @staticmethod
     def process_include_results(
@@ -202,7 +216,7 @@ class IncludedFile:
                             else:
                                 include_file = loader.path_dwim(include_utr.include_file)
 
-                        inc_file = IncludedFile(include_file, include_args, special_vars, original_task)
+                        inc_file = IncludedFile(include_file, include_args, original_task)
                     else:
                         # template the included role's name here
                         role_name = include_args.pop('name', include_args.pop('role', None))
@@ -214,7 +228,7 @@ class IncludedFile:
                                 from_key = from_arg.removesuffix('_from')
                                 new_task._from_files[from_key] = include_args.get(from_arg)
 
-                        inc_file = IncludedFile(role_name, include_args, special_vars, new_task, is_role=True)
+                        inc_file = IncludedFile(role_name, include_args, new_task, is_role=True)
 
                     # Deduplication loop handles multiple facets:
                     # 1. Cross-host consolidation: merge hosts with same (filename, args, vars, task) into one IncludedFile
@@ -235,7 +249,7 @@ class IncludedFile:
                             inc_file = orig_inc_file
 
                         try:
-                            inc_file.add_host(original_host)
+                            inc_file.add_host(HV(original_host, special_vars))
                             inc_file._results.append(res)
                         except ValueError:
                             # The host already exists for this include, advance forward, this is a new include

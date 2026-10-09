@@ -301,9 +301,12 @@ class CallbackModule(CallbackBase):
             return
 
         msg = 'included: %s for %s' % (included_file._filename, ", ".join([h.name for h in included_file._hosts]))
-        label = self._get_item_label(included_file._vars)
-        if label:
-            msg += " => (item=%s)" % label
+        labels = {self._get_item_label(hv.vars) for hv in included_file._hvs}
+        labels.discard(None)
+        if len(labels) == 1:
+            msg += " => (item=%s)" % labels.pop()
+        elif labels:
+            msg += " => (item=<various>)"
         self._display.display(msg, color=C.COLOR_INCLUDED)
 
     def v2_playbook_on_stats(self, stats):
