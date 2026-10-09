@@ -352,8 +352,10 @@ class StrategyModule(StrategyBase):
                         mark_hosts_failed = True
 
                 if mark_hosts_failed and (failed_hosts or unreachable_hosts):
+                    active_hosts = {host.name for host, task in host_tasks}
                     for host in hosts_left:
-                        if host.name not in failed_hosts:
+                        if (host.name not in failed_hosts and host.name not in unreachable_hosts and
+                                (not active_hosts or host.name in active_hosts)):
                             self._tqm._failed_hosts[host.name] = True
                             iterator.mark_host_failed(host)
                 display.debug("done checking for any_errors_fatal")
@@ -363,10 +365,12 @@ class StrategyModule(StrategyBase):
                     percentage = iterator._play.max_fail_percentage / 100.0
 
                     if (len(self._tqm._failed_hosts) / iterator.batch_size) > percentage:
+                        active_hosts = {host.name for host, task in host_tasks}
                         for host in hosts_left:
                             # don't double-mark hosts, or the iterator will potentially
                             # fail them out of the rescue/always states
-                            if host.name not in failed_hosts:
+                            if (host.name not in failed_hosts and
+                                    (not active_hosts or host.name in active_hosts)):
                                 self._tqm._failed_hosts[host.name] = True
                                 iterator.mark_host_failed(host)
                         self._tqm.send_callback('v2_playbook_on_no_hosts_remaining')
