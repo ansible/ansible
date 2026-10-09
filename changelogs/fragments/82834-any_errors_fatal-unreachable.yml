@@ -1,0 +1,2 @@
+bugfixes:
+  - any_errors_fatal - fix an issue where errors caused by hosts being unreachable did not always result in a fatal error (https://github.com/ansible/ansible/issues/82834)
