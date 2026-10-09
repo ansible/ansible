@@ -24,7 +24,7 @@ class TestConnectionWinRM(object):
     OPTIONS_DATA: tuple[tuple[dict[str, t.Any], dict[str, t.Any], dict[str, t.Any], bool], ...] = (
         # default options
         (
-            {'_extras': {}},
+            {},
             {},
             {
                 '_kerb_managed': False,
@@ -43,7 +43,7 @@ class TestConnectionWinRM(object):
         ),
         # http through port
         (
-            {'_extras': {}, 'ansible_port': 5985},
+            {'ansible_port': 5985},
             {},
             {
                 '_winrm_kwargs': {'username': None, 'password': None},
@@ -55,7 +55,7 @@ class TestConnectionWinRM(object):
         ),
         # kerberos user with kerb present
         (
-            {'_extras': {}, 'ansible_user': 'user@domain.com'},
+            {'ansible_user': 'user@domain.com'},
             {},
             {
                 '_kerb_managed': False,
@@ -70,7 +70,7 @@ class TestConnectionWinRM(object):
         ),
         # kerberos user without kerb present
         (
-            {'_extras': {}, 'ansible_user': 'user@domain.com'},
+            {'ansible_user': 'user@domain.com'},
             {},
             {
                 '_kerb_managed': False,
@@ -85,7 +85,7 @@ class TestConnectionWinRM(object):
         ),
         # kerberos user with managed ticket (implicit)
         (
-            {'_extras': {}, 'ansible_user': 'user@domain.com'},
+            {'ansible_user': 'user@domain.com'},
             {'remote_password': 'pass'},
             {
                 '_kerb_managed': True,
@@ -100,7 +100,7 @@ class TestConnectionWinRM(object):
         ),
         # kerb with managed ticket (explicit)
         (
-            {'_extras': {}, 'ansible_user': 'user@domain.com',
+            {'ansible_user': 'user@domain.com',
              'ansible_winrm_kinit_mode': 'managed'},
             {'password': 'pass'},
             {
@@ -110,7 +110,7 @@ class TestConnectionWinRM(object):
         ),
         # kerb with unmanaged ticket (explicit))
         (
-            {'_extras': {}, 'ansible_user': 'user@domain.com',
+            {'ansible_user': 'user@domain.com',
              'ansible_winrm_kinit_mode': 'manual'},
             {'password': 'pass'},
             {
@@ -120,7 +120,7 @@ class TestConnectionWinRM(object):
         ),
         # transport override (single)
         (
-            {'_extras': {}, 'ansible_user': 'user@domain.com',
+            {'ansible_user': 'user@domain.com',
              'ansible_winrm_transport': 'ntlm'},
             {},
             {
@@ -133,7 +133,7 @@ class TestConnectionWinRM(object):
         ),
         # transport override (list)
         (
-            {'_extras': {}, 'ansible_user': 'user@domain.com',
+            {'ansible_user': 'user@domain.com',
              'ansible_winrm_transport': ['ntlm', 'certificate']},
             {},
             {
@@ -144,21 +144,97 @@ class TestConnectionWinRM(object):
             },
             False
         ),
-        # winrm extras
+        # default Protocol kwargs
         (
-            {'_extras': {'ansible_winrm_server_cert_validation': 'ignore',
-                         'ansible_winrm_service': 'WSMAN'}},
+            {},
             {},
             {
-                '_winrm_kwargs': {'username': None, 'password': None,
-                                  'server_cert_validation': 'ignore',
-                                  'service': 'WSMAN'},
+                '_winrm_kwargs': {
+                    'username': None,
+                    'password': None,
+                    'service': 'HTTP',
+                    'cert_pem': None,
+                    'cert_key_pem': None,
+                    'server_cert_validation': 'validate',
+                    'kerberos_delegation': False,
+                    'read_timeout_sec': 30,
+                    'operation_timeout_sec': 20,
+                    'kerberos_hostname_override': None,
+                    'message_encryption': 'auto',
+                    'credssp_disable_tlsv1_2': False,
+                    'send_cbt': True,
+                },
+            },
+            False
+        ),
+        # explicit Protocol kwargs set through the ansible_winrm_* vars
+        (
+            {
+                'ansible_winrm_server_cert_validation': 'ignore',
+                'ansible_winrm_service': 'WSMAN',
+                'ansible_winrm_cert_pem': '/tmp/cert.pem',
+                'ansible_winrm_cert_key_pem': '/tmp/key.pem',
+                'ansible_winrm_kerberos_delegation': 'yes',
+                'ansible_winrm_read_timeout_sec': '60',
+                'ansible_winrm_operation_timeout_sec': '50',
+                'ansible_winrm_kerberos_hostname_override': 'host.domain.com',
+                'ansible_winrm_message_encryption': 'always',
+                'ansible_winrm_credssp_disable_tlsv1_2': 'true',
+                'ansible_winrm_send_cbt': 'no',
+                'ansible_winrm_ca_trust_path': '/tmp/ca.pem',
+                'ansible_winrm_proxy': 'http://proxy:8080',
+            },
+            {},
+            {
+                '_winrm_kwargs': {
+                    'username': None,
+                    'password': None,
+                    'service': 'WSMAN',
+                    'cert_pem': '/tmp/cert.pem',
+                    'cert_key_pem': '/tmp/key.pem',
+                    'server_cert_validation': 'ignore',
+                    'kerberos_delegation': True,
+                    'read_timeout_sec': 60,
+                    'operation_timeout_sec': 50,
+                    'kerberos_hostname_override': 'host.domain.com',
+                    'message_encryption': 'always',
+                    'credssp_disable_tlsv1_2': True,
+                    'send_cbt': False,
+                    'ca_trust_path': '/tmp/ca.pem',
+                    'proxy': 'http://proxy:8080',
+                },
+            },
+            False
+        ),
+        # kerberos_service alias
+        (
+            {'ansible_winrm_kerberos_service': 'WSMAN'},
+            {},
+            {
+                '_winrm_kwargs': {'service': 'WSMAN'},
+            },
+            False
+        ),
+        # proxy set to the string None disables proxy lookups
+        (
+            {'ansible_winrm_proxy': 'None'},
+            {},
+            {
+                '_winrm_kwargs': {'proxy': None},
+            },
+            False
+        ),
+        (
+            {'ansible_winrm_proxy': 'none'},
+            {},
+            {
+                '_winrm_kwargs': {'proxy': None},
             },
             False
         ),
         # direct override
         (
-            {'_extras': {}, 'ansible_winrm_connection_timeout': 5},
+            {'ansible_winrm_connection_timeout': 5},
             {'connection_timeout': 10},
             {
                 '_winrm_connection_timeout': 10,
@@ -167,7 +243,7 @@ class TestConnectionWinRM(object):
         ),
         # password as ansible_password
         (
-            {'_extras': {}, 'ansible_password': 'pass'},
+            {'ansible_password': 'pass'},
             {},
             {
                 '_winrm_pass': 'pass',
@@ -177,7 +253,7 @@ class TestConnectionWinRM(object):
         ),
         # password as ansible_winrm_pass
         (
-            {'_extras': {}, 'ansible_winrm_pass': 'pass'},
+            {'ansible_winrm_pass': 'pass'},
             {},
             {
                 '_winrm_pass': 'pass',
@@ -188,7 +264,7 @@ class TestConnectionWinRM(object):
 
         # password as ansible_winrm_password
         (
-            {'_extras': {}, 'ansible_winrm_password': 'pass'},
+            {'ansible_winrm_password': 'pass'},
             {},
             {
                 '_winrm_pass': 'pass',
@@ -209,25 +285,40 @@ class TestConnectionWinRM(object):
         conn.set_options(var_options=options, direct=direct)
         conn._build_winrm_kwargs()
 
-        for attr, expected in expected.items():
+        # These default to the pywinrm environment lookup behaviour and should
+        # only be present when explicitly set.
+        for env_kwarg in ('ca_trust_path', 'proxy'):
+            assert (env_kwarg in conn._winrm_kwargs) == (env_kwarg in expected.get('_winrm_kwargs', {}))
+
+        for attr, expected_value in expected.items():
             actual = getattr(conn, attr)
-            assert actual == expected, \
-                "winrm attr '%s', actual '%s' != expected '%s'"\
-                % (attr, actual, expected)
+
+            if attr == '_winrm_kwargs':
+                # Only check the kwargs the test case cares about, the rest are
+                # the pywinrm defaults.
+                for k, v in expected_value.items():
+                    assert actual[k] == v, f"winrm Protocol kwarg {k!r}, actual {actual[k]!r} != expected {v!r}"
+
+            else:
+                assert actual == expected_value, f"winrm attr {attr!r}, actual {actual!r} != expected {expected_value!r}"
 
 
 class TestWinRMKerbAuth(object):
 
     @pytest.mark.parametrize('options, expected', [
-        [{"_extras": {}},
+        [{},
          (["kinit", "user@domain"],)],
-        [{"_extras": {}, 'ansible_winrm_kinit_cmd': 'kinit2'},
+        [{'ansible_winrm_kinit_cmd': 'kinit2'},
          (["kinit2", "user@domain"],)],
-        [{"_extras": {'ansible_winrm_kerberos_delegation': True}},
+        [{'ansible_winrm_kerberos_delegation': True},
          (["kinit", "-f", "user@domain"],)],
-        [{"_extras": {}, 'ansible_winrm_kinit_args': '-f -p'},
+        [{'ansible_winrm_kerberos_delegation': 'yes'},
+         (["kinit", "-f", "user@domain"],)],
+        [{'ansible_winrm_kerberos_delegation': 'false'},
+         (["kinit", "user@domain"],)],
+        [{'ansible_winrm_kinit_args': '-f -p'},
          (["kinit", "-f", "-p", "user@domain"],)],
-        [{"_extras": {}, 'ansible_winrm_kerberos_delegation': True, 'ansible_winrm_kinit_args': '-p'},
+        [{'ansible_winrm_kerberos_delegation': True, 'ansible_winrm_kinit_args': '-p'},
          (["kinit", "-p", "user@domain"],)]
     ])
     def test_kinit_success_subprocess(self, monkeypatch, options, expected):
@@ -262,7 +353,7 @@ class TestWinRMKerbAuth(object):
 
         pc = PlayContext()
         conn = connection_loader.get('winrm', pc)
-        options = {"_extras": {}, "ansible_winrm_kinit_cmd": "/fake/kinit"}
+        options = {"ansible_winrm_kinit_cmd": "/fake/kinit"}
         conn.set_options(var_options=options)
         conn._build_winrm_kwargs()
 
@@ -285,7 +376,7 @@ class TestWinRMKerbAuth(object):
 
         pc = PlayContext()
         conn = connection_loader.get('winrm', pc)
-        conn.set_options(var_options={"_extras": {}})
+        conn.set_options(var_options={})
         conn._build_winrm_kwargs()
 
         with pytest.raises(AnsibleConnectionFailure) as err:
@@ -305,7 +396,7 @@ class TestWinRMKerbAuth(object):
 
         pc = PlayContext()
         conn = connection_loader.get('winrm', pc)
-        conn.set_options(var_options={"_extras": {}})
+        conn.set_options(var_options={})
         conn._build_winrm_kwargs()
 
         with pytest.raises(AnsibleConnectionFailure) as err:
@@ -356,7 +447,7 @@ class TestWinRMKerbAuth(object):
     def test_connect_failure_auth_401(self, monkeypatch):
         pc = PlayContext()
         conn = connection_loader.get('winrm', pc)
-        conn.set_options(var_options={"ansible_winrm_transport": "basic", "_extras": {}})
+        conn.set_options(var_options={"ansible_winrm_transport": "basic"})
 
         mock_proto = MagicMock()
         mock_proto.open_shell.side_effect = ValueError("Custom exc Code 401")
@@ -371,7 +462,7 @@ class TestWinRMKerbAuth(object):
     def test_connect_failure_other_exception(self, monkeypatch):
         pc = PlayContext()
         conn = connection_loader.get('winrm', pc)
-        conn.set_options(var_options={"ansible_winrm_transport": "basic", "_extras": {}})
+        conn.set_options(var_options={"ansible_winrm_transport": "basic"})
 
         mock_proto = MagicMock()
         mock_proto.open_shell.side_effect = ValueError("Custom exc")
@@ -386,7 +477,7 @@ class TestWinRMKerbAuth(object):
     def test_connect_failure_operation_timed_out(self, monkeypatch):
         pc = PlayContext()
         conn = connection_loader.get('winrm', pc)
-        conn.set_options(var_options={"ansible_winrm_transport": "basic", "_extras": {}})
+        conn.set_options(var_options={"ansible_winrm_transport": "basic"})
 
         mock_proto = MagicMock()
         mock_proto.open_shell.side_effect = ValueError("Custom exc Operation timed out")
@@ -401,7 +492,7 @@ class TestWinRMKerbAuth(object):
     def test_connect_no_transport(self):
         pc = PlayContext()
         conn = connection_loader.get('winrm', pc)
-        conn.set_options(var_options={"_extras": {}})
+        conn.set_options(var_options={})
         conn._build_winrm_kwargs()
         conn._winrm_transport = []
 
