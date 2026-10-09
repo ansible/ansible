@@ -1,5 +1,95 @@
-- hosts: all
+- hosts: persistent_default
   gather_facts: false
   tasks:
     - persistent:
+      vars:
+        ansible_command_timeout: 31
+      register: first
+
     - persistent:
+      vars:
+        ansible_command_timeout: 32
+      register: second
+
+    - persistent:
+      vars:
+        ansible_command_timeout: 33
+      register: third
+
+    - name: Enable become on the existing daemon
+      persistent_state:
+      vars:
+        ansible_become: true
+      register: become_enabled
+
+    - name: Disable become on the existing daemon
+      persistent_state:
+      vars:
+        ansible_become: false
+      register: become_disabled
+
+    - assert:
+        that:
+          - first.pid == second.pid
+          - first.pid == third.pid
+          - first.pid == become_enabled.pid
+          - first.pid == become_disabled.pid
+          - first.timeout == 31
+          - second.timeout == 32
+          - third.timeout == 33
+          - first.command_timeout == 31
+          - second.command_timeout == 32
+          - third.command_timeout == 33
+          - first.check_prompt is none
+          - second.check_prompt is truthy
+          - third.check_prompt is truthy
+          - second.check_prompt != third.check_prompt
+          - become_enabled.become is true
+          - become_disabled.become is false
+          - lookup('file', helper_counter_path).splitlines() | length == 1
+
+    - name: Reset the active persistent connection
+      meta: reset_connection
+
+    - name: Create a new daemon after reset
+      persistent:
+      vars:
+        ansible_command_timeout: 34
+      register: after_reset
+
+    - assert:
+        that:
+          - after_reset.pid != first.pid
+          - after_reset.timeout == 34
+          - after_reset.command_timeout == 34
+          - lookup('file', helper_counter_path).splitlines() | length == 2
+
+    - name: Reuse the daemon matching each final connection identity
+      persistent:
+      vars:
+        ansible_user: "{{ item.user }}"
+        ansible_port: "{{ item.port }}"
+      loop:
+        - {user: alice, port: 2201}
+        - {user: alice, port: 2202}
+        - {user: bob, port: 2201}
+        - {user: alice, port: 2201}
+        - {user: alice, port: 2202}
+        - {user: bob, port: 2201}
+      register: identities
+
+    - assert:
+        that:
+          - identities.results[0].pid != identities.results[1].pid
+          - identities.results[0].pid != identities.results[2].pid
+          - identities.results[1].pid != identities.results[2].pid
+          - identities.results[0].pid == identities.results[3].pid
+          - identities.results[1].pid == identities.results[4].pid
+          - identities.results[2].pid == identities.results[5].pid
+          - identities.results[0].check_prompt is none
+          - identities.results[1].check_prompt is none
+          - identities.results[2].check_prompt is none
+          - identities.results[3].check_prompt is truthy
+          - identities.results[3].check_prompt == identities.results[4].check_prompt
+          - identities.results[3].check_prompt == identities.results[5].check_prompt
+          - lookup('file', helper_counter_path).splitlines() | length == 5
