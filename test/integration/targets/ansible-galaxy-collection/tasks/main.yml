@@ -63,6 +63,9 @@
       environment:
         ANSIBLE_CONFIG: '{{ galaxy_dir }}/ansible.cfg'
 
+- name: run ansible-galaxy collection tarball extraction tests
+  include_tasks: install_tarball.yml
+
 - name: run ansible-galaxy collection publish tests for {{ test_name }}
   include_tasks: publish.yml
   args:
