@@ -1,1 +1,1 @@
-query: overwrite global Jinja2 function
+hostvars: overwrite internal object
