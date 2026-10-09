@@ -29,6 +29,7 @@ options:
     type: list
     default: []
     elements: dict
+    secret: false
     suboptions:
       parent_group:
         type: str
@@ -43,6 +44,7 @@ options:
         default: "_"
       key:
         type: str
+        secret: false
         description:
         - The key from input dictionary used to generate groups.
       default_value:
