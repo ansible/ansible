@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-config - Improved validation logic to ensure all configuration entries, including those under `galaxy_server`, are properly validated for required fields and correct value types.

@@ -1,0 +1,41 @@
+---
+- name: Test valid galaxy configuration
+  ansible.builtin.command: "ansible-config validate -t all"
+  environment:
+    ANSIBLE_CONFIG: "{{ role_path }}/files/valid_galaxy.cfg"
+  register: valid_test
+  changed_when: false
+
+- name: Verify valid config passes
+  ansible.builtin.assert:
+    that:
+      - valid_test.rc == 0
+      - "'All configurations seem valid' in valid_test.stdout"
+
+- name: Test invalid galaxy configuration (missing url)
+  ansible.builtin.command: "ansible-config validate -t all"
+  environment:
+    ANSIBLE_CONFIG: "{{ role_path }}/files/invalid_galaxy.cfg"
+  register: invalid_test
+  changed_when: false
+  ignore_errors: yes
+
+- name: Verify invalid config fails
+  ansible.builtin.assert:
+    that:
+      - invalid_test.rc != 0
+      - "'missing required field' in invalid_test.stderr"
+      - "'url' in invalid_test.stderr"
+
+- name: Test empty configuration file
+  ansible.builtin.command: "ansible-config validate -t all"
+  environment:
+    ANSIBLE_CONFIG: "{{ role_path }}/files/empty.cfg"
+  register: empty_test
+  changed_when: false
+
+- name: Verify empty config passes
+  ansible.builtin.assert:
+    that:
+      - empty_test.rc == 0
+      - "'All configurations seem valid' in empty_test.stdout"
