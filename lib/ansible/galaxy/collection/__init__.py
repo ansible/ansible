@@ -1663,6 +1663,9 @@ def _extract_tar_dir(tar, dirname, b_dest):
     except KeyError:
         raise AnsibleError("Unable to extract '%s' from collection" % dirname)
 
+    if not _is_child_path(to_bytes(tar_member.name, errors='surrogate_or_strict'), b_dest):
+        raise AnsibleError(f"Cannot extract directory '{dirname}' in collection: path is outside of collection '{tar_member.name}'")
+
     b_dir_path = os.path.join(b_dest, to_bytes(dirname, errors='surrogate_or_strict'))
 
     b_parent_path = os.path.dirname(b_dir_path)
@@ -1771,13 +1774,16 @@ def _get_file_hash(b_path, filename):  # type: (bytes, str) -> str
 def _is_child_path(path, parent_path, link_name=None):
     """ Checks that path is a path within the parent_path specified. """
     b_path = to_bytes(path, errors='surrogate_or_strict')
+    b_parent_path = to_bytes(parent_path, errors='surrogate_or_strict')
 
     if link_name and not os.path.isabs(b_path):
         # If link_name is specified, path is the source of the link and we need to resolve the absolute path.
         b_link_dir = os.path.dirname(to_bytes(link_name, errors='surrogate_or_strict'))
-        b_path = os.path.abspath(os.path.join(b_link_dir, b_path))
+        b_path = os.path.join(b_link_dir, b_path)
+    elif not os.path.isabs(b_path):
+        b_path = os.path.join(b_parent_path, b_path)
 
-    b_parent_path = to_bytes(parent_path, errors='surrogate_or_strict')
+    b_path = os.path.normpath(b_path)
     return b_path == b_parent_path or b_path.startswith(b_parent_path + to_bytes(os.path.sep))
 
 
