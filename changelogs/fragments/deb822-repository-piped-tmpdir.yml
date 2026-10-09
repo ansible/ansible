@@ -1,0 +1,6 @@
+bugfixes:
+  - deb822_repository module - the sources and key files are now staged only when their content
+    actually differs from the destination, and the temporary file is removed if the write fails.
+  - deb822_repository module - the ``/etc/apt/keyrings`` directory is now created and its ownership
+    and mode enforced whenever a ``signed_by`` key is written, instead of only when the key content
+    differed from what was already on disk.

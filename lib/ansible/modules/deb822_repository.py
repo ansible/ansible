@@ -253,6 +253,7 @@ key_filename:
   sample: /etc/apt/keyrings/debian.gpg
 """
 
+import hashlib
 import os
 import re
 import sys
@@ -342,6 +343,31 @@ def is_armored(b_data):
     return b'-----BEGIN PGP PUBLIC KEY BLOCK-----' in b_data
 
 
+def write_bytes_atomically(module: AnsibleModule, dest: str, b_data: bytes) -> None:
+    """Write ``b_data`` to ``dest`` via a temp file.
+    """
+    tmpfd, tmpfile = tempfile.mkstemp(prefix='.ansible_tmp', dir=module.tmpdir)
+    try:
+        with os.fdopen(tmpfd, 'wb') as f:
+            f.write(b_data)
+        module.atomic_move(tmpfile, dest)
+    except Exception:
+        try:
+            os.unlink(tmpfile)
+        except OSError:
+            pass
+        raise
+
+
+def write_file_if_changed(module: AnsibleModule, dest: str, b_data: bytes) -> bool:
+    """Atomically replace ``dest`` when its SHA-256 digest differs from ``b_data``."""
+    if hashlib.sha256(b_data).hexdigest() == module.sha256(dest):
+        return False
+    if not module.check_mode:
+        write_bytes_atomically(module, dest, b_data)
+    return True
+
+
 def write_signed_by_key(module, v, slug):
     changed = False
     if os.path.isfile(v):
@@ -364,22 +390,11 @@ def write_signed_by_key(module, v, slug):
     if not b_data:
         return changed, v, None
 
-    tmpfd, tmpfile = tempfile.mkstemp(dir=module.tmpdir)
-    with os.fdopen(tmpfd, 'wb') as f:
-        f.write(b_data)
-
     ext = 'asc' if is_armored(b_data) else 'gpg'
     filename = make_signed_by_filename(slug, ext)
 
-    src_chksum = module.sha256(tmpfile)
-    dest_chksum = module.sha256(filename)
-
-    if src_chksum != dest_chksum:
-        changed |= ensure_keyrings_dir(module)
-        if not module.check_mode:
-            module.atomic_move(tmpfile, filename)
-        changed |= True
-
+    changed |= ensure_keyrings_dir(module)
+    changed |= write_file_if_changed(module, filename, b_data)
     changed |= module.set_mode_if_different(filename, S_IRWU_RG_RO, False)
 
     return changed, filename, None
@@ -629,19 +644,9 @@ def main():
         deb822[format_field_name(key)] = value
 
     repo = deb822.dump()
-    tmpfd, tmpfile = tempfile.mkstemp(dir=module.tmpdir)
-    with os.fdopen(tmpfd, 'wb') as f:
-        f.write(to_bytes(repo))
-
     sources_filename = make_sources_filename(slug)
 
-    src_chksum = module.sha256(tmpfile)
-    dest_chksum = module.sha256(sources_filename)
-
-    if src_chksum != dest_chksum:
-        if not check_mode:
-            module.atomic_move(tmpfile, sources_filename)
-        changed |= True
+    changed |= write_file_if_changed(module, sources_filename, to_bytes(repo))
 
     changed |= module.set_mode_if_different(sources_filename, mode, False)
 
