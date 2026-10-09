@@ -1,0 +1,3 @@
+---
+deprecated_features:
+  - ansible-pull - The ``ansible-pull`` CLI is deprecated and will be removed in ansible-core 2.25. Users should migrate to a shell script or playbook combining git and ``ansible-playbook`` (https://github.com/ansible/ansible/issues/86889).
