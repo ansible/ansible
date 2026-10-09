@@ -187,8 +187,9 @@ class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
             if self._loader.path_exists(role_path):
                 return (role_name, role_path)
 
-        # if not found elsewhere try to extract path from name
-        role_path = unfrackpath(role_name)
+        # if not found elsewhere try to extract path from name, resolving relative
+        # to the playbook directory rather than the process CWD
+        role_path = unfrackpath(role_name, basedir=self._loader.get_basedir())
         if self._loader.path_exists(role_path):
             role_name = os.path.basename(role_name)
             return (role_name, role_path)

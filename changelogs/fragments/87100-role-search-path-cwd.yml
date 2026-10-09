@@ -1,0 +1,3 @@
+bugfixes:
+  - role definition - fix path-based role lookup resolving relative to the process working directory
+    instead of the playbook directory when the role name looks like a path (https://github.com/ansible/ansible/issues/87100).
