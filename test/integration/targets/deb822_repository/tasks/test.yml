@@ -146,7 +146,8 @@
       - remove_repos_1 is changed
       - remove_stats.results|map(attribute='stat')|selectattr('exists') == []
 
-- name: Add repo with signed_by
+
+- name: Add repo with signed_by as - single inline key block
   deb822_repository:
     name: ansible-test
     types: deb
@@ -168,27 +169,10 @@
       -----END PGP PUBLIC KEY BLOCK-----
   register: signed_by_inline
 
-- name: Change signed_by to URL
-  deb822_repository:
-    name: ansible-test
-    types: deb
-    uris: https://deb.debian.org
-    suites: stable
-    components:
-      - main
-      - contrib
-      - non-free
-    signed_by: https://ci-files.testing.ansible.com/test/integration/targets/apt_key/apt-key-example-binary.gpg
-  register: signed_by_url
-
 - assert:
     that:
       - signed_by_inline.key_filename is none
       - signed_by_inline.repo|trim == signed_by_inline_expected
-      - signed_by_url is changed
-      - signed_by_url.key_filename == '/etc/apt/keyrings/ansible-test.gpg'
-      - >
-        'BEGIN' not in signed_by_url.repo
   vars:
     signed_by_inline_expected: |-
       Components: main contrib non-free
@@ -206,6 +190,621 @@
       Suites: stable
       Types: deb
       URIs: https://deb.debian.org
+
+
+- name: Test Checkmode for adding repo with signed_by as - single inline key block
+  deb822_repository:
+    name: ansible-test-inline
+    types: deb
+    uris: https://deb.debian.org
+    suites: stable
+    components:
+      - main
+      - contrib
+      - non-free
+    signed_by: |-
+      -----BEGIN PGP PUBLIC KEY BLOCK-----
+      
+      mDMEYCQjIxYJKwYBBAHaRw8BAQdAD/P5Nvvnvk66SxBBHDbhRml9ORg1WV5CvzKY
+      CuMfoIS0BmFiY2RlZoiQBBMWCgA4FiEErCIG1VhKWMWo2yfAREZd5NfO31cFAmAk
+      IyMCGyMFCwkIBwMFFQoJCAsFFgIDAQACHgECF4AACgkQREZd5NfO31fbOwD6ArzS
+      dM0Dkd5h2Ujy1b6KcAaVW9FOa5UNfJ9FFBtjLQEBAJ7UyWD3dZzhvlaAwunsk7DG
+      3bHcln8DMpIJVXht78sL
+      =IE0r
+      -----END PGP PUBLIC KEY BLOCK-----
+  register: signed_by_inline_checkmode
+  check_mode: yes
+
+- name: Verify repo file does not exist for checkmode with - single inline key
+  stat:                                                                                                 
+    path: /etc/apt/sources.list.d/ansible-test-inline.sources                                                      
+  register: verify_checkmode_inline
+
+- assert:
+    that:
+      - signed_by_inline_checkmode is changed
+      - not verify_checkmode_inline.stat.exists
+
+
+- name: Add repo with signed_by as - URL
+  deb822_repository:
+    name: ansible-test
+    types: deb
+    uris: https://deb.debian.org
+    suites: stable
+    components:
+      - main
+      - contrib
+      - non-free
+    signed_by: https://ci-files.testing.ansible.com/test/integration/targets/apt_key/apt-key-example-binary.gpg
+  register: signed_by_url
+
+- assert:
+    that:
+      - signed_by_url is changed
+      - signed_by_url.key_filename == '/etc/apt/keyrings/ansible-test.gpg'
+      - >
+        'BEGIN' not in signed_by_url.repo
+      - signed_by_url.repo|trim == signed_by_url_expected
+  vars:
+    signed_by_url_expected: |-
+      Components: main contrib non-free
+      X-Repolib-Name: ansible-test
+      Signed-By: /etc/apt/keyrings/ansible-test.gpg
+      Suites: stable
+      Types: deb
+      URIs: https://deb.debian.org
+
+
+- name: Test Checkmode for adding repo with signed_by as - URL
+  deb822_repository:
+    name: ansible-test-url
+    types: deb
+    uris: https://deb.debian.org
+    suites: stable
+    components:
+      - main
+      - contrib
+      - non-free
+    signed_by:
+      - https://ci-files.testing.ansible.com/test/integration/targets/apt_key/apt-key-example-binary.gpg
+  register: signed_by_url_checkmode
+  check_mode: true
+
+- name: Verify repo file does not exist for checkmode with - url
+  stat:
+    path: /etc/apt/sources.list.d/ansible-test-url.sources
+  register: verify_checkmode_url
+
+- assert:
+    that:
+      - signed_by_url_checkmode is changed
+      - not verify_checkmode_url.stat.exists
+
+
+- name: Add repo with signed_by as - filepath
+  deb822_repository:
+    name: ansible-test
+    types: deb
+    uris: https://deb.debian.org
+    suites: stable
+    components:
+      - main
+      - contrib
+      - non-free
+    signed_by:
+      - /etc/apt/keyrings/ansible-test.gpg
+  register: signed_by_filepath
+
+- assert:
+    that:
+      - signed_by_filepath.key_filename == '/etc/apt/keyrings/ansible-test.gpg'
+      - signed_by_filepath.key_filenames == ['/etc/apt/keyrings/ansible-test.gpg']
+
+- name: Test Checkmode for adding repo with signed_by as - filepath
+  deb822_repository:
+    name: ansible-test-filepath
+    types: deb
+    uris: https://deb.debian.org
+    suites: stable
+    components:
+      - main
+      - contrib
+      - non-free
+    signed_by:
+      - /etc/apt/keyrings/ansible-test.gpg
+  register: signed_by_filepath_checkmode
+  check_mode: true
+
+- name: Verify repo file does not exist for checkmode with - filepath
+  stat:
+    path: /etc/apt/sources.list.d/ansible-test-filepath.sources
+  register: verify_checkmode_filepath
+
+- assert:
+    that:
+      - signed_by_filepath_checkmode is changed
+      - not verify_checkmode_filepath.stat.exists
+
+
+- name: Add repo with signed_by as - fingerprint
+  deb822_repository:
+    name: ansible-test
+    types: deb
+    uris: https://deb.debian.org
+    suites: stable
+    components:
+      - main
+      - contrib
+      - non-free
+    signed_by:
+      - F8B5 C3D4 E5F6 A1B2 C3D4 E5F6 A1B2 C3D4 E5F6 C37C
+  register: signed_by_fingerprint
+  check_mode: true
+
+- assert:
+    that:
+      - signed_by_fingerprint is changed
+      - signed_by_fingerprint.repo|trim == signed_by_fingerprint_expected
+  vars:
+    signed_by_fingerprint_expected: |-
+      Components: main contrib non-free
+      X-Repolib-Name: ansible-test
+      Signed-By: F8B5C3D4E5F6A1B2C3D4E5F6A1B2C3D4E5F6C37C
+      Suites: stable
+      Types: deb
+      URIs: https://deb.debian.org
+
+
+- name: Test Checkmode for adding repo with signed_by as - fingerprint
+  deb822_repository:
+    name: ansible-test-fingerprint
+    types: deb
+    uris: https://deb.debian.org
+    suites: stable
+    components:
+      - main
+      - contrib
+      - non-free
+    signed_by:
+      - F8B5 C3D4 E5F6 A1B2 C3D4 E5F6 A1B2 C3D4 E5F6 C37C
+  register: signed_by_fingerprint_checkmode
+  check_mode: yes
+
+- name: Verify repo file does not exist for checkmode with - fingerprint
+  stat:
+    path: /etc/apt/sources.list.d/ansible-test-fingerprint.sources
+  register: verify_checkmode_fingerprint
+
+- assert:
+    that:
+      - signed_by_fingerprint_checkmode is changed
+      - not verify_checkmode_fingerprint.stat.exists
+
+
+- name: Add repo with signed_by as - URLs and fingerprint
+  deb822_repository:
+    name: ansible-test
+    types: deb
+    uris: https://deb.debian.org
+    suites: stable
+    components:
+      - main
+      - contrib
+      - non-free
+    signed_by:
+      - https://ci-files.testing.ansible.com/test/integration/targets/apt_key/apt-key-example-binary.gpg
+      - https://ci-files.testing.ansible.com/test/integration/targets/apt_key/apt-key-example-binary.gpg
+      - F8B5 C3D4 E5F6 A1B2 C3D4 E5F6 A1B2 C3D4 E5F6 C37C
+  register: signed_by_urls_fingerprint
+
+- assert:
+    that:
+      - signed_by_urls_fingerprint is changed
+      - signed_by_urls_fingerprint.key_filename == '/etc/apt/keyrings/ansible-test.gpg'
+      - signed_by_urls_fingerprint.key_filenames == ['/etc/apt/keyrings/ansible-test.gpg']
+      - signed_by_urls_fingerprint.repo|trim == signed_by_urls_fingerprint_expected
+  vars:
+    signed_by_urls_fingerprint_expected: |-
+      Components: main contrib non-free
+      X-Repolib-Name: ansible-test
+      Signed-By: /etc/apt/keyrings/ansible-test.gpg F8B5C3D4E5F6A1B2C3D4E5F6A1B2C3D4E5F6C37C
+      Suites: stable
+      Types: deb
+      URIs: https://deb.debian.org
+
+
+- name: Test Checkmode for adding a repo with signed_by as - URLs and fingerprint
+  deb822_repository:
+    name: ansible-test-multiple-url
+    types: deb
+    uris: https://deb.debian.org
+    suites: stable
+    components:
+      - main
+      - contrib
+      - non-free
+    signed_by:
+      - https://ci-files.testing.ansible.com/test/integration/targets/apt_key/apt-key-example-binary.gpg
+      - https://ci-files.testing.ansible.com/test/integration/targets/apt_key/apt-key-example-binary.gpg
+      - F8B5 C3D4 E5F6 A1B2 C3D4 E5F6 A1B2 C3D4 E5F6 C37C
+  register: signed_by_urls_fingerprint_checkmode
+  check_mode: yes
+
+- name: Verify repo file does not exist for checkmode with - URLs and fingerprint
+  stat:
+    path: /etc/apt/sources.list.d/ansible-test-multiple-url.sources
+  register: verify_checkmode_urls_fingerprint
+
+- assert:
+    that:
+      - signed_by_urls_fingerprint_checkmode is changed
+      - not verify_checkmode_urls_fingerprint.stat.exists
+      - signed_by_urls_fingerprint_checkmode.key_filename == '/etc/apt/keyrings/ansible-test-multiple-url.gpg'
+      - signed_by_urls_fingerprint_checkmode.key_filenames == ['/etc/apt/keyrings/ansible-test-multiple-url.gpg']
+      - signed_by_urls_fingerprint_checkmode.repo|trim == signed_by_urls_fingerprint_checkmode_expected
+  vars:
+    signed_by_urls_fingerprint_checkmode_expected: |-
+      Components: main contrib non-free
+      X-Repolib-Name: ansible-test-multiple-url
+      Signed-By: /etc/apt/keyrings/ansible-test-multiple-url.gpg F8B5C3D4E5F6A1B2C3D4E5F6A1B2C3D4E5F6C37C
+      Suites: stable
+      Types: deb
+      URIs: https://deb.debian.org
+
+
+- name: Add repo with signed_by as - filepath, fingerprint
+  deb822_repository:
+    name: ansible-test
+    types: deb
+    uris: https://deb.debian.org
+    suites: stable
+
+    components:
+      - main
+      - contrib
+      - non-free
+    signed_by:
+      - /etc/apt/keyrings/ansible-test.gpg
+      - ffffDDDDeeee44449999aaaa2222dddd4444bbbb
+  register: signed_by_filepath_fingerprint
+
+- assert:
+    that:
+      - signed_by_filepath_fingerprint is changed
+      - signed_by_filepath_fingerprint.key_filename == '/etc/apt/keyrings/ansible-test.gpg'
+      - signed_by_filepath_fingerprint.key_filenames == ['/etc/apt/keyrings/ansible-test.gpg']
+      - signed_by_filepath_fingerprint.repo|trim == signed_by_filepath_fingerprint_expected
+  vars:
+    signed_by_filepath_fingerprint_expected: |-
+      Components: main contrib non-free
+      X-Repolib-Name: ansible-test
+      Signed-By: /etc/apt/keyrings/ansible-test.gpg ffffDDDDeeee44449999aaaa2222dddd4444bbbb
+      Suites: stable
+      Types: deb
+      URIs: https://deb.debian.org
+
+
+- name: Test checkmode for add repo with signed_by as - filepath, fingerprint
+  deb822_repository:
+    name: ansible-test-multiple
+    types: deb
+    uris: https://deb.debian.org
+    suites: stable
+    components:
+      - main
+      - contrib
+      - non-free
+    signed_by:
+      - /etc/apt/keyrings/ansible-test.gpg
+      - ffffDDDDeeee44449999aaaa2222dddd4444bbbb
+  register: signed_by_filepath_fingerprint_checkmode
+  check_mode: yes
+
+- name: Verify repo file does not exist for checkmode with - filepath, fingerprint
+  stat:
+    path: /etc/apt/sources.list.d/ansible-test-multiple.sources
+  register: verify_checkmode_filepath_fingerprint
+
+- assert:
+    that:
+      - signed_by_filepath_fingerprint_checkmode is changed
+      - not verify_checkmode_filepath_fingerprint.stat.exists
+      - signed_by_filepath_fingerprint_checkmode.key_filename == '/etc/apt/keyrings/ansible-test.gpg'
+      - signed_by_filepath_fingerprint_checkmode.key_filenames == ['/etc/apt/keyrings/ansible-test.gpg']
+      - signed_by_filepath_fingerprint_checkmode.repo|trim == signed_by_filepath_fingerprint_checkmode_expected
+  vars:
+    signed_by_filepath_fingerprint_checkmode_expected: |-
+      Components: main contrib non-free
+      X-Repolib-Name: ansible-test-multiple
+      Signed-By: /etc/apt/keyrings/ansible-test.gpg ffffDDDDeeee44449999aaaa2222dddd4444bbbb
+      Suites: stable
+      Types: deb
+      URIs: https://deb.debian.org
+
+
+- name: Add repo with signed_by as - fingerprints
+  deb822_repository:
+    name: ansible-test
+    types: deb
+    uris: https://deb.debian.org
+    suites: stable
+    components:
+      - main
+      - contrib
+      - non-free
+    signed_by:
+      - "A1B2 C3D4 E5F6 A1B2 C3D4 E5F6 A1B2 C3D4 E5F6 A1B2"
+      - "F8A5C3D4E5F6A1B2C3D4E5F6A1B2C3D4E5F6987B"
+  register: signed_by_fingerprints
+
+- assert:
+    that:
+      - signed_by_fingerprints is changed
+      - signed_by_fingerprints.key_filename is none
+      - signed_by_fingerprints.key_filenames is none
+      - signed_by_fingerprints.repo|trim == signed_by_fingerprints_expected
+  vars:
+    signed_by_fingerprints_expected: |-
+      Components: main contrib non-free
+      X-Repolib-Name: ansible-test
+      Signed-By: A1B2C3D4E5F6A1B2C3D4E5F6A1B2C3D4E5F6A1B2 F8A5C3D4E5F6A1B2C3D4E5F6A1B2C3D4E5F6987B
+      Suites: stable
+      Types: deb
+      URIs: https://deb.debian.org
+
+
+- name: Add repo with signed_by as - key blocks
+  deb822_repository:
+    name: ansible-test
+    types: deb
+    uris: https://deb.debian.org
+    suites: stable
+    components:
+      - main
+      - contrib
+      - non-free
+    signed_by:
+      - |
+        -----BEGIN PGP PUBLIC KEY BLOCK-----
+
+        mDMEYCQjIxYJKwYBBAHaRw8BAQdAD/P5Nvvnvk66SxBBHDbhRml9ORg1WV5CvzKY
+        CuMfoIS0BmFiY2RlZoiQBBMWCgA4FiEErCIG1VhKWMWo2yfAREZd5NfO31cFAmAk
+        IyMCGyMFCwkIBwMFFQoJCAsFFgIDAQACHgECF4AACgkQREZd5NfO31fbOwD6ArzS
+        dM0Dkd5h2Ujy1b6KcAaVW9FOa5UNfJ9FFBtjLQEBAJ7UyWD3dZzhvlaAwunsk7DG
+        3bHcln8DMpIJVXht78sL
+        =IE0r
+        -----END PGP PUBLIC KEY BLOCK-----
+      - |
+        -----BEGIN PGP PUBLIC KEY BLOCK-----
+
+        mDMEYCQjIxYJKwYBBAHaRw8BAQdAD/P5Nvvnvk66SxBBHDbhRml9ORg1WV5CvzKY
+        CuMfoIS0BmFiY2RlZoiQBBMWCgA4FiEErCIG1VhKWMWo2yfAREZd5NfO31cFAmAk
+        IyMCGyMFCwkIBwMFFQoJCAsFFgIDAQACHgECF4AACgkQREZd5NfO31fbOwD6ArzS
+        dM0Dkd5h2Ujy1b6KcAaVW9FOa5UNfJ9FFBtjLQEBAJ7UyWD3dZzhvlaAwunsk7DG
+        3bHcln8DMpIJVXht78sL
+        =IE0r
+        -----END PGP PUBLIC KEY BLOCK-----
+  register: signed_by_key_blocks
+
+- assert:
+    that:
+      - signed_by_key_blocks is changed
+      - signed_by_key_blocks.key_filename == '/etc/apt/keyrings/ansible-test.gpg'
+      - signed_by_key_blocks.key_filenames == ['/etc/apt/keyrings/ansible-test.gpg']
+      - signed_by_key_blocks.repo|trim == signed_by_keyblocks_expected
+  vars:
+    signed_by_keyblocks_expected: |-
+      Components: main contrib non-free
+      X-Repolib-Name: ansible-test
+      Signed-By: /etc/apt/keyrings/ansible-test.gpg
+      Suites: stable
+      Types: deb
+      URIs: https://deb.debian.org
+
+
+- name: Add repo with signed_by as - keyblock and url
+  deb822_repository:
+    name: ansible-test
+    types: deb
+    uris: https://deb.debian.org
+    suites: stable
+    components:
+      - main
+      - contrib
+      - non-free
+    signed_by:
+      - |
+        -----BEGIN PGP PUBLIC KEY BLOCK-----
+
+        mDMEYCQjIxYJKwYBBAHaRw8BAQdAD/P5Nvvnvk66SxBBHDbhRml9ORg1WV5CvzKY
+        CuMfoIS0BmFiY2RlZoiQBBMWCgA4FiEErCIG1VhKWMWo2yfAREZd5NfO31cFAmAk
+        IyMCGyMFCwkIBwMFFQoJCAsFFgIDAQACHgECF4AACgkQREZd5NfO31fbOwD6ArzS
+        dM0Dkd5h2Ujy1b6KcAaVW9FOa5UNfJ9FFBtjLQEBAJ7UyWD3dZzhvlaAwunsk7DG
+        3bHcln8DMpIJVXht78sL
+        =IE0r
+        -----END PGP PUBLIC KEY BLOCK-----
+      - https://ci-files.testing.ansible.com/test/integration/targets/apt_key/apt-key-example-binary.gpg
+  register: signed_by_keyblock_url
+
+- assert:
+    that:
+      - signed_by_keyblock_url is changed
+      - signed_by_keyblock_url.key_filename == '/etc/apt/keyrings/ansible-test.gpg'
+      - signed_by_keyblock_url.key_filenames == ['/etc/apt/keyrings/ansible-test.gpg']
+      - signed_by_keyblock_url.repo|trim == signed_by_keyblock_url_expected
+  vars:
+    signed_by_keyblock_url_expected: |-
+      Components: main contrib non-free
+      X-Repolib-Name: ansible-test
+      Signed-By: /etc/apt/keyrings/ansible-test.gpg
+      Suites: stable
+      Types: deb
+      URIs: https://deb.debian.org
+
+- name: Add repo with signed_by as - filepath, url, fingerprint
+  deb822_repository:
+    name: ansible-test
+    types: deb
+    uris: https://deb.debian.org
+    suites: stable
+    components:
+      - main
+      - contrib
+      - non-free
+    signed_by:
+      - /etc/apt/keyrings/ansible-test.gpg
+      - https://ci-files.testing.ansible.com/test/integration/targets/apt_key/apt-key-example-binary.gpg
+      - ffffDDDDeeee44449999aaaa2222dddd4444bbbb
+  register: signed_by_filepath_url_fingerprint
+
+- assert:
+    that:
+      - signed_by_filepath_url_fingerprint is changed
+      - signed_by_filepath_url_fingerprint.key_filename == '/etc/apt/keyrings/ansible-test.gpg'
+      - signed_by_filepath_url_fingerprint.key_filenames == ['/etc/apt/keyrings/ansible-test.gpg']
+      - signed_by_filepath_url_fingerprint.repo|trim == signed_by_filepath_url_fingerprint_expected
+  vars:
+    signed_by_filepath_url_fingerprint_expected: |-
+      Components: main contrib non-free
+      X-Repolib-Name: ansible-test
+      Signed-By: /etc/apt/keyrings/ansible-test.gpg ffffDDDDeeee44449999aaaa2222dddd4444bbbb
+      Suites: stable
+      Types: deb
+      URIs: https://deb.debian.org
+
+
+- name: Checkmode for adding repo with signed_by as - filepath, url, fingerprint
+  deb822_repository:
+    name: ansible-test-final
+    types: deb
+    uris: https://deb.debian.org
+    suites: stable
+    components:
+      - main
+      - contrib
+      - non-free
+    signed_by:
+      - /etc/apt/keyrings/ansible-test.gpg
+      - https://ci-files.testing.ansible.com/test/integration/targets/apt_key/apt-key-example-binary.gpg
+      - ffffDDDDeeee44449999aaaa2222dddd4444bbbb
+  register: signed_by_filepath_url_fingerprint_checkmode
+  check_mode: yes
+
+
+- name: Verify repo file does not exist for checkmode with - url, filepath, fingerprint
+  stat:
+    path: /etc/apt/sources.list.d/ansible-test-final.sources
+  register: verify_checkmode_filepath_url_fingerprint
+
+- assert:
+    that:
+      - signed_by_filepath_url_fingerprint_checkmode is changed
+      - not verify_checkmode_filepath_url_fingerprint.stat.exists
+      - signed_by_filepath_url_fingerprint_checkmode.key_filename == '/etc/apt/keyrings/ansible-test.gpg /etc/apt/keyrings/ansible-test-final.gpg'
+      - signed_by_filepath_url_fingerprint_checkmode.key_filenames == ['/etc/apt/keyrings/ansible-test.gpg', '/etc/apt/keyrings/ansible-test-final.gpg']
+      - signed_by_filepath_url_fingerprint_checkmode.repo|trim == signed_by_filepath_url_fingerprint_checkmode_expected
+  vars:
+    signed_by_filepath_url_fingerprint_checkmode_expected: |-
+      Components: main contrib non-free
+      X-Repolib-Name: ansible-test-final
+      Signed-By: /etc/apt/keyrings/ansible-test.gpg /etc/apt/keyrings/ansible-test-final.gpg ffffDDDDeeee44449999aaaa2222dddd4444bbbb
+      Suites: stable
+      Types: deb
+      URIs: https://deb.debian.org
+
+
+- name: Add repo with signed_by as - fingerprint with trailing '!'
+  deb822_repository:
+    name: ansible-test
+    types: deb
+    uris: https://deb.debian.org
+    suites: stable
+    components:
+      - main
+      - contrib
+      - non-free
+    signed_by:
+      - "A1B2 C3D4 E5F6 A1B2 C3D4 E5F6 A1B2 C3D4 E5F6 A1B2!"
+  register: signed_by_fingerprint_exact
+
+- assert:
+    that:
+      - signed_by_fingerprint_exact is changed
+      - signed_by_fingerprint_exact.key_filename is none
+      - signed_by_fingerprint_exact.key_filenames is none
+      - signed_by_fingerprint_exact.repo|trim == signed_by_fingerprint_exact_expected
+  vars:
+    signed_by_fingerprint_exact_expected: |-
+      Components: main contrib non-free
+      X-Repolib-Name: ansible-test
+      Signed-By: A1B2C3D4E5F6A1B2C3D4E5F6A1B2C3D4E5F6A1B2!
+      Suites: stable
+      Types: deb
+      URIs: https://deb.debian.org
+
+
+- name: Test Idempotency and Changed - Add repo with signed_by as - filepath, fingerprint
+  deb822_repository:
+    name: ansible-test
+    types: deb
+    uris: https://deb.debian.org
+    suites: stable
+    components:
+      - main
+      - contrib
+      - non-free
+    signed_by:
+      - /etc/apt/keyrings/ansible-test.gpg
+      - ffffDDDDeeee44449999aaaa2222dddd4444bbbb
+  register: signed_by_idempotent_changed
+
+- assert:
+    that:
+      - signed_by_idempotent_changed is changed
+      - signed_by_idempotent_changed.key_filename == '/etc/apt/keyrings/ansible-test.gpg'
+      - signed_by_idempotent_changed.key_filenames == ['/etc/apt/keyrings/ansible-test.gpg']
+      - signed_by_idempotent_changed.repo|trim == signed_by_idempotent_changed_expected
+  vars:
+    signed_by_idempotent_changed_expected: |-
+      Components: main contrib non-free
+      X-Repolib-Name: ansible-test
+      Signed-By: /etc/apt/keyrings/ansible-test.gpg ffffDDDDeeee44449999aaaa2222dddd4444bbbb
+      Suites: stable
+      Types: deb
+      URIs: https://deb.debian.org
+
+
+- name: Test Idempotency and Not Changed - Add repo with signed_by as - fingerprint, filepath
+  deb822_repository:
+    name: ansible-test
+    types: deb
+    uris: https://deb.debian.org
+    suites: stable
+    components:
+      - main
+      - contrib
+      - non-free
+    signed_by:
+      - ffffDDDDeeee44449999aaaa2222dddd4444bbbb
+      - /etc/apt/keyrings/ansible-test.gpg
+  register: signed_by_idempotent_not_changed
+
+- assert:
+    that:
+      - signed_by_idempotent_not_changed is not changed
+      - signed_by_idempotent_not_changed.key_filename == '/etc/apt/keyrings/ansible-test.gpg'
+      - signed_by_idempotent_not_changed.key_filenames == ['/etc/apt/keyrings/ansible-test.gpg']
+      - signed_by_idempotent_not_changed.repo|trim == signed_by_idempotent_not_changed_expected
+  vars:
+    signed_by_idempotent_not_changed_expected: |-
+      Components: main contrib non-free
+      X-Repolib-Name: ansible-test
+      Signed-By: /etc/apt/keyrings/ansible-test.gpg ffffDDDDeeee44449999aaaa2222dddd4444bbbb
+      Suites: stable
+      Types: deb
+      URIs: https://deb.debian.org
+
 
 - name: remove ansible-test repo
   deb822_repository:
@@ -241,3 +840,8 @@
 - assert:
     that:
       - ansible_test_http_agent is changed
+
+- name: Cleanup - remove ansible-test repo
+  deb822_repository:
+    name: ansible-test
+    state: absent
