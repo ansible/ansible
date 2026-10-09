@@ -14,6 +14,7 @@ import sys
 import typing as t
 
 import argparse
+from collections.abc import MutableMapping, MutableSequence
 
 from ansible import constants as C
 from ansible import context
@@ -397,12 +398,28 @@ class InventoryCLI(CLI):
         return results
 
 
+def _validate_no_none_values(obj: t.Any) -> None:
+    if obj is None:
+        raise AnsibleError(
+            "Inventory contains None values, which cannot be represented in TOML."
+        )
+
+    if isinstance(obj, MutableMapping):
+        for value in obj.values():
+            _validate_no_none_values(value)
+
+    elif isinstance(obj, MutableSequence):
+        for item in obj:
+            _validate_no_none_values(item)
+
+
 def toml_dumps(data: t.Any) -> str:
     try:
         from tomli_w import dumps as _tomli_w_dumps
     except ImportError:
         pass
     else:
+        _validate_no_none_values(data)
         return _tomli_w_dumps(data)
 
     raise AnsibleRuntimeError('The Python library "tomli-w" is required when using the TOML output format.')
