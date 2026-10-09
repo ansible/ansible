@@ -20,7 +20,7 @@ from __future__ import annotations
 import sys
 import typing as t
 
-from collections import defaultdict
+from collections import ChainMap, defaultdict
 from collections.abc import Mapping, MutableMapping
 
 from ansible import constants as C
@@ -38,6 +38,7 @@ from ansible.plugins.loader import cache_loader
 from ansible.utils.display import Display
 from ansible.utils.vars import combine_vars, load_extra_vars, load_options_vars
 from ansible.vars.clean import namespace_facts, clean_facts
+from ansible.vars.container import VarsContainer
 from ansible.vars.hostvars import HostVars
 from ansible.vars.plugins import get_vars_from_inventory_sources, get_vars_from_path
 from ansible.vars.reserved import warn_if_reserved
@@ -48,6 +49,7 @@ if t.TYPE_CHECKING:
 
 display = Display()
 
+type V = ChainMap[str, t.Any] | dict[str, t.Any]
 _DEPRECATE_TOP_LEVEL_FACT_TAG = _tags.Deprecated(
     msg='INJECT_FACTS_AS_VARS default to `True` is deprecated, top-level facts will not be auto injected after the change.',
     version='2.24',
@@ -60,6 +62,7 @@ _DEPRECATE_VARS = _tags.Deprecated(
     deprecator=_deprecator.ANSIBLE_CORE_DEPRECATOR,
     help_text='Use the `vars` and `varnames` lookups instead.',
 )
+_INJECT_FACTS, _INJECT_FACTS_ORIGIN = C.config.get_config_value_and_origin('INJECT_FACTS_AS_VARS')
 
 
 def _deprecate_top_level_fact(value: t.Any) -> t.Any:
@@ -69,9 +72,6 @@ def _deprecate_top_level_fact(value: t.Any) -> t.Any:
     Unique tag instances are required to achieve the correct de-duplication within a top-level templating operation.
     """
     return _DEPRECATE_TOP_LEVEL_FACT_TAG.tag(value)
-
-
-_INJECT_FACTS, _INJECT_FACTS_ORIGIN = C.config.get_config_value_and_origin('INJECT_FACTS_AS_VARS')
 
 
 def _clean_and_deprecate_top_level_facts(facts: Mapping[str, object]) -> dict[str, object]:
@@ -89,7 +89,6 @@ def preprocess_vars(a):
     returned as a list of dictionaries, to ensure for instance
     that vars loaded from a file conform to an expected state.
     """
-
     # FIXME: this does not properly handle omit, undefined, or dynamic structure from templated `vars` ; templating should be done earlier
     if a is None:
         return None
@@ -164,7 +163,7 @@ class VariableManager:
         _hosts: list[str] | None = None,
         _hosts_all: list[str] | None = None,
         stage: str = 'task',
-    ) -> dict[str, t.Any]:
+    ) -> ChainMap[str, t.Any]:
         """
         Returns the variables, with optional "context" given via the parameters
         for the play, host, and task (which could possibly result in different
@@ -189,7 +188,7 @@ class VariableManager:
 
         display.debug("in VariableManager get_vars()")
 
-        all_vars: dict[str, t.Any] = dict()
+        all_vars = VarsContainer()
         magic_variables = self._get_magic_variables(
             play=play,
             host=host,
@@ -198,13 +197,6 @@ class VariableManager:
             _hosts=_hosts,
             _hosts_all=_hosts_all,
         )
-
-        def _combine_and_track(data, new_data, source):
-            # FIXME: this no longer does any tracking, only a slight optimization for empty new_data
-            if new_data == {}:
-                return data
-
-            return combine_vars(data, new_data)
 
         # default for all cases
         basedirs = []
@@ -215,7 +207,7 @@ class VariableManager:
             # get role defaults (lowest precedence)
             for role in play.roles:
                 if role.public:
-                    all_vars = _combine_and_track(all_vars, role.get_default_vars(), "role '%s' defaults" % role.name)
+                    all_vars.combine(role.get_default_vars())
 
         if task:
             # set basedirs
@@ -232,7 +224,7 @@ class VariableManager:
             # (v1) made sure each task had a copy of its roles default vars
             # TODO: investigate why we need play or include_role check?
             if task._role is not None and (play or task.action in C._ACTION_INCLUDE_ROLE):
-                all_vars = _combine_and_track(all_vars, task._role.get_default_vars(dep_chain=task.get_dep_chain()), "role '%s' defaults" % task._role.name)
+                all_vars.combine(task._role.get_default_vars(dep_chain=task.get_dep_chain()))
 
         if host:
             # THE 'all' group and the rest of groups for a host, used below
@@ -248,7 +240,7 @@ class VariableManager:
                 """ merges all entities adjacent to play """
                 data = {}
                 for path in basedirs:
-                    data = _combine_and_track(data, get_vars_from_path(self._loader, path, entities, stage), "path '%s'" % path)
+                    data = combine_vars(data, get_vars_from_path(self._loader, path, entities, stage))
                 return data
 
             # configurable functions that are sortable via config, remember to add to _ALLOWED if expanding this list
@@ -280,8 +272,8 @@ class VariableManager:
                 """
                 data = {}
                 for group in host_groups:
-                    data[group] = _combine_and_track(data[group], _plugins_inventory(group), "inventory group_vars for '%s'" % group)
-                    data[group] = _combine_and_track(data[group], _plugins_play(group), "playbook group_vars for '%s'" % group)
+                    data[group] = combine_vars(data[group], _plugins_inventory(group))
+                    data[group] = combine_vars(data[group], _plugins_play(group))
                 return data
 
             # Merge groups as per precedence config
@@ -289,14 +281,14 @@ class VariableManager:
             for entry in C.VARIABLE_PRECEDENCE:
                 if entry in self._ALLOWED:
                     display.debug('Calling %s to load vars for %s' % (entry, host.name))
-                    all_vars = _combine_and_track(all_vars, locals()[entry](), "group vars, precedence entry '%s'" % entry)
+                    all_vars.combine(locals()[entry]())
                 else:
                     display.warning('Ignoring unknown variable precedence entry: %s' % (entry))
 
             # host vars, from inventory, inventory adjacent and play adjacent via plugins
-            all_vars = _combine_and_track(all_vars, host.get_vars(), "host vars for '%s'" % host)
-            all_vars = _combine_and_track(all_vars, _plugins_inventory([host]), "inventory host_vars for '%s'" % host)
-            all_vars = _combine_and_track(all_vars, _plugins_play([host]), "playbook host_vars for '%s'" % host)
+            all_vars.combine(host.get_vars())
+            all_vars.combine(_plugins_inventory([host]))
+            all_vars.combine(_plugins_play([host]))
 
             # finally, the facts caches for this host, if they exist
             try:
@@ -310,15 +302,15 @@ class VariableManager:
                 # push facts to main namespace
                 if _INJECT_FACTS:
                     clean_top = _clean_and_deprecate_top_level_facts(facts)
-                    all_vars = _combine_and_track(all_vars, clean_top, "facts")
+                    all_vars.combine(clean_top)
                 else:
                     # always 'promote' ansible_local, even if empty
-                    all_vars = _combine_and_track(all_vars, {'ansible_local': facts.get('ansible_local', {})}, "facts")
+                    all_vars['ansible_local'] = facts.get('ansible_local', {})
             except KeyError:
                 pass
 
         if play:
-            all_vars = _combine_and_track(all_vars, play.get_vars(), "play vars")
+            all_vars.combine(play.get_vars())
 
             vars_files = play.get_vars_files()
 
@@ -328,8 +320,10 @@ class VariableManager:
                 # NOTE: this makes them depend on host vars/facts so things like
                 #       ansible_facts['os_distribution'] can be used, ala include_vars.
                 #       Consider DEPRECATING this in the future, since we have include_vars ...
-                temp_vars = combine_vars(all_vars, self._extra_vars)
-                temp_vars = combine_vars(temp_vars, magic_variables)
+                #       include_vars already handles per host, these should be per play
+                temp_vars = all_vars.new_child()
+                temp_vars.combine(self._extra_vars)
+                temp_vars.combine(magic_variables)
                 templar = TemplateEngine(loader=self._loader, variables=temp_vars)
 
                 # we assume each item in the list is itself a list, as we
@@ -357,7 +351,7 @@ class VariableManager:
                             data = preprocess_vars(self._loader.load_from_file(found_file, unsafe=True, cache='vaulted', trusted_as_template=True))
                             if data is not None:
                                 for item in data:
-                                    all_vars = _combine_and_track(all_vars, item, f"play vars_files from {vars_file!r}")
+                                    all_vars.combine(item)
                             display.vvv(f"Read `vars_file` {found_file!r}.")
                             break
                         except AnsibleFileNotFound:
@@ -385,24 +379,23 @@ class VariableManager:
             # We now merge in all exported vars from all roles in the play (very high precedence)
             for role in play.roles:
                 if role.public:
-                    all_vars = _combine_and_track(all_vars, role.get_vars(include_params=False, only_exports=True), "role '%s' exported vars" % role.name)
+                    all_vars.combine(role.get_vars(include_params=False, only_exports=True))
 
         # next, we merge in the vars from the role, which will specifically
         # follow the role dependency chain, and then we merge in the tasks
         # vars (which will look at parent blocks/task includes)
         if task:
             if task._role:
-                all_vars = _combine_and_track(all_vars, task._role.get_vars(task.get_dep_chain(), include_params=False, only_exports=False),
-                                              "role '%s' all vars" % task._role.name)
-            all_vars = _combine_and_track(all_vars, task.get_vars(), "task vars")
+                all_vars.combine(task._role.get_vars(task.get_dep_chain(), include_params=False, only_exports=False))
+            all_vars.combine(task.get_vars())
 
         # next, we merge in the vars cache (include vars) and nonpersistent
         # facts cache (set_fact/register), in that order
         if host:
             # include_vars non-persistent cache
-            all_vars = _combine_and_track(all_vars, self._vars_cache.get(host.get_name(), dict()), "include_vars")
+            all_vars.combine(self._vars_cache.get(host.get_name(), dict()))
             # fact non-persistent cache (this also includes registered variables and host variables set at runtime)
-            all_vars = _combine_and_track(all_vars, self._nonpersistent_fact_cache.get(host.name, dict()), "set_fact")
+            all_vars.combine(self._nonpersistent_fact_cache.get(host.name, dict()))
 
         # next, we merge in role params and task include params
         if task:
@@ -410,17 +403,17 @@ class VariableManager:
             # may be specified in the vars field for the task, which should
             # have higher precedence than the vars/np facts above
             if task._role:
-                all_vars = _combine_and_track(all_vars, task._role.get_role_params(task.get_dep_chain()), "role params")
-            all_vars = _combine_and_track(all_vars, task.get_include_params(), "include params")
+                all_vars.combine(task._role.get_role_params(task.get_dep_chain()))
+            all_vars.combine(task.get_include_params())
 
         # extra vars
-        all_vars = _combine_and_track(all_vars, self._extra_vars, "extra vars")
+        all_vars.combine(self._extra_vars)
 
         # before we add 'reserved vars', check we didn't add any reserved vars
         warn_if_reserved(all_vars)
 
         # magic variables
-        all_vars = _combine_and_track(all_vars, magic_variables, "magic vars")
+        all_vars.combine(magic_variables)
 
         # special case for the 'environment' magic variable, as someone
         # may have set it as a variable and we don't want to stomp on it

@@ -30,7 +30,7 @@ from ansible.playbook.task_include import TaskInclude
 from ansible.playbook.role_include import IncludeRole
 from ansible._internal._templating._engine import TemplateEngine
 from ansible.utils.display import Display
-from ansible.vars.manager import VariableManager
+from ansible.vars.manager import VariableManager, V
 
 display = Display()
 
@@ -81,7 +81,7 @@ class IncludedFile:
         variable_manager: VariableManager,
     ) -> list[IncludedFile]:
         included_files: list[IncludedFile] = []
-        task_vars_cache: dict[tuple, dict] = {}
+        task_vars_cache: dict[tuple, V] = {}
 
         for res in results:
 
