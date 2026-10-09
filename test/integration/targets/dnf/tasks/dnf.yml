@@ -51,8 +51,8 @@
 - assert:
     that:
       - dnf_result is success
-      - dnf_result.results|length > 0
-      - "dnf_result.results[0].startswith('Installed: ')"
+      - dnf_result.transactions|length > 0
+      - "dnf_result.transactions[0].startswith('Installed: ')"
 
 - name: install sos
   dnf:
@@ -88,7 +88,7 @@
   assert:
     that:
         - "'changed' in dnf_result"
-        - "'results' in dnf_result"
+        - "'transactions' in dnf_result"
 
 # INSTALL AGAIN
 - name: install sos again (check_mode)
@@ -101,7 +101,7 @@
 - assert:
     that:
       - dnf_result is not changed
-      - dnf_result.results|length == 0
+      - dnf_result.transactions|length == 0
 
 - name: install sos again
   dnf:
@@ -242,9 +242,9 @@
 - assert:
     that:
       - dnf_result is success
-      - dnf_result.results|length >= 2
-      - "dnf_result.results[0].startswith('Removed: ')"
-      - "dnf_result.results[1].startswith('Removed: ')"
+      - dnf_result.transactions|length >= 2
+      - "dnf_result.transactions[0].startswith('Removed: ')"
+      - "dnf_result.transactions[1].startswith('Removed: ')"
 
 - name: uninstall sos and dos2unix
   dnf:
@@ -290,7 +290,7 @@
   assert:
     that:
         - "'changed' in dnf_result"
-        - "'results' in dnf_result"
+        - "'transactions' in dnf_result"
 
 - name: uninstall sos in /
   dnf: name=sos installroot='/'
@@ -312,7 +312,7 @@
 - assert:
     that:
       - dnf_result is success
-      - "dnf_result.results[0].startswith('Downloaded: ')"
+      - "dnf_result.transactions[0].startswith('Downloaded: ')"
 
 - name: Test download_only
   dnf:
@@ -383,7 +383,7 @@
     that:
     - not dnf_result is failed
     - dnf_result is changed
-    - "'results' in dnf_result"
+    - "'transactions' in dnf_result"
     - dinginessentail_result.rc == 0
 
 - name: install the group again
@@ -420,7 +420,7 @@
   assert:
     that:
     - dnf_result is changed
-    - "'results' in dnf_result"
+    - "'transactions' in dnf_result"
     - landsidescalping_result.rc == 0
 
 - name: try to install the group again, with --check to check 'changed'
@@ -459,7 +459,7 @@
     that:
     - not dnf_result is failed
     - dnf_result is changed
-    - "'results' in dnf_result"
+    - "'transactions' in dnf_result"
 
 - dnf:
     name: "@Custom Group"
@@ -540,7 +540,7 @@
     that:
     - not dnf_result is failed
     - dnf_result is changed
-    - "'results' in dnf_result"
+    - "'transactions' in dnf_result"
     - landsidescalping_result.rc == 0
 
 - name: uninstall Custom Environment Group
@@ -572,8 +572,8 @@
   assert:
     that:
         - "dnf_result is failed"
-        - "'non-existent-rpm' in dnf_result['failures'][0]"
-        - "'No package non-existent-rpm available' in dnf_result['failures'][0]"
+        - "'non-existent-rpm' in dnf_result['transaction_errors'][0]"
+        - "'No package non-existent-rpm available' in dnf_result['transaction_errors'][0]"
         - "'Failed to install some of the specified packages' in dnf_result['msg']"
 
 - name: ensure sos isn't installed
@@ -635,8 +635,8 @@
     that:
         - "not dnf_result is changed"
         - "dnf_result is failed"
-        - dnf_result.failures | length > 0
-        - '"scriptlet failed, exit status 1" in dnf_result.failures[0]'
+        - dnf_result.transaction_errors | length > 0
+        - '"scriptlet failed, exit status 1" in dnf_result.transaction_errors[0]'
 
 # setup for testing installing an RPM from local file
 
@@ -699,7 +699,7 @@
   assert:
     that:
         - "'changed' in dnf_result"
-        - "'results' in dnf_result"
+        - "'transactions' in dnf_result"
 
 # Install RPM from url with update_only
 - name: install from url with update_only
@@ -721,7 +721,7 @@
   assert:
     that:
         - "'changed' in dnf_result"
-        - "'results' in dnf_result"
+        - "'transactions' in dnf_result"
 
 - name: Create a temp RPM file which does not contain nevra information
   file:
