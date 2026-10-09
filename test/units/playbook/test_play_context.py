@@ -10,6 +10,8 @@ import pytest
 from ansible import constants as C
 from ansible import context
 from ansible.cli.arguments import option_helpers as opt_help
+from ansible.playbook.attribute import FieldAttribute, _DeprecatedFieldAttribute
+from ansible.playbook.base import Base
 from ansible.playbook.play_context import PlayContext
 from ansible.playbook.play import Play
 from ansible.utils import context_objects as co
@@ -57,7 +59,7 @@ def test_play_context(mocker, parser, reset_cli_args):
     mock_play.force_handlers = True
 
     play_context = PlayContext(play=mock_play)
-    assert play_context.force_handlers is True
+    assert play_context._force_handlers is True  # deprecated, but still populated
 
     mock_task = mocker.MagicMock()
     mock_task.connection = 'mocktask'
@@ -88,3 +90,33 @@ def test_play_context(mocker, parser, reset_cli_args):
     mock_task.no_log = False
     play_context = play_context.set_task_and_variable_override(task=mock_task, variables=all_vars, templar=mock_templar)
     assert play_context.no_log is False
+
+
+def _attribute_definition(attribute):
+    definition = dict(vars(attribute))
+    definition['type'] = type(attribute)
+
+    # a deprecated override must still match the Base definition it wraps
+    if isinstance(attribute, _DeprecatedFieldAttribute):
+        definition['type'] = FieldAttribute
+
+        for key in ('_version', '_help_text', '_msg'):
+            del definition[key]
+
+    # If the default is a callable with a closure, it is a deferred CLI default, so we remove it for comparison.
+    if callable(default := definition['default']) and getattr(default, '__closure__', None):
+        del definition['default']
+
+    return definition
+
+
+@pytest.mark.parametrize('name', sorted(Base.fattributes))
+def test_play_context_redeclares_inherited_attributes(name):
+    # Keeps PlayContext in sync with Base so that we don't miss any future deprecations.
+    assert name in vars(PlayContext), f'{name} is inherited from Base but not redeclared on PlayContext'
+
+    # attributes PlayContext deliberately defines differently from Base
+    if name in ('timeout', 'become', 'become_method', 'become_user', 'become_exe', 'become_flags'):
+        return
+
+    assert _attribute_definition(PlayContext.fattributes[name]) == _attribute_definition(Base.fattributes[name])

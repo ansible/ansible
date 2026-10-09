@@ -224,14 +224,25 @@ class ConnectionBase(AnsiblePlugin):
         """Terminate the connection"""
         pass
 
+    # deprecated: description='remove connection_lock and connection_unlock' core_version='2.26'
     def connection_lock(self) -> None:
-        f = self._play_context.connection_lockfd
+        display.deprecated('The ConnectionBase.connection_lock() method is deprecated.', version='2.26')
+
+        # the deprecated lock file descriptor is read from its private field storage to avoid a second
+        # deprecation warning for the attribute itself, unset fields hold a Sentinel rather than None
+        if not isinstance(f := getattr(self._play_context, '_connection_lockfd', None), int):
+            return
+
         display.vvvv('CONNECTION: pid %d waiting for lock on %d' % (os.getpid(), f), host=self._play_context.remote_addr)
         fcntl.lockf(f, fcntl.LOCK_EX)
         display.vvvv('CONNECTION: pid %d acquired lock on %d' % (os.getpid(), f), host=self._play_context.remote_addr)
 
     def connection_unlock(self) -> None:
-        f = self._play_context.connection_lockfd
+        display.deprecated('The ConnectionBase.connection_unlock() method is deprecated.', version='2.26')
+
+        if not isinstance(f := getattr(self._play_context, '_connection_lockfd', None), int):
+            return
+
         fcntl.lockf(f, fcntl.LOCK_UN)
         display.vvvv('CONNECTION: pid %d released lock on %d' % (os.getpid(), f), host=self._play_context.remote_addr)
 
