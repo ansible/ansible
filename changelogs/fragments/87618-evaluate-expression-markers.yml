@@ -1,0 +1,2 @@
+bugfixes:
+  - templating - Fix premature undefined variable errors when evaluating expressions inside plugins, allowing filters such as ``default`` to handle missing dictionary attributes (https://github.com/ansible/ansible/issues/87618).

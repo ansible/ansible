@@ -45,7 +45,7 @@ from ansible._internal._templating import _transform
 from ansible.utils.collection_loader._collection_finder import _AnsibleCollectionFinder
 from ansible._internal._datatag._tags import Origin, TrustedAsTemplate
 from ansible.plugins.loader import init_plugin_loader
-from ansible._internal._templating._jinja_common import _TemplateConfig, _SandboxMode
+from ansible._internal._templating._jinja_common import JinjaCallContext, _TemplateConfig, _SandboxMode
 from ansible._internal._templating._jinja_plugins import _lookup
 from ansible._internal._templating import _jinja_plugins
 from ansible._internal._templating._engine import TemplateEngine, TemplateOptions
@@ -400,25 +400,36 @@ def test_dict_template(tagged: bool) -> None:
     assert AnsibleTagHelper.tags(result) == AnsibleTagHelper.tags(test1)
 
 
+@pytest.mark.parametrize("accept_lazy_markers", [False, True])
 @pytest.mark.parametrize("expr,expected,variables", [
     ("'constant'", "constant", None),
     ("a - b", 42, dict(a=100, b=58)),
+    ("foo.bar | default(1)", 1, dict(foo={})),
+    ("foo['bar'] | default(1)", 1, dict(foo={})),
+    ("foo.bar.baz | default(1)", 1, dict(foo={})),
+    ("foo.bar is defined", False, dict(foo={})),
+    ("foo.bar is undefined", True, dict(foo={})),
+    ("foo.bar | default(1)", 2, dict(foo=dict(bar=2))),
 ])
-def test_evaluate_expression(expr: str, expected: t.Any, variables: dict[str, t.Any] | None):
-    assert TemplateEngine(variables=variables).evaluate_expression(TRUST.tag(expr)) == expected
+def test_evaluate_expression(expr: str, expected: t.Any, variables: dict[str, t.Any] | None, accept_lazy_markers: bool):
+    with JinjaCallContext(accept_lazy_markers=accept_lazy_markers):
+        assert TemplateEngine(variables=variables).evaluate_expression(TRUST.tag(expr)) == expected
 
 
+@pytest.mark.parametrize("accept_lazy_markers", [False, True])
 @pytest.mark.parametrize("expr,error_type", [
     ("fhdgsfk#$76&@#$&", AnsibleTemplateSyntaxError),
     ("bogusvar", AnsibleUndefinedVariable),
+    ("{}.bar", AnsibleUndefinedVariable),
+    ("{}.bar | int", AnsibleUndefinedVariable),
     ("untrusted expression", TemplateTrustCheckFailedError),
     (dict(hi="{{'mom'}}"), TypeError),
 ])
-def test_evaluate_expression_errors(expr: str, error_type: type[Exception]):
+def test_evaluate_expression_errors(expr: str, error_type: type[Exception], accept_lazy_markers: bool):
     if error_type is not TemplateTrustCheckFailedError:
         expr = TRUST.tag(expr)
 
-    with pytest.raises(error_type):
+    with JinjaCallContext(accept_lazy_markers=accept_lazy_markers), pytest.raises(error_type):
         TemplateEngine().evaluate_expression(expr)
 
 
