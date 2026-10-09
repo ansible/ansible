@@ -14,5 +14,17 @@
     - 1
   tasks:
     - command: echo
+      ignore_unreachable: true
+
+    - debug:
+        msg: PASSED
+
+- hosts: unreachable_host, localhost
+  gather_facts: false
+  any_errors_fatal: true
+  serial:
+    - 1
+  tasks:
+    - command: echo
     - debug:
         msg: SHOULD NOT HAPPEN

@@ -345,7 +345,7 @@ class StrategyModule(StrategyBase):
                 for res in results:
                     if res.utr.failed:
                         failed_hosts.append(res.host.name)
-                    elif res.utr.unreachable:
+                    elif res.utr.unreachable and not res.utr.ignore_unreachable:
                         unreachable_hosts.append(res.host.name)
 
                     if (any_errors_fatal or run_once) and not res.utr.ignore_errors:
