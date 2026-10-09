@@ -1500,7 +1500,7 @@ class GalaxyCLI(CLI):
             try:
                 installed = role.install()
             except AnsibleError as e:
-                display.warning(f"- {role_name} was NOT installed successfully: {to_text(e)}")
+                display.warning(f"- {role_name} was NOT installed successfully: {e}")
                 self.exit_without_ignore()
                 continue
 

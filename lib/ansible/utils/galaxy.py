@@ -44,7 +44,10 @@ def scm_archive_resource(src, scm='git', name=None, version='HEAD', keep_scm_met
         ran = ""
         for arg in cmd:
             if arg.startswith(('http', 'https', 'git', 'hg', 'ssh')):
-                arg = mask_url(arg)
+                try:
+                    arg = mask_url(arg)
+                except ValueError as e:
+                    display.debug(f"mask_url could not parse the url provided: {e}")
             ran += f"{arg} "
 
         stderr = ''
@@ -53,9 +56,9 @@ def scm_archive_resource(src, scm='git', name=None, version='HEAD', keep_scm_met
             dummy, stderr = popen.communicate()
         except Exception as e:
             display.debug(f"ran : {ran}")
-            raise AnsibleError(f"when executing {ran}: {to_native(e)}")
+            raise AnsibleError(f"when executing {ran}: {e}")
         if popen.returncode != 0:
-            raise AnsibleError(f"- command {ran} failed in directory {tempdir} (rc={popen.returncode}) - {to_native(stderr)}")
+            raise AnsibleError(f"- command {ran} failed in directory {tempdir} (rc={popen.returncode}) - {stderr}")
 
     if scm not in ['hg', 'git']:
         raise AnsibleError("- scm %s is not currently supported" % scm)
