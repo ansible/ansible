@@ -141,6 +141,8 @@ class StrategyModule(StrategyBase):
                     templar = TemplateEngine(loader=self._loader, variables=task_vars)
                     display.debug("done getting variables")
 
+                    initial_host_state = iterator.get_state_for_host(host.name)
+
                     # test to see if the task across all hosts points to an action plugin which
                     # sets BYPASS_HOST_LOOP to true, or if it has run_once enabled. If so, we
                     # will only send this task to the first host in the list.
@@ -354,8 +356,14 @@ class StrategyModule(StrategyBase):
                 if mark_hosts_failed and (failed_hosts or unreachable_hosts):
                     for host in hosts_left:
                         if host.name not in failed_hosts:
-                            self._tqm._failed_hosts[host.name] = True
                             iterator.mark_host_failed(host)
+
+                            if iterator.is_any_block_rescuing(initial_host_state) and host.name not in unreachable_hosts:
+                                self._tqm._stats.increment('rescued', host.name)
+                            else:
+                                self._tqm._failed_hosts[host.name] = True
+                                self._tqm._stats.increment('failures', host.name)
+
                 display.debug("done checking for any_errors_fatal")
 
                 display.debug("checking for max_fail_percentage")

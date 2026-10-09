@@ -36,6 +36,9 @@ set -e
 
 ansible-playbook -i inventory "$@" 31543.yml | tee out.txt
 [ "$(grep -c 'SHOULD NOT HAPPEN' out.txt)" -eq 0 ]
+# Check play recap includes failed for both hosts
+grep 'testhost.*ok=1.*failed=1.*skipped=0' out.txt
+grep 'testhost2.*ok=1.*failed=1.*skipped=1' out.txt
 
 ansible-playbook -i inventory "$@" 36308.yml | tee out.txt
 [ "$(grep -c 'handler1 ran' out.txt)" -eq 1 ]
@@ -47,3 +50,7 @@ ansible-playbook -i inventory "$@" 80981.yml | tee out.txt
 [ "$(grep -c 'SHOULD NOT HAPPEN' out.txt)" -eq 0 ]
 [ "$(grep -c 'rescuedd' out.txt)" -eq 2 ]
 [ "$(grep -c 'recovered' out.txt)" -eq 2 ]
+
+# Check play recap includes rescued for both hosts
+grep 'testhost.*ok=2.*skipped=0.*rescued=1' out.txt
+grep 'testhost2.*ok=2.*skipped=1.*rescued=1' out.txt
