@@ -1,0 +1,44 @@
+- name: install the systemd unit file
+  copy:
+    src: failed_service.systemd
+    dest: /etc/systemd/system/ansible_failed_service.service
+    mode: '0644'
+  register: install_systemd_result
+
+- name: assert that the systemd unit file was installed
+  assert:
+    that:
+      - "install_systemd_result.dest == '/etc/systemd/system/ansible_failed_service.service'"
+      - "install_systemd_result.state == 'file'"
+      - "install_systemd_result.mode == '0644'"
+
+- name: start the ansible test service
+  service:
+    name: ansible_failed_service
+    enabled: yes
+    state: started
+  register: start_result
+
+- name: assert that the service was enabled and changes reported
+  assert:
+    that:
+      - "start_result.state == 'started'"
+      - "start_result is changed"
+
+- name: make sure systemd is reloaded
+  shell: systemctl daemon-reload
+
+- name: Populate service facts
+  service_facts:
+
+- name: Check if the service status is correct
+  assert:
+    that:
+      - "services['ansible_failed_service.service'].state == 'failed'"
+      - "services['ansible_failed_service.service'].status == 'enabled'"
+
+- name: remove the systemd unit file
+  file:
+    path: /etc/systemd/system/ansible_failed_service.service
+    state: absent
+  register: remove_systemd_result
