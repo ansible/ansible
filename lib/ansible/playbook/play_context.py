@@ -163,19 +163,19 @@ class PlayContext(Base):
     )
     start_at_task = _DeprecatedFieldAttribute(
         isa='string', version='2.26',
-        help_text="Use the command line option instead, e.g. ansible.context.CLIARGS.get('start_at_task').",
+        help_text="The value was cleared once the task was reached and never made sense to a plugin, there is no replacement.",
     )
     step = _DeprecatedFieldAttribute(
         isa='bool', default=False, version='2.26',
-        help_text="Use the command line option instead, e.g. ansible.context.CLIARGS.get('step').",
+        help_text="Never populated on PlayContext, there is no replacement.",
     )
     # 2.7 was the last version of Ansible where this attribute was relevant. No
     # public collections reference it, we don't add help_text because there is
-    # no public alterantive.
+    # no public alternative.
     force_handlers = _DeprecatedFieldAttribute(isa='bool', default=False, version='2.26')
     success_key = _DeprecatedFieldAttribute(
         isa='string', default='', version='2.26',
-        help_text="Use the become plugin's 'success_key' attribute instead, e.g. connection.become.success_key.",
+        help_text="Use the become plugin's 'success' attribute instead, e.g. connection.become.success.",
     )
 
     def __init__(self, play=None, passwords=None, connection_lockfd=None):
