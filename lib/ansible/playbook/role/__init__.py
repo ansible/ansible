@@ -497,7 +497,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
 
         default_vars = dict()
         for dep in self.get_all_dependencies():
-            default_vars = combine_vars(default_vars, dep.get_default_vars())
+            default_vars = combine_vars(default_vars, dep._default_vars)
         if dep_chain:
             for parent in dep_chain:
                 default_vars = combine_vars(default_vars, parent._default_vars)
@@ -536,13 +536,17 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
         all_vars = self.get_inherited_vars(dep_chain, only_exports=only_exports)
 
         # get exported variables from meta/dependencies
+        # FIXME Combining deps' _role_vars can be optimized by moving it
+        #       into _load_role_data so it is done just once.
+        #       Same for _default_vars in self.get_default_vars().
+        #       Needs investigation.
         seen = []
         for dep in self.get_all_dependencies():
             # Avoid rerunning dupe deps since they can have vars from previous invocations and they accumulate in deps
             # TODO: re-examine dep loading to see if we are somehow improperly adding the same dep too many times
             if dep not in seen:
                 # only take 'exportable' vars from deps
-                all_vars = combine_vars(all_vars, dep.get_vars(include_params=False, only_exports=True))
+                all_vars = combine_vars(all_vars, dep._role_vars)
                 seen.append(dep)
 
         # role_vars come from vars/ in a role
