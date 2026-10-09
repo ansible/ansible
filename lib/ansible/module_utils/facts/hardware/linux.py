@@ -887,6 +887,10 @@ class LinuxHardware(Hardware):
             rc, vg_lines, err = self.module.run_command('%s %s' % (vgs_cmd, lvm_util_options))
             for vg_line in vg_lines.splitlines():
                 items = vg_line.strip().split(',')
+                if len(items) < 7:
+                    # Skip unexpected non-data lines (e.g. LVM informational
+                    # messages such as "Retrying metadata scan.")
+                    continue
                 vgs[items[0]] = {
                     'size_g': items[-2],
                     'free_g': items[-1],
@@ -903,6 +907,11 @@ class LinuxHardware(Hardware):
                 rc, lv_lines, err = self.module.run_command('%s %s' % (lvs_path, lvm_util_options))
                 for lv_line in lv_lines.splitlines():
                     items = lv_line.strip().split(',')
+                    if len(items) < 11:
+                        # Skip unexpected non-data lines (e.g. LVM
+                        # informational messages such as
+                        # "Retrying metadata scan.")
+                        continue
                     vg_name = items[1]
                     lv_name = items[0]
                     # The LV name is only unique per VG, so the top level fact lvs can be misleading.
@@ -923,6 +932,11 @@ class LinuxHardware(Hardware):
                 rc, pv_lines, err = self.module.run_command('%s %s' % (pvs_path, lvm_util_options))
                 for pv_line in pv_lines.splitlines():
                     items = pv_line.strip().split(',')
+                    if len(items) < 6:
+                        # Skip unexpected non-data lines (e.g. LVM
+                        # informational messages such as
+                        # "Retrying metadata scan.")
+                        continue
                     pvs[self._find_mapper_device_name(items[0])] = {
                         'size_g': items[4],
                         'free_g': items[5],
