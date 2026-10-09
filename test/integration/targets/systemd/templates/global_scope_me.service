@@ -1,0 +1,8 @@
+[Unit]
+Description=Global Scope Me Server
+
+[Service]
+ExecStart=/bin/sleep infinity
+
+[Install]
+WantedBy=default.target

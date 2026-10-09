@@ -123,3 +123,4 @@
 - import_tasks: test_enabled_runtime.yml
 - import_tasks: test_systemd_version.yml
 - import_tasks: test_mask.yml
+- import_tasks: test_global_scope.yml

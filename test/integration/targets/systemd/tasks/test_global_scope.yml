@@ -1,0 +1,102 @@
+## Regression test for https://github.com/ansible/ansible/issues/85714
+##
+## systemd 253+ rejects `--global` outright for any verb that needs to talk to a
+## running service manager instance (systemctl show/cat/daemon-reload/daemon-reexec/
+## is-active/status/etc, and the bare default action). The systemd module must not
+## rely on those verbs for scope=global, and must not crash when it hits them.
+
+- name: Ensure the global (user) unit directory exists
+  file:
+    path: /etc/systemd/user
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Copy service file for global scope operations
+  template:
+    src: global_scope_me.service
+    dest: /etc/systemd/user/global_scope_me.service
+    owner: root
+    group: root
+    mode: '0644'
+  notify: remove global scope unit file
+
+- name: Enable a real unit with scope=global, force and daemon_reload (exact repro of #85714)
+  systemd:
+    name: global_scope_me.service
+    scope: global
+    enabled: true
+    force: true
+    daemon_reload: true
+  register: global_scope_enable_1
+
+- name: Enable the same unit again, should be idempotent
+  systemd:
+    name: global_scope_me.service
+    scope: global
+    enabled: true
+    force: true
+    daemon_reload: true
+  register: global_scope_enable_2
+
+- name: Validate enabling a unit with scope=global does not fail and is idempotent
+  assert:
+    that:
+      - global_scope_enable_1 is changed
+      - global_scope_enable_1.enabled
+      - global_scope_enable_2 is not changed
+      - global_scope_enable_2.enabled
+
+- name: Disable the unit with scope=global
+  systemd:
+    name: global_scope_me.service
+    scope: global
+    enabled: false
+  register: global_scope_disable
+
+- name: Validate disabling a unit with scope=global does not fail
+  assert:
+    that:
+      - global_scope_disable is changed
+      - not global_scope_disable.enabled
+
+- name: Remove the real unit file so masking can create its /dev/null symlink in its place
+  file:
+    path: /etc/systemd/user/global_scope_me.service
+    state: absent
+
+- name: Mask the (now uninstalled) unit with scope=global
+  systemd:
+    name: global_scope_me.service
+    scope: global
+    masked: true
+  register: global_scope_mask
+
+- name: Unmask the unit with scope=global
+  systemd:
+    name: global_scope_me.service
+    scope: global
+    masked: false
+  register: global_scope_unmask
+
+- name: Validate masking/unmasking a unit with scope=global does not fail
+  assert:
+    that:
+      - global_scope_mask is changed
+      - global_scope_unmask is changed
+
+- name: A nonexistent unit with scope=global must fail cleanly, not with a raw systemctl bus error
+  systemd:
+    name: '{{ fake_service }}'
+    scope: global
+    enabled: true
+  register: global_scope_missing
+  ignore_errors: true
+
+- name: Validate the failure message names the missing service, and is not the raw systemd bus error
+  assert:
+    that:
+      - global_scope_missing is failed
+      - global_scope_missing is search("Could not find the requested service " + fake_service)
+      - "'--global is not supported for this operation' not in global_scope_missing.msg"
