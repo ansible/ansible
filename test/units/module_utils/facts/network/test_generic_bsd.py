@@ -33,6 +33,7 @@ re0: flags=8843<UP,BROADCAST,RUNNING,SIMPLEX,MULTICAST> mtu 1500
         status: active
         inet 192.168.122.205 netmask 0xffffff00 broadcast 192.168.122.255
         inet6 fe80::5054:ff:fe63:55af%re0 prefixlen 64 scopeid 0x2
+        inet6 2001:db8:cafe:0da1:5054:ff:fe63:55af prefixlen 64
 """
 
 NETBSD_IFCONFIG_A_OUT_POST_7_1 = r"""
@@ -51,10 +52,11 @@ re0: flags=0x8843<UP,BROADCAST,RUNNING,SIMPLEX,MULTICAST> mtu 1500
         status: active
         inet 192.168.122.205/24 broadcast 192.168.122.255 flags 0x0
         inet6 fe80::5054:ff:fe63:55af%re0/64 flags 0x0 scopeid 0x2
+        inet6 2001:db8:cafe:0da1:5054:ff:fe63:55af/64 flags 0
 """
 
 NETBSD_EXPECTED = {'all_ipv4_addresses': ['192.168.122.205'],
-                   'all_ipv6_addresses': ['fe80::5054:ff:fe63:55af%re0'],
+                   'all_ipv6_addresses': ['fe80::5054:ff:fe63:55af%re0', '2001:db8:cafe:0da1:5054:ff:fe63:55af'],
                    'default_ipv4': {},
                    'default_ipv6': {},
                    'interfaces': ['lo0', 're0'],
@@ -64,8 +66,8 @@ NETBSD_EXPECTED = {'all_ipv4_addresses': ['192.168.122.205'],
                                      'broadcast': '127.255.255.255',
                                      'netmask': '255.0.0.0',
                                      'network': '127.0.0.0'}],
-                           'ipv6': [{'address': '::1', 'prefix': '128'},
-                                    {'address': 'fe80::1%lo0', 'prefix': '64', 'scope': '0x1'}],
+                           'ipv6': [{'address': 'fe80::1%lo0', 'prefix': '64', 'scope': '0x1'},
+                                    {'address': '::1', 'prefix': '128'}],
                            'macaddress': 'unknown',
                            'mtu': '33624',
                            'type': 'loopback'},
@@ -75,7 +77,9 @@ NETBSD_EXPECTED = {'all_ipv4_addresses': ['192.168.122.205'],
                                      'broadcast': '192.168.122.255',
                                      'netmask': '255.255.255.0',
                                      'network': '192.168.122.0'}],
-                           'ipv6': [{'address': 'fe80::5054:ff:fe63:55af%re0',
+                           'ipv6': [{'address': '2001:db8:cafe:0da1:5054:ff:fe63:55af',
+                                     'prefix': '64'},
+                                    {'address': 'fe80::5054:ff:fe63:55af%re0',
                                      'prefix': '64',
                                      'scope': '0x2'}],
                            'macaddress': 'unknown',
