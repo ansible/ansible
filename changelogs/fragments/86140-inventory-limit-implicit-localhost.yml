@@ -1,0 +1,2 @@
+bugfixes:
+  - "inventory - Refactored pattern evaluation to use a filter-based approach, eliminating duplicate work and properly preserving implicit localhost (https://github.com/ansible/ansible/issues/86140)."
