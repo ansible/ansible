@@ -1,0 +1,2 @@
+bugfixes:
+  - free - fix warning about ``any_errors_fatal`` when it is a template that evaluates to ``False``.
