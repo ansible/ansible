@@ -84,7 +84,7 @@ test "$output" -eq 2
 
 echo "filter list with more than one collection (2/2)"
 output=$(ansible-doc --list testns.testcol testns.testcol4 --playbook-dir ./ 2>&1 | wc -l)
-test "$output" -eq 5
+test "$output" -eq 7
 
 echo "testing ansible-doc output for various plugin types"
 for ptype in cache inventory lookup vars filter module
@@ -97,13 +97,17 @@ do
 		expected=5
 		expected_names=("b64decode" "filter_subdir.nested" "filter_subdir.noop" "noop" "ultimatequestion")
 	elif [ "${ptype}" == "module" ]; then
-		expected=4
+		expected=6
 		expected_names=("fakemodule" "notrealmodule" "randommodule" "database.database_type.subdir_module")
+	elif [ "${ptype}" == "cache" ]; then
+		expected=3
+		expected_names=("notjsonfile")
+	elif [ "${ptype}" == "lookup" ]; then
+		expected=3
+		expected_names=("noop")
 	else
 		expected=1
-                if [ "${ptype}" == "cache" ]; then expected_names=("notjsonfile");
-                elif [ "${ptype}" == "inventory" ]; then expected_names=("statichost");
-                elif [ "${ptype}" == "lookup" ]; then expected_names=("noop");
+                if [ "${ptype}" == "inventory" ]; then expected_names=("statichost");
                 elif [ "${ptype}" == "vars" ]; then expected_names=("noop_vars_plugin"); fi
 	fi
 	echo "testing collection-filtered list for plugin ${ptype}"
