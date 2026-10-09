@@ -103,6 +103,8 @@ class BecomeModule(BecomeBase):
     fail = ('Sorry, try again.',)
     missing = ('Sorry, a password is required to run sudo', 'sudo: a password is required')
 
+    _flag_re = re.compile(r'^(-\w*)n(\w*.*)')
+
     def check_password_prompt(self, b_output: bytes) -> bool:
         # try GNU sudo first
         matched = super().check_password_prompt(b_output)
@@ -133,7 +135,7 @@ class BecomeModule(BecomeBase):
                         continue
                     elif not flag.startswith('--'):
                         # handle -XnxxX flags only
-                        flag = re.sub(r'^(-\w*)n(\w*.*)', r'\1\2', flag)
+                        flag = self._flag_re.sub(r'\1\2', flag)
                     reflag.append(flag)
                 flags = shlex.join(reflag)
 
@@ -141,7 +143,7 @@ class BecomeModule(BecomeBase):
 
         user = self.get_option('become_user') or ''
         if user:
-            user = f'-u {user}'
+            user = f'-u {shlex.quote(user)}'
 
         if chdir := self.get_option('sudo_chdir'):
             try:
