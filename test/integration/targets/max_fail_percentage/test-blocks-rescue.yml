@@ -1,0 +1,48 @@
+---
+- name: Test threshold exceeded in main block - rescue should execute
+  hosts: testhost1,testhost2,testhost3,testhost4
+  gather_facts: false
+  max_fail_percentage: 50%
+  tasks:
+    - block:
+        - name: Fail 3 out of 4 hosts (75%)
+          fail:
+            msg: intentional failure in main block
+          when: inventory_hostname in ['testhost1', 'testhost2', 'testhost3']
+
+        - name: Should not execute
+          debug:
+            msg: "MAIN_BLOCK_SHOULD_NOT_EXECUTE"
+
+      rescue:
+        - name: Rescue should execute despite threshold exceeded
+          debug:
+            msg: "RESCUE_EXECUTED_AFTER_THRESHOLD"
+
+    - name: Task after rescue block
+      debug:
+        msg: "AFTER_RESCUE_BLOCK"
+
+- name: Test threshold exceeded in rescue block
+  hosts: testhost5,testhost6,testhost7,testhost8
+  gather_facts: false
+  max_fail_percentage: 50%
+  tasks:
+    - block:
+        - name: Fail all hosts to trigger rescue
+          fail:
+            msg: intentional failure to trigger rescue
+
+      rescue:
+        - name: Fail 3 out of 4 hosts in rescue (75%)
+          fail:
+            msg: intentional failure in rescue
+          when: inventory_hostname in ['testhost5', 'testhost6', 'testhost7']
+
+        - name: Should not execute in rescue
+          debug:
+            msg: "RESCUE_THRESHOLD_SHOULD_NOT_EXECUTE"
+
+    - name: Task after rescue failure should not execute
+      debug:
+        msg: "AFTER_RESCUE_THRESHOLD_SHOULD_NOT_EXECUTE"

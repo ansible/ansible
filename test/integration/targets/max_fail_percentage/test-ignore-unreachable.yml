@@ -1,0 +1,70 @@
+---
+- name: Test ignored unreachable hosts do not count toward threshold
+  hosts: testhost1,testhost2,testhost3,unreachable1,unreachable2
+  gather_facts: false
+  max_fail_percentage: 50%
+  tasks:
+    - name: Ping with ignore_unreachable (2 unreachable/5 = 40% but ignored)
+      ping:
+      ignore_unreachable: true
+      # unreachable1 and unreachable2 will be unreachable but ignored
+
+    - name: Should execute on all reachable hosts
+      debug:
+        msg: "{{ 'IGNORE_UNREACHABLE' ~ '_ALL_EXECUTED' }}"
+
+- name: Test mixed ignored unreachable and real failures
+  hosts: testhost4,testhost5,testhost6,unreachable3
+  gather_facts: false
+  max_fail_percentage: 50%
+  tasks:
+    - name: Fail 1 host
+      fail:
+        msg: intentional failure
+      when: inventory_hostname == 'testhost4'
+
+    - name: Ping with ignore_unreachable (1 unreachable ignored + 1 real failure = 1/4 = 25% < 50%)
+      ping:
+      ignore_unreachable: true
+
+    - name: Should execute 2 times (testhost5, testhost6)
+      debug:
+        msg: "{{ 'IGNORE_UNREACHABLE' ~ '_MIXED_EXECUTED' }}"
+
+- name: Test ignored unreachable do not prevent threshold from real failures
+  hosts: testhost7,testhost8,testhost9,unreachable1
+  gather_facts: false
+  max_fail_percentage: 50%
+  tasks:
+    - name: Ping with ignore_unreachable
+      ping:
+      ignore_unreachable: true
+      # unreachable1 ignored
+
+    - name: Fail 2 hosts without ignore (2/4 = 50%, not > 50%)
+      fail:
+        msg: intentional real failure
+      when: inventory_hostname in ['testhost7', 'testhost8']
+
+    - name: Should execute 1 time (only testhost9)
+      debug:
+        msg: "{{ 'IGNORE_UNREACHABLE' ~ '_THRESHOLD_EXECUTED' }}"
+
+- name: Test ignored unreachable with real failures exceeding threshold
+  hosts: testhost1,testhost2,testhost3,unreachable2
+  gather_facts: false
+  max_fail_percentage: 50%
+  tasks:
+    - name: Ping with ignore_unreachable
+      ping:
+      ignore_unreachable: true
+      # unreachable2 ignored
+
+    - name: Fail 3 hosts (3/4 = 75% > 50%)
+      fail:
+        msg: intentional real failure
+      when: inventory_hostname in ['testhost1', 'testhost2', 'testhost3']
+
+    - name: Should not execute
+      debug:
+        msg: "{{ 'IGNORE_UNREACHABLE' ~ '_SHOULD_NOT_EXECUTE' }}"
