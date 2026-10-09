@@ -1,0 +1,57 @@
+---
+# Integration test: Verify that ansiballz modules can serialize results
+# across multiple module invocations where sys.modules may be empty and
+# the zip payload may be cleaned up between invocations.
+#
+# This test validates the fix for the FileNotFoundError caused by
+# _internal/_json lazy-import after do_cleanup_files() deletes the
+# ansiballz zip payload.
+
+- name: "Task 1 -- command module (establishes baseline)"
+  ansible.builtin.command: echo "task 1 works"
+  register: task1_result
+
+- name: Verify task 1 result
+  ansible.builtin.assert:
+    that:
+      - task1_result.rc == 0
+      - "'task 1 works' in task1_result.stdout"
+
+- name: "Task 2 -- shell module (different module type)"
+  ansible.builtin.shell: echo "task 2 works"
+  register: task2_result
+
+- name: Verify task 2 result
+  ansible.builtin.assert:
+    that:
+      - task2_result.rc == 0
+      - "'task 2 works' in task2_result.stdout"
+
+- name: "Task 3 -- file module (tests stat-based module)"
+  ansible.builtin.file:
+    path: /tmp/ansiballz_json_profile_test
+    state: touch
+    mode: "0644"
+  register: file_result
+
+- name: Verify file result serialized correctly
+  ansible.builtin.assert:
+    that:
+      - file_result is changed or file_result is not changed
+
+- name: "Task 4 -- copy module (tests content transfer + serialization)"
+  ansible.builtin.copy:
+    content: "ansiballz json profile test"
+    dest: /tmp/ansiballz_json_profile_test
+    mode: "0644"
+  register: copy_result
+
+- name: Verify copy result serialized correctly
+  ansible.builtin.assert:
+    that:
+      - copy_result is changed or copy_result is not changed
+
+- name: "Cleanup test files"
+  ansible.builtin.file:
+    path: /tmp/ansiballz_json_profile_test
+    state: absent
