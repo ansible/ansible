@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import os
 
+from ansible._internal._prompt import compile_validation_pattern
 from ansible import constants as C
 from ansible import context
 from ansible.executor.task_queue_manager import TaskQueueManager, AnsibleEndPlay
@@ -138,12 +139,15 @@ class PlaybookExecutor:
                             salt_size = var.get("salt_size", None)
                             salt = var.get("salt", None)
                             unsafe = boolean(var.get("unsafe", False))
+                            validation_pattern = compile_validation_pattern(var.get("validate"))
 
                             if vname not in self._variable_manager.extra_vars:
                                 if self._tqm:
                                     self._tqm.send_callback('v2_playbook_on_vars_prompt', vname, private, prompt, encrypt, confirm, salt_size, salt,
                                                             default, unsafe)
-                                    play.vars[vname] = display.do_var_prompt(vname, private, prompt, encrypt, confirm, salt_size, salt, default, unsafe)
+                                    play.vars[vname] = display.do_var_prompt(
+                                        vname, private, prompt, encrypt, confirm, salt_size, salt, default, unsafe, validate=validation_pattern,
+                                    )
                                 else:  # we are either in --list-<option> or syntax check
                                     play.vars[vname] = default
 

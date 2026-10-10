@@ -64,6 +64,7 @@ from ansible.utils.multiprocessing import context as multiprocessing_context
 from ansible.utils.singleton import Singleton
 
 if t.TYPE_CHECKING:
+    import re
     # avoid circular import at runtime
     from ansible.executor.task_queue_manager import FinalQueue
 
@@ -927,9 +928,11 @@ class Display(metaclass=Singleton):
         salt: str | None = None,
         default: str | None = None,
         unsafe: bool = False,
+        *,
+        validate: re.Pattern[str] | None = None,
     ) -> str:
-        result = None
-        if sys.__stdin__.isatty():
+        interactive = sys.__stdin__.isatty()
+        if interactive:
 
             do_prompt = self.prompt
 
@@ -940,28 +943,37 @@ class Display(metaclass=Singleton):
             else:
                 msg = 'input for %s: ' % varname
 
-            if confirm:
-                while True:
+        while True:
+            if interactive:
+                if confirm:
+                    while True:
+                        result = do_prompt(msg, private)
+                        second = do_prompt("confirm " + msg, private)
+                        if result == second:
+                            break
+                        self.display("***** VALUES ENTERED DO NOT MATCH ****")
+                else:
                     result = do_prompt(msg, private)
-                    second = do_prompt("confirm " + msg, private)
-                    if result == second:
-                        break
-                    self.display("***** VALUES ENTERED DO NOT MATCH ****")
             else:
-                result = do_prompt(msg, private)
-        else:
-            result = None
-            self.warning("Not prompting as we are not in interactive mode")
+                result = None
+                self.warning("Not prompting as we are not in interactive mode")
 
-        # if result is false and default is not None
-        if not result and default is not None:
-            result = default
+            if not result and default is not None:
+                result = default
 
-        # handle utf-8 chars
-        result_str = to_text(result, errors='surrogate_or_strict')
+            result_str = to_text(result, errors='surrogate_or_strict')
 
-        if private and result:
-            register_secret(result_str)
+            if private and result:
+                register_secret(result_str)
+
+            if validate is None or (result is not None and validate.fullmatch(result_str)):
+                break
+            if not interactive:
+                raise AnsibleError(
+                    f"No valid value is available for vars_prompt variable {varname!r} in non-interactive mode.",
+                    help_text="Provide a matching default, or supply the variable through --extra-vars and validate it with an assert task.",
+                )
+            self.display(f"Invalid input for {varname!r}: the value must match the validate expression.", color=C.COLOR_ERROR)
 
         if encrypt:
             # Circular import because encrypt needs a display class
