@@ -1,0 +1,2 @@
+bugfixes:
+  - module_utils - ``check_required_one_of`` now treats parameters with ``None`` values as missing (https://github.com/ansible/ansible/issues/82724).
