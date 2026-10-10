@@ -16,7 +16,7 @@ env_vars = {
 }
 
 
-def run_test(playbook, test_spec, args=None, timeout=10, env=None, forbidden_values=()):
+def run_test(playbook, test_spec, args=None, timeout=10, env=None, forbidden_values=(), expected_status=0):
 
     if not env:
         env = os.environ.copy()
@@ -43,7 +43,7 @@ def run_test(playbook, test_spec, args=None, timeout=10, env=None, forbidden_val
     vars_prompt_test.close()
     output = transcript.getvalue()
     sys.stdout.buffer.write(output)
-    assert vars_prompt_test.exitstatus == (1 if playbook == 'unsupported.yml' else 0)
+    assert vars_prompt_test.exitstatus == expected_status
     for value in forbidden_values:
         assert value.encode() not in output
 
@@ -146,6 +146,7 @@ tests = [
 
     # Test unsupported keys
     {'playbook': 'unsupported.yml',
+     'expected_status': 4,
      'test_spec': [
          [],
          "Invalid vars_prompt data structure, found unsupported key 'when'"]},
