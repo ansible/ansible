@@ -1,0 +1,16 @@
+- name: Test private prompt validation before hashing
+  hosts: testhost
+  gather_facts: false
+  vars_prompt:
+    - name: password
+      prompt: Enter password
+      private: true
+      confirm: true
+      encrypt: sha512_crypt
+      salt: jESIyad4F08hP3Ta
+      validate: '[0-9]{3}'
+  tasks:
+    - ansible.builtin.assert:
+        that:
+          - password == ('123' | password_hash('sha512', 'jESIyad4F08hP3Ta'))
+        quiet: true

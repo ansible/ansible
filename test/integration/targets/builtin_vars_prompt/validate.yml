@@ -1,0 +1,16 @@
+- name: Test prompt validation
+  hosts: testhost
+  gather_facts: false
+  vars:
+    number: from-play-vars
+    number_pattern: '[0-9]{3}'
+  vars_prompt:
+    - name: number
+      prompt: Enter number
+      private: false
+      default: bad-default
+      validate: "{{ number_pattern }}"
+  tasks:
+    - ansible.builtin.assert:
+        that:
+          - number == '123'
