@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - Updated the base and default containers to include Python 3.15.0.
