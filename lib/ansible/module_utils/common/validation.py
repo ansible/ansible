@@ -67,13 +67,13 @@ def check_mutually_exclusive(terms, parameters, options_context=None):
 
 
 def check_required_one_of(terms, parameters, options_context=None):
-    """Check each list of terms to ensure at least one exists in the given module
-    parameters
+    """Check each list of terms to ensure at least one has a value other than
+    ``None`` in the given module parameters.
 
     Accepts a list of lists or tuples
 
     :arg terms: List of lists of terms to check. For each list of terms, at
-        least one is required.
+        least one is required and must not be ``None``.
     :arg parameters: Dictionary of parameters
     :kwarg options_context: List of strings of parent key names if ``terms`` are
         in a sub spec.
@@ -85,8 +85,10 @@ def check_required_one_of(terms, parameters, options_context=None):
     if terms is None:
         return results
 
+    valid_parameters = {key: value for key, value in parameters.items() if value is not None}
+
     for term in terms:
-        count = count_terms(term, parameters)
+        count = count_terms(term, valid_parameters)
         if count == 0:
             results.append(term)
 
