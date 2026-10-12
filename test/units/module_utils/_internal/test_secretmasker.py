@@ -7,7 +7,7 @@ import pytest
 from ansible.module_utils._internal import _secrets
 
 # Corpus contract: each case registers its secrets, masks its input, and must produce exactly
-# the expected output. Short secrets (4-6 chars) are masked only at a word boundary. The same
+# the expected output. There is no minimum or maximum length and no word boundary rule. The same
 # corpus drives the C# (Ansible.Secrets.cs) conformance test.
 CORPUS = "test/integration/targets/module_utils_Ansible.Secrets/files/secret_masking_corpus.json"
 
@@ -87,16 +87,6 @@ def test_register_secret_texts_deduplicates(masker):
     assert tracker.flush() == frozenset({"bravo_secret"})
 
 
-def test_register_secret_texts_skips_short_secrets(masker):
-    """Secrets shorter than the minimum length are skipped by the bulk path too."""
-    short = "a" * (_secrets._MINIMUM_SECRET_LENGTH - 1)
-
-    tracker = masker.track_new_secrets()
-    masker.register_secret_texts([short, "long_enough_secret"])
-
-    assert tracker.flush() == frozenset({"long_enough_secret"})
-
-
 def test_register_secret_texts_accepts_any_iterable(masker):
     masker.register_secret_texts(s for s in ("alpha_secret", "bravo_secret"))
     assert masker.mask_string("alpha_secret bravo_secret", mask_placeholder=SENTINEL) == f"{SENTINEL} {SENTINEL}"
@@ -148,14 +138,6 @@ def test_multiple_trackers_each_see_new_secrets(masker):
     assert second.flush() == frozenset({"bravo_secret"})
 
 
-def test_tracker_records_trimmed_secret(masker):
-    """Trackers carry what was registered: the trimmed value, not the oversized input."""
-    secret = "S" * (_secrets._MAXIMUM_SECRET_LENGTH + 5)
-    tracker = masker.track_new_secrets()
-    masker.register_secret_text(secret)
-    assert tracker.flush() == frozenset({secret[:_secrets._MAXIMUM_SECRET_LENGTH]})
-
-
 def test_tracker_records_stripped_secret(masker):
     """Surrounding whitespace is stripped before registration; the caller still gets the value unchanged."""
     tracker = masker.track_new_secrets()
@@ -163,12 +145,12 @@ def test_tracker_records_stripped_secret(masker):
     assert tracker.flush() == frozenset({"secret-value"})
 
 
-def test_whitespace_only_or_padded_short_secrets_are_not_registered(masker):
-    """The minimum length applies after stripping."""
+def test_whitespace_only_secrets_are_not_registered_padded_ones_are_stripped(masker):
+    """A value that is empty after stripping is ignored; a padded value is registered as its stripped text."""
     tracker = masker.track_new_secrets()
-    masker.register_secret_texts(["    ", "\n\n\n\n", " ab ", "\tabc\n"])
-    assert tracker.flush() == frozenset()
-    assert masker.mask_string("    ab abc", mask_placeholder=SENTINEL) == "    ab abc"
+    masker.register_secret_texts(["", "    ", "\n\n\n\n", " ab ", "\tabc\n"])
+    assert tracker.flush() == frozenset({"ab", "abc"})
+    assert masker.mask_string("    ab abc", mask_placeholder=SENTINEL) == f"    {SENTINEL} {SENTINEL}"
 
 
 def test_only_the_secret_itself_is_tracked_as_new(masker):
@@ -176,14 +158,6 @@ def test_only_the_secret_itself_is_tracked_as_new(masker):
     tracker = masker.track_new_secrets()
     masker.register_secret_text('test"secret')
     assert tracker.flush() == frozenset({'test"secret'})
-
-
-def test_oversized_secrets_sharing_the_trimmed_prefix_are_one_secret(masker):
-    """Two inputs that differ only beyond the cap trim to the same secret and are tracked once."""
-    base = "".join(chr(0x21 + i % 90) for i in range(_secrets._MAXIMUM_SECRET_LENGTH))
-    tracker = masker.track_new_secrets()
-    masker.register_secret_texts([base + "AAA", base + "BBB"])
-    assert tracker.flush() == frozenset({base})
 
 
 def test_registering_a_secret_does_not_rebuild_previous_state(masker):
@@ -217,11 +191,10 @@ def test_secrets_in_json_empty_value_and_empty_registry(masker):
     assert masker.secrets_in_json("") == frozenset()
 
 
-def test_secrets_in_json_ignores_the_boundary_rule(masker):
-    """Detection reports short secrets even when glued to alphanumerics: the receiver may see them at a boundary."""
-    masker.register_secret_text("pass")
-    assert masker.mask_string("AAApassBBB", mask_placeholder=SENTINEL) == "AAApassBBB"
-    assert masker.secrets_in_json("AAApassBBB") == frozenset({"pass"})
+def test_secrets_in_json_reports_short_secrets(masker):
+    """Secrets shorter than the anchor are detected like any other."""
+    masker.register_secret_texts(["pass", "pw"])
+    assert masker.secrets_in_json("AAApassBBB pw") == frozenset({"pass", "pw"})
 
 
 def test_secrets_in_json_reports_overlapping_secrets(masker):
@@ -305,16 +278,9 @@ def test_secrets_in_json_literal_backslash_form_on_non_json_text(masker):
     assert masker.secrets_in_json("dir\\path-secret appeared") == frozenset({"dir\\path-secret"})
 
 
-def test_secrets_in_json_reports_trimmed_secret(masker):
-    """An oversized secret is registered trimmed, so that is what detection reports."""
-    secret = "".join(chr(0x21 + i % 90) for i in range(_secrets._MAXIMUM_SECRET_LENGTH + 10))
-    masker.register_secret_text(secret)
-    assert masker.secrets_in_json(json.dumps({"k": secret})) == frozenset({secret[:_secrets._MAXIMUM_SECRET_LENGTH]})
-
-
 def test_round_trip_through_a_receiver_masks_every_form(masker):
     """Whatever the controller detects in encoded params lets a receiver mask raw, escaped and re-encoded values."""
-    secrets = ['foo"bar', "dir\\path", "café", "tab\tsep", "plainsecret"]
+    secrets = ['foo"bar', "dir\\path", "café", "tab\tsep", "plainsecret", "é", 'a"']
     masker.register_secret_texts(secrets)
     for ensure_ascii in (True, False):
         params = json.dumps({"ANSIBLE_MODULE_ARGS": {f"opt{i}": s for i, s in enumerate(secrets)}}, ensure_ascii=ensure_ascii)
