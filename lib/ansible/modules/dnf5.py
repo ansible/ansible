@@ -206,7 +206,7 @@ options:
     type: str
   allowerasing:
     description:
-      - If V(true) it allows  erasing  of  installed  packages to resolve dependencies.
+      - If V(true) it allows erasing of installed packages to resolve dependencies.
     required: false
     type: bool
     default: "no"
