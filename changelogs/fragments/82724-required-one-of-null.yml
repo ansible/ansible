@@ -1,2 +1,2 @@
 bugfixes:
-  - module_utils - ``check_required_one_of`` now treats parameters with ``None`` values as missing (https://github.com/ansible/ansible/issues/82724).
+  - module_utils - ``check_required_one_of`` accepts an optional ``argument_spec`` to treat ``None`` as missing only when the option has no explicit default and does not allow ``None`` in ``choices`` (https://github.com/ansible/ansible/issues/82724).

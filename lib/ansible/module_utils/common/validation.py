@@ -66,17 +66,22 @@ def check_mutually_exclusive(terms, parameters, options_context=None):
     return results
 
 
-def check_required_one_of(terms, parameters, options_context=None):
-    """Check each list of terms to ensure at least one has a value other than
-    ``None`` in the given module parameters.
+def check_required_one_of(terms, parameters, options_context=None, argument_spec=None):
+    """Check each list of terms to ensure at least one exists in the given module parameters.
+
+    When ``argument_spec`` is supplied, a ``None`` value counts as missing only if
+    the option has no explicit default and ``None`` is not among its choices.
+    Without an argument spec, parameters are checked by key presence.
 
     Accepts a list of lists or tuples
 
     :arg terms: List of lists of terms to check. For each list of terms, at
-        least one is required and must not be ``None``.
+        least one is required.
     :arg parameters: Dictionary of parameters
     :kwarg options_context: List of strings of parent key names if ``terms`` are
         in a sub spec.
+    :kwarg argument_spec: Optional argument spec used to distinguish missing
+        parameters from options that allow ``None``.
 
     :returns: Empty list or raises :class:`TypeError` if the check fails.
     """
@@ -85,7 +90,19 @@ def check_required_one_of(terms, parameters, options_context=None):
     if terms is None:
         return results
 
-    valid_parameters = {key: value for key, value in parameters.items() if value is not None}
+    valid_parameters = parameters
+    if argument_spec is not None:
+        option_specs = argument_spec.copy()
+        for spec in argument_spec.values():
+            for alias in spec.get('aliases') or ():
+                if alias not in argument_spec:
+                    option_specs[alias] = spec
+        valid_parameters = {
+            key: value for key, value in parameters.items()
+            if value is not None
+            or 'default' in option_specs.get(key, {})
+            or None in (option_specs.get(key, {}).get('choices') or ())
+        }
 
     for term in terms:
         count = count_terms(term, valid_parameters)
