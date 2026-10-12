@@ -97,6 +97,9 @@ class _Fixed4Matcher:
     secrets of that length as sets, so a candidate is resolved with two set lookups
     instead of a walk over every secret sharing the anchor. Every bucket is visited so
     overlapping secrets of different lengths are all reported; the caller merges them.
+
+    For secrets shorter than _ANCHOR_LEN, they are stored in a separate short bucket
+    keyed by their first character.
     """
 
     def __init__(self) -> None:
