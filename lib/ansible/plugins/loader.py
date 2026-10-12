@@ -402,7 +402,7 @@ class PluginLoader:
         package = data.get('package')
         config = data.get('config')
         subdir = data.get('subdir')
-        aliases = data.get('aliases')
+        aliases = data.get('aliases') or Sentinel
         base_class = data.get('base_class')
 
         PATH_CACHE[class_name] = data.get('PATH_CACHE')

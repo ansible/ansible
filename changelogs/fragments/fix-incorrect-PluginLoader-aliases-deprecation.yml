@@ -1,0 +1,2 @@
+bugfixes:
+  - Fix incorrect deprecation warning "Instantiating <plugin_type> PluginLoader with aliases is deprecated." when the plugin type is not instantiated with aliases.
