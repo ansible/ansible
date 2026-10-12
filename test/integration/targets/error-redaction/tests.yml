@@ -1,0 +1,64 @@
+# Verify annotated source lines are redacted when an AnsibleError has show_content=False.
+# Redaction occurs when a sensitive operation raises an error (by setting show_content=False on the exception).
+# Errors unrelated to the sensitive operation or errors that block the sensitive operation are not redacted.
+# These tests cover various scenarios that will be redated.
+# They also cover scenarios which will not be redacted, although the list is not exhaustive.
+
+- hosts: localhost
+  gather_facts: no
+  ignore_errors: yes
+  tasks:
+    - name: redacted error in a module arg
+      ping:
+        data: "{{ 'REDACT_ME_1' | make_redacted_error }}"
+
+    - name: redacted error as __context__
+      ping:
+        data: "{{ 'REDACT_ME_2' | make_redacted_context_error }}"
+
+    - name: redacted error as orig_exc
+      ping:
+        data: "{{ 'REDACT_ME_3' | make_redacted_orig_exc_error }}"
+
+    - name: redacted error in a register projection
+      ping:
+      register:
+        something: "'REDACT_ME_4' | make_redacted_error"
+
+    - name: redacted error in non-existent module arg
+      ping:
+        invalid_arg: "{{ 'REDACT_ME_5' | make_redacted_error }}"
+
+    - name: redacted error as a warning
+      ping:
+      loop: [1]
+      loop_control:
+        label: "{{ 'REDACT_ME_6' | make_redacted_error }}"
+
+    - name: do not redact normal errors
+      ping:
+      register:
+        something: "{{ 'NOT_REDACTED_1' | make_unredacted_error }}"
+
+    - name: cannot redact template used where expression expected
+      ping:
+      register:
+        something: "{{ 'NOT_REDACTED_2' | make_redacted_error }}"
+
+    - name: cannot redact template syntax error
+      ping:
+      register:
+        something: "{{ 'NOT_REDACTED_3 | make_redacted_error }}"
+
+    - name: cannot redact by proximity
+      ping:
+        data: "{{ 'NOT_REDACTED_4' | make_redacted_error }}"
+    - ping: {"data": "crash"}
+
+    - name: cannot redact deprecation
+      ping:
+        data: "{{ query('make_deprecated', 'NOT_REDACTED_5')[0] | make_redacted_error }}"
+
+    - name: cannot redact warning
+      ping:
+        data: "{{ query('make_warning', 'NOT_REDACTED_6')[0] | make_redacted_error }}"

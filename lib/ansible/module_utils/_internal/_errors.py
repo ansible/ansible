@@ -39,13 +39,26 @@ class EventFactory:
         self._depth += 1
 
         try:
+            chain = self._get_chain(exception)
+            events = self._get_events(exception)
+
+            redact_source_context = (
+                self._get_redact_source_context(exception)
+                or bool(chain and chain.event.redact_source_context)
+                or bool(events and any(evt.redact_source_context for evt in events))
+            )
+
+            if redact_source_context:
+                self._set_redact_source_context(exception)
+
             return _messages.Event(
                 msg=self._get_msg(exception),
                 formatted_traceback=self._get_formatted_traceback(exception),
                 formatted_source_context=self._get_formatted_source_context(exception),
                 help_text=self._get_help_text(exception),
-                chain=self._get_chain(exception),
-                events=self._get_events(exception),
+                chain=chain,
+                events=events,
+                redact_source_context=redact_source_context,
             )
         finally:
             self._depth -= 1
@@ -99,3 +112,16 @@ class EventFactory:
     def _get_events(self, exception: BaseException) -> tuple[_messages.Event, ...] | None:
         # deprecated: description='move BaseExceptionGroup support here from ControllerEventFactory' python_version='3.10'
         return None
+
+    def _get_redact_source_context(self, exception: BaseException) -> bool:
+        """
+        Return True if the exception's source context should be redacted, otherwise False.
+        This will always be False for exception types that do not support source context.
+        """
+        return False
+
+    def _set_redact_source_context(self, exception: BaseException) -> None:
+        """
+        Mark the exception as needing to have its source context redacted.
+        This has no effect if the exception type does not support source context.
+        """

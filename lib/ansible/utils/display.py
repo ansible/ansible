@@ -841,10 +841,11 @@ class Display(metaclass=Singleton):
         event = _error_factory.ControllerEventFactory.from_exception(exception, _traceback.is_traceback_enabled(_traceback.TracebackEvent.WARNING))
 
         if msg:
-            if source_context := _error_utils.SourceContext.from_value(obj):
-                formatted_source_context = str(source_context)
-            else:
-                formatted_source_context = None
+            with _error_utils.RedactAnnotatedSourceContext.when(event.redact_source_context):
+                if source_context := _error_utils.SourceContext.from_value(obj):
+                    formatted_source_context = str(source_context)
+                else:
+                    formatted_source_context = None
 
             event = _messages.Event(
                 msg=msg,
@@ -856,6 +857,7 @@ class Display(metaclass=Singleton):
                     traceback_reason=_errors.TRACEBACK_REASON_EXCEPTION_DIRECT_WARNING,
                     event=event,
                 ),
+                redact_source_context=event.redact_source_context,
             )
 
         warning = _messages.WarningSummary(

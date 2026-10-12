@@ -65,7 +65,7 @@ class SourceContext:
             origin = Origin.get_tag(value)
 
         if RedactAnnotatedSourceContext.current(optional=True):
-            return cls.error('content redacted')
+            return cls.error('content redacted', origin)
 
         if origin and origin.path:
             return cls.from_origin(origin)

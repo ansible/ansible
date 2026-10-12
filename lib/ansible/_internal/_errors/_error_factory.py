@@ -87,3 +87,17 @@ class ControllerEventFactory(_errors.EventFactory):
             return tuple(self._convert_exception(ex) for ex in exception.exceptions)
 
         return None
+
+    def _get_redact_source_context(self, exception: BaseException) -> bool:
+        from ansible.errors import AnsibleError
+
+        if isinstance(exception, AnsibleError):
+            return not exception._show_content
+
+        return False
+
+    def _set_redact_source_context(self, exception: BaseException) -> None:
+        from ansible.errors import AnsibleError
+
+        if isinstance(exception, AnsibleError):
+            exception._show_content = False
