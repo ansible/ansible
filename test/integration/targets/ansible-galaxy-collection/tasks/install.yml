@@ -873,6 +873,11 @@
     path: '{{ galaxy_dir }}/scratch/symlink-force-target'
     state: directory
 
+- name: remove installed collection directory before creating replacement symlink - {{ test_id }}
+  file:
+    path: '{{ galaxy_dir }}/ansible_collections/symlink/symlink'
+    state: absent
+
 - name: replace installed collection path with symlink before force install - {{ test_id }}
   file:
     path: '{{ galaxy_dir }}/ansible_collections/symlink/symlink'
