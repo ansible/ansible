@@ -1,0 +1,6 @@
+security_fixes:
+  - uri - a filename derived from a server-controlled redirect URL is now url-decoded
+    before its basename is taken, so a percent-encoded path such as
+    ``x%2F..%2F..%2Fetc%2Fcron.d%2Fevil`` can no longer decode back into a traversal
+    after the basename and write the downloaded file outside the ``dest`` directory
+    (https://github.com/ansible/ansible/pull/87685).

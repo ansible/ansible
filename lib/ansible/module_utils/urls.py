@@ -370,10 +370,8 @@ def get_response_filename(response):
         filename = os.path.basename(filename)
     else:
         url = response.geturl()
-        path = urlparse(url)[2]
+        path = unquote(urlparse(url)[2])
         filename = os.path.basename(path.rstrip('/')) or None
-        if filename:
-            filename = unquote(filename)
 
     return filename
 
