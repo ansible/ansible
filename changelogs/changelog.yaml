@@ -475,3 +475,47 @@ releases:
     - 87559-callback-result-masking.yml
     - ensure_conn_cli_dir_perms.yml
     release_date: '2026-09-29'
+  2.22.0rc1:
+    changes:
+      bugfixes:
+      - argspec validation - fix a crash when an option with ``no_log`` had a default
+        or fallback value that is not a string (https://github.com/ansible/ansible/issues/87623).
+      - errors - when any exception in an error's cause chain was raised with ``show_content=False``,
+        the annotated source lines are now redacted for every exception in the chain,
+        not just the one that requested it. Previously the outer exceptions wrapping
+        it, such as the task or template error, still displayed the source lines and
+        could reveal the content the inner error deemed sensitive. The origin (file,
+        line, and column) is still shown so the error can be located.
+      - module_utils.mask_url - handle exceptions on parseurl to avoid disclosing
+        url itself.
+      - sudo become plugin, sudo-rs compatibility fix for non english locales
+      minor_changes:
+      - Secret masking - removed the minimum and maximum secret length limits introduced
+        in ansible-core 2.22.0b1. Secrets of any length are now registered and redacted
+        wherever they appear, short secrets are no longer restricted to whole word
+        matches, and long secrets are matched on their full value rather than their
+        first 65536 characters. Surrounding whitespace is still stripped before registration
+        and values that are empty after stripping are ignored.
+      - ansible-test - Updated the base and default containers to include Python 3.15.0.
+      - register_secret filter - the ``validation_action`` now applies when the secret
+        is empty after trimming surrounding whitespace rather than when it is less
+        than 4 characters long.
+      release_summary: '| Release Date: 2026-10-13
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.22/porting_guides/porting_guide_core_2.22.html>`__
+
+        '
+      security_fixes:
+      - '``ansible-galaxy collection install`` - fix validating ``FILES.json`` entries
+        are contained in the collection before creating them. (CVE-2026-89091)'
+    codename: Thank You
+    fragments:
+    - 2.22.0rc1_summary.yaml
+    - 87624-no-log-non-string-defaults.yml
+    - 87648-secret-masking-no-length-limits.yml
+    - ansible-galaxy-collection-check-path-containment.yml
+    - ansible-test-update-default-containers.yml
+    - mask_url_except.yml
+    - show-content-redact-chain.yml
+    - sudo_moar_rs.yml
+    release_date: '2026-10-13'

@@ -4,6 +4,35 @@ ansible-core 2.22 "Thank You" Release Notes
 
 .. contents:: Topics
 
+v2.22.0rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2026-10-13
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.22/porting_guides/porting_guide_core_2.22.html>`__
+
+Minor Changes
+-------------
+
+- Secret masking - removed the minimum and maximum secret length limits introduced in ansible-core 2.22.0b1. Secrets of any length are now registered and redacted wherever they appear, short secrets are no longer restricted to whole word matches, and long secrets are matched on their full value rather than their first 65536 characters. Surrounding whitespace is still stripped before registration and values that are empty after stripping are ignored.
+- ansible-test - Updated the base and default containers to include Python 3.15.0.
+- register_secret filter - the ``validation_action`` now applies when the secret is empty after trimming surrounding whitespace rather than when it is less than 4 characters long.
+
+Security Fixes
+--------------
+
+- ``ansible-galaxy collection install`` - fix validating ``FILES.json`` entries are contained in the collection before creating them. (CVE-2026-89091)
+
+Bugfixes
+--------
+
+- argspec validation - fix a crash when an option with ``no_log`` had a default or fallback value that is not a string (https://github.com/ansible/ansible/issues/87623).
+- errors - when any exception in an error's cause chain was raised with ``show_content=False``, the annotated source lines are now redacted for every exception in the chain, not just the one that requested it. Previously the outer exceptions wrapping it, such as the task or template error, still displayed the source lines and could reveal the content the inner error deemed sensitive. The origin (file, line, and column) is still shown so the error can be located.
+- module_utils.mask_url - handle exceptions on parseurl to avoid disclosing url itself.
+- sudo become plugin, sudo-rs compatibility fix for non english locales
+
 v2.22.0b2
 =========
 
@@ -35,7 +64,7 @@ Release Summary
 Major Changes
 -------------
 
-- Secret masking - Ansible now automatically redacts known secret values from the output it generates, such as ``display`` output (including verbose, warning, deprecation, and error output), module logging, and task results passed to callback plugins. Masking is non-destructive; the real value remains available to tasks, conditionals, and registered variables, only the rendered output is redacted with ``$REDACTED$``. Secrets shorter than 4 characters are never masked, secrets of 4 to 6 characters are only masked when they appear as a whole word or when they overlap or are adjacent to another secret, and secrets longer than 65536 characters are matched on their first 65536 characters.
+- Secret masking - Ansible now automatically redacts known secret values from the output it generates, such as ``display`` output (including verbose, warning, deprecation, and error output), module logging, and task results passed to callback plugins. Masking is non-destructive; the real value remains available to tasks, conditionals, and registered variables, only the rendered output is redacted with ``$REDACTED$``.
 - Secret masking - add the ``ansible.module_utils.secrets`` public API for working with secrets manually. It provides ``register_secret`` and ``register_secrets`` to register values that should be redacted from masked output, and ``mask_secrets`` to redact any registered secrets from a string. The API can be used on the controller and in Python modules; the new ``Ansible.Secrets`` C# module_util provides the equivalent ``[Ansible.Secrets.SecretMasker]::RegisterSecret()`` and ``MaskString()`` methods for PowerShell modules. Secrets registered inside a module or worker process are propagated back to the controller so they are also masked there.
 - ansible - Add support for Python 3.15.
 - ansible - Drop support for Python 3.12 on the controller.
