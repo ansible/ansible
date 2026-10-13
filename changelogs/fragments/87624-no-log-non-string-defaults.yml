@@ -1,0 +1,2 @@
+bugfixes:
+  - argspec validation - fix a crash when an option with ``no_log`` had a default or fallback value that is not a string (https://github.com/ansible/ansible/issues/87623).

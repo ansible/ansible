@@ -494,7 +494,7 @@ def _set_defaults(argument_spec, parameters, set_default=True):
         if param not in parameters and (default is not None or set_default):
             # Make sure any default value for no_log fields are masked.
             if value.get('no_log', False) and default:
-                no_log_values.add(default)
+                no_log_values.update(_return_datastructure_name(default))
 
             parameters[param] = default
 
@@ -847,7 +847,7 @@ def set_fallbacks(argument_spec, parameters):
                 continue
             else:
                 if value.get('no_log', False) and fallback_value:
-                    no_log_values.add(fallback_value)
+                    no_log_values.update(_return_datastructure_name(fallback_value))
                 parameters[param] = fallback_value
 
     return no_log_values
