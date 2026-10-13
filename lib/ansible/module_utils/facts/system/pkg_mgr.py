@@ -118,7 +118,10 @@ class PkgMgrFactCollector(BaseFactCollector):
         # Handle distro family defaults when more than one package manager is
         # installed or available to the distro, the ansible_fact entry should be
         # the default package manager officially supported by the distro.
-        if collected_facts['ansible_os_family'] == "RedHat":
+        if collected_facts['ansible_os_family'] in ("RedHat", "ROSA", "MOS"):
+            # ROSA Linux and its derivative MOS have used dnf as the
+            # default package manager since rosa2021.1, but the legacy urpmi
+            # may still be installed and beats dnf in the loop above.
             pkg_mgr_name = self._check_rh_versions()
         elif collected_facts['ansible_os_family'] == 'Debian' and pkg_mgr_name != 'apt':
             # It's possible to install dnf, zypper, rpm, etc inside of

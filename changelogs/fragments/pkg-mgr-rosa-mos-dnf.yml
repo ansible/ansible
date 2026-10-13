@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - pkg_mgr fact - detect dnf as the default package manager on ROSA Linux and its derivative MOS. The legacy urpmi may still be installed and used to win the generic package manager detection (https://github.com/ansible/ansible/pull/87687).
