@@ -92,7 +92,8 @@ def test_from_yaml_origin() -> None:
 
 
 @pytest.mark.parametrize("secret", (
-    "abcd",
+    "a",
+    "abc",
     "  abcd  ",
     "Longersecret0001",
 ))
@@ -106,8 +107,8 @@ def test_register_secret_valid(secret: str) -> None:
 
 @pytest.mark.parametrize("secret, msg", (
     (1234, "Secret must be a string"),
-    ("abc", "Secret must be at least 4 characters long after trimming whitespace"),
-    ("  abc  ", "Secret must be at least 4 characters long after trimming whitespace"),
+    ("", "Secret must not be empty after trimming whitespace"),
+    ("  \t\n", "Secret must not be empty after trimming whitespace"),
 ))
 def test_register_secret_invalid_error(secret: object, msg: str) -> None:
     with mock.patch("ansible.plugins.filter.core.secrets.register_secret") as m:
@@ -122,7 +123,7 @@ def test_register_secret_invalid_error(secret: object, msg: str) -> None:
 
 @pytest.mark.parametrize("secret, msg", (
     (1234, "Secret must be a string"),
-    ("abc", "Secret must be at least 4 characters long after trimming whitespace"),
+    ("   ", "Secret must not be empty after trimming whitespace"),
 ))
 def test_register_secret_invalid_warn(secret: object, msg: str) -> None:
     with mock.patch("ansible.plugins.filter.core.secrets.register_secret") as m:
@@ -134,7 +135,7 @@ def test_register_secret_invalid_warn(secret: object, msg: str) -> None:
 
 @pytest.mark.parametrize("secret", (
     1234,
-    "abc",
+    "   ",
 ))
 def test_register_secret_invalid_ignore(secret: object) -> None:
     with mock.patch("ansible.plugins.filter.core.secrets.register_secret") as m:

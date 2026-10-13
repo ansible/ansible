@@ -137,5 +137,5 @@
     # not show the source of the template containing it.
     - name: register_secret failure does not display the source of the template
       debug:
-        msg: "{{ 'Zq1' | register_secret }}"
+        msg: "{{ ['Zq1'] | register_secret }}"
       ignore_errors: true
