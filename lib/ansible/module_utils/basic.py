@@ -84,6 +84,7 @@ from .common.text.converters import (
     container_to_text as json_dict_bytes_to_unicode,
 )
 
+from ansible import constants as C
 from ansible.module_utils.common.arg_spec import ModuleArgumentSpecValidator
 
 from ansible.module_utils.common.text.formatters import (
@@ -249,8 +250,12 @@ def _mask_sensitive_headers(name: str, value: t.Any) -> t.Any:
     if not name.lower().endswith('headers'):
         return value
 
+    sensitive_headers = SENSITIVE_HEADERS | frozenset(
+            str(header).strip().lower() for header in C.config.get_config_value('REDACT_HTTP_HEADERS')
+        )
+
     if isinstance(value, Mapping):
-        return {key: '$REDACTED$' if str(key).strip().lower() in SENSITIVE_HEADERS else val for key, val in value.items()}
+        return {key: '$REDACTED$' if str(key).strip().lower() in sensitive_headers else val for key, val in value.items()}
 
     if isinstance(value, str):
         try:
@@ -261,7 +266,7 @@ def _mask_sensitive_headers(name: str, value: t.Any) -> t.Any:
         if not isinstance(headers, dict):
             return value
 
-        return json.dumps(_mask_sensitive_headers(name, headers))
+        return json.dumps(_mask_sensitive_headers(name, headers, sensitive_headers))
 
     return value
 
