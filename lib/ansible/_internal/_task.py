@@ -737,6 +737,7 @@ class UnifiedTaskResult:
 
     @property
     def failed(self) -> bool:
+        # deprecated: description='require modules to set failed explicitly when returning a non-zero rc' core_version='2.24'
         if self._failed is None and self.rc is not None and self.rc != 0:
             return True
 
