@@ -1,0 +1,28 @@
+- name: Headers named by REDACT_HTTP_HEADERS are redacted in addition to the well-known ones
+  hosts: testhost
+  gather_facts: false
+  tasks:
+    - name: pass both configured and unconfigured headers
+      headers_module:
+        headers:
+          X-Api-Key: SECRET_API_KEY
+          x-token: SECRET_TOKEN
+          Authorization: Bearer SECRET_AUTHORIZATION
+          Accept: application/json
+          X-Request-Id: UNCONFIGURED_REQUEST_ID
+      register: result
+
+    - name: the configured headers are redacted, matched case insensitively
+      assert:
+        that:
+          - result.invocation.module_args.headers['X-Api-Key'] == '$REDACTED$'
+          - result.invocation.module_args.headers['x-token'] == '$REDACTED$'
+          # the well-known headers are still redacted when the option is set
+          - result.invocation.module_args.headers.Authorization == '$REDACTED$'
+          # headers which were not configured are left alone
+          - result.invocation.module_args.headers.Accept == 'application/json'
+          - result.invocation.module_args.headers['X-Request-Id'] == 'UNCONFIGURED_REQUEST_ID'
+
+    - name: show the invocation so runme.sh can check the output for leaked values
+      debug:
+        var: result.invocation

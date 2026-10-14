@@ -4,11 +4,13 @@ import contextlib
 import dataclasses
 import enum
 import functools
+import json
 import types
 import typing as t
 
 from collections import abc as c
 
+from ansible import constants as C
 from ansible._internal import _display_utils
 from ansible._internal._errors import _attribute_unavailable, _captured, _error_factory, _error_utils
 from ansible._internal._templating import _engine
@@ -46,6 +48,74 @@ PRESERVE = frozenset(
 )
 
 POLYMORPHIC_RESULT_EXPRESSION = trust_as_template("_task.polymorphic_result")
+
+SENSITIVE_HEADERS = frozenset(
+    {
+        'authorization',
+        'cookie',
+        'proxy-authorization',
+        'set-cookie',
+        'www-authenticate',
+    }
+)
+
+
+def _redact_invocation_headers(result_data: dict[str, object]) -> None:
+    """Redact the values of sensitive HTTP headers from the ``invocation`` in a task result, in place.
+
+    A headers parameter is rarely marked ``no_log`` as a whole, so the values it carries would otherwise be
+    echoed back in the task result. Headers to redact in addition to the well-known ones are configured with
+    the ``REDACT_HTTP_HEADERS`` option.
+    """
+    if not isinstance(invocation := result_data.get('invocation'), c.Mapping):
+        return
+
+    if not isinstance(module_args := invocation.get('module_args'), c.Mapping):
+        return
+
+    task_context = TaskContext.current(optional=True)
+    sensitive_headers = SENSITIVE_HEADERS | frozenset(
+        str(header).strip().lower()
+        for header in C.config.get_config_value('REDACT_HTTP_HEADERS', variables=task_context.task_vars if task_context else None)
+    )
+
+    result_data['invocation'] = dict(invocation, module_args=_redact_headers(module_args, sensitive_headers))
+
+
+def _redact_headers(value: t.Any, sensitive_headers: frozenset[str]) -> t.Any:
+    """Return a copy of ``value`` with the values of sensitive headers replaced by a placeholder.
+
+    Every argument whose name ends with ``headers`` is masked, at any depth, since the argument spec is not available here.
+    """
+    if isinstance(value, c.Mapping):
+        return {key: _redact_headers(_mask_headers(key, val, sensitive_headers), sensitive_headers) for key, val in value.items()}
+
+    if isinstance(value, list):
+        return [_redact_headers(item, sensitive_headers) for item in value]
+
+    return value
+
+
+def _mask_headers(name: object, value: t.Any, sensitive_headers: frozenset[str]) -> t.Any:
+    """Return a copy of a headers argument with the values of sensitive headers replaced by a placeholder."""
+    if not str(name).lower().endswith('headers'):
+        return value
+
+    if isinstance(value, c.Mapping):
+        return {key: '$REDACTED$' if str(key).strip().lower() in sensitive_headers else val for key, val in value.items()}
+
+    if isinstance(value, str):
+        try:
+            headers = json.loads(value)
+        except ValueError:
+            return value  # a string which is not a JSON object cannot be masked reliably
+
+        if not isinstance(headers, dict):
+            return value
+
+        return json.dumps(_mask_headers(name, headers, sensitive_headers))
+
+    return value
 
 
 class NoRecordedResultError(AnsibleError):
@@ -967,6 +1037,8 @@ class UnifiedTaskResult:
                 display.warning(f"Removed reserved key {key!r} from module result.", obj=value)
             else:
                 result_data[key] = value
+
+        _redact_invocation_headers(result_data)
 
         return cls(is_module=source_is_module, **kwargs)
 
