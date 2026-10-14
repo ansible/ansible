@@ -744,6 +744,11 @@ class UnifiedTaskResult:
     @property
     def failed(self) -> bool:
         if self._failed is None and self.rc is not None and self.rc != 0:
+            display.deprecated(
+                msg="Inferring a task failure from a non-zero `rc` is deprecated. "
+                "The action plugin or module should return `failed=True` to preserve the current behavior.",
+                version="2.24",
+            )
             return True
 
         if self.failed_when_result is not None:
