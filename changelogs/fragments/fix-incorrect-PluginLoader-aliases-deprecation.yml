@@ -1,2 +1,8 @@
 bugfixes:
-  - Fix incorrect deprecation warning "Instantiating <plugin_type> PluginLoader with aliases is deprecated." when the plugin type is not instantiated with aliases.
+- >-
+  Fix incorrect deprecation warning when pickling ``PluginLoader`` and ``Jinja2Loader``.
+  Previously, the warning "Instantiating <plugin_type> PluginLoader with aliases is deprecated."
+  would occur even when the plugin type is not instantiated with aliases.
+- >-
+  Fix instantiating ``Jinja2Loader`` during deserialization. The positional argument ``plugin_wrapper_type``
+  caused keyword arguments ``aliases`` and ``required_base_class`` to be incorrect.

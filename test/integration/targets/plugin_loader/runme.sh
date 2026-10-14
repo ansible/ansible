@@ -51,3 +51,8 @@ ansible-playbook file_collision/play.yml "$@"
 # validate warnings from deprecated core plugins
 unset ANSIBLE_DEPRECATION_WARNINGS
 ansible-playbook deprecated_core_plugins.yml
+
+# validate deprecation warnings do not occur when pickling Jinja2Loader
+ANSIBLE_FILTER_PLUGINS=filter_plugins/ ansible-playbook pickle_plugin_loader.yml 2>&1 | tee out.txt
+grep "SUCCESS" out.txt
+[ "$(grep -c '\[DEPRECATION WARNING\]' out.txt)" -eq 0 ]
