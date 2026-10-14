@@ -175,8 +175,6 @@ stages:
               test: alpine324
             - name: Fedora 44
               test: fedora44
-            - name: Ubuntu 24.04
-              test: ubuntu2404
             - name: Ubuntu 26.04
               test: ubuntu2604
           groups:
