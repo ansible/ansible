@@ -75,8 +75,7 @@ def _redact_invocation_headers(result_data: dict[str, object]) -> None:
 
     task_context = TaskContext.current(optional=True)
     sensitive_headers = SENSITIVE_HEADERS | frozenset(
-        str(header).strip().lower()
-        for header in C.config.get_config_value('REDACT_HTTP_HEADERS', variables=task_context.task_vars if task_context else None)
+        str(header).strip().lower() for header in C.config.get_config_value('REDACT_HTTP_HEADERS', variables=task_context.task_vars if task_context else None)
     )
 
     result_data['invocation'] = dict(invocation, module_args=_redact_headers(module_args, sensitive_headers))
