@@ -1,0 +1,97 @@
+- name: Test unsafe tarball extraction
+  vars:
+    unsafe_rel_path: '../../outside'
+    unsafe_abs_path: '{{ galaxy_dir }}/ansible_collections/suspicious/test/../../outside'
+    safe_linkname: '{{ galaxy_dir }}/ansible_collections/suspicious/test/inside'
+    expected_rc: 1
+    expected_stdout: ""
+    tarfile_arguments: "{{ item }}"
+  block:
+    - name: Test unsafe file extraction
+      include_tasks: build_and_install_tarball.yml
+      loop:
+        - "--file '{{ unsafe_rel_path }}.sh'"
+        - "--file '{{ unsafe_abs_path }}.sh'"
+        - "--symlink '{{ unsafe_rel_path }}.sh' --symlink-linkname '{{ safe_linkname }}.sh'"
+        - "--symlink '{{ unsafe_abs_path }}.sh' --symlink-linkname '{{ safe_linkname }}.sh'"
+      vars:
+        expected_error: "Cannot extract tar entry"
+
+    - name: Test unsafe directory extraction
+      include_tasks: build_and_install_tarball.yml
+      loop:
+        - "--dir '{{ unsafe_rel_path }}'"
+        - "--dir '{{ unsafe_abs_path }}'"
+        - "--symlink '{{ unsafe_rel_path }}' --symlink-linkname '{{ safe_linkname }}/'"
+        - "--symlink '{{ unsafe_abs_path }}' --symlink-linkname '{{ safe_linkname }}/'"
+      vars:
+        expected_error: "Cannot extract directory"
+
+    - name: Test unsafe symlink linkname
+      include_tasks: build_and_install_tarball.yml
+      loop:
+        - "--symlink-linkname '{{ unsafe_rel_path }}.sh'"
+        - "--symlink-linkname '{{ unsafe_abs_path }}.sh'"
+        - "--symlink-linkname '{{ unsafe_rel_path }}/'"
+        - "--symlink-linkname '{{ unsafe_abs_path }}/'"
+        - "--symlink 'some_directory/symlink' --symlink-linkname 'safe/../../../unsafe'"
+      vars:
+        expected_error: >-
+          Cannot extract symlink '.*symlink' in collection: path points to location outside of collection
+
+- name: Test safe tarball extraction
+  vars:
+    expected_rc: 0
+    expected_error: ""
+    expected_stdout: "suspicious\\.test:1\\.0\\.0 was installed successfully"
+    cleanup: False
+  block:
+    - name: Test successful directory extraction
+      include_tasks: build_and_install_tarball.yml
+      loop:
+        - "--dir 'safe/'"
+        - "--dir 'safe'"
+      loop_control:
+        loop_var: tarfile_arguments
+      vars:
+        cleanup: True
+
+    - name: Test successful relative linkname extraction
+      include_tasks: build_and_install_tarball.yml
+      vars:
+        tarfile_arguments: "--symlink 'some_directory/symlink' --symlink-linkname '../safe'"
+
+    - &stat_symlink
+      name: Check extracted the symlink exists
+      stat:
+        path: "{{ galaxy_dir }}/ansible_collections/suspicious/test/some_directory/symlink"
+      register: expected_symlink
+
+    - &realpath_symlink
+      name: Check extracted symlink is not broken
+      command: "realpath {{ galaxy_dir }}/ansible_collections/suspicious/test/some_directory/symlink"
+      ignore_errors: True
+      register: realpath_result
+
+    - &assert_symlink
+      assert:
+        that:
+          - expected_symlink.stat.exists
+          - realpath_result is not failed
+          - expected_symlink.stat.lnk_source == realpath_result.stdout == galaxy_dir ~ '/ansible_collections/suspicious/test/safe'
+
+    - &cleanup
+      name: Remove installed collection
+      file:
+        path: "{{ galaxy_dir }}/ansible_collections"
+        state: absent
+
+    - name: Test successful absolute linkname extraction
+      include_tasks: build_and_install_tarball.yml
+      vars:
+        tarfile_arguments: "--symlink some_directory/symlink --symlink-linkname '{{ galaxy_dir }}/ansible_collections/suspicious/test/safe'"
+
+    - <<: *stat_symlink
+    - <<: *realpath_symlink
+    - <<: *assert_symlink
+    - <<: *cleanup
