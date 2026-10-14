@@ -1,0 +1,2 @@
+bugfixes:
+  - sudo become plugin, sudo-rs compatibility fix for non english locales
