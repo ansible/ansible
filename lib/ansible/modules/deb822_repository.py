@@ -344,8 +344,7 @@ def is_armored(b_data):
 
 
 def write_bytes_atomically(module: AnsibleModule, dest: str, b_data: bytes) -> None:
-    """Write ``b_data`` to ``dest`` via a temp file.
-    """
+    """Write ``b_data`` to ``dest`` via a temp file."""
     tmpfd, tmpfile = tempfile.mkstemp(prefix='.ansible_tmp', dir=module.tmpdir)
     try:
         with os.fdopen(tmpfd, 'wb') as f:
