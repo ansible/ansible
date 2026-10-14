@@ -13,6 +13,7 @@ env_vars = {
     'ANSIBLE_ROLES_PATH': './roles',
     'ANSIBLE_NOCOLOR': 'True',
     'ANSIBLE_RETRY_FILES_ENABLED': 'False',
+    'ANSIBLE_PROMPT_TEST_VALUE': 'abc',
 }
 
 
@@ -34,15 +35,17 @@ def run_test(playbook, test_spec, args=None, timeout=10, env=None, forbidden_val
 
     transcript = io.BytesIO()
     vars_prompt_test.logfile_read = transcript
-    for item in test_spec[0]:
-        vars_prompt_test.expect(item[0])
-        if item[1]:
-            vars_prompt_test.send(item[1])
-    vars_prompt_test.expect(test_spec[1])
-    vars_prompt_test.expect(pexpect.EOF)
-    vars_prompt_test.close()
-    output = transcript.getvalue()
-    sys.stdout.buffer.write(output)
+    try:
+        for item in test_spec[0]:
+            vars_prompt_test.expect(item[0])
+            if item[1]:
+                vars_prompt_test.send(item[1])
+        vars_prompt_test.expect(test_spec[1])
+        vars_prompt_test.expect(pexpect.EOF)
+    finally:
+        vars_prompt_test.close()
+        output = transcript.getvalue()
+        sys.stdout.buffer.write(output)
     assert vars_prompt_test.exitstatus == expected_status
     for value in forbidden_values:
         assert value.encode() not in output
@@ -144,6 +147,23 @@ tests = [
           ('confirm Enter password:', '123\r')],
          'testhost.*ok=1']},
 
+    # Membership uses earlier prompt input and play variables without a regex.
+    {'playbook': 'validate-jinja.yml',
+     'test_spec': [
+         [('Enter environment:', 'unknown\r'),
+          ('Invalid input', ''),
+          ('Enter environment:', 'prod\r'),
+          ('Confirm environment:', 'staging\r'),
+          ('Invalid input', ''),
+          ('Confirm environment:', 'prod\r'),
+          ('Enter URL:', 'http://example.org\r'),
+          ('Invalid input', ''),
+          ('Enter URL:', 'https://example.org\r'),
+          ('Enter code:', 'long\r'),
+          ('Invalid input', ''),
+          ('Enter code:', 'abc\r')],
+         'All assertions passed']},
+
     # Test unsupported keys
     {'playbook': 'unsupported.yml',
      'expected_status': 4,
@@ -156,12 +176,12 @@ for t in tests:
     run_test(**t)
 
 
-def run_noninteractive(args: list[str], expected_status: int) -> str:
+def run_noninteractive(args: list[str], expected_status: int, playbook: str = 'validate.yml') -> str:
     """Exercise skipped prompts and defaults without a terminal or an unbounded wait."""
     env = os.environ.copy()
     env.update(env_vars)
     result = subprocess.run(
-        ['ansible-playbook', 'validate.yml', *sys.argv[1:], *args],
+        ['ansible-playbook', playbook, *sys.argv[1:], *args],
         stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
         text=True, timeout=30, env=env, check=False,
     )
@@ -189,8 +209,13 @@ assert 'non-interactive mode' in output
 assert 'Invalid input' not in output
 
 
-# Configuration errors must be reported even during a syntax check.
-output = run_noninteractive(['--syntax-check', '-e', 'number_pattern=['], 1)
-assert 'Invalid regular expression in vars_prompt validate' in output
-output = run_noninteractive(['--syntax-check', '-e', '{"number_pattern": 42}'], 1)
-assert 'vars_prompt validate option must be a string' in output
+# Expressions refer to play variables; an invalid regex is an evaluation error at runtime.
+output = run_noninteractive(['-e', 'number_pattern=['], 1)
+assert 'non-interactive mode' not in output
+assert 'Error evaluating vars_prompt validation' in output
+
+
+output = run_noninteractive(['--syntax-check'], 1, 'validate-invalid-expression.yml')
+assert 'Invalid Jinja2 expression in vars_prompt validate' in output
+output = run_noninteractive(['--syntax-check'], 1, 'validate-invalid-type.yml')
+assert 'vars_prompt validate option must be a non-empty Jinja2 expression string' in output

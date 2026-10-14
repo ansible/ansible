@@ -1,3 +1,4 @@
 minor_changes:
-  - vars_prompt - add a ``validate`` regular expression to retry invalid interactive input before hashing.
+  - vars_prompt - add a ``validate`` Jinja2 condition to retry invalid interactive input before hashing.
+    Conditions can use existing tests, filters, lookups, and play variables.
     Extra variables still skip prompting; invalid non-interactive defaults fail without retrying.

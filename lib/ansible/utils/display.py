@@ -64,7 +64,6 @@ from ansible.utils.multiprocessing import context as multiprocessing_context
 from ansible.utils.singleton import Singleton
 
 if t.TYPE_CHECKING:
-    import re
     # avoid circular import at runtime
     from ansible.executor.task_queue_manager import FinalQueue
 
@@ -929,7 +928,7 @@ class Display(metaclass=Singleton):
         default: str | None = None,
         unsafe: bool = False,
         *,
-        validate: re.Pattern[str] | None = None,
+        validate: t.Callable[[str], bool] | None = None,
     ) -> str:
         interactive = sys.__stdin__.isatty()
         if interactive:
@@ -966,14 +965,14 @@ class Display(metaclass=Singleton):
             if private and result:
                 register_secret(result_str)
 
-            if validate is None or (result is not None and validate.fullmatch(result_str)):
+            if validate is None or (result is not None and validate(result_str)):
                 break
             if not interactive:
                 raise AnsibleError(
                     f"No valid value is available for vars_prompt variable {varname!r} in non-interactive mode.",
                     help_text="Provide a matching default, or supply the variable through --extra-vars and validate it with an assert task.",
                 )
-            self.display(f"Invalid input for {varname!r}: the value must match the validate expression.", color=C.COLOR_ERROR)
+            self.display(f"Invalid input for {varname!r}: the validate condition must be true.", color=C.COLOR_ERROR)
 
         if encrypt:
             # Circular import because encrypt needs a display class

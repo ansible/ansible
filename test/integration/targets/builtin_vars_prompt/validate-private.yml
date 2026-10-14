@@ -8,7 +8,7 @@
       confirm: true
       encrypt: sha512_crypt
       salt: jESIyad4F08hP3Ta
-      validate: '[0-9]{3}'
+      validate: password is match('^[0-9]{3}$')
   tasks:
     - ansible.builtin.assert:
         that:
