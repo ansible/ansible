@@ -158,6 +158,14 @@ DOCUMENTATION = """
         vars:
           - name: ansible_winrm_connection_timeout
         type: int
+      no_log:
+        description:
+          - Internal use only, not designed for user input.
+        type: bool
+        default: false
+        keyword:
+          - name: no_log
+        version_added: '2.23'
 """
 
 import base64
@@ -637,7 +645,7 @@ class Connection(ConnectionBase):
 
             log_stdout = stdout
             log_stderr = stderr
-            if self._play_context.no_log:
+            if self.get_option('no_log'):
                 log_stdout = log_stderr = '<censored due to no log>'
 
             if from_exec:

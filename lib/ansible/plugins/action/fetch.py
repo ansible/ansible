@@ -160,10 +160,7 @@ class ActionModule(ActionBase):
                     dest = self._loader.path_dwim(dest)
             else:
                 # files are saved in dest dir, with a subdir for each host, then the filename
-                if 'inventory_hostname' in task_vars:
-                    target_name = task_vars['inventory_hostname']
-                else:
-                    target_name = self._play_context.remote_addr
+                target_name = task_vars['inventory_hostname']
                 dest = "%s/%s/%s" % (self._loader.path_dwim(dest), target_name, source_local)
 
             dest = os.path.normpath(dest)
