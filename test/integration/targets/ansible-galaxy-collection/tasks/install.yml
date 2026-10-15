@@ -873,6 +873,11 @@
     path: '{{ galaxy_dir }}/scratch/symlink-force-target'
     state: directory
 
+- name: create sentinel in the symlink target before force install - {{ test_id }}
+  file:
+    path: '{{ galaxy_dir }}/scratch/symlink-force-target/sentinel.txt'
+    state: touch
+
 - name: remove installed collection directory before creating replacement symlink - {{ test_id }}
   file:
     path: '{{ galaxy_dir }}/ansible_collections/symlink/symlink'
@@ -901,6 +906,11 @@
     path: '{{ galaxy_dir }}/ansible_collections/symlink/symlink/MANIFEST.json'
   register: install_symlink_force_manifest
 
+- name: get result of symlink target after force install over symlink - {{ test_id }}
+  stat:
+    path: '{{ galaxy_dir }}/scratch/symlink-force-target/sentinel.txt'
+  register: install_symlink_force_target
+
 - name: assert force install collection over existing symlink - {{ test_id }}
   assert:
     that:
@@ -908,6 +918,7 @@
     - install_symlink_force_actual.stat.isdir
     - not install_symlink_force_actual.stat.islnk
     - install_symlink_force_manifest.stat.isreg
+    - install_symlink_force_target.stat.exists
 
 
 # Testing an install from source to check that symlinks to directories
