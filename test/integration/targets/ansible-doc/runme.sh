@@ -80,6 +80,7 @@ ansible-doc --list testns.testcol.fakemodule  --playbook-dir ./ 2>&1 | grep "${G
 
 echo "ensure list uses the top-level short_description, not an option of the same name"
 ansible-doc --list testns.testcol --playbook-dir ./ 2>&1 | grep "${GREP_OPTS[@]}" "testns.testcol.nested_short_description *top-level"
+ansible-doc --list testns.testcol --playbook-dir ./ 2>&1 | grep "${GREP_OPTS[@]}" "testns.testcol.top_level_short_description_first *top-level first"
 
 echo "filter list with more than one collection (1/2)"
 output=$(ansible-doc --list testns.testcol3 testns.testcol4 --playbook-dir ./ 2>&1 | wc -l)
@@ -87,7 +88,7 @@ test "$output" -eq 2
 
 echo "filter list with more than one collection (2/2)"
 output=$(ansible-doc --list testns.testcol testns.testcol4 --playbook-dir ./ 2>&1 | wc -l)
-test "$output" -eq 6
+test "$output" -eq 7
 
 echo "testing ansible-doc output for various plugin types"
 for ptype in cache inventory lookup vars filter module
@@ -100,8 +101,8 @@ do
 		expected=5
 		expected_names=("b64decode" "filter_subdir.nested" "filter_subdir.noop" "noop" "ultimatequestion")
 	elif [ "${ptype}" == "module" ]; then
-		expected=5
-		expected_names=("fakemodule" "nested_short_description" "notrealmodule" "randommodule" "database.database_type.subdir_module")
+		expected=6
+		expected_names=("fakemodule" "nested_short_description" "notrealmodule" "randommodule" "top_level_short_description_first" "database.database_type.subdir_module")
 	else
 		expected=1
                 if [ "${ptype}" == "cache" ]; then expected_names=("notjsonfile");
