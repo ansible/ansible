@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-doc - Fix ``--list`` failing with ``object has no attribute 'strip'`` when a plugin has an option named ``short_description`` documented before its top-level ``short_description`` (https://github.com/ansible-collections/google.cloud/issues/789).

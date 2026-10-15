@@ -133,6 +133,7 @@ def read_docstub(filename):
     in_documentation = False
     capturing = False
     indent_detection = ''
+    top_level_indent = None
     doc_stub = []
 
     with open(filename, 'r') as t_module_data:
@@ -145,12 +146,20 @@ def read_docstub(filename):
                 elif capturing and not line.startswith(indent_detection):
                     break
 
-                elif line.lstrip().startswith('short_description:'):
-                    capturing = True
-                    # Detect that the short_description continues on the next line if it's indented more
-                    # than short_description itself.
-                    indent_detection = ' ' * (len(line) - len(line.lstrip()) + 1)
-                    doc_stub.append(line)
+                else:
+                    indent = len(line) - len(line.lstrip())
+
+                    # The first line of YAML content gives the indentation of top-level keys, so a nested
+                    # key of the same name (such as an option called short_description) is not matched.
+                    if top_level_indent is None and line.strip().lstrip('rRuU').strip('\'"-'):
+                        top_level_indent = indent
+
+                    if indent == top_level_indent and line.lstrip().startswith('short_description:'):
+                        capturing = True
+                        # Detect that the short_description continues on the next line if it's indented more
+                        # than short_description itself.
+                        indent_detection = ' ' * (indent + 1)
+                        doc_stub.append(line)
 
             elif line.startswith('DOCUMENTATION') and ('=' in line or ':' in line):
                 in_documentation = True
