@@ -46,9 +46,10 @@ def scm_archive_resource(src, scm='git', name=None, version='HEAD', keep_scm_met
             if arg.startswith(('http', 'https', 'git', 'hg', 'ssh')):
                 try:
                     arg = mask_url(arg)
+                    ran += f"{arg} "
                 except ValueError as e:
                     display.debug(f"mask_url could not parse the url provided: {e}")
-            ran += f"{arg} "
+                    ran += "**** "
 
         stderr = ''
         try:
