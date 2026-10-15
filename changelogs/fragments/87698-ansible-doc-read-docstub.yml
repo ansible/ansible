@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible.parsing.plugin_docs.read_docstub - fix when module's short_description appears at the end of DOCUMENTATION block, and there's another short_description field defined prior (https://github.com/ansible/ansible/pull/87698).
