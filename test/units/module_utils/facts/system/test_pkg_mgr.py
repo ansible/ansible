@@ -4,6 +4,8 @@
 
 from __future__ import annotations
 
+import pytest
+
 from ansible.module_utils.facts.system.pkg_mgr import PkgMgrFactCollector
 
 
@@ -57,3 +59,19 @@ def test_default_dnf_version_detection_fedora_dnf5_microdnf(mocker):
 def test_default_dnf_version_detection_fedora_no_default(mocker):
     mocker.patch("os.path.exists", lambda p: p in ("/usr/bin/dnf-3", "/usr/bin/dnf5"))
     assert PkgMgrFactCollector().collect(collected_facts=_FACTS).get("pkg_mgr") == "unknown"
+
+
+@pytest.mark.parametrize(
+    ("family", "paths", "links", "expected"),
+    [
+        ("MOS", ("/usr/bin/dnf", "/usr/bin/dnf-3", "/usr/sbin/urpmi"), {"/usr/bin/dnf": "/usr/bin/dnf-3"}, "dnf"),
+        ("ROSA", ("/usr/bin/dnf", "/usr/bin/dnf-3", "/usr/sbin/urpmi"), {"/usr/bin/dnf": "/usr/bin/dnf-3"}, "dnf"),
+        ("ROSA", ("/usr/bin/dnf", "/usr/bin/dnf5"), {"/usr/bin/dnf": "/usr/bin/dnf5"}, "dnf5"),
+    ],
+    ids=["mos-urpmi-installed", "rosa-urpmi-installed", "rosa-dnf5"],
+)
+def test_default_pkg_mgr_rosa_mos(family, paths, links, expected, mocker):
+    mocker.patch("os.path.exists", lambda p: p in paths)
+    mocker.patch("os.path.realpath", lambda p: links.get(p, p))
+    facts = {"ansible_os_family": family}
+    assert PkgMgrFactCollector().collect(collected_facts=facts).get("pkg_mgr") == expected
