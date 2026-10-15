@@ -30,3 +30,35 @@
           file:
             path: /etc/ansible/facts.d/uuid.fact
             state: absent
+
+# https://github.com/ansible/ansible/issues/87415 -- run_once broadcasts one
+# templated result object to every target host; a later per-host fact update
+# on one of them must not leak onto the others via a shared cached dict.
+- hosts: facthost3,facthost4
+  gather_facts: no
+  tasks:
+    - name: Gather initial facts with run_once
+      facts_one:
+      run_once: True
+
+    - name: Gather additional facts for one host
+      facts_two:
+      when: inventory_hostname == "facthost4"
+
+    - name: Assert the untouched host still has only its run_once facts
+      assert:
+        that:
+          - hostvars.facthost3.ansible_facts.factsone == 'from facts_one module'
+          - hostvars.facthost3.ansible_facts.common_fact == 'also from facts_one module'
+          - "hostvars.facthost3.ansible_facts.common_dict_fact == {'key_one': 'from facts_one', 'key_two': 'from facts_one'}"
+          - "'factstwo' not in hostvars.facthost3.ansible_facts"
+        msg: "facthost3 was polluted by facthost4's own later fact update -- the run_once broadcast aliased a shared dict across hosts"
+
+    - name: Assert the updated host has its own additional facts
+      assert:
+        that:
+          - hostvars.facthost4.ansible_facts.factsone == 'from facts_one module'
+          - hostvars.facthost4.ansible_facts.factstwo == 'from facts_two module'
+          - hostvars.facthost4.ansible_facts.common_fact == 'also from facts_two module'
+          - "hostvars.facthost4.ansible_facts.common_dict_fact == {'key_two': 'from facts_two', 'key_four': 'from facts_two'}"
+        msg: "facthost4 did not receive its own per-host fact update"
