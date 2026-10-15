@@ -1,0 +1,7 @@
+breaking_changes:
+  - >-
+    ssh connection - The connection host is now taken only from the ``host`` option, without falling back to the
+    legacy ``PlayContext.remote_addr`` value. Setting ``ansible_host`` to an empty string previously only worked by
+    accident through that fallback, which connected to the inventory hostname instead. It now results in an empty host
+    and the connection fails, matching the behaviour of the ``winrm`` and ``psrp`` connection plugins. Remove the empty
+    ``ansible_host`` value to connect using the inventory hostname.

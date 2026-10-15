@@ -415,6 +415,14 @@ DOCUMENTATION = """
           - {key: verbosity, section: ssh_connection}
         vars:
           - name: ansible_ssh_verbosity
+      no_log:
+        description:
+          - Internal use only, not designed for user input.
+        type: bool
+        default: false
+        keyword:
+          - name: no_log
+        version_added: '2.23'
 """
 
 import collections.abc as c
@@ -574,8 +582,7 @@ def _ssh_retry[**P](
                     # The raw output is only shown under ANSIBLE_DEBUG. Module output may contain secrets which are
                     # not registered with the secret masker until the result has been parsed by the action plugin,
                     # so displaying the raw output here at a normal verbosity level could leak them.
-                    # TODO: this should come from task
-                    if self._play_context.no_log:
+                    if self.get_option('no_log'):
                         display.debug(u'stdout and stderr censored due to no log')
                     else:
                         display.debug(u'stdout and stderr: %s' % str(return_tuple[1:]))
@@ -589,7 +596,7 @@ def _ssh_retry[**P](
 
                 remaining_retries = remaining_tries - attempt - 1
                 cmd = t.cast(list[bytes], args[0])
-                _handle_error(remaining_retries, cmd[0], return_tuple, self._play_context.no_log, self.host)
+                _handle_error(remaining_retries, cmd[0], return_tuple, self.get_option('no_log'), self.host)
 
                 break
 
@@ -650,10 +657,10 @@ class Connection(ConnectionBase):
     def __init__(self, *args: t.Any, **kwargs: t.Any) -> None:
         super(Connection, self).__init__(*args, **kwargs)
 
-        # TODO: all should come from get_option(), but not might be set at this point yet
-        self.host = self._play_context.remote_addr
-        self.port = self._play_context.port
-        self.user = self._play_context.remote_user
+        # These are set from get_option() once the options are available for the operation being run.
+        self.host: str | None = None
+        self.port: int | None = None
+        self.user: str | None = None
         self.control_path: str | None = None
         self.control_path_dir: str | None = None
         self.shm: SharedMemory | None = None
@@ -1492,7 +1499,8 @@ class Connection(ConnectionBase):
 
         super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
 
-        self.host = self.get_option('host') or self._play_context.remote_addr
+        self.host = self.get_option('host')
+        self.user = self.get_option('remote_user')
 
         display.vvv(u"ESTABLISH SSH CONNECTION FOR USER: {0}".format(self.user), host=self.host)
 
@@ -1533,7 +1541,7 @@ class Connection(ConnectionBase):
 
         super(Connection, self).put_file(in_path, out_path)
 
-        self.host = self.get_option('host') or self._play_context.remote_addr
+        self.host = self.get_option('host')
 
         display.vvv(u"PUT {0} TO {1}".format(in_path, out_path), host=self.host)
         if not os.path.exists(to_bytes(in_path, errors='surrogate_or_strict')):
@@ -1549,7 +1557,7 @@ class Connection(ConnectionBase):
 
         super(Connection, self).fetch_file(in_path, out_path)
 
-        self.host = self.get_option('host') or self._play_context.remote_addr
+        self.host = self.get_option('host')
 
         display.vvv(u"FETCH {0} TO {1}".format(in_path, out_path), host=self.host)
 
@@ -1560,7 +1568,7 @@ class Connection(ConnectionBase):
         return self._file_transport_command(in_path, out_path, 'get')
 
     def reset(self) -> None:
-        self.host = self.get_option('host') or self._play_context.remote_addr
+        self.host = self.get_option('host')
 
         # If we have a persistent ssh connection (ControlPersist), we can ask it to stop listening.
         # only run the reset if the ControlPath already exists or if it isn't configured and ControlPersist is set
