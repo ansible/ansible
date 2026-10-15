@@ -47,6 +47,13 @@ options:
     vars:
     - name: ansible_winrm_server_cert_validation
     type: str
+  no_log:
+    description:
+    - Internal use only, not designed for user input.
+    type: bool
+    default: false
+    keyword:
+    - name: no_log
 """
 
 
