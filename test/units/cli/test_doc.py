@@ -140,19 +140,20 @@ def test_legacy_modules_list():
     assert len(result) > 0
 
 
-@pytest.mark.parametrize('short_description', [
-    pytest.param('', id='null'),
-    pytest.param('{one: two}', id='dict'),
-    pytest.param('[one, two]', id='list'),
+@pytest.mark.parametrize('short_description, type_name', [
+    pytest.param('', 'NoneType', id='null'),
+    pytest.param('{one: two}', 'dict', id='dict'),
+    pytest.param('[one, two]', 'list', id='list'),
 ])
-def test_plugin_list_descriptions_invalid_short_description(tmp_path: pathlib.Path, mocker: pytest_mock.MockerFixture, short_description: str) -> None:
+def test_plugin_list_descriptions_invalid_short_description(
+    tmp_path: pathlib.Path, mocker: pytest_mock.MockerFixture, short_description: str, type_name: str
+) -> None:
     plugin = tmp_path / 'sample.py'
     plugin.write_text(f'DOCUMENTATION = """\nmodule: sample\nshort_description: {short_description}\n"""\n')
-    error_as_warning = mocker.patch.object(Display(), 'error_as_warning')
-
     obj = DocCLI(args=['ansible-doc', '-l'])
+    warning = mocker.patch.object(Display(), 'warning')
+
     descs = obj._get_plugin_list_descriptions({'ns.col.sample': _PluginDocMetadata(name='ns.col.sample', path=str(plugin).encode())})
 
     assert descs == {'ns.col.sample': 'INVALID SHORT DESCRIPTION'}
-    error_as_warning.assert_called_once()
-    assert error_as_warning.call_args.args[0] == 'ns.col.sample has an invalid short_description.'
+    warning.assert_called_once_with(f'ns.col.sample short_description must be a string, not a {type_name}.')
