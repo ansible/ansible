@@ -1,0 +1,22 @@
+- include_tasks:
+    file: include_count.yml
+  loop:
+    - apple
+    - banana
+    - orange
+    - banana
+    - apple
+    - apple
+
+- assert:
+    that:
+      - apple|int == 3
+      - banana|int == 2
+      - orange|int == 1
+
+- include_tasks:
+    file: include_hostvar_based.yml
+  loop:
+    - '{{ hostvar_based_loop_item }}'
+  vars:
+    hostvar_based_loop_item: '{{ groups.all.index(inventory_hostname) }}'
