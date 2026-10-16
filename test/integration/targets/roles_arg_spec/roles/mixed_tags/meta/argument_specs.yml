@@ -1,0 +1,7 @@
+argument_specs:
+    main:
+        short_description: Main entry point for mixed_tags role.
+        options:
+            mixed_str:
+                type: "str"
+                required: true

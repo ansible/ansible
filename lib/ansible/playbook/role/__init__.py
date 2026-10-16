@@ -38,6 +38,7 @@ from ansible.playbook.taggable import Taggable
 from ansible.plugins.loader import add_all_plugin_dirs
 from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.utils.display import Display
+from ansible.utils.fqcn import add_internal_fqcns
 from ansible.utils.path import is_subpath
 from ansible.utils.vars import combine_vars
 
@@ -48,12 +49,17 @@ from ansible.utils.vars import combine_vars
 #       * https://stackoverflow.com/q/39740632/199513
 #       * https://peps.python.org/pep-0484/#forward-references
 if _t.TYPE_CHECKING:
+    from collections.abc import Callable
+
     from ansible.playbook.block import Block
     from ansible.playbook.play import Play
+    from ansible.playbook.task import Task
 
-__all__ = ['Role', 'hash_params']
+__all__ = ['Role', 'hash_params', 'prune_orphaned_role_argspec_validation']
 
 _display = Display()
+
+_VALIDATE_ARGUMENT_SPEC_ACTIONS = frozenset(add_internal_fqcns(('validate_argument_spec',)))
 
 
 def hash_params(params):
@@ -399,6 +405,8 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
                 },
             },
             'name': task_name,
+            # Survive tag filtering so we can decide post-filter whether the role
+            # still has work to do; orphaned validation is pruned afterwards.
             'tags': ['always'],
         }
 
@@ -672,3 +680,157 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
             parent.set_loader(loader)
         for dep in self.get_direct_dependencies():
             dep.set_loader(loader)
+
+
+def _is_role_argspec_validation_task(task: Task) -> bool:
+    """Return True if task is the implicit role argument-spec validation task."""
+    if task.action not in _VALIDATE_ARGUMENT_SPEC_ACTIONS:
+        return False
+    context = task.args.get('validate_args_context') if isinstance(task.args, Mapping) else None
+    return isinstance(context, Mapping) and context.get('type') == 'role'
+
+
+def _is_role_complete_task(task: Task) -> bool:
+    """Return True if task is the implicit meta: role_complete marker."""
+    return (
+        task.action in C._ACTION_META
+        and isinstance(task.args, Mapping)
+        and task.args.get('_raw_params') == 'role_complete'
+    )
+
+
+def _role_had_user_tasks(role: Role) -> bool:
+    """True if the role originally contained any non-validation tasks."""
+    for block in role._task_blocks:
+        for task in block.get_tasks():
+            if not _is_role_argspec_validation_task(task):
+                return True
+    return False
+
+
+def _evaluate_tags_without_always(
+    task: Task,
+    only_tags: _t.AbstractSet[str],
+    skip_tags: _t.AbstractSet[str],
+    all_vars: dict[str, _t.Any],
+) -> bool:
+    """Evaluate tags as if the task did not have the special ``always`` tag."""
+    saved_tags = task._tags
+    # Clear the task-local tags (``always``) so only inherited role/import tags apply.
+    task._tags = []
+    try:
+        return task.evaluate_tags(only_tags, skip_tags, all_vars)
+    finally:
+        task._tags = saved_tags
+
+
+def _walk_block_tasks(block: Block, callback: Callable[[Task], None]) -> None:
+    """Invoke callback for every Task in a block tree (including nested blocks)."""
+    from ansible.playbook.block import Block
+
+    def _walk(target):
+        for item in target:
+            if isinstance(item, Block):
+                _walk(item.block)
+                _walk(item.rescue)
+                _walk(item.always)
+            else:
+                callback(item)
+
+    _walk(block.block)
+    _walk(block.rescue)
+    _walk(block.always)
+
+
+def _remove_validation_tasks(block: Block, roles_to_prune: set[int]) -> Block:
+    """Return a copy of block without argspec validation for roles in roles_to_prune."""
+    from ansible.playbook.block import Block
+
+    def _filter_list(target):
+        filtered = []
+        for item in target:
+            if isinstance(item, Block):
+                new_child = _remove_validation_tasks(item, roles_to_prune)
+                if new_child.has_tasks():
+                    filtered.append(new_child)
+            else:
+                role = getattr(item, '_role', None)
+                if (
+                    role is not None
+                    and id(role) in roles_to_prune
+                    and _is_role_argspec_validation_task(item)
+                ):
+                    continue
+                filtered.append(item)
+        return filtered
+
+    new_block = block.copy(exclude_parent=True, exclude_tasks=True)
+    new_block._parent = block._parent
+    new_block.block = _filter_list(block.block)
+    new_block.rescue = _filter_list(block.rescue)
+    new_block.always = _filter_list(block.always)
+    return new_block
+
+
+def prune_orphaned_role_argspec_validation(
+    blocks: list[Block],
+    all_vars: dict[str, _t.Any],
+) -> list[Block]:
+    """Drop role argspec validation when the role has no runnable tagged tasks.
+
+    The validation task is tagged ``always`` so it survives ``filter_tagged_tasks``.
+    After filtering, keep it only when:
+
+    * at least one non-validation, non-role_complete task from the same role remains, or
+    * the role had no user tasks to begin with (argspec-only) and the role/import tags
+      would select it without relying on ``always``.
+
+    This must consider tasks across all blocks from a role, not a single block, because
+    a surviving task may live in a different block than the validation task.
+    """
+    if not blocks:
+        return blocks
+
+    role_info: dict[int, dict] = {}
+
+    def _collect(task: Task) -> None:
+        role = getattr(task, '_role', None)
+        if role is None:
+            return
+        info = role_info.setdefault(id(role), {
+            'role': role,
+            'validations': [],
+            'has_user_tasks': False,
+            'play': None,
+        })
+        if info['play'] is None and task._parent is not None:
+            info['play'] = task.get_play()
+        if _is_role_argspec_validation_task(task):
+            info['validations'].append(task)
+        elif not _is_role_complete_task(task):
+            info['has_user_tasks'] = True
+
+    for block in blocks:
+        _walk_block_tasks(block, _collect)
+
+    roles_to_prune: set[int] = set()
+    for role_id, info in role_info.items():
+        if not info['validations'] or info['has_user_tasks']:
+            continue
+
+        if _role_had_user_tasks(info['role']):
+            # All real tasks were filtered out; do not validate.
+            roles_to_prune.add(role_id)
+            continue
+
+        # ArgSpec-only role: honor inherited tags without the forced ``always``.
+        play = info['play'] or getattr(blocks[0], '_play', None)
+        only_tags = getattr(play, 'only_tags', None) or frozenset()
+        skip_tags = getattr(play, 'skip_tags', None) or frozenset()
+        if not _evaluate_tags_without_always(info['validations'][0], only_tags, skip_tags, all_vars):
+            roles_to_prune.add(role_id)
+
+    if not roles_to_prune:
+        return blocks
+
+    return [_remove_validation_tasks(block, roles_to_prune) for block in blocks]
