@@ -51,9 +51,6 @@ class TestConnectionBaseClass(unittest.TestCase):
 
     def setUp(self):
         self.play_context = PlayContext()
-        self.play_context.prompt = (
-            '[sudo via ansible, key=ouzmdnewuhucvuaabtjmweasarviygqq] password: '
-        )
         self.in_stream = StringIO()
 
     def tearDown(self):
