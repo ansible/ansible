@@ -1,6 +1,19 @@
 ---
 - hosts: all
+  vars:
+    inherit_playbook: playbook
   tasks:
   - name: static import inside dynamic include inherits defaults/vars
     include_role:
       name: include_import_dep_chain
+    vars:
+      inherit_include: include
+  - name: static import inside dynamic include inherits defaults/vars
+    include_role:
+      name: include_import_dep_chain
+    vars:
+      overwritten: true
+      inherit_include: include
+      inherit_default: overwritten
+      inherit_var: overwritten_as_well
+      include_default_var: overwritten_again
