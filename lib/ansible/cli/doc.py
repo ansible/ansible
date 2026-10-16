@@ -32,6 +32,7 @@ from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleParserError
 from ansible.module_utils.common.text.converters import to_native, to_text
 from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.common.yaml import yaml_dump
+from ansible.module_utils.datatag import native_type_name
 from ansible.parsing.plugin_docs import read_docstub
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.parsing.yaml.loader import AnsibleLoader
@@ -1194,8 +1195,11 @@ class DocCLI(CLI, RoleMixin):
 
             if not doc or not isinstance(doc, dict):
                 desc = 'UNDOCUMENTED'
+            elif isinstance(short_description := doc.get('short_description', 'INVALID SHORT DESCRIPTION'), str):
+                desc = short_description.strip()
             else:
-                desc = doc.get('short_description', 'INVALID SHORT DESCRIPTION').strip()
+                display.warning(f"{plugin} short_description must be a string, not a {native_type_name(short_description)}.")
+                desc = 'INVALID SHORT DESCRIPTION'
 
             descs[plugin] = desc
 
