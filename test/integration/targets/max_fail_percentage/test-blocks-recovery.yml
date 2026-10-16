@@ -1,0 +1,33 @@
+---
+- name: Test threshold exceeded, recovered in rescue, next task executes
+  hosts: testhost1,testhost2,testhost3,testhost4,testhost5
+  gather_facts: false
+  max_fail_percentage: 50%
+  tasks:
+    - block:
+        - name: Fail 3 out of 5 hosts (60%)
+          fail:
+            msg: intentional failure
+          when: inventory_hostname in ['testhost1', 'testhost2', 'testhost3']
+
+        - name: Should not execute
+          debug:
+            msg: "RECOVERY_MAIN_SHOULD_NOT_EXECUTE"
+
+      rescue:
+        - name: Recovery task - rescue succeeds
+          debug:
+            msg: "RECOVERY_RESCUE_EXECUTED"
+
+    - name: After successful rescue, hosts are recovered
+      debug:
+        msg: "AFTER_RECOVERY_EXECUTED"
+
+- name: Test next play after recovery sees hosts as not failed
+  hosts: testhost1,testhost2,testhost3,testhost4,testhost5
+  gather_facts: false
+  max_fail_percentage: 50%
+  tasks:
+    - name: All hosts should execute in new play
+      debug:
+        msg: "NEW_PLAY_AFTER_RECOVERY"
