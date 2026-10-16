@@ -1474,6 +1474,11 @@ class DocCLI(CLI, RoleMixin):
                     except Exception as e:
                         raise AnsibleParserError("Unable to parse examples section.") from e
 
+            if doc.get('return'):
+                text.append('')
+                text.append(_format("RETURN VALUES:", 'bold'))
+                DocCLI.add_fields(text, doc.pop('return'), limit, opt_indent, return_values=True, man=(display.verbosity == 0))
+
         return text
 
     @staticmethod
