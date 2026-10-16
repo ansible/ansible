@@ -247,7 +247,10 @@ echo "testing legacy plugin list via --playbook-dir"
 [ "$(ansible-doc -l ansible.legacy --playbook-dir ./|wc -l)" -gt "0" ]
 
 echo "testing undocumented plugin output"
-[ "$(ansible-doc -M ./library -l ansible.legacy |grep -c UNDOCUMENTED)" == "6" ]
+[ "$(ansible-doc -M ./library -l ansible.legacy |grep -c UNDOCUMENTED)" == "7" ]
+
+echo "ensure list does not take short_description from outside DOCUMENTATION"
+ansible-doc -M ./library -l ansible.legacy --json | grep "${GREP_OPTS[@]}" '"ansible.legacy.test_docs_short_description_in_return": "UNDOCUMENTED"'
 
 echo "testing filtering does not include any 'test_' modules"
 [ "$(ansible-doc -M ./library -l ansible.builtin |grep -c test_)" == 0 ]

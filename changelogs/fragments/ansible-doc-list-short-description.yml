@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-doc - ``--list`` no longer takes ``short_description`` from an option of the same name, or from ``EXAMPLES``, ``RETURN`` or code after ``DOCUMENTATION``, which could fail the whole list (https://github.com/ansible-collections/google.cloud/issues/789).

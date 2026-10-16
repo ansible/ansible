@@ -4,6 +4,9 @@
 from __future__ import annotations
 
 import ast
+import itertools
+import re
+import typing as t
 
 import yaml
 
@@ -123,6 +126,43 @@ def read_docstring(filename, verbose=True, ignore_errors=True):
     return docstring
 
 
+_TRIPLE_QUOTE = re.compile('\'\'\'|"""')
+
+
+def _read_documentation_lines(module_data: t.Iterator[str]) -> t.Iterator[str]:
+    """Yield the lines of the DOCUMENTATION string of a Python file, or of the DOCUMENTATION key of a YAML file."""
+
+    for line in module_data:
+        if re.match(r'DOCUMENTATION\s*[:=]', line):
+            break
+    else:
+        return
+
+    if line.rstrip() == 'DOCUMENTATION:':
+        # YAML: the block ends at the next top-level key, such as EXAMPLES or RETURN.
+        for line in module_data:
+            if line.strip() and not line.startswith((' ', '#')):
+                return
+            yield line
+        return
+
+    start = _TRIPLE_QUOTE.search(line)
+
+    if not start and line.rstrip().endswith('\\'):
+        # Python: the string opens on the next line, as in DOCUMENTATION = \
+        line = next(module_data, '')
+        start = _TRIPLE_QUOTE.search(line)
+
+    if not start:
+        return
+
+    for line in itertools.chain([line[start.end():]], module_data):
+        text, end_quote, dummy = line.partition(start.group())
+        yield text
+        if end_quote:
+            return
+
+
 def read_docstub(filename):
     """
     Quickly find short_description using string methods instead of node parsing.
@@ -130,39 +170,34 @@ def read_docstub(filename):
     operations like ansible-doc -l.
     """
 
-    in_documentation = False
     capturing = False
     indent_detection = ''
     top_level_indent = None
     doc_stub = []
 
     with open(filename, 'r') as t_module_data:
-        for line in t_module_data:
-            if in_documentation:
-                # start capturing the stub until indentation returns
-                if capturing and line.startswith(indent_detection):
+        for line in _read_documentation_lines(t_module_data):
+            # start capturing the stub until indentation returns
+            if capturing and line.startswith(indent_detection):
+                doc_stub.append(line)
+
+            elif capturing and not line.startswith(indent_detection):
+                break
+
+            else:
+                content = line.lstrip()
+                indent = len(line) - len(content)
+
+                # The first YAML key sets the top-level indentation, so a nested key of the same name, such as an option, is not matched.
+                if top_level_indent is None and content.strip() and not content.startswith(('#', '---')):
+                    top_level_indent = indent
+
+                if indent == top_level_indent and content.startswith('short_description:'):
+                    capturing = True
+                    # Detect that the short_description continues on the next line if it's indented more
+                    # than short_description itself.
+                    indent_detection = ' ' * (indent + 1)
                     doc_stub.append(line)
-
-                elif capturing and not line.startswith(indent_detection):
-                    break
-
-                else:
-                    indent = len(line) - len(line.lstrip())
-
-                    # The first line of YAML content gives the indentation of top-level keys, so a nested
-                    # key of the same name (such as an option called short_description) is not matched.
-                    if top_level_indent is None and line.strip().lstrip('rRuU').strip('\'"-'):
-                        top_level_indent = indent
-
-                    if indent == top_level_indent and line.lstrip().startswith('short_description:'):
-                        capturing = True
-                        # Detect that the short_description continues on the next line if it's indented more
-                        # than short_description itself.
-                        indent_detection = ' ' * (indent + 1)
-                        doc_stub.append(line)
-
-            elif line.startswith('DOCUMENTATION') and ('=' in line or ':' in line):
-                in_documentation = True
 
     short_description = r''.join(doc_stub).strip().rstrip('.')
     data = yaml.load(_tags.Origin(path=str(filename)).tag(short_description), Loader=AnsibleLoader)
