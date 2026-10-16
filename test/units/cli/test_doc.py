@@ -1,10 +1,15 @@
 from __future__ import annotations
 
+import pathlib
+
 import pytest
+import pytest_mock
 
 from ansible import constants as C
 from ansible.cli.doc import DocCLI, RoleMixin
+from ansible.plugins.list import _PluginDocMetadata
 from ansible.plugins.loader import module_loader, init_plugin_loader
+from ansible.utils.display import Display
 
 
 C.ANSIBLE_NOCOLOR = True
@@ -133,3 +138,21 @@ def test_legacy_modules_list():
     obj.parse()
     result = obj._list_plugins('module', module_loader)
     assert len(result) > 0
+
+
+@pytest.mark.parametrize('short_description', [
+    pytest.param('', id='null'),
+    pytest.param('{one: two}', id='dict'),
+    pytest.param('[one, two]', id='list'),
+])
+def test_plugin_list_descriptions_invalid_short_description(tmp_path: pathlib.Path, mocker: pytest_mock.MockerFixture, short_description: str) -> None:
+    plugin = tmp_path / 'sample.py'
+    plugin.write_text(f'DOCUMENTATION = """\nmodule: sample\nshort_description: {short_description}\n"""\n')
+    error_as_warning = mocker.patch.object(Display(), 'error_as_warning')
+
+    obj = DocCLI(args=['ansible-doc', '-l'])
+    descs = obj._get_plugin_list_descriptions({'ns.col.sample': _PluginDocMetadata(name='ns.col.sample', path=str(plugin).encode())})
+
+    assert descs == {'ns.col.sample': 'INVALID SHORT DESCRIPTION'}
+    error_as_warning.assert_called_once()
+    assert error_as_warning.call_args.args[0] == 'ns.col.sample has an invalid short_description.'

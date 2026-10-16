@@ -1195,7 +1195,11 @@ class DocCLI(CLI, RoleMixin):
             if not doc or not isinstance(doc, dict):
                 desc = 'UNDOCUMENTED'
             else:
-                desc = doc.get('short_description', 'INVALID SHORT DESCRIPTION').strip()
+                try:
+                    desc = doc.get('short_description', 'INVALID SHORT DESCRIPTION').strip()
+                except AttributeError as ex:
+                    display.error_as_warning(f"{plugin} has an invalid short_description.", exception=ex)
+                    desc = 'INVALID SHORT DESCRIPTION'
 
             descs[plugin] = desc
 
