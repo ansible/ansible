@@ -19,12 +19,13 @@ import yaml
 import ansible
 from ansible import constants as C
 from ansible._internal import _templating
+from ansible._internal._datatag._tags import TrustedAsTemplate, Origin
 from ansible.module_utils.common.text.converters import to_native
 from ansible.module_utils.common.yaml import HAS_LIBYAML, yaml_load
 from ansible.release import __version__
+from ansible.parsing.splitter import parse_kv
+from ansible.parsing.utils.yaml import from_yaml
 from ansible.utils.path import unfrackpath
-
-from ansible._internal._datatag._tags import TrustedAsTemplate, Origin
 
 
 #
@@ -231,6 +232,46 @@ def maybe_unfrack_path(beacon):
             return beacon + unfrackpath(value[1:])
         return value
     return inner
+
+
+def parse_env_vars(value: str) -> dict[str, str]:
+    """
+    Parse command line args to set the 'environment' keyword
+    """
+
+    if value.startswith('{'):
+        data = from_yaml(value)
+
+    elif value.startswith('@'):
+        filename = unfrackpath(value[1:])
+        try:
+            with open(filename, errors='strict') as f:
+                data = from_yaml(f.read(), file_name=filename)
+        except OSError as e:
+            raise ValueError(f"Cannot access environment file {filename!r}") from e
+        except ValueError as e:
+            raise ValueError(f"Cannot decode file {filename!r}") from e
+
+    elif '=' in value:
+        data = parse_kv(value)
+
+    else:
+        raise ValueError(f"Unable to parse environment option, not YAML/JSON  nor k=v pairs nor a file: {value!r}")
+
+    if not isinstance(data, dict):
+        raise TypeError(f"Error while parsing environment values, expected a dictionary, got a {type(data)!r}")
+
+    final = {}
+    for k, v in data.items():
+        if not isinstance(k, str):
+            raise TypeError(f"Environment key is required to be a string, but {k!r} is a {type(k)!r} instead.")
+        try:
+            final[k] = TrustedAsTemplate().tag(str(v))
+        except UnicodeError as e:
+            raise ValueError(f"Environment values are required to be strings, {k!r}'s value could not be converted.") from e
+
+    # TODO: add Origin
+    return final
 
 
 def _git_repo_info(repo_path):
@@ -502,6 +543,8 @@ def add_runtask_options(parser):
     """Add options for commands that run a task"""
     parser.add_argument('-e', '--extra-vars', dest="extra_vars", action="append", type=maybe_unfrack_path('@'),
                         help="set additional variables as key=value or YAML/JSON, if filename prepend with @", default=[])
+    parser.add_argument('-E', '--environment', dest='environment', action='append', default=[], type=parse_env_vars,
+                        help="Set environment variables (key=value or YAML/JSON formatted or @filename.yml) when executing a task on the target.")
 
 
 def add_tasknoplay_options(parser):
