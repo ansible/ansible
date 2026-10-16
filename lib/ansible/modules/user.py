@@ -3169,9 +3169,6 @@ class BusyBox(User):
         This method will return '*' at a minimum to avoid creating an enabled
         account with no password.
         """
-        if self.password is None and self.password_lock is None and current_password is not None:
-            return current_password
-
         if self.password is not None:
             password = self.password
         elif current_password:
