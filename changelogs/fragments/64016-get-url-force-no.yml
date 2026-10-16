@@ -1,0 +1,2 @@
+bugfixes:
+  - get_url - avoid downloading an existing destination when ``force`` is disabled and no checksum is provided (https://github.com/ansible/ansible/issues/64016).
