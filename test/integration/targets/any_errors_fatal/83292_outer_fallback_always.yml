@@ -1,0 +1,35 @@
+---
+- name: Let an outer rescue catch an inner always failure
+  hosts: testhost,testhost2
+  gather_facts: false
+  max_fail_percentage: '{{ max_fail_pct | default(100) }}'
+  tasks:
+    - name: Outer block with the rescue fallback
+      block:
+        - name: Inner block whose always section fails
+          block:
+            - name: Fail once in the inner block
+              ansible.builtin.fail:
+              run_once: true
+
+            - name: Do not continue inside the failed inner block
+              ansible.builtin.debug:
+                msg: SHOULD NOT HAPPEN
+          always:
+            - name: Fail the inner always section
+              ansible.builtin.fail:
+                msg: 83292 outer fallback inner always {{ inventory_hostname }}
+      rescue:
+        - name: Rescue both hosts after the inner always failure
+          ansible.builtin.assert:
+            that:
+              - ansible_play_hosts | sort == ['testhost', 'testhost2']
+              - ansible_play_batch | sort == ['testhost', 'testhost2']
+            success_msg: 83292 outer fallback always rescue {{ inventory_hostname }}
+
+    - name: Continue both hosts after the outer rescue
+      ansible.builtin.assert:
+        that:
+          - ansible_play_hosts | sort == ['testhost', 'testhost2']
+          - ansible_play_batch | sort == ['testhost', 'testhost2']
+        success_msg: 83292 outer fallback always recovered {{ inventory_hostname }}

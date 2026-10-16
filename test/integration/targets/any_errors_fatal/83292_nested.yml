@@ -1,0 +1,38 @@
+---
+- name: Rescued run_once failure in an inner block
+  hosts: testhost,testhost2
+  gather_facts: false
+  max_fail_percentage: '{{ max_fail_pct | default(100) }}'
+  tasks:
+    - name: Wrap the run_once block
+      block:
+        - name: Run the failing block with its own rescue
+          block:
+            - name: Fail once in the inner block
+              ansible.builtin.fail:
+              run_once: true
+
+            - name: Do not continue inside the failed inner block
+              ansible.builtin.debug:
+                msg: SHOULD NOT HAPPEN
+          rescue:
+            - name: Rescue both hosts in the inner block
+              ansible.builtin.assert:
+                that:
+                  - ansible_play_hosts | sort == ['testhost', 'testhost2']
+                  - ansible_play_batch | sort == ['testhost', 'testhost2']
+                success_msg: 83292 nested rescue {{ inventory_hostname }}
+
+        - name: Continue both hosts after the inner rescue
+          ansible.builtin.assert:
+            that:
+              - ansible_play_hosts | sort == ['testhost', 'testhost2']
+              - ansible_play_batch | sort == ['testhost', 'testhost2']
+            success_msg: 83292 nested recovered {{ inventory_hostname }}
+
+    - name: Continue after the outer block
+      ansible.builtin.assert:
+        that:
+          - ansible_play_hosts | sort == ['testhost', 'testhost2']
+          - ansible_play_batch | sort == ['testhost', 'testhost2']
+        success_msg: 83292 nested post {{ inventory_hostname }}
