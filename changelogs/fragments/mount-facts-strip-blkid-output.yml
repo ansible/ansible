@@ -1,0 +1,2 @@
+bugfixes:
+  - mount_facts - Strip whitespace from ``blkid`` UUID lookup output so static mounts can be filtered by resolved device paths.
