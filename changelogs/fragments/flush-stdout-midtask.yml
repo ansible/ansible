@@ -1,0 +1,2 @@
+bugfixes:
+  - Fix displaying prompts and individual loop item results with unbuffered output (https://github.com/ansible/ansible/issues/81155, https://github.com/ansible/ansible/issues/79662).
