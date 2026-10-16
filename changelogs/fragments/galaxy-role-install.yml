@@ -1,0 +1,3 @@
+---
+bugfixes:
+    - galaxy - hide user credentials from logging while installing role.

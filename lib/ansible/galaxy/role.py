@@ -37,7 +37,7 @@ from ansible.galaxy.user_agent import user_agent
 from ansible.module_utils.common.text.converters import to_native, to_text
 from ansible.module_utils.common.yaml import yaml_dump, yaml_load
 from ansible.module_utils.compat.version import LooseVersion
-from ansible.module_utils.urls import open_url
+from ansible.module_utils.urls import mask_url, open_url
 from ansible.playbook.role.requirement import RoleRequirement
 from ansible.utils.display import Display
 from ansible.utils.path import is_subpath, unfrackpath
@@ -224,7 +224,7 @@ class GalaxyRole(object):
             else:
                 archive_url = self.src
 
-            display.display("- downloading role from %s" % archive_url)
+            display.display(f"- downloading role from {mask_url(archive_url)}")
 
             try:
                 url_file = open_url(archive_url, validate_certs=self._validate_certs, http_agent=user_agent(), timeout=60)
@@ -254,7 +254,7 @@ class GalaxyRole(object):
             else:
                 role_data = self.api.lookup_role_by_name(self.src)
                 if not role_data:
-                    raise AnsibleError("- sorry, %s was not found on %s." % (self.src, self.api.api_server))
+                    raise AnsibleError(f"- sorry, {mask_url(self.src)} was not found on {self.api.api_server}")
 
                 if role_data.get('role_type') == 'APP':
                     # Container Role
