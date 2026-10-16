@@ -1947,6 +1947,22 @@ PYTHON_MODULE_RLIMIT_NOFILE:
   vars:
   - {name: ansible_python_module_rlimit_nofile}
   version_added: '2.8'
+REDACT_HTTP_HEADERS:
+  name: Additional HTTP headers to redact
+  default: []
+  description:
+    - The names of additional HTTP headers whose values are redacted from the ``invocation`` returned in task results.
+    - These are redacted in addition to the always redacted ``authorization``, ``cookie``, ``proxy-authorization``,
+      ``set-cookie`` and ``www-authenticate`` headers.
+    - Header names are matched case insensitively against the keys of module parameters whose name ends with ``headers``.
+    - This has no effect on the module invocation logged on the target, which always redacts the well-known headers only.
+  env: [{name: ANSIBLE_REDACT_HTTP_HEADERS}]
+  ini:
+  - {key: redact_http_headers, section: defaults}
+  type: list
+  vars:
+  - name: ansible_redact_http_headers
+  version_added: "2.23"
 RETRY_FILES_ENABLED:
   name: Retry files
   default: False
