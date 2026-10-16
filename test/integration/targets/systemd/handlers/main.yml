@@ -20,3 +20,8 @@
   file:
     path: /etc/systemd/system/mask_me.service
     state: absent
+
+- name: remove global scope unit file
+  file:
+    path: /etc/systemd/user/global_scope_me.service
+    state: absent
