@@ -121,6 +121,7 @@ def ansible_environment(args: CommonConfig, color: bool = True, ansible_config: 
         ANSIBLE_WORKER_SHUTDOWN_POLL_DELAY='0.1',
         # ansible-test specific environment variables require an 'ANSIBLE_TEST_' prefix to distinguish them from ansible-core env vars defined by config
         ANSIBLE_TEST_ANSIBLE_LIB_ROOT=ANSIBLE_LIB_ROOT,  # used by the coverage injector
+        ANSIBLE_TEST_SOURCE_ROOT=ANSIBLE_SOURCE_ROOT or '',
     )
 
     if isinstance(args, IntegrationConfig) and args.coverage:

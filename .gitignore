@@ -115,6 +115,10 @@ packaging/release/ansible_release
 /test/integration/inventory.winrm
 /test/integration/cloud-config-aws.yml
 /test/integration/cloud-config-cs.ini
+# compiled configs
+/lib/ansible/config/_internal/__init__.py
+/lib/ansible/config/_internal/_ansible_builtin_runtime.py
+/lib/ansible/config/_internal/_base.py
 # python 'rope' stuff
 .ropeproject
 # local 'ack' config files
