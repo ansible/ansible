@@ -27,7 +27,7 @@ from ansible import context
 from ansible.errors import AnsibleError
 from ansible.utils.display import Display
 from ansible.module_utils.common.process import get_bin_path
-from ansible.module_utils.common.text.converters import to_text, to_native
+from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.urls import mask_url
 
 
