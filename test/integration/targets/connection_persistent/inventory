@@ -1,1 +1,6 @@
+[persistent_default]
 localhost0 ansible_connection=persistent ansible_python_interpreter={{ansible_playbook_python}}
+
+[persistent_aliases]
+persistent_alias_a ansible_host=shared-connection-target ansible_connection=persistent ansible_user=shared-user ansible_port=2222 ansible_python_interpreter={{ansible_playbook_python}}
+persistent_alias_b ansible_host=shared-connection-target ansible_connection=persistent ansible_user=shared-user ansible_port=2222 ansible_python_interpreter={{ansible_playbook_python}}

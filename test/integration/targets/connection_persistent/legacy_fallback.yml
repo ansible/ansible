@@ -1,0 +1,33 @@
+- hosts: persistent_default
+  gather_facts: false
+  tasks:
+    - persistent:
+      vars:
+        ansible_command_timeout: 41
+      register: first
+
+    - persistent:
+      vars:
+        ansible_command_timeout: 42
+      register: second
+
+    - persistent:
+      vars:
+        ansible_command_timeout: 43
+      register: third
+
+    - assert:
+        that:
+          - first.pid == second.pid
+          - first.pid == third.pid
+          - first.timeout == 41
+          - second.timeout == 42
+          - third.timeout == 43
+          - first.command_timeout == 41
+          - second.command_timeout == 42
+          - third.command_timeout == 43
+          - first.check_prompt is none
+          - second.check_prompt is truthy
+          - third.check_prompt is truthy
+          - second.check_prompt != third.check_prompt
+          - lookup('file', legacy_helper_counter_path).splitlines() | length == 3
