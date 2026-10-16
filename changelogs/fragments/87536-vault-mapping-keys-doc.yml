@@ -1,0 +1,4 @@
+minor_changes:
+  - ansible-vault - document that strings encrypted with ``ansible-vault encrypt_string``
+    can only be used as YAML mapping values, not as mapping keys
+    (https://github.com/ansible/ansible/issues/87536).
