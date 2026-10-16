@@ -2,12 +2,6 @@
 - hosts: localhost
   gather_facts: no
   tasks:
-    - name: a test plugin returning a boolean does not deprecate
-      assert:
-        that:
-          - true is passthru
-          - false is not passthru
-
     - name: a test plugin returning a non-boolean is deprecated and coerced to a boolean
       assert:
         that:

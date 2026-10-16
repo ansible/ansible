@@ -26,12 +26,12 @@ grep out_unwrapped.txt -e "\[DEPRECATION WARNING\]: The \`bool\` filter coerced 
 grep out_unwrapped.txt -e "\[DEPRECATION WARNING\]: The \`bool\` filter coerced invalid value {} (dict) to False"
 
 ansible-playbook from_yaml.yml 2>&1 | tee out.txt
-grep out.txt -e "\[DEPRECATION WARNING\]: The from_yaml_all filter ignored non-string"
-grep out.txt -e "\[DEPRECATION WARNING\]: The from_yaml filter ignored non-string"
+tr -s '[:space:]' ' ' < out.txt > out_unwrapped.txt
+grep out_unwrapped.txt -e "\[DEPRECATION WARNING\]: The from_yaml filter ignored non-string input of type 'int'."
+grep out_unwrapped.txt -e "\[DEPRECATION WARNING\]: The from_yaml_all filter ignored non-string input of type 'int'."
 
 ansible-playbook non_boolean_test_plugins.yml 2>&1 | tee out.txt
 grep out.txt -e "\[DEPRECATION WARNING\]: The test plugin 'passthru' returned a non-boolean result"
-# the warning text is wrapped to the terminal width, so unwrap it before matching the full message
 tr -s '[:space:]' ' ' < out.txt > out_unwrapped.txt
 grep out_unwrapped.txt -e "The test plugin 'passthru' returned a non-boolean result of type <class 'str'>"
 grep out_unwrapped.txt -e "The test plugin 'passthru' returned a non-boolean result of type <class 'int'>"
