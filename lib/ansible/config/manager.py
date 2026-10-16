@@ -783,7 +783,7 @@ class ConfigManager:
 
         return value, origin
 
-    def initialize_plugin_configuration_definitions(self, plugin_type, name, defs):
+    def initialize_plugin_configuration_definitions(self, plugin_type, name, defs, fqcn=None):
 
         _validate_secret_config_defs(defs, plugin_type=plugin_type, plugin_name=name)
 
@@ -791,6 +791,9 @@ class ConfigManager:
             self._plugins[plugin_type] = {}
 
         self._plugins[plugin_type][name] = defs
+
+        if fqcn and fqcn != name:
+            self._plugins[plugin_type][fqcn] = defs
 
     def _get_ini_config_value(self, config_file: str, section: str, option: str) -> t.Any:
         """
