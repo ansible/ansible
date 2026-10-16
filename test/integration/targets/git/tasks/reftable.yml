@@ -1,0 +1,67 @@
+- name: REFTABLE | clear checkout_dir
+  file:
+    state: absent
+    path: '{{ checkout_dir }}'
+
+- name: REFTABLE | clone using the reftable backend
+  git:
+    repo: '{{ repo_dir }}/minimal'
+    dest: '{{ checkout_dir }}'
+  environment:
+    GIT_DEFAULT_REF_FORMAT: reftable
+  register: reftable_clone
+
+- name: REFTABLE | check clone result
+  assert:
+    that:
+      - reftable_clone is changed
+
+- name: REFTABLE | get clone ref format
+  command: git config --get extensions.refstorage
+  args:
+    chdir: '{{ checkout_dir }}'
+  changed_when: false
+  register: reftable_format
+
+- name: REFTABLE | check clone ref format
+  assert:
+    that:
+      - reftable_format.stdout == 'reftable'
+
+- name: REFTABLE | re-run should be idempotent
+  git:
+    repo: '{{ repo_dir }}/minimal'
+    dest: '{{ checkout_dir }}'
+  register: reftable_rerun
+
+- name: REFTABLE | check re-run result
+  assert:
+    that:
+      - reftable_rerun is not changed
+
+- name: REFTABLE | detach HEAD
+  command: git checkout --detach
+  args:
+    chdir: '{{ checkout_dir }}'
+
+- name: REFTABLE | update detached HEAD
+  git:
+    repo: '{{ repo_dir }}/minimal'
+    dest: '{{ checkout_dir }}'
+
+- name: REFTABLE | get branch after update
+  command: git symbolic-ref --short HEAD
+  args:
+    chdir: '{{ checkout_dir }}'
+  changed_when: false
+  register: reftable_branch
+
+- name: REFTABLE | check branch after update
+  assert:
+    that:
+      - reftable_branch.stdout == git_default_branch
+
+- name: REFTABLE | clear checkout_dir
+  file:
+    path: '{{ checkout_dir }}'
+    state: absent
