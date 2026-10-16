@@ -101,6 +101,7 @@ options:
         the destination file is replaced with the newly downloaded file.
       - If the checksum URL requires username and password, O(url_username) and O(url_password) are used
         to download the checksum file.
+      - Module fails if the checksum URL host or port differs from the url parameter.
     type: str
     default: ''
     version_added: "2.0"
@@ -378,7 +379,7 @@ from urllib.parse import urlsplit
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.text.converters import to_native
-from ansible.module_utils.urls import fetch_url, is_fetch_success, mask_url, url_argument_spec
+from ansible.module_utils.urls import fetch_url, is_fetch_success, mask_url, url_argument_spec, urls_have_different_host_port
 
 # ==============================================================
 # url handling
@@ -567,6 +568,11 @@ def main():
 
         if is_url(checksum):
             checksum_url = checksum
+            if urls_have_different_host_port(url, checksum_url):
+                module.fail_json(
+                    msg="The checksum URL host or port differs from the url parameter",
+                    **result,
+                )
             # download checksum file to checksum_tmpsrc
             checksum_tmpsrc, _dummy = url_get(module, checksum_url, dest, use_proxy, last_mod_time, force, timeout, headers, tmp_dest,
                                               unredirected_headers=unredirected_headers, ciphers=ciphers, use_netrc=use_netrc)
