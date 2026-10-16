@@ -1,15 +1,44 @@
 - hosts: localhost
-  gather_facts: no
+  gather_facts: false
   environment:
-    ANSIBLE_LIBRARY: "{{ playbook_dir }}/library"
-    ANSIBLE_NOCOLOR: 1
     ANSIBLE_DEPRECATION_WARNINGS: 1
     ANSIBLE_DOC_FRAGMENT_PLUGINS: "{{ playbook_dir }}/doc_fragments"
+    ANSIBLE_LIBRARY: "{{ playbook_dir }}/library"
+    ANSIBLE_NOCOLOR: 1
   vars:
     # avoid header that has full path and won't work across random paths for tests
     actual_output_clean: '{{ actual_output.splitlines()[1:] }}'
     expected_output_clean: '{{ expected_output.splitlines()[1:] }}'
   tasks:
+    - name: create temporary file
+      ansible.builtin.tempfile:
+        state: file
+      register: temp_file
+
+    - name: redirect stdout and stderr to file
+      ansible.builtin.shell: |
+        ansible-doc test_docs > {{ temp_file.path }} 2>&1
+      environment:
+        ANSIBLE_DEPRECATION_WARNINGS: 0
+        ANSIBLE_DEVEL_WARNING: 0
+        ANSIBLE_FORCE_COLOR: 0
+        ANSIBLE_NOCOLOR: 0
+
+    - name: assert that file does not contain ansi escape sequences
+      assert:
+        that:
+          - actual_output[0][:20] == "> MODULE test_docs ("
+        fail_msg: |
+          actual_output[0][:20]: {{ actual_output[0][:20] }}
+          actual_output: {{ actual_output }}
+      vars:
+        actual_output: "{{ lookup('file', temp_file.path).splitlines() }}"
+
+    - name: remove tempfile
+      ansible.builtin.file:
+        path: "{{ temp_file.path }}"
+        state: absent
+
     - name: module with missing description return docs
       command: ansible-doc test_docs_missing_description
       register: result
