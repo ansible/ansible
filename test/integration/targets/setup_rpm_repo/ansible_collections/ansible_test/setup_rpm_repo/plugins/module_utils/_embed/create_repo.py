@@ -35,6 +35,8 @@ SPECS = [
     RPM(name='landsidescalping', version='1.1',),
     RPM(name='dinginessentail-with-weak-dep', version='1.0', recommends=['dinginessentail-weak-dep']),
     RPM(name='dinginessentail-weak-dep', version='1.0',),
+    RPM(name='dinginessentail-with-hard-dep', version='1.0', requires=['dinginessentail-hard-dep']),
+    RPM(name='dinginessentail-hard-dep', version='1.0',),
     RPM(name='noarchfake', version='1.0'),
     RPM(name='provides_foo_a', version='1.0', file='foo.gif'),
     RPM(name='provides_foo_b', version='1.0', file='foo.gif'),
