@@ -10,7 +10,8 @@ import urllib.request
 import http.client
 
 from ansible.module_utils.urls import (Request, open_url, cookiejar,
-                                       UnixHTTPHandler, UnixHTTPSConnection)
+                                       UnixHTTPHandler, UnixHTTPSConnection,
+                                       UnixHTTPSHandler)
 from ansible.module_utils.urls import HTTPRedirectHandler
 
 import pytest
@@ -54,6 +55,7 @@ def test_Request_fallback(urlopen_mock, install_opener_mock, mocker):
         ca_path=pem,
         ciphers=['ECDHE-RSA-AES128-SHA256'],
         use_netrc=True,
+        max_response_headers=200,
     )
     fallback_mock = mocker.spy(request, '_fallback')
 
@@ -79,10 +81,11 @@ def test_Request_fallback(urlopen_mock, install_opener_mock, mocker):
         call(None, ['ECDHE-RSA-AES128-SHA256']),  # ciphers
         call(None, True),  # use_netrc
         call(None, None),  # context
+        call(None, 200),  # max_response_headers
     ]
     fallback_mock.assert_has_calls(calls)
 
-    assert fallback_mock.call_count == 19  # All but headers use fallback
+    assert fallback_mock.call_count == 20  # All but headers use fallback
 
     args = urlopen_mock.call_args[0]
     assert args[1] is None  # data, this is handled in the Request not urlopen
@@ -160,6 +163,30 @@ def test_Request_open_https_unix_socket(urlopen_mock, install_opener_mock, mocke
     args = do_open.call_args[0]
     cls = args[0]
     assert isinstance(cls, UnixHTTPSConnection)
+
+
+def test_Request_open_unix_socket_max_response_headers(urlopen_mock, install_opener_mock, mocker):
+    do_open = mocker.patch.object(urllib.request.HTTPSHandler, 'do_open')
+
+    r = Request().open('GET', 'https://ansible.com/', unix_socket='/foo/bar/baz.sock', max_response_headers=200)
+
+    opener = install_opener_mock.call_args[0][0]
+    handlers = opener.handlers
+
+    https_handler = None
+    for handler in handlers:
+        if isinstance(handler, UnixHTTPSHandler):
+            https_handler = handler
+            break
+
+    assert https_handler is not None
+    assert https_handler._max_response_headers == 200
+
+    https_handler.https_open(None)
+    args = do_open.call_args[0]
+    conn = args[0]
+    assert isinstance(conn, UnixHTTPSConnection)
+    assert conn._max_response_headers == 200
 
 
 def test_Request_open_ftp(urlopen_mock, install_opener_mock, mocker):
@@ -459,4 +486,4 @@ def test_open_url(urlopen_mock, install_opener_mock, mocker):
                                      force_basic_auth=False, follow_redirects='urllib2',
                                      client_cert=None, client_key=None, cookies=None, use_gssapi=False,
                                      unix_socket=None, ca_path=None, unredirected_headers=None, decompress=True,
-                                     ciphers=None, use_netrc=True)
+                                     ciphers=None, use_netrc=True, max_response_headers=None)
