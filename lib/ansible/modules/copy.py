@@ -219,6 +219,26 @@ EXAMPLES = r"""
     src: /etc/foo.conf
     dest: /path/to/link  # link to /path/to/file
     follow: no
+
+- name: Copy a binary, carrying IMA signature xattrs from the controller copy
+  ansible.builtin.copy:
+    src: /usr/local/bin/signed-binary
+    dest: /usr/local/bin/signed-binary
+    mode: '0755'
+    preserve_xattrs: source
+
+- name: Replace a config file but keep whatever xattrs the previous file had
+  ansible.builtin.copy:
+    src: /etc/myservice/new.conf
+    dest: /etc/myservice/active.conf
+    preserve_xattrs: target
+
+- name: Overlay source xattrs on top of the existing destination xattrs
+  ansible.builtin.copy:
+    src: /srv/files/blob
+    dest: /var/lib/myapp/blob
+    preserve_xattrs: merge
+    xattr_error_mode: warn
 """
 
 RETURN = r"""
@@ -478,6 +498,10 @@ def main():
             local_follow=dict(type='bool'),
             checksum=dict(type='str'),
             follow=dict(type='bool', default=False),
+            # Internal channel for the action plugin to ship source xattrs (base64-encoded)
+            # to the module on the target host. Marked no_log to avoid dumping binary blobs
+            # in invocation diagnostics.
+            _xattrs_data=dict(type='dict', no_log=True),
         ),
         add_file_common_args=True,
         supports_check_mode=True,
@@ -664,7 +688,27 @@ def main():
     directory_mode = module.params['directory_mode']
     if os.path.isdir(b_dest) and directory_mode is not None:
         file_args['mode'] = directory_mode
-    res_args['changed'] = module.set_fs_attributes_if_different(file_args, res_args['changed'])
+
+    # Collect a diff dict so xattr (and other metadata) changes propagate to --diff output.
+    diff = {} if module._diff else None
+
+    # For remote_src=true, the source lives on the managed node, so we read its xattrs here
+    # and shove them into file_args under the same internal key the controller-side action
+    # plugin uses. set_xattrs_if_different then handles source/merge/target/no uniformly.
+    if remote_src and file_args.get('preserve_xattrs') in ('source', 'merge') and file_args.get('_xattrs_data') is None:
+        try:
+            from ansible.module_utils.common.xattrs import read_xattrs, encode_xattrs
+            src_xattrs = read_xattrs(b_src) if os.path.isfile(b_src) else None
+            if src_xattrs:
+                file_args['_xattrs_data'] = encode_xattrs(src_xattrs)
+        except OSError:
+            # Let set_xattrs_if_different surface the issue through xattr_error_mode.
+            pass
+
+    res_args['changed'] = module.set_fs_attributes_if_different(file_args, res_args['changed'], diff=diff)
+
+    if diff:
+        res_args['diff'] = diff
 
     module.exit_json(**res_args)
 
