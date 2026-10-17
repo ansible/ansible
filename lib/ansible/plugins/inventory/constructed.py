@@ -149,27 +149,28 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         cache = cache_loader.get(C.CACHE_PLUGIN)
 
         try:
-            # Go over hosts (less var copies)
-            for host in inventory.hosts:
+            with self.templar._expression_cache():
+                # Go over hosts (less var copies)
+                for host in inventory.hosts:
 
-                # get available variables to templar
-                hostvars = self.get_all_host_vars(inventory.hosts[host], loader, sources)
-                if cache.contains(host):  # adds facts if cache is active
-                    hostvars = combine_vars(hostvars, cache.get(host))
+                    # get available variables to templar
+                    hostvars = self.get_all_host_vars(inventory.hosts[host], loader, sources)
+                    if cache.contains(host):  # adds facts if cache is active
+                        hostvars = combine_vars(hostvars, cache.get(host))
 
-                # create composite vars
-                self._set_composite_vars(self.get_option('compose'), hostvars, host, strict=strict)
+                    # create composite vars
+                    self._set_composite_vars(self.get_option('compose'), hostvars, host, strict=strict)
 
-                # refetch host vars in case new ones have been created above
-                hostvars = self.get_all_host_vars(inventory.hosts[host], loader, sources)
-                if cache.contains(host):  # adds facts if cache is active
-                    hostvars = combine_vars(hostvars, cache.get(host))
+                    # refetch host vars in case new ones have been created above
+                    hostvars = self.get_all_host_vars(inventory.hosts[host], loader, sources)
+                    if cache.contains(host):  # adds facts if cache is active
+                        hostvars = combine_vars(hostvars, cache.get(host))
 
-                # constructed groups based on conditionals
-                self._add_host_to_composed_groups(self.get_option('groups'), hostvars, host, strict=strict, fetch_hostvars=False)
+                    # constructed groups based on conditionals
+                    self._add_host_to_composed_groups(self.get_option('groups'), hostvars, host, strict=strict, fetch_hostvars=False)
 
-                # constructed groups based variable values
-                self._add_host_to_keyed_groups(self.get_option('keyed_groups'), hostvars, host, strict=strict, fetch_hostvars=False)
+                    # constructed groups based variable values
+                    self._add_host_to_keyed_groups(self.get_option('keyed_groups'), hostvars, host, strict=strict, fetch_hostvars=False)
 
         except Exception as ex:
             raise AnsibleParserError(f"Failed to parse {path!r}.") from ex
