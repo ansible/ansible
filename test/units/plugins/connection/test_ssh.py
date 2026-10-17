@@ -25,7 +25,7 @@ import pytest
 
 import unittest
 from unittest.mock import patch, MagicMock, PropertyMock, mock_open
-from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
+from ansible.errors import AnsibleConnectionFailure, AnsibleFileNotFound
 import shlex
 from ansible.module_utils.common.text.converters import to_bytes
 from ansible.playbook.play_context import PlayContext
@@ -237,16 +237,19 @@ class TestConnectionBaseClass(unittest.TestCase):
         conn.exec_command = MagicMock(return_value=(1, b'', b'dd errors'))
         conn._bare_run.side_effect = [(1, 'stdout', 'sftp errors'), (2, 'stdout', 'scp errors')] * 10  # put_file is retried
         with patch('builtins.open', mock_open(read_data=b'data')):
-            with pytest.raises(AnsibleError) as excinfo:
+            with pytest.raises(ExceptionGroup) as excinfo:
                 conn.put_file('/path/to/in/file', '/path/to/dest/file')
-        for expected in ('sftp (rc=1)', 'sftp errors', 'scp (rc=2)', 'scp errors', 'piped (rc=1)', 'dd errors'):
-            assert expected in str(excinfo.value)
+        failures = [str(e) for e in excinfo.value.exceptions]
+        assert len(failures) == 3
+        for failure, expected in zip(failures, (('sftp (rc=1)', 'sftp errors'), ('scp (rc=2)', 'scp errors'), ('piped (rc=1)', 'dd errors'))):
+            for text in expected:
+                assert text in failure
         conn._bare_run.side_effect = None
 
         # Test that a non-zero rc raises an error
         conn.set_option('ssh_transfer_method', 'sftp')
         conn._bare_run.return_value = (1, 'stdout', 'some errors')
-        self.assertRaises(AnsibleError, conn.put_file, '/path/to/bad/file', '/remote/path/to/file')
+        self.assertRaises(ExceptionGroup, conn.put_file, '/path/to/bad/file', '/remote/path/to/file')
 
         # Test that rc=255 raises an error
         conn._bare_run.return_value = (255, 'stdout', 'some errors')
@@ -254,7 +257,7 @@ class TestConnectionBaseClass(unittest.TestCase):
 
         # Test that rc=256 raises an error
         conn._bare_run.return_value = (256, 'stdout', 'some errors')
-        self.assertRaises(AnsibleError, conn.put_file, '/path/to/bad/file', '/remote/path/to/file')
+        self.assertRaises(ExceptionGroup, conn.put_file, '/path/to/bad/file', '/remote/path/to/file')
 
         # Test that a not-found path raises an error
         mock_ospe.return_value = False
@@ -299,7 +302,7 @@ class TestConnectionBaseClass(unittest.TestCase):
         # Test that a non-zero rc raises an error
         conn.set_option('ssh_transfer_method', 'sftp')
         conn._bare_run.return_value = (1, 'stdout', 'some errors')
-        self.assertRaises(AnsibleError, conn.fetch_file, '/path/to/bad/file', '/remote/path/to/file')
+        self.assertRaises(ExceptionGroup, conn.fetch_file, '/path/to/bad/file', '/remote/path/to/file')
 
         # Test that rc=255 raises an error
         conn._bare_run.return_value = (255, 'stdout', 'some errors')
@@ -307,7 +310,7 @@ class TestConnectionBaseClass(unittest.TestCase):
 
         # Test that rc=256 raises an error
         conn._bare_run.return_value = (256, 'stdout', 'some errors')
-        self.assertRaises(AnsibleError, conn.fetch_file, '/path/to/bad/file', '/remote/path/to/file')
+        self.assertRaises(ExceptionGroup, conn.fetch_file, '/path/to/bad/file', '/remote/path/to/file')
 
 
 class MockSelector(object):
