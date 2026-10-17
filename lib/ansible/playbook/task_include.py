@@ -46,6 +46,7 @@ class TaskInclude(Task):
     def __init__(self, block=None, role=None, task_include=None):
         super(TaskInclude, self).__init__(block=block, role=role, task_include=task_include)
         self.statically_loaded = False
+        self._resolved_include_path: str | None = None
 
     @staticmethod
     def load(data, block=None, role=None, task_include=None, variable_manager=None, loader=None):
@@ -101,6 +102,7 @@ class TaskInclude(Task):
     def copy(self, exclude_parent=False, exclude_tasks=False):
         new_me = super(TaskInclude, self).copy(exclude_parent=exclude_parent, exclude_tasks=exclude_tasks)
         new_me.statically_loaded = self.statically_loaded
+        new_me._resolved_include_path = self._resolved_include_path
         return new_me
 
     def build_parent_block(self):
