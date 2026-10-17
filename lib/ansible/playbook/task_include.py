@@ -43,10 +43,11 @@ class TaskInclude(Task):
                                         'loop_with', 'name', 'no_log', 'register', 'run_once', 'tags', 'timeout', 'vars',
                                         'when'))
 
+    _resolved_include_path: str | None = None
+
     def __init__(self, block=None, role=None, task_include=None):
         super(TaskInclude, self).__init__(block=block, role=role, task_include=task_include)
         self.statically_loaded = False
-        self._resolved_include_path: str | None = None
 
     @staticmethod
     def load(data, block=None, role=None, task_include=None, variable_manager=None, loader=None):
