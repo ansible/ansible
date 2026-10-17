@@ -1,0 +1,16 @@
+all:
+  hosts:
+    first:
+      ordinal: 1
+      role: spine
+      region: east
+    second:
+      ordinal: 2
+      role: leaf
+      region: west
+      feature: enabled
+    third:
+      ordinal: 3
+      role: spine
+      region: west
+      feature: disabled

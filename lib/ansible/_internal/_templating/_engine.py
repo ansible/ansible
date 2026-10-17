@@ -10,7 +10,7 @@ import typing as t
 import collections.abc as c
 import re
 
-from collections import ChainMap
+from collections import ChainMap, OrderedDict
 
 from ansible.errors import (
     AnsibleError,
@@ -23,6 +23,7 @@ from ansible.errors import (
 )
 
 from ansible.module_utils._internal._datatag import AnsibleTaggedObject, NotTaggableError, AnsibleTagHelper
+from ansible.module_utils._internal._ambient_context import AmbientContextBase
 from ansible._internal._errors._handler import Skippable
 from ansible._internal._datatag._tags import Origin, TrustedAsTemplate
 from ansible.utils.display import Display
@@ -35,6 +36,7 @@ from ._jinja_bits import (
     _TemplateCompileContext,
     TemplateOverrides,
     AnsibleEnvironment,
+    AnsibleCodeGenerator,
     defer_template_error,
     create_template_error,
     is_possibly_template,
@@ -94,6 +96,22 @@ class TemplateExpressionWrapper:
     expression: str
 
 
+class _ExpressionCacheContext(AmbientContextBase):
+    """Bound compiled-expression reuse to one engine and one explicit scope."""
+
+    MAX_ENTRIES: t.ClassVar[int] = 128
+
+    def __init__(self, engine: TemplateEngine) -> None:
+        self.engine = engine
+        self.programs: OrderedDict[tuple[t.Any, ...], AnsibleTemplateExpression] = OrderedDict()
+
+    def __exit__(self, exc_type: t.Any, exc_val: t.Any, exc_tb: t.Any) -> None:
+        try:
+            super().__exit__(exc_type, exc_val, exc_tb)
+        finally:
+            self.programs.clear()
+
+
 class TemplateEngine:
     """
     The main class for templating, with the main entry-point of template().
@@ -121,6 +139,14 @@ class TemplateEngine:
                 marker_behavior = FAIL_ON_UNDEFINED
 
         self._marker_behavior = marker_behavior
+
+    def expression_cache(self) -> _ExpressionCacheContext:
+        """
+        Reuse successful expression compilations within a bounded scope, never expression results or variables.
+        The compiler environment and plugin resolution must remain stable throughout the scope.
+        Engines copied or extended from this instance do not inherit the cache.
+        """
+        return _ExpressionCacheContext(self)
 
     def copy(self) -> t.Self:
         new_engine = copy.copy(self)
@@ -383,11 +409,47 @@ class TemplateEngine:
         In the specific case of escape_backslashes, the setting only applies to a top-level template at compile-time, not runtime, to
         ensure that any nested template calls (e.g., include and import) do not inherit the (lack of) escaping behavior.
         """
+        programs = None
+        key = None
+
         try:
+            if (cache_context := _ExpressionCacheContext.current(optional=True)) is not None and cache_context.engine is self:
+                environment = self.environment
+
+                # Extensions and customized compilers can change their output on each compilation.
+                # Preserve source-debugging behavior, which also has compile-time side effects.
+                # Exact type checking intentionally excludes custom environment subclasses.
+                if (
+                    type(environment) is AnsibleEnvironment  # pylint: disable=unidiomatic-typecheck
+                    and environment.code_generator_class is AnsibleCodeGenerator
+                    and not environment.extensions
+                    and not environment._debuggable_template_source
+                ):
+                    try:
+                        key = (environment, type(expression), str(expression), AnsibleTagHelper.tags(expression), options)
+                        hash(key)
+                    except TypeError:
+                        pass  # Custom data tags or options need not be hashable.
+                    else:
+                        programs = cache_context.programs
+
+                        if key in programs:
+                            programs.move_to_end(key)
+                            return programs[key]
+
             with _TemplateCompileContext(escape_backslashes=options.escape_backslashes):
-                return AnsibleTemplateExpression(self.environment.compile_expression(expression, False))
+                program = AnsibleTemplateExpression(self.environment.compile_expression(expression, False))
         except Exception as ex:
+            # Deferred-error closures capture source/engine state and must not be reused.
             return self._defer_jinja_compile_error(ex, expression, True)
+
+        if programs is not None and key is not None:
+            programs[key] = program
+
+            if len(programs) > _ExpressionCacheContext.MAX_ENTRIES:
+                programs.popitem(last=False)
+
+        return program
 
     def _defer_jinja_compile_error(self, ex: Exception, variable: str, is_expression: bool) -> t.Callable[[c.Mapping[str, t.Any]], t.Any]:
         deferred_error = defer_template_error(ex, variable, is_expression=is_expression)
