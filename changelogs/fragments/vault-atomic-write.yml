@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-vault - writing vault files (encrypt, encrypt_string, create, rekey, decrypt) no longer destroys the destination file before the new contents are written. The data is now written to a temporary file in the same directory and atomically renamed over the destination, so an interrupted run can no longer leave the file with neither the original contents nor the vault (https://github.com/ansible/ansible/issues/87679).

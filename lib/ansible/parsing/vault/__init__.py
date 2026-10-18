@@ -23,6 +23,7 @@ import os
 import random
 import shlex
 import shutil
+import stat
 import subprocess
 import sys
 import tempfile
@@ -1029,7 +1030,10 @@ class VaultEditor:
 
         :arg data: the byte string (bytes) data
         :arg thefile: file descriptor or filename to save 'data' to.
-        :arg shred: if shred==True, make sure that the original data is first shredded so that is cannot be recovered.
+        :arg shred: kept for backwards compatibility; the data is always written to a
+            temporary file that is atomically renamed over the destination, so the
+            previous contents of an existing destination file are never destroyed
+            before the new data is safely in place.
         :returns: None
         """
         # FIXME: do we need this now? data_bytes should always be a utf-8 byte string
@@ -1056,35 +1060,52 @@ class VaultEditor:
         else:
             if not os.access(os.path.dirname(thefile), os.W_OK):
                 raise AnsibleError("Destination '%s' not writable" % (os.path.dirname(thefile)))
-            # file names are insecure and prone to race conditions, so remove and create securely
-            if os.path.isfile(thefile):
-                if shred:
-                    self._shred_file(thefile)
-                else:
-                    os.remove(thefile)
 
-            # when setting new umask, we get previous as return
-            current_umask = os.umask(0o077)
+            # Write the data to a temporary file in the same directory as the
+            # destination, then atomically rename it over the destination. If
+            # the process is interrupted at any point, the destination is left
+            # holding either the original contents or the new data, never
+            # neither. Previously the destination was shredded/removed before
+            # the new data was written, so an interrupt could destroy the only
+            # copy of the data. See: https://github.com/ansible/ansible/issues/87679
+            tmp_path = None
             try:
                 try:
-                    # create file with secure permissions
-                    fd = os.open(thefile, os.O_CREAT | os.O_EXCL | os.O_RDWR | os.O_TRUNC, mode)
-                except FileExistsError as ex:
-                    raise AnsibleError('Vault file got recreated while we were operating on it.') from ex
+                    tmp_fd, tmp_path = tempfile.mkstemp(prefix=os.path.basename(thefile), dir=os.path.dirname(thefile) or os.curdir)
                 except OSError as ex:
                     raise AnsibleError('Problem creating temporary vault file.') from ex
 
                 try:
-                    # now write to the file and ensure ours is only data in it
-                    os.ftruncate(fd, 0)
-                    os.write(fd, b_file_data)
+                    os.write(tmp_fd, b_file_data)
+                    os.fsync(tmp_fd)
                 except OSError as e:
                     raise AnsibleError('Unable to write to temporary vault file: %s' % to_native(e))
                 finally:
-                    # Make sure the file descriptor is always closed and reset umask
-                    os.close(fd)
+                    os.close(tmp_fd)
+
+                # preserve the mode of an existing destination file, falling
+                # back to the requested mode for a new file
+                try:
+                    dest_stat = os.stat(thefile)
+                except OSError:
+                    os.chmod(tmp_path, mode)
+                else:
+                    os.chmod(tmp_path, stat.S_IMODE(dest_stat.st_mode))
+                    if hasattr(os, 'chown'):
+                        try:
+                            os.chown(tmp_path, dest_stat.st_uid, dest_stat.st_gid)
+                        except (OSError, ValueError):
+                            pass  # not the owner of the file, or unsupported on this platform
+
+                os.replace(tmp_path, thefile)
+                tmp_path = None
             finally:
-                os.umask(current_umask)
+                if tmp_path is not None:
+                    # clean up the temporary file if the replace never happened
+                    try:
+                        os.remove(tmp_path)
+                    except OSError:
+                        pass
 
     def shuffle_files(self, src, dest):
         prev = None
