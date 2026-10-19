@@ -93,8 +93,6 @@ stages:
       - template: templates/matrix.yml  # context/controller
         parameters:
           targets:
-            - name: RHEL 8.10
-              test: rhel/8.10
             - name: RHEL 9.8
               test: rhel/9.8
           groups:
@@ -104,8 +102,6 @@ stages:
       - template: templates/matrix.yml  # context/controller (ansible-test container management)
         parameters:
           targets:
-            - name: RHEL 8.10
-              test: rhel/8.10
             - name: RHEL 9.8
               test: rhel/9.8
             - name: Ubuntu 20.04
