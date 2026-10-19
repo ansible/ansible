@@ -254,7 +254,7 @@ class GalaxyRole(object):
             else:
                 role_data = self.api.lookup_role_by_name(self.src)
                 if not role_data:
-                    raise AnsibleError(f"- sorry, {mask_url(self.src)} was not found on {self.api.api_server}")
+                    raise AnsibleError(f"- sorry, {mask_url(self.src)} was not found on {self.api.api_server}.")
 
                 if role_data.get('role_type') == 'APP':
                     # Container Role

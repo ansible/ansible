@@ -41,17 +41,16 @@ def scm_archive_collection(src, name=None, version='HEAD'):
 def scm_archive_resource(src, scm='git', name=None, version='HEAD', keep_scm_meta=False):
 
     def run_scm_cmd(cmd, tempdir):
-        ran = ""
+        masked_args = []
         for arg in cmd:
-            if arg.startswith(('http', 'https', 'git', 'hg', 'ssh')):
-                try:
-                    arg = mask_url(arg)
-                    ran += f"{arg} "
-                except ValueError as e:
-                    display.debug(f"mask_url could not parse the url provided: {e}")
-                    ran += "**** "
+            try:
+                masked_args.append(mask_url(arg))
+            except ValueError as e:
+                display.debug(f"mask_url could not parse the url provided: {e}")
+                masked_args.append('****')
+        ran = " ".join(masked_args)
 
-        stderr = ''
+        stderr = b''
         try:
             popen = Popen(cmd, cwd=tempdir, stdout=PIPE, stderr=PIPE)
             dummy, stderr = popen.communicate()
