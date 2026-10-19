@@ -104,8 +104,6 @@ stages:
           targets:
             - name: RHEL 9.8
               test: rhel/9.8
-            - name: Ubuntu 20.04
-              test: ubuntu/20.04
             - name: Ubuntu 22.04
               test: ubuntu/22.04
           groups:
@@ -117,8 +115,6 @@ stages:
         parameters:
           testFormat: linux/{0}
           targets:
-            - name: Ubuntu 20.04
-              test: ubuntu2004
             - name: Ubuntu 22.04
               test: ubuntu2204
           groups:
