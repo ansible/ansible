@@ -282,6 +282,11 @@ def get_versioned_doclink(path):
             if any((pre in split_ver[2]) for pre in ['a', 'b']) or len(split_ver) > 3 and 'dev' in split_ver[3]:
                 doc_version = 'devel'
 
+        if doc_version != 'devel' and (int(split_ver[0]), int(split_ver[1])) >= (2, 21):
+            # docs.ansible.com serves versioned doc trees as stable-X.Y since the 2.21 release;
+            # older releases still resolve under the plain X.Y tree
+            doc_version = 'stable-' + doc_version
+
         return '{0}{1}/{2}'.format(base_url, doc_version, path)
     except Exception as ex:
         return '(unable to create versioned doc link for path {0}: {1})'.format(path, to_native(ex))

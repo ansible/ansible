@@ -1,0 +1,2 @@
+bugfixes:
+  - get_versioned_doclink - Fix 404 documentation links in warning/error messages by using the ``stable-X.Y`` doc tree slug for ansible-core 2.21 and later (https://github.com/ansible/ansible/issues/87711).

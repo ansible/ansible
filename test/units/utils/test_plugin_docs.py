@@ -330,3 +330,31 @@ def test_add(is_module, return_docs, fragment, expected_fragment):
     fragment_copy = copy.deepcopy(fragment)
     add_collection_to_versions_and_dates(fragment_copy, 'foo.bar', is_module, return_docs)
     assert fragment_copy == expected_fragment
+
+
+@pytest.mark.parametrize('version,expected_slug', (
+    # docs.ansible.com serves versioned doc trees as stable-X.Y since 2.21;
+    # older releases still resolve under the plain X.Y tree
+    ('2.21.1', 'stable-2.21'),
+    ('2.21.0', 'stable-2.21'),
+    ('2.22.0rc1', 'stable-2.22'),
+    ('2.20.5', '2.20'),
+    ('2.19.3', '2.19'),
+    ('2.22.0.dev0', 'devel'),
+    ('2.22.0a1', 'devel'),
+    ('2.22.0b1', 'devel'),
+))
+def test_get_versioned_doclink_version_slug(version, expected_slug, monkeypatch):
+    from ansible.utils import plugin_docs
+
+    monkeypatch.setattr(plugin_docs, 'ansible_version', version)
+    monkeypatch.setattr(
+        plugin_docs.C.config, 'get_config_value',
+        lambda name, **kwargs: 'https://docs.ansible.com/ansible-core/',
+    )
+
+    url = plugin_docs.get_versioned_doclink('playbook_guide/playbooks_privilege_escalation.html')
+
+    assert url == (
+        'https://docs.ansible.com/ansible-core/%s/playbook_guide/playbooks_privilege_escalation.html' % expected_slug
+    )
