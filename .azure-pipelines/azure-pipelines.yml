@@ -85,18 +85,16 @@ stages:
               test: rhel/8.10@3.6
             - name: RHEL 8.10 py39
               test: rhel/8.10@3.9
-            - name: RHEL 9.7
-              test: rhel/9.7
+            - name: RHEL 9.8
+              test: rhel/9.8
           groups:
             - 1
             - 2
       - template: templates/matrix.yml  # context/controller
         parameters:
           targets:
-            - name: RHEL 8.10
-              test: rhel/8.10
-            - name: RHEL 9.7
-              test: rhel/9.7
+            - name: RHEL 9.8
+              test: rhel/9.8
           groups:
             - 3
             - 4
@@ -104,12 +102,8 @@ stages:
       - template: templates/matrix.yml  # context/controller (ansible-test container management)
         parameters:
           targets:
-            - name: RHEL 8.10
-              test: rhel/8.10
-            - name: RHEL 9.7
-              test: rhel/9.7
-            - name: Ubuntu 20.04
-              test: ubuntu/20.04
+            - name: RHEL 9.8
+              test: rhel/9.8
             - name: Ubuntu 22.04
               test: ubuntu/22.04
           groups:
@@ -121,8 +115,6 @@ stages:
         parameters:
           testFormat: linux/{0}
           targets:
-            - name: Ubuntu 20.04
-              test: ubuntu2004
             - name: Ubuntu 22.04
               test: ubuntu2204
           groups:

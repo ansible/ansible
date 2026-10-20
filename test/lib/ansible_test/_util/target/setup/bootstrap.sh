@@ -305,6 +305,7 @@ bootstrap_remote_rhel_9()
 
     packages="
         gcc
+        python3-packaging
         ${py_pkg_prefix}-devel
         "
 
