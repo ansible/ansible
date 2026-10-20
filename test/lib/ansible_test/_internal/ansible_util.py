@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import os
+import pathlib
 import shutil
 import typing as t
 
@@ -272,35 +273,35 @@ def get_ansible_python_path(args: CommonConfig) -> str:
         os.symlink(ANSIBLE_LIB_ROOT, os.path.join(python_path, 'ansible'))
 
     if not args.explain:
-        generate_egg_info(python_path)
+        generate_dist_info(python_path)
 
     get_ansible_python_path.python_path = python_path  # type: ignore[attr-defined]
 
     return python_path
 
 
-def generate_egg_info(path: str) -> None:
-    """Generate an egg-info in the specified base directory."""
-    # minimal PKG-INFO stub following the format defined in PEP 241
-    # required for older setuptools versions to avoid a traceback when importing pkg_resources from packages like cryptography
-    # newer setuptools versions are happy with an empty directory
-    # including a stub here means we don't need to locate the existing file or run any tools to generate it when running from source
-    pkg_info = '''
-Metadata-Version: 1.0
-Name: ansible
-Version: %s
-Platform: UNKNOWN
-Summary: Radically simple IT automation
-Author-email: info@ansible.com
-License: GPLv3+
-''' % get_ansible_version()
+def generate_dist_info(path: str) -> None:
+    """Generate a dist-info in the specified base directory."""
+    version = get_ansible_version()
+    metadata = f'''\
+Metadata-Version: 2.1
+Name: ansible-core
+Version: {version}
+'''
+    python_path = pathlib.Path(path)
 
-    pkg_info_path = os.path.join(path, 'ansible_core.egg-info', 'PKG-INFO')
+    current_dist_info = python_path / f'ansible_core-{version}.dist-info'
 
-    if os.path.exists(pkg_info_path):
+    for dist_info in pathlib.Path(path).glob('ansible_core-*.dist-info'):
+        if dist_info == current_dist_info:
+            continue
+        shutil.rmtree(dist_info, ignore_errors=True)
+
+    metadata_path = current_dist_info / 'METADATA'
+    if metadata_path.is_file():
         return
 
-    write_text_file(pkg_info_path, pkg_info.lstrip(), create_directories=True)
+    write_text_file(str(metadata_path), metadata, create_directories=True)
 
 
 class CollectionDetail:

@@ -1,0 +1,2 @@
+minor_changes:
+- ansible-test - Generate ``dist_info`` when running tests.
