@@ -96,12 +96,14 @@ stages:
           targets:
             - name: macOS 26.3
               test: macos/26.3
-            - name: RHEL 9.7 py39
-              test: rhel/9.7@3.9
-            - name: RHEL 9.7 py312
-              test: rhel/9.7@3.12
-            - name: RHEL 10.1
-              test: rhel/10.1
+            - name: RHEL 9.8 py39
+              test: rhel/9.8@3.9
+            - name: RHEL 9.8 py314
+              test: rhel/9.8@3.14
+            - name: RHEL 10.2 py312
+              test: rhel/10.2@3.12
+            - name: RHEL 10.2 py314
+              test: rhel/10.2@3.14
             - name: FreeBSD 14.4
               test: freebsd/14.4
             - name: FreeBSD 15.0
@@ -114,10 +116,10 @@ stages:
           targets:
             - name: macOS 26.3
               test: macos/26.3
-            - name: RHEL 9.7
-              test: rhel/9.7
-            - name: RHEL 10.1
-              test: rhel/10.1
+            - name: RHEL 9.8
+              test: rhel/9.8
+            - name: RHEL 10.2
+              test: rhel/10.2
             - name: FreeBSD 14.4
               test: freebsd/14.4
             - name: FreeBSD 15.0
@@ -133,10 +135,10 @@ stages:
               test: alpine/3.23
             - name: Fedora 43
               test: fedora/43
-            - name: RHEL 9.7
-              test: rhel/9.7
-            - name: RHEL 10.1
-              test: rhel/10.1
+            - name: RHEL 9.8
+              test: rhel/9.8
+            - name: RHEL 10.2
+              test: rhel/10.2
             - name: Ubuntu 24.04
               test: ubuntu/24.04
           groups:

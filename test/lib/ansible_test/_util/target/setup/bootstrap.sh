@@ -426,10 +426,15 @@ bootstrap_remote_rhel_10()
 {
     optimize_dnf
 
-    py_pkg_prefix="python3"
+    if [ "${python_version}" = "3.12" ]; then
+        py_pkg_prefix="python3"
+    else
+        py_pkg_prefix="python${python_version}"
+    fi
 
     packages="
         gcc
+        python3-packaging
         ${py_pkg_prefix}-devel
         ${py_pkg_prefix}-pip
         "
@@ -438,11 +443,19 @@ bootstrap_remote_rhel_10()
         packages="
             ${packages}
             ${py_pkg_prefix}-cryptography
-            ${py_pkg_prefix}-jinja2
-            ${py_pkg_prefix}-packaging
             ${py_pkg_prefix}-pyyaml
-            ${py_pkg_prefix}-resolvelib
             "
+
+        if [ "${python_version}" = "3.12" ]; then
+            # These packages are not available for all Python versions.
+            # Install them when possible, otherwise let ansible-test install them from PyPI.
+            packages="
+                ${packages}
+                ${py_pkg_prefix}-jinja2
+                ${py_pkg_prefix}-packaging
+                ${py_pkg_prefix}-resolvelib
+                "
+        fi
     fi
 
     retry_init
