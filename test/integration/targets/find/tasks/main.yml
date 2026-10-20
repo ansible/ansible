@@ -460,6 +460,100 @@
       - remote_tmp_dir_test + "/astest/.hidden.txt" in astest_list
       - '"checksum" in result.files[0]'
 
+- name: make directories for prune tests
+  file:
+    path: "{{ remote_tmp_dir_test }}/prune_test/{{ item }}"
+    state: directory
+  loop:
+    - keep
+    - skipme
+
+- name: make files for prune tests
+  copy:
+    dest: "{{ remote_tmp_dir_test }}/prune_test/{{ item }}"
+    content: 'data'
+  loop:
+    - keep/a.txt
+    - skipme/b.txt
+
+- name: find without prune
+  find:
+    paths: "{{ remote_tmp_dir_test }}/prune_test"
+    recurse: true
+  register: no_prune
+
+- name: find with prune
+  find:
+    paths: "{{ remote_tmp_dir_test }}/prune_test"
+    recurse: true
+    prune:
+      - "{{ remote_tmp_dir_test }}/prune_test/skipme"
+  register: with_prune
+
+- name: assert prune skipped the directory
+  assert:
+    that:
+      - no_prune.matched == 2
+      - with_prune.matched == 1
+      - with_prune.files[0].path == remote_tmp_dir_test ~ '/prune_test/keep/a.txt'
+      - with_prune.examined < no_prune.examined
+
+- name: find with prune given as a path with a trailing slash
+  find:
+    paths: "{{ remote_tmp_dir_test }}/prune_test"
+    recurse: true
+    prune:
+      - "{{ remote_tmp_dir_test }}/prune_test/skipme/"
+  register: prune_slash
+
+- name: assert trailing slash is handled
+  assert:
+    that:
+      - prune_slash.matched == 1
+      - prune_slash.files[0].path == remote_tmp_dir_test ~ '/prune_test/keep/a.txt'
+
+- name: find directories with prune
+  find:
+    paths: "{{ remote_tmp_dir_test }}/prune_test"
+    recurse: true
+    file_type: directory
+    prune:
+      - "{{ remote_tmp_dir_test }}/prune_test/skipme"
+  register: prune_dirs
+
+- name: assert the pruned directory is not listed
+  assert:
+    that:
+      - prune_dirs.files | map(attribute='path') | list == [remote_tmp_dir_test ~ '/prune_test/keep']
+
+- name: find with a prune path that does not exist
+  find:
+    paths: "{{ remote_tmp_dir_test }}/prune_test"
+    recurse: true
+    prune:
+      - "{{ remote_tmp_dir_test }}/prune_test/does_not_exist"
+  register: prune_missing
+
+- name: assert nothing was pruned and no error occurred
+  assert:
+    that:
+      - prune_missing is success
+      - prune_missing.matched == 2
+
+- name: find with every subdirectory pruned
+  find:
+    paths: "{{ remote_tmp_dir_test }}/prune_test"
+    recurse: true
+    prune:
+      - "{{ remote_tmp_dir_test }}/prune_test/keep"
+      - "{{ remote_tmp_dir_test }}/prune_test/skipme"
+  register: prune_all
+
+- name: assert everything was pruned
+  assert:
+    that:
+      - prune_all.matched == 0
+
 # Test permission error is correctly handled by find module
 - vars:
     test_dir: /tmp/permission_test
