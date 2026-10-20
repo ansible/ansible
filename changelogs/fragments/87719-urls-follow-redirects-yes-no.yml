@@ -1,0 +1,2 @@
+bugfixes:
+   - "``module_utils.urls`` - restore support for the ``yes`` and ``no`` values of ``follow_redirects`` which were accidentally removed for direct callers of ``open_url``, ``fetch_url`` and ``Request`` (https://github.com/ansible/ansible/issues/87719)"

@@ -443,13 +443,13 @@ class HTTPRedirectHandler(urllib.request.HTTPRedirectHandler):
             return urllib.request.HTTPRedirectHandler.redirect_request(self, req, fp, code, msg, headers, newurl)
 
         # Handle disabled redirects
-        elif follow_redirects in ('none', False):
+        elif follow_redirects in ('no', 'none', False):
             raise urllib.error.HTTPError(newurl, code, msg, headers, fp)
 
         method = req.get_method()
 
         # Handle non-redirect HTTP status or invalid follow_redirects
-        if follow_redirects in ('all', True):
+        if follow_redirects in ('yes', 'all', True):
             if code < 300 or code >= 400:
                 raise urllib.error.HTTPError(req.get_full_url(), code, msg, headers, fp)
         elif follow_redirects == 'safe':
@@ -816,7 +816,7 @@ class Request:
         :kwarg url_password: (optional) String of the password to use when authenticating
         :kwarg http_agent: (optional) String of the User-Agent to use in the request
         :kwarg force_basic_auth: (optional) Boolean determining if auth header should be sent in the initial request
-        :kwarg follow_redirects: (optional) String of urllib2, all, safe, none to determine how redirects are
+        :kwarg follow_redirects: (optional) String of urllib2, all/yes, safe, none to determine how redirects are
             followed, see HTTPRedirectHandler for more information
         :kwarg client_cert: (optional) PEM formatted certificate chain file to be used for SSL client authentication.
             This file can also include the key as well, and if the key is included, client_key is not required
