@@ -1,0 +1,2 @@
+minor_changes:
+  - find - add ``prune`` option to skip directories during traversal.
