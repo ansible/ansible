@@ -73,6 +73,10 @@ class Local(CIProvider):
         """Return the base commit or an empty string."""
         return ''
 
+    def is_pr(self, args: CommonConfig) -> bool:
+        """Return True if the request is for a PR, otherwise False."""
+        return False
+
     def detect_changes(self, args: TestConfig) -> t.Optional[list[str]]:
         """Initialize change detection."""
         result = LocalChanges(args)
