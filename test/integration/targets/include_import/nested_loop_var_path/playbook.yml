@@ -1,9 +1,0 @@
-# https://github.com/ansible/ansible/issues/87706
-- hosts: localhost
-  gather_facts: false
-  tasks:
-    - include_tasks: tasks/outer.yml
-
-    - assert:
-        that:
-          - nested_loop_var_path_items == ['br0', 'br1']

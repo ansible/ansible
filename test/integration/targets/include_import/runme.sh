@@ -163,6 +163,4 @@ set -e
 test "$(grep -c 'Could not find or access' test_nested_non_existent_tasks.out)" = 2
 
 # https://github.com/ansible/ansible/issues/87706
-ansible-playbook nested_loop_var_path/playbook.yml 2>&1 | tee test_nested_loop_var_path.out
-test "$(grep -c 'Templating the path of the parent include_tasks failed.' test_nested_loop_var_path.out)" = 0
-test "$(grep -c 'failed=0' test_nested_loop_var_path.out)" = 1
+ansible-playbook 87706/playbook.yml "$@"

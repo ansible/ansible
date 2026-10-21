@@ -1,6 +1,0 @@
-# The include path depends on ansible_loop_var, which has a different value in the nested include below.
-- include_tasks: "{{ lookup('vars', ansible_loop_var) }}"
-  loop:
-    - sub/middle.yml
-  loop_control:
-    loop_var: _lv_outer

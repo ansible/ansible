@@ -1,2 +1,0 @@
-- set_fact:
-    nested_loop_var_path_items: "{{ nested_loop_var_path_items + [bridge.name] }}"
