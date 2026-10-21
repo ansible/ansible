@@ -735,7 +735,15 @@ class User(object):
 
     def _set_password_chpasswd(self, chpasswd, password):
         # chpasswd -e reads 'name:hash' from stdin and stores the hash as given
-        return self.execute_command([chpasswd, '-e'], data='%s:%s' % (self.name, password))
+        (rc, out, err) = self.execute_command([chpasswd, '-e'], data='%s:%s' % (self.name, password))
+        if rc != 0:
+            # Recent shadow-utils releases validate the hash and reject values that
+            # usermod -p accepts (for example a value that is not a crypt hash, which
+            # this module already warns about). Keep the previous behavior for those.
+            (rc, _out, _err) = self.execute_command([self.module.get_bin_path('usermod', True), '-p', password, self.name])
+            out += _out
+            err += _err
+        return (rc, out, err)
 
     def backup_shadow(self):
         if not self.module.check_mode and self.SHADOWFILE:

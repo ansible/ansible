@@ -139,14 +139,28 @@ def test_create_user_useradd_failure_skips_chpasswd(mocker):
     assert _chpasswd_calls(user) == []
 
 
-def test_create_user_chpasswd_failure_is_reported(mocker):
+def test_create_user_chpasswd_rejection_falls_back_to_usermod(mocker):
+    # newer shadow-utils reject values that are not valid hashes, keep the old usermod -p behavior for those
+    user = _make_user(mocker, password='plaintextpassword')
+    user.module.run_command.side_effect = [(0, '', ''), (1, '', 'chpasswd: (line 1, user %s) invalid password hash' % NAME), (0, '', '')]
+
+    rc, out, err = user.create_user()
+
+    assert rc == 0
+    calls = _calls(user)
+    assert calls[1] == (['/usr/sbin/chpasswd', '-e'], '%s:plaintextpassword' % NAME)
+    assert calls[2] == (['/usr/sbin/usermod', '-p', 'plaintextpassword', NAME], None)
+
+
+def test_create_user_chpasswd_and_usermod_failure_is_reported(mocker):
     user = _make_user(mocker, password=HASH)
-    user.module.run_command.side_effect = [(0, '', ''), (1, '', 'chpasswd: error')]
+    user.module.run_command.side_effect = [(0, '', ''), (1, '', 'chpasswd: error'), (1, '', 'usermod: error')]
 
     rc, out, err = user.create_user()
 
     assert rc == 1
     assert 'chpasswd: error' in err
+    assert 'usermod: error' in err
 
 
 @pytest.mark.parametrize('password_lock, current, expected', [
