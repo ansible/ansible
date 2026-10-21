@@ -554,6 +554,45 @@
     that:
       - prune_all.matched == 0
 
+- name: make a directory that will be both searched and pruned
+  file:
+    path: "{{ remote_tmp_dir_test }}/prune_root/skipme"
+    state: directory
+
+- name: put a file inside it
+  copy:
+    content: "data\n"
+    dest: "{{ remote_tmp_dir_test }}/prune_root/skipme/f.txt"
+
+- name: search skipme while also pruning skipme
+  find:
+    paths:
+      - "{{ remote_tmp_dir_test }}/prune_root/skipme"
+    recurse: true
+    prune:
+      - "{{ remote_tmp_dir_test }}/prune_root/skipme"
+  register: root_prune
+
+- name: assert a pruned search root returns nothing
+  assert:
+    that:
+      - root_prune.matched == 0
+      - root_prune.examined == 0
+      - root_prune.warnings | length == 1
+
+- name: find with a prune path containing .. segments
+  find:
+    paths: "{{ remote_tmp_dir_test }}/prune_test"
+    recurse: true
+    prune:
+      - "{{ remote_tmp_dir_test }}/prune_test/keep/../skipme"
+  register: prune_dotdot
+
+- name: assert .. segments are normalized
+  assert:
+    that:
+      - prune_dotdot.matched == 1
+
 # Test permission error is correctly handled by find module
 - vars:
     test_dir: /tmp/permission_test
