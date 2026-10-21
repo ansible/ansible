@@ -3314,8 +3314,9 @@ class BusyBox(User):
 
         # Manage group membership
         if self.groups in ('',):
-            for group_name in current_groups:
-                rc, out, err = self._run_group_cmd(remove_cmd_bin, group_name)
+            if not self.append:
+                for group_name in current_groups:
+                    rc, out, err = self._run_group_cmd(remove_cmd_bin, group_name)
 
         elif self.groups:
             groups = self.get_groups_set() or set()
