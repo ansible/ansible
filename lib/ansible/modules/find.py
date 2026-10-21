@@ -577,7 +577,7 @@ def main():
     if params['limit'] is not None and params['limit'] <= 0:
         module.fail_json(msg="limit cannot be %d (use None for unlimited)" % params['limit'])
 
-    prune_paths = []
+    prune_paths = [[os.path.abspath(p) for p in params['prune'] or []]]
     if params['prune']:
         for p in params['prune']:
             prune_paths.append(os.path.normpath(p))
@@ -591,11 +591,15 @@ def main():
             if not os.path.isdir(npath):
                 raise Exception("'%s' is not a directory" % to_native(npath))
 
+            if os.path.abspath(npath) in prune_paths:
+                module.warn("Skipping search path '%s' because it is also listed in prune." % to_text(npath))
+                continue
+
             # Setting `topdown=True` to explicitly guarantee matches are made from the shallowest directory first
             for root, dirs, files in os.walk(npath, onerror=handle_walk_errors, followlinks=params['follow'], topdown=True):
                 if params['prune']:
                     dirs[:] = [
-                        d for d in dirs if os.path.normpath(os.path.join(root, d)) not in prune_paths
+                        d for d in dirs if os.path.abspath(os.path.join(root, d)) not in prune_paths
                     ]
                 looked = looked + len(files) + len(dirs)
                 for fsobj in (files + dirs):
