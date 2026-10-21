@@ -1195,11 +1195,14 @@ class DocCLI(CLI, RoleMixin):
 
             if not doc or not isinstance(doc, dict):
                 desc = 'UNDOCUMENTED'
-            elif isinstance(short_description := doc.get('short_description', 'INVALID SHORT DESCRIPTION'), str):
-                desc = short_description.strip()
             else:
-                display.warning(f"{plugin} short_description must be a string, not a {native_type_name(short_description)}.")
-                desc = 'INVALID SHORT DESCRIPTION'
+                short_description = doc.get('short_description', 'INVALID SHORT DESCRIPTION')
+
+                if isinstance(short_description, str):
+                    desc = short_description.strip()
+                else:
+                    display.warning(f"{plugin} short_description must be a string, not a {native_type_name(short_description)}.")
+                    desc = 'INVALID SHORT DESCRIPTION'
 
             descs[plugin] = desc
 
