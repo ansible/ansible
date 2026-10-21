@@ -3161,6 +3161,12 @@ class BusyBox(User):
         if self.shell not in shells:
             self.module.warn(f"'{self.shell}' is not listed as a valid shell on the remote host.")
 
+    def _run_group_cmd(self, cmd_bin: str, group: str) -> tuple[int | None, str, str]:
+        rc, out, err = self.execute_command([cmd_bin, self.name, group])
+        if rc is not None and rc != 0:
+            self.module.fail_json(name=self.name, msg=err, rc=rc)
+        return rc, out, err
+
     def _build_password_string(self, current_password: str | None = None) -> str:
         """
         Build the appropriate password string based on the current password and
@@ -3307,24 +3313,22 @@ class BusyBox(User):
         self._validate_shell()
 
         # Manage group membership
-        if self.groups:
+        if self.groups == '':
+            for group_name in current_groups:
+                rc, out, err = self._run_group_cmd(remove_cmd_bin, group_name)
+
+        elif self.groups:
             groups = self.get_groups_set() or set()
             group_diff = set(current_groups).symmetric_difference(groups)
 
             if group_diff:
-                for g in groups:
-                    if g in group_diff:
-                        add_cmd = [add_cmd_bin, self.name, g]
-                        rc, out, err = self.execute_command(add_cmd)
-                        if rc is not None and rc != 0:
-                            self.module.fail_json(name=self.name, msg=err, rc=rc)
+                for group_name in groups:
+                    if group_name in group_diff:
+                        rc, out, err = self._run_group_cmd(add_cmd_bin, group_name)
 
-                for g in group_diff:
-                    if g not in groups and not self.append:
-                        remove_cmd = [remove_cmd_bin, self.name, g]
-                        rc, out, err = self.execute_command(remove_cmd)
-                        if rc is not None and rc != 0:
-                            self.module.fail_json(name=self.name, msg=err, rc=rc)
+                for group_name in group_diff:
+                    if group_name not in groups and not self.append:
+                        rc, out, err = self._run_group_cmd(remove_cmd_bin, group_name)
 
         # Manage password
         current_password = to_native(user_info[1])
