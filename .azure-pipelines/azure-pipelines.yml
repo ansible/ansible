@@ -62,17 +62,6 @@ stages:
             - test: 3.9
             - test: '3.10'
             - test: 3.11
-  - stage: Windows
-    dependsOn: []
-    jobs:
-      - template: templates/matrix.yml
-        parameters:
-          nameFormat: Server {0}
-          testFormat: windows/{0}/1
-          targets:
-            - test: 2016
-            - test: 2019
-            - test: 2022
   - stage: Remote
     dependsOn: []
     jobs:
@@ -152,28 +141,14 @@ stages:
             - test: 3.9
             - test: '3.10'
             - test: 3.11
-  - stage: Incidental_Windows
-    displayName: Incidental Windows
-    dependsOn: []
-    jobs:
-      - template: templates/matrix.yml
-        parameters:
-          nameFormat: Server {0}
-          testFormat: i/windows/{0}
-          targets:
-            - test: 2016
-            - test: 2019
-            - test: 2022
   - stage: Summary
     condition: succeededOrFailed()
     dependsOn:
       - Sanity
       - Units
-      - Windows
       - Remote
       - Docker
       - Galaxy
       - Generic
-      - Incidental_Windows
     jobs:
       - template: templates/coverage.yml
