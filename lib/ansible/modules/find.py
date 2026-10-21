@@ -521,7 +521,7 @@ def main():
             exact_mode=dict(type='bool', default=True),
             encoding=dict(type='str'),
             limit=dict(type='int'),
-            prune=dict(type='list', elements='path')
+            prune=dict(type='list', elements='path'),
         ),
         supports_check_mode=True,
     )
