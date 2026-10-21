@@ -23,7 +23,7 @@
           - "'bin' in user_groups_create.groups"
           - "'daemon' in user_groups_create.groups"
 
-    - name: append a group to the test user
+    - name: Specify empty groups list with append=false
       user:
         name: ansibulluser_groups
         groups: []
@@ -31,13 +31,13 @@
         state: present
       register: user_groups_remove
 
-    - name: validate groups after append includes all groups
+    - name: validate groups
       assert:
         that:
           - user_groups_remove.changed
           - user_groups_remove.groups is defined
-          - not "'bin' in user_groups_remove.groups"
-          - not "'daemon' in user_groups_remove.groups"
+          - "'bin' not in user_groups_remove.groups"
+          - "'daemon' not in user_groups_remove.groups"
   always:
     - name: clean up test user
       user:
