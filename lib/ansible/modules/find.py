@@ -594,7 +594,7 @@ def main():
                 raise Exception("'%s' is not a directory" % to_native(npath))
 
             if os.path.abspath(npath) in prune_paths:
-                module.warn("Skipping search path '%s' because it is also listed in prune." % to_text(npath))
+                module.warn(f"Skipping search path {npath!r} because it is also listed in prune.")
                 continue
 
             # Setting `topdown=True` to explicitly guarantee matches are made from the shallowest directory first
