@@ -579,7 +579,7 @@ def main():
     if params['limit'] is not None and params['limit'] <= 0:
         module.fail_json(msg="limit cannot be %d (use None for unlimited)" % params['limit'])
 
-    prune_paths = [[os.path.abspath(p) for p in params['prune'] or []]]
+    prune_paths = [os.path.abspath(p) for p in params['prune'] or []]
     if params['prune']:
         for p in params['prune']:
             prune_paths.append(os.path.normpath(p))
