@@ -227,10 +227,14 @@ class ValidateModulesTest(SanitySingleVersion):
             display.warning('The validate-modules sanity test cannot compare against the base commit because git is not being used.')
             return
 
-        base_commit = args.base_branch or get_ci_provider().get_base_commit(args)
+        ci_provider = get_ci_provider()
 
-        if not base_commit:
-            display.warning('The validate-modules sanity test cannot compare against the base commit because it was not detected.')
+        if base_commit := args.base_branch:
+            display.info(f'The validate-modules sanity test will compare against the user-provided base commit: {base_commit}')
+        elif ci_provider.is_pr(args) and (base_commit := ci_provider.get_base_commit(args)):
+            display.info(f'The validate-modules sanity test will compare against the detected PR base commit: {base_commit}')
+        else:
+            display.warning('The validate-modules sanity test cannot compare against the base commit because it was not provided.')
             return
 
         path = self.get_archive_path(args)
