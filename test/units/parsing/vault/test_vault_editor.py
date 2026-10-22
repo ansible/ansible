@@ -313,7 +313,8 @@ class TestVaultEditor(unittest.TestCase):
                                    'interrupted before replace',
                                    ve.write_data,
                                    to_bytes('new vault data'),
-                                   src_file_path)
+                                   src_file_path,
+                                   False)
 
         # the original contents must be intact
         with open(src_file_path, 'rb') as src_file:
@@ -321,6 +322,25 @@ class TestVaultEditor(unittest.TestCase):
 
         # and no temporary file may be left behind
         self.assertEqual([name for name in os.listdir(self._test_dir) if name != 'src_file'], [])
+
+    def test_write_data_shredded_keeps_new_data_on_failed_replace(self):
+        # Once the previous contents are shredded the temporary file holds the
+        # only copy of the new data, so a failed replace must not delete it.
+        self._test_dir = self._create_test_dir()
+        src_file_path = self._create_file(self._test_dir, 'src_file', content=to_bytes("old"))
+
+        ve = self._vault_editor()
+
+        def interrupted_replace(src, dst):
+            raise OSError('interrupted before replace')
+
+        with patch('ansible.parsing.vault.os.replace', side_effect=interrupted_replace):
+            self.assertRaises(errors.AnsibleError, ve.write_data, to_bytes('new vault data'), src_file_path)
+
+        leftovers = [name for name in os.listdir(self._test_dir) if name != 'src_file']
+        self.assertEqual(len(leftovers), 1)
+        with open(os.path.join(self._test_dir, leftovers[0]), 'rb') as tmp_file:
+            self.assertEqual(b'new vault data', tmp_file.read())
 
     def test_encrypt_file_symlink(self):
         self._test_dir = self._create_test_dir()

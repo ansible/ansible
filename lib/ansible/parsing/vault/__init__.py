@@ -1069,6 +1069,7 @@ class VaultEditor:
             except OSError as ex:
                 raise AnsibleError('Problem creating temporary vault file.') from ex
 
+            shred_ran = False
             try:
                 try:
                     os.write(tmp_fd, b_file_data)
@@ -1081,23 +1082,29 @@ class VaultEditor:
                 self._copy_dest_attributes(thefile, tmp_path, mode)
 
                 # The new data is on disk, so the old contents can go now.
+                # Once they do, the temporary file is the only copy left, so a
+                # failed replace must keep it.
                 shred_error = None
                 if shred:
                     try:
                         self._shred_file(thefile)
                     except (OSError, AnsibleAssertionError) as e:
                         shred_error = e
+                    shred_ran = True
 
                 try:
                     os.replace(tmp_path, thefile)
                 except OSError as e:
+                    if shred_ran:
+                        raise AnsibleError('Unable to replace vault file: %s (the new data is in %s)'
+                                           % (to_native(e), to_native(tmp_path)))
                     raise AnsibleError('Unable to replace vault file: %s' % to_native(e))
                 tmp_path = None
 
                 if shred_error is not None:
                     raise AnsibleError('Unable to shred the previous contents of %s: %s' % (to_native(thefile), to_native(shred_error)))
             finally:
-                if tmp_path is not None:
+                if tmp_path is not None and not shred_ran:
                     try:
                         os.remove(tmp_path)
                     except OSError:
