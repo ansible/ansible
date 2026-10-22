@@ -294,10 +294,9 @@ class TestVaultEditor(unittest.TestCase):
         self._assert_file_is_encrypted(ve, src_file_path, src_file_contents)
 
     def test_write_data_interrupted_leaves_original_intact(self):
-        # An interruption cannot be induced from an integration test without
-        # fault injection, so the data-loss regression stays here; the
-        # end-to-end behaviour is covered by test/integration/targets/
-        # ansible-vault/runme.sh.
+        # An interruption cannot be induced from an integration test, so the
+        # data-loss regression stays here; the end-to-end behaviour is covered
+        # by test/integration/targets/ansible-vault/runme.sh.
         self._test_dir = self._create_test_dir()
         src_file_contents = to_bytes("some info in a file\nyup.")
         src_file_path = self._create_file(self._test_dir, 'src_file', content=src_file_contents)
