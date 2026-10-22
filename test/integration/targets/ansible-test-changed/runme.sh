@@ -35,7 +35,7 @@ echo content > regular-file  # control
 timeout 600 ansible-test sanity --test pep8 --changed --untracked --base-branch main -v 2>&1 | tee "${log}"
 
 # Verbose output lists each detected path, so these also fail if one was skipped.
-grep --quiet --fixed-strings 'symlink-to-directory' "${log}"
-grep --quiet --fixed-strings 'broken-symlink' "${log}"
-grep --quiet --fixed-strings 'nested-repository/' "${log}"
-grep --quiet --fixed-strings 'regular-file' "${log}"
+grep -qF 'symlink-to-directory' "${log}"
+grep -qF 'broken-symlink' "${log}"
+grep -qF 'nested-repository/' "${log}"
+grep -qF 'regular-file' "${log}"
