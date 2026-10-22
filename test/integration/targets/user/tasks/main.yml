@@ -46,4 +46,4 @@
     - ansible_distribution == 'Alpine'
 - include_tasks: test_modify_user_groups.yml
   when:
-    - ansible_distribution != 'Darwin'
+    - ansible_os_family not in ['Darwin']

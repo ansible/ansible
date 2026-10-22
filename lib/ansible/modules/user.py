@@ -3313,7 +3313,7 @@ class BusyBox(User):
         self._validate_shell()
 
         # Manage group membership
-        if self.groups in ('',):
+        if self.groups == '':
             if not self.append:
                 for group_name in current_groups:
                     rc, out, err = self._run_group_cmd(remove_cmd_bin, group_name)
