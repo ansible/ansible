@@ -169,6 +169,8 @@ options:
             - List of directory paths that are not descended into during the search.
             - Unlike O(excludes), which only filters the results, this stops the traversal, so nothing inside these directories is examined.
             - Paths are compared against the full path of each directory found while walking O(paths).
+            - Pruned directories are themselves excluded from the results, even with the O(file_type=directory).
+            - A path listed in both O(paths) and O(prune) is skipped entirely and produces a warning.
         type: list
         elements: path
         version_added: "2.23"
