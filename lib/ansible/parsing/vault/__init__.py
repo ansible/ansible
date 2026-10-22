@@ -17,16 +17,17 @@
 
 from __future__ import annotations
 
+import errno
 import fcntl
 import functools
 import os
 import random
 import shlex
 import shutil
-import stat
 import subprocess
 import sys
 import tempfile
+import time
 import warnings
 import typing as t
 
@@ -1030,10 +1031,12 @@ class VaultEditor:
 
         :arg data: the byte string (bytes) data
         :arg thefile: file descriptor or filename to save 'data' to.
-        :arg shred: kept for backwards compatibility; the data is always written to a
-            temporary file that is atomically renamed over the destination, so the
-            previous contents of an existing destination file are never destroyed
-            before the new data is safely in place.
+        :arg shred: if shred==True, the previous contents of an existing destination
+            file are overwritten with random data once the new data is safely in
+            place, so they cannot be recovered. The new data is always written
+            first, so a failed or interrupted run never destroys the old contents
+            without the new ones being in place.
+        :arg mode: the mode to use when the destination does not exist yet.
         :returns: None
         """
         # FIXME: do we need this now? data_bytes should always be a utf-8 byte string
@@ -1068,13 +1071,13 @@ class VaultEditor:
             # neither. Previously the destination was shredded/removed before
             # the new data was written, so an interrupt could destroy the only
             # copy of the data. See: https://github.com/ansible/ansible/issues/87679
-            tmp_path = None
             try:
-                try:
-                    tmp_fd, tmp_path = tempfile.mkstemp(prefix=os.path.basename(thefile), dir=os.path.dirname(thefile) or os.curdir)
-                except OSError as ex:
-                    raise AnsibleError('Problem creating temporary vault file.') from ex
+                tmp_fd, tmp_path = tempfile.mkstemp(prefix=os.path.basename(thefile), dir=os.path.dirname(thefile) or os.curdir)
+            except OSError as ex:
+                raise AnsibleError('Problem creating temporary vault file.') from ex
 
+            prev_fd = None
+            try:
                 try:
                     os.write(tmp_fd, b_file_data)
                     os.fsync(tmp_fd)
@@ -1083,21 +1086,26 @@ class VaultEditor:
                 finally:
                     os.close(tmp_fd)
 
-                # preserve the mode of an existing destination file, falling
-                # back to the requested mode for a new file
-                try:
-                    dest_stat = os.stat(thefile)
-                except OSError:
-                    os.chmod(tmp_path, mode)
-                else:
-                    os.chmod(tmp_path, stat.S_IMODE(dest_stat.st_mode))
-                    if hasattr(os, 'chown'):
-                        try:
-                            os.chown(tmp_path, dest_stat.st_uid, dest_stat.st_gid)
-                        except (OSError, ValueError):
-                            pass  # not the owner of the file, or unsupported on this platform
+                self._copy_dest_attributes(thefile, tmp_path, mode)
 
-                os.replace(tmp_path, thefile)
+                # Hold the previous contents open before the rename unlinks
+                # them: afterwards the descriptor is the only handle left on
+                # the inode, and shredding needs one. POSIX only: a rename
+                # cannot replace a file that is open on Windows, so there the
+                # previous contents are left unshredded rather than risk the
+                # replace (and with it the data-loss window of #87679).
+                if shred and os.name == 'posix' and os.path.isfile(thefile):
+                    try:
+                        prev_fd = os.open(thefile, os.O_RDWR)
+                    except OSError:
+                        # not ours to write to; the rename still replaces it,
+                        # the previous contents are just left unshredded
+                        prev_fd = None
+
+                try:
+                    os.replace(tmp_path, thefile)
+                except OSError as e:
+                    raise AnsibleError('Unable to replace vault file: %s' % to_native(e))
                 tmp_path = None
             finally:
                 if tmp_path is not None:
@@ -1106,6 +1114,89 @@ class VaultEditor:
                         os.remove(tmp_path)
                     except OSError:
                         pass
+                    if prev_fd is not None:
+                        os.close(prev_fd)
+                        prev_fd = None
+
+            if prev_fd is not None:
+                # The new data is in place; the previous contents are now
+                # unreachable by path, so overwrite them through the handle
+                # opened before the rename. An interrupt before this point
+                # leaves the old contents unshredded, but the new data intact.
+                try:
+                    self._shred_fd(prev_fd)
+                finally:
+                    os.close(prev_fd)
+
+    def _copy_dest_attributes(self, dest, tmp_path, mode):
+        """Give the temporary file the attributes the destination should keep.
+
+        An existing destination keeps its mode, ownership and timestamps, and a
+        new file gets the requested mode; the timestamps are bumped to now
+        because the contents just changed. This mirrors the attribute handling
+        of ``atomic_move()`` in ``module_utils/basic.py``, minus its SELinux
+        context handling, which the vault writers have never done (see the TODO
+        in ``shuffle_files()``).
+
+        :arg dest: path of the file the temporary file will replace.
+        :arg tmp_path: path of the temporary file to adjust.
+        :arg mode: mode to use when ``dest`` does not exist.
+        :returns: None
+        """
+        try:
+            dest_stat = os.stat(dest)
+        except OSError:
+            # no destination yet: create with the requested mode
+            os.chmod(tmp_path, mode)
+            return
+
+        try:
+            if hasattr(os, 'chown'):
+                os.chown(tmp_path, dest_stat.st_uid, dest_stat.st_gid)
+            shutil.copystat(dest, tmp_path)
+            os.utime(tmp_path, times=(time.time(), time.time()))
+        except OSError as e:
+            # not the owner of the file, or the platform refuses the operation
+            if e.errno != errno.EPERM:
+                raise
+
+    def _shred_fd(self, fd):
+        """Overwrite the contents of an open file with random data.
+
+        Used for the previous contents of a replaced vault file: the rename has
+        already unlinked them, so there is no path left for ``_shred_file()`` to
+        work on and the descriptor is the only handle on the inode. GNU shred
+        cannot be used for the same reason, so this mirrors the custom fallback
+        in ``_shred_file_custom()``.
+
+        :arg fd: descriptor of the file to overwrite.
+        :returns: None
+        """
+        file_len = os.fstat(fd).st_size
+
+        if file_len <= 0:  # avoid work when file was empty
+            return
+
+        max_chunk_len = min(1024 * 1024 * 2, file_len)
+
+        passes = 3
+        for dummy in range(passes):
+            os.lseek(fd, 0, os.SEEK_SET)
+            # get a random chunk of data, each pass with other length
+            chunk_len = random.randint(max_chunk_len // 2, max_chunk_len)
+            data = os.urandom(chunk_len)
+
+            # os.write can write less than asked for, so keep count ourselves
+            remaining = file_len
+            while remaining > 0:
+                chunk = data if remaining >= len(data) else data[:remaining]
+                remaining -= os.write(fd, chunk)
+
+            # FIXME remove this assert once we have unittests to check its accuracy
+            if os.lseek(fd, 0, os.SEEK_CUR) != file_len:
+                raise AnsibleAssertionError()
+
+            os.fsync(fd)
 
     def shuffle_files(self, src, dest):
         prev = None

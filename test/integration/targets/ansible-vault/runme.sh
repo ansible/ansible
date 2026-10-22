@@ -244,6 +244,34 @@ ansible-vault view "$@" --vault-id test_vault_id@vault-password-wrong --vault-id
 
 ansible-vault decrypt "$@" --vault-password-file vault-password "${TEST_FILE}"
 
+### ATOMIC WRITE ###
+# Writing a vault file must never destroy the destination before the new
+# contents are safely in place, must keep the mode of an existing file, and
+# must not leave a temporary file behind.
+# See https://github.com/ansible/ansible/issues/87679
+
+ATOMIC_DIR="${MYTMPDIR}/atomic"
+mkdir -p "${ATOMIC_DIR}"
+ATOMIC_FILE="${ATOMIC_DIR}/atomic_file"
+echo "atomic write test contents" > "${ATOMIC_FILE}"
+chmod 0640 "${ATOMIC_FILE}"
+
+ansible-vault encrypt "$@" --vault-password-file vault-password "${ATOMIC_FILE}"
+
+# the destination holds valid ciphertext, not an empty or partial file
+ansible-vault view "$@" --vault-password-file vault-password "${ATOMIC_FILE}"
+[ "$(head -c 14 "${ATOMIC_FILE}")" == '$ANSIBLE_VAULT' ]
+
+# the mode of the existing destination survived the rewrite
+find "${ATOMIC_FILE}" -perm 640 | grep -q .
+
+# no temporary file was left behind next to the destination
+[ "$(ls "${ATOMIC_DIR}")" == "atomic_file" ]
+
+# and the round trip still restores the original contents
+ansible-vault decrypt "$@" --vault-password-file vault-password "${ATOMIC_FILE}"
+[ "$(cat "${ATOMIC_FILE}")" == "atomic write test contents" ]
+
 # encrypt it, using a vault_id so we write a 1.2 format file
 ansible-vault encrypt "$@" --vault-id test_vault_1_2@vault-password "${TEST_FILE_1_2}"
 

@@ -19,7 +19,6 @@
 from __future__ import annotations
 
 import os
-import stat
 import tempfile
 from io import BytesIO, StringIO
 
@@ -294,50 +293,11 @@ class TestVaultEditor(unittest.TestCase):
 
         self._assert_file_is_encrypted(ve, src_file_path, src_file_contents)
 
-    def test_encrypt_file_interrupted_leaves_plaintext_intact(self):
-        self._test_dir = self._create_test_dir()
-        src_file_contents = to_bytes("some info in a file\nyup.")
-        src_file_path = self._create_file(self._test_dir, 'src_file', content=src_file_contents)
-
-        ve = self._vault_editor()
-
-        # simulate an interruption after the ciphertext was written to the
-        # temporary file, but before it replaced the original file
-        def interrupted_replace(src, dst):
-            raise Exception('interrupted before replace')
-
-        with patch('ansible.parsing.vault.os.replace', side_effect=interrupted_replace):
-            self.assertRaisesRegex(Exception,
-                                   'interrupted before replace',
-                                   ve.encrypt_file,
-                                   src_file_path,
-                                   self.vault_secret)
-
-        # the original plaintext must be intact
-        with open(src_file_path, 'rb') as src_file:
-            self.assertEqual(src_file_contents, src_file.read())
-
-        # and no partial vault or temporary file may be left behind
-        self.assertEqual([name for name in os.listdir(self._test_dir) if name != 'src_file'], [])
-
-    @pytest.mark.skipif(os.name == 'nt', reason='POSIX file mode preservation is not observable on Windows')
-    def test_write_data_replaces_content_and_preserves_mode(self):
-        self._test_dir = self._create_test_dir()
-        src_file_contents = to_bytes("some info in a file\nyup.")
-        src_file_path = self._create_file(self._test_dir, 'src_file', content=src_file_contents)
-
-        os.chmod(src_file_path, 0o640)
-
-        ve = self._vault_editor()
-        new_contents = to_bytes('new vault data')
-        ve.write_data(new_contents, src_file_path)
-
-        with open(src_file_path, 'rb') as src_file:
-            self.assertEqual(new_contents, src_file.read())
-
-        self.assertEqual(stat.S_IMODE(os.stat(src_file_path).st_mode), 0o640)
-
     def test_write_data_interrupted_leaves_original_intact(self):
+        # An interruption cannot be induced from an integration test without
+        # fault injection, so the data-loss regression stays here; the
+        # end-to-end behaviour is covered by test/integration/targets/
+        # ansible-vault/runme.sh.
         self._test_dir = self._create_test_dir()
         src_file_contents = to_bytes("some info in a file\nyup.")
         src_file_path = self._create_file(self._test_dir, 'src_file', content=src_file_contents)
