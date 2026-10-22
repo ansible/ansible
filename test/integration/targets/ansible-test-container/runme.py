@@ -855,6 +855,7 @@ class Bootstrapper(metaclass=abc.ABCMeta):
                 dict(
                     user='root',
                     password=root_password,
+                    password_lock='false',
                 ),
             )
 
