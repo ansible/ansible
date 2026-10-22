@@ -574,11 +574,13 @@
   register: root_prune
 
 - name: assert a pruned search root returns nothing
+  vars:
+    warning_pattern: 'Skipping search path .* because it is also listed in prune'
   assert:
     that:
       - root_prune.matched == 0
       - root_prune.examined == 0
-      - root_prune.warnings | length == 1
+      - root_prune.warnings | select('search', warning_pattern) | list | length == 1
 
 - name: find with a prune path containing .. segments
   find:
