@@ -260,7 +260,7 @@ ansible-vault encrypt "$@" --vault-password-file vault-password "${ATOMIC_FILE}"
 
 # the destination holds valid ciphertext, not an empty or partial file
 ansible-vault view "$@" --vault-password-file vault-password "${ATOMIC_FILE}"
-[ "$(head -c 14 "${ATOMIC_FILE}")" == '$ANSIBLE_VAULT' ]
+[ "$(head -c 14 "${ATOMIC_FILE}")" == "\$ANSIBLE_VAULT" ]
 
 # the mode of the existing destination survived the rewrite
 find "${ATOMIC_FILE}" -perm 640 | grep -q .
