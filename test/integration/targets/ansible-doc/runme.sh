@@ -245,6 +245,11 @@ echo "testing legacy plugin list via --playbook-dir"
 echo "testing undocumented plugin output"
 [ "$(ansible-doc -M ./library -l ansible.legacy |grep -c UNDOCUMENTED)" == "6" ]
 
+echo "testing non-string short_description in plugin list"
+output=$(ansible-doc -M ./library -l ansible.legacy --json 2>&1)
+echo "${output}" | grep "${GREP_OPTS[@]}" 'test_docs_invalid_short_description short_description must be a string, not a dict'
+echo "${output}" | grep "${GREP_OPTS[@]}" '"ansible.legacy.test_docs_invalid_short_description": "INVALID SHORT DESCRIPTION"'
+
 echo "testing filtering does not include any 'test_' modules"
 [ "$(ansible-doc -M ./library -l ansible.builtin |grep -c test_)" == 0 ]
 [ "$(ansible-doc --playbook-dir ./  -l ansible.builtin |grep -c test_)" == 0 ]

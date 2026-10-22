@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-doc - ``--list`` no longer fails for every plugin when one plugin's ``short_description`` is not a string; it warns and lists that plugin as ``INVALID SHORT DESCRIPTION`` (https://github.com/ansible-collections/google.cloud/issues/789).
