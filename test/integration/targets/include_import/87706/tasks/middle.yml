@@ -1,0 +1,5 @@
+- name: Include tasks relative to the parent include
+  include_tasks: inner.yml
+  loop:
+    # redefine the variable used by the parent include
+    - {}
