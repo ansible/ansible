@@ -111,6 +111,7 @@ class FieldAttributeBase:
         self._loader = None
         self._variable_manager = None
         self._origin: Origin | None = None
+        self._templar = TemplateEngine | None = None
 
         # other internal params
         self._validated = False
@@ -123,6 +124,19 @@ class FieldAttributeBase:
     @property
     def finalized(self):
         return self._finalized
+
+    def _resolve_templar(self, templar=None):
+
+        if templar is None:
+            if self._templar is None:
+                raise AnsibleError("A templar object is required for this function, either passing directly or by using `set_templar`, but none were suplied")
+            else:
+                templar = self._templar
+        else:
+            self._templar = templar
+
+        return templar
+
 
     def dump_me(self, depth=0):
         """ this is never called from production code, it is here to be used when debugging as a 'complex print' """
@@ -198,6 +212,9 @@ class FieldAttributeBase:
         return self._variable_manager
 
     def _post_validate_debugger(self, attr, value, templar):
+
+        templar = self._resolve_templar(templar)
+
         try:
             value = templar.template(value)
         except AnsibleValueOmittedError:
@@ -449,12 +466,12 @@ class FieldAttributeBase:
         return new_me
 
     def get_validated_value(self, name, attribute, value, templar):
+        templar = self._resolve_templar(templar)
         try:
             return self._get_validated_value(name, attribute, value, templar)
         except (TypeError, ValueError):
             raise AnsibleError(f"The value {value!r} could not be converted to {attribute.isa!r}.", obj=value)
 
-    def _get_validated_value(self, name, attribute, value, templar):
         if attribute.isa == 'string':
             value = to_text(value)
         elif attribute.isa == 'int':
@@ -531,6 +548,7 @@ class FieldAttributeBase:
         all the variables.  Run basic types (from isa) as well as
         any _post_validate_<foo> functions.
         """
+        templar = self._resolve_templar(templar)
 
         for name in self.fattributes:
             value = self.post_validate_attribute(name, templar=templar)
@@ -682,6 +700,19 @@ class FieldAttributeBase:
             else:
                 setattr(self, attr, value)  # overridden dump_attrs in derived types may dump attributes which are not field attributes
 
+        def set_templar(self, templar):
+            self._templar = templar
+
+        def get_fa(self, key):
+            return self.'_%s' % key
+
+        def __getter__(self, key):
+            if self._templar is None:
+                value = getattr(self, get_fa(key))
+            else
+                value = self.get_validated_value(key, self.get_fa(key), getattr(self, key))
+
+            return value
 
 class Base(FieldAttributeBase):
 
