@@ -64,6 +64,9 @@ def human_to_bytes(number, default_unit=None, isbits=False):
         string bits representation was passed and return as a number or bits.
         The function expects 'b' (lowercase) as a bit identifier, e.g. 'Mb'/'Kb'/etc.
         if 'MB'/'KB'/... is passed, the ValueError will be rased.
+
+    The unit can also be spelled out, in the singular or the plural,
+        e.g. 'kilobyte'/'kilobytes' (or 'kilobit'/'kilobits' when isbits is True).
     """
     m = re.search(r'^([0-9]*\.?[0-9]+)(?:\s*([A-Za-z]+))?\s*$', str(number))
 
@@ -96,14 +99,15 @@ def human_to_bytes(number, default_unit=None, isbits=False):
         unit_class_name = 'bit'
     # check unit value if more than one character (KB, MB)
     if len(unit) > 1:
-        expect_message = 'expect %s%s or %s' % (range_key, unit_class, range_key)
-        if range_key == 'B':
-            expect_message = 'expect %s or %s' % (unit_class, unit_class_name)
         unit_group = VALID_UNITS.get(range_key, None)
         if unit_group is None:
             raise ValueError(f"human_to_bytes() can't interpret a valid unit for {range_key}")
         isbits_flag = 1 if isbits else 0
-        if unit.lower() == unit_group[isbits_flag][0]:
+        unit_name = unit_group[isbits_flag][0]
+        expect_message = 'expect %s%s, %s, %s or %ss' % (range_key, unit_class, range_key, unit_name, unit_name)
+        if range_key == 'B':
+            expect_message = 'expect %s, %s or %ss' % (unit_class, unit_class_name, unit_class_name)
+        if unit.lower() in (unit_name, unit_name + 's'):
             pass
         elif unit != unit_group[isbits_flag][1]:
             raise ValueError("human_to_bytes() failed to convert %s. Value is not a valid string (%s)" % (number, expect_message))
