@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - Update the pip version used to 26.2.2.
