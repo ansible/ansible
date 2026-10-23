@@ -834,6 +834,11 @@ def is_binary_file(path: str) -> bool:
         return b'\0' in path_fd.read(4096)
 
 
+def is_file(path: str) -> bool:
+    """Return True if the specified path is a file, return false otherwise."""
+    return os.path.isfile(path)
+
+
 def generate_name(length: int = 8) -> str:
     """Generate and return a random name."""
     return ''.join(random.choice(string.ascii_letters + string.digits) for _idx in range(length))
