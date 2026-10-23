@@ -6,16 +6,20 @@ DOCUMENTATION:
     - Using Python's text object method C(split) we turn strings into lists via a 'splitting character'.
   notes:
     - This is a passthrough to Python's C(str.split).
-  positional: _input, _split_string
+  positional: _input
   options:
     _input:
       description: A string to split.
       type: str
       required: true
-    _split_string:
+    sep:
       description: A string on which to split the original.
       type: str
       default: ' '
+    maxsplit:
+      description: The maximum number of splits to do. -1 means no limit.
+      type: int
+      default: -1
 
 EXAMPLES: |
 
@@ -24,6 +28,9 @@ EXAMPLES: |
 
     # listjojocomma => [ "jojo is", " a" ]
     listjojocomma: "{{ 'jojo is, a' | split(',') }}"
+
+    # listjojo_maxsplit => [ "jojo", "is a" ]
+    listjojo_maxsplit: "{{ 'jojo is a' | split(' ', 1) }}"
 
 RETURN:
   _value:
