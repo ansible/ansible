@@ -629,15 +629,6 @@ class Dnf5Module(YumDnf):
         logger = libdnf5.logger.create_file_logger(base, "dnf5.log")
         log_router.add_logger(logger)
 
-        if self.update_cache:
-            repo_query = libdnf5.repo.RepoQuery(base)
-            repo_query.filter_type(libdnf5.repo.Repo.Type_AVAILABLE)
-            for repo in repo_query:
-                repo_dir = repo.get_cachedir()
-                if os.path.exists(repo_dir):
-                    repo_cache = libdnf5.repo.RepoCache(base, repo_dir)
-                    repo_cache.write_attribute(libdnf5.repo.RepoCache.ATTRIBUTE_EXPIRED)
-
         sack = base.get_repo_sack()
         sack.create_repos_from_system_configuration()
 
@@ -650,6 +641,10 @@ class Dnf5Module(YumDnf):
             repo_query.filter_id(self.enablerepo, libdnf5.common.QueryCmp_IGLOB)
             for repo in repo_query:
                 repo.enable()
+
+        if self.update_cache:
+            for repo in libdnf5.repo.RepoQuery(base):
+                repo.expire()
 
         try:
             sack.load_repos()
