@@ -6,12 +6,17 @@
         name: ansibulluser_groups
         state: absent
 
+    - name: create group group4test
+      group:
+        name: group4test
+        state: present
+
     - name: create test user with initial groups
       user:
         name: ansibulluser_groups
         groups:
           - daemon
-          - bin
+          - group4test
         state: present
       register: user_groups_create
 
@@ -19,8 +24,8 @@
       assert:
         that:
           - user_groups_create.groups is defined
-          - "'bin' in user_groups_create.groups"
-          - "'daemon' in user_groups_create.groups"
+          - "'group4test' in user_groups_create.groups | split(',') | list"
+          - "'daemon' in user_groups_create.groups | split(',') | list"
 
     - name: specify empty groups list without append
       user:
@@ -35,14 +40,14 @@
         that:
           - user_groups_remove.changed
           - user_groups_remove.groups is defined
-          - "'bin' not in user_groups_remove.groups"
-          - "'daemon' not in user_groups_remove.groups"
+          - "'group4test' not in user_groups_remove.groups | split(',') | list"
+          - "'daemon' not in user_groups_remove.groups | split(',') | list"
 
     - name: add the groups back with append
       user:
         name: ansibulluser_groups
         groups:
-          - bin
+          - group4test
           - daemon
         append: True
         state: present
@@ -53,8 +58,8 @@
         that:
           - user_groups_add.changed
           - user_groups_add.groups is defined
-          - "'bin' in user_groups_add.groups"
-          - "'daemon' in user_groups_add.groups"
+          - "'group4test' in user_groups_add.groups | split(',') | list"
+          - "'daemon' in user_groups_add.groups | split(',') | list"
 
     - name: specify empty groups list with append
       user:
@@ -69,11 +74,16 @@
         that:
           - not user_groups_append.changed
           - user_groups_append.groups is defined
-          - "'bin' in user_groups_append.groups"
-          - "'daemon' in user_groups_append.groups"
+          - "'group4test' in user_groups_append.groups | split(',') | list"
+          - "'daemon' in user_groups_append.groups | split(',') | list"
 
   always:
     - name: clean up test user
       user:
         name: ansibulluser_groups
+        state: absent
+
+    - name: remove group group4test
+      group:
+        name: group4test
         state: absent
