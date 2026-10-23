@@ -18,6 +18,7 @@ if t.TYPE_CHECKING:
 
     from resolvelib.structs import RequirementInformation
 
+from ansible.errors import AnsibleError
 from ansible.galaxy.collection.gpg import get_signature_from_source
 from ansible.galaxy.dependency_resolution.dataclasses import (
     Candidate,
@@ -241,6 +242,26 @@ class CollectionDependencyProvider(AbstractProvider):
                 ) from exc
             # Unexpected error from a Galaxy server
             raise
+
+        if (
+            not preinstalled_candidates
+            and not coll_versions
+            and first_req.type == 'galaxy'
+            and not first_req.is_concrete_artifact
+            and all(r._parent is None for r in requirements)
+        ):
+            # coll_versions is fetched directly from the Galaxy API and is not
+            # filtered by pre-release status (that filtering happens later,
+            # per-candidate, below). An empty coll_versions here therefore
+            # means no versions of any kind -- including pre-releases --
+            # exist for this collection on any configured server, so the
+            # generic pre-release hint would not be applicable/helpful.
+            server_names = ', '.join(
+                api.api_server for api in self._api_proxy._apis
+            ) or 'the configured Galaxy server(s)'
+            raise AnsibleError(
+                f"Collection '{fqcn}' does not exist on {server_names}."
+            )
 
         if first_req.is_concrete_artifact:
             # FIXME: do we assume that all the following artifacts are also concrete?
