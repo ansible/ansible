@@ -26,6 +26,7 @@ from ansible._internal._datatag._tags import TrustedAsTemplate
 from ansible.plugins.inventory.constructed import InventoryModule
 from ansible.inventory.data import InventoryData
 from ansible.template import Templar
+from units.test_utils.controller.display import emits_warnings
 
 
 @pytest.fixture()
@@ -364,3 +365,41 @@ def test_keyed_group_with_trailing_separator(inventory_module):
     )
     for group_name in ('tag_environment_prod', 'tag_status'):
         assert group_name in inventory_module.inventory.groups
+
+
+def test_sanitize_group_name_valid_unchanged() -> None:
+    """Verify that group names with only valid characters pass through unchanged and emit no warning."""
+    with emits_warnings(warning_pattern=[], allow_unmatched_message=False):
+        assert InventoryModule._sanitize_group_name('valid_group') == 'valid_group'
+        assert InventoryModule._sanitize_group_name('group123') == 'group123'
+
+
+def test_sanitize_group_name_hyphen_emits_warning() -> None:
+    """Verify that a group name containing a hyphen is normalized and a warning is emitted."""
+    # TODO: also assert the rename detail line is present at -vvvv verbosity once
+    # emits_warnings (or a sibling utility) gains support for verbose-level output assertions.
+    with emits_warnings(warning_pattern=r'Invalid characters were found in group names'):
+        result = InventoryModule._sanitize_group_name('qa-windows')
+    assert result == 'qa_windows'
+
+
+def test_add_host_to_composed_groups_warns_on_invalid_group_name(inventory_module: InventoryModule) -> None:
+    """Verify that composing groups with an invalid name normalizes it and emits a warning."""
+    inventory_module.inventory.add_host('myhost')
+    host = inventory_module.inventory.get_host('myhost')
+    groups = _trust({'qa-windows': 'True'})
+    with emits_warnings(warning_pattern=r'Invalid characters were found in group names'):
+        inventory_module._add_host_to_composed_groups(groups, host.vars, host.name, strict=True)
+    assert 'qa_windows' in inventory_module.inventory.groups
+    assert host in inventory_module.inventory.groups['qa_windows'].hosts
+
+
+def test_add_host_to_keyed_groups_warns_on_invalid_group_name(inventory_module: InventoryModule) -> None:
+    """Verify that keyed groups with an invalid prefix are normalized and a warning is emitted."""
+    inventory_module.inventory.add_host('myhost')
+    inventory_module.inventory.set_variable('myhost', 'os', 'windows')
+    host = inventory_module.inventory.get_host('myhost')
+    keyed_groups = _trust([{'prefix': 'qa-env', 'separator': '_', 'key': 'os'}])
+    with emits_warnings(warning_pattern=r'Invalid characters were found in group names'):
+        inventory_module._add_host_to_keyed_groups(keyed_groups, host.vars, host.name, strict=True)
+    assert 'qa_env_windows' in inventory_module.inventory.groups
