@@ -66,3 +66,8 @@ ansible-inventory -i invs/1/one.yml -i invs/2/constructed.yml --graph | tee out.
 
 grep '@c_lola' out.txt
 grep '@c_group4testing' out.txt
+
+
+# Verify fresh host variables, composed values, and memberships across constructed sources.
+ansible-inventory -i multi_host_inventory.yml -i multi_host_constructed.yml -i second_source_constructed.yml --list > "$OUTPUT_DIR/multi_host_inventory.json"
+ansible-playbook -i localhost, assert_multi_host_inventory.yml "$@"
