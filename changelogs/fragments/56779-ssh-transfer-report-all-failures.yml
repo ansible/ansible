@@ -1,0 +1,2 @@
+bugfixes:
+  - ssh connection plugin - when every ``smart`` transfer method fails, the error now includes the return code and output of each method instead of only the last one (https://github.com/ansible/ansible/issues/56779).
