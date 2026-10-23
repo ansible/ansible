@@ -63,10 +63,46 @@
   register: invalid
 
 - assert:
-    that: "invalid.rc != 0"
+    that:
+      - invalid.rc != 0
+      - 'invalid.stderr is search("Invalid linkname for tarfile member: path / is not a subpath of the role")'
 
 - name: Uninstall invalid role
   command: ansible-galaxy role remove invalid-testrole
+
+- name: Test invalid role requirement name
+  vars:
+    abs_name: "{{ remote_tmp_dir }}/unsafe"
+    install_msg: "{{ abs_name }} was installed successfully"
+    external_msg: "The role name '{{ abs_name }}' resolves to a path outside of the configured role directory"
+  block:
+    - name: Create invalid requirements file
+      copy:
+        dest: invalid-requirements.yml
+        content: |-
+          - src: "{{ remote_tmp_dir }}/valid-role.tar"
+            name: "{{ abs_name }}"
+
+    - name: Test installing the role
+      command: ansible-galaxy install -r invalid-requirements.yml
+      register: fail_external
+      ignore_errors: True
+
+    - assert:
+        that:
+          - fail_external is failed
+          - fail_external.stderr is search(external_msg)
+          - fail_external.stdout is not search(install_msg)
+
+- name: Test --ignore-errors skips unsatisfiable invalid requirement name
+  command: ansible-galaxy install {{ remote_tmp_dir }}/roles/../valid-role.tar --roles-path {{ remote_tmp_dir }}/roles --ignore-errors
+  register: warn_external
+
+- assert:
+    that:
+      - warn_external is success
+      - warn_external.stderr is search("The role name '.*' resolves to a path outside of the configured role directory")
+      - warn_external.stdout is not search(".* was installed successfully")
 
 - import_tasks: dir-traversal.yml
 - import_tasks: valid-role-symlinks.yml
