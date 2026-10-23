@@ -336,6 +336,11 @@ class VariableManager:
                 # support "conditional includes" for vars_files, which mimics
                 # the with_first_found mechanism.
                 vars_file_list = vars_file_item
+
+                # Attempt to evaluate vars_file_list as possible jinja expression.
+                if not isinstance(vars_file_list, list):
+                    vars_file_list = templar.template(vars_file_list)
+
                 if not isinstance(vars_file_list, list):
                     vars_file_list = [vars_file_list]
 
