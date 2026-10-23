@@ -400,6 +400,26 @@
 - name: change the ownership of a directory with recurse=yes
   file: path={{remote_tmp_dir_test}}/foobar owner=1235 recurse=yes
 
+- name: copy directory for diff test
+  copy:
+    src: diff-test
+    dest: "{{remote_tmp_dir_test}}/"
+    owner: 1234
+
+- name: change the owner on the diff test files
+  file:
+    path: "{{remote_tmp_dir_test}}/diff-test"
+    owner: 1235
+    recurse: true
+  diff: true
+  register: change_ownership_recurse
+
+- name: verify that both the directory and the file have diffs
+  assert:
+    that:
+      - (change_ownership_recurse.diff | length) == 2
+      - (change_ownership_recurse.diff | map(attribute='after') | map(attribute='path') | sort) == ["{{remote_tmp_dir_test}}/diff-test", "{{remote_tmp_dir_test}}/diff-test/file"]
+
 - name: verify that the permission of the directory was set
   file: path={{remote_tmp_dir_test}}/foobar state=directory
   register: file10_result
