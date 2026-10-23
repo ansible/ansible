@@ -1,0 +1,47 @@
+---
+- name: Test 50% with 0 failures
+  hosts: local
+  gather_facts: false
+  max_fail_percentage: 50%
+  tasks:
+    - debug:
+        msg: "{{ inventory_hostname }} live"
+
+- name: Test 50% with 40% failure
+  hosts: local
+  gather_facts: false
+  max_fail_percentage: 50%
+  tasks:
+    - name: Intentionally fail 4/10 hosts
+      fail:
+        msg: intentional failure
+      when: inventory_hostname in ['testhost1', 'testhost2', 'testhost3', 'testhost4']
+    - name: Should run 6 times
+      debug:
+        msg: "SHOULD_EXECUTE_6_TIMES"
+
+- name: Test 50% with exactly 50%
+  hosts: local
+  gather_facts: false
+  max_fail_percentage: 50%
+  tasks:
+    - name: Intentionally fail 3/6 remaining hosts
+      fail:
+        msg: intentional failure
+      when: inventory_hostname in ['testhost5', 'testhost6', 'testhost7']
+    - name: Should run 3 times
+      debug:
+        msg: "SHOULD_EXECUTE_3_TIMES"
+
+- name: Test 50% with 67% failure
+  hosts: local
+  gather_facts: false
+  max_fail_percentage: 50%
+  tasks:
+    - name: Intentionally fail 2/3 remaining hosts
+      fail:
+        msg: intentional failure
+      when: inventory_hostname in ['testhost8', 'testhost9']
+    - name: Should not execute
+      debug:
+        msg: "SHOULD_NOT_EXECUTE"
