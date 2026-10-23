@@ -1,0 +1,12 @@
+---
+- hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: Verify to_bool
+      assert:
+        that:
+          - (None|bool)==false
+          - (1.0|bool)==true
+          - (0.0|bool)==false
+          - (7|bool)==false
+          - ({}|bool)==false
