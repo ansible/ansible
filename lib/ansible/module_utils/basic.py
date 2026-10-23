@@ -168,6 +168,14 @@ SEQUENCETYPE = frozenset, KeysView, Sequence
 
 PASSWORD_MATCH = re.compile(r'^(?:.+[-_\s])?pass(?:[-_\s]?(?:word|phrase|wrd|wd)?)(?:[-_\s].+)?$', re.I)
 
+SENSITIVE_HEADERS = frozenset((
+    'authorization',
+    'cookie',
+    'proxy-authorization',
+    'set-cookie',
+    'www-authenticate',
+))
+
 imap = map
 
 # Internal global holding passed in params.  This is consulted in case
@@ -234,6 +242,28 @@ def get_all_subclasses(cls):
         help_text="Use `get_all_subclasses()` from `ansible.module_utils.common._utils` instead.",
     )
     return list(_get_all_subclasses(cls))
+
+
+def _mask_sensitive_headers(name: str, value: t.Any) -> t.Any:
+    """Return a copy of a headers argument with the values of sensitive headers replaced by a placeholder."""
+    if not name.lower().endswith('headers'):
+        return value
+
+    if isinstance(value, Mapping):
+        return {key: '$REDACTED$' if str(key).strip().lower() in SENSITIVE_HEADERS else val for key, val in value.items()}
+
+    if isinstance(value, str):
+        try:
+            headers = json.loads(value)
+        except ValueError:
+            return value
+
+        if not isinstance(headers, dict):
+            return value
+
+        return json.dumps(_mask_sensitive_headers(name, headers))
+
+    return value
 
 
 def heuristic_log_sanitize(data, no_log_values=None):
@@ -1269,7 +1299,7 @@ class AnsibleModule(object):
             msg = msg.decode('utf-8', 'replace')
 
         if log_args:
-            log_args = {k: _secrets.mask_secrets(str(v)) for k, v in log_args.items()}
+            log_args = {k: _secrets.mask_secrets(str(_mask_sensitive_headers(k, v))) for k, v in log_args.items()}
 
         msg = _secrets.mask_secrets(msg)
 
@@ -1299,6 +1329,7 @@ class AnsibleModule(object):
 
         Values are redacted by their position in ``argument_spec`` rather than by matching their content, so
         ``no_log`` values that are too short or not a string to be registered as a secret are still hidden.
+        The values of sensitive HTTP headers are redacted from headers parameters at any level.
         Sub options are processed recursively using the same rules as the top level parameters.
         """
         aliases = {alias: name for name, opts in argument_spec.items() for alias in opts.get('aliases') or ()}
@@ -1336,7 +1367,7 @@ class AnsibleModule(object):
                         for idx, elem in enumerate(value)
                     ]
 
-            redacted[param] = value
+            redacted[param] = _mask_sensitive_headers(param, value)
 
         return redacted
 
