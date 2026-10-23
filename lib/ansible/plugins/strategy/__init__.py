@@ -168,7 +168,12 @@ def debug_closure(func):
                 if next_action.result == NextAction.REDO:
                     # rollback host state
                     self._tqm.clear_failed_hosts()
-                    if task.run_once and iterator._play.strategy in add_internal_fqcns(('linear',)) and result.utr.failed:
+                    if (
+                        task.run_once
+                        and iterator._play.strategy in add_internal_fqcns(('linear',))
+                        and self.ALLOW_BASE_RUN_ONCE_FAILURE_PROPAGATION
+                        and result.utr.failed
+                    ):
                         for host_name, state in prev_host_states.items():
                             if host_name == host.name:
                                 continue
@@ -228,6 +233,10 @@ class StrategyBase:
     # strategies to disable this and either forego supporting it or managing
     # the throttling internally (as `free` does)
     ALLOW_BASE_THROTTLING = True
+
+    # Strategies that propagate failed ``run_once`` tasks themselves can disable
+    # the base implementation to avoid marking hosts twice.
+    ALLOW_BASE_RUN_ONCE_FAILURE_PROPAGATION = True
 
     def __init__(self, tqm: TaskQueueManager) -> None:
         self._tqm = tqm
@@ -563,7 +572,7 @@ class StrategyBase:
                     state_when_failed = iterator.get_state_for_host(original_host.name)
                     display.debug("marking %s as failed" % original_host.name)
 
-                    if original_task.run_once:
+                    if original_task.run_once and self.ALLOW_BASE_RUN_ONCE_FAILURE_PROPAGATION:
                         # if we're using run_once, we have to fail every host here
                         for h in self._inventory.get_hosts(iterator._play.hosts):
                             if h.name not in self._tqm._unreachable_hosts:
