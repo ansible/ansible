@@ -1,0 +1,3 @@
+bugfixes:
+  - Ansible now warns for all reserved vars being defined, they were currently being silently overwritten, but now will give an adequate warning.
+  - Ansible no longer allows clobbering of some internal variables (group_names, inventory_hostname_short, inventory_hostname, ansible_local, ansible_facts, inventory_file, inventory_dir)
