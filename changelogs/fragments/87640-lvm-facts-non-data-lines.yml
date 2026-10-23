@@ -1,0 +1,5 @@
+bugfixes:
+  - ansible_facts - ``get_lvm_facts`` no longer fails with ``IndexError`` when
+    ``vgs``/``lvs``/``pvs`` output contains unexpected non-data lines (such as
+    LVM informational messages like "Retrying metadata scan."); such lines are
+    now skipped (https://github.com/ansible/ansible/issues/87640).
