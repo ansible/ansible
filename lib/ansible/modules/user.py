@@ -2591,7 +2591,7 @@ class DarwinUser(User):
         if self.append is False:
             for remove in current - target:
                 (_rc, _out, _err) = self.__modify_group(remove, 'delete')
-                rc += rc
+                rc += _rc
                 out += _out
                 err += _err
                 changed = True
@@ -2759,7 +2759,7 @@ class DarwinUser(User):
             err += _err
             changed = rc
 
-        if self.groups:
+        if self.groups is not None:
             (rc, _out, _err, _changed) = self._modify_group()
             out += _out
             err += _err
