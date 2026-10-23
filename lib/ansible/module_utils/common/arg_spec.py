@@ -243,8 +243,9 @@ class ArgumentSpecValidator:
         _validate_argument_values(self.argument_spec, result._validated_parameters, errors=result.errors)
 
         for check in _ADDITIONAL_CHECKS:
+            check_kwargs = {'argument_spec': self.argument_spec} if check['attr'] == 'required_one_of' else {}
             try:
-                check['func'](getattr(self, "_{attr}".format(attr=check['attr'])), result._validated_parameters)
+                check['func'](getattr(self, "_{attr}".format(attr=check['attr'])), result._validated_parameters, **check_kwargs)
             except TypeError as te:
                 result.errors.append(check['err'](to_native(te)))
 
