@@ -430,19 +430,23 @@ def copy_left_only(src, dest, module):
 
 def copy_common_dirs(src, dest, module):
     changed = False
-    common_dirs = filecmp.dircmp(src, dest).common_dirs
-    for item in common_dirs:
+    dircmp = filecmp.dircmp(src, dest)
+    for item in dircmp.common_dirs:
         src_item_path = os.path.join(src, item)
         dest_item_path = os.path.join(dest, item)
         b_src_item_path = to_bytes(src_item_path, errors='surrogate_or_strict')
         b_dest_item_path = to_bytes(dest_item_path, errors='surrogate_or_strict')
         diff_files_changed = copy_diff_files(b_src_item_path, b_dest_item_path, module)
         left_only_changed = copy_left_only(b_src_item_path, b_dest_item_path, module)
-        if diff_files_changed or left_only_changed:
+        ownership_changed = chown_path(module, b_dest_item_path, module.params['owner'], module.params['group'])
+        if diff_files_changed or left_only_changed or ownership_changed:
             changed = True
 
         # recurse into subdirectory
         changed = copy_common_dirs(os.path.join(src, item), os.path.join(dest, item), module) or changed
+    for item in dircmp.same_files:
+        dest_item_path = os.path.join(dest, item)
+        changed |= chown_path(module, dest_item_path, module.params['owner'], module.params['group'])
     return changed
 
 
@@ -456,8 +460,7 @@ def copy_directory(src, dest, module):
         diff_files_changed = copy_diff_files(src, dest, module)
         left_only_changed = copy_left_only(src, dest, module)
         common_dirs_changed = copy_common_dirs(src, dest, module)
-        owner_group_changed = chown_recursive(dest, module)
-        changed = any([diff_files_changed, left_only_changed, common_dirs_changed, owner_group_changed])
+        changed = any([diff_files_changed, left_only_changed, common_dirs_changed])
     return changed
 
 
