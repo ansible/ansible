@@ -1,0 +1,2 @@
+bugfixes:
+  - systemd_service - Avoid systemctl verbs that require a running service manager instance, such as ``show``, ``daemon-reload``, and ``daemon-reexec``, with ``scope=global``, since newer systemd releases reject them with ``--global is not supported for this operation`` (https://github.com/ansible/ansible/issues/85714).
