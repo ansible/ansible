@@ -1,0 +1,2 @@
+bugfixes:
+  - async_wrapper - protect ``ipc_notifier.send`` against ``BrokenPipeError`` and ``OSError`` when the grandparent process exits under slow IO (fixes https://github.com/ansible/ansible/issues/87387).

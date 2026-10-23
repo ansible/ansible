@@ -135,12 +135,17 @@ def _run_module(jid, *module_args):
 
     jwrite({"started": True, "finished": False, "ansible_job_id": jid})
 
-    result = {}
-
     # signal grandchild process started and isolated from being terminated
     # by the connection being closed sending a signal to the job group
-    ipc_notifier.send(True)
-    ipc_notifier.close()
+    try:
+        ipc_notifier.send(True)
+    except (BrokenPipeError, OSError) as ex:
+        notice(f"ipc_notifier.send failed (grandparent exited): {ex}")
+    finally:
+        try:
+            ipc_notifier.close()
+        except (BrokenPipeError, OSError):
+            pass
 
     outdata = ''
     filtered_outdata = ''
