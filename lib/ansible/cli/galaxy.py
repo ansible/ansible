@@ -47,7 +47,7 @@ from ansible.galaxy.collection.concrete_artifact_manager import (
 from ansible.galaxy.collection.gpg import GPG_ERROR_MAP
 from ansible.galaxy.dependency_resolution.dataclasses import Requirement
 
-from ansible.galaxy.role import GalaxyRole
+from ansible.galaxy.role import GalaxyRole, download_roles
 from ansible.galaxy.token import BasicAuthToken, GalaxyToken, KeycloakToken, NoTokenSentinel
 from ansible.module_utils.ansible_release import __version__ as ansible_version
 from ansible.module_utils.common.collections import is_iterable
@@ -313,6 +313,24 @@ class GalaxyCLI(CLI):
 
         self.add_info_options(role_parser, parents=[common, roles_path, offline])
         self.add_install_options(role_parser, parents=[common, force, roles_path])
+        self.add_download_role_options(role_parser, parents=[common])
+
+    def add_download_role_options(self, parser, parents=None):
+        download_parser = parser.add_parser(
+            'download',
+            parents=parents,
+            help='Download roles as tarballs for an offline install.',
+        )
+        download_parser.set_defaults(func=self.execute_download_role)
+
+        download_parser.add_argument('args', help='Role(s)', metavar='role', nargs='*')
+        download_parser.add_argument('-r', '--requirements-file', dest='requirements',
+                                     help='A file containing a list of roles to be downloaded.')
+        download_parser.add_argument('-p', '--download-path', dest='download_path',
+                                     default='./roles',
+                                     help='The directory to download the roles to.')
+        download_parser.add_argument('-i', '--ignore-errors', dest='ignore_errors', action='store_true', default=False,
+                                     help='Ignore errors and continue with the next specified role.')
 
     def add_download_options(self, parser, parents=None):
         download_parser = parser.add_parser('download', parents=parents,
@@ -1055,6 +1073,40 @@ class GalaxyCLI(CLI):
             context.CLIARGS['allow_pre_release'],
             artifacts_manager=artifacts_manager,
         )
+
+        return 0
+
+    def execute_download_role(self):
+        """Download roles as tarballs for an offline install."""
+        role_inputs = context.CLIARGS['args']
+        requirements_file = context.CLIARGS['requirements']
+
+        if role_inputs and requirements_file:
+            raise AnsibleError('The positional role arg and --requirements-file are mutually exclusive.')
+        if not role_inputs and not requirements_file:
+            raise AnsibleError('You must specify a role name or a requirements file.')
+
+        if requirements_file:
+            requirements_file = GalaxyCLI._resolve_path(requirements_file)
+            if not (requirements_file.endswith('.yaml') or requirements_file.endswith('.yml')):
+                raise AnsibleError('Invalid role requirements file, it must end with a .yml or .yaml extension')
+
+            requirements = self._parse_requirements_file(requirements_file)
+            roles = requirements['roles']
+            if requirements['collections']:
+                display.vvv("The requirements file '%s' contains collections which will be ignored." % requirements_file)
+        else:
+            roles = [
+                GalaxyRole(self.galaxy, self.lazy_role_api, **RoleRequirement.role_yaml_parse(role_input))
+                for role_input in role_inputs
+            ]
+
+        download_path = GalaxyCLI._resolve_path(context.CLIARGS['download_path'])
+        b_download_path = to_bytes(download_path, errors='surrogate_or_strict')
+        if not os.path.exists(b_download_path):
+            os.makedirs(b_download_path)
+
+        download_roles(roles, download_path, context.CLIARGS['ignore_errors'])
 
         return 0
 
