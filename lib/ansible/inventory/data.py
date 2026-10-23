@@ -223,8 +223,11 @@ class InventoryData:
 
     def remove_host(self, host: Host) -> None:
 
-        if host.name in self.hosts:
-            del self.hosts[host.name]
+        for hostobj in self.hosts:
+            # match on host name/inventory_hostname is unique id
+            if hostobj.name == host.name:
+                del self.hosts[hostobj]
+                break
 
         for group in self.groups:
             g = self.groups[group]
