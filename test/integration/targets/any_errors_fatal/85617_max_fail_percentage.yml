@@ -1,0 +1,11 @@
+- hosts: testhost,testhost2,testhost3
+  gather_facts: false
+  max_fail_percentage: 10
+  tasks:
+    - name: testhost2 and testhost3 enter the block (testhost2 fails for real, no rescue); testhost diverges here
+      include_tasks: 85617_mfp_block.yml
+      when: inventory_hostname in ["testhost2", "testhost3"]
+
+    - name: max_fail_percentage must not strand a host that never entered the failing block
+      debug:
+        msg: "SHOULD HAPPEN only for the diverged host"
