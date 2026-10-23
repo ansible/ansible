@@ -55,6 +55,7 @@ options:
             - One or more (shell or regex) patterns, which type is controlled by O(use_regex) option.
             - Items whose base names match an O(excludes) pattern are culled from O(patterns) matches.
               Multiple patterns can be specified using a list.
+            - To skip descending into directories entirely, use O(prune).
         type: list
         aliases: [ exclude ]
         version_added: "2.5"
@@ -163,6 +164,16 @@ options:
             - Default is unlimited matches.
         type: int
         version_added: "2.18"
+    prune:
+        description:
+            - List of directory paths that are not descended into during the search.
+            - Unlike O(excludes), which only filters the results, this stops the traversal, so nothing inside these directories is examined.
+            - Paths are compared against the full path of each directory found while walking O(paths).
+            - Pruned directories are themselves excluded from the results, even with the O(file_type=directory).
+            - A path listed in both O(paths) and O(prune) is skipped entirely and produces a warning.
+        type: list
+        elements: path
+        version_added: "2.23"
 extends_documentation_fragment: [action_common_attributes, checksum_common]
 attributes:
     check_mode:
@@ -246,6 +257,16 @@ EXAMPLES = r"""
     use_regex: true
     recurse: true
     limit: 1
+
+- name: Find all files under / without descending into pseudo-filesystems
+  ansible.builtin.find:
+    paths: /
+    recurse: true
+    file_type: any
+    prune:
+      - /proc
+      - /sys
+      - /dev
 """
 
 RETURN = r"""
@@ -501,7 +522,8 @@ def main():
             mode=dict(type='raw'),
             exact_mode=dict(type='bool', default=True),
             encoding=dict(type='str'),
-            limit=dict(type='int')
+            limit=dict(type='int'),
+            prune=dict(type='list', elements='path'),
         ),
         supports_check_mode=True,
     )
@@ -557,6 +579,7 @@ def main():
     if params['limit'] is not None and params['limit'] <= 0:
         module.fail_json(msg="limit cannot be %d (use None for unlimited)" % params['limit'])
 
+    prune_paths = {os.path.abspath(p) for p in params['prune'] or []}
     now = time.time()
     msg = 'All paths examined'
     looked = 0
@@ -566,8 +589,16 @@ def main():
             if not os.path.isdir(npath):
                 raise Exception("'%s' is not a directory" % to_native(npath))
 
+            if os.path.abspath(npath) in prune_paths:
+                module.warn(f"Skipping search path {npath!r} because it is also listed in prune.")
+                continue
+
             # Setting `topdown=True` to explicitly guarantee matches are made from the shallowest directory first
             for root, dirs, files in os.walk(npath, onerror=handle_walk_errors, followlinks=params['follow'], topdown=True):
+                if params['prune']:
+                    dirs[:] = [
+                        d for d in dirs if os.path.abspath(os.path.join(root, d)) not in prune_paths
+                    ]
                 looked = looked + len(files) + len(dirs)
                 for fsobj in (files + dirs):
                     fsname = os.path.normpath(os.path.join(root, fsobj))
