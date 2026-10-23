@@ -402,13 +402,13 @@ class PluginLoader:
         package = data.get('package')
         config = data.get('config')
         subdir = data.get('subdir')
-        aliases = data.get('aliases')
+        aliases = data.get('aliases') or Sentinel
         base_class = data.get('base_class')
 
         PATH_CACHE[class_name] = data.get('PATH_CACHE')
         PLUGIN_PATH_CACHE[class_name] = data.get('PLUGIN_PATH_CACHE')
 
-        self.__init__(class_name, package, config, subdir, aliases, base_class)
+        self.__init__(class_name, package, config, subdir, aliases=aliases, required_base_class=base_class)
         self._extra_dirs = data.get('_extra_dirs', [])
         self._searched_paths = data.get('_searched_paths', set())
 
@@ -1314,6 +1314,33 @@ class Jinja2Loader(PluginLoader):
         self._plugin_wrapper_type = plugin_wrapper_type
         self._plugin_type_friendly_name = 'filter' if plugin_wrapper_type is AnsibleJinja2Filter else 'test'
         self._cached_non_collection_wrappers: dict[str, AnsibleJinja2Filter | AnsibleJinja2Test | _DeferredPluginLoadFailure] = {}
+
+    def __setstate__(self, data):
+        """
+        Deserializer.
+        """
+        class_name = data.get('class_name')
+        package = data.get('package')
+        config = data.get('config')
+        subdir = data.get('subdir')
+        plugin_wrapper_type = data.get('plugin_wrapper_type')
+        aliases = data.get('aliases') or Sentinel
+        base_class = data.get('base_class')
+
+        PATH_CACHE[class_name] = data.get('PATH_CACHE')
+        PLUGIN_PATH_CACHE[class_name] = data.get('PLUGIN_PATH_CACHE')
+
+        self.__init__(class_name, package, config, subdir, plugin_wrapper_type, aliases=aliases, required_base_class=base_class)
+        self._extra_dirs = data.get('_extra_dirs', [])
+        self._searched_paths = data.get('_searched_paths', set())
+
+    def __getstate__(self):
+        """
+        Serializer.
+        """
+        data = super(Jinja2Loader, self).__getstate__()
+        data['plugin_wrapper_type'] = self._plugin_wrapper_type
+        return data
 
     def _clear_caches(self):
         super(Jinja2Loader, self)._clear_caches()
