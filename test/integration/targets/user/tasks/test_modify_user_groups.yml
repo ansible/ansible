@@ -20,8 +20,8 @@
       assert:
         that:
           - user_groups_create.groups is defined
-          - "'bin' in user_groups_create.groups"
-          - "'daemon' in user_groups_create.groups"
+          - "'bin' in user_groups_create.groups | split(',') | list"
+          - "'daemon' in user_groups_create.groups | split(',') | list"
 
     - name: Specify empty groups list with append=false
       user:
@@ -36,8 +36,8 @@
         that:
           - user_groups_remove.changed
           - user_groups_remove.groups is defined
-          - "'bin' not in user_groups_remove.groups"
-          - "'daemon' not in user_groups_remove.groups"
+          - "'bin' not in user_groups_remove.groups | split(',') | list"
+          - "'daemon' not in user_groups_remove.groups | split(',') | list"
 
     - name: re-add initial groups ahead of the append=true test
       user:
@@ -60,8 +60,8 @@
         that:
           - not user_groups_append_empty.changed
           - user_groups_append_empty.groups is defined
-          - "'bin' in user_groups_append_empty.groups"
-          - "'daemon' in user_groups_append_empty.groups"
+          - "'bin' in user_groups_append_empty.groups | split(',') | list"
+          - "'daemon' in user_groups_append_empty.groups | split(',') | list"
   always:
     - name: clean up test user
       user:
