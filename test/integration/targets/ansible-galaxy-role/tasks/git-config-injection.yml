@@ -40,9 +40,10 @@
           - stderr is search(error2)
           - (stderr | regex_findall("git clone") | length) == (stderr | regex_findall("git clone --") | length) == 2
       vars:
-        stderr: "{{ result.stderr | regex_replace('\\n', ' ') }}"
-        error1: "repository '{{ invalid_git_opts }}' does not exist"
-        error2: "Cloning into '{{ invalid_git_opts }}'"
+        stderr: >-
+          {{ result.stderr | regex_replace('\n', ' ') | regex_replace('\\n', ' ') | regex_replace("\\'", "'") }}
+        error1: "repository '{{ invalid_git_opts | regex_escape }}' does not exist"
+        error2: "Cloning into '{{ invalid_git_opts | regex_escape }}'"
 
   always:
     - name: Uninstall git if it was installed
