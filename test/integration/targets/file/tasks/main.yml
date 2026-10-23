@@ -962,6 +962,51 @@
 
 # END #55971
 
+# Regression test for https://github.com/ansible/ansible/issues/86146
+- block:
+  - name: Create relative hardlink source file
+    copy:
+      content: "relative hardlink source"
+      dest: relative_hardlink_source
+
+  - name: Create existing relative hardlink destination file
+    copy:
+      content: "existing hardlink destination"
+      dest: relative_hardlink_dest
+
+  - name: Replace existing relative file with hardlink
+    file:
+      src: relative_hardlink_source
+      dest: relative_hardlink_dest
+      state: hard
+      force: true
+    register: replace_relative_file_with_hardlink
+
+  - name: Stat relative hardlink source
+    stat:
+      path: relative_hardlink_source
+    register: relative_hardlink_source_stat
+
+  - name: Stat replaced relative hardlink destination
+    stat:
+      path: relative_hardlink_dest
+    register: relative_hardlink_dest_stat
+
+  - name: Ensure existing file was replaced with relative hardlink
+    assert:
+      that:
+        - replace_relative_file_with_hardlink is changed
+        - relative_hardlink_source_stat.stat.inode == relative_hardlink_dest_stat.stat.inode
+
+  always:
+    - name: Remove relative hardlink test files
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - relative_hardlink_source
+        - relative_hardlink_dest
+
 - name: Regression test for https://github.com/ansible/ansible/issues/57573
   block:
     - name: Create directory
