@@ -163,7 +163,12 @@ def _configure_base(base, config_dict):
         conf.cacheonly = True
 
     autoremove = config_dict.get('autoremove', False)
-    conf.clean_requirements_on_remove = autoremove
+    # `clean_requirements_on_remove` can be set independently of `autoremove`. When it is
+    # not specified, fall back to `autoremove` to preserve backwards compatibility.
+    clean_requirements_on_remove = config_dict.get('clean_requirements_on_remove')
+    if clean_requirements_on_remove is None:
+        clean_requirements_on_remove = autoremove
+    conf.clean_requirements_on_remove = clean_requirements_on_remove
 
     install_weak_deps = config_dict.get('install_weak_deps', True)
     conf.install_weak_deps = install_weak_deps
