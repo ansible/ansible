@@ -382,6 +382,47 @@ def test_reboot_command_reconnection_retries_option_unsupported(action_plugin, m
     set_option_spy.assert_not_called()
 
 
+@pytest.mark.parametrize(
+    'task_args',
+    (
+        {
+            'reboot_timeout': 5,
+            'reboot_command': _SENTINEL_REBOOT_COMMAND,
+            'test_command': _SENTINEL_TEST_COMMAND,
+        },
+    ),
+    ids=('reboot command with spaces', ),
+    indirect=('task_args', ),
+)
+def test_reboot_command_set_option_attribute_error_does_not_restore(action_plugin, mocker, monkeypatch, task_args):
+    """If set_option('reconnection_retries', 0) raises AttributeError, the option was never
+    actually overridden, so no restore attempt should be made afterwards (reconnection_retries_changed
+    must stay False)."""
+    original_retries = 3
+    connection = _connection_with_options(mocker, reconnection_retries=original_retries)
+
+    def _set_option(name, value):
+        if name == 'reconnection_retries' and value == 0:
+            raise AttributeError("Connection plugin does not allow reconnection_retries to be overridden")
+        raise AssertionError('set_option should not be called to restore a value that was never overridden')
+
+    connection.set_option = mocker.Mock(side_effect=_set_option)
+    action_plugin._connection = connection
+
+    monkeypatch.setattr(action_plugin, '_low_level_execute_command', lambda *_a, **_kw: {
+        'rc': 0,
+        'stderr': '<reboot command stub-stderr>',
+        'stdout': '<reboot command stub-stdout>',
+    })
+
+    result = action_plugin.perform_reboot(task_vars={}, distribution={})
+
+    assert result['failed'] is False
+    # set_option was only called once, to attempt setting reconnection_retries to 0. It must not
+    # be called again in the `finally` block to "restore" a value that was never successfully changed.
+    connection.set_option.assert_called_once_with('reconnection_retries', 0)
+
+
 def test_reboot_command_real_ssh_retry_prevents_duplicate_command(action_plugin, monkeypatch):
     """Regression test for the duplicate-reboot bug using a real ssh connection plugin instance.
 

@@ -341,19 +341,21 @@ class ActionModule(ActionBase):
         # the host shuts down, such a retry would resend the reboot/shutdown command to a host that may
         # already be rebooting.
         original_reconnection_retries = None
+        reconnection_retries_changed = False
         try:
             original_reconnection_retries = self._connection.get_option('reconnection_retries')
         except KeyError:
             display.debug("{action}: reconnection_retries connection option has not been set".format(action=self._task.action))
 
-        try:
-            if original_reconnection_retries is not None:
-                try:
-                    display.debug("{action}: setting reconnection_retries to 0 for reboot command".format(action=self._task.action))
-                    self._connection.set_option("reconnection_retries", 0)
-                except AttributeError:
-                    display.warning("Connection plugin does not allow reconnection_retries to be overridden")
+        if original_reconnection_retries is not None:
+            try:
+                display.debug("{action}: setting reconnection_retries to 0 for reboot command".format(action=self._task.action))
+                self._connection.set_option("reconnection_retries", 0)
+                reconnection_retries_changed = True
+            except AttributeError:
+                display.warning("Connection plugin does not allow reconnection_retries to be overridden")
 
+        try:
             try:
                 display.vvv("{action}: rebooting server...".format(action=self._task.action))
                 display.debug("{action}: rebooting server with command '{command}'".format(action=self._task.action, command=reboot_command))
@@ -363,7 +365,7 @@ class ActionModule(ActionBase):
                 display.debug('{action}: AnsibleConnectionFailure caught and handled: {error}'.format(action=self._task.action, error=to_text(e)))
                 reboot_result['rc'] = 0
         finally:
-            if original_reconnection_retries is not None:
+            if reconnection_retries_changed:
                 try:
                     display.debug("{action}: restoring reconnection_retries to original value of {value}".format(
                         action=self._task.action, value=original_reconnection_retries))
