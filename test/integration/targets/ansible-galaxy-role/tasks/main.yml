@@ -65,7 +65,7 @@
 - assert:
     that:
       - invalid.rc != 0
-      - 'invalid.stderr is search("Invalid linkname for tarfile member: path / is not a subpath of the role")'
+      - 'invalid.stderr is search("Invalid linkname for tarfile member: path (:?/|/root/invalid) is not a subpath of the role")'
 
 - name: Uninstall invalid role
   command: ansible-galaxy role remove invalid-testrole
