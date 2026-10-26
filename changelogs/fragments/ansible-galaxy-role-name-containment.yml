@@ -1,0 +1,3 @@
+security_fixes:
+- >-
+  ``ansible-galaxy role install`` - fix validating the role name is contained to the configured role path. (CVE-2026-105929)
