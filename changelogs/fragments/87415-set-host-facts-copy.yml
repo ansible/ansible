@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible_facts - initial facts from ``run_once`` tasks no longer reference the same object and can be updated for individual hosts
