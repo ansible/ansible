@@ -1056,7 +1056,8 @@ def set_remote_branch(git_path, module, dest, remote, version, depth):
         "fetch",
         f"--depth={depth}",
         remote,
-        f"+refs/heads/{version}:refs/heads/{version} +refs/heads/{version}:refs/remotes/{remote}/{version}",
+        f"+refs/heads/{version}:refs/heads/{version}",
+        f"+refs/heads/{version}:refs/remotes/{remote}/{version}",
     ]
     (rc, out, err) = module.run_command(cmd, cwd=dest)
     if rc != 0:
