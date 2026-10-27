@@ -1,0 +1,4 @@
+bugfixes:
+  - >-
+    distribution facts - report SLES Immutable and openSUSE Leap Immutable under their own name instead of ``SL-Micro``.
+    Only SUSE Linux Micro is reported as ``SL-Micro`` when ``VARIANT_ID`` is ``transactional``.
