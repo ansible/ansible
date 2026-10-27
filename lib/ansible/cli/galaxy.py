@@ -60,6 +60,7 @@ from ansible._internal._templating._engine import TemplateEngine
 from ansible.template import trust_as_template
 from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.utils.display import Display
+from ansible.utils.path import is_subpath
 from ansible.utils.plugin_docs import get_versioned_doclink
 from ansible.utils.vars import load_extra_vars
 
@@ -1461,6 +1462,15 @@ class GalaxyCLI(CLI):
                 continue
 
             display.vvv('Processing role %s ' % role.name)
+
+            if not any(
+                is_subpath(os.path.join(path, role.name), path, real=True)
+                for path in context.CLIARGS['roles_path']
+            ):
+                display.warning(f"The role name '{role.name}' resolves to a path outside of the configured role directory")
+                self.exit_without_ignore()
+                display.display(f'- skipping role {role.name}')
+                continue
 
             # query the galaxy API for the role data
 
