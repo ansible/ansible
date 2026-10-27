@@ -1001,7 +1001,7 @@ def submodules_fetch(git_path, module, remote, track_submodules, dest):
                 branch = get_submodule_branch(git_path, module, dest, submodule)
                 version_ref = 'HEAD' if branch == 'HEAD' else shlex.quote(f'{remote}/{branch}')
                 submodule_path = os.path.join(dest, submodule)
-                cmd = [git_path, 'rev-parse', '--', version_ref]
+                cmd = [git_path, 'rev-parse', version_ref]
                 (rc, out, err) = module.run_command(cmd, cwd=submodule_path)
                 if rc != 0:
                     module.fail_json(
