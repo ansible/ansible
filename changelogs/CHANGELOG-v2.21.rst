@@ -4,6 +4,38 @@ ansible-core 2.21 "The Rain Song" Release Notes
 
 .. contents:: Topics
 
+v2.21.6rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2026-10-27
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.21/porting_guides/porting_guide_core_2.21.html>`__
+
+Minor Changes
+-------------
+
+- ansible-test - Replace FreeBSD 14.4 remote with 14.5.
+- ansible-test - Replace FreeBSD 15.0 remote with 15.1.
+- ansible-test - Replace RHEL 10.1 remote with 10.2.
+- ansible-test - Replace RHEL 9.7 remote with 9.8.
+
+Security Fixes
+--------------
+
+- ``ansible-galaxy collection install`` - fix validating ``FILES.json`` entries are contained in the collection before creating them. (CVE-2026-89091)
+- ``ansible-galaxy role install`` - fix validating the role name is contained to the configured role path. (CVE-2026-105929)
+
+Bugfixes
+--------
+
+- ansible_facts - initial facts from ``run_once`` tasks no longer reference the same object and can be updated for individual hosts
+- git module - updated to avoid possible incorrect parameters read from the repo targets. CVE-2026-84503
+- module_utils.mask_url - handle exceptions on parseurl to avoid disclosing url itself.
+- sudo become plugin, sudo-rs compatibility fix for non english locales
+- user - On BusyBox systems, preserve the existing password lock marker when ``password_lock`` is omitted.
+
 v2.21.5
 =======
 
