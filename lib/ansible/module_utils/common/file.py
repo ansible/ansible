@@ -6,27 +6,39 @@ from __future__ import annotations
 import os
 import stat
 import re
+import typing as t
 
 
+# Keys are ordered the way lsattr prints flags and _sort_attr_flags() relies on
+# that, so do not reorder them. The order is taken from flags_array in
+# lib/e2p/pf.c in e2fsprogs, which print_flags() walks once per file; neither
+# chattr(1) nor lsattr(1) documents it, both listing flags alphabetically
+# instead. The last three are no longer printed by current lsattr and are kept
+# for older versions.
 FILE_ATTRIBUTES = {
-    'A': 'noatime',
-    'a': 'append',
-    'c': 'compressed',
-    'C': 'nocow',
-    'd': 'nodump',
-    'D': 'dirsync',
-    'e': 'extents',
-    'E': 'encrypted',
-    'h': 'blocksize',
-    'i': 'immutable',
-    'I': 'indexed',
-    'j': 'journalled',
-    'N': 'inline',
     's': 'zero',
+    'u': 'undelete',
     'S': 'synchronous',
+    'D': 'dirsync',
+    'i': 'immutable',
+    'a': 'append',
+    'd': 'nodump',
+    'A': 'noatime',
+    'c': 'compressed',
+    'E': 'encrypted',
+    'j': 'journalled',
+    'I': 'indexed',
     't': 'notail',
     'T': 'blockroot',
-    'u': 'undelete',
+    'e': 'extents',
+    'C': 'nocow',
+    'x': 'dax',
+    'F': 'casefold',
+    'N': 'inline',
+    'P': 'projinherit',
+    'V': 'verity',
+    'm': 'nocompress',
+    'h': 'blocksize',
     'X': 'compressedraw',
     'Z': 'compresseddirty',
 }
@@ -81,6 +93,13 @@ def format_attributes(attributes):
 def get_flags_from_attributes(attributes):
     flags = [key for key, attr in FILE_ATTRIBUTES.items() if attr in attributes]
     return ''.join(flags)
+
+
+def _sort_attr_flags(flags: t.Iterable[str]) -> str:
+    """Return ``flags`` as a string ordered the way lsattr prints them, unknown flags last."""
+    flags = set(flags)
+    known = [flag for flag in FILE_ATTRIBUTES if flag in flags]
+    return ''.join(known + sorted(flags.difference(FILE_ATTRIBUTES)))
 
 
 def get_file_arg_spec():
