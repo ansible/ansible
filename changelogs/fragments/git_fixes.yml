@@ -1,0 +1,2 @@
+bugfixes:
+  - git module - updated to avoid possible incorrect parameters read from the repo targets. CVE-2026-84503
