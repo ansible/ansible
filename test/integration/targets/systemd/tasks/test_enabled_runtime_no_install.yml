@@ -1,0 +1,52 @@
+# Simulates a unit enabled by a systemd generator, which cannot be enabled persistently
+# https://github.com/ansible/ansible/issues/86214
+- name: Copy unit file without an Install section
+  template:
+    src: qux.service
+    dest: /etc/systemd/system/qux.service
+    owner: root
+    group: root
+    mode: '0644'
+  notify: remove enabled-runtime unit file without Install section
+
+- name: Create runtime wants directory
+  file:
+    path: /run/systemd/system/multi-user.target.wants
+    state: directory
+
+- name: Link the unit at runtime only
+  file:
+    src: /etc/systemd/system/qux.service
+    dest: /run/systemd/system/multi-user.target.wants/qux.service
+    state: link
+  notify: remove enabled-runtime unit file without Install section
+
+- name: Reload systemd
+  systemd:
+    daemon_reload: true
+
+- name: Check the unit is enabled-runtime
+  command: systemctl is-enabled qux.service
+  register: qux_is_enabled
+  changed_when: false
+
+- name: Enable enabled-runtime service without Install section
+  systemd:
+    name: qux.service
+    enabled: true
+  register: qux_test_1
+
+- name: Enable enabled-runtime service without Install section again
+  systemd:
+    name: qux.service
+    enabled: true
+  register: qux_test_2
+
+- assert:
+    that:
+      - qux_is_enabled.stdout == 'enabled-runtime'
+      - qux_test_1 is not changed
+      - qux_test_1 is success
+      - qux_test_1.enabled
+      - qux_test_2 is not changed
+      - qux_test_2 is success
