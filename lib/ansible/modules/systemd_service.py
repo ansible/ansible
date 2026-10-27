@@ -546,7 +546,8 @@ def main():
                     if enabled_runtime:
                         # a unit enabled at runtime without an [Install] section (for example linked by a generator)
                         # cannot be enabled persistently, systemctl enable is a no-op in that case
-                        (rc, out, err) = module.run_command("%s is-enabled '%s' -l" % (systemctl, unit))
+                        systemctl_enable_cmd = [systemctl, "is-enabled", unit, "-l"]
+                        (rc, out, err) = module.run_command(systemctl_enable_cmd)
                         if rc == 0 and out.rstrip() == "enabled-runtime":
                             result['changed'] = False
 
