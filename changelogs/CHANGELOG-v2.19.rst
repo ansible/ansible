@@ -4,6 +4,31 @@ ansible-core 2.19 "What Is and What Should Never Be" Release Notes
 
 .. contents:: Topics
 
+v2.19.15rc1
+===========
+
+Release Summary
+---------------
+
+| Release Date: 2026-10-27
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.19/porting_guides/porting_guide_core_2.19.html>`__
+
+Minor Changes
+-------------
+
+- ansible-test - Remove unsupported FreeBSD 13.5 remote.
+
+Security Fixes
+--------------
+
+- ``ansible-galaxy collection install`` - fix validating ``FILES.json`` entries are contained in the collection before creating them. (CVE-2026-89091)
+- ``ansible-galaxy role install`` - fix validating the role name is contained to the configured role path. (CVE-2026-105929)
+
+Bugfixes
+--------
+
+- git module - updated to avoid possible incorrect parameters read from the repo targets. CVE-2026-84503
+
 v2.19.14
 ========
 
