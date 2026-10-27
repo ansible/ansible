@@ -1391,6 +1391,31 @@ releases:
     - ansible-test-validate-modules-secret.yml
     - ensure_conn_cli_dir_perms.yml
     release_date: '2026-09-29'
+  2.19.15rc1:
+    changes:
+      bugfixes:
+      - git module - updated to avoid possible incorrect parameters read from the
+        repo targets. CVE-2026-84503
+      minor_changes:
+      - ansible-test - Remove unsupported FreeBSD 13.5 remote.
+      release_summary: '| Release Date: 2026-10-27
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.19/porting_guides/porting_guide_core_2.19.html>`__
+
+        '
+      security_fixes:
+      - '``ansible-galaxy collection install`` - fix validating ``FILES.json`` entries
+        are contained in the collection before creating them. (CVE-2026-89091)'
+      - '``ansible-galaxy role install`` - fix validating the role name is contained
+        to the configured role path. (CVE-2026-105929)'
+    codename: What Is and What Should Never Be
+    fragments:
+    - 2.19.15rc1_summary.yaml
+    - ansible-galaxy-collection-check-path-containment.yml
+    - ansible-galaxy-role-name-containment.yml
+    - ansible-test-remove-freebsd-13.5.yml
+    - git_fixes.yml
+    release_date: '2026-10-27'
   2.19.1rc1:
     changes:
       bugfixes:
