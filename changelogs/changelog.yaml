@@ -852,3 +852,44 @@ releases:
     - dnf5-download_dir-download_only.yml
     - ensure_conn_cli_dir_perms.yml
     release_date: '2026-09-29'
+  2.21.6rc1:
+    changes:
+      bugfixes:
+      - ansible_facts - initial facts from ``run_once`` tasks no longer reference
+        the same object and can be updated for individual hosts
+      - git module - updated to avoid possible incorrect parameters read from the
+        repo targets. CVE-2026-84503
+      - module_utils.mask_url - handle exceptions on parseurl to avoid disclosing
+        url itself.
+      - sudo become plugin, sudo-rs compatibility fix for non english locales
+      - user - On BusyBox systems, preserve the existing password lock marker when
+        ``password_lock`` is omitted.
+      minor_changes:
+      - ansible-test - Replace FreeBSD 14.4 remote with 14.5.
+      - ansible-test - Replace FreeBSD 15.0 remote with 15.1.
+      - ansible-test - Replace RHEL 10.1 remote with 10.2.
+      - ansible-test - Replace RHEL 9.7 remote with 9.8.
+      release_summary: '| Release Date: 2026-10-27
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.21/porting_guides/porting_guide_core_2.21.html>`__
+
+        '
+      security_fixes:
+      - '``ansible-galaxy collection install`` - fix validating ``FILES.json`` entries
+        are contained in the collection before creating them. (CVE-2026-89091)'
+      - '``ansible-galaxy role install`` - fix validating the role name is contained
+        to the configured role path. (CVE-2026-105929)'
+    codename: The Rain Song
+    fragments:
+    - 2.21.6rc1_summary.yaml
+    - 87415-set-host-facts-copy.yml
+    - ansible-galaxy-collection-check-path-containment.yml
+    - ansible-galaxy-role-name-containment.yml
+    - ansible-test-freebsd.yml
+    - ansible-test-rhel.yml
+    - bump-freebsd-15-0-to-15-1.yml
+    - git_fixes.yml
+    - mask_url_except.yml
+    - sudo_moar_rs.yml
+    - user-busybox-password-lock.yml
+    release_date: '2026-10-27'
