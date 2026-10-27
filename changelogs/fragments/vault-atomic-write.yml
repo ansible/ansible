@@ -1,0 +1,4 @@
+bugfixes:
+  - ansible-vault - write the new contents to a temporary file before destroying the original one, so
+    an interrupted ``encrypt``, ``decrypt`` or ``rekey`` no longer leaves the file empty or destroyed
+    with no way to recover it (https://github.com/ansible/ansible/issues/87679).

@@ -293,6 +293,59 @@ class TestVaultEditor(unittest.TestCase):
 
         self._assert_file_is_encrypted(ve, src_file_path, src_file_contents)
 
+    def test_encrypt_file_write_failure_keeps_original(self):
+        self._test_dir = self._create_test_dir()
+        src_file_contents = to_bytes("some info in a file\nyup.")
+        src_file_path = self._create_file(self._test_dir, 'src_file', content=src_file_contents)
+
+        ve = self._vault_editor()
+
+        with patch('ansible.parsing.vault.os.write', side_effect=OSError('disk full')):
+            self.assertRaisesRegex(errors.AnsibleError, 'Unable to write to temporary vault file',
+                                   ve.encrypt_file, src_file_path, self.vault_secret)
+
+        # the original contents must be untouched and no temporary file left behind
+        with open(src_file_path, 'rb') as src_file:
+            self.assertEqual(src_file.read(), src_file_contents)
+        self.assertEqual(os.listdir(self._test_dir), ['src_file'])
+
+    def test_encrypt_file_interrupted_keeps_encrypted_data(self):
+        self._test_dir = self._create_test_dir()
+        src_file_contents = to_bytes("some info in a file\nyup.")
+        src_file_path = self._create_file(self._test_dir, 'src_file', content=src_file_contents)
+
+        ve = self._vault_editor()
+
+        # simulate a crash between destroying the original and installing the new file
+        with patch('ansible.parsing.vault.os.replace', side_effect=OSError('interrupted')):
+            self.assertRaises(OSError, ve.encrypt_file, src_file_path, self.vault_secret)
+
+        # the encrypted contents must still be recoverable from the directory
+        remaining = [os.path.join(self._test_dir, name) for name in os.listdir(self._test_dir)]
+        recoverable = []
+        for path in remaining:
+            with open(path, 'rb') as vault_file:
+                contents = vault_file.read()
+            if vault.is_encrypted(contents):
+                recoverable.append(ve.vault.decrypt(contents))
+
+        self.assertIn(src_file_contents, recoverable)
+
+    def test_decrypt_file_interrupted_keeps_vault(self):
+        self._test_dir = self._create_test_dir()
+        src_file_contents = to_bytes("some info in a file\nyup.")
+        src_file_path = self._create_file(self._test_dir, 'src_file', content=src_file_contents)
+
+        ve = self._vault_editor()
+        ve.encrypt_file(src_file_path, self.vault_secret)
+
+        with patch('ansible.parsing.vault.os.replace', side_effect=OSError('interrupted')):
+            self.assertRaises(OSError, ve.decrypt_file, src_file_path)
+
+        # the vault must be intact and no decrypted data left behind
+        self._assert_file_is_encrypted(ve, src_file_path, src_file_contents)
+        self.assertEqual(os.listdir(self._test_dir), ['src_file'])
+
     def test_encrypt_file_symlink(self):
         self._test_dir = self._create_test_dir()
 

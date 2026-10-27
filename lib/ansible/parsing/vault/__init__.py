@@ -1056,35 +1056,43 @@ class VaultEditor:
         else:
             if not os.access(os.path.dirname(thefile), os.W_OK):
                 raise AnsibleError("Destination '%s' not writable" % (os.path.dirname(thefile)))
-            # file names are insecure and prone to race conditions, so remove and create securely
-            if os.path.isfile(thefile):
-                if shred:
-                    self._shred_file(thefile)
-                else:
-                    os.remove(thefile)
 
-            # when setting new umask, we get previous as return
-            current_umask = os.umask(0o077)
+            # Write the new data to a temporary file in the destination directory first, so that
+            # an interruption cannot leave the user without either the old or the new contents.
+            fd, tmp_path = tempfile.mkstemp(prefix='.ansible-vault-', dir=os.path.dirname(thefile))
+
             try:
                 try:
-                    # create file with secure permissions
-                    fd = os.open(thefile, os.O_CREAT | os.O_EXCL | os.O_RDWR | os.O_TRUNC, mode)
-                except FileExistsError as ex:
-                    raise AnsibleError('Vault file got recreated while we were operating on it.') from ex
-                except OSError as ex:
-                    raise AnsibleError('Problem creating temporary vault file.') from ex
+                    os.fchmod(fd, mode)
+                except (AttributeError, OSError):
+                    pass  # no fchmod on this platform, mkstemp already created it 0600
 
                 try:
-                    # now write to the file and ensure ours is only data in it
-                    os.ftruncate(fd, 0)
                     os.write(fd, b_file_data)
+                    os.fsync(fd)
                 except OSError as e:
                     raise AnsibleError('Unable to write to temporary vault file: %s' % to_native(e))
                 finally:
-                    # Make sure the file descriptor is always closed and reset umask
                     os.close(fd)
-            finally:
-                os.umask(current_umask)
+            except Exception:
+                # nothing else has been touched yet, destroy the incomplete temporary file
+                self._shred_file(tmp_path)
+                raise
+
+            # now destroy the original data, then atomically replace it with the new file
+            try:
+                if shred and os.path.isfile(thefile):
+                    self._shred_file(thefile)
+
+                os.replace(tmp_path, thefile)
+            except Exception:
+                if shred:
+                    # the original is already gone, leave the new data on disk so it can be recovered
+                    display.warning("Unable to replace '%s', the new contents were left in '%s'." % (thefile, tmp_path))
+                else:
+                    # the original is still in place, do not leave the new plaintext behind
+                    self._shred_file(tmp_path)
+                raise
 
     def shuffle_files(self, src, dest):
         prev = None
