@@ -4,6 +4,33 @@ ansible-core 2.22 "Thank You" Release Notes
 
 .. contents:: Topics
 
+v2.22.0rc2
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2026-10-27
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.22/porting_guides/porting_guide_core_2.22.html>`__
+
+Deprecated Features
+-------------------
+
+- task result - Inferred task failure from a non-zero ``rc`` key and absence of a ``failed`` key emits a runtime deprecation warning. Actions and modules must explicitly communicate failure by setting the ``failed`` key, using APIs that do so, or raising an unhandled exception. In ansible-core 2.24, the ``rc`` key will receive no special handling during task result processing.
+
+Security Fixes
+--------------
+
+- ``ansible-galaxy role install`` - fix validating the role name is contained to the configured role path. (CVE-2026-105929)
+
+Bugfixes
+--------
+
+- ``module_utils.urls`` - restore support for the ``yes`` and ``no`` values of ``follow_redirects`` which were accidentally removed for direct callers of ``open_url``, ``fetch_url`` and ``Request`` (https://github.com/ansible/ansible/issues/87719)
+- ansible_facts - initial facts from ``run_once`` tasks no longer reference the same object and can be updated for individual hosts
+- git module - updated to avoid possible incorrect parameters read from the repo targets. CVE-2026-84503
+- user - On BusyBox systems, preserve the existing password lock marker when ``password_lock`` is omitted.
+
 v2.22.0rc1
 ==========
 
