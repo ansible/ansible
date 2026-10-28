@@ -1,0 +1,5 @@
+minor_changes:
+  - ansible-test - Replace the ``pytest-forked`` pytest plugin with a custom plugin.
+bugfixes:
+  - ansible-test - Unit tests now report warnings generated during test runs.
+                   Previously only warnings generated during test collection were reported.
