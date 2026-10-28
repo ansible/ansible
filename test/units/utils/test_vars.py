@@ -25,7 +25,8 @@ from unittest import mock
 import unittest
 
 from ansible.errors import AnsibleError
-from ansible._internal._datatag._tags import Origin
+from ansible._internal._datatag._tags import Origin, VaultedValue
+from ansible.module_utils._internal._datatag import AnsibleTagHelper
 from ansible.parsing.vault import EncryptedString
 from ansible.utils.vars import combine_vars, merge_hash, transform_to_native_types
 from units.mock.vault_helper import VaultTestHelper
@@ -294,6 +295,31 @@ def test_transform_to_native_types() -> None:
 
     assert all(type(key) is str for key in result.keys())  # pylint: disable=unidiomatic-typecheck
     assert all(type(value) is str for value in result.values())  # pylint: disable=unidiomatic-typecheck
+
+
+def test_transform_to_native_types_redacts_decrypted_vaulted_value() -> None:
+    """Verify that a value decrypted before it reaches transform_to_native_types is still redacted.
+
+    A vaulted value that has already been decrypted (for example, by the time a filter
+    plugin sees it) is a plain string carrying a VaultedValue tag, not an EncryptedString,
+    so redaction must key off the tag as well.
+    """
+    vaulted = AnsibleTagHelper.tag("my-secret-plaintext", {VaultedValue(ciphertext="$ANSIBLE_VAULT;1.1;AES256;bogus")})
+
+    result = transform_to_native_types({"password": vaulted, "nested": [vaulted], "plain": "hello"})
+
+    assert result == {"password": "<redacted>", "nested": ["<redacted>"], "plain": "hello"}
+    assert type(result["password"]) is str  # pylint: disable=unidiomatic-typecheck
+    assert type(result["nested"][0]) is str  # pylint: disable=unidiomatic-typecheck
+
+
+def test_transform_to_native_types_unredacted_vaulted_value() -> None:
+    """Verify that redaction disabled leaves a decrypted vaulted value as plaintext."""
+    vaulted = AnsibleTagHelper.tag("my-secret-plaintext", {VaultedValue(ciphertext="$ANSIBLE_VAULT;1.1;AES256;bogus")})
+
+    result = transform_to_native_types({"password": vaulted}, redact=False)
+
+    assert result == {"password": "my-secret-plaintext"}
 
 
 def test_transform_to_native_types_unredacted(_vault_secrets_context: None) -> None:

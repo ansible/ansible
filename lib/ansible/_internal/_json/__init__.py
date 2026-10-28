@@ -19,7 +19,7 @@ from ansible.module_utils._internal._datatag import (
 )
 from ansible.module_utils._internal._json._profiles import _tagless
 from ansible.parsing.vault import EncryptedString
-from ansible._internal._datatag._tags import Origin, TrustedAsTemplate
+from ansible._internal._datatag._tags import Origin, TrustedAsTemplate, VaultedValue
 from ansible._internal._templating import _transform
 from ansible.module_utils import _internal
 from ansible.module_utils._internal import _datatag
@@ -159,6 +159,16 @@ class AnsibleVariableVisitor:
                     value_type = str
                 case EncryptedStringBehavior.FAIL:
                     raise AnsibleVariableTypeError.from_value(obj=value)
+        elif (
+            self.encrypted_string_behavior is EncryptedStringBehavior.REDACT
+            and isinstance(value, str)
+            and VaultedValue.get_tag(value) is not None
+        ):
+            # Values that were already decrypted (for example, before reaching a filter plugin)
+            # still carry the VaultedValue tag; redaction must apply to them as well, otherwise
+            # the plaintext leaks through transform_to_native_types with redact=True.
+            value = "<redacted>"  # type: ignore[assignment]
+            value_type = str
         elif self.apply_transforms and value_type in _transform._type_transform_mapping:
             value = self._template_engine.transform(value)
             value_type = type(value)

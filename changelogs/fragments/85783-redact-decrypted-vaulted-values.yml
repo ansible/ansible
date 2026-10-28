@@ -1,0 +1,3 @@
+bugfixes:
+  - transform_to_native_types - redact values that were already decrypted but still carry the
+    ``VaultedValue`` tag, instead of leaking the plaintext (https://github.com/ansible/ansible/issues/85783).
