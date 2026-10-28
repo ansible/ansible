@@ -79,21 +79,18 @@ def split_args(args):
     Basically this is a variation shlex that has some more intelligence for
     how Ansible needs to use it.
     """
-
-    # the list of params parsed out of the arg string
-    # this is going to be the result value when we are done
     params = []
-
-    # here we encode the args, so we have a uniform charset to
-    # work with, and split on white space
+    
+    # normalize input to str and decode bytes if necessary
+    if isinstance(args, bytes):
+        try:
+            args = args.decode('utf-8')
+        except UnicodeDecodeError:
+            args = args.decode('latin-1')
+    
     args = args.strip()
-    try:
-        args = args.encode('utf-8')
-        do_decode = True
-    except UnicodeDecodeError:
-        do_decode = False
-    items = args.split('\n')
-
+    # finally, correctly splits str with str delimiter
+    items = args.split('\n')  
     # iterate over the tokens, and reassemble any that may have been
     # split on a space inside a jinja2 block.
     # ex if tokens are "{{", "foo", "}}" these go together
@@ -101,7 +98,7 @@ def split_args(args):
     # These variables are used
     # to keep track of the state of the parsing, since blocks and quotes
     # may be nested within each other.
-
+    
     quote_char = None
     inside_quotes = False
     print_depth = 0  # used to count nested jinja2 {{ }} blocks
@@ -115,11 +112,11 @@ def split_args(args):
         # we split on spaces and newlines separately, so that we
         # can tell which character we split on for reassembly
         # inside quotation characters
+        
         tokens = item.strip().split(' ')
-
         line_continuation = False
-        for idx, token in enumerate(tokens):
 
+        for idx, token in enumerate(tokens):
             # if we hit a line continuation character, but
             # we're not inside quotes, ignore it and continue
             # on to the next token while setting a flag
@@ -137,7 +134,7 @@ def split_args(args):
             # append means add to the end of the list, don't append means concatenate
             # it to the end of the last token
             appended = False
-
+            
             # if we're inside quotes now, but weren't before, append the token
             # to the end of the list, since we'll tack on more to it later
             # otherwise, if we're inside any jinja2 block, inside quotes, or we were
@@ -147,17 +144,22 @@ def split_args(args):
                 appended = True
             elif print_depth or block_depth or comment_depth or inside_quotes or was_inside_quotes:
                 if idx == 0 and not inside_quotes and was_inside_quotes:
-                    params[-1] = "%s%s" % (params[-1], token)
+                    if not params:
+                        params.append(token)
+                    else:
+                        params[-1] = "%s%s" % (params[-1], token)
                 elif len(tokens) > 1:
-                    spacer = ''
-                    if idx > 0:
-                        spacer = ' '
-                    params[-1] = "%s%s%s" % (params[-1], spacer, token)
+                    spacer = ' ' if idx > 0 else ''
+                    if not params:
+                        params.append(token)
+                    else:
+                        params[-1] = "%s%s%s" % (params[-1], spacer, token)
                 else:
-                    spacer = ''
-                    if not params[-1].endswith('\n') and idx == 0:
-                        spacer = '\n'
-                    params[-1] = "%s%s%s" % (params[-1], spacer, token)
+                    spacer = '\n' if params and not params[-1].endswith('\n') and idx == 0 else ''
+                    if not params:
+                        params.append(token)
+                    else:
+                        params[-1] = "%s%s%s" % (params[-1], spacer, token)
                 appended = True
 
             # if the number of paired block tags is not the same, the depth has changed, so we calculate that here
@@ -179,32 +181,25 @@ def split_args(args):
             if comment_depth != prev_comment_depth and not appended:
                 params.append(token)
                 appended = True
-
             # finally, if we're at zero depth for all blocks and not inside quotes, and have not
             # yet appended anything to the list of params, we do so now
             if not (print_depth or block_depth or comment_depth) and not inside_quotes and not appended and token != '':
                 params.append(token)
-
+        
         # if this was the last token in the list, and we have more than
         # one item (meaning we split on newlines), add a newline back here
         # to preserve the original structure
         if len(items) > 1 and itemidx != len(items) - 1 and not line_continuation:
-            if not params[-1].endswith('\n') or item == '':
+            if not params:
+                params.append('\n')
+            elif not params[-1].endswith('\n') or item == '':
                 params[-1] += '\n'
 
-        # always clear the line continuation flag
-        line_continuation = False
-
-    # If we're done and things are not at zero depth or we're still inside quotes,
-    # raise an error to indicate that the args were unbalanced
     if print_depth or block_depth or comment_depth or inside_quotes:
-        raise Exception("error while splitting arguments, either an unbalanced jinja2 block or quotes")
-
-    # finally, we decode each param back to the unicode it was in the arg string
-    if do_decode:
-        params = [x.decode('utf-8') for x in params]
+        raise Exception("error while splitting arguments, either an unbalanced jinja2 block or quotes.")
 
     return params
+ 
 
 
 def is_quoted(data):
