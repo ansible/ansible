@@ -1,0 +1,3 @@
+bugfixes:
+  - import_playbook - register the imported playbook's directory in the collection search paths,
+    so collections adjacent to the imported playbook can be found (https://github.com/ansible/ansible/issues/85357).

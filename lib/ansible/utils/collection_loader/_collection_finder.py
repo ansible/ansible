@@ -280,6 +280,18 @@ class _AnsibleCollectionFinder:
             self._n_cached_collection_paths = paths = self._n_playbook_paths + self._n_configured_paths
         return paths
 
+    def add_playbook_path(self, playbook_path):
+        """Append a single playbook dir to the collection search paths, keeping existing entries."""
+        collection_path = os.path.join(_to_text(playbook_path), 'collections')
+
+        if collection_path not in self._n_playbook_paths:
+            self._n_playbook_paths.append(collection_path)
+            self._n_cached_collection_paths = None
+            # The root collection package may already be loaded with a __path__ computed from
+            # the old search paths; reload it (as set_playbook_paths does) so the new dir is visible.
+            for pkg in ['ansible_collections', 'ansible_collections.ansible']:
+                self._reload_hack(pkg)
+
     def set_playbook_paths(self, playbook_paths):
         if isinstance(playbook_paths, str):
             playbook_paths = [playbook_paths]

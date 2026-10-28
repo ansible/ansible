@@ -95,6 +95,10 @@ class _AnsibleCollectionConfig(type):
         cls._require_finder()
         cls._collection_finder.set_playbook_paths(value)
 
+    def add_playbook_path(cls, playbook_path):
+        cls._require_finder()
+        cls._collection_finder.add_playbook_path(playbook_path)
+
     def _require_finder(cls):
         if not cls._collection_finder:
             raise NotImplementedError('an AnsibleCollectionFinder has not been installed in this process')

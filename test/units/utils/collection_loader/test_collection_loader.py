@@ -679,6 +679,32 @@ def test_finder_playbook_paths():
         import ansible_collections.testns.playbook_adj_other
 
 
+def test_finder_add_playbook_path(tmp_path):
+    """Adding a playbook dir (as import_playbook does) extends the search paths without replacing them."""
+    finder = get_default_finder()
+    reset_collections_loader_state(finder)
+
+    import ansible_collections
+
+    first = tmp_path / 'first'
+    second = tmp_path / 'second'
+    (first / 'collections' / 'ansible_collections').mkdir(parents=True)
+    (second / 'collections' / 'ansible_collections').mkdir(parents=True)
+
+    AnsibleCollectionConfig.playbook_paths = [str(first)]
+    AnsibleCollectionConfig.add_playbook_path(str(second))
+
+    assert AnsibleCollectionConfig.playbook_paths == [str(first / 'collections'), str(second / 'collections')]
+    assert AnsibleCollectionConfig.collection_paths[:2] == [str(first / 'collections'), str(second / 'collections')]
+
+    # adding the same dir again is a no-op
+    AnsibleCollectionConfig.add_playbook_path(str(second))
+    assert AnsibleCollectionConfig.playbook_paths == [str(first / 'collections'), str(second / 'collections')]
+
+    # the already-loaded root package is fixed up so the added dir is visible to fresh imports
+    assert str(second / 'collections' / 'ansible_collections') in list(ansible_collections.__path__)
+
+
 def test_toplevel_iter_modules():
     finder = get_default_finder()
     reset_collections_loader_state(finder)

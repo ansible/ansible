@@ -102,8 +102,8 @@ class PlaybookInclude(Base, Conditional, Taggable):
             AnsibleCollectionConfig.default_collection = playbook_collection
         else:
             # it is NOT a collection playbook, setup adjacent paths
-            AnsibleCollectionConfig.playbook_paths.append(os.path.dirname(os.path.abspath(to_bytes(playbook, errors='surrogate_or_strict'))))
-            # broken, see: https://github.com/ansible/ansible/issues/85357
+            # NB: playbook_paths returns a copy, so appending to it is a no-op; add_playbook_path updates the finder
+            AnsibleCollectionConfig.add_playbook_path(os.path.dirname(os.path.abspath(to_bytes(playbook, errors='surrogate_or_strict'))))
 
         pb._load_playbook_data(file_name=playbook, variable_manager=variable_manager, vars=self.vars.copy())
 
