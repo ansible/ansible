@@ -1,0 +1,3 @@
+bugfixes:
+  - SIGINT/SIGTERM Handling - a SIGINT (Ctrl-C) received while a worker process is forked now stops the run, instead of leaving it going with its workers stopped, or hanging it (https://github.com/ansible/ansible/issues/87812).
+  - SIGINT/SIGTERM Handling - a SIGINT (Ctrl-C) received while a finished worker process is replaced no longer fails the run with ``process object is closed`` (https://github.com/ansible/ansible/issues/87812).

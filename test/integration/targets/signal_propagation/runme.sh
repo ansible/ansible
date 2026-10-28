@@ -23,3 +23,16 @@ do
       exit 1
   fi
 done
+
+echo "Test a SIGINT whose KeyboardInterrupt CPython discards: in a lock's at-fork callback while a worker is forked, and in a finalizer"
+for where in fork finalizer
+do
+  ANSIBLE_CALLBACKS_ENABLED=deliver_sigint DELIVER_SIGINT=$where ../test_utils/scripts/timeout.py 30 -- \
+      ansible-playbook -i inventory deliver_sigint.yml -f 10 > "${OUTPUT_DIR}/deliver_sigint.txt" 2>&1
+  rc="$?"
+  if [[ "$rc" != "99" ]] || ! grep -q "User interrupted execution" "${OUTPUT_DIR}/deliver_sigint.txt"; then
+      echo "The SIGINT delivered in a $where did not stop the run (rc $rc)"
+      cat "${OUTPUT_DIR}/deliver_sigint.txt"
+      exit 1
+  fi
+done
