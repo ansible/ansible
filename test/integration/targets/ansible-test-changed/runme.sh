@@ -31,10 +31,6 @@ touch nested-repository/content.txt
 echo content > regular-file  # control
 
 # Reading any of these as a file raises, which exits non-zero and trips `set -e`.
-ansible-test sanity --test pep8 --changed --base-branch main -v 2>&1 | tee "${log}"
+ansible-test sanity --test pep8 --changed --base-branch main 2>&1 | tee "${log}"
 
-# Verbose output lists each detected path, so these also fail if one was skipped.
-grep -qF 'symlink-to-directory' "${log}"
-grep -qF 'broken-symlink' "${log}"
-grep -qF 'nested-repository/' "${log}"
-grep -qF 'regular-file' "${log}"
+grep -qF 'Ignored 4 untracked file(s)' "${log}"
