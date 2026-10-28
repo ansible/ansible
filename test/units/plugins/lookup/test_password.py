@@ -486,9 +486,11 @@ class TestLookupModuleWithoutPasslib(BaseTestLookupModule):
 
         for result in results:
             self.assertEqual(result, u'hunter42')
+
     def test_empty_chars_raises_error(self):
         with pytest.raises(AnsibleError, match="The 'chars' option cannot be empty"):
             self.password_lookup.run([u'/dev/null chars='], None)
+
 
 @pytest.mark.skipif(passlib is None, reason='passlib must be installed to run these tests')
 class TestLookupModuleWithPasslib(BaseTestLookupModule):
