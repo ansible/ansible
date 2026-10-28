@@ -165,6 +165,9 @@ test/integration/targets/win_script/files/test_script_with_args.ps1 pslint:PSAvo
 test/integration/targets/win_script/files/test_script_with_splatting.ps1 pslint:PSAvoidUsingWriteHost # Keep
 test/lib/ansible_test/_data/requirements/sanity.pslint.ps1 pslint:PSCustomUseLiteralPath # Uses wildcards on purpose
 test/lib/ansible_test/_internal/http.py replace-urlopen
+test/lib/ansible_test/_util/target/pytest/plugins/ansible_forked.py pylint:ansible-format-automatic-specification
+test/lib/ansible_test/_util/target/pytest/plugins/ansible_forked.py pylint:protected-access
+test/lib/ansible_test/_util/target/pytest/plugins/ansible_pytest_collections.py pylint:ansible-format-automatic-specification
 test/lib/ansible_test/_util/target/setup/requirements.py replace-urlopen
 test/support/integration/plugins/modules/timezone.py pylint:disallowed-name
 test/support/integration/plugins/module_utils/compat/ipaddress.py future-import-boilerplate
