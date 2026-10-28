@@ -1,0 +1,4 @@
+bugfixes:
+  - module_utils.common.network - ``to_ipv6_subnet()`` and ``to_ipv6_network()`` no longer drop the groups that follow ``::``
+    when ``::`` replaces fewer zero groups than the prefix needs.
+    For example, ``to_ipv6_subnet('2001:db8::1:2:3:4:5')`` now returns ``2001:db8:0:1::`` instead of ``2001:db8::``.
