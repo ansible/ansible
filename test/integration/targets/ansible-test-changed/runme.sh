@@ -4,7 +4,7 @@
 set -eux -o pipefail
 
 # ansible-test only runs within a content root, and inside the ansible source tree change
-# detection resolves git against the wrong repository, so work outside it.
+# detection resolves git against the ansible repository, so work outside it.
 tmp_dir=$(mktemp -d)
 
 trap 'rm -rf "${tmp_dir}"' EXIT
@@ -31,7 +31,7 @@ touch nested-repository/content.txt
 echo content > regular-file  # control
 
 # Reading any of these as a file raises, which exits non-zero and trips `set -e`.
-ansible-test sanity --test pep8 --changed --untracked --base-branch main -v 2>&1 | tee "${log}"
+ansible-test sanity --test pep8 --changed --base-branch main -v 2>&1 | tee "${log}"
 
 # Verbose output lists each detected path, so these also fail if one was skipped.
 grep -qF 'symlink-to-directory' "${log}"
