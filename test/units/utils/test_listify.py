@@ -8,7 +8,6 @@ import typing as t
 import pytest
 import pytest_mock
 
-from ansible.utils.display import Display
 from ansible.utils.listify import listify_lookup_plugin_terms
 
 
@@ -18,11 +17,13 @@ from ansible.utils.listify import listify_lookup_plugin_terms
     (["foo"], ["foo"]),
 ), ids=str)
 def test_listify_lookup_plugin_terms(test_input: t.Any, expected: t.Any, mocker: pytest_mock.MockerFixture) -> None:
-    with mocker.patch.object(Display(), 'deprecated'):  # as deprecated:
-        assert listify_lookup_plugin_terms(test_input) == expected
+    # deprecated = mocker.patch.object(Display(), 'deprecated')
+
+    assert listify_lookup_plugin_terms(test_input) == expected
 
     # deprecated: description="Calling listify_lookup_plugin_terms function is not necessary; the function should be deprecated." core_version="2.23"
     # deprecated.assert_called_once_with(
-    #     msg='"listify_lookup_plugin_terms" is obsolete and in most cases unnecessary',
-    #     version='2.23',
+    #     msg='The "listify_lookup_plugin_terms" function is not required for lookup terms to be templated.',
+    #     version='2.27',
+    #     help_text='If needed, implement custom `strip` or list-wrapping in the caller.',
     # )
