@@ -1,7 +1,3 @@
 minor_changes:
   - stat - report the ``casefold``, ``dax``, ``nocompress``, ``projinherit`` and
     ``verity`` file attributes, which were previously omitted.
-  - ansible.module_utils.common.file.get_flags_from_attributes - the returned flags
-    are now ordered the way ``lsattr`` reports them rather than alphabetically, so
-    the result can be passed to the ``attributes`` option without the ordering
-    itself being reported as a change.
