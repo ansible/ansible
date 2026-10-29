@@ -67,8 +67,3 @@ def resource_from_fqcr(ref):
     """
     ref = _to_text(ref, strict=True)
     return ref.split(u'.')[-1]
-
-
-# FIXME: decide what of this we want to actually be public/toplevel, put other stuff on a utility class?
-from ._collection_config import AnsibleCollectionConfig
-from ._collection_finder import AnsibleCollectionRef

@@ -64,8 +64,8 @@ def main():
         # allow importing code from collections when testing a collection
 
         # noinspection PyProtectedMember
-        from ansible.utils.collection_loader._collection_finder import _AnsibleCollectionFinder
-        from ansible.utils.collection_loader import _collection_finder, _to_text
+        from ansible.module_utils._internal._collection_loader._collection_finder import _AnsibleCollectionFinder
+        from ansible.module_utils._internal._collection_loader import _collection_finder, _to_text
 
         yaml_to_dict_cache = {}
 
@@ -492,7 +492,7 @@ def main():
             yield
         finally:
             if import_type == 'plugin' and not collection_loader:
-                from ansible.utils.collection_loader._collection_finder import _AnsibleCollectionFinder
+                from ansible.module_utils._internal._collection_loader._collection_finder import _AnsibleCollectionFinder
 
                 _AnsibleCollectionFinder._remove()  # pylint: disable=protected-access
 

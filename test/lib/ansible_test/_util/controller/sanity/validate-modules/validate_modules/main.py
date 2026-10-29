@@ -51,7 +51,7 @@ def setup_collection_loader():
         return
 
     # noinspection PyProtectedMember
-    from ansible.utils.collection_loader._collection_finder import _AnsibleCollectionFinder
+    from ansible.module_utils._internal._collection_loader._collection_finder import _AnsibleCollectionFinder
 
     collections_paths = os.environ.get('ANSIBLE_COLLECTIONS_PATH', '').split(os.pathsep)
     collection_loader = _AnsibleCollectionFinder(collections_paths)

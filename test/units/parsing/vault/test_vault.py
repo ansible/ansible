@@ -42,7 +42,7 @@ from ansible._internal._templating._jinja_common import VaultExceptionMarker, Tr
 from ansible._internal._templating._engine import TemplateEngine, TemplateOptions
 from ansible._internal._templating._utils import TemplateContext
 from ansible._internal._datatag._tags import VaultedValue, Origin, TrustedAsTemplate
-from ansible.utils.collection_loader import _EncryptedStringProtocol
+from ansible.module_utils._internal._collection_loader import _EncryptedStringProtocol
 
 from units.mock.loader import DictDataLoader
 from units.mock.vault_helper import TextVaultSecret, VaultTestHelper

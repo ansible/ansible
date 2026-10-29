@@ -29,7 +29,7 @@ from ansible.playbook.conditional import Conditional
 from ansible.playbook.taggable import Taggable
 from ansible._internal._templating._engine import TemplateEngine
 from ansible.utils.collection_loader import AnsibleCollectionRef
-from ansible.utils.collection_loader._collection_finder import _get_collection_role_path
+from ansible.module_utils._internal._collection_loader._collection_finder import _get_collection_role_path
 from ansible.utils.path import unfrackpath
 from ansible.utils.display import Display
 

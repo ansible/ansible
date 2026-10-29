@@ -25,7 +25,7 @@ from ansible.playbook.base import Base
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.taggable import Taggable
 from ansible.utils.collection_loader import AnsibleCollectionConfig
-from ansible.utils.collection_loader._collection_finder import _get_collection_name_from_path, _get_collection_playbook_path
+from ansible.module_utils._internal._collection_loader._collection_finder import _get_collection_name_from_path, _get_collection_playbook_path
 from ansible._internal._templating._engine import TemplateEngine
 from ansible.errors import AnsibleError
 from ansible import constants as C

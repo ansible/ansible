@@ -85,7 +85,7 @@ class TestGalaxy(unittest.TestCase):
             fd.write("- 'src': '%s'\n  'name': '%s'\n  'path': '%s'" % (cls.role_tar, cls.role_name, cls.role_path))
 
         # DTFIX-FUTURE: use a proper fixture for all of this
-        from ansible.utils.collection_loader._collection_finder import _AnsibleCollectionFinder
+        from ansible.module_utils._internal._collection_loader._collection_finder import _AnsibleCollectionFinder
         _AnsibleCollectionFinder._remove()
 
     @classmethod
@@ -295,7 +295,7 @@ class ValidRoleTests(object):
             cls.role_skeleton_path = gc.galaxy.default_role_skeleton_path
 
         # DTFIX-FUTURE: use a proper fixture for all of this
-        from ansible.utils.collection_loader._collection_finder import _AnsibleCollectionFinder
+        from ansible.module_utils._internal._collection_loader._collection_finder import _AnsibleCollectionFinder
         _AnsibleCollectionFinder._remove()
 
     @classmethod

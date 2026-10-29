@@ -41,7 +41,7 @@ def collection_loader() -> t.Iterator[None]:
     Provide a collection loader with no collections.
     Useful for tests that fail without a collection loader, but that don't actually depend on collections.
     """
-    from ansible.utils.collection_loader._collection_finder import _AnsibleCollectionFinder
+    from ansible.module_utils._internal._collection_loader._collection_finder import _AnsibleCollectionFinder
 
     _AnsibleCollectionFinder()._install()
 

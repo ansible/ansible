@@ -25,7 +25,8 @@ from ansible.module_utils.common.text.converters import to_text
 from ansible.parsing.dataloader import DataLoader
 from ansible.playbook.attribute import Attribute, FieldAttribute, NonInheritableFieldAttribute
 from ansible.plugins.loader import module_loader, action_loader
-from ansible.utils.collection_loader._collection_finder import _get_collection_metadata, AnsibleCollectionRef
+from ansible.module_utils._internal._collection_loader._collection_finder import _get_collection_metadata
+from ansible.utils.collection_loader import AnsibleCollectionRef
 from ansible.utils.display import Display
 from ansible.utils.vars import combine_vars, get_unique_id, validate_variable_name
 from ansible._internal._templating._engine import TemplateEngine

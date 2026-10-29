@@ -704,7 +704,7 @@ class _AnsibleCollectionPkgLoader(_AnsibleCollectionPkgLoaderBase):
 
     def _load_module(self, module):
         if not _meta_yml_to_dict:
-            raise ValueError('ansible.utils.collection_loader._meta_yml_to_dict is not set')
+            raise ValueError('_meta_yml_to_dict is not set')
 
         module._collection_meta = {}
         # TODO: load collection metadata, cache in __loader__ state

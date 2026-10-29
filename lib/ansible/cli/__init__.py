@@ -116,7 +116,7 @@ from ansible.parsing.vault import PromptVaultSecret, get_file_vault_secret, Vaul
 from ansible.plugins.loader import add_all_plugin_dirs, init_plugin_loader
 from ansible.release import __version__
 from ansible.utils.collection_loader import AnsibleCollectionConfig
-from ansible.utils.collection_loader._collection_finder import _get_collection_name_from_path
+from ansible.module_utils._internal._collection_loader._collection_finder import _get_collection_name_from_path
 from ansible.utils.path import unfrackpath
 from ansible.vars.manager import VariableManager
 from ansible.module_utils._internal import _deprecator

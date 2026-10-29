@@ -47,7 +47,7 @@ def enable_assertion_rewriting_hook():  # type: () -> None
 
     assertion_rewriting_hook = hooks[0]
 
-    # This is based on `_AnsibleCollectionPkgLoaderBase.exec_module` from `ansible/utils/collection_loader/_collection_finder.py`.
+    # This is based on `_AnsibleCollectionPkgLoaderBase.exec_module` from `ansible/module_utils/_internal/_collection_loader/_collection_finder.py`.
     def exec_module(self, module):
         # short-circuit redirect; avoid reinitializing existing modules
         if self._redirect_module:  # pylint: disable=protected-access
@@ -68,7 +68,7 @@ def enable_assertion_rewriting_hook():  # type: () -> None
                 exec(code_obj, module.__dict__)  # pylint: disable=exec-used
 
     # noinspection PyProtectedMember
-    from ansible.utils.collection_loader._collection_finder import _AnsibleCollectionPkgLoaderBase
+    from ansible.module_utils._internal._collection_loader._collection_finder import _AnsibleCollectionPkgLoaderBase
 
     _AnsibleCollectionPkgLoaderBase.exec_module = exec_module  # type: ignore[method-assign]
 
@@ -84,7 +84,7 @@ def pytest_configure():
     enable_assertion_rewriting_hook()
 
     # noinspection PyProtectedMember
-    from ansible.utils.collection_loader._collection_finder import _AnsibleCollectionFinder
+    from ansible.module_utils._internal._collection_loader._collection_finder import _AnsibleCollectionFinder
 
     # allow unit tests to import code from collections
 
