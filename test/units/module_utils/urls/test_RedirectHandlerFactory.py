@@ -131,3 +131,59 @@ def test_redir_http_error_308_urllib2(urllib_req, request_body, mocker):
     inst.redirect_request(urllib_req, request_body, 308, '308 Permanent Redirect', {}, 'https://docs.ansible.com/')
 
     assert redir_mock.call_count == 1
+
+
+@pytest.mark.parametrize('newurl', [
+    'https://evil.example/',           # another host
+    'http://ansible.com/',             # https -> http downgrade, same host
+    'https://ansible.com:8443/',       # another port, same host
+    'https://ansible.com:443/',        # explicit port differs from the implicit one
+])
+def test_redir_cross_origin_strips_credentials(request_body, mocker, newurl):
+    req_mock = mocker.patch('ansible.module_utils.urls.urllib.request.Request')
+    handler = HTTPRedirectHandler('all')
+    inst = handler()
+
+    req = urllib.request.Request('https://ansible.com/')
+    req.headers = {
+        'Authorization': 'Basic dXNlcjpwYXNz',
+        'Proxy-Authorization': 'Basic cHJveHk=',
+        'Cookie': 'session=abc',
+        'X-Api-Key': 'still-forwarded-unless-unredirected',
+    }
+
+    inst.redirect_request(req, request_body, 307, '307 Temporary Redirect', {}, newurl)
+    req_mock.assert_called_once_with(newurl, data=None, headers={'X-Api-Key': 'still-forwarded-unless-unredirected'}, method='GET',
+                                     origin_req_host='ansible.com', unverifiable=True)
+
+
+@pytest.mark.parametrize('newurl', [
+    'https://ansible.com/other',       # same origin
+    '/relative',                       # relative Location
+    'https://ANSIBLE.com/',            # same origin, different case
+])
+def test_redir_same_origin_keeps_credentials(request_body, mocker, newurl):
+    req_mock = mocker.patch('ansible.module_utils.urls.urllib.request.Request')
+    handler = HTTPRedirectHandler('all')
+    inst = handler()
+
+    req = urllib.request.Request('https://ansible.com/')
+    req.headers = {'Authorization': 'Basic dXNlcjpwYXNz', 'Cookie': 'session=abc'}
+
+    inst.redirect_request(req, request_body, 307, '307 Temporary Redirect', {}, newurl)
+    req_mock.assert_called_once_with(newurl, data=None, headers={'Authorization': 'Basic dXNlcjpwYXNz', 'Cookie': 'session=abc'}, method='GET',
+                                     origin_req_host='ansible.com', unverifiable=True)
+
+
+def test_redir_http_to_https_upgrade_strips_credentials(request_body, mocker):
+    # A scheme change is a different origin, even when it is an upgrade.
+    req_mock = mocker.patch('ansible.module_utils.urls.urllib.request.Request')
+    handler = HTTPRedirectHandler('all')
+    inst = handler()
+
+    req = urllib.request.Request('http://ansible.com/')
+    req.headers = {'Authorization': 'Basic dXNlcjpwYXNz'}
+
+    inst.redirect_request(req, request_body, 301, '301 Moved Permanently', {}, 'https://ansible.com/')
+    req_mock.assert_called_once_with('https://ansible.com/', data=None, headers={}, method='GET',
+                                     origin_req_host='ansible.com', unverifiable=True)
