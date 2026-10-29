@@ -1,0 +1,9 @@
+---
+bugfixes:
+- reboot - disable the connection plugin's automatic reconnection retries while sending the
+  reboot/shutdown command itself, so a connection dropped by the host actually rebooting is not
+  mistaken for a failed connection attempt and used to resend the reboot command a second time.
+  As a tradeoff, if the connection fails before the reboot command actually reaches the target
+  (for example, a transient network blip), that failure will no longer be automatically retried
+  by the connection plugin; it will instead surface during the post-reboot validation step, or as
+  a timeout, rather than being retried immediately.
