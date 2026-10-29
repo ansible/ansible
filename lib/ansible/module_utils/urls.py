@@ -487,6 +487,11 @@ class HTTPRedirectHandler(urllib.request.HTTPRedirectHandler):
             if code == 301 and method == 'POST':
                 method = 'GET'
 
+        # Credentials are scoped to the origin they were sent to.
+        if _is_cross_origin_redirect(req.full_url, newurl):
+            req_headers = {k: v for k, v in req_headers.items()
+                           if k.lower() not in _CREDENTIAL_HEADERS}
+
         return urllib.request.Request(
             newurl,
             data=data,
@@ -495,6 +500,21 @@ class HTTPRedirectHandler(urllib.request.HTTPRedirectHandler):
             unverifiable=True,
             method=method.upper(),
         )
+
+
+_CREDENTIAL_HEADERS = frozenset(("authorization", "proxy-authorization", "cookie", 'set-cookie', 'www-authenticate'))
+
+
+def _is_cross_origin_redirect(from_url, to_url):
+    """Return True when a redirect from ``from_url`` to ``to_url`` leaves the
+    origin of the original request (scheme, host or port), so credentials
+    must not follow it. A relative ``Location`` stays within the origin.
+    """
+    old = urlparse(from_url)
+    new = urlparse(to_url)
+    if not new.hostname:
+        return False
+    return (old.scheme, old.hostname, old.port) != (new.scheme, new.hostname, new.port)
 
 
 def make_context(cafile=None, cadata=None, capath=None, ciphers=None, validate_certs=True, client_cert=None,
