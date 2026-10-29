@@ -25,6 +25,7 @@ from ansible import constants as C
 from ansible.errors import AnsibleAssertionError
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.playbook.block import Block
+from ansible.playbook.role import prune_orphaned_role_argspec_validation
 from ansible.playbook.task import Task
 from ansible.utils.display import Display
 
@@ -201,8 +202,15 @@ class PlayIterator:
         # used for the lockstep mechanism in the linear strategy
         self.all_tasks = setup_block.get_tasks()
 
+        filtered_blocks = []
         for block in self._play.compile():
             new_block = block.filter_tagged_tasks(all_vars)
+            if new_block.has_tasks():
+                filtered_blocks.append(new_block)
+
+        # Role argspec validation uses tags: always so it survives filtering; drop it
+        # when the role has no remaining runnable tasks (see issue #82505).
+        for new_block in prune_orphaned_role_argspec_validation(filtered_blocks, all_vars):
             if new_block.has_tasks():
                 self._blocks.append(new_block)
                 self.all_tasks.extend(new_block.get_tasks())
