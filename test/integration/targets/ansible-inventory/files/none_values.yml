@@ -1,0 +1,10 @@
+all:
+  children:
+    ungrouped:
+      hosts:
+        testhost:
+          normal_var: hello
+          nullable_var: null
+          nested:
+            keep: world
+            remove: null
