@@ -28,13 +28,13 @@ import tarfile
 import tempfile
 
 from collections.abc import MutableSequence
-from shutil import rmtree
+from shutil import copyfile, rmtree
 
 from ansible import context
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.galaxy.api import GalaxyAPI
 from ansible.galaxy.user_agent import user_agent
-from ansible.module_utils.common.text.converters import to_native, to_text
+from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.module_utils.common.yaml import yaml_dump, yaml_load
 from ansible.module_utils.compat.version import LooseVersion
 from ansible.module_utils.urls import open_url
@@ -240,7 +240,8 @@ class GalaxyRole(object):
 
         return False
 
-    def install(self):
+    def _get_archive_file(self):
+        """Return a local archive containing the role."""
 
         if self.scm:
             # create tar file from scm url
@@ -300,6 +301,39 @@ class GalaxyRole(object):
         else:
             raise AnsibleError("No valid role data found")
 
+        return tmp_file
+
+    def download(self, output_path):
+        """Download the role archive to the specified output path."""
+        tmp_file = self._get_archive_file()
+        if not tmp_file:
+            return False
+
+        if not tarfile.is_tarfile(tmp_file):
+            raise AnsibleError('the downloaded file does not appear to be a valid tar archive.')
+
+        if os.path.isfile(self.src):
+            archive_name = os.path.basename(self.src)
+        else:
+            role_name = self.name.replace('/', '-').replace('\\', '-')
+            role_version = to_text(self.version or 'master').replace('/', '-').replace('\\', '-')
+            archive_name = f'{role_name}-{role_version}.tar.gz'
+
+        archive_path = os.path.join(output_path, archive_name)
+        try:
+            copyfile(tmp_file, archive_path)
+        finally:
+            if not (self.src and os.path.isfile(self.src)):
+                try:
+                    os.unlink(tmp_file)
+                except OSError as ex:
+                    display.error_as_warning(f'Unable to remove tmp file {tmp_file!r}.', exception=ex)
+
+        return archive_path
+
+    def install(self):
+
+        tmp_file = self._get_archive_file()
         if tmp_file:
 
             display.debug("installing from %s" % tmp_file)
@@ -447,3 +481,38 @@ class GalaxyRole(object):
             raise AnsibleParserError(f"Expected role dependencies to be a list. Role {self} has meta/requirements.yml {self._requirements}")
 
         return self._requirements
+
+
+def download_roles(roles, output_path, ignore_errors):
+    """Download role archives and write an offline-install requirements file."""
+    requirements = []
+
+    for role in roles:
+        display.display("Downloading role '%s' to '%s'" % (role, output_path))
+        try:
+            archive_path = role.download(output_path)
+        except AnsibleError as ex:
+            display.warning("Role '%s' was not downloaded successfully: %s" % (role.name, to_text(ex)))
+            if not ignore_errors:
+                raise
+            continue
+
+        if not archive_path:
+            display.warning("Role '%s' was not downloaded successfully." % role.name)
+            if not ignore_errors:
+                raise AnsibleError('Failed to download role %s.' % role.name)
+            continue
+
+        requirement = {
+            'name': role.name,
+            'src': os.path.basename(archive_path),
+        }
+        if role.version:
+            requirement['version'] = role.version
+        requirements.append(requirement)
+        display.display("Role '%s' was downloaded successfully" % role)
+
+    requirements_path = os.path.join(output_path, 'requirements.yml')
+    display.display("Writing requirements.yml file of downloaded roles to '%s'" % requirements_path)
+    with open(requirements_path, mode='wb') as req_fd:
+        req_fd.write(to_bytes(yaml_dump({'roles': requirements}), errors='surrogate_or_strict'))

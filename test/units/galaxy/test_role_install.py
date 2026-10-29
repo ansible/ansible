@@ -10,6 +10,8 @@ import os
 import functools
 import pytest
 import tempfile
+import tarfile
+import yaml
 
 from io import StringIO
 from ansible import context
@@ -166,3 +168,24 @@ def test_role_download_url_default_version(init_mock_temp_file, mocker, galaxy_s
 
     assert mock_role_download_api.call_count == 1
     assert mock_role_download_api.mock_calls[0][1][0] == 'http://localhost:8080/test_owner/test_role/0.0.2.tar.gz'
+
+
+def test_role_download_local_archive(tmp_path, galaxy_server):
+    source_archive = tmp_path / 'test-role.tar'
+    output_path = tmp_path / 'download'
+    output_path.mkdir()
+
+    with tarfile.open(source_archive, 'w'):
+        pass
+
+    galaxy_role = role.GalaxyRole(Galaxy(), galaxy_server, 'test-role', src=to_text(source_archive))
+    downloaded_archive = galaxy_role.download(to_text(output_path))
+
+    assert downloaded_archive == to_text(output_path / 'test-role.tar')
+    assert (output_path / 'test-role.tar').read_bytes() == source_archive.read_bytes()
+
+    role.download_roles([galaxy_role], to_text(output_path), ignore_errors=False)
+
+    assert yaml.safe_load((output_path / 'requirements.yml').read_text()) == {
+        'roles': [{'name': 'test-role', 'src': 'test-role.tar'}],
+    }
