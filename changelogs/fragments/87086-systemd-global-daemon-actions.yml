@@ -1,0 +1,4 @@
+bugfixes:
+  - systemd - the module did not check if the daemon bus was relevant to the requested scope context.
+    The global scope does not use the bus, which lead to task failures. Explicitly disabling daemon
+    actions when in global scope mitigates this issue (https://github.com/ansible/ansible/pull/87086).
