@@ -1587,6 +1587,9 @@ class Connection(ConnectionBase):
         return self._is_tty_requested()
 
     def _is_tty_requested(self):
+        # check if become requires a TTY and using a TTY is allowed
+        if self.become and self.become.require_tty and self.get_option("use_tty"):
+            return True
 
         # check if we require tty (only from our args, cannot see options in configuration files)
         opts = []
