@@ -258,15 +258,15 @@ def test_human_to_bytes_non_ascii_number(test_input):
 
 
 @pytest.mark.parametrize(
-    'input_data,isbits,expected',
+    ('input_data', 'isbits', 'expected'),
     [
-        ('1 byte', False, 1),
-        ('1 bytes', False, 1),
-        ('2 Bytes', False, 2),
-        ('2 kilobytes', False, 2 * NUM_IN_METRIC['K']),
-        ('3 Megabytes', False, 3 * NUM_IN_METRIC['M']),
-        ('8 bits', True, 8),
-        ('2 kilobits', True, 2 * NUM_IN_METRIC['K']),
+        pytest.param('1 byte', False, 1, id='1-byte'),
+        pytest.param('1 bytes', False, 1, id='1-bytes'),
+        pytest.param('2 Bytes', False, 2, id='2-Bytes'),
+        pytest.param('2 kilobytes', False, 2 * NUM_IN_METRIC['K'], id='2-kilobytes'),
+        pytest.param('3 Megabytes', False, 3 * NUM_IN_METRIC['M'], id='3-Megabytes'),
+        pytest.param('8 bits', True, 8, id='8-bits'),
+        pytest.param('2 kilobits', True, 2 * NUM_IN_METRIC['K'], id='2-kilobits'),
     ]
 )
 def test_human_to_bytes_plural_unit_name(input_data, isbits, expected):
@@ -275,12 +275,12 @@ def test_human_to_bytes_plural_unit_name(input_data, isbits, expected):
 
 
 @pytest.mark.parametrize(
-    'input_data,isbits',
+    ('input_data', 'isbits'),
     [
-        ('2 kilobits', False),
-        ('2 kilobytes', True),
-        ('2 bits', False),
-        ('2 bytes', True),
+        pytest.param('2 kilobits', False, id='kilobits-as-bytes'),
+        pytest.param('2 kilobytes', True, id='kilobytes-as-bits'),
+        pytest.param('2 bits', False, id='bits-as-bytes'),
+        pytest.param('2 bytes', True, id='bytes-as-bits'),
     ]
 )
 def test_human_to_bytes_plural_unit_name_wrong_isbits(input_data, isbits):
@@ -290,12 +290,12 @@ def test_human_to_bytes_plural_unit_name_wrong_isbits(input_data, isbits):
 
 
 @pytest.mark.parametrize(
-    'input_data,isbits,expected',
+    ('input_data', 'isbits', 'expected'),
     [
-        ('1 bite', False, 'expect B, byte or bytes'),
-        ('1 bite', True, 'expect b, bit or bits'),
-        ('1 kilobite', False, 'expect KB, K, kilobyte or kilobytes'),
-        ('1 kilobite', True, 'expect Kb, K, kilobit or kilobits'),
+        pytest.param('1 bite', False, 'expect B, byte or bytes', id='bite-as-bytes'),
+        pytest.param('1 bite', True, 'expect b, bit or bits', id='bite-as-bits'),
+        pytest.param('1 kilobite', False, 'expect KB, K, kilobyte or kilobytes', id='kilobite-as-bytes'),
+        pytest.param('1 kilobite', True, 'expect Kb, K, kilobit or kilobits', id='kilobite-as-bits'),
     ]
 )
 def test_human_to_bytes_unit_name_error_message(input_data, isbits, expected):
@@ -305,7 +305,11 @@ def test_human_to_bytes_unit_name_error_message(input_data, isbits, expected):
 
 
 @pytest.mark.parametrize('size', [0, 1, 1023, 1024, 1536, 2 ** 20, 5 * 2 ** 30])
-@pytest.mark.parametrize('isbits', [False, True])
+@pytest.mark.parametrize(
+    'isbits',
+    [False, True],
+    ids=lambda is_bits: 'bits' if is_bits else 'bytes',
+)
 def test_human_to_bytes_reads_bytes_to_human(size, isbits):
     """Read back what bytes_to_human() writes for sizes it can write exactly.
 
