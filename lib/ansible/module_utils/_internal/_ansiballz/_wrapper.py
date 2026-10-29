@@ -208,6 +208,7 @@ def _ansiballz_main(
             with open(args_path, 'wb') as writer:
                 writer.write(json_params)
 
+            # pylint: disable=ansible-bad-function
             print('Module expanded into:')
             print(basedir)
 
@@ -235,7 +236,7 @@ def _ansiballz_main(
             )
 
         else:
-            print(f'FATAL: Unknown debug command {command!r}. Doing nothing.')
+            print(f'FATAL: Unknown debug command {command!r}. Doing nothing.')  # pylint: disable=ansible-bad-function
 
     #
     # See comments in the debug() method for information on debugging

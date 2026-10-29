@@ -40,7 +40,7 @@ from io import BytesIO
 
 from ansible._internal import _locking
 from ansible._internal._ansiballz import _builder
-from ansible._internal import _ansiballz
+from ansible.module_utils._internal import _ansiballz
 from ansible._internal._datatag import _utils
 from ansible._internal._powershell import _clixml, _script as _ps_script
 from ansible.module_utils._internal import _dataclass_validation
