@@ -515,9 +515,19 @@ def main():
         finally:
             check_sys_modules(path, snapshot, messages)
 
-            for key in set(sys.modules.keys()) - set(snapshot.keys()):
+            added_modules = set(sys.modules.keys()) - set(snapshot.keys())
+
+            # Remove child modules before their parents so package attributes can be cleaned up too.
+            for key in sorted(added_modules, key=lambda name: name.count('.'), reverse=True):
                 if is_name_in_namepace(key, ('ansible', 'ansible_collections')):
-                    del sys.modules[key]  # only unload our own code since we know it's native Python
+                    module = sys.modules.pop(key)  # only unload our own code since we know it's native Python
+                    parent_name, separator, child_name = key.rpartition('.')
+
+                    if separator:
+                        parent = sys.modules.get(parent_name)
+
+                        if parent is not None and getattr(parent, child_name, None) is module:
+                            delattr(parent, child_name)
 
     @contextlib.contextmanager
     def capture_output(capture):
