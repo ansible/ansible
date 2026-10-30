@@ -1,0 +1,5 @@
+minor_changes:
+  - >-
+    module_utils.urls - Added ``max_response_headers`` option to ``Request``,
+    ``open_url``, ``UnixHTTPSConnection``, and ``UnixHTTPConnection`` to allow
+    overriding the default limit of 100 response headers (https://github.com/ansible/ansible/issues/82780).
