@@ -25,3 +25,12 @@
   when:
     - ansible_service_mgr == "systemd"
     - ansible_distribution != 'Alpine'
+
+- name: Test enabled failed service facts
+  block:
+    - name: test failed service facts
+      include_tasks: 'failed_enabled_service.yml'
+
+  when:
+    - ansible_service_mgr == "systemd"
+    - ansible_distribution != 'Alpine'
