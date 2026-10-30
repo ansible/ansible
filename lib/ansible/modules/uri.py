@@ -201,6 +201,15 @@ options:
     type: list
     elements: str
     version_added: '2.12'
+  redirect_default_ports:
+    description:
+      - Port assumed for a URL that states none, per URL scheme, when deciding whether a redirect stays
+        within the origin of the original request. Credential headers (C(Authorization), C(Proxy-Authorization),
+        C(Cookie)) are not sent on a redirect that leaves that origin.
+      - Extends the defaults of V(80) for C(http) and V(443) for C(https). Only needed when the server behind
+        O(url) redirects to itself through a URL that states a non-standard port implicitly.
+    type: dict
+    version_added: '2.23'
   use_gssapi:
     description:
       - Use GSSAPI to perform the authentication, typically this is for Kerberos or Kerberos through Negotiate
