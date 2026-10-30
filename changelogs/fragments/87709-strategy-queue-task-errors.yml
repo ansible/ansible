@@ -1,0 +1,4 @@
+bugfixes:
+  - strategy - fail the run when a worker process cannot start, for example because the reader of stdout has exited or ``fork`` failed.
+    Previously the error was ignored, so the ``free`` strategy polled forever and other strategies could report success for tasks that never ran
+    (https://github.com/ansible/ansible/issues/87709).
