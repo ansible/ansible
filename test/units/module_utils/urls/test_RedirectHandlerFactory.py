@@ -137,7 +137,6 @@ def test_redir_http_error_308_urllib2(urllib_req, request_body, mocker):
     'https://evil.example/',           # another host
     'http://ansible.com/',             # https -> http downgrade, same host
     'https://ansible.com:8443/',       # another port, same host
-    'https://ansible.com:443/',        # explicit port differs from the implicit one
 ])
 def test_redir_cross_origin_strips_credentials(request_body, mocker, newurl):
     # Build the real request before Request is mocked for the redirect.
@@ -162,6 +161,7 @@ def test_redir_cross_origin_strips_credentials(request_body, mocker, newurl):
     'https://ansible.com/other',       # same origin
     '/relative',                       # relative Location
     'https://ANSIBLE.com/',            # same origin, different case
+    'https://ansible.com:443/',        # explicit default port is the implicit one
 ])
 def test_redir_same_origin_keeps_credentials(request_body, mocker, newurl):
     req = urllib.request.Request('https://ansible.com/')
@@ -187,4 +187,19 @@ def test_redir_http_to_https_upgrade_strips_credentials(request_body, mocker):
 
     inst.redirect_request(req, request_body, 301, '301 Moved Permanently', {}, 'https://ansible.com/')
     req_mock.assert_called_once_with('https://ansible.com/', data=None, headers={}, method='GET',
+                                     origin_req_host='ansible.com', unverifiable=True)
+
+
+def test_redir_custom_default_ports_keep_credentials(request_body, mocker):
+    # With https assumed to be on 8443, https://ansible.com/ and https://ansible.com:8443/ are one origin.
+    req = urllib.request.Request('https://ansible.com/')
+    req.headers = {'Authorization': 'Basic dXNlcjpwYXNz'}
+
+    req_mock = mocker.patch('ansible.module_utils.urls.urllib.request.Request')
+    handler = HTTPRedirectHandler('all', default_ports={'https': 8443})
+    inst = handler()
+    assert inst.default_ports == {'http': 80, 'https': 8443}
+
+    inst.redirect_request(req, request_body, 307, '307 Temporary Redirect', {}, 'https://ansible.com:8443/')
+    req_mock.assert_called_once_with('https://ansible.com:8443/', data=None, headers={'Authorization': 'Basic dXNlcjpwYXNz'}, method='GET',
                                      origin_req_host='ansible.com', unverifiable=True)
