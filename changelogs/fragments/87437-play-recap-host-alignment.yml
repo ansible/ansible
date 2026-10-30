@@ -1,0 +1,4 @@
+bugfixes:
+  - default callback - PLAY RECAP host columns were misaligned for long and wide
+    hostnames. Fix now pads to the longest hostname display width, with a 26-column
+    minimum (https://github.com/ansible/ansible/pull/87437).
