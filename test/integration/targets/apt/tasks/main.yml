@@ -18,6 +18,8 @@
 
   - import_tasks: 'apt_update.yml'
 
+  - import_tasks: 'apt_autoremove_cache.yml'
+
   - block:
       - import_tasks: 'repo.yml'
     always:
