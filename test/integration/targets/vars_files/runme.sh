@@ -3,3 +3,7 @@
 set -eux
 
 ansible-playbook runme.yml -i inventory -v "$@"
+
+output=$(ansible-playbook missing_vars_files.yml -i inventory -v "$@" 2>&1)
+grep -F "Unable to find vars_files: does_not_exist.yml, also_does_not_exist.yml" <<< "$output"
+grep -E "ok=2.*ignored=1" <<< "$output"

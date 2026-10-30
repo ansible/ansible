@@ -1,0 +1,4 @@
+bugfixes:
+  - playbook - When a ``vars_files`` list contains multiple files and none can be found, warn
+    and continue instead of failing, allowing later undefined variable references to raise
+    with the specific variable name (https://github.com/ansible/ansible/issues/87788).
