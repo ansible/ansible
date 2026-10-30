@@ -367,6 +367,8 @@ class VariableManager:
                             raise
                         except AnsibleError as e:
                             raise AnsibleError(f"Invalid vars_files file {found_file!r}.") from e
+                    else:
+                        display.warning(f"Unable to find vars_files: {', '.join(vars_file_list)}")
 
                 except AnsibleUndefinedVariable as ex:
                     if host is not None:

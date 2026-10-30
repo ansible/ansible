@@ -1,0 +1,17 @@
+---
+- hosts: localhost
+  gather_facts: no
+  vars_files:
+    - ["doesnt_exist.yml", "also_doesnt_exist.yml"]
+  tasks:
+    - debug:
+        msg: This play shouldn't fail
+
+- hosts: localhost
+  gather_facts: no
+  vars_files:
+    - ["doesnt_exist.yml", "also_doesnt_exist.yml"]
+  tasks:
+    - debug:
+        msg: Hypothetical {{ varname }} doesnt exist and should crash
+      ignore_errors: true
