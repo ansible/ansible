@@ -1,0 +1,39 @@
+- name: Verify constructed values and groups across hosts and sources
+  hosts: localhost
+  gather_facts: false
+  vars:
+    inventory_data: >-
+      {{ lookup("ansible.builtin.file", lookup("ansible.builtin.env", "OUTPUT_DIR") ~ "/multi_host_inventory.json")
+         | from_json(profile="inventory_legacy") }}
+    inventory_hostvars: '{{ inventory_data._meta.hostvars }}'
+  tasks:
+    - name: Verify each host uses its own input and composed variables
+      ansible.builtin.assert:
+        that:
+          - inventory_hostvars.first.doubled == 2
+          - inventory_hostvars.second.doubled == 4
+          - inventory_hostvars.third.doubled == 6
+          - inventory_hostvars.first.role_upper == 'SPINE'
+          - inventory_hostvars.second.role_upper == 'LEAF'
+          - inventory_hostvars.third.role_upper == 'SPINE'
+          - inventory_hostvars.first.optional_feature is undefined
+          - inventory_hostvars.second.optional_feature == 'enabled'
+          - inventory_hostvars.third.optional_feature == 'disabled'
+          - inventory_data.selected.hosts == ['first', 'third']
+          - inventory_data.role_spine.hosts == ['first', 'third']
+          - inventory_data.role_leaf.hosts == ['second']
+          - inventory_data.east.children == ['role_spine']
+          - inventory_data.west.children | sort == ['role_leaf', 'role_spine']
+
+    - name: Verify a later constructed source sees prior results and current host variables
+      ansible.builtin.assert:
+        that:
+          - inventory_hostvars.first.second_doubled == 2
+          - inventory_hostvars.second.second_doubled == 4
+          - inventory_hostvars.third.second_doubled == 6
+          - inventory_hostvars.first.label == 'SPINE_2'
+          - inventory_hostvars.second.label == 'LEAF_4'
+          - inventory_hostvars.third.label == 'SPINE_6'
+          - inventory_data.constructed_values.hosts == ['first', 'second', 'third']
+          - inventory_data.second_SPINE.hosts == ['first', 'third']
+          - inventory_data.second_LEAF.hosts == ['second']
