@@ -293,10 +293,15 @@ class PasslibHash(BaseHash):
 def do_encrypt(result, algorithm, salt_size=None, salt=None, ident=None, rounds=None):
     if HAS_CRYPT and algorithm in CryptHash.algorithms:
         return CryptHash(algorithm).hash(result, salt=salt, salt_size=salt_size, rounds=rounds, ident=ident)
-    elif PASSLIB_AVAILABLE:
-        # TODO: deprecate passlib
+    if PASSLIB_AVAILABLE:
+        display.deprecated(
+            f"Hashing with the {algorithm!r} algorithm via the 'passlib' Python package is deprecated.",
+            version='2.27',
+            help_text="Install 'libxcrypt' so the built-in 'crypt' support can be used instead, "
+                      f"or request one of its algorithms ({', '.join(sorted(CryptHash.algorithms))}).",
+        )
         return PasslibHash(algorithm).hash(result, salt=salt, salt_size=salt_size, rounds=rounds, ident=ident)
-    elif not PASSLIB_AVAILABLE and algorithm not in CryptHash.algorithms:
+    if not PASSLIB_AVAILABLE and algorithm not in CryptHash.algorithms:
         # When passlib support is removed, this branch can be removed too
         raise AnsibleError(f"crypt does not support {algorithm!r} algorithm")
     raise AnsibleError("Unable to encrypt nor hash, either libxcrypt (recommended), crypt, or passlib must be installed.") from CRYPT_E
