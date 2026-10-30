@@ -21,7 +21,7 @@ from ansible.module_utils.common.text.converters import to_bytes
 from ansible.playbook.block import Block
 from ansible.plugins.loader import add_all_plugin_dirs
 from ansible.utils.collection_loader import AnsibleCollectionConfig
-from ansible.utils.collection_loader._collection_finder import _get_collection_name_from_path, _get_collection_playbook_path
+from ansible.module_utils._internal._collection_loader._collection_finder import _get_collection_name_from_path, _get_collection_playbook_path
 from ansible.utils.display import Display
 
 

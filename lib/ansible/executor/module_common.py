@@ -40,7 +40,7 @@ from io import BytesIO
 
 from ansible._internal import _locking
 from ansible._internal._ansiballz import _builder
-from ansible._internal import _ansiballz
+from ansible.module_utils._internal import _ansiballz
 from ansible._internal._datatag import _utils
 from ansible._internal._powershell import _clixml, _script as _ps_script
 from ansible.module_utils._internal import _dataclass_validation
@@ -59,7 +59,7 @@ from ansible.plugins.become import BecomeBase
 from ansible.plugins.loader import module_utils_loader
 from ansible._internal._templating._engine import TemplateOptions, TemplateEngine
 from ansible.template import Templar
-from ansible.utils.collection_loader._collection_finder import _get_collection_metadata, _nested_dict_get
+from ansible.module_utils._internal._collection_loader._collection_finder import _get_collection_metadata, _nested_dict_get
 from ansible.module_utils._internal import _json
 from ansible.module_utils._internal._ansiballz import _loader
 from ansible.module_utils import basic as _basic

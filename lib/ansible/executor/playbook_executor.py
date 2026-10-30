@@ -29,7 +29,7 @@ from ansible.playbook import Playbook
 from ansible._internal._templating._engine import TemplateEngine
 from ansible.utils.helpers import pct_to_int
 from ansible.utils.collection_loader import AnsibleCollectionConfig
-from ansible.utils.collection_loader._collection_finder import _get_collection_name_from_path, _get_collection_playbook_path
+from ansible.module_utils._internal._collection_loader._collection_finder import _get_collection_name_from_path, _get_collection_playbook_path
 from ansible.utils.path import makedirs_safe
 from ansible.utils.display import Display
 

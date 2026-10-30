@@ -42,7 +42,7 @@ from ansible._internal._errors._handler import ErrorAction, ErrorHandler
 from ansible.module_utils._internal._datatag import AnsibleTagHelper, AnsibleDatatagBase
 from ansible.module_utils._internal._datatag._tags import Deprecated
 from ansible._internal._templating import _transform
-from ansible.utils.collection_loader._collection_finder import _AnsibleCollectionFinder
+from ansible.module_utils._internal._collection_loader._collection_finder import _AnsibleCollectionFinder
 from ansible._internal._datatag._tags import Origin, TrustedAsTemplate
 from ansible.plugins.loader import init_plugin_loader
 from ansible._internal._templating._jinja_common import _TemplateConfig, _SandboxMode
@@ -870,7 +870,7 @@ def test_jinja2_loader_plugin(fixture: str, plugin_type: str, plugin_name: str, 
         expression = f'{{{{ lookup("{plugin_name}") }}}}'
 
     # HACK: this test should really be using a shared collection loader fixture, but this fixes an "inherited" dummy collection loader
-    from ansible.utils.collection_loader._collection_finder import _AnsibleCollectionFinder
+    from ansible.module_utils._internal._collection_loader._collection_finder import _AnsibleCollectionFinder
 
     try:
         _AnsibleCollectionFinder._remove()

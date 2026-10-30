@@ -97,7 +97,7 @@ from ansible.playbook.task import Task
 from ansible.plugins.callback import CallbackBase
 from ansible.executor.task_result import CallbackTaskResult
 from ansible.playbook.included_file import IncludedFile
-from ansible.utils._junit_xml import (
+from ansible._internal._junit_xml import (
     TestCase,
     TestError,
     TestFailure,

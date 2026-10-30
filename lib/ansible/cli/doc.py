@@ -40,7 +40,7 @@ from ansible._internal._yaml._loader import AnsibleInstrumentedLoader
 from ansible.plugins.list import _list_plugins_with_info, _PluginDocMetadata
 from ansible.plugins.loader import action_loader, fragment_loader
 from ansible.utils.collection_loader import AnsibleCollectionConfig, AnsibleCollectionRef
-from ansible.utils.collection_loader._collection_finder import _get_collection_name_from_path
+from ansible.module_utils._internal._collection_loader._collection_finder import _get_collection_name_from_path
 from ansible.utils.color import stringc
 from ansible.utils.display import Display
 from ansible.utils.plugin_docs import get_plugin_docs, get_docstring, get_versioned_doclink

@@ -12,12 +12,12 @@ from importlib import import_module
 
 from ansible.modules import ping as ping_module
 from ansible.utils.collection_loader import AnsibleCollectionConfig, AnsibleCollectionRef
-from ansible.utils.collection_loader._collection_finder import (
+from ansible.module_utils._internal._collection_loader._collection_finder import (
     _AnsibleCollectionFinder, _AnsibleCollectionLoader, _AnsibleCollectionNSPkgLoader, _AnsibleCollectionPkgLoader,
     _AnsibleCollectionPkgLoaderBase, _AnsibleCollectionRootPkgLoader, _AnsibleNSTraversable, _AnsiblePathHookFinder,
     _get_collection_name_from_path, _get_collection_role_path, _get_collection_metadata, _iter_modules_impl, _to_bytes, _to_text
 )
-from ansible.utils.collection_loader._collection_config import _EventSource
+from ansible.module_utils._internal._collection_loader._collection_config import _EventSource
 from unittest.mock import MagicMock, NonCallableMagicMock, patch
 
 
@@ -268,7 +268,7 @@ def test_collpkg_loader_load_module():
             # verify the module has metadata, then try loading it with busted metadata
             assert module._collection_meta
 
-            _collection_finder = import_module('ansible.utils.collection_loader._collection_finder')
+            _collection_finder = import_module('ansible.module_utils._internal._collection_loader._collection_finder')
 
             with patch.object(_collection_finder, '_meta_yml_to_dict', side_effect=Exception('bang')):
                 with pytest.raises(Exception) as ex:

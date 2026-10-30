@@ -1,1 +1,1 @@
-../../../../lib/ansible/utils/_junit_xml.py
+../../../../lib/ansible/_internal/_junit_xml.py

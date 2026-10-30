@@ -64,8 +64,8 @@ def main():
         # allow importing code from collections when testing a collection
 
         # noinspection PyProtectedMember
-        from ansible.utils.collection_loader._collection_finder import _AnsibleCollectionFinder
-        from ansible.utils.collection_loader import _collection_finder, _to_text
+        from ansible.module_utils._internal._collection_loader._collection_finder import _AnsibleCollectionFinder
+        from ansible.module_utils._internal._collection_loader import _collection_finder, _to_text
 
         yaml_to_dict_cache = {}
 
@@ -492,7 +492,7 @@ def main():
             yield
         finally:
             if import_type == 'plugin' and not collection_loader:
-                from ansible.utils.collection_loader._collection_finder import _AnsibleCollectionFinder
+                from ansible.module_utils._internal._collection_loader._collection_finder import _AnsibleCollectionFinder
 
                 _AnsibleCollectionFinder._remove()  # pylint: disable=protected-access
 
@@ -515,9 +515,19 @@ def main():
         finally:
             check_sys_modules(path, snapshot, messages)
 
-            for key in set(sys.modules.keys()) - set(snapshot.keys()):
+            added_modules = set(sys.modules.keys()) - set(snapshot.keys())
+
+            # Remove child modules before their parents so package attributes can be cleaned up too.
+            for key in sorted(added_modules, key=lambda name: name.count('.'), reverse=True):
                 if is_name_in_namepace(key, ('ansible', 'ansible_collections')):
-                    del sys.modules[key]  # only unload our own code since we know it's native Python
+                    module = sys.modules.pop(key)  # only unload our own code since we know it's native Python
+                    parent_name, separator, child_name = key.rpartition('.')
+
+                    if separator:
+                        parent = sys.modules.get(parent_name)
+
+                        if parent is not None and getattr(parent, child_name, None) is module:
+                            delattr(parent, child_name)
 
     @contextlib.contextmanager
     def capture_output(capture):

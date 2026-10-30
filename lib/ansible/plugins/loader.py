@@ -32,7 +32,7 @@ from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible._internal._yaml._loader import AnsibleInstrumentedLoader
 from ansible.plugins import get_plugin_class, MODULE_CACHE, PATH_CACHE, PLUGIN_PATH_CACHE, AnsibleJinja2Plugin
 from ansible.utils.collection_loader import AnsibleCollectionConfig, AnsibleCollectionRef
-from ansible.utils.collection_loader._collection_finder import _AnsibleCollectionFinder, _get_collection_metadata
+from ansible.module_utils._internal._collection_loader._collection_finder import _AnsibleCollectionFinder, _get_collection_metadata
 from ansible.utils.display import Display
 from ansible.utils.plugin_docs import add_fragments
 from ansible._internal._datatag import _tags

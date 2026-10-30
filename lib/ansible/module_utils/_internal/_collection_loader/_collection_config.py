@@ -102,5 +102,6 @@ class _AnsibleCollectionConfig(type):
 
 # concrete class of our metaclass type that defines the class properties we want
 
+
 class AnsibleCollectionConfig(object, metaclass=_AnsibleCollectionConfig):
     pass

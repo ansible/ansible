@@ -79,6 +79,7 @@ class _AnsibleNSTraversable:
     Several methods will raise ``NotImplementedError`` as they do not make
     sense for these namespace packages.
     """
+
     def __init__(self, *paths):
         self._paths = [pathlib.Path(p) for p in paths]
 
@@ -114,6 +115,7 @@ class _AnsibleTraversableResources(TraversableResources):
     for the higher level namespace packages, ``_AnsibleNSTraversable``
     will be returned.
     """
+
     def __init__(self, package, loader):
         self._package = package
         self._loader = loader
@@ -555,11 +557,7 @@ class _AnsibleCollectionPkgLoaderBase:
             return self._redirect_module
 
         # we're actually loading a module/package
-        module_attrs = dict(
-            __loader__=self,
-            __file__=self.get_filename(fullname),
-            __package__=self._parent_package_name  # sane default for non-packages
-        )
+        module_attrs = dict(__loader__=self, __file__=self.get_filename(fullname), __package__=self._parent_package_name)  # sane default for non-packages
 
         # eg, I am a package
         if self._subpackage_search_paths is not None:  # empty is legal
@@ -704,7 +702,7 @@ class _AnsibleCollectionPkgLoader(_AnsibleCollectionPkgLoaderBase):
 
     def _load_module(self, module):
         if not _meta_yml_to_dict:
-            raise ValueError('ansible.utils.collection_loader._meta_yml_to_dict is not set')
+            raise ValueError('_meta_yml_to_dict is not set')
 
         module._collection_meta = {}
         # TODO: load collection metadata, cache in __loader__ state
@@ -887,10 +885,32 @@ class _AnsibleInternalRedirectLoader:
 
 class AnsibleCollectionRef:
     # FUTURE: introspect plugin loaders to get these dynamically?
-    VALID_REF_TYPES = frozenset(_to_text(r) for r in ['action', 'become', 'cache', 'callback', 'cliconf', 'connection',
-                                                      'doc_fragments', 'filter', 'httpapi', 'inventory', 'lookup',
-                                                      'module_utils', 'modules', 'netconf', 'role', 'shell', 'strategy',
-                                                      'terminal', 'test', 'vars', 'playbook'])
+    VALID_REF_TYPES = frozenset(
+        _to_text(r)
+        for r in [
+            'action',
+            'become',
+            'cache',
+            'callback',
+            'cliconf',
+            'connection',
+            'doc_fragments',
+            'filter',
+            'httpapi',
+            'inventory',
+            'lookup',
+            'module_utils',
+            'modules',
+            'netconf',
+            'role',
+            'shell',
+            'strategy',
+            'terminal',
+            'test',
+            'vars',
+            'playbook',
+        ]
+    )
 
     # FIXME: tighten this up to match Python identifier reqs, etc
     VALID_SUBDIRS_RE = re.compile(_to_text(r'^\w+(\.\w+)*$'))
@@ -1180,7 +1200,7 @@ def _get_collection_name_from_path(path):
     if len(path_parts) < ac_pos + 3:
         return None
 
-    candidate_collection_name = '.'.join(path_parts[ac_pos + 1:ac_pos + 3])
+    candidate_collection_name = '.'.join(path_parts[ac_pos + 1 : ac_pos + 3])
 
     try:
         # we've got a name for it, now see if the path prefix matches what the loader sees
@@ -1191,7 +1211,7 @@ def _get_collection_name_from_path(path):
     # reassemble the original path prefix up the collection name, and it should match what we just imported. If not
     # this is probably a collection root that's not configured.
 
-    original_path_prefix = os.path.join('/', *path_parts[0:ac_pos + 3])
+    original_path_prefix = os.path.join('/', *path_parts[0 : ac_pos + 3])
 
     imported_pkg_path = _to_text(os.path.abspath(_to_bytes(imported_pkg_path)))
     if original_path_prefix != imported_pkg_path:
@@ -1215,7 +1235,7 @@ def _get_ancestor_redirect(redirected_package_map, fullname):
         ancestor_redirect = redirected_package_map.get(cur_pkg)
         if ancestor_redirect:
             # rewrite the prefix on fullname so we import the target first, then alias it
-            redirect = ancestor_redirect + fullname[len(cur_pkg):]
+            redirect = ancestor_redirect + fullname[len(cur_pkg) :]
             return redirect
     return None
 
