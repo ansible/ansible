@@ -1,0 +1,2 @@
+minor_changes:
+- deb822_repository - The ``signed_by`` parameter now supports a list of keys. Added ``key_filenames`` return value containing the list of key file paths (https://github.com/ansible/ansible/issues/85700).
