@@ -20,3 +20,11 @@
   file:
     path: /etc/systemd/system/mask_me.service
     state: absent
+
+- name: remove enabled-runtime unit file without Install section
+  file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /run/systemd/system/multi-user.target.wants/qux.service
+    - /etc/systemd/system/qux.service

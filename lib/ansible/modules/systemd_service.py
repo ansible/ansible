@@ -511,6 +511,7 @@ def main():
             # do we need to enable the service?
             enabled = False
             (rc, out, err) = module.run_command("%s is-enabled '%s' -l" % (systemctl, unit))
+            enabled_runtime = rc == 0 and out.rstrip() == "enabled-runtime"
 
             # check systemctl result or if it is a init script
             if rc == 0:
@@ -541,6 +542,14 @@ def main():
                     (rc, out, err) = module.run_command("%s %s '%s'" % (systemctl, action, unit))
                     if rc != 0:
                         module.fail_json(msg="Unable to %s service %s: %s" % (action, unit, out + err))
+
+                    if enabled_runtime:
+                        # a unit enabled at runtime without an [Install] section (for example linked by a generator)
+                        # cannot be enabled persistently, systemctl enable is a no-op in that case
+                        systemctl_enable_cmd = [systemctl, "is-enabled", unit, "-l"]
+                        (rc, out, err) = module.run_command(systemctl_enable_cmd)
+                        if rc == 0 and out.rstrip() == "enabled-runtime":
+                            result['changed'] = False
 
                 result['enabled'] = not enabled
 

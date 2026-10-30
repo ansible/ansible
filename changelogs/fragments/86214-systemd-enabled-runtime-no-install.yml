@@ -1,0 +1,3 @@
+bugfixes:
+  - systemd_service - do not report a change when enabling a unit that is only enabled at runtime and cannot be enabled persistently,
+    for example a unit without an ``[Install]`` section linked by a generator (https://github.com/ansible/ansible/issues/86214).

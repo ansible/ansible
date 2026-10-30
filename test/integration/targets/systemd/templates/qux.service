@@ -1,0 +1,5 @@
+[Unit]
+Description=Qux Server without an Install section
+
+[Service]
+ExecStart=/bin/yes
