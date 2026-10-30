@@ -130,6 +130,17 @@ def test_field_name_header_param_escaped():
     assert b_data.count(b'\r\nContent-Disposition: ') == 1
 
 
+def test_filepath_basename_header_param_escaped(tmp_path):
+    # the filepath branch derives the header filename from os.path.basename
+    path = tmp_path / 'ok.txt"\r\nX-Injected: pwned'
+    path.write_bytes(b'file_content')
+    fields = {'upload': {'filename': str(path)}}
+    content_type, b_data = prepare_multipart(fields)
+    assert b'filename="ok.txt%22%0D%0AX-Injected: pwned"' in b_data
+    assert b'\r\nX-Injected: pwned' not in b_data
+
+
 def test_mime_type_with_crlf():
     fields = {'foo': {'content': 'foo', 'mime_type': 'text/plain\r\nX-Injected: pwned'}}
-    pytest.raises(ValueError, prepare_multipart, fields)
+    with pytest.raises(ValueError, match='mime_type cannot contain CR or LF'):
+        prepare_multipart(fields)
