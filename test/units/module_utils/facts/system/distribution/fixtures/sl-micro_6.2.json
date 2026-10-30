@@ -1,0 +1,46 @@
+{
+    "name": "SL-Micro 16.0",
+    "distro": {
+        "codename": "",
+        "id": "sles",
+        "name": "SLES",
+        "version": "16.0",
+        "version_best": "16.0",
+        "lsb_release_info": {},
+        "os_release_info": {
+            "name": "SLES",
+            "pretty_name": "SUSE Linux Enterprise Server 16.0",
+            "variant": "Micro",
+            "variant_id": "transactional",
+            "version": "16.0",
+            "version_id": "16.0",
+            "ansi_color": "0;32",
+            "id": "sles",
+            "id_like": "suse opensuse sle-micro sl-micro microos opensuse-microos",
+            "cpe_name": "cpe:/o:suse:sles:16:16.0",
+            "suse_support_product": "SUSE Linux Micro",
+            "suse_support_product_version": "6.2",
+            "suse_pretty_name": "SUSE Linux Micro 6.2",
+            "home_url": "https://www.suse.com/products/micro/",
+            "documentation_url": "https://documentation.suse.com/sl-micro/6.2/",
+            "logo": "distributor-logo"
+        }
+    },
+    "input": {
+        "/etc/os-release": "# The NAME and PRETTY_NAME fields have been chosen to state compatibility between our products.\n# The use of \"SLES\" and \"SUSE Linux Enterprise\" rather than a more generic name is due to backward compatibility with existing OS detection code in applications of third party vendors.\nNAME=\"SLES\"\nPRETTY_NAME=\"SUSE Linux Enterprise Server 16.0\"\nVARIANT=\"Micro\"\nVARIANT_ID=\"transactional\"\nVERSION=\"16.0\"\nVERSION_ID=\"16.0\"\nANSI_COLOR=\"0;32\"\nID=\"sles\"\nID_LIKE=\"suse opensuse sle-micro sl-micro microos opensuse-microos\"\nCPE_NAME=\"cpe:/o:suse:sles:16:16.0\"\nSUSE_SUPPORT_PRODUCT=\"SUSE Linux Micro\"\nSUSE_SUPPORT_PRODUCT_VERSION=\"6.2\"\nSUSE_PRETTY_NAME=\"SUSE Linux Micro 6.2\"\nHOME_URL=\"https://www.suse.com/products/micro/\"\nDOCUMENTATION_URL=\"https://documentation.suse.com/sl-micro/6.2/\"\nLOGO=\"distributor-logo\"\n",
+        "/usr/lib/os-release": "# The NAME and PRETTY_NAME fields have been chosen to state compatibility between our products.\n# The use of \"SLES\" and \"SUSE Linux Enterprise\" rather than a more generic name is due to backward compatibility with existing OS detection code in applications of third party vendors.\nNAME=\"SLES\"\nPRETTY_NAME=\"SUSE Linux Enterprise Server 16.0\"\nVARIANT=\"Micro\"\nVARIANT_ID=\"transactional\"\nVERSION=\"16.0\"\nVERSION_ID=\"16.0\"\nANSI_COLOR=\"0;32\"\nID=\"sles\"\nID_LIKE=\"suse opensuse sle-micro sl-micro microos opensuse-microos\"\nCPE_NAME=\"cpe:/o:suse:sles:16:16.0\"\nSUSE_SUPPORT_PRODUCT=\"SUSE Linux Micro\"\nSUSE_SUPPORT_PRODUCT_VERSION=\"6.2\"\nSUSE_PRETTY_NAME=\"SUSE Linux Micro 6.2\"\nHOME_URL=\"https://www.suse.com/products/micro/\"\nDOCUMENTATION_URL=\"https://documentation.suse.com/sl-micro/6.2/\"\nLOGO=\"distributor-logo\"\n"
+    },
+    "platform.dist": [
+        "sles",
+        "16.0",
+        ""
+    ],
+    "result": {
+        "distribution": "SL-Micro",
+        "distribution_version": "16.0",
+        "distribution_release": "0",
+        "distribution_major_version": "16",
+        "os_family": "Suse"
+    },
+    "platform.release": "6.12.0-160000.38-default"
+}
