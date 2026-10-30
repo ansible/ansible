@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-vault - fix ``ansible-vault edit`` and ``ansible-vault rekey`` failing with a permissions error when file ownership cannot be restored, such as when an unprivileged user edits a file whose group they are not a member of (e.g. files created in ``/tmp`` on macOS inherit the ``wheel`` group) (https://github.com/ansible/ansible/issues/11544).
