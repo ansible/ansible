@@ -297,6 +297,8 @@
       - "'1.0' is version('1.0', '>=', true)"
       - "'1.2.3' is version('2.0.0', 'lt', version_type='semver')"
       - "'2.14.0rc1' is version('2.14.0', 'lt', version_type='pep440')"
+      - "'1:2.3-4~bpo12+1' is version('1:2.3-4', 'gt')"
+      - "'1:2.3-4~bpo12+1' is version('1:2.3-4', 'lt', version_type='debian')"
       - version_bad_operator is failed
       - version_bad_value is failed
       - version_strict_version_type is failed
