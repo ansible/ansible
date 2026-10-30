@@ -899,11 +899,12 @@ def set_remote_url(git_path, module, repo, dest, remote):
     if remote_url == repo or unfrackgitpath(remote_url) == unfrackgitpath(repo):
         return False
 
-    command = [git_path, 'remote', 'set-url', remote, repo]
-    (rc, out, err) = module.run_command(command, cwd=dest)
-    if rc != 0:
-        label = "set a new url %s for %s" % (repo, remote)
-        module.fail_json(msg="Failed to %s: %s %s" % (label, out, err))
+    if not module.check_mode:
+        command = [git_path, 'remote', 'set-url', remote, repo]
+        (rc, out, err) = module.run_command(command, cwd=dest)
+        if rc != 0:
+            label = "set a new url %s for %s" % (repo, remote)
+            module.fail_json(msg="Failed to %s: %s %s" % (label, out, err))
 
     # Return False if remote_url is None to maintain previous behavior
     # for Git versions prior to 1.7.5 that lack required functionality.
