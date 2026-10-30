@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import pytest
 
-from ansible.module_utils.common.text.formatters import human_to_bytes
+from ansible.module_utils.common.text.formatters import bytes_to_human, human_to_bytes
 
 
 NUM_IN_METRIC = {
@@ -255,3 +255,64 @@ def test_human_to_bytes_non_ascii_number(test_input):
     expected = "can't interpret following string"
     with pytest.raises(ValueError, match=expected):
         human_to_bytes(test_input)
+
+
+@pytest.mark.parametrize(
+    ('input_data', 'isbits', 'expected'),
+    [
+        pytest.param('1 byte', False, 1, id='1-byte'),
+        pytest.param('1 bytes', False, 1, id='1-bytes'),
+        pytest.param('2 Bytes', False, 2, id='2-Bytes'),
+        pytest.param('2 kilobytes', False, 2 * NUM_IN_METRIC['K'], id='2-kilobytes'),
+        pytest.param('3 Megabytes', False, 3 * NUM_IN_METRIC['M'], id='3-Megabytes'),
+        pytest.param('8 bits', True, 8, id='8-bits'),
+        pytest.param('2 kilobits', True, 2 * NUM_IN_METRIC['K'], id='2-kilobits'),
+    ]
+)
+def test_human_to_bytes_plural_unit_name(input_data, isbits, expected):
+    """Accept the plural of a spelled-out unit name."""
+    assert human_to_bytes(input_data, isbits=isbits) == expected
+
+
+@pytest.mark.parametrize(
+    ('input_data', 'isbits'),
+    [
+        pytest.param('2 kilobits', False, id='kilobits-as-bytes'),
+        pytest.param('2 kilobytes', True, id='kilobytes-as-bits'),
+        pytest.param('2 bits', False, id='bits-as-bytes'),
+        pytest.param('2 bytes', True, id='bytes-as-bits'),
+    ]
+)
+def test_human_to_bytes_plural_unit_name_wrong_isbits(input_data, isbits):
+    """Keep rejecting a plural unit name that does not match isbits."""
+    with pytest.raises(ValueError, match="Value is not a valid string"):
+        human_to_bytes(input_data, isbits=isbits)
+
+
+@pytest.mark.parametrize(
+    ('input_data', 'isbits', 'expected'),
+    [
+        pytest.param('1 bite', False, 'expect B, byte or bytes', id='bite-as-bytes'),
+        pytest.param('1 bite', True, 'expect b, bit or bits', id='bite-as-bits'),
+        pytest.param('1 kilobite', False, 'expect KB, K, kilobyte or kilobytes', id='kilobite-as-bytes'),
+        pytest.param('1 kilobite', True, 'expect Kb, K, kilobit or kilobits', id='kilobite-as-bits'),
+    ]
+)
+def test_human_to_bytes_unit_name_error_message(input_data, isbits, expected):
+    """List the singular and plural unit names in the error message."""
+    with pytest.raises(ValueError, match=expected):
+        human_to_bytes(input_data, isbits=isbits)
+
+
+@pytest.mark.parametrize('size', [0, 1, 1023, 1024, 1536, 2 ** 20, 5 * 2 ** 30])
+@pytest.mark.parametrize(
+    'isbits',
+    [False, True],
+    ids=lambda is_bits: 'bits' if is_bits else 'bytes',
+)
+def test_human_to_bytes_reads_bytes_to_human(size, isbits):
+    """Read back what bytes_to_human() writes for sizes it can write exactly.
+
+    bytes_to_human() rounds to two decimals, so for instance 1025 comes back as 1024.
+    """
+    assert human_to_bytes(bytes_to_human(size, isbits=isbits), isbits=isbits) == size
