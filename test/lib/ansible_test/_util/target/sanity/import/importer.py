@@ -12,17 +12,18 @@ def main():
     import sys
     import types
 
+    ansible_lib_root = os.environ['ANSIBLE_TEST_ANSIBLE_LIB_ROOT']
+
     # preload an empty ansible._vendor module to prevent use of any embedded modules during the import test
     vendor_module_name = 'ansible._vendor'
 
     vendor_module = types.ModuleType(vendor_module_name)
-    vendor_module.__file__ = os.path.join(os.path.sep.join(os.path.abspath(__file__).split(os.path.sep)[:-8]), 'lib/ansible/_vendor/__init__.py')
-    vendor_module.__path__ = []
+    vendor_module.__file__ = os.path.join(ansible_lib_root, '_vendor/__init__.py')
+    vendor_module.__path__ = [os.path.join(ansible_lib_root, '_vendor')]
     vendor_module.__package__ = vendor_module_name
 
     sys.modules[vendor_module_name] = vendor_module
 
-    import ansible
     import contextlib
     import datetime
     import json
@@ -32,13 +33,26 @@ def main():
     import traceback
     import warnings
 
-    ansible_path = os.path.dirname(os.path.dirname(ansible.__file__))
+    ansible_path = os.path.dirname(ansible_lib_root)
     temp_path = os.environ['SANITY_TEMP_PATH'] + os.path.sep
     external_python = os.environ.get('SANITY_EXTERNAL_PYTHON')
     yaml_to_json_path = os.environ.get('SANITY_YAML_TO_JSON')
     collection_full_name = os.environ.get('SANITY_COLLECTION_FULL_NAME')
     collection_root = os.environ.get('ANSIBLE_COLLECTIONS_PATH')
     import_type = os.environ.get('SANITY_IMPORTER_TYPE')
+
+    def synthesize_ansible_module() -> None:
+        if import_type == 'plugin':
+            return  # only controller code has access to the real ansible module
+
+        ansible_module = types.ModuleType('ansible')
+        ansible_module.__file__ = os.path.join(ansible_lib_root, '__init__.py')
+        ansible_module.__path__ = [ansible_lib_root]
+        ansible_module.__package__ = 'ansible'
+
+        sys.modules['ansible'] = ansible_module
+
+    synthesize_ansible_module()
 
     try:
         # noinspection PyCompatibility
@@ -125,18 +139,9 @@ def main():
         pass
     else:
         # remove all modules under the ansible package, except the preloaded vendor module
-        list(map(sys.modules.pop, [m for m in sys.modules if m.partition('.')[0] == ansible.__name__ and m != vendor_module_name]))
+        list(map(sys.modules.pop, [m for m in sys.modules if m.partition('.')[0] == 'ansible' and m != vendor_module_name]))
 
-    if import_type == 'module':
-        # pre-load an empty ansible package to prevent unwanted code in __init__.py from loading
-        # this more accurately reflects the environment that AnsiballZ runs modules under
-        # it also avoids issues with imports in the ansible package that are not allowed
-        ansible_module = types.ModuleType(ansible.__name__)
-        ansible_module.__file__ = ansible.__file__
-        ansible_module.__path__ = ansible.__path__
-        ansible_module.__package__ = ansible.__package__
-
-        sys.modules[ansible.__name__] = ansible_module
+    synthesize_ansible_module()
 
     class ImporterAnsibleModuleException(Exception):
         """Exception thrown during initialization of ImporterAnsibleModule."""

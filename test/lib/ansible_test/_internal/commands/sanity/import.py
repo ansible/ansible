@@ -19,7 +19,6 @@ from . import (
 
 from ...constants import (
     CONTROLLER_MIN_PYTHON_VERSION,
-    REMOTE_ONLY_PYTHON_VERSIONS,
 )
 
 from ...test import (
@@ -109,14 +108,7 @@ class ImportTest(SanityMultipleVersion):
             ('module', _get_module_test(True)),
             ('plugin', _get_module_test(False)),
         ):
-            if import_type == 'plugin' and python.version in REMOTE_ONLY_PYTHON_VERSIONS:
-                # Plugins are not supported on remote-only Python versions.
-                # However, the collection loader is used by the import sanity test and unit tests on remote-only Python versions.
-                # To support this, it is tested as a plugin, but using a venv which installs no requirements.
-                # Filtering of paths relevant to the Python version tested has already been performed by filter_remote_targets.
-                venv_type = 'empty'
-            else:
-                venv_type = import_type
+            venv_type = import_type
 
             data = '\n'.join([path for path in paths if test(path)])
 
