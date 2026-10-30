@@ -1,0 +1,13 @@
+---
+- hosts: localhost
+  gather_facts: false
+  module_defaults:
+    gather_facts:
+        gather_subset: ['env']
+  tasks:
+    - name: Verify all environment variables are accessible via ansible_env
+      assert:
+        that:
+          - ansible_env.TEST_PULL is defined
+          - ansible_env.TEST_PULL == "pull_test_value"
+        fail_msg: "Environment variables not accessible via -E option in ansible-pull"
