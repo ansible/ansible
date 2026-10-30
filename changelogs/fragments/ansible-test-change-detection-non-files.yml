@@ -1,0 +1,3 @@
+bugfixes:
+  - ansible-test - Fix a crash during change detection with ``--changed`` when the working tree contains an
+    untracked symlink to a directory, a broken symlink, or a nested git repository.
