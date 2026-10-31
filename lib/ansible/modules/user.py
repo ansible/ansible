@@ -275,11 +275,13 @@ options:
     password_expire_last_changed:
         description:
             - Number of days since January 1, 1970 when the password was last changed.
+            - Set to V(0) to force the user to change their password at next login.
             - Supported on Linux only.
             - Requires password aging utilities on the target system.
-            - Uses C(lchage) when O(local=true).
+            - Uses C(lchage) when O(local=true). In that case any O(password_expire_min), O(password_expire_max)
+              and O(password_expire_warn) set in the same task are also applied with C(lchage).
         type: int
-        version_added: "2.22"
+        version_added: "2.23"
     umask:
         description:
             - Sets the umask of the user.
@@ -1202,7 +1204,12 @@ class User(object):
         if not (min_needs_change or max_needs_change or warn_needs_change or last_changed_needs_change):
             return (None, '', '')  # target state already reached
 
-        command_name = 'lchage' if self.local else 'chage'
+        # chage ignores local=true, but switching all password_expire_* options to lchage would require libuser
+        # on hosts that previously worked, so only use lchage when password_expire_last_changed is requested
+        if self.local and self.password_expire_last_changed is not None:
+            command_name = 'lchage'
+        else:
+            command_name = 'chage'
         cmd = [self.module.get_bin_path(command_name, True)]
         if min_needs_change:
             cmd.extend(["-m", self.password_expire_min])
