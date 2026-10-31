@@ -17,6 +17,7 @@
     - name: Install deb file with dependencies from URL (check_mode)
       apt:
         deb: https://ci-files.testing.ansible.com/test/integration/targets/apt/echo-hello_1.0_all.deb
+        checksum: 'sha256:60c5d4dac1c83ea4d42d30c9e16dcec215f537e5053415e0d7bdb06957d32ae8'
       check_mode: true
       register: apt_url_deps_check_mode
 
