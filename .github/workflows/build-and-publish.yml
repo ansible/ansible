@@ -1,0 +1,508 @@
+---
+
+name: 👷 build & 📦 publish
+
+on:  # yamllint disable-line rule:truthy
+  workflow_dispatch:
+    inputs:
+      release-version:
+        # github.event_name == 'workflow_dispatch'
+        # && github.event.inputs.release-version
+        description: >-
+          Target PEP440-compliant version to release.
+          Please, don't prepend `v`.
+        required: true
+        type: string
+      release-commitish:
+        # github.event_name == 'workflow_dispatch'
+        # && github.event.inputs.release-commitish
+        default: ''
+        description: >-
+          The commit to be released to PyPI and tagged
+          in Git as `release-version`. Normally, you
+          should keep this empty.
+        type: string
+
+concurrency:
+  group: >-
+    ${{
+        github.workflow
+    }}-${{
+        github.ref_type
+    }}-${{
+        github.event.pull_request.number || github.sha
+    }}
+  cancel-in-progress: true
+
+env:
+  DEFAULT_PYTHON_VERSION: 3.11
+  FORCE_COLOR: 1  # Request colored output from CLI tools supporting it
+  PIP_DISABLE_PIP_VERSION_CHECK: 1
+  PIP_NO_PYTHON_VERSION_WARNING: 1
+  PIP_NO_WARN_SCRIPT_LOCATION: 1
+
+permissions: {}  # Jobs hardened by default
+
+jobs:
+  pre-setup:
+    name: ⚙️  Pre-set global build settings
+    runs-on: ubuntu-latest
+
+    outputs:
+      dist-version: ${{ github.event.inputs.release-version }}
+      git-tag: ${{ steps.git.outputs.tag }}
+      stable-branch: stable-${{ steps.version.outputs.major }}
+      release-branch: ${{ steps.git.outputs.release-branch }}
+      sdist-artifact-name: ${{ steps.artifact-name.outputs.sdist }}
+      changelog-patch-name: ${{ steps.changelog-patch-name.outputs.filename }}
+      changelog-draft-name-md: >-
+        ${{ steps.changelog-draft-name.outputs.filename-base }}.md
+      changelog-draft-name-rst: >-
+        ${{ steps.changelog-draft-name.outputs.filename-base }}.rst
+
+    permissions:
+      contents: read  # For accessing the repository
+
+    steps:
+    - name: >-
+        ✅ Fail if the requested release version
+        '${{ github.event.inputs.release-version }}' is not PEP440-compliant
+      run: |
+        import os
+        import pathlib
+        import sys
+
+        from packaging.version import InvalidVersion, Version
+
+        try:
+            Version('${{ github.event.inputs.release-version }}')
+        except InvalidVersion as version_error:
+            with pathlib.Path(
+                os.environ['GITHUB_STEP_SUMMARY'],
+            ).open('a') as summary_fd:
+                print('# ❌ Requested version check failed', file=summary_fd)
+                print('', file=summary_fd)
+                print(
+                    'The requested version `${{
+                        github.event.inputs.release-version
+                    }}` must be compliant with PEP440 but it is not.',
+                    file=summary_fd,
+                )
+                print('', file=summary_fd)
+                print(str(version_error), file=summary_fd)
+                print('', file=summary_fd)
+
+            sys.exit(str(version_error))
+      shell: python
+
+    - name: ⚙️  Set the target Git 🏷️ tag
+      id: git
+      run: |
+        echo 'release-branch=release/${{
+            github.event.inputs.release-version
+        }}' >> "${GITHUB_OUTPUT}"
+        echo 'tag=v${{
+            github.event.inputs.release-version
+        }}' >> "${GITHUB_OUTPUT}"
+
+    - name: ⚙️  Set the "major" release version
+      id: version
+      run: >-
+        echo "major=$(
+        echo '${{ github.event.inputs.release-version }}'
+        | sed 's/\([0-9]\+\.[0-9]\+\).*/\1/'
+        )"
+        >> "${GITHUB_OUTPUT}"
+
+    - name: ⬇️  Fetch the src
+      uses: actions/checkout@v3
+      with:
+        ref: ${{ github.event.inputs.release-commitish }}
+    - name: >-
+        ✅ Fail if the requested tag 🏷️ ${{ steps.git.outputs.tag }}
+        is present
+      run: |
+        REMOTE_TAGGED_COMMIT_SHA="$(
+          git ls-remote --tags --refs $(git remote get-url origin) '${{
+            steps.git.outputs.tag
+          }}' | awk '{print $1}'
+        )"
+
+        if [[ "${REMOTE_TAGGED_COMMIT_SHA}" != '' ]]
+        then
+          echo >> "${GITHUB_STEP_SUMMARY}"
+          echo "# ❌ Tag 🏷️ ${{
+            steps.git.outputs.tag
+          }} check failed" >> "${GITHUB_STEP_SUMMARY}"
+          echo >> "${GITHUB_STEP_SUMMARY}"
+
+          echo >> "${GITHUB_STEP_SUMMARY}"
+          echo \
+          '> **Warning**: Tag 🏷️ ${{ steps.git.outputs.tag }} already '\
+          'exists in the repository. To continue, remove it and restart ' \
+          'the workflow' | >&2 tee -a "${GITHUB_STEP_SUMMARY}"
+          echo >> "${GITHUB_STEP_SUMMARY}"
+
+          exit 1
+        fi
+
+    - name: ⚙️  Set the expected dist artifact names
+      id: artifact-name
+      run: >-
+        echo 'sdist=ansible-core-${{
+            github.event.inputs.release-version
+        }}.tar.gz'
+        >> "${GITHUB_OUTPUT}"
+    - name: ⚙️  Set the expected changelog patch filename
+      id: changelog-patch-name
+      run: >-
+        echo 'filename=0001-Version-bump-for-v${{
+            github.event.inputs.release-version
+        }}.patch'
+        >> "${GITHUB_OUTPUT}"
+    - name: ⚙️  Set the expected changelog draft filename
+      id: changelog-draft-name
+      run: >-
+        echo 'filename-base=changelogs/CHANGELOG-v${{
+            steps.version.outputs.major
+        }}'
+        >> "${GITHUB_OUTPUT}"
+
+  build-src:
+    name: 👷📦 dists ${{ needs.pre-setup.outputs.git-tag }}
+    needs:
+    - pre-setup
+
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write  # For publishing the artifacts
+
+    steps:
+    - name: 🐍 Switch to using Python v${{ env.DEFAULT_PYTHON_VERSION }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.DEFAULT_PYTHON_VERSION }}
+
+    - name: ⬇️  Grab the source from Git
+      uses: actions/checkout@v3
+      with:
+        ref: ${{ github.event.inputs.release-commitish }}
+
+    - name: 📂 Make a virtualenv
+      # ... so that the externally installed libs don't leak into our env
+      run: python -m venv ansible-release
+
+    - name: ✨ Activate the virtualenv
+      run: >-
+        echo "${{ github.workspace }}/ansible-release/bin" >> "${GITHUB_PATH}"
+
+    - name: ✨📦 Install the checked out Git repository in editable mode
+      run: >-
+        python -m
+        pip install
+        --editable
+        .
+
+    - name: ✨📦 Install antsibull-changelog, `build` PEP 517 front-end and Twine
+      run: >-
+        python -m
+        pip install
+        antsibull-changelog
+        build
+        twine
+
+    - name: ⚙️  Setup git user as [bot]
+      uses: fregante/setup-git-user@v1.1.0
+
+    - name: >-
+        📝 Bump version and generate changelog for ${{
+            needs.pre-setup.outputs.git-tag
+        }}
+      run: >-
+        make release 'version=${{ needs.pre-setup.outputs.dist-version }}'
+      working-directory: ${{ github.workspace }}/packaging/release
+    - name: 📝 Log the version bump and changelog commit
+      run: git show --color
+    - name: 📝 Create a changelog update patch from the last Git commit
+      run: >-
+        git format-patch
+        --output='${{ needs.pre-setup.outputs.changelog-patch-name }}'
+        -1 HEAD
+    - name: ✅ Verify that expected patch got created
+      run: ls -1 '${{ needs.pre-setup.outputs.changelog-patch-name }}'
+
+    - name: 📦 Install pandoc via apt
+      run: sudo apt install -y pandoc
+    - name: >-
+        📝 Convert ${{ needs.pre-setup.outputs.changelog-draft-name-rst }}
+        into ${{ needs.pre-setup.outputs.changelog-draft-name-md }}
+        with a native pandoc run
+      run: >-
+        pandoc
+        --from=rst
+        --to=gfm
+        --output='${{ needs.pre-setup.outputs.changelog-draft-name-md }}'
+        '${{ needs.pre-setup.outputs.changelog-draft-name-rst }}'
+    - name: 📝 Render the changelog draft in the GitHub Job Summary
+      run: |
+        echo "# 📝 Changelog for ${{
+            needs.pre-setup.outputs.git-tag
+        }}" >> "${GITHUB_STEP_SUMMARY}"
+        echo >> "${GITHUB_STEP_SUMMARY}"
+        echo >> "${GITHUB_STEP_SUMMARY}"
+        cat '${{
+            needs.pre-setup.outputs.changelog-draft-name-md
+        }}' >> "${GITHUB_STEP_SUMMARY}"
+        echo >> "${GITHUB_STEP_SUMMARY}"
+
+    - name: >-
+        📦 Generate source distribution using the `build` PEP 517 front-end
+      run: >-
+        python -m build --sdist
+    - name: ✅ Verify that the artifacts with expected names got created
+      run: >-
+        ls -1
+        'dist/${{ needs.pre-setup.outputs.sdist-artifact-name }}'
+
+    - name: ✨ Verify 🐍📦 metadata
+      run: >-
+        python -m
+        twine check
+        --strict
+        'dist/${{ needs.pre-setup.outputs.sdist-artifact-name }}'
+
+    - name: ⇪ Store the distribution packages
+      uses: actions/upload-artifact@v3
+      with:
+        name: python-package-distributions
+        # NOTE: Exact expected file names are specified here
+        # NOTE: as a safety measure — if anything weird ends
+        # NOTE: up being in this dir or not all dists will be
+        # NOTE: produced, this will fail the workflow.
+        path: |
+          dist/${{ needs.pre-setup.outputs.sdist-artifact-name }}
+        retention-days: 90
+    - name: ⇪  Save the package bump patch as a GHA artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: changelog
+        path: |
+          ${{ needs.pre-setup.outputs.changelog-patch-name }}
+
+  publish-pypi:
+    name: ⇪ Publish 🐍📦 ${{ needs.pre-setup.outputs.git-tag }} to PyPI
+    needs:
+    - build-src
+    - pre-setup  # transitive, for accessing settings
+    runs-on: ubuntu-latest
+
+    environment:  # acts as an if-clause, pauses the wokrflow until approved
+      name: pypi
+      url: >-
+        https://pypi.org/project/ansible-core/${{
+          needs.pre-setup.outputs.dist-version
+        }}
+
+    permissions:
+      contents: read  # For accessing the artifacts
+
+    steps:
+    - name: ⬇️  Download all the dists
+      uses: actions/download-artifact@v3
+      with:
+        name: python-package-distributions
+        path: dist/
+    - name: >-
+        ⇪ Publish 🐍📦 ${{ needs.pre-setup.outputs.git-tag }} to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        password: ${{ secrets.PYPI_API_TOKEN }}
+
+  publish-testpypi:
+    name: ⇪ Publish 🐍📦 ${{ needs.pre-setup.outputs.git-tag }} to TestPyPI
+    needs:
+    - build-src
+    - pre-setup  # transitive, for accessing settings
+    runs-on: ubuntu-latest
+
+    environment:
+      name: testpypi
+      url: >-
+        https://test.pypi.org/project/ansible-core/${{
+          needs.pre-setup.outputs.dist-version
+        }}
+
+    permissions:
+      contents: read  # For accessing the artifacts
+
+    steps:
+    - name: ⬇️  Download all the dists
+      uses: actions/download-artifact@v3
+      with:
+        name: python-package-distributions
+        path: dist/
+    - name: >-
+        ⇪ Publish 🐍📦 ${{ needs.pre-setup.outputs.git-tag }} to TestPyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        password: ${{ secrets.PYPI_API_TOKEN }}
+        repository_url: https://test.pypi.org/legacy/
+
+  post-release-repo-update:
+    name: >-
+      ⇪ Publish post-release Git tag and branch
+      for ${{ needs.pre-setup.outputs.git-tag }}
+    needs:
+    - publish-pypi
+    - pre-setup  # transitive, for accessing settings
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write  # For pushing Git tag and branch
+
+    steps:
+    - name: ⬇️  Fetch the src
+      uses: actions/checkout@v3
+      with:
+        ref: ${{ github.event.inputs.release-commitish }}
+
+    - name: ⚙️  Setup git user as [bot]
+      # Refs:
+      # * https://github.community/t/github-actions-bot-email-address/17204/6
+      # * https://github.com/actions/checkout/issues/13#issuecomment-724415212
+      uses: fregante/setup-git-user@v1.1.0
+
+    - name: ⬇️  Fetch the GHA artifact with the version patch
+      uses: actions/download-artifact@v3
+      with:
+        name: changelog
+    - name: 📝 Apply the changelog patch
+      run: git am '${{ needs.pre-setup.outputs.changelog-patch-name }}'
+
+    - name: >-
+        ✨ Create a local '${{ needs.pre-setup.outputs.release-branch }}' branch
+      run: >-
+        git checkout -b '${{ needs.pre-setup.outputs.release-branch }}'
+
+    - name: >-
+        🏷️ Tag the release in the local Git repo as v999.99.9Tag the release in the local Git repo
+        as ${{ needs.pre-setup.outputs.git-tag }}
+      # NOTE: This could be
+      # NOTE: $ make tag 'version=${{ github.event.inputs.release-commitish }}'
+      # NOTE: but the following implementation also adds a link to PyPI which
+      # NOTE: provides more context.
+      # NOTE: Tagging is needed because Git patches don't contain tag info.
+      run: >-
+        git tag
+        -m '${{ needs.pre-setup.outputs.git-tag }}'
+        -m 'Published at https://pypi.org/project/ansible-core/${{
+          needs.pre-setup.outputs.dist-version
+        }}'
+        -m 'This release has been produced by the following workflow run: ${{
+          github.server_url
+        }}/${{
+          github.repository
+        }}/actions/runs/${{
+          github.run_id
+        }}'
+        '${{ needs.pre-setup.outputs.git-tag }}'
+
+    - name: >-
+        📝 Bump the version to ${{ needs.pre-setup.outputs.git-tag }}.post0
+      run: >-
+        make publish 'version=${{ github.event.inputs.release-commitish }}'
+      working-directory: ${{ github.workspace }}/packaging/release
+
+    - name: >-
+        ⇪ Push 🏷️  ${{ needs.pre-setup.outputs.git-tag }} tag corresponding
+        to the just published release back to GitHub
+      run: >-
+        git push --atomic origin '${{
+          needs.pre-setup.outputs.git-tag
+        }}' '${{ needs.pre-setup.outputs.release-branch }}'
+
+    - name: 📝 Explain the pushed Git objects in the GitHub Job Summary
+      run: |
+        echo "# ✨🎉🏷️  ${{
+            needs.pre-setup.outputs.git-tag
+        }} release tag and branch created in ${{
+            github.repository
+        }}" >> "${GITHUB_STEP_SUMMARY}"
+        echo >> "${GITHUB_STEP_SUMMARY}"
+
+        echo >> "${GITHUB_STEP_SUMMARY}"
+        echo '> **Note**: `${{
+            needs.pre-setup.outputs.git-tag
+        }}` tag and `${{
+            needs.pre-setup.outputs.release-branch
+        }}` branch are now a part of `${{
+            github.repository
+        }}`' >> "${GITHUB_STEP_SUMMARY}"
+        echo >> "${GITHUB_STEP_SUMMARY}"
+
+        echo >> "${GITHUB_STEP_SUMMARY}"
+        echo '## Post-release activities' >> "${GITHUB_STEP_SUMMARY}"
+        echo >> "${GITHUB_STEP_SUMMARY}"
+
+        echo >> "${GITHUB_STEP_SUMMARY}"
+        echo 'The final thing left to do is applying the repository updates ' \
+        'to the release branch.' >> "${GITHUB_STEP_SUMMARY}"
+        echo '1. Copy the branch to your fork (assuming your local Git ' \
+        'repository has `upstream` remote pointing at ${{
+          github.server_url
+        }}/${{
+          github.repository
+        }} and `fork` is your forked repository):' >> "${GITHUB_STEP_SUMMARY}"
+        echo '   ```console' >> "${GITHUB_STEP_SUMMARY}"
+        echo '   git fetch --all' >> "${GITHUB_STEP_SUMMARY}"
+        echo "   git push 'upstream/${{
+            needs.pre-setup.outputs.release-branch
+        }}:${{
+            needs.pre-setup.outputs.release-branch
+        }}'" >> "${GITHUB_STEP_SUMMARY}"
+        echo '   ```' >> "${GITHUB_STEP_SUMMARY}"
+        echo '2. [Create a pull request from your fork against `${{
+            needs.pre-setup.outputs.stable-branch
+        }}`](${{
+          github.server_url
+        }}/${{
+          github.repository
+        }}/compare/${{
+            needs.pre-setup.outputs.stable-branch
+        }}...).' >> "${GITHUB_STEP_SUMMARY}"
+        echo '3. Merge the pull request using the true merge mode so that ' \
+        'the tagged commit ends up in `${{
+            needs.pre-setup.outputs.stable-branch
+        }}`.' >> "${GITHUB_STEP_SUMMARY}"
+        echo >> "${GITHUB_STEP_SUMMARY}"
+
+        echo >> "${GITHUB_STEP_SUMMARY}"
+        echo '> **Warning**: You can also re-sign the tag with GPG locally ' \
+        'as follows:' >> "${GITHUB_STEP_SUMMARY}"
+        echo '> ```console' >> "${GITHUB_STEP_SUMMARY}"
+        echo "> git tag --sign --force -m '${{
+            needs.pre-setup.outputs.git-tag
+        }}' -m 'Published at https://pypi.org/project/ansible-core/${{
+          needs.pre-setup.outputs.dist-version
+        }}' -m 'This release has been produced by the following workflow run: ${{
+          github.server_url
+        }}/${{
+          github.repository
+        }}/actions/runs/${{
+          github.run_id
+        }}' ${{ needs.pre-setup.outputs.git-tag }}" \
+        '-- $(git ls-remote ${{
+          github.server_url
+        }}/${{
+          github.repository
+        }}.git ${{
+            needs.pre-setup.outputs.git-tag
+        }} | awk "{print $1}")' >> "${GITHUB_STEP_SUMMARY}"
+        echo 'git push --force upstream ${{
+            needs.pre-setup.outputs.git-tag
+        }}'
+        echo '> ```' >> "${GITHUB_STEP_SUMMARY}"
+        echo >> "${GITHUB_STEP_SUMMARY}"
+
+...
