@@ -56,7 +56,7 @@ def test_get_caller_plugin_info(python_fq_name: str, expected_plugin_info: _mess
     # invoke a standalone fake loader that generates a Python module with the specified FQ python name (converted to a corresponding __file__ entry) that
     # pretends as if it called `get_caller_plugin_info()` and returns its result
     loader = FakePathLoader()
-    spec = importlib.util.spec_from_loader(name=python_fq_name, loader=loader)
+    spec = importlib.util.spec_from_loader(name=python_fq_name, loader=loader)  # type: ignore[arg-type]
     mod = importlib.util.module_from_spec(spec)
 
     loader.exec_module(mod)

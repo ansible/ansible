@@ -778,8 +778,8 @@ class _InventoryDataWrapper(_wrapt.ObjectProxy):
     """
 
     # declared as class attrs to signal to ObjectProxy that we want them stored on the proxy, not the wrapped value
-    _target_plugin = None
-    _default_origin = None
+    _target_plugin: BaseInventoryPlugin | None = None
+    _default_origin: Origin | None = None
 
     def __init__(self, referent: InventoryData, target_plugin: BaseInventoryPlugin, origin: Origin) -> None:
         super().__init__(referent)

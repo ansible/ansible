@@ -505,7 +505,7 @@ def _have_pip_module():  # type: () -> bool
     try:
         from importlib.util import find_spec
     except ImportError:
-        find_spec = None  # type: ignore[assignment] # type: ignore[no-redef]
+        find_spec = None  # type: ignore[assignment,no-redef]
 
     if find_spec:  # type: ignore[truthy-function]
         # noinspection PyBroadException

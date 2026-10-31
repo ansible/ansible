@@ -423,7 +423,6 @@ import errno
 import contextlib
 import fcntl
 import hashlib
-import io
 import json
 import os
 import pathlib
@@ -943,7 +942,7 @@ class Connection(ConnectionBase):
 
         return b_command
 
-    def _send_initial_data(self, fh: io.IOBase, in_data: bytes, ssh_process: subprocess.Popen) -> None:
+    def _send_initial_data(self, fh: t.IO, in_data: bytes, ssh_process: subprocess.Popen) -> None:
         """
         Writes initial data to the stdin filehandle of the subprocess and closes
         it. (The handle must be closed; otherwise, for example, "sftp -b -" will

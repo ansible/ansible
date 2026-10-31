@@ -209,8 +209,8 @@ class ModuleDepFinder(ast.NodeVisitor):
         self.tree = _compile_module_ast(module_fqn, module_data)
 
         self._embed_sniffing = False
-        self._embed_module_name = None
-        self._embedmanager_type_name = None
+        self._embed_module_name: str | None = None
+        self._embedmanager_type_name: str | None = None
         self._embed_import_origin: Origin | None = None
 
         self.visit(self.tree)
