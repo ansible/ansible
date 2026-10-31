@@ -999,7 +999,9 @@ class Connection(ConnectionBase):
                 display.debug(u"become_prompt: (source=%s, state=%s): '%s'" % (source, state, display_line))
                 self._flags['become_prompt'] = True
                 suppress_output = True
-            elif self.become.success and self.become.check_success(b_line):
+            # An unterminated success line is left for the remainder, so that its
+            # line ending is consumed with it rather than leaking into the output.
+            elif self.become.success and b_line.endswith(b'\n') and self.become.check_success(b_line):
                 display.debug(u"become_success: (source=%s, state=%s): '%s'" % (source, state, display_line))
                 self._flags['become_success'] = True
                 suppress_output = True
