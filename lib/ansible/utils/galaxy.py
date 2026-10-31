@@ -63,6 +63,10 @@ def scm_archive_resource(src, scm='git', name=None, version='HEAD', keep_scm_met
     tempdir = tempfile.mkdtemp(dir=C.DEFAULT_LOCAL_TMP)
     clone_cmd = [scm_path, 'clone']
 
+    # Perform a shallow clone if simply cloning HEAD
+    if scm == 'git' and version == 'HEAD':
+        clone_cmd.append('--depth=1')
+
     # Add specific options for ignoring certificates if requested
     ignore_certs = context.CLIARGS['ignore_certs'] or C.GALAXY_IGNORE_CERTS
 
@@ -76,7 +80,7 @@ def scm_archive_resource(src, scm='git', name=None, version='HEAD', keep_scm_met
 
     run_scm_cmd(clone_cmd, tempdir)
 
-    if scm == 'git' and version:
+    if scm == 'git' and version and version != 'HEAD':
         checkout_cmd = [scm_path, 'checkout', to_text(version)]
         run_scm_cmd(checkout_cmd, os.path.join(tempdir, name))
 
