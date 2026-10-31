@@ -1,0 +1,3 @@
+---
+minor_changes:
+  - copy - Allow user to specify checksum algorithm for change detection and validation (https://github.com/ansible/ansible/issues/83576).

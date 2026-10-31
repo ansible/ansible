@@ -18,6 +18,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import os.path
@@ -282,7 +283,7 @@ class ActionModule(ActionBase):
             return None
 
         # Generate a hash of the local file.
-        local_checksum = checksum(source_full)
+        local_checksum = checksum(source_full, hash_func=getattr(hashlib, self._task.args.get('checksum_algorithm', 'sha1')))
 
         if local_checksum != dest_status['checksum']:
             # The checksums don't match and we will change or error out.
