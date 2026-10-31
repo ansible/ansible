@@ -284,6 +284,7 @@ class ConcreteArtifactsManager:
     def get_direct_collection_meta(self, collection):
         # type: (Collection) -> dict[str, t.Union[str, dict[str, str], list[str], None, t.Type[Sentinel]]]
         """Extract meta from the given on-disk collection artifact."""
+        collection_meta: dict[str, t.Union[str, dict[str, str], list[str], None, t.Type[Sentinel]]]
         try:  # FIXME: use unique collection identifier as a cache key?
             return self._artifact_meta_cache[collection.src]
         except KeyError:

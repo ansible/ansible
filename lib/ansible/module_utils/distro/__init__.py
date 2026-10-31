@@ -52,4 +52,4 @@ else:
     # Our bundled copy
     from ansible.module_utils.distro import _distro as distro
 
-sys.modules['ansible.module_utils.distro'] = distro
+sys.modules['ansible.module_utils.distro'] = distro  # type: ignore[has-type]

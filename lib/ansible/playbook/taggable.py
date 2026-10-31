@@ -62,7 +62,7 @@ class Taggable:
         return tags
 
     def _get_all_taggable_objects(self) -> t.Iterable[Taggable]:
-        obj = self
+        obj: Taggable | None = self
         while obj is not None:
             yield obj
 

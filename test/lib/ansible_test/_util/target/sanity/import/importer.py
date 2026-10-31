@@ -231,7 +231,7 @@ def main():
                     if not os.path.exists(path):
                         continue
                     loader = SourceFileLoader(fullname, path)
-                    spec = spec_from_loader(fullname, loader)
+                    spec = spec_from_loader(fullname, loader)  # type: ignore[arg-type]
                     real_module = module_from_spec(spec)
                     loader.exec_module(real_module)
                     real_module.AnsibleModule = ImporterAnsibleModule  # type: ignore[attr-defined]
