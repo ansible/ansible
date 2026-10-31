@@ -1204,8 +1204,8 @@ class User(object):
         if not (min_needs_change or max_needs_change or warn_needs_change or last_changed_needs_change):
             return (None, '', '')  # target state already reached
 
-        # chage ignores local=true, but switching all password_expire_* options to lchage would require libuser
-        # on hosts that previously worked, so only use lchage when password_expire_last_changed is requested
+        # using lchage for every password_expire_* option would require libuser on hosts that already work
+        # without it, so only use lchage when password_expire_last_changed is requested
         if self.local and self.password_expire_last_changed is not None:
             command_name = 'lchage'
         else:
