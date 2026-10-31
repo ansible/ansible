@@ -27,6 +27,10 @@ import traceback
 import types
 import typing as t
 
+from collections import defaultdict
+
+# from inspect import stack
+from multiprocessing.popen_fork import Popen as ForkPopen
 from multiprocessing.queues import Queue
 
 from ansible._internal import _task
@@ -60,12 +64,49 @@ class WorkerQueue(Queue):
         return result
 
 
+class WorkerPopen(ForkPopen):
+    """
+    Custom implementation of multiprocessing's `Popen` class with enhancements to the poll method.
+    """
+
+    # arbitrary limit for now...
+    POLL_ERROR_COUNT_MAX = 10
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._poll_error_count = defaultdict(int)
+
+    def poll(self, flag=os.WNOHANG):
+        # display.debug(f"poll caller: {stack()[1].function}")
+        if self.returncode is None:
+            try:
+                pid, sts = os.waitpid(self.pid, flag)
+            except ChildProcessError:
+                # Child process not yet created. See #1731717
+                # e.errno == errno.ECHILD == 10
+                return None
+            except OSError as e:
+                self._poll_error_count[self.pid] += 1
+                display.error(f"poll error #{self._poll_error_count[self.pid]} for PID {self.pid}: {e}")
+                if self._poll_error_count[self.pid] > self.POLL_ERROR_COUNT_MAX:
+                    # What should we return here?
+                    return 100
+                return None
+            if pid == self.pid:
+                self.returncode = os.waitstatus_to_exitcode(sts)
+        return self.returncode
+
+
 class WorkerProcess(multiprocessing_context.Process):  # type: ignore[name-defined]
     """
     The worker thread class, which uses TaskExecutor to run tasks
     read from a job queue and pushes results into a results queue
     for reading later.
     """
+
+    @staticmethod
+    def _Popen(process_obj):
+        return WorkerPopen(process_obj)
 
     def __init__(
             self,
