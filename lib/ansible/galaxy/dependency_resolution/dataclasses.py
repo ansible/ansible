@@ -20,6 +20,7 @@ if t.TYPE_CHECKING:
     from ansible.galaxy.collection.concrete_artifact_manager import (
         ConcreteArtifactsManager,
     )
+    from ansible.module_utils.common.arg_spec import ArgumentSpec
     Collection = t.TypeVar(
         'Collection',
         'Candidate', 'Requirement',
@@ -87,7 +88,7 @@ def _validate_v1_source_info_schema(
     version: str,
     provided_arguments: dict[str, object],
 ) -> list[str]:
-    argument_spec_data = dict(
+    argument_spec_data: ArgumentSpec = dict(
         format_version=dict(choices=["1.0.0"]),
         download_url=dict(),
         version_url=dict(),
