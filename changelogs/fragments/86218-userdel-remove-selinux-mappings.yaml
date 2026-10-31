@@ -1,0 +1,2 @@
+bugfixes:
+  - user - remove SELinux user mappings when a user is deleted on SELinux enabled systems (https://github.com/ansible/ansible/issues/86218).
