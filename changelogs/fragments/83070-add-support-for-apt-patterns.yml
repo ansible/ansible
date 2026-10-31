@@ -1,0 +1,2 @@
+minor_changes:
+  - apt - add support for apt-patterns (https://github.com/ansible/ansible/pull/83070)
