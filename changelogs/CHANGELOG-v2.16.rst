@@ -5,6 +5,55 @@ ansible-core 2.16 "All My Love" Release Notes
 .. contents:: Topics
 
 
+v2.16.20
+========
+
+Release Summary
+---------------
+
+| Release Date: 2026-11-02
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.16/porting_guides/porting_guide_core_2.16.html>`__
+
+
+Minor Changes
+-------------
+
+- Templar - a warning is now emitted when a type unknown to the templating system is encountered in a finalized template result, since such types are not guaranteed to behave correctly. The warning is emitted once per unknown type per process and does not change the template result.
+- ansible-test - An ``ansible_core.egg-info`` directory is no longer generated when running tests.
+- ansible-test - Generate ``dist_info`` when running tests.
+- ansible-test - Replace RHEL 10.1 remote with 10.2.
+- ansible-test - Replace RHEL 9.7 remote with 9.8 and use Python 3.12 instead of 3.11.
+- ansible-test - Use Python 3.12 instead of 3.11 on RHEL 8.10 remotes.
+- bool filter - The filter now always returns a boolean value, so ``None`` input results in ``False`` instead of ``None``.
+- parallel fact gathering - the async wrapper now considers the timeout when determining whether to kill the process running the module. Previously, a 5 second sleep occurred twice before checking if the job had remaining time.
+
+Deprecated Features
+-------------------
+
+- Templar - direct access to the ``Templar._available_variables`` internal attribute is deprecated, use the public ``available_variables`` property instead.
+- Templar - direct access to the ``Templar._loader`` internal attribute is deprecated, use ``Templar.copy_with_new_env`` to create a new instance instead.
+- Templar - direct access to the ``Templar.environment`` attribute is deprecated, consider using ``Templar.copy_with_new_env`` or passing ``overrides`` to ``Templar.template`` instead.
+- bool filter - Support for coercing unrecognized input values (including None) has been deprecated. Consult the filter documentation for acceptable values, or consider use of the ``truthy`` and ``falsy`` tests.
+- conditionals - Conditional expressions (such as ``when`` in playbook tasks or ``that`` in the ``assert`` action) which are a literal ``None`` or an empty string evaluate as True and issue a deprecation warning. This behavior will be removed in Ansible Core 2.23. Such expressions should be removed or corrected to always ensure a strictly boolean (True or False) result.
+- inventory plugins - Setting invalid Ansible variable names in inventory plugins is deprecated.
+- playbook syntax - Specifying the task ``args`` keyword without a value is deprecated.
+- playbook syntax - Using ``key=value`` args and the task ``args`` keyword on the same task is deprecated.
+- playbook syntax - Using a mapping with the ``action`` keyword is deprecated. (https://github.com/ansible/ansible/issues/84101)
+- templating - Test plugins which return a non-boolean result are deprecated; the result is coerced to a boolean for now, but test plugins must have a boolean result in ansible-core 2.23 and later.
+
+Security Fixes
+--------------
+
+- psrp - Do not log raw stdout/stderr on verbosity 5 when task has ``no_log: true`` set
+- winrm - Do not log raw stdout/stderr on verbosity 5 when task has ``no_log: true`` set
+
+Bugfixes
+--------
+
+- from_yaml_all filter - `None` and empty string inputs now always return an empty list. Previously, `None` was returned in Jinja native mode and empty list in classic mode.
+- parallel fact gathering - fix hang caused by corrupt async job files.
+- syslog - Handle ValueError exception raised when sending Null Characters to syslog with Python 3.12.
+
 v2.16.19
 ========
 
