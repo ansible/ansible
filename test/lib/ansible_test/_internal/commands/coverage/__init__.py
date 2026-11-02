@@ -252,6 +252,8 @@ def enumerate_powershell_lines(
         display.error('%s' % ex)
         return
 
+    hits: t.Any
+
     for filename, hits in coverage_run.items():
         filename = sanitize_filename(filename, collection_search_re=collection_search_re, collection_sub_re=collection_sub_re)
 

@@ -320,7 +320,7 @@ class Display(metaclass=Singleton):
         # Do not change the type of this lock or upgrade to a shared lock (eg multiprocessing.RLock).
         self._lock = threading.RLock()
 
-        self.columns = None
+        self.columns: int | None = None
         self.verbosity = verbosity
 
         if C.LOG_VERBOSITY is None:

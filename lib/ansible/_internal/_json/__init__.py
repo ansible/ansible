@@ -177,10 +177,18 @@ class AnsibleVariableVisitor:
         # DTFIX7: de-duplicate and optimize; extract inline generator expressions and fallback function or mapping for native type calculation?
         elif value_type in _ANSIBLE_ALLOWED_MAPPING_VAR_TYPES:  # check mappings first, because they're also collections
             with self:  # supports StateTrackingMixIn
-                result = AnsibleTagHelper.tag_copy(value, ((self._visit_key(k), self._visit(k, v)) for k, v in value.items()), value_type=value_type)
+                result = AnsibleTagHelper.tag_copy(
+                    value,
+                    ((self._visit_key(k), self._visit(k, v)) for k, v in t.cast(t.Mapping, value).items()),
+                    value_type=value_type,
+                )  # type: ignore[assignment]
         elif value_type in _ANSIBLE_ALLOWED_NON_SCALAR_COLLECTION_VAR_TYPES:
             with self:  # supports StateTrackingMixIn
-                result = AnsibleTagHelper.tag_copy(value, (self._visit(k, v) for k, v in enumerate(t.cast(t.Iterable, value))), value_type=value_type)
+                result = AnsibleTagHelper.tag_copy(
+                    value,
+                    (self._visit(k, v) for k, v in enumerate(t.cast(t.Iterable, value))),
+                    value_type=value_type,
+                )  # type: ignore[assignment]
         elif self.convert_mapping_to_dict and _internal.is_intermediate_mapping(value):
             with self:  # supports StateTrackingMixIn
                 result = {self._visit_key(k): self._visit(k, v) for k, v in value.items()}  # type: ignore[assignment]
@@ -195,7 +203,7 @@ class AnsibleVariableVisitor:
             result = int(value)  # type: ignore[assignment]
         elif value_type in _ANSIBLE_ALLOWED_VAR_TYPES:
             # supported scalar type that requires no special handling, just return as-is
-            result = value
+            result = value  # type: ignore[assignment]
         elif self.encrypted_string_behavior is EncryptedStringBehavior.PRESERVE and isinstance(value, EncryptedString):
             result = value  # type: ignore[assignment]
         else:

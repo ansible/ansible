@@ -164,7 +164,7 @@ class mpint(int, VariableSized):
         nbytes = (self.bit_length() + 8) // 8
         ret = bytearray(self.to_bytes(length=nbytes, byteorder='big'))
         ret[:0] = uint32(len(ret)).to_blob()
-        return ret
+        return bytes(ret)
 
     @classmethod
     def from_blob(cls, blob: memoryview | bytes) -> t.Self:
@@ -250,7 +250,7 @@ class Msg:
                 rv.extend(fv.to_blob())
             else:
                 raise NotImplementedError(field.type)
-        return rv
+        return bytes(rv)
 
     @classmethod
     def from_blob(cls, blob: memoryview | bytes) -> t.Self:

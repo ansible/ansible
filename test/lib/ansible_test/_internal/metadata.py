@@ -19,7 +19,6 @@ from .io import (
 
 from .diff import (
     parse_diff,
-    FileDiff,
 )
 
 if t.TYPE_CHECKING:
@@ -46,7 +45,7 @@ class Metadata:
     def populate_changes(self, diff: t.Optional[list[str]]) -> None:
         """Populate the changeset using the given diff."""
         patches = parse_diff(diff)
-        patches: list[FileDiff] = sorted(patches, key=lambda k: k.new.path)
+        patches = sorted(patches, key=lambda k: k.new.path)
 
         self.changes = dict((patch.new.path, tuple(patch.new.ranges)) for patch in patches)
 

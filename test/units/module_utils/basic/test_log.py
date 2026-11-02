@@ -12,8 +12,8 @@ import pytest
 
 
 class TestAnsibleModuleLogSmokeTest:
-    DATA = [u'Text string', u'Toshio くらとみ non-ascii test']
-    DATA = DATA + [d.encode('utf-8') for d in DATA]
+    string_data = [u'Text string', u'Toshio くらとみ non-ascii test']
+    DATA = string_data + [d.encode('utf-8') for d in string_data]
     DATA += [b'non-utf8 :\xff: test']
 
     @pytest.mark.parametrize('msg, stdin', [(m, {}) for m in DATA], indirect=['stdin'])

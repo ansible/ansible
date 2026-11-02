@@ -36,6 +36,7 @@ from ansible.module_utils.datatag import native_type_name
 from ansible.parsing.plugin_docs import read_docstub
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.parsing.yaml.loader import AnsibleLoader
+from ansible.playbook.base import FieldAttributeBase
 from ansible._internal._yaml._loader import AnsibleInstrumentedLoader
 from ansible.plugins.list import _list_plugins_with_info, _PluginDocMetadata
 from ansible.plugins.loader import action_loader, fragment_loader
@@ -53,7 +54,7 @@ display = Display()
 
 TARGET_OPTIONS = C.DOCUMENTABLE_PLUGINS + ('role', 'keyword',)
 PB_OBJECTS = ['Play', 'Role', 'Block', 'Task', 'Handler']
-PB_LOADED = {}
+PB_LOADED: dict[str, FieldAttributeBase] = {}
 SNIPPETS = ['inventory', 'lookup', 'module']
 
 # hardcoded from ascii values
