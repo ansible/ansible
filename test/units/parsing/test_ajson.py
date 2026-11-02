@@ -83,7 +83,8 @@ class TestAnsibleJSONEncoder:
     """
 
     @pytest.fixture(scope='class')
-    def mapping(self, request):
+    @classmethod
+    def mapping(cls, request):
         """
         Returns object of Mapping mock class.
 
