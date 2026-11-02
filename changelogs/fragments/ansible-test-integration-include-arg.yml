@@ -1,0 +1,4 @@
+bugfixes:
+  - ansible-test - Fix the ``--include`` option for integration tests.
+    Previously this option accepted an argument but could be overridden by positional argument processing.
+    (https://github.com/ansible/ansible/issues/87839)
