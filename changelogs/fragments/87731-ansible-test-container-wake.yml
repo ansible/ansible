@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-test - Retry waking a Docker container for up to 30 seconds when its ``env sleep 60`` startup process has not started yet, instead of aborting provisioning (https://github.com/ansible/ansible/issues/87731).

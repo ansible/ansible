@@ -1081,9 +1081,17 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
     def wake_command(self) -> list[str]:
         """
         The command used to wake the container from sleep.
-        This will be run inside our utility container, so the command used does not need to be present in the container being woken up.
+        This will be run after entering the mount and PID namespaces of the container being woken up, so the commands used must be present in that container.
+        The container may not have exec'd ``sleep`` yet when the wake command runs, so wait for it instead of assuming it is already running.
         """
-        return ['pkill', 'sleep']
+        return [
+            'sh', '-c',
+            'command -v pkill >/dev/null 2>&1 || { echo "pkill is required to wake the container." >&2; exit 1; }; '
+            'i=0; until pkill -x sleep; do '
+            'i=$((i+1)); [ "$i" -lt 30 ] || { '
+            'echo "Timed out waiting for the container to start its sleep process." >&2; exit 1; }; '
+            'env sleep 1; done',
+        ]
 
     def check_systemd_cgroup_v1(self, options: list[str]) -> None:
         """Check the cgroup v1 systemd hierarchy to verify it is writeable for our container."""
