@@ -852,6 +852,17 @@ releases:
     - dnf5-download_dir-download_only.yml
     - ensure_conn_cli_dir_perms.yml
     release_date: '2026-09-29'
+  2.21.6:
+    changes:
+      release_summary: '| Release Date: 2026-11-02
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.21/porting_guides/porting_guide_core_2.21.html>`__
+
+        '
+    codename: The Rain Song
+    fragments:
+    - 2.21.6_summary.yaml
+    release_date: '2026-11-02'
   2.21.6rc1:
     changes:
       bugfixes:
