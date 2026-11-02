@@ -438,11 +438,17 @@ class VaultCLI(CLI):
         if not context.CLIARGS['args'] and sys.stdin.isatty():
             display.display("Reading ciphertext input from stdin", stderr=True)
 
-        for f in context.CLIARGS['args'] or ['-']:
-            self.editor.decrypt_file(f, output_file=context.CLIARGS['output_file'])
+        output_file = context.CLIARGS['output_file']
+        input_files = context.CLIARGS['args'] or ['-']
+        for f in input_files:
+            self.editor.decrypt_file(f, output_file=output_file)
 
         if sys.stdout.isatty():
-            display.display("Decryption successful", stderr=True)
+            # Decrypted content written to stdout may not end with a newline.
+            # Start the success message on a new line so it does not run into the content.
+            to_stdout = output_file == '-' or (output_file is None and '-' in input_files)
+            prefix = '\n' if to_stdout else ''
+            display.display("%sDecryption successful" % prefix, stderr=True)
 
     def execute_create(self):
         """ create and open a file in an editor that will be encrypted with the provided vault secret when closed"""

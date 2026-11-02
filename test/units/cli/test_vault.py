@@ -223,6 +223,61 @@ class TestVaultCli(unittest.TestCase):
 
     @patch('ansible.cli.vault.VaultCLI.setup_vault_secrets')
     @patch('ansible.cli.vault.VaultEditor')
+    def test_decrypt_stdin_success_message_prefixed_with_newline(self, mock_vault_editor, mock_setup_vault_secrets):
+        mock_setup_vault_secrets.return_value = [('default', TextVaultSecret('password'))]
+        cli = VaultCLI(args=['ansible-vault', 'decrypt'])
+        cli.parse()
+        with patch('ansible.cli.vault.sys.stdout.isatty', return_value=True), \
+                patch('ansible.cli.vault.display.display') as mock_display:
+            cli.run()
+        mock_display.assert_any_call('\nDecryption successful', stderr=True)
+
+    @patch('ansible.cli.vault.VaultCLI.setup_vault_secrets')
+    @patch('ansible.cli.vault.VaultEditor')
+    def test_decrypt_dash_success_message_prefixed_with_newline(self, mock_vault_editor, mock_setup_vault_secrets):
+        mock_setup_vault_secrets.return_value = [('default', TextVaultSecret('password'))]
+        cli = VaultCLI(args=['ansible-vault', 'decrypt', '-'])
+        cli.parse()
+        with patch('ansible.cli.vault.sys.stdout.isatty', return_value=True), \
+                patch('ansible.cli.vault.display.display') as mock_display:
+            cli.run()
+        mock_display.assert_any_call('\nDecryption successful', stderr=True)
+
+    @patch('ansible.cli.vault.VaultCLI.setup_vault_secrets')
+    @patch('ansible.cli.vault.VaultEditor')
+    def test_decrypt_output_dash_success_message_prefixed_with_newline(self, mock_vault_editor, mock_setup_vault_secrets):
+        mock_setup_vault_secrets.return_value = [('default', TextVaultSecret('password'))]
+        cli = VaultCLI(args=['ansible-vault', 'decrypt', '--output', '-', '/dev/null/foo'])
+        cli.parse()
+        with patch('ansible.cli.vault.sys.stdout.isatty', return_value=True), \
+                patch('ansible.cli.vault.display.display') as mock_display:
+            cli.run()
+        mock_display.assert_any_call('\nDecryption successful', stderr=True)
+
+    @patch('ansible.cli.vault.VaultCLI.setup_vault_secrets')
+    @patch('ansible.cli.vault.VaultEditor')
+    def test_decrypt_in_place_success_message_not_prefixed(self, mock_vault_editor, mock_setup_vault_secrets):
+        mock_setup_vault_secrets.return_value = [('default', TextVaultSecret('password'))]
+        cli = VaultCLI(args=['ansible-vault', 'decrypt', '/dev/null/foo'])
+        cli.parse()
+        with patch('ansible.cli.vault.sys.stdout.isatty', return_value=True), \
+                patch('ansible.cli.vault.display.display') as mock_display:
+            cli.run()
+        mock_display.assert_any_call('Decryption successful', stderr=True)
+
+    @patch('ansible.cli.vault.VaultCLI.setup_vault_secrets')
+    @patch('ansible.cli.vault.VaultEditor')
+    def test_decrypt_output_file_success_message_not_prefixed(self, mock_vault_editor, mock_setup_vault_secrets):
+        mock_setup_vault_secrets.return_value = [('default', TextVaultSecret('password'))]
+        cli = VaultCLI(args=['ansible-vault', 'decrypt', '--output', '/dev/null/out', '/dev/null/foo'])
+        cli.parse()
+        with patch('ansible.cli.vault.sys.stdout.isatty', return_value=True), \
+                patch('ansible.cli.vault.display.display') as mock_display:
+            cli.run()
+        mock_display.assert_any_call('Decryption successful', stderr=True)
+
+    @patch('ansible.cli.vault.VaultCLI.setup_vault_secrets')
+    @patch('ansible.cli.vault.VaultEditor')
     def test_view(self, mock_vault_editor, mock_setup_vault_secrets):
         mock_setup_vault_secrets.return_value = [('default', TextVaultSecret('password'))]
         cli = VaultCLI(args=['ansible-vault', 'view', '/dev/null/foo'])

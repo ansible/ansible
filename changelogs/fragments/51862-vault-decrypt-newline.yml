@@ -1,0 +1,4 @@
+bugfixes:
+  - ansible-vault decrypt - start the ``Decryption successful`` message on a new line when the
+    decrypted content is written to stdout, so it is not appended to content that does not end
+    with a newline (https://github.com/ansible/ansible/issues/51862).
