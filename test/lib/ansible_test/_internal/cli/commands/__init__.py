@@ -115,6 +115,7 @@ def do_commands(
         'include',
         metavar='TARGET',
         nargs='*',
+        action='extend',
         help='test the specified target',
     ), functools.partial(complete_target, completer))
 
