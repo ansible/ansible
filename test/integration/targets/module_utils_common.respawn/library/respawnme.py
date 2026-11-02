@@ -27,7 +27,7 @@ def main():
             respawn_module(interpreter_path=new_interpreter)
 
             # respawn should always exit internally- if we continue executing here, it's a bug
-            raise Exception('FAIL, should never reach this line')
+            raise Exception('FAIL, should never reach this line')  # pylint: disable=unreachable
         else:
             # return the current interpreter, as well as a signal that we created a different one
             mod.exit_json(created_interpreter=sys.executable, interpreter_path=sys.executable)

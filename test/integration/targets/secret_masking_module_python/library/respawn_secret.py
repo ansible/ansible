@@ -23,7 +23,7 @@ def main():
         os.symlink(sys.executable, new_interpreter)
         respawn_module(interpreter_path=new_interpreter)
 
-        raise Exception('FAIL, should never reach this line after respawn_module')
+        raise Exception('FAIL, should never reach this line after respawn_module')  # pylint: disable=unreachable
 
     incoming = module.params['incoming']
     escaped_incoming = module.params['escaped_incoming']
