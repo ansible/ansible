@@ -440,6 +440,17 @@ releases:
     - dnf5-download_dir-download_only.yml
     - ensure_conn_cli_dir_perms.yml
     release_date: '2026-09-29'
+  2.20.11:
+    changes:
+      release_summary: '| Release Date: 2026-11-02
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.20/porting_guides/porting_guide_core_2.20.html>`__
+
+        '
+    codename: Good Times Bad Times
+    fragments:
+    - 2.20.11_summary.yaml
+    release_date: '2026-11-02'
   2.20.11rc1:
     changes:
       bugfixes:
