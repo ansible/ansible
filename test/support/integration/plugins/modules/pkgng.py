@@ -42,15 +42,6 @@ options:
         type: bool
         required: false
         default: no
-    annotation:
-        description:
-            - A comma-separated list of keyvalue-pairs of the form
-              C(<+/-/:><key>[=<value>]). A C(+) denotes adding an annotation, a
-              C(-) denotes removing an annotation, and C(:) denotes modifying an
-              annotation.
-              If setting or modifying annotations, a value must be provided.
-        required: false
-        version_added: "1.6"
     pkgsite:
         description:
             - For pkgng versions before 1.1.4, specify packagesite to use
@@ -95,11 +86,6 @@ EXAMPLES = """
   pkgng:
     name: foo
     state: present
-
-- name: Annotate package foo and bar
-  pkgng:
-    name: foo,bar
-    annotation: '+test1=baz,-test2,:test3=foobar'
 
 - name: Remove packages foo and bar
   pkgng:
@@ -240,88 +226,6 @@ def install_packages(module, pkgng_path, packages, cached, pkgsite, dir_arg, sta
     return (False, "package(s) already %s" % (state))
 
 
-def annotation_query(module, pkgng_path, package, tag, dir_arg):
-    rc, out, err = module.run_command("%s %s info -g -A %s" % (pkgng_path, dir_arg, package))
-    match = re.search(r'^\s*(?P<tag>%s)\s*:\s*(?P<value>\w+)' % tag, out, flags=re.MULTILINE)
-    if match:
-        return match.group('value')
-    return False
-
-
-def annotation_add(module, pkgng_path, package, tag, value, dir_arg):
-    _value = annotation_query(module, pkgng_path, package, tag, dir_arg)
-    if not _value:
-        # Annotation does not exist, add it.
-        rc, out, err = module.run_command('%s %s annotate -y -A %s %s "%s"'
-                                          % (pkgng_path, dir_arg, package, tag, value))
-        if rc != 0:
-            module.fail_json(msg="could not annotate %s: %s"
-                             % (package, out), stderr=err)
-        return True
-    elif _value != value:
-        # Annotation exists, but value differs
-        module.fail_json(
-            mgs="failed to annotate %s, because %s is already set to %s, but should be set to %s"
-            % (package, tag, _value, value))
-        return False
-    else:
-        # Annotation exists, nothing to do
-        return False
-
-
-def annotation_delete(module, pkgng_path, package, tag, value, dir_arg):
-    _value = annotation_query(module, pkgng_path, package, tag, dir_arg)
-    if _value:
-        rc, out, err = module.run_command('%s %s annotate -y -D %s %s'
-                                          % (pkgng_path, dir_arg, package, tag))
-        if rc != 0:
-            module.fail_json(msg="could not delete annotation to %s: %s"
-                             % (package, out), stderr=err)
-        return True
-    return False
-
-
-def annotation_modify(module, pkgng_path, package, tag, value, dir_arg):
-    _value = annotation_query(module, pkgng_path, package, tag, dir_arg)
-    if not value:
-        # No such tag
-        module.fail_json(msg="could not change annotation to %s: tag %s does not exist"
-                         % (package, tag))
-    elif _value == value:
-        # No change in value
-        return False
-    else:
-        rc, out, err = module.run_command('%s %s annotate -y -M %s %s "%s"'
-                                          % (pkgng_path, dir_arg, package, tag, value))
-        if rc != 0:
-            module.fail_json(msg="could not change annotation annotation to %s: %s"
-                             % (package, out), stderr=err)
-        return True
-
-
-def annotate_packages(module, pkgng_path, packages, annotation, dir_arg):
-    annotate_c = 0
-    annotations = map(lambda _annotation:
-                      re.match(r'(?P<operation>[\+-:])(?P<tag>\w+)(=(?P<value>\w+))?',
-                               _annotation).groupdict(),
-                      re.split(r',', annotation))
-
-    operation = {
-        '+': annotation_add,
-        '-': annotation_delete,
-        ':': annotation_modify
-    }
-
-    for package in packages:
-        for _annotation in annotations:
-            if operation[_annotation['operation']](module, pkgng_path, package, _annotation['tag'], _annotation['value']):
-                annotate_c += 1
-
-    if annotate_c > 0:
-        return (True, "added %s annotations." % annotate_c)
-    return (False, "changed no annotations")
-
-
 def autoremove_packages(module, pkgng_path, dir_arg):
     rc, out, err = module.run_command("%s %s autoremove -n" % (pkgng_path, dir_arg))
 
@@ -346,7 +250,6 @@ def main():
             state=dict(default="present", choices=["present", "latest", "absent"], required=False),
             name=dict(aliases=["pkg"], required=True, type='list'),
             cached=dict(default=False, type='bool'),
-            annotation=dict(default="", required=False),
             pkgsite=dict(default="", required=False),
             rootdir=dict(default="", required=False, type='path'),
             chroot=dict(default="", required=False, type='path'),
@@ -390,11 +293,6 @@ def main():
 
     if p["autoremove"]:
         _changed, _msg = autoremove_packages(module, pkgng_path, dir_arg)
-        changed = changed or _changed
-        msgs.append(_msg)
-
-    if p["annotation"]:
-        _changed, _msg = annotate_packages(module, pkgng_path, pkgs, p["annotation"], dir_arg)
         changed = changed or _changed
         msgs.append(_msg)
 
