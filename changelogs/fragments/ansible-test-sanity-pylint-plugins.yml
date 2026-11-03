@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-test - Load pylint plugins using their full name to avoid conflicts with code under test.
