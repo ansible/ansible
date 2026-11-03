@@ -1,0 +1,45 @@
+{
+    "name": "Alibaba Cloud Linux 4.0.6 (OpenAnolis Edition)",
+    "distro": {
+        "id": "alinux",
+        "name": "Alibaba Cloud Linux",
+        "version": "4",
+        "version_best": "4.0.6",
+        "codename": "OpenAnolis Edition",
+        "os_release_info": {
+            "name": "Alibaba Cloud Linux",
+            "version": "4",
+            "id": "alinux",
+            "id_like": "anolis",
+            "version_id": "4",
+            "variant": "OpenAnolis Edition",
+            "variant_id": "openanolis",
+            "alinux_minor_id": "0",
+            "alinux_update_id": "6",
+            "platform_id": "platform:alnx4",
+            "pretty_name": "Alibaba Cloud Linux 4.0.6 (OpenAnolis Edition)",
+            "ansi_color": "0;31",
+            "home_url": "https://www.aliyun.com/",
+            "bug_report_url": "https://www.aliyun.com/"
+        },
+        "lsb_release_info": {}
+    },
+    "input": {
+        "/etc/os-release": "NAME=\"Alibaba Cloud Linux\"\nVERSION=\"4\"\nID=\"alinux\"\nID_LIKE=\"anolis\"\nVERSION_ID=\"4\"\nVARIANT=\"OpenAnolis Edition\"\nVARIANT_ID=\"openanolis\"\nALINUX_MINOR_ID=\"0\"\nALINUX_UPDATE_ID=\"6\"\nPLATFORM_ID=\"platform:alnx4\"\nPRETTY_NAME=\"Alibaba Cloud Linux 4.0.6 (OpenAnolis Edition)\"\nANSI_COLOR=\"0;31\"\nHOME_URL=\"https://www.aliyun.com/\"\nBUG_REPORT_URL=\"https://www.aliyun.com/\"\n",
+        "/etc/system-release": "Alibaba Cloud Linux release 4 (OpenAnolis Edition) \n",
+        "/etc/alinux-release": "Alibaba Cloud Linux release 4 (OpenAnolis Edition) \n"
+    },
+    "platform.dist": [
+        "alinux",
+        "4",
+        "OpenAnolis Edition"
+    ],
+    "result": {
+        "distribution": "Alibaba Cloud Linux",
+        "distribution_version": "4",
+        "distribution_major_version": "4",
+        "distribution_release": "OpenAnolis Edition",
+        "distribution_cpe_name": null,
+        "os_family": "RedHat"
+    }
+}
