@@ -1,8 +1,4 @@
 ---
-- name: Run test for Alpine Linux only
-  meta: end_host
-  when: ansible_distribution != 'Alpine'
-
 - name: Move user home directory
   block:
     - name: Create user with invalid shell

@@ -1,0 +1,2 @@
+bugfixes:
+  - user - properly remove all group memberships when ``groups`` is set to an empty string on BusyBox.
