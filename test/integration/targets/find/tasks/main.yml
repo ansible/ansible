@@ -696,11 +696,20 @@
     content: "root file"
     dest: "{{ remote_tmp_dir_test }}/owner_test/root_file.txt"
 
+- name: look up test user primary group name
+  command: id -gn {{ test_user_name }}
+  register: test_group_name_output
+  changed_when: false
+
+- set_fact:
+    test_group_name: "{{ test_group_name_output.stdout }}"
+
 - name: create file owned by test user
   copy:
     content: "test user file"
     dest: "{{ remote_tmp_dir_test }}/owner_test/testuser_file.txt"
     owner: "{{ test_user_name }}"
+    group: "{{ test_group_name }}"
   become: true
 
 - name: create a subdirectory owned by test user
@@ -708,32 +717,8 @@
     path: "{{ remote_tmp_dir_test }}/owner_test/testuser_dir"
     state: directory
     owner: "{{ test_user_name }}"
+    group: "{{ test_group_name }}"
   become: true
-
-- name: look up test user uid and group info
-  command: id {{ test_user_name }}
-  register: test_id_output
-  changed_when: false
-
-- name: look up test user uid
-  command: id -u {{ test_user_name }}
-  register: test_uid_output
-  changed_when: false
-
-- name: look up test user primary group name
-  command: id -gn {{ test_user_name }}
-  register: test_group_name_output
-  changed_when: false
-
-- name: look up test user primary gid
-  command: id -g {{ test_user_name }}
-  register: test_gid_output
-  changed_when: false
-
-- set_fact:
-    test_uid: "{{ test_uid_output.stdout | int }}"
-    test_group_name: "{{ test_group_name_output.stdout }}"
-    test_gid: "{{ test_gid_output.stdout | int }}"
 
 # --- filter by username ---
 
@@ -754,7 +739,7 @@
 - name: find files owned by test user (by UID as int)
   find:
     paths: "{{ remote_tmp_dir_test }}/owner_test"
-    user: "{{ test_uid | int }}"
+    user: "{{ test_user.uid | int }}"
   register: find_by_uid_int
 
 - name: assert UID int filter works
@@ -768,7 +753,7 @@
 - name: find files owned by test user (by UID as string)
   find:
     paths: "{{ remote_tmp_dir_test }}/owner_test"
-    user: "{{ test_uid | string }}"
+    user: "{{ test_user.uid | string }}"
   register: find_by_uid_str
 
 - name: assert UID string filter works
@@ -795,7 +780,7 @@
 - name: find files owned by root group (by GID as int)
   find:
     paths: "{{ remote_tmp_dir_test }}/owner_test"
-    group: "{{ test_gid | int }}"
+    group: "{{ test_user.group | int }}"
   register: find_by_gid_int
 
 - name: assert GID int filter works
@@ -855,15 +840,15 @@
   find:
     paths: "{{ remote_tmp_dir_test }}/owner_test"
     user: "{{ test_user_name }}"
-    group: "root"
+    group: "0"
   register: find_no_match
-  when: test_group_name != "root"
+  when: test_group_name != "root" and test_group_name != "wheel"
 
-- name: assert no matches (only when test user group is not root)
+- name: assert no matches (only when test user group is not the root group)
   assert:
     that:
       - find_no_match.matched == 0
-  when: test_group_name != "root"
+  when: test_group_name != "root" and test_group_name != "wheel"
 
 # --- non-existent user fails ---
 
@@ -878,7 +863,7 @@
   assert:
     that:
       - find_bad_user is failed
-      - "'Failed to find user' in find_bad_user.msg"
+      - "'Failed to resolve' in find_bad_user.msg"
 
 # --- non-existent group fails ---
 
@@ -893,4 +878,21 @@
   assert:
     that:
       - find_bad_group is failed
-      - "'Failed to find group' in find_bad_group.msg"
+      - "'Failed to resolve' in find_bad_group.msg"
+
+# --- user as a list ---
+
+- name: find files owned by either root or test user (list)
+  find:
+    paths: "{{ remote_tmp_dir_test }}/owner_test"
+    user:
+      - root
+      - "{{ test_user_name }}"
+  register: find_user_list
+
+- name: assert list matches both owners
+  assert:
+    that:
+      - find_user_list.matched == 2
+      - (remote_tmp_dir_test ~ '/owner_test/root_file.txt') in (find_user_list.files | map(attribute='path') | list)
+      - (remote_tmp_dir_test ~ '/owner_test/testuser_file.txt') in (find_user_list.files | map(attribute='path') | list)

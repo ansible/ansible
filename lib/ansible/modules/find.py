@@ -176,17 +176,21 @@ options:
         version_added: "2.23"
     user:
         description:
-            - Select files owned by the specified user.
-            - Accepts a user name or a numeric UID.
+            - Select files owned by the specified user or users.
+            - Each entry accepts a user name or a numeric UID.
             - When a string that can be interpreted as an integer is given, it is treated as a UID.
-        type: raw
+            - A file matches when its owner is any of the listed values.
+        type: list
+        elements: raw
         version_added: "2.23"
     group:
         description:
-            - Select files owned by the specified group.
-            - Accepts a group name or a numeric GID.
+            - Select files owned by the specified group or groups.
+            - Each entry accepts a group name or a numeric GID.
             - When a string that can be interpreted as an integer is given, it is treated as a GID.
-        type: raw
+            - A file matches when its group is any of the listed values.
+        type: list
+        elements: raw
         version_added: "2.23"
 extends_documentation_fragment: [action_common_attributes, checksum_common]
 attributes:
@@ -294,6 +298,14 @@ EXAMPLES = r"""
     recurse: true
     user: 1234
     group: www-data
+
+- name: Find files owned by either 'alice' or 'bob'
+  ansible.builtin.find:
+    paths: /shared
+    recurse: true
+    user:
+      - alice
+      - bob
 """
 
 RETURN = r"""
@@ -471,9 +483,41 @@ def mode_filter(st, mode, exact, module):
     return bool(st_mode & mode)
 
 
-def ownerfilter(st, uid, gid):
-    """filter files by owner uid and/or group gid"""
-    return (uid is None or st.st_uid == uid) and (gid is None or st.st_gid == gid)
+def ownerfilter(st, uids, gids):
+    """filter files by owner uid set and/or group gid set"""
+    return (uids is None or st.st_uid in uids) and (gids is None or st.st_gid in gids)
+
+
+def resolve_uids(values: list | None) -> set[int] | None:
+    """Resolve a list of user names or numeric values to a set of UIDs.
+    Returns None when *values* is empty or None.
+    Raises KeyError when a name cannot be resolved."""
+    if values:
+        result = set()
+        for val in values:
+            try:
+                result.add(int(val))
+            except ValueError:
+                result.add(pwd.getpwnam(val).pw_uid)
+    else:
+        result = None
+    return result
+
+
+def resolve_gids(values: list | None) -> set[int] | None:
+    """Resolve a list of group names or numeric values to a set of GIDs.
+    Returns None when *values* is empty or None.
+    Raises KeyError when a name cannot be resolved."""
+    if values:
+        result = set()
+        for val in values:
+            try:
+                result.add(int(val))
+            except ValueError:
+                result.add(grp.getgrnam(val).gr_gid)
+    else:
+        result = None
+    return result
 
 
 def statinfo(st):
@@ -556,8 +600,8 @@ def main():
             encoding=dict(type='str'),
             limit=dict(type='int'),
             prune=dict(type='list', elements='path'),
-            user=dict(type='raw'),
-            group=dict(type='raw'),
+            user=dict(type='list', elements='raw'),
+            group=dict(type='list', elements='raw'),
         ),
         supports_check_mode=True,
     )
@@ -615,33 +659,15 @@ def main():
 
     prune_paths = {os.path.abspath(p) for p in params['prune'] or []}
 
-    # Resolve user to a numeric uid
-    uid = None
-    if params['user'] is not None:
-        if isinstance(params['user'], int):
-            uid = params['user']
-        else:
-            try:
-                uid = int(params['user'])
-            except ValueError:
-                try:
-                    uid = pwd.getpwnam(params['user']).pw_uid
-                except KeyError:
-                    module.fail_json(msg="Failed to find user '%s'" % params['user'])
+    try:
+        uids = resolve_uids(params['user'])
+    except (KeyError, TypeError):
+        module.fail_json(msg="Failed to resolve one or more user values in %s" % params['user'])
 
-    # Resolve group to a numeric gid
-    gid = None
-    if params['group'] is not None:
-        if isinstance(params['group'], int):
-            gid = params['group']
-        else:
-            try:
-                gid = int(params['group'])
-            except ValueError:
-                try:
-                    gid = grp.getgrnam(params['group']).gr_gid
-                except KeyError:
-                    module.fail_json(msg="Failed to find group '%s'" % params['group'])
+    try:
+        gids = resolve_gids(params['group'])
+    except (KeyError, TypeError):
+        module.fail_json(msg="Failed to resolve one or more group values in %s" % params['group'])
 
     now = time.time()
     msg = 'All paths examined'
@@ -688,7 +714,7 @@ def main():
                         if (pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex']) and
                                 agefilter(st, now, age, params['age_stamp']) and
                                 mode_filter(st, params['mode'], params['exact_mode'], module) and
-                                ownerfilter(st, uid, gid)):
+                                ownerfilter(st, uids, gids)):
 
                             r.update(statinfo(st))
                             if stat.S_ISREG(st.st_mode) and params['get_checksum']:
@@ -704,7 +730,7 @@ def main():
                         if (pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex']) and
                                 agefilter(st, now, age, params['age_stamp']) and
                                 mode_filter(st, params['mode'], params['exact_mode'], module) and
-                                ownerfilter(st, uid, gid)):
+                                ownerfilter(st, uids, gids)):
 
                             r.update(statinfo(st))
                             filelist.append(r)
@@ -715,7 +741,7 @@ def main():
                                 sizefilter(st, size) and
                                 contentfilter(fsname, params['contains'], params['encoding'], params['read_whole_file']) and
                                 mode_filter(st, params['mode'], params['exact_mode'], module) and
-                                ownerfilter(st, uid, gid)):
+                                ownerfilter(st, uids, gids)):
 
                             r.update(statinfo(st))
                             if params['get_checksum']:
@@ -726,7 +752,7 @@ def main():
                         if (pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex']) and
                                 agefilter(st, now, age, params['age_stamp']) and
                                 mode_filter(st, params['mode'], params['exact_mode'], module) and
-                                ownerfilter(st, uid, gid)):
+                                ownerfilter(st, uids, gids)):
 
                             r.update(statinfo(st))
                             filelist.append(r)
