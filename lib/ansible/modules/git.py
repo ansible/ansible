@@ -922,13 +922,12 @@ def fetch(git_path, module, repo, dest, version, remote, depth, bare, refspec, g
     if depth:
         # try to find the minimal set of refs we need to fetch to get a
         # successful checkout
-        currenthead = get_head_branch(git_path, module, dest, remote)
         if refspec:
             refspecs.append(refspec)
         elif version == 'HEAD':
-            refspecs.append(currenthead)
+            refspecs.append(get_head_branch(git_path, module, dest, remote))
         elif is_remote_branch(git_path, module, dest, repo, version):
-            if currenthead != version:
+            if is_not_a_branch(git_path, module, dest) or get_head_branch(git_path, module, dest, remote) != version:
                 # this workaround is only needed for older git versions
                 # 1.8.3 is broken, 1.9.x works
                 # ensure that remote branch is available as both local and remote ref
