@@ -51,6 +51,7 @@ from ...ansible_util import (
     CollectionDetail,
     CollectionDetailError,
     ResultType,
+    get_ansible_test_python_path,
 )
 
 from ...config import (
@@ -63,6 +64,10 @@ from ...data import (
 
 from ...host_configs import (
     PythonConfig,
+)
+
+from ...._util.controller.sanity.pylint import (
+    plugins,
 )
 
 
@@ -88,8 +93,8 @@ class PylintTest(SanitySingleVersion):
     def test(self, args: SanityConfig, targets: SanityTargets, python: PythonConfig) -> TestResult:
         target_paths = set(target.path for target in self.filter_remote_targets(list(targets.targets)))
 
-        plugin_dir = os.path.join(SANITY_ROOT, 'pylint', 'plugins')
-        plugin_names = sorted(p[0] for p in [
+        plugin_dir = os.path.dirname(t.cast(str, plugins.__file__))
+        plugin_names = sorted(f'{plugins.__name__}.{p[0]}' for p in [
             os.path.splitext(p) for p in os.listdir(plugin_dir)] if p[1] == '.py' and p[0] != '__init__')
 
         settings = self.load_processor(args)
@@ -176,7 +181,7 @@ class PylintTest(SanitySingleVersion):
                 continue
 
             context_start = datetime.datetime.now(tz=datetime.timezone.utc)
-            messages += self.pylint(args, context, is_target, context_paths, plugin_dir, plugin_names, python, collection_detail)
+            messages += self.pylint(args, context, is_target, context_paths, plugin_names, python, collection_detail)
             context_end = datetime.datetime.now(tz=datetime.timezone.utc)
 
             context_times.append('%s: %d (%s)' % (context, len(context_paths), context_end - context_start))
@@ -213,7 +218,6 @@ class PylintTest(SanitySingleVersion):
         context: str,
         is_target: bool,
         paths: list[str],
-        plugin_dir: str,
         plugin_names: list[str],
         python: PythonConfig,
         collection_detail: CollectionDetail,
@@ -263,7 +267,7 @@ class PylintTest(SanitySingleVersion):
         cmd.extend(itertools.chain.from_iterable((options | plugin_options).items()))
         cmd.extend(paths)
 
-        append_python_path = [plugin_dir]
+        append_python_path = [get_ansible_test_python_path()]
 
         if data_context().content.collection:
             append_python_path.append(data_context().content.collection.root)

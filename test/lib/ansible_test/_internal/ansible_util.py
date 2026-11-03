@@ -285,6 +285,33 @@ def get_ansible_python_path(args: CommonConfig) -> str:
     return python_path
 
 
+@mutex
+def get_ansible_test_python_path() -> str:
+    """
+    Return a directory usable for PYTHONPATH, containing only the ansible_test package.
+    If a temporary directory is required, it will be cached for the lifetime of the process and cleaned up at exit.
+    """
+    try:
+        return get_ansible_test_python_path.python_path  # type: ignore[attr-defined]
+    except AttributeError:
+        pass
+
+    if ANSIBLE_SOURCE_ROOT:
+        # when running from source there is no need for a temporary directory to isolate the ansible package
+        python_path = os.path.dirname(ANSIBLE_TEST_ROOT)
+    else:
+        # when not running from source the installed directory is unsafe to add to PYTHONPATH
+        # doing so would expose many unwanted packages on sys.path
+        # instead a temporary directory is created which contains only ansible_test using a symlink
+        python_path = create_temp_dir(prefix='ansible-test-')
+
+        os.symlink(ANSIBLE_TEST_ROOT, os.path.join(python_path, 'ansible_test'))
+
+    get_ansible_test_python_path.python_path = python_path  # type: ignore[attr-defined]
+
+    return python_path
+
+
 def generate_dist_info(path: str) -> None:
     """Generate a dist-info in the specified base directory."""
     version = get_ansible_version()
