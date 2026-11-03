@@ -1,0 +1,3 @@
+bugfixes:
+  - setup - classify Anolis OS as part of the ``RedHat`` OS family while preserving the reported distribution name and version.
+  - setup - classify Alibaba Cloud Linux as part of the ``RedHat`` OS family while preserving the reported distribution name and version (https://github.com/ansible/ansible/issues/87841).

@@ -1,0 +1,38 @@
+{
+    "name": "Anolis OS 23.4",
+    "distro": {
+        "codename": "",
+        "id": "anolis",
+        "name": "Anolis OS",
+        "version": "23.4",
+        "version_best": "23.4",
+        "lsb_release_info": {},
+        "os_release_info": {
+            "name": "Anolis OS",
+            "version": "23.4",
+            "id": "anolis",
+            "version_id": "23.4",
+            "platform_id": "platform:an23",
+            "pretty_name": "Anolis OS 23.4",
+            "ansi_color": "0;31",
+            "home_url": "https://openanolis.cn/",
+            "bug_report_url": "https://bugzilla.openanolis.cn/"
+        }
+    },
+    "input": {
+        "/etc/system-release": "Anolis OS release 23.4\n",
+        "/etc/os-release": "NAME=\"Anolis OS\"\nVERSION=\"23.4\"\nID=\"anolis\"\nVERSION_ID=\"23.4\"\nPLATFORM_ID=\"platform:an23\"\nPRETTY_NAME=\"Anolis OS 23.4\"\nANSI_COLOR=\"0;31\"\nHOME_URL=\"https://openanolis.cn/\"\nBUG_REPORT_URL=\"https://bugzilla.openanolis.cn/\"\n\n"
+    },
+    "platform.dist": [
+        "anolis",
+        "23.4",
+        ""
+    ],
+    "result": {
+        "distribution": "Anolis OS",
+        "distribution_version": "23.4",
+        "distribution_release": "NA",
+        "distribution_major_version": "23",
+        "os_family": "RedHat"
+    }
+}

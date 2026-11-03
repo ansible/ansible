@@ -1,0 +1,39 @@
+{
+    "name": "Anolis 8.8",
+    "distro": {
+        "codename": "",
+        "id": "anolis",
+        "name": "Anolis OS",
+        "version": "8.8",
+        "version_best": "8.8",
+        "lsb_release_info": {},
+        "os_release_info": {
+            "name": "Anolis OS",
+            "version": "8.8",
+            "id": "anolis",
+            "id_like": "rhel fedora centos",
+            "version_id": "8.8",
+            "platform_id": "platform:an8",
+            "pretty_name": "Anolis OS 8.8",
+            "ansi_color": "0;31",
+            "home_url": "https://openanolis.cn/"
+        }
+    },
+    "input": {
+        "/etc/redhat-release": "Anolis OS release 8.8\n",
+        "/etc/system-release": "Anolis OS release 8.8\n",
+        "/etc/os-release": "NAME=\"Anolis OS\"\nVERSION=\"8.8\"\nID=\"anolis\"\nID_LIKE=\"rhel fedora centos\"\nVERSION_ID=\"8.8\"\nPLATFORM_ID=\"platform:an8\"\nPRETTY_NAME=\"Anolis OS 8.8\"\nANSI_COLOR=\"0;31\"\nHOME_URL=\"https://openanolis.cn/\"\n\n"
+    },
+    "platform.dist": [
+        "anolis",
+        "8.8",
+        ""
+    ],
+    "result": {
+        "distribution": "Anolis",
+        "distribution_version": "8.8",
+        "distribution_release": "NA",
+        "distribution_major_version": "8",
+        "os_family": "RedHat"
+    }
+}
