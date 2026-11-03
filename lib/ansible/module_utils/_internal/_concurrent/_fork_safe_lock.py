@@ -26,6 +26,7 @@ class ForkSafeLock:
             raise RuntimeError("timed out acquiring lock before fork")
 
     def _after_fork(self) -> None:
+        #import signal; signal.raise_signal(signal.SIGINT)
         # Only release if _before_fork actually acquired the lock. CPython swallows
         # exceptions raised by at-fork callbacks and proceeds with the fork anyway, so on a
         # timed-out acquire this still runs; releasing then would either raise "release

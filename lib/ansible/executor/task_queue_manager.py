@@ -17,6 +17,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import dataclasses
 import errno
 import os
@@ -65,6 +66,8 @@ __all__ = ['TaskQueueManager']
 STDIN_FILENO = 0
 STDOUT_FILENO = 1
 STDERR_FILENO = 2
+
+WORKER_SIGNALS = frozenset({signal.SIGTERM, signal.SIGINT})
 
 display = Display()
 
@@ -230,8 +233,10 @@ class TaskQueueManager:
         self._workers: list[WorkerProcess | None] = []
 
         # signal handlers to propagate signals to workers
-        signal.signal(signal.SIGTERM, self._signal_handler)
-        signal.signal(signal.SIGINT, self._signal_handler)
+        for sig in WORKER_SIGNALS:
+            signal.signal(sig, self._signal_handler)
+
+        self._signal_raised: int | None = None
 
         # Location of our stacktrace dump directory. Pre-create so Workers don't have to.
         trace_dir = Path(C.ANSIBLE_HOME).expanduser() / 'debug'
@@ -248,6 +253,32 @@ class TaskQueueManager:
     def _initialize_processes(self, num: int) -> None:
         # mutable update to ensure the reference stays the same
         self._workers[:] = [None] * num
+
+
+    def _save_signal(self, signum, frame) -> None:
+        if self._signal_raised is None:
+            self._signal_raised = signum
+
+    @contextlib.contextmanager
+    def _defer_signals(self):
+        # other threads
+        for sig in WORKER_SIGNALS:
+            signal.signal(sig, self._save_signal)
+
+        # this thread and a worker
+        old_mask = signal.pthread_sigmask(signal.SIG_BLOCK, WORKER_SIGNALS)
+
+        try:
+            yield
+        finally:
+            signal.pthread_sigmask(signal.SIG_SETMASK, old_mask)
+
+            for sig in WORKER_SIGNALS:
+                signal.signal(sig, self._signal_handler)
+
+            if (signum := self._signal_raised) is not None:
+                self._signal_raised = None
+                signal.raise_signal(signum)
 
     def _signal_handler(self, signum, frame) -> None:
         """
