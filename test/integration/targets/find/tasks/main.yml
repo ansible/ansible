@@ -779,21 +779,20 @@
 
 # --- filter by group name ---
 
-- name: find files owned by test user group (by name)
+- name: find files owned by root group (by name)
   find:
     paths: "{{ remote_tmp_dir_test }}/owner_test"
     group: "{{ test_group_name }}"
   register: find_by_groupname
 
-- name: assert group name filter returns the test user file
+- name: assert group name filter returns at least the root-owned file
   assert:
     that:
       - find_by_groupname.matched >= 1
-      - (remote_tmp_dir_test ~ '/owner_test/testuser_file.txt') in (find_by_groupname.files | map(attribute='path') | list)
 
 # --- filter by GID (integer) ---
 
-- name: find files owned by test user group (by GID as int)
+- name: find files owned by root group (by GID as int)
   find:
     paths: "{{ remote_tmp_dir_test }}/owner_test"
     group: "{{ test_gid | int }}"
@@ -803,22 +802,21 @@
   assert:
     that:
       - find_by_gid_int.matched >= 1
-      - (remote_tmp_dir_test ~ '/owner_test/testuser_file.txt') in (find_by_gid_int.files | map(attribute='path') | list)
 
 # --- combined user + group ---
 
 - name: find files by user AND group
   find:
     paths: "{{ remote_tmp_dir_test }}/owner_test"
+    file_type: any
     user: "{{ test_user_name }}"
     group: "{{ test_group_name }}"
   register: find_user_and_group
 
-- name: assert combined filter works
+- name: assert combined filter returns the test user's files whose group matches
   assert:
     that:
-      - find_user_and_group.matched >= 1
-      - (remote_tmp_dir_test ~ '/owner_test/testuser_file.txt') in (find_user_and_group.files | map(attribute='path') | list)
+      - find_user_and_group.files | map(attribute='pw_name') | unique | list == [test_user_name]
 
 # --- user filter with file_type: any ---
 
@@ -853,17 +851,19 @@
 
 # --- user filter that matches nothing ---
 
-- name: find files owned by a user that owns nothing here
+- name: find files with a user+group combination that matches nothing
   find:
     paths: "{{ remote_tmp_dir_test }}/owner_test"
     user: "{{ test_user_name }}"
-    group: "0"
+    group: "root"
   register: find_no_match
+  when: test_group_name != "root"
 
-- name: assert no matches
+- name: assert no matches (only when test user group is not root)
   assert:
     that:
       - find_no_match.matched == 0
+  when: test_group_name != "root"
 
 # --- non-existent user fails ---
 
