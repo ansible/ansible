@@ -541,9 +541,12 @@ def ensure_absent(path):
                 try:
                     shutil.rmtree(b_path, ignore_errors=False)
                 except Exception as e:
-                    module.fail_json(
-                        msg=f"rmtree failed: {to_native(e)}"
-                    )
+                    # A concurrent remover may have already removed the requested path.
+                    # Strip trailing slashes so a replacement file or dangling link is still detected.
+                    if not isinstance(e, FileNotFoundError) or os.path.lexists(b_path.rstrip(b'/') or b'/'):
+                        module.fail_json(
+                            msg=f"rmtree failed: {to_native(e)}"
+                        )
             else:
                 try:
                     os.unlink(b_path)
