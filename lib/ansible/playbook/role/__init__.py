@@ -402,6 +402,10 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
             'tags': ['always'],
         }
 
+    # role content types that can also live outside <subdir>/main.yml; extensions match _load_role_yaml
+    _ROLE_KEYS = ('tasks', 'handlers', 'defaults', 'vars', 'meta')
+    _ROLE_EXTENSIONS = ('.yml', '.yaml', '.json')
+
     def _load_role_yaml(self, subdir, main=None, allow_dir=False):
         """
         Find and load role YAML files and return data found.
@@ -413,9 +417,13 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
                           If false, highlander rules. Only for vars(dicts) and not tasks(lists).
         :type allow_dir: bool
 
+        When ``main`` is not given, ``<subdir>.{yml,yaml,json}`` and the role level ``main.{yml,yaml,json}`` (with a
+        top-level ``<subdir>`` key) are used too, and treated like the files found in ``<subdir>/``.
+
         :returns: data from the matched file(s), type can be dict or list depending on vars or tasks.
         """
         data = None
+        found_files = []
         file_path = os.path.join(self._role_path, subdir)
         if self._loader.path_exists(file_path) and self._loader.is_directory(file_path):
             # Valid extensions and ordering for roles is hard-coded to maintain portability
@@ -432,32 +440,103 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
 
             # not really 'find_vars_files' but find_files_with_extensions_default_to_yaml_filename_extensions
             found_files = self._loader.find_vars_files(file_path, _main, extensions, allow_dir)
-            if found_files:
-                for found in found_files:
-
-                    if not is_subpath(found, file_path):
-                        raise self._FAIL(f"Failed loading '{found!r}' for role ({self._role_name}) "
-                                         f"as it is not inside the expected role path: {file_path!r}")
-
-                    new_data = self._loader.load_from_file(found, trusted_as_template=True)
-                    if new_data:
-                        if data is not None and isinstance(new_data, Mapping):
-                            data = combine_vars(data, new_data)
-                        else:
-                            data = new_data
-
-                        # found data so no need to continue unless we want to merge
-                        if not allow_dir:
-                            break
-
-            elif main is not None:
+            if not found_files and main is not None:
                 # this won't trigger with default only when <subdir>_from is specified
                 raise self._FAIL(f"Could not find specified file in role: {subdir}/{main}")
         elif main is not None:
             # this won't trigger with default only when <subdir>_from is specified
             raise self._FAIL(f"Could not find specified file in role, its '{subdir}/' is not usable.")
 
+        # Each source is (path, directory it has to stay inside, key to take from the file or None, layout name).
+        sources = [(found, file_path, None, f"{subdir}/") for found in found_files]
+        if main is None:
+            # Also look for <subdir>.yml and the all-in-one main.yml. When there is a single winner (allow_dir is false)
+            # the first source with data wins, so the conventional layout goes first. When sources are merged later ones
+            # override earlier ones, so the conventional layout goes last and keeps winning on conflicts.
+            alternatives = self._role_alternative_sources(subdir)
+            sources = sources + alternatives if not allow_dir else alternatives[::-1] + sources
+
+        layouts = []
+        for found, base_path, key, layout in sources:
+
+            if not is_subpath(found, base_path):
+                raise self._FAIL(f"Failed loading '{found!r}' for role ({self._role_name}) "
+                                 f"as it is not inside the expected role path: {base_path!r}")
+
+            new_data = self._loader.load_from_file(found, trusted_as_template=True)
+            if key is not None:
+                new_data = new_data.get(key)  # role level main.yml, already checked to be a dictionary
+
+            if new_data:
+                if layout not in layouts:
+                    layouts.append(layout)
+
+                # without allow_dir the first source with data wins, the rest are only looked at to report them
+                if data is None or allow_dir:
+                    if data is not None and isinstance(new_data, Mapping):
+                        data = combine_vars(data, new_data)
+                    else:
+                        data = new_data
+
+        if len(layouts) > 1:
+            if allow_dir:
+                outcome = f"merging them, '{layouts[-1]}' takes precedence"
+            else:
+                outcome = f"using '{layouts[0]}' and ignoring {', '.join(layouts[1:])}"
+            _display.warning(f"Role '{self._role_name}' defines '{subdir}' in more than one layout; {outcome}. "
+                             "Remove all but one to avoid confusion.")
+
         return data
+
+    def _role_alternative_sources(self, subdir):
+        """
+        Sources for ``subdir`` that are not ``<subdir>/main.yml``, highest priority first, in the format
+        used by _load_role_yaml: ``<role>/<subdir>.{yml,yaml,json}``, then the role level ``<role>/main.{yml,yaml,json}``.
+        """
+        if subdir not in self._ROLE_KEYS:
+            return []
+
+        extensions = list(self._ROLE_EXTENSIONS)  # no '' entry, so a directory or extensionless file is never matched
+        sources = [
+            (found, self._role_path, None, os.path.basename(found))
+            for found in self._loader.find_vars_files(self._role_path, subdir, extensions, allow_dir=False)
+        ]
+        if self._role_main is not None:
+            sources.append((self._role_main, self._role_path, subdir, os.path.basename(self._role_main)))
+
+        return sources
+
+    @_functools.cached_property
+    def _role_main(self):
+        """
+        The path of the all-in-one role file, ``<role>/main.{yml,yaml,json}``, which has optional top-level keys
+        tasks, handlers, defaults, vars and meta; None if there isn't one.
+
+        To avoid hijacking unrelated files that happen to share the name, only a mapping that has at least
+        one of those keys is treated as a role file; anything else is ignored. A mapping that mixes those keys
+        with unknown ones is almost certainly a typo and is an error.
+        """
+        found = self._loader.find_vars_files(self._role_path, 'main', list(self._ROLE_EXTENSIONS), allow_dir=False)
+        if not found:
+            return None
+
+        path = found[0]
+        if not is_subpath(path, self._role_path):
+            raise self._FAIL(f"Failed loading '{path!r}' for role ({self._role_name}) "
+                             f"as it is not inside the expected role path: {self._role_path!r}")
+
+        data = self._loader.load_from_file(path, trusted_as_template=True)
+        if not isinstance(data, Mapping) or not set(data) & set(self._ROLE_KEYS):
+            _display.vv(f"Ignoring '{path}' in role '{self._role_name}': not a role definition "
+                        f"(expected a dictionary with any of: {', '.join(self._ROLE_KEYS)}).")
+            return None
+
+        unknown = set(data) - set(self._ROLE_KEYS)
+        if unknown:
+            raise self._FAIL(f"Unknown top-level key(s) in '{os.path.basename(path)}' for role '{self._role_name}': "
+                             f"{', '.join(sorted(unknown))}. Valid keys: {', '.join(self._ROLE_KEYS)}.")
+
+        return path
 
     def _load_dependencies(self):
         """

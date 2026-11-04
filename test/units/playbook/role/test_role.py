@@ -24,7 +24,7 @@ import pytest
 import unittest
 from unittest.mock import patch, MagicMock
 
-from ansible.errors import AnsibleParserError
+from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.playbook.block import Block
 
 from units.mock.loader import DictDataLoader
@@ -410,3 +410,234 @@ class TestRole(unittest.TestCase):
         r = Role.load(i, play=mock_play)
 
         self.assertEqual(r.get_name(), "foo_complex")
+
+
+
+
+class TestAlternativeRoleLayouts(unittest.TestCase):
+    """Roles may use <subdir>.yml or an all-in-one main.yml in the role directory instead of <subdir>/main.yml."""
+
+    R = "/etc/ansible/roles/foo/"
+
+    @staticmethod
+    def _load(files, from_files=None):
+        fake_loader = DictDataLoader({k if k.startswith('/') else TestAlternativeRoleLayouts.R + k: v for k, v in files.items()})
+        mock_play = MagicMock()
+        mock_play.role_cache = {}
+        i = RoleInclude.load('foo', play=mock_play, loader=fake_loader)
+        with patch('ansible.playbook.role._display.warning') as warning:
+            role = Role.load(i, play=mock_play, from_files=from_files)
+        # other warnings can be emitted while loading, only look at ours
+        warnings = [c[0][0] for c in warning.call_args_list if 'more than one layout' in c[0][0]]
+        return role, warnings
+
+    @patch('ansible.playbook.role.definition.unfrackpath', mock_unfrackpath_noop)
+    def test_flat_files(self):
+        r, warnings = self._load({
+            "tasks.yml": "- debug: msg=hi\n",
+            "handlers.yaml": "- name: h\n  debug: msg=h\n",
+            "defaults.yml": "a: 1\n",
+            "vars.json": '{"b": 2}',
+            "meta.yml": "allow_duplicates: true\n",
+        })
+        assert warnings == []
+        assert len(r._task_blocks) == 1
+        assert len(r._handler_blocks) == 1
+        assert r._default_vars == {'a': 1}
+        assert r._role_vars == {'b': 2}
+        assert r._metadata.allow_duplicates is True
+
+    @patch('ansible.playbook.role.definition.unfrackpath', mock_unfrackpath_noop)
+    def test_all_in_one_main_yml(self):
+        r, warnings = self._load({
+            "main.yml": """
+            meta: {allow_duplicates: true}
+            defaults: {a: 1}
+            vars: {b: 2}
+            tasks:
+              - debug: msg=hi
+            handlers:
+              - name: h
+                debug: msg=h
+            """,
+        })
+        assert warnings == []
+        assert len(r._task_blocks) == 1
+        assert len(r._handler_blocks) == 1
+        assert r._default_vars == {'a': 1}
+        assert r._role_vars == {'b': 2}
+        assert r._metadata.allow_duplicates is True
+
+    @patch('ansible.playbook.role.definition.unfrackpath', mock_unfrackpath_noop)
+    def test_all_in_one_main_json(self):
+        r, warnings = self._load({"main.json": '{"defaults": {"a": 1}}'})
+        assert warnings == []
+        assert r._default_vars == {'a': 1}
+
+    @patch('ansible.playbook.role.definition.unfrackpath', mock_unfrackpath_noop)
+    def test_priority_is_conventional_then_flat_then_all_in_one(self):
+        # every layout defines tasks; conventional wins, the other two are reported
+        r, warnings = self._load({
+            "tasks/main.yml": "- debug: msg=conventional\n- debug: msg=two\n",
+            "tasks.yml": "- debug: msg=flat\n",
+            "main.yml": "tasks:\n  - debug: msg=allinone\n",
+        })
+        assert len(r._task_blocks[0].block) == 2
+        assert len(warnings) == 1
+        assert "'tasks'" in warnings[0] and "using 'tasks/'" in warnings[0]
+        assert "tasks.yml" in warnings[0] and "main.yml" in warnings[0]
+
+    @patch('ansible.playbook.role.definition.unfrackpath', mock_unfrackpath_noop)
+    def test_vars_and_defaults_are_merged_conventional_last(self):
+        # dictionaries are merged like the files of a vars/main/ directory; conventional wins conflicts
+        for subdir in ('vars', 'defaults'):
+            attr = '_role_vars' if subdir == 'vars' else '_default_vars'
+            r, warnings = self._load({
+                f"{subdir}/main.yml": "a: 1\nx: conventional\n",
+                f"{subdir}.yml": "b: 2\nx: flat\n",
+                "main.yml": f"{subdir}: {{c: 3, x: allinone}}\n",
+            })
+            assert getattr(r, attr) == {'a': 1, 'b': 2, 'c': 3, 'x': 'conventional'}, subdir
+            assert len(warnings) == 1, subdir
+            assert "merging them" in warnings[0] and f"'{subdir}/' takes precedence" in warnings[0], subdir
+
+    @patch('ansible.playbook.role.definition.unfrackpath', mock_unfrackpath_noop)
+    def test_merge_without_conventional_flat_beats_all_in_one(self):
+        r, warnings = self._load({"vars.yml": "x: flat\nf: 1\n", "main.yml": "vars: {x: allinone, m: 2}\n"})
+        assert r._role_vars == {'x': 'flat', 'f': 1, 'm': 2}
+        assert len(warnings) == 1 and "'vars.yml' takes precedence" in warnings[0]
+
+    @patch('ansible.playbook.role.definition.unfrackpath', mock_unfrackpath_noop)
+    def test_meta_is_not_merged(self):
+        # like tasks and handlers, meta has a single winner
+        r, warnings = self._load({
+            "meta.yml": "allow_duplicates: true\n",
+            "main.yml": "meta: {allow_duplicates: false, dependencies: []}\n",
+        })
+        assert r._metadata.allow_duplicates is True
+        assert len(warnings) == 1 and "using 'meta.yml'" in warnings[0] and "ignoring main.yml" in warnings[0]
+
+    @patch('ansible.playbook.role.definition.unfrackpath', mock_unfrackpath_noop)
+    def test_vars_directory_merge_is_unchanged_and_silent(self):
+        r, warnings = self._load({"vars/main/a.yml": "a: 1\nx: a\n", "vars/main/b.yml": "b: 2\nx: b\n"})
+        assert warnings == []
+        assert r._role_vars == {'a': 1, 'b': 2, 'x': 'b'}
+
+    @patch('ansible.playbook.role.definition.unfrackpath', mock_unfrackpath_noop)
+    def test_all_in_one_fills_in_what_other_layouts_do_not_define(self):
+        r, warnings = self._load({
+            "main.yml": "tasks:\n  - debug: msg=allinone\nhandlers:\n  - name: h\n    debug: msg=h\n",
+            "tasks/main.yml": "- debug: msg=conventional\n",
+        })
+        # tasks come from tasks/ (and main.yml's tasks are reported), handlers from main.yml (nothing to compare)
+        assert r._task_blocks[0].block[0].args['msg'] == 'conventional'
+        assert len(r._handler_blocks) == 1
+        assert len(warnings) == 1 and "'tasks'" in warnings[0]
+
+    @patch('ansible.playbook.role.definition.unfrackpath', mock_unfrackpath_noop)
+    def test_extension_collision_is_silent_like_main_yml(self):
+        r, warnings = self._load({
+            "tasks.yml": "- debug: msg=one\n- debug: msg=two\n",
+            "tasks.yaml": "- debug: msg=ignored\n",
+            "tasks.json": '[{"debug": {"msg": "ignored"}}]',
+        })
+        assert warnings == []
+        assert len(r._task_blocks[0].block) == 2
+
+    @patch('ansible.playbook.role.definition.unfrackpath', mock_unfrackpath_noop)
+    def test_unrelated_files_with_similar_names_are_ignored(self):
+        # these hold valid tasks, so if they were mistaken for role files the result (or a warning) would change
+        junk = "- debug: msg=junk\n- debug: msg=junk2\n- debug: msg=junk3\n"
+        r, warnings = self._load({
+            "tasks.bak": junk,
+            "tasks.md": junk,
+            "tasks.yml.bak": junk,
+            "tasks.yml~": junk,
+            "tasks.txt": junk,
+            "main.bak": "tasks:\n  - debug: msg=junk\n",
+            "tasks/main.yml": "- debug: msg=conventional\n",
+        })
+        assert warnings == []
+        assert len(r._task_blocks[0].block) == 1
+        assert r._task_blocks[0].block[0].args['msg'] == 'conventional'
+
+    @patch('ansible.playbook.role.definition.unfrackpath', mock_unfrackpath_noop)
+    def test_extensionless_files_are_not_role_files(self):
+        r, warnings = self._load({
+            "handlers": "- name: h\n  debug: msg=h\n",
+            "main": "defaults: {a: 1}\n",
+            "tasks/main.yml": "- debug: msg=hi\n",
+        })
+        assert warnings == []
+        assert r._handler_blocks == [] and r._default_vars == {}
+
+    @patch('ansible.playbook.role.definition.unfrackpath', mock_unfrackpath_noop)
+    def test_explicit_entry_point_does_not_consult_alternative_layouts(self):
+        # tasks_from=install names a file in tasks/, the alternatives are stand-ins for the default entry point only
+        r, warnings = self._load({
+            "tasks/main.yml": "- debug: msg=default\n",
+            "tasks/install.yml": "- debug: msg=install\n",
+            "tasks.yml": "- debug: msg=flat\n",
+            "main.yml": "tasks:\n  - debug: msg=allinone\n",
+        }, from_files={'tasks': 'install'})
+        assert warnings == []
+        assert r._task_blocks[0].block[0].args['msg'] == 'install'
+
+    @patch('ansible.playbook.role.definition.unfrackpath', mock_unfrackpath_noop)
+    def test_explicit_entry_point_without_data_does_not_fall_back_to_the_default_one(self):
+        r, warnings = self._load({
+            "tasks/empty.yml": "---\n# nothing\n",
+            "tasks.yml": "- debug: msg=flat\n",
+        }, from_files={'tasks': 'empty'})
+        assert warnings == []
+        assert r._task_blocks == []
+
+    @patch('ansible.playbook.role.definition.unfrackpath', mock_unfrackpath_noop)
+    def test_argument_specs_file_is_not_a_competitor_of_flat_meta(self):
+        r, warnings = self._load({
+            "meta/argument_specs.yml": "argument_specs:\n  main:\n    short_description: s\n    options: {}\n",
+            "meta.yml": "allow_duplicates: true\n",
+            "tasks/main.yml": "- debug: msg=hi\n",
+        })
+        assert warnings == []
+        assert r._metadata.allow_duplicates is True
+
+    @patch('ansible.playbook.role.definition.unfrackpath', mock_unfrackpath_noop)
+    def test_mixing_layouts_across_subdirs_is_fine(self):
+        r, warnings = self._load({
+            "tasks/main.yml": "- debug: msg=hi\n",
+            "handlers.yml": "- name: h\n  debug: msg=h\n",
+            "defaults/main.yml": "a: 1\n",
+        })
+        assert warnings == []
+        assert len(r._task_blocks) == 1 and len(r._handler_blocks) == 1 and r._default_vars == {'a': 1}
+
+    @patch('ansible.playbook.role.definition.unfrackpath', mock_unfrackpath_noop)
+    def test_galaxy_init_stub_does_not_cause_ambiguity(self):
+        # ansible-galaxy role init creates comment-only main.yml stubs; these contain no data
+        r, warnings = self._load({
+            "handlers/main.yml": "---\n# handlers file for foo\n",
+            "tasks/main.yml": "---\n# tasks file for foo\n",
+            "main.yml": "tasks:\n  - debug: msg=hi\nhandlers:\n  - name: h\n    debug: msg=h\n",
+        })
+        assert warnings == []
+        assert len(r._task_blocks) == 1 and len(r._handler_blocks) == 1
+
+    @patch('ansible.playbook.role.definition.unfrackpath', mock_unfrackpath_noop)
+    def test_conventional_only_is_untouched(self):
+        r, warnings = self._load({"tasks/main.yml": "- debug: msg=hi\n"})
+        assert warnings == []
+        assert len(r._task_blocks) == 1
+
+    @patch('ansible.playbook.role.definition.unfrackpath', mock_unfrackpath_noop)
+    def test_stray_main_yml_that_is_not_a_role_definition_is_ignored(self):
+        # existing roles may have an unrelated main.yml in their root; it must not change anything
+        for stray in ("- hosts: all\n  tasks: []\n", "just_a_var: 1\n", "---\n# nothing\n", "[]"):
+            r, warnings = self._load({"main.yml": stray, "tasks/main.yml": "- debug: msg=conventional\n"})
+            assert warnings == [], stray
+            assert len(r._task_blocks) == 1, stray
+
+    @patch('ansible.playbook.role.definition.unfrackpath', mock_unfrackpath_noop)
+    def test_main_yml_unknown_key_next_to_valid_key(self):
+        with pytest.raises(AnsibleError, match="Unknown top-level key.*taskz"):
+            self._load({"main.yml": "tasks: []\ntaskz: []\n"})

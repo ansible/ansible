@@ -1,0 +1,7 @@
+minor_changes:
+  - roles - Roles can now use flat files (``tasks.yml``, ``handlers.yml``, ``defaults.yml``, ``vars.yml``, ``meta.yml``) or a single
+    ``main.yml`` in the role directory with top-level ``tasks``/``handlers``/``defaults``/``vars``/``meta`` keys, as alternatives to the
+    ``<subdir>/main.yml`` layout. For ``tasks``, ``handlers`` and ``meta`` the first of ``<subdir>/main.yml``, ``<subdir>.yml`` and the
+    role level ``main.yml`` that has data is used. For ``vars`` and ``defaults`` all of them are merged, with ``<subdir>/`` taking precedence,
+    like the files of a ``vars/main/`` directory. Ansible warns when more than one layout defines the same content.
+    A ``main.yml`` in the role directory that is not a dictionary with at least one of those keys is ignored.
