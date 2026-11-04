@@ -412,8 +412,6 @@ class TestRole(unittest.TestCase):
         self.assertEqual(r.get_name(), "foo_complex")
 
 
-
-
 class TestAlternativeRoleLayouts(unittest.TestCase):
     """Roles may use <subdir>.yml or an all-in-one main.yml in the role directory instead of <subdir>/main.yml."""
 
@@ -421,7 +419,8 @@ class TestAlternativeRoleLayouts(unittest.TestCase):
 
     @staticmethod
     def _load(files, from_files=None):
-        fake_loader = DictDataLoader({k if k.startswith('/') else TestAlternativeRoleLayouts.R + k: v for k, v in files.items()})
+        fake_loader = DictDataLoader(
+            {k if k.startswith('/') else TestAlternativeRoleLayouts.R + k: v for k, v in files.items()})
         mock_play = MagicMock()
         mock_play.role_cache = {}
         i = RoleInclude.load('foo', play=mock_play, loader=fake_loader)
