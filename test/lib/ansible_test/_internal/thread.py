@@ -31,8 +31,7 @@ class WrappedThread(threading.Thread):
         # noinspection PyBroadException
         try:
             self._result.put((self.action(), None))
-        # pylint: disable=locally-disabled, bare-except
-        except:  # noqa
+        except:  # noqa  # pylint: disable=bare-except
             self._result.put((None, sys.exc_info()))
 
     def wait_for_result(self) -> t.Any:

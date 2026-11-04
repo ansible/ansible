@@ -28,29 +28,29 @@ class TestAttribute(unittest.TestCase):
         self.two = Attribute(priority=0)
 
     def test_eq(self):
-        self.assertTrue(self.one == self.one)
+        self.assertTrue(self.one == self.one)  # pylint: disable=comparison-with-itself
         self.assertFalse(self.one == self.two)
 
     def test_ne(self):
-        self.assertFalse(self.one != self.one)
+        self.assertFalse(self.one != self.one)  # pylint: disable=comparison-with-itself
         self.assertTrue(self.one != self.two)
 
     def test_lt(self):
-        self.assertFalse(self.one < self.one)
+        self.assertFalse(self.one < self.one)  # pylint: disable=comparison-with-itself
         self.assertTrue(self.one < self.two)
         self.assertFalse(self.two < self.one)
 
     def test_gt(self):
-        self.assertFalse(self.one > self.one)
+        self.assertFalse(self.one > self.one)  # pylint: disable=comparison-with-itself
         self.assertFalse(self.one > self.two)
         self.assertTrue(self.two > self.one)
 
     def test_le(self):
-        self.assertTrue(self.one <= self.one)
+        self.assertTrue(self.one <= self.one)  # pylint: disable=comparison-with-itself
         self.assertTrue(self.one <= self.two)
         self.assertFalse(self.two <= self.one)
 
     def test_ge(self):
-        self.assertTrue(self.one >= self.one)
+        self.assertTrue(self.one >= self.one)  # pylint: disable=comparison-with-itself
         self.assertFalse(self.one >= self.two)
         self.assertTrue(self.two >= self.one)
