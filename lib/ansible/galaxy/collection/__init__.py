@@ -516,7 +516,7 @@ def _find_existing_download_artifacts(b_output_path):
     # type: (bytes) -> dict[tuple[str, str], bytes]
     """Scan a download directory for existing collection tarballs.
 
-    Returns a mapping of (fqcn, version) to the tarball basename.
+    Returns a mapping of (fqcn, version) to the full tarball path.
     """
     existing = {}  # type: dict[tuple[str, str], bytes]
     for b_tarball in glob.glob(os.path.join(b_output_path, b'*.tar.gz')):
@@ -528,11 +528,11 @@ def _find_existing_download_artifacts(b_output_path):
         namespace = meta.get('namespace')
         name = meta.get('name')
         version = meta.get('version')
-        if not namespace or not name or not version:
+        if not isinstance(namespace, str) or not isinstance(name, str) or not isinstance(version, str):
             continue
 
         fqcn = '%s.%s' % (namespace, name)
-        existing[(fqcn, version)] = os.path.basename(b_tarball)
+        existing[(fqcn, version)] = b_tarball
 
     return existing
 
@@ -581,7 +581,7 @@ def download_collections(
     preferred_candidates = None
     if preferred_existing:
         preferred_candidates = {
-            Candidate(fqcn, ver, None, 'galaxy', None)
+            Candidate(fqcn, ver, to_native(preferred_existing[(fqcn, ver)]), 'file', None)
             for fqcn, ver in preferred_existing
         }
 
@@ -621,7 +621,7 @@ def download_collections(
                     format(coll=to_text(concrete_coll_pin)),
                 )
                 requirements.append({
-                    'name': to_native(preferred_existing[coll_key]),
+                    'name': to_native(os.path.basename(preferred_existing[coll_key])),
                     'version': concrete_coll_pin.ver,
                 })
                 continue
