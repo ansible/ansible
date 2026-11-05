@@ -319,7 +319,7 @@ class DistributionFiles:
             variant_id = variant_id_match.group(1)
             if variant_id in ('server-sap', 'sles-sap'):
                 suse_facts['distribution'] = 'SLES_SAP'
-            elif variant_id == 'transactional':
+            elif variant_id == 'transactional' and re.search(r'^SUSE_SUPPORT_PRODUCT="?SUSE Linux Micro"?$', data, re.MULTILINE):
                 suse_facts['distribution'] = 'SL-Micro'
         else:
             # Fallback for older SLES 15 using baseproduct symlink
