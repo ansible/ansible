@@ -174,23 +174,39 @@ options:
         type: list
         elements: path
         version_added: "2.23"
-    user:
+    username:
         description:
-            - Select files owned by the specified user or users.
-            - Each entry accepts a user name or a numeric UID.
-            - When a string that can be interpreted as an integer is given, it is treated as a UID.
+            - Select files owned by the specified user name or names.
             - A file matches when its owner is any of the listed values.
+            - Names that do not exist on the remote system cause the task to fail.
+            - May be combined with O(uid) to match either by name or numeric id.
         type: list
-        elements: raw
+        elements: str
+        version_added: "2.23"
+    uid:
+        description:
+            - Select files owned by the specified numeric user id or ids.
+            - A file matches when its owner is any of the listed values.
+            - May be combined with O(username) to match either by name or numeric id.
+        type: list
+        elements: int
         version_added: "2.23"
     group:
         description:
-            - Select files owned by the specified group or groups.
-            - Each entry accepts a group name or a numeric GID.
-            - When a string that can be interpreted as an integer is given, it is treated as a GID.
+            - Select files owned by the specified group name or names.
             - A file matches when its group is any of the listed values.
+            - Names that do not exist on the remote system cause the task to fail.
+            - May be combined with O(gid) to match either by name or numeric id.
         type: list
-        elements: raw
+        elements: str
+        version_added: "2.23"
+    gid:
+        description:
+            - Select files owned by the specified numeric group id or ids.
+            - A file matches when its group is any of the listed values.
+            - May be combined with O(group) to match either by name or numeric id.
+        type: list
+        elements: int
         version_added: "2.23"
 extends_documentation_fragment: [action_common_attributes, checksum_common]
 attributes:
@@ -290,20 +306,20 @@ EXAMPLES = r"""
   ansible.builtin.find:
     paths: /opt
     recurse: true
-    user: deploy
+    username: deploy
 
 - name: Find files owned by UID 1234 and group 'www-data'
   ansible.builtin.find:
     paths: /var/www
     recurse: true
-    user: 1234
+    uid: 1234
     group: www-data
 
 - name: Find files owned by either 'alice' or 'bob'
   ansible.builtin.find:
     paths: /shared
     recurse: true
-    user:
+    username:
       - alice
       - bob
 """
@@ -488,38 +504,6 @@ def ownerfilter(st, uids, gids):
     return (uids is None or st.st_uid in uids) and (gids is None or st.st_gid in gids)
 
 
-def resolve_uids(values: list | None) -> set[int] | None:
-    """Resolve a list of user names or numeric values to a set of UIDs.
-    Returns None when *values* is empty or None.
-    Raises KeyError when a name cannot be resolved."""
-    if values:
-        result = set()
-        for val in values:
-            try:
-                result.add(int(val))
-            except ValueError:
-                result.add(pwd.getpwnam(val).pw_uid)
-    else:
-        result = None
-    return result
-
-
-def resolve_gids(values: list | None) -> set[int] | None:
-    """Resolve a list of group names or numeric values to a set of GIDs.
-    Returns None when *values* is empty or None.
-    Raises KeyError when a name cannot be resolved."""
-    if values:
-        result = set()
-        for val in values:
-            try:
-                result.add(int(val))
-            except ValueError:
-                result.add(grp.getgrnam(val).gr_gid)
-    else:
-        result = None
-    return result
-
-
 def statinfo(st):
     pw_name = ""
     gr_name = ""
@@ -600,8 +584,10 @@ def main():
             encoding=dict(type='str'),
             limit=dict(type='int'),
             prune=dict(type='list', elements='path'),
-            user=dict(type='list', elements='raw'),
-            group=dict(type='list', elements='raw'),
+            username=dict(type='list', elements='str'),
+            uid=dict(type='list', elements='int'),
+            group=dict(type='list', elements='str'),
+            gid=dict(type='list', elements='int'),
         ),
         supports_check_mode=True,
     )
@@ -659,15 +645,19 @@ def main():
 
     prune_paths = {os.path.abspath(p) for p in params['prune'] or []}
 
+    uids = set(params['uid'] or [])
     try:
-        uids = resolve_uids(params['user'])
-    except (KeyError, TypeError):
-        module.fail_json(msg="Failed to resolve one or more user values in %s" % params['user'])
+        uids.update(pwd.getpwnam(name).pw_uid for name in (params['username'] or []))
+    except KeyError as err:
+        module.fail_json(msg="Failed to resolve username: %s" % err)
+    uids = uids or None
 
+    gids = set(params['gid'] or [])
     try:
-        gids = resolve_gids(params['group'])
-    except (KeyError, TypeError):
-        module.fail_json(msg="Failed to resolve one or more group values in %s" % params['group'])
+        gids.update(grp.getgrnam(name).gr_gid for name in (params['group'] or []))
+    except KeyError as err:
+        module.fail_json(msg="Failed to resolve group: %s" % err)
+    gids = gids or None
 
     now = time.time()
     msg = 'All paths examined'

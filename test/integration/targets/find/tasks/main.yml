@@ -725,7 +725,7 @@
 - name: find files owned by test user (by name)
   find:
     paths: "{{ remote_tmp_dir_test }}/owner_test"
-    user: "{{ test_user_name }}"
+    username: "{{ test_user_name }}"
   register: find_by_username
 
 - name: assert only the test user file is returned
@@ -734,67 +734,53 @@
       - find_by_username.matched == 1
       - find_by_username.files[0].path == remote_tmp_dir_test ~ '/owner_test/testuser_file.txt'
 
-# --- filter by UID (integer) ---
+# --- filter by UID ---
 
-- name: find files owned by test user (by UID as int)
+- name: find files owned by test user (by UID)
   find:
     paths: "{{ remote_tmp_dir_test }}/owner_test"
-    user: "{{ test_user.uid | int }}"
-  register: find_by_uid_int
+    uid: "{{ test_user.uid | int }}"
+  register: find_by_uid
 
-- name: assert UID int filter works
+- name: assert UID filter works
   assert:
     that:
-      - find_by_uid_int.matched == 1
-      - find_by_uid_int.files[0].path == remote_tmp_dir_test ~ '/owner_test/testuser_file.txt'
-
-# --- filter by UID (string) ---
-
-- name: find files owned by test user (by UID as string)
-  find:
-    paths: "{{ remote_tmp_dir_test }}/owner_test"
-    user: "{{ test_user.uid | string }}"
-  register: find_by_uid_str
-
-- name: assert UID string filter works
-  assert:
-    that:
-      - find_by_uid_str.matched == 1
-      - find_by_uid_str.files[0].path == remote_tmp_dir_test ~ '/owner_test/testuser_file.txt'
+      - find_by_uid.matched == 1
+      - find_by_uid.files[0].path == remote_tmp_dir_test ~ '/owner_test/testuser_file.txt'
 
 # --- filter by group name ---
 
-- name: find files owned by root group (by name)
+- name: find files owned by test group (by name)
   find:
     paths: "{{ remote_tmp_dir_test }}/owner_test"
     group: "{{ test_group_name }}"
   register: find_by_groupname
 
-- name: assert group name filter returns at least the root-owned file
+- name: assert group name filter returns at least the test user file
   assert:
     that:
       - find_by_groupname.matched >= 1
 
-# --- filter by GID (integer) ---
+# --- filter by GID ---
 
-- name: find files owned by root group (by GID as int)
+- name: find files owned by test group (by GID)
   find:
     paths: "{{ remote_tmp_dir_test }}/owner_test"
-    group: "{{ test_user.group | int }}"
-  register: find_by_gid_int
+    gid: "{{ test_user.group | int }}"
+  register: find_by_gid
 
-- name: assert GID int filter works
+- name: assert GID filter works
   assert:
     that:
-      - find_by_gid_int.matched >= 1
+      - find_by_gid.matched >= 1
 
-# --- combined user + group ---
+# --- combined username + group ---
 
-- name: find files by user AND group
+- name: find files by username AND group
   find:
     paths: "{{ remote_tmp_dir_test }}/owner_test"
     file_type: any
-    user: "{{ test_user_name }}"
+    username: "{{ test_user_name }}"
     group: "{{ test_group_name }}"
   register: find_user_and_group
 
@@ -803,13 +789,13 @@
     that:
       - find_user_and_group.files | map(attribute='pw_name') | unique | list == [test_user_name]
 
-# --- user filter with file_type: any ---
+# --- username filter with file_type: any ---
 
 - name: find any type owned by test user
   find:
     paths: "{{ remote_tmp_dir_test }}/owner_test"
     file_type: any
-    user: "{{ test_user_name }}"
+    username: "{{ test_user_name }}"
   register: find_any_by_user
 
 - name: assert both file and directory are found
@@ -819,13 +805,13 @@
       - (remote_tmp_dir_test ~ '/owner_test/testuser_file.txt') in (find_any_by_user.files | map(attribute='path') | list)
       - (remote_tmp_dir_test ~ '/owner_test/testuser_dir') in (find_any_by_user.files | map(attribute='path') | list)
 
-# --- user filter with file_type: directory ---
+# --- username filter with file_type: directory ---
 
 - name: find directories owned by test user
   find:
     paths: "{{ remote_tmp_dir_test }}/owner_test"
     file_type: directory
-    user: "{{ test_user_name }}"
+    username: "{{ test_user_name }}"
   register: find_dir_by_user
 
 - name: assert only directory is found
@@ -834,13 +820,13 @@
       - find_dir_by_user.matched == 1
       - find_dir_by_user.files[0].path == remote_tmp_dir_test ~ '/owner_test/testuser_dir'
 
-# --- user filter that matches nothing ---
+# --- username + gid combination that matches nothing ---
 
-- name: find files with a user+group combination that matches nothing
+- name: find files with a username+gid combination that matches nothing
   find:
     paths: "{{ remote_tmp_dir_test }}/owner_test"
-    user: "{{ test_user_name }}"
-    group: "0"
+    username: "{{ test_user_name }}"
+    gid: 0
   register: find_no_match
   when: test_group_name != "root" and test_group_name != "wheel"
 
@@ -850,20 +836,20 @@
       - find_no_match.matched == 0
   when: test_group_name != "root" and test_group_name != "wheel"
 
-# --- non-existent user fails ---
+# --- non-existent username fails ---
 
-- name: find with a non-existent user
+- name: find with a non-existent username
   find:
     paths: "{{ remote_tmp_dir_test }}/owner_test"
-    user: this_user_does_not_exist_at_all
+    username: this_user_does_not_exist_at_all
   register: find_bad_user
   ignore_errors: true
 
-- name: assert failure for non-existent user
+- name: assert failure for non-existent username
   assert:
     that:
       - find_bad_user is failed
-      - "'Failed to resolve' in find_bad_user.msg"
+      - "'Failed to resolve username' in find_bad_user.msg"
 
 # --- non-existent group fails ---
 
@@ -878,14 +864,14 @@
   assert:
     that:
       - find_bad_group is failed
-      - "'Failed to resolve' in find_bad_group.msg"
+      - "'Failed to resolve group' in find_bad_group.msg"
 
-# --- user as a list ---
+# --- username as a list ---
 
 - name: find files owned by either root or test user (list)
   find:
     paths: "{{ remote_tmp_dir_test }}/owner_test"
-    user:
+    username:
       - root
       - "{{ test_user_name }}"
   register: find_user_list
@@ -896,3 +882,17 @@
       - find_user_list.matched == 2
       - (remote_tmp_dir_test ~ '/owner_test/root_file.txt') in (find_user_list.files | map(attribute='path') | list)
       - (remote_tmp_dir_test ~ '/owner_test/testuser_file.txt') in (find_user_list.files | map(attribute='path') | list)
+
+# --- combined username + uid ---
+
+- name: find files by username and uid together
+  find:
+    paths: "{{ remote_tmp_dir_test }}/owner_test"
+    username: "{{ test_user_name }}"
+    uid: 0
+  register: find_name_and_uid
+
+- name: assert both root and test user files matched
+  assert:
+    that:
+      - find_name_and_uid.matched == 2

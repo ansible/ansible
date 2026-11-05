@@ -1,2 +1,2 @@
 minor_changes:
-  - find - add ``user`` and ``group`` options to filter by file owner and group (https://github.com/ansible/ansible/issues/87652).
+  - find - add ``username``, ``uid``, ``group``, and ``gid`` options to filter by file owner and group (https://github.com/ansible/ansible/issues/87652).
