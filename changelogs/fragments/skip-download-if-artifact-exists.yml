@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-galaxy - Skip re-downloading collection artifacts when a matching file already exists unless ``--force`` is used.
