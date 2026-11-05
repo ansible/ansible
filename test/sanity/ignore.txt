@@ -1,5 +1,6 @@
 .github/RELEASE_NAMES.txt release-names  # Current codename 'TBD' not present in the file
 README.md pymarkdown:line-length
+lib/ansible/__init__.py boilerplate  # avoid boilerplate to increase range of Python versions which can execute the version check
 lib/ansible/_internal/_errors/_task_timeout.py pylint:ansible-deprecated-version  # Deprecated version '2.23' found in call to 'ansible.module_utils.datatag.deprecate_value'
 lib/ansible/_internal/_task.py pylint:ansible-deprecated-version-comment  # Deprecated core version ('2.23') found: enable the deprecation message for collection_name
 lib/ansible/_internal/_templating/_datatag.py pylint:ansible-deprecated-version-comment  # Deprecated core version ('2.23') found: embedded Jinja constant string template support
