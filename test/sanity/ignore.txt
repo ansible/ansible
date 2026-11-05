@@ -51,6 +51,7 @@ lib/ansible/module_utils/compat/selinux.py import-3.15!skip # pass/fail depends 
 lib/ansible/module_utils/compat/selinux.py pylint:unidiomatic-typecheck
 lib/ansible/module_utils/distro/_distro.py no-assert
 lib/ansible/module_utils/distro/_distro.py pylint:ansible-bad-function
+lib/ansible/module_utils/facts/hardware/aix.py pylint:used-before-assignment
 lib/ansible/module_utils/facts/system/pkg_mgr.py pylint:ansible-bad-function
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.ArgvParser.psm1 pslint:PSUseApprovedVerbs
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.CommandUtil.psm1 pslint:PSProvideCommentHelp # need to agree on best format for comment location
@@ -90,6 +91,7 @@ lib/ansible/modules/mount_facts.py pylint:ansible-bad-function
 lib/ansible/modules/package_facts.py validate-modules:doc-choices-do-not-match-spec
 lib/ansible/modules/rpm_key.py pylint:used-before-assignment
 lib/ansible/modules/service.py pylint:ansible-bad-function
+lib/ansible/modules/service.py pylint:used-before-assignment
 lib/ansible/modules/service.py validate-modules:nonexistent-parameter-documented
 lib/ansible/modules/stat.py codespell:woth  # write-other
 lib/ansible/modules/stat.py validate-modules:parameter-invalid
@@ -97,6 +99,7 @@ lib/ansible/modules/systemd_service.py validate-modules:parameter-invalid
 lib/ansible/modules/uri.py codespell:aNULL  # cipher name
 lib/ansible/modules/user.py codespell:Fromm  # contributor's name
 lib/ansible/modules/user.py pylint:ansible-bad-function
+lib/ansible/modules/user.py pylint:used-before-assignment
 lib/ansible/modules/user.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/parsing/ajson.py pylint:ansible-deprecated-version-comment  # Deprecated core version ('2.23') found: deprecate ajson
 lib/ansible/parsing/dataloader.py pylint:ansible-deprecated-version  # Deprecated version '2.23' found in call to 'ansible.utils.display.Display.deprecated'
@@ -180,6 +183,7 @@ test/integration/targets/module_precedence/lib_with_extension/a.ini shebang
 test/integration/targets/module_precedence/lib_with_extension/ping.ini shebang
 test/integration/targets/module_precedence/roles_with_extension/foo/library/a.ini shebang
 test/integration/targets/module_precedence/roles_with_extension/foo/library/ping.ini shebang
+test/integration/targets/module_utils/library/test_optional.py pylint:used-before-assignment
 test/integration/targets/module_utils_Ansible.Process/library/ansible_process_tests.ps1 codespell:caf  # expected test output
 test/integration/targets/old_style_modules_posix/library/helloworld.sh shebang
 test/integration/targets/powershell_exec_wrapper/library/test_fail.ps1 pslint:PSCustomUseLiteralPath
