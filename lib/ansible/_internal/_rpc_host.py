@@ -45,10 +45,16 @@ class LocalNotAProcess(BaseProcess):
 
             # the only target this should see is _run_server
             # start cannot return until Server.serve_forever is called (our custom subclass sets the _server_ready event)
-            self._tpe.submit(self._target, *self._args, **self._kwargs)
+            future = self._tpe.submit(self._target, *self._args, **self._kwargs)
+
+            # the server only returns on failure; wake the waiter below instead of letting it time out
+            future.add_done_callback(lambda _future: _server_ready.set())
 
             if not _server_ready.wait(5):
                 raise TimeoutError("Local RPC server did not start.")
+
+            if future.done() and (ex := future.exception()):
+                raise RuntimeError("Local RPC server failed to start.") from ex
         finally:
             signal.signal = original_signal  # always restore default signal impl
 
