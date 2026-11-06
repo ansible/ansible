@@ -337,6 +337,8 @@ class _ComputedReqKindsMixin:
     ) -> t.Self:
         req_name = collection_req.get('name', None)
         req_version = collection_req.get('version', '*')
+        if req_version is not None:
+            req_version = str(req_version)
         req_type = collection_req.get('type')
         # TODO: decide how to deprecate the old src API behavior
         req_source = collection_req.get('source', None)
