@@ -82,8 +82,8 @@ class CryptFacade:
                     continue
             else:
                 lib_so = ctypes.util.find_library(lib_config.name)
-            if not lib_so:
-                continue
+                if not lib_so:
+                    continue
 
             loaded_lib = ctypes.cdll.LoadLibrary(lib_so)
 
