@@ -48,7 +48,9 @@
 - name: assert download collection with multiple dependencies
   assert:
     that:
-    - '"Downloading collection ''parent_dep.parent_collection:1.0.0'' to" in download_collection.stdout'
+    - >-
+      "Downloading collection 'parent_dep.parent_collection:1.0.0' to" in download_collection.stdout
+      or "'parent_dep.parent_collection:1.0.0' is already downloaded, skipping" in download_collection.stdout
     - '"Downloading collection ''child_dep.child_collection:0.9.9'' to" in download_collection.stdout'
     - '"Downloading collection ''child_dep.child_dep2:1.2.2'' to" in download_collection.stdout'
     - download_collection_actual.examined == 4
@@ -169,6 +171,42 @@
         that:
         - '"Downloading collection ''ansible_test.my_collection:1.0.0'' to" in download_collection.stdout'
         - download_collection_actual.stat.exists
+
+    - name: download the same tar.gz again without --force
+      command: ansible-galaxy collection download '{{ galaxy_dir }}/scratch/ansible_test/my_collection/ansible_test-my_collection-1.0.0.tar.gz'
+      args:
+        chdir: '{{ galaxy_dir }}/download'
+      register: download_collection_repeat
+
+    - name: get result of repeated download
+      stat:
+        path: '{{ galaxy_dir }}/download/collections/ansible_test-my_collection-1.0.0.tar.gz'
+      register: download_collection_repeat_actual
+
+    - assert:
+        that:
+        - "'is already downloaded, skipping' in download_collection_repeat.stdout"
+        - download_collection_actual.stat.checksum == download_collection_repeat_actual.stat.checksum
+
+    - name: download the same tar.gz again with --force
+      command: ansible-galaxy collection download '{{ galaxy_dir }}/scratch/ansible_test/my_collection/ansible_test-my_collection-1.0.0.tar.gz' --force
+      args:
+        chdir: '{{ galaxy_dir }}/download'
+      register: download_collection_force
+
+    - assert:
+        that:
+        - '"Downloading collection ''ansible_test.my_collection:1.0.0'' to" in download_collection_force.stdout'
+
+    - name: download the same tar.gz again with --force-with-deps
+      command: ansible-galaxy collection download '{{ galaxy_dir }}/scratch/ansible_test/my_collection/ansible_test-my_collection-1.0.0.tar.gz' --force-with-deps
+      args:
+        chdir: '{{ galaxy_dir }}/download'
+      register: download_collection_force_deps
+
+    - assert:
+        that:
+        - '"Downloading collection ''ansible_test.my_collection:1.0.0'' to" in download_collection_force_deps.stdout'
 
 - block:
   - name: create skeleton collection for trailing slash test
