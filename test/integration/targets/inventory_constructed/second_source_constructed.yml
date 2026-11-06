@@ -1,0 +1,11 @@
+plugin: ansible.builtin.constructed
+strict: true
+use_vars_plugins: false
+compose:
+  second_doubled: ordinal * 2
+  label: role_upper ~ '_' ~ (doubled | string)
+groups:
+  constructed_values: doubled == ordinal * 2 and ('role_' ~ role) in group_names
+keyed_groups:
+  - key: role_upper
+    prefix: second

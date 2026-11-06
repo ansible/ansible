@@ -19,13 +19,19 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+from textwrap import dedent
+
 import pytest
+from pytest_mock import MockerFixture
 
 from ansible.errors import AnsibleParserError
 from ansible._internal._datatag._tags import TrustedAsTemplate
 from ansible.plugins.inventory.constructed import InventoryModule
 from ansible.inventory.data import InventoryData
 from ansible.template import Templar
+from ansible.plugins.loader import inventory_loader
+from ansible.parsing.dataloader import DataLoader
 
 
 @pytest.fixture()
@@ -364,3 +370,145 @@ def test_keyed_group_with_trailing_separator(inventory_module):
     )
     for group_name in ('tag_environment_prod', 'tag_status'):
         assert group_name in inventory_module.inventory.groups
+
+
+@pytest.fixture()
+def parsing_inventory_module(collection_loader: None) -> InventoryModule:
+    """Load configured options while exercising the real constructed parse path."""
+    return inventory_loader.get('constructed')
+
+
+def _constructed_loader(tmp_path: Path, sources: dict[str, str]) -> DataLoader:
+    """Use native YAML loading so expressions retain source origins and trust tags."""
+    for name, content in sources.items():
+        (tmp_path / name).write_text(content)
+    loader = DataLoader()
+    loader.set_basedir(str(tmp_path))
+    return loader
+
+
+def test_parse_reuses_expressions_with_fresh_host_variables(
+    parsing_inventory_module: InventoryModule, mocker: MockerFixture, tmp_path: Path,
+) -> None:
+    module = parsing_inventory_module
+    inventory = InventoryData()
+    for name, ordinal, role, region in [('first', 1, 'spine', 'east'), ('second', 2, 'leaf', 'west'), ('third', 3, 'spine', 'west')]:
+        inventory.add_host(name)
+        for key, value in [('ordinal', ordinal), ('role', role), ('region', region)]:
+            inventory.set_variable(name, key, value)
+
+    loader = _constructed_loader(tmp_path, {'constructed.yml': dedent("""\
+        plugin: constructed
+        strict: true
+        compose:
+          doubled: ordinal * 2
+        groups:
+          selected: doubled > 2
+        keyed_groups:
+          - key: role
+            prefix: role
+            parent_group: '{{ region }}'
+        """)})
+    compiler = mocker.spy(module.templar.environment, 'compile_expression')
+
+    module.parse(inventory, loader, 'constructed.yml')
+
+    assert [host.vars['doubled'] for host in inventory.hosts.values()] == [2, 4, 6]
+    assert [host.name for host in inventory.groups['selected'].hosts] == ['second', 'third']
+    assert [host.name for host in inventory.groups['role_spine'].hosts] == ['first', 'third']
+    assert [host.name for host in inventory.groups['role_leaf'].hosts] == ['second']
+    assert [group.name for group in inventory.groups['east'].child_groups] == ['role_spine']
+    assert [group.name for group in inventory.groups['west'].child_groups] == ['role_leaf', 'role_spine']
+    assert compiler.call_count == 3
+
+    # The source's compilation scope ends even when the plugin/templar is retained.
+    expression = module.get_option('compose')['doubled']
+    for ordinal in (10, 11):
+        module.templar.available_variables = {'ordinal': ordinal}
+        assert module.templar.evaluate_expression(expression) == ordinal * 2
+    assert compiler.call_count == 5
+
+
+def test_parse_undefined_value_does_not_poison_later_hosts(parsing_inventory_module: InventoryModule, tmp_path: Path) -> None:
+    module = parsing_inventory_module
+    inventory = InventoryData()
+    for name in ('missing', 'present', 'different'):
+        inventory.add_host(name)
+    inventory.set_variable('present', 'feature', 'enabled')
+    inventory.set_variable('different', 'feature', 'disabled')
+    loader = _constructed_loader(tmp_path, {'constructed.yml': dedent("""\
+        plugin: constructed
+        strict: false
+        compose:
+          optional_feature: feature
+        groups:
+          enabled: feature == 'enabled'
+        keyed_groups:
+          - key: feature
+            prefix: feature
+        """)})
+
+    module.parse(inventory, loader, 'constructed.yml')
+
+    assert 'optional_feature' not in inventory.hosts['missing'].vars
+    assert inventory.hosts['present'].vars['optional_feature'] == 'enabled'
+    assert inventory.hosts['different'].vars['optional_feature'] == 'disabled'
+    assert [host.name for host in inventory.groups['enabled'].hosts] == ['present']
+    assert [host.name for host in inventory.groups['feature_enabled'].hosts] == ['present']
+    assert [host.name for host in inventory.groups['feature_disabled'].hosts] == ['different']
+
+
+def test_parse_failure_discards_compiled_expressions(parsing_inventory_module: InventoryModule, mocker: MockerFixture, tmp_path: Path) -> None:
+    module = parsing_inventory_module
+    inventory = InventoryData()
+    inventory.add_host('missing')
+    loader = _constructed_loader(tmp_path, {'constructed.yml': dedent("""\
+        plugin: constructed
+        strict: true
+        compose:
+          optional_feature: feature
+        """)})
+    compiler = mocker.spy(module.templar.environment, 'compile_expression')
+
+    with pytest.raises(AnsibleParserError, match='Failed to parse'):
+        module.parse(inventory, loader, 'constructed.yml')
+    assert compiler.call_count == 1
+
+    expression = module.get_option('compose')['optional_feature']
+    for feature in ('first', 'second'):
+        module.templar.available_variables = {'feature': feature}
+        assert module.templar.evaluate_expression(expression) == feature
+    assert compiler.call_count == 3
+
+
+def test_parse_reused_plugin_starts_a_fresh_source_scope(parsing_inventory_module: InventoryModule, mocker: MockerFixture, tmp_path: Path) -> None:
+    module = parsing_inventory_module
+    inventory = InventoryData()
+    for name, ordinal in [('first', 1), ('second', 2)]:
+        inventory.add_host(name)
+        inventory.set_variable(name, 'ordinal', ordinal)
+    source = dedent("""\
+        plugin: constructed
+        strict: true
+        compose:
+          doubled: ordinal * 2
+        """)
+    loader = _constructed_loader(tmp_path, {'first.yml': source, 'second.yml': source})
+    compiler = mocker.spy(module.templar.environment, 'compile_expression')
+
+    module.parse(inventory, loader, 'first.yml')
+    assert compiler.call_count == 1
+    assert [host.vars['doubled'] for host in inventory.hosts.values()] == [2, 4]
+
+    inventory.set_variable('first', 'ordinal', 3)
+    inventory.set_variable('second', 'ordinal', 4)
+    module.parse(inventory, loader, 'second.yml')
+    assert compiler.call_count == 2
+    assert [host.vars['doubled'] for host in inventory.hosts.values()] == [6, 8]
+
+    # Refreshing the same source must start fresh even when the expression's origin is unchanged.
+    inventory.set_variable('first', 'ordinal', 5)
+    inventory.set_variable('second', 'ordinal', 6)
+    module.parse(inventory, loader, 'second.yml')
+    assert compiler.call_count == 3
+    assert [host.vars['doubled'] for host in inventory.hosts.values()] == [10, 12]
