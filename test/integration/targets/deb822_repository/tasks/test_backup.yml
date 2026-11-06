@@ -1,0 +1,52 @@
+# test backup file is created when repo is updated
+- block:
+    - name: Create deb822 repo
+      deb822_repository:
+        name: ansible-test-backup
+        uris: http://us.archive.ubuntu.com/ubuntu
+        suites:
+          - focal
+        components:
+          - main
+      register: deb822_create_backup_1
+
+    - name: Get Checksum of newly created repo file
+      stat:
+        path: "{{ deb822_create_backup_1.dest }}"
+      register: deb822_create_backup_1_stat
+
+    - name: Update deb822 repo with backup
+      deb822_repository:
+        name: ansible-test-backup
+        uris: http://us.archive.ubuntu.com/ubuntu
+        suites:
+          - focal
+          - focal-updates
+        components:
+          - main
+          - restricted
+        backup: true
+      register: deb822_create_backup_2
+
+    - name: Check backup file
+      stat:
+        path: "{{ deb822_create_backup_2.backup_file }}"
+      register: deb822_create_backup_stats
+
+    - name: Assert backup file exists
+      assert:
+        that:
+          - deb822_create_backup_1.changed
+          - deb822_create_backup_1.backup_file is not defined
+          - deb822_create_backup_2.changed
+          - deb822_create_backup_stats.stat.exists
+          - deb822_create_backup_stats.stat.size > 0
+          - deb822_create_backup_stats.stat.mode == '0644'
+          - deb822_create_backup_1_stat.stat.checksum == deb822_create_backup_stats.stat.checksum
+
+  always:
+    - name: remove ansible-test repo
+      deb822_repository:
+        name: ansible-test-backup
+        state: absent
+      register: ansible_test_repo_remove
