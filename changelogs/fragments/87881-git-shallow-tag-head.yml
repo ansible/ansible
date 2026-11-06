@@ -1,0 +1,2 @@
+bugfixes:
+  - git module - fix crash when updating a shallow checkout of a tag where the remote HEAD ref file does not exist (https://github.com/ansible/ansible/issues/87881).
