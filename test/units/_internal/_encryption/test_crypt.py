@@ -88,7 +88,7 @@ class TestCryptFacade:
         assert crypt_facade._crypt_gensalt_impl is not None
         assert crypt_facade._crypt_gensalt_impl.argtypes is not None
         assert crypt_facade._crypt_gensalt_impl.restype is not None
-
+        assert crypt_facade._use_crypt_gensalt_rn is False
         assert crypt_facade.has_crypt_gensalt
 
     def test_crypt_fail_errno(self, mocker: MockerFixture) -> None:
