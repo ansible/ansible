@@ -1,0 +1,4 @@
+bugfixes:
+  - transform_to_native_types - Redaction behavior now applies to individually vaulted values that have already been decrypted.
+    Previously it only applied to values not yet decrypted.
+    (https://github.com/ansible/ansible/issues/85783)

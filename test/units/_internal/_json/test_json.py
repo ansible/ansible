@@ -37,15 +37,22 @@ def test_encrypted_string_behavior(
             '37346430303361316436306130663461393832656134346639326365633830373361376236343961386164323538353962'
         ))
 
-    avv = AnsibleVariableVisitor(encrypted_string_behavior=behavior)
+    for decrypted in [False, True]:
+        if decrypted:
+            if not decryptable:
+                continue
 
-    if isinstance(expected, Exception):
-        with pytest.raises(type(expected), match=expected.args[0]):
-            avv.visit(value)
-    else:
-        result = avv.visit(value)
+            value = str(value)
 
-        if expected is None:
-            assert result is value
+        avv = AnsibleVariableVisitor(encrypted_string_behavior=behavior)
+
+        if isinstance(expected, Exception):
+            with pytest.raises(type(expected), match=expected.args[0]):
+                avv.visit(value)
         else:
-            assert result == expected
+            result = avv.visit(value)
+
+            if expected is None:
+                assert result is value
+            else:
+                assert result == expected

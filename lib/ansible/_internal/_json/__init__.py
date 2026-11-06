@@ -19,7 +19,7 @@ from ansible.module_utils._internal._datatag import (
 )
 from ansible.module_utils._internal._json._profiles import _tagless
 from ansible.parsing.vault import EncryptedString
-from ansible._internal._datatag._tags import Origin, TrustedAsTemplate
+from ansible._internal._datatag._tags import Origin, TrustedAsTemplate, VaultedValue
 from ansible._internal._templating import _transform
 from ansible.module_utils import _internal
 from ansible.module_utils._internal import _datatag
@@ -149,7 +149,7 @@ class AnsibleVariableVisitor:
         value_type: type = type(value)
 
         # handle EncryptedString conversion before more generic transformation and native conversions
-        if value_type is EncryptedString:  # pylint: disable=unidiomatic-typecheck
+        if value_type is EncryptedString or VaultedValue.is_tagged_on(value):  # pylint: disable=unidiomatic-typecheck
             match self.encrypted_string_behavior:
                 case EncryptedStringBehavior.DECRYPT:
                     value = str(value)  # type: ignore[assignment]
