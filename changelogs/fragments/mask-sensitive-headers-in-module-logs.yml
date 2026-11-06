@@ -1,0 +1,8 @@
+minor_changes:
+  - module logging - redact the values of the ``authorization``, ``cookie``, ``proxy-authorization``,
+    ``set-cookie`` and ``www-authenticate`` headers from the module invocation written to syslog and
+    to the journal, since a headers parameter is rarely marked ``no_log`` as a whole.
+  - task results - redact the values of the ``authorization``, ``cookie``, ``proxy-authorization``,
+    ``set-cookie`` and ``www-authenticate`` headers from the ``invocation`` returned by a module or an
+    action plugin. The new ``REDACT_HTTP_HEADERS`` configuration option allows the values of additional
+    headers to be redacted.

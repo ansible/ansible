@@ -23,6 +23,18 @@ ARGUMENT_SPEC = dict(
 )
 
 
+HEADERS_ARGS = dict(
+    headers=dict(Authorization='Bearer s3cr3t', Accept='application/json'),
+    nested=dict(http_headers=dict(Cookie='session=abc')),
+    unredirected_headers=['Authorization'],
+)
+HEADERS_ARGUMENT_SPEC = dict(
+    headers=dict(type='dict'),
+    nested=dict(type='dict', options=dict(http_headers=dict(type='dict'))),
+    unredirected_headers=dict(type='list', elements='str'),
+)
+
+
 @pytest.mark.parametrize('am, stdin', [(ARGUMENT_SPEC, ARGS)], indirect=['am', 'stdin'])
 def test_module_utils_basic__log_invocation(am, mocker, monkeypatch):
 
@@ -69,3 +81,26 @@ def test_module_utils_basic__log_invocation(am, mocker, monkeypatch):
             syslog_facility='LOG_USER',
             target_log_info=None,
         )
+
+
+@pytest.mark.parametrize('am, stdin', [(HEADERS_ARGUMENT_SPEC, HEADERS_ARGS)], indirect=['am', 'stdin'])
+def test_module_utils_basic__log_invocation_headers(am, mocker, monkeypatch):
+    """Sensitive header values must be redacted from the logged message and from the journal fields."""
+    logger_mock = mocker.MagicMock()
+    monkeypatch.setattr(_logging, 'log_to_system', logger_mock)
+    am._log_invocation()
+
+    message = logger_mock.call_args[0][0]
+    log_args = logger_mock.call_args[1]['log_args']
+
+    assert 'Bearer s3cr3t' not in message
+    assert 'session=abc' not in message
+
+    # the names of the headers, and the values of the ones which carry no credentials, are still logged
+    assert "headers={'Authorization': '$REDACTED$', 'Accept': 'application/json'}" in message
+    assert "nested={'http_headers': {'Cookie': '$REDACTED$'}}" in message
+    assert "unredirected_headers=['Authorization']" in message
+
+    assert log_args['headers'] == "{'Authorization': '$REDACTED$', 'Accept': 'application/json'}"
+    assert log_args['nested'] == "{'http_headers': {'Cookie': '$REDACTED$'}}"
+    assert log_args['unredirected_headers'] == "['Authorization']"
