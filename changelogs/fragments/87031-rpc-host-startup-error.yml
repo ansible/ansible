@@ -1,0 +1,3 @@
+bugfixes:
+  - ansible-playbook - Report the underlying error when the local RPC server fails to start (for example, when Unix domain sockets are unavailable),
+    instead of a generic timeout.
