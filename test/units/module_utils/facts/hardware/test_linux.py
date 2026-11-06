@@ -195,3 +195,51 @@ class TestFactsLinuxHardwareGetMountFacts(unittest.TestCase):
         lh = linux.LinuxHardware(module=module, load_on_init=False)
         sg_inq_serial = lh._get_sg_inq_serial('/usr/bin/sg_inq', 'nvme0n1')
         self.assertEqual(sg_inq_serial, None)
+
+
+class TestFactsLinuxHardwareGetLvmFacts(unittest.TestCase):
+
+    def setUp(self):
+        timeout.GATHER_TIMEOUT = 10
+
+    def tearDown(self):
+        timeout.GATHER_TIMEOUT = None
+
+    def _module_with_lvm_output(self, vgs_out, lvs_out, pvs_out):
+        module = Mock()
+        module.get_bin_path = Mock(side_effect=lambda name, *args, **kwargs: '/usr/sbin/%s' % name)
+
+        def run_command(cmd, *args, **kwargs):
+            if cmd.startswith('/usr/sbin/vgs'):
+                return (0, vgs_out, '')
+            if cmd.startswith('/usr/sbin/lvs'):
+                return (0, lvs_out, '')
+            if cmd.startswith('/usr/sbin/pvs'):
+                return (0, pvs_out, '')
+            raise AssertionError('unexpected command: %s' % cmd)
+
+        module.run_command = Mock(side_effect=run_command)
+        return module
+
+    @patch('ansible.module_utils.facts.hardware.linux.os.getuid', return_value=0)
+    def test_get_lvm_facts_skips_non_data_lines(self, mock_getuid):
+        # lvs can print informational lines (e.g. "Retrying metadata scan.")
+        # to stdout; such lines are not comma-separated data rows and must
+        # not abort fact gathering with an IndexError.
+        # https://github.com/ansible/ansible/issues/87640
+        vgs_out = 'ceph-vg,1,2,0,wi-ao----,7153.95,0.00\n'
+        lvs_out = (
+            '  Retrying metadata scan.\n'
+            'osd-block-5651,ceph-vg,-wi-a-----,7153.95,,,,,,,,\n'
+            'osd-block-015d,ceph-vg,-wi-a-----,7153.95,,,,,,,,\n'
+        )
+        pvs_out = '/dev/sda,ceph-vg,lvm2,a--,7153.95,0.00\n'
+        module = self._module_with_lvm_output(vgs_out, lvs_out, pvs_out)
+        lh = linux.LinuxHardware(module=module, load_on_init=False)
+        lvm_facts = lh.get_lvm_facts()
+
+        self.assertIn('ceph-vg', lvm_facts['lvm']['vgs'])
+        self.assertEqual(sorted(lvm_facts['lvm']['lvs']), ['osd-block-015d', 'osd-block-5651'])
+        self.assertEqual(lvm_facts['lvm']['lvs']['osd-block-5651'], {'size_g': '7153.95', 'vg': 'ceph-vg'})
+        self.assertEqual(sorted(lvm_facts['lvm']['vgs']['ceph-vg']['lvs']), ['osd-block-015d', 'osd-block-5651'])
+        self.assertIn('/dev/sda', lvm_facts['lvm']['pvs'])
