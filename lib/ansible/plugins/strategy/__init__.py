@@ -993,7 +993,6 @@ class StrategyBase:
                 connection = plugin_loader.connection_loader.get(play_context.connection, play_context, os.devnull)
                 var_options = connection._resolve_option_variables(all_vars, templar)
                 connection.set_options(task_keys=task.dump_attrs(), var_options=var_options)
-                play_context.set_attributes_from_plugin(connection)
 
             if connection:
                 try:
