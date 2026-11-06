@@ -12,6 +12,7 @@ from ansible.module_utils.common.network import (
     to_netmask,
     to_subnet,
     to_ipv6_network,
+    to_ipv6_subnet,
     is_mac,
     is_masklen,
     is_netmask
@@ -95,6 +96,29 @@ def test_to_ipv6_network():
     assert '2001:db8::' == to_ipv6_network('2001:db8::')
     assert '2001:0db8:85a3::' == to_ipv6_network('2001:0db8:85a3:0000:0000:8a2e:0370:7334')
     assert '2001:0db8:85a3::' == to_ipv6_network('2001:0db8:85a3:0:0:8a2e:0370:7334')
+
+
+@pytest.mark.parametrize('address, expected', [
+    ('2001:db8::1', '2001:db8::'),
+    # '::' stands for a single zero group, so the groups after it are part of the network
+    ('2001::1:2:3:4:5:6', '2001:0:1::'),
+    ('::1:2:3:4:5:6:7', '0:1:2::'),
+])
+def test_to_ipv6_network_short_zero_run(address, expected):
+    assert expected == to_ipv6_network(address)
+
+
+@pytest.mark.parametrize('address, expected', [
+    ('2001:db8::1', '2001:db8::'),
+    ('2001:db8:1:2:3:4:5:6', '2001:db8:1:2::'),
+    # '::' stands for fewer zero groups than the subnet prefix still needs
+    ('2001:db8::1:2:3:4:5', '2001:db8:0:1::'),
+    ('::1:2:3:4:5:6:7', '0:1:2:3::'),
+    # an embedded IPv4 address takes up the last two groups
+    ('1:2::3:4:5:192.0.2.1', '1:2:0:3::'),
+])
+def test_to_ipv6_subnet_short_zero_run(address, expected):
+    assert expected == to_ipv6_subnet(address)
 
 
 def test_to_bits():
