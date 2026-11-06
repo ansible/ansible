@@ -34,6 +34,7 @@ from ansible._internal import _task
 from ansible.errors import AnsibleError, AnsibleAssertionError, AnsibleParserError, AnsibleValueOmittedError, AnsibleUndefinedVariable
 from ansible.playbook.handler import Handler
 from ansible.playbook.included_file import IncludedFile
+from ansible.playbook.role import prune_orphaned_role_argspec_validation
 from ansible.plugins.action import ActionBase
 from ansible.plugins.loader import action_loader
 from ansible.plugins.strategy import StrategyBase
@@ -275,11 +276,12 @@ class StrategyModule(StrategyBase):
                             iterator.handlers = [h for b in iterator._play.handlers for h in b.block]
 
                             display.debug("iterating over new_blocks loaded from include file")
+                            filtered_blocks = []
                             for new_block in new_blocks:
                                 if is_handler:
                                     for task in new_block.block:
                                         task.notified_hosts = included_file._hosts[:]
-                                    final_block = new_block
+                                    filtered_blocks.append(new_block)
                                 else:
                                     task_vars = self._variable_manager.get_vars(
                                         play=iterator._play,
@@ -288,9 +290,19 @@ class StrategyModule(StrategyBase):
                                         _hosts_all=self._hosts_cache_all,
                                     )
                                     display.debug("filtering new block on tags")
-                                    final_block = new_block.filter_tagged_tasks(task_vars)
+                                    filtered_blocks.append(new_block.filter_tagged_tasks(task_vars))
                                     display.debug("done filtering new block on tags")
 
+                            if not is_handler and filtered_blocks:
+                                task_vars = self._variable_manager.get_vars(
+                                    play=iterator._play,
+                                    task=filtered_blocks[0].get_first_parent_include(),
+                                    _hosts=self._hosts_cache,
+                                    _hosts_all=self._hosts_cache_all,
+                                )
+                                filtered_blocks = prune_orphaned_role_argspec_validation(filtered_blocks, task_vars)
+
+                            for final_block in filtered_blocks:
                                 included_tasks.extend(final_block.get_tasks())
 
                                 for host in hosts_left:
