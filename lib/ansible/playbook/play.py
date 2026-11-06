@@ -58,7 +58,7 @@ class Play(Base, Taggable, CollectionSearch):
     """
 
     # =================================================================================
-    hosts = NonInheritableFieldAttribute(isa='list', required=True, listof=(str,), always_post_validate=True, priority=-2)
+    hosts = NonInheritableFieldAttribute(isa='list', required=True, listof=(str,), always_post_validate=True, priority=-15)
 
     # Facts
     gather_facts = NonInheritableFieldAttribute(isa='bool', default=None, always_post_validate=True)
@@ -73,13 +73,13 @@ class Play(Base, Taggable, CollectionSearch):
     validate_argspec = NonInheritableFieldAttribute(isa='string', always_post_validate=True)
 
     # Role Attributes
-    roles = NonInheritableFieldAttribute(isa='list', default=list, priority=90)
+    roles = NonInheritableFieldAttribute(isa='list', default=list, priority=-5)
 
     # Block (Task) Lists Attributes
-    handlers = NonInheritableFieldAttribute(isa='list', default=list, priority=-1)
-    pre_tasks = NonInheritableFieldAttribute(isa='list', default=list, priority=-1)
-    post_tasks = NonInheritableFieldAttribute(isa='list', default=list, priority=-1)
-    tasks = NonInheritableFieldAttribute(isa='list', default=list, priority=-1)
+    handlers = NonInheritableFieldAttribute(isa='list', default=list, priority=-10)
+    pre_tasks = NonInheritableFieldAttribute(isa='list', default=list, priority=-10)
+    post_tasks = NonInheritableFieldAttribute(isa='list', default=list, priority=-10)
+    tasks = NonInheritableFieldAttribute(isa='list', default=list, priority=-10)
 
     # Flag/Setting Attributes
     force_handlers = NonInheritableFieldAttribute(isa='bool', default=context.cliargs_deferred_get('force_handlers'), always_post_validate=True)
@@ -200,11 +200,7 @@ class Play(Base, Taggable, CollectionSearch):
         Bare handlers outside of a block are given an implicit block.
         """
         try:
-            return self._extend_value(
-                self.handlers,
-                load_list_of_blocks(ds=ds, play=self, use_handlers=True, variable_manager=self._variable_manager, loader=self._loader),
-                prepend=True
-            )
+            return load_list_of_blocks(ds=ds, play=self, use_handlers=True, variable_manager=self._variable_manager, loader=self._loader)
         except AssertionError as ex:
             raise AnsibleParserError("A malformed block was encountered while loading handlers.", obj=self._ds) from ex
 
