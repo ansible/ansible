@@ -1,0 +1,6 @@
+- hosts: testhost
+  gather_facts: false
+  vars_prompt:
+    - name: number
+      validate: 42
+  tasks: []
