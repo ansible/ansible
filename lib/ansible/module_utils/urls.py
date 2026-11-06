@@ -422,8 +422,12 @@ class HTTPRedirectHandler(urllib.request.HTTPRedirectHandler):
     urllib.
     """
 
-    def __init__(self, follow_redirects=None):
+    def __init__(self, follow_redirects=None, default_ports=None):
         self.follow_redirects = follow_redirects
+        # Ports assumed for a URL that does not state one, per scheme. Used to
+        # decide whether a redirect stays within the origin of the original
+        # request; see ``_is_cross_origin_redirect``.
+        self.default_ports = dict(_DEFAULT_PORTS, **(default_ports or {}))
 
     def __call__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -487,6 +491,11 @@ class HTTPRedirectHandler(urllib.request.HTTPRedirectHandler):
             if code == 301 and method == 'POST':
                 method = 'GET'
 
+        # Credentials are scoped to the origin they were sent to.
+        if _is_cross_origin_redirect(req.full_url, newurl, self.default_ports):
+            req_headers = {k: v for k, v in req_headers.items()
+                           if k.lower() not in _CREDENTIAL_HEADERS}
+
         return urllib.request.Request(
             newurl,
             data=data,
@@ -495,6 +504,35 @@ class HTTPRedirectHandler(urllib.request.HTTPRedirectHandler):
             unverifiable=True,
             method=method.upper(),
         )
+
+
+_CREDENTIAL_HEADERS = frozenset(("authorization", "proxy-authorization", "cookie", 'set-cookie', 'www-authenticate'))
+
+# Port assumed for a URL that does not state one, per scheme. Callers can
+# extend or override these through ``redirect_default_ports``.
+_DEFAULT_PORTS = {'http': 80, 'https': 443}
+
+
+def _is_cross_origin_redirect(from_url, to_url, default_ports=None):
+    """Return True when a redirect from ``from_url`` to ``to_url`` leaves the
+    origin of the original request (scheme, host or port), so credentials
+    must not follow it. A relative ``Location`` stays within the origin.
+
+    A URL that states no port is taken to use ``default_ports[scheme]``, so
+    ``https://host/`` and ``https://host:443/`` are the same origin.
+    """
+    if default_ports is None:
+        default_ports = _DEFAULT_PORTS
+    old = urlparse(from_url)
+    new = urlparse(to_url)
+    if not new.hostname:
+        return False
+
+    def origin(parts):
+        port = parts.port if parts.port is not None else default_ports.get(parts.scheme)
+        return parts.scheme, parts.hostname, port
+
+    return origin(old) != origin(new)
 
 
 def make_context(cafile=None, cadata=None, capath=None, ciphers=None, validate_certs=True, client_cert=None,
@@ -733,8 +771,8 @@ class Request:
     def __init__(self, headers=None, use_proxy=True, force=False, timeout=10, validate_certs=True,
                  url_username=None, url_password=None, http_agent=None, force_basic_auth=False,
                  follow_redirects='urllib2', client_cert=None, client_key=None, cookies=None, unix_socket=None,
-                 ca_path=None, unredirected_headers=None, decompress=True, ciphers=None, use_netrc=True,
-                 context=None):
+                 ca_path=None, unredirected_headers=None, redirect_default_ports=None, decompress=True, ciphers=None,
+                 use_netrc=True, context=None):
         """This class works somewhat similarly to the ``Session`` class of from requests
         by defining a cookiejar that can be used across requests as well as cascaded defaults that
         can apply to repeated requests
@@ -770,6 +808,7 @@ class Request:
         self.unix_socket = unix_socket
         self.ca_path = ca_path
         self.unredirected_headers = unredirected_headers
+        self.redirect_default_ports = redirect_default_ports
         self.decompress = decompress
         self.ciphers = ciphers
         self.use_netrc = use_netrc
@@ -789,7 +828,7 @@ class Request:
              url_username=None, url_password=None, http_agent=None,
              force_basic_auth=None, follow_redirects=None,
              client_cert=None, client_key=None, cookies=None, use_gssapi=False,
-             unix_socket=None, ca_path=None, unredirected_headers=None, decompress=None,
+             unix_socket=None, ca_path=None, unredirected_headers=None, redirect_default_ports=None, decompress=None,
              ciphers=None, use_netrc=None, context=None):
         """
         Sends a request via HTTP(S) or FTP using urllib (Python3)
@@ -829,6 +868,9 @@ class Request:
             connection to the provided url
         :kwarg ca_path: (optional) String of file system path to CA cert bundle to use
         :kwarg unredirected_headers: (optional) A list of headers to not attach on a redirected request
+        :kwarg redirect_default_ports: (optional) Dict mapping a URL scheme to the port assumed when a URL
+            states none, used to decide whether a redirect stays within the origin of the original request.
+            Extends the defaults ``{'http': 80, 'https': 443}``
         :kwarg decompress: (optional) Whether to attempt to decompress gzip content-encoded responses
         :kwarg ciphers: (optional) List of ciphers to use
         :kwarg use_netrc: (optional) Boolean determining whether to use credentials from ~/.netrc file
@@ -858,6 +900,7 @@ class Request:
         unix_socket = self._fallback(unix_socket, self.unix_socket)
         ca_path = self._fallback(ca_path, self.ca_path)
         unredirected_headers = self._fallback(unredirected_headers, self.unredirected_headers)
+        redirect_default_ports = self._fallback(redirect_default_ports, self.redirect_default_ports)
         decompress = self._fallback(decompress, self.decompress)
         ciphers = self._fallback(ciphers, self.ciphers)
         use_netrc = self._fallback(use_netrc, self.use_netrc)
@@ -890,7 +933,7 @@ class Request:
             ssl_handler = urllib.request.HTTPSHandler(context=context)
         handlers.append(ssl_handler)
 
-        handlers.append(HTTPRedirectHandler(follow_redirects))
+        handlers.append(HTTPRedirectHandler(follow_redirects, redirect_default_ports))
 
         # add some nicer cookie handling
         if cookies is not None:
@@ -1013,7 +1056,7 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
              force_basic_auth=False, follow_redirects='urllib2',
              client_cert=None, client_key=None, cookies=None,
              use_gssapi=False, unix_socket=None, ca_path=None,
-             unredirected_headers=None, decompress=True, ciphers=None, use_netrc=True):
+             unredirected_headers=None, redirect_default_ports=None, decompress=True, ciphers=None, use_netrc=True):
     """
     Sends a request via HTTP(S) or FTP using urllib (Python3)
 
@@ -1026,7 +1069,8 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
                           force_basic_auth=force_basic_auth, follow_redirects=follow_redirects,
                           client_cert=client_cert, client_key=client_key, cookies=cookies,
                           use_gssapi=use_gssapi, unix_socket=unix_socket, ca_path=ca_path,
-                          unredirected_headers=unredirected_headers, decompress=decompress, ciphers=ciphers, use_netrc=use_netrc)
+                          unredirected_headers=unredirected_headers, redirect_default_ports=redirect_default_ports,
+                          decompress=decompress, ciphers=ciphers, use_netrc=use_netrc)
 
 
 # deprecated: description='TypedDict Required/NotRequired' python_version='3.11'
@@ -1392,7 +1436,20 @@ def url_redirect_argument_spec():
     """
     return dict(
         follow_redirects=dict(type='str', default='safe', choices=['all', 'none', 'safe', 'urllib2']),
+        redirect_default_ports=dict(type='dict'),
     )
+
+
+def _redirect_default_ports_from_params(module):
+    """Read and validate the ``redirect_default_ports`` module option, a dict
+    mapping a URL scheme to the port assumed when a URL states none."""
+    ports = module.params.get('redirect_default_ports')
+    if not ports:
+        return None
+    try:
+        return {str(scheme).lower(): int(port) for scheme, port in ports.items()}
+    except (AttributeError, TypeError, ValueError):
+        module.fail_json(msg="redirect_default_ports must map a URL scheme to an integer port, got: %r" % (ports,))
 
 
 def fetch_url(module, url, data=None, headers=None, method=None,
@@ -1458,6 +1515,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     force_basic_auth = module.params.get('force_basic_auth', '')
 
     follow_redirects = module.params.get('follow_redirects', 'urllib2')
+    redirect_default_ports = _redirect_default_ports_from_params(module)
 
     client_cert = module.params.get('client_cert')
     client_key = module.params.get('client_key')
@@ -1476,6 +1534,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
                      follow_redirects=follow_redirects, client_cert=client_cert,
                      client_key=client_key, cookies=cookies, use_gssapi=use_gssapi,
                      unix_socket=unix_socket, ca_path=ca_path, unredirected_headers=unredirected_headers,
+                     redirect_default_ports=redirect_default_ports,
                      decompress=decompress, ciphers=ciphers, use_netrc=use_netrc)
         # Lowercase keys, to conform to py2 behavior
         info.update({k.lower(): v for k, v in r.info().items()})
