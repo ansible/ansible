@@ -310,7 +310,7 @@ def get_units_ansible_python_path(args: UnitsConfig, test_context: str) -> str:
     if python_path:
         return python_path
 
-    python_path = create_temp_dir(prefix='ansible-test-')
+    python_path = create_temp_dir(prefix='ansible-test-', suffix='-mmu')
     ansible_path = os.path.join(python_path, 'ansible')
     ansible_test_path = os.path.join(python_path, 'ansible_test')
 
