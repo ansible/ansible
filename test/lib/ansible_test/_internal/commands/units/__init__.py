@@ -22,10 +22,8 @@ from ...util import (
     ANSIBLE_TEST_DATA_ROOT,
     display,
     is_subdir,
-    str_to_version,
     SubprocessError,
     ANSIBLE_LIB_ROOT,
-    ANSIBLE_TEST_TARGET_ROOT,
 )
 
 from ...util_common import (
@@ -37,6 +35,7 @@ from ...util_common import (
 from ...ansible_util import (
     ansible_environment,
     get_ansible_python_path,
+    get_ansible_test_python_path,
 )
 
 from ...target import (
@@ -85,6 +84,10 @@ from ...pypi_proxy import (
 
 from ...host_profiles import (
     PosixProfile,
+)
+
+from ...._util.target.pytest import (
+    plugins,
 )
 
 
@@ -260,19 +263,18 @@ def command_units(args: UnitsConfig) -> None:
             cmd.append('--durations=25')
             cmd.append('--pythonwarnings=error:Passing a non-Collection iterable to parametrize is deprecated')
 
-        plugins = []
+        plugin_names = []
 
         if args.coverage:
-            plugins.append('ansible_pytest_coverage')
+            plugin_names.append('ansible_pytest_coverage')
 
         if data_context().content.collection:
-            plugins.append('ansible_pytest_collections')
+            plugin_names.append('ansible_pytest_collections')
 
-        plugins.append('ansible_forked')
+        plugin_names.append('ansible_forked')
 
-        if plugins:
-            env['PYTHONPATH'] += ':%s' % os.path.join(ANSIBLE_TEST_TARGET_ROOT, 'pytest/plugins')
-            env['PYTEST_PLUGINS'] = ','.join(plugins)
+        env['PYTHONPATH'] += os.path.pathsep + get_ansible_test_python_path()
+        env['PYTEST_PLUGINS'] = ','.join(f'{plugins.__name__}.{plugin_name}' for plugin_name in plugin_names)
 
         if args.collect_only:
             cmd.append('--collect-only')
