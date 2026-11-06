@@ -88,3 +88,7 @@ for test_strategy in linear free; do
 
   grep -q "META: end_role conditional evaluated to False," <<< "$out"
 done
+
+# clear_host_errors unreachable
+ansible-playbook -i inventory.yml "$@" clear_unreachable.yml | tee out.txt
+[ "$(grep -c 'PASSED' out.txt)" -eq 1 ]

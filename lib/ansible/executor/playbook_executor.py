@@ -50,7 +50,6 @@ class PlaybookExecutor:
         self._variable_manager = variable_manager
         self._loader = loader
         self.passwords = passwords
-        self._unreachable_hosts = dict()
 
         if context.CLIARGS.get('listhosts') or context.CLIARGS.get('listtasks') or \
                 context.CLIARGS.get('listtags') or context.CLIARGS.get('syntax'):
@@ -108,7 +107,6 @@ class PlaybookExecutor:
                     self._tqm.load_callbacks()
                     self._tqm.send_callback('v2_playbook_on_start', pb)
 
-                i = 1
                 plays = pb.get_plays()
                 display.vv(u'%d plays in %s' % (len(plays), to_text(playbook_path)))
 
@@ -160,52 +158,30 @@ class PlaybookExecutor:
                         entry['plays'].append(play)
 
                     else:
-                        self._tqm._unreachable_hosts.update(self._unreachable_hosts)
-
-                        previously_failed = len(self._tqm._failed_hosts)
-                        previously_unreachable = len(self._tqm._unreachable_hosts)
-
                         break_play = False
-                        # we are actually running plays
                         batches = self._get_serialized_batches(play)
                         if len(batches) == 0:
                             self._tqm.send_callback('v2_playbook_on_play_start', play)
                             self._tqm.send_callback('v2_playbook_on_no_hosts_matched')
                         for batch in batches:
-                            # restrict the inventory to the hosts in the serialized batch
                             self._inventory.restrict_to_hosts(batch)
-                            # and run it...
+                            live_hosts = {h.name for h in batch}.difference(self._tqm._failed_hosts, self._tqm._unreachable_hosts)
                             try:
                                 result = self._tqm.run(play=play)
                             except AnsibleEndPlay as e:
                                 result = e.result
                                 break
 
-                            # break the play if the result equals the special return code
                             if result & self._tqm.RUN_FAILED_BREAK_PLAY != 0:
                                 result = self._tqm.RUN_FAILED_HOSTS
                                 break_play = True
 
-                            # check the number of failures here and break out if the entire batch failed
-                            failed_hosts_count = len(self._tqm._failed_hosts) + len(self._tqm._unreachable_hosts) - \
-                                (previously_failed + previously_unreachable)
-
-                            if len(batch) == failed_hosts_count:
+                            if live_hosts and not live_hosts.difference(self._tqm._failed_hosts, self._tqm._unreachable_hosts):
                                 break_play = True
                                 break
 
-                            # update the previous counts so they don't accumulate incorrectly
-                            # over multiple serial batches
-                            previously_failed += len(self._tqm._failed_hosts) - previously_failed
-                            previously_unreachable += len(self._tqm._unreachable_hosts) - previously_unreachable
-
-                            # save the unreachable hosts from this batch
-                            self._unreachable_hosts.update(self._tqm._unreachable_hosts)
-
                         if break_play:
                             break
-
-                    i = i + 1  # per play
 
                 if entry:
                     entrylist.append(entry)  # per playbook

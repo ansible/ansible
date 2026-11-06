@@ -1,0 +1,13 @@
+ungrouped:
+  hosts:
+    unreachable:
+      ansible_connection: ssh
+      ansible_host: 127.0.0.1
+      ansible_port: 1011  # IANA Reserved port
+local:
+  hosts:
+    testhost:
+    testhost2:
+  vars:
+    ansible_connection: local
+    ansible_python_interpreter: "{{ ansible_playbook_python }}"
