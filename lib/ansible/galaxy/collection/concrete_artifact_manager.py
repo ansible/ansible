@@ -55,7 +55,7 @@ MANIFEST_FILENAME = 'MANIFEST.json'
 
 class PersistentArtifactsCache():
     def __init__(self):
-        self._blobs_path: Path = Path(C.GALAXY_CACHE_DIR) / "blobs"
+        self._blobs_path = Path(C.GALAXY_CACHE_DIR) / "blobs"
         self._no_cache = context.CLIARGS.get("no_cache")
 
         if self._no_cache:
