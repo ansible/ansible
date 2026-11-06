@@ -1,0 +1,2 @@
+- fail:
+  when: inventory_hostname == "testhost2"
