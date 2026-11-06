@@ -30,7 +30,6 @@ from ...target import (
 )
 
 from ...util import (
-    cache,
     SubprocessError,
     display,
     parse_to_list_of_dict,
@@ -40,7 +39,6 @@ from ...util import (
 
 from ...util_common import (
     ResultType,
-    create_temp_dir,
 )
 
 from ...ansible_util import (
@@ -141,7 +139,6 @@ class ImportTest(SanityMultipleVersion):
                     SANITY_EXTERNAL_PYTHON=external_python.path,
                     SANITY_YAML_TO_JSON=os.path.join(ANSIBLE_TEST_TOOLS_ROOT, 'yaml_to_json.py'),
                     ANSIBLE_CONTROLLER_MIN_PYTHON_VERSION=CONTROLLER_MIN_PYTHON_VERSION,
-                    PYTHONPATH=':'.join((get_ansible_test_python_path(), env["PYTHONPATH"])),
                 )
 
             if args.prime_venvs:
@@ -187,13 +184,3 @@ class ImportTest(SanityMultipleVersion):
             return SanityFailure(self.name, messages=results, python_version=python.version)
 
         return SanitySuccess(self.name, python_version=python.version)
-
-
-@cache
-def get_ansible_test_python_path() -> str:
-    """
-    Return a directory usable for PYTHONPATH, containing only the ansible-test collection loader.
-    The temporary directory created will be cached for the lifetime of the process and cleaned up at exit.
-    """
-    python_path = create_temp_dir(prefix='ansible-test-')
-    return python_path

@@ -273,7 +273,7 @@ def get_ansible_python_path(args: CommonConfig) -> str:
         # when not running from source the installed directory is unsafe to add to PYTHONPATH
         # doing so would expose many unwanted packages on sys.path
         # instead a temporary directory is created which contains only ansible using a symlink
-        python_path = create_temp_dir(prefix='ansible-test-')
+        python_path = create_temp_dir(prefix='ansible-test-', suffix='-ansible')
 
         os.symlink(ANSIBLE_LIB_ROOT, os.path.join(python_path, 'ansible'))
 
@@ -303,7 +303,7 @@ def get_ansible_test_python_path() -> str:
         # when not running from source the installed directory is unsafe to add to PYTHONPATH
         # doing so would expose many unwanted packages on sys.path
         # instead a temporary directory is created which contains only ansible_test using a symlink
-        python_path = create_temp_dir(prefix='ansible-test-')
+        python_path = create_temp_dir(prefix='ansible-test-', suffix='-self')
 
         os.symlink(ANSIBLE_TEST_ROOT, os.path.join(python_path, 'ansible_test'))
 

@@ -22,10 +22,8 @@ from ...util import (
     ANSIBLE_TEST_DATA_ROOT,
     display,
     is_subdir,
-    str_to_version,
     SubprocessError,
     ANSIBLE_LIB_ROOT,
-    ANSIBLE_TEST_TARGET_ROOT,
 )
 
 from ...util_common import (
@@ -37,6 +35,7 @@ from ...util_common import (
 from ...ansible_util import (
     ansible_environment,
     get_ansible_python_path,
+    get_ansible_test_python_path,
 )
 
 from ...target import (
@@ -85,6 +84,10 @@ from ...pypi_proxy import (
 
 from ...host_profiles import (
     PosixProfile,
+)
+
+from ...._util.target.pytest import (
+    plugins,
 )
 
 
@@ -260,19 +263,18 @@ def command_units(args: UnitsConfig) -> None:
             cmd.append('--durations=25')
             cmd.append('--pythonwarnings=error:Passing a non-Collection iterable to parametrize is deprecated')
 
-        plugins = []
+        plugin_names = []
 
         if args.coverage:
-            plugins.append('ansible_pytest_coverage')
+            plugin_names.append('ansible_pytest_coverage')
 
         if data_context().content.collection:
-            plugins.append('ansible_pytest_collections')
+            plugin_names.append('ansible_pytest_collections')
 
-        plugins.append('ansible_forked')
+        plugin_names.append('ansible_forked')
 
-        if plugins:
-            env['PYTHONPATH'] += ':%s' % os.path.join(ANSIBLE_TEST_TARGET_ROOT, 'pytest/plugins')
-            env['PYTEST_PLUGINS'] = ','.join(plugins)
+        env['PYTHONPATH'] += os.path.pathsep + get_ansible_test_python_path()
+        env['PYTEST_PLUGINS'] = ','.join(f'{plugins.__name__}.{plugin_name}' for plugin_name in plugin_names)
 
         if args.collect_only:
             cmd.append('--collect-only')
@@ -310,9 +312,8 @@ def get_units_ansible_python_path(args: UnitsConfig, test_context: str) -> str:
     if python_path:
         return python_path
 
-    python_path = create_temp_dir(prefix='ansible-test-')
+    python_path = create_temp_dir(prefix='ansible-test-', suffix='-mmu')
     ansible_path = os.path.join(python_path, 'ansible')
-    ansible_test_path = os.path.join(python_path, 'ansible_test')
 
     write_text_file(os.path.join(ansible_path, '__init__.py'), '', True)
     os.symlink(os.path.join(ANSIBLE_LIB_ROOT, 'module_utils'), os.path.join(ansible_path, 'module_utils'))
@@ -321,14 +322,6 @@ def get_units_ansible_python_path(args: UnitsConfig, test_context: str) -> str:
         # built-in runtime configuration for the collection loader
         make_dirs(os.path.join(ansible_path, 'config'))
         os.symlink(os.path.join(ANSIBLE_LIB_ROOT, 'config', 'ansible_builtin_runtime.yml'), os.path.join(ansible_path, 'config', 'ansible_builtin_runtime.yml'))
-
-        # current collection loader required by all python versions supported by the controller
-        write_text_file(os.path.join(ansible_path, 'utils', '__init__.py'), '', True)
-        os.symlink(os.path.join(ANSIBLE_LIB_ROOT, 'utils', 'collection_loader'), os.path.join(ansible_path, 'utils', 'collection_loader'))
-
-        # legacy collection loader required by all python versions not supported by the controller
-        write_text_file(os.path.join(ansible_test_path, '__init__.py'), '', True)
-        write_text_file(os.path.join(ansible_test_path, '_internal', '__init__.py'), '', True)
     elif test_context == TestContext.modules:
         # only non-collection ansible module tests should have access to ansible built-in modules
         os.symlink(os.path.join(ANSIBLE_LIB_ROOT, 'modules'), os.path.join(ansible_path, 'modules'))
