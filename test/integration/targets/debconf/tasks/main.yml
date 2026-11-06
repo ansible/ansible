@@ -215,6 +215,123 @@
         that:
           - debconf_bool_test_bool_2.changed
 
+    - name: Set default locale to fr_FR.UTF-8
+      ansible.builtin.debconf:
+        name: locales
+        question: locales/default_environment_locale
+        value: fr_FR.UTF-8
+        vtype: select
+
+    - name: Set seen flag to false
+      ansible.builtin.debconf:
+        name: locales
+        question: locales/default_environment_locale
+        vtype: seen
+        value: false
+      register: false_flag
+
+    - name: Set seen flag to false again (idempotency)
+      ansible.builtin.debconf:
+        name: locales
+        question: locales/default_environment_locale
+        vtype: seen
+        value: false
+      register: false_flag_again
+
+    - name: Check if setting seen flag to false works idempotently
+      assert:
+        that:
+          - false_flag.changed
+          - not false_flag_again.changed
+
+    - name: Set seen flag to true
+      ansible.builtin.debconf:
+        name: locales
+        question: locales/default_environment_locale
+        vtype: seen
+        value: true
+      register: true_flag
+
+    - name: Set seen flag to true again (idempotency)
+      ansible.builtin.debconf:
+        name: locales
+        question: locales/default_environment_locale
+        vtype: seen
+        value: true
+      register: true_flag_again
+
+    - assert:
+        that:
+          - true_flag.changed
+          - not true_flag_again.changed
+
+    - name: Set invalid value for vtype seen
+      ansible.builtin.debconf:
+        name: locales
+        question: locales/default_environment_locale
+        vtype: seen
+        value: invalid
+      register: invalid_flag
+      ignore_errors: yes
+
+    - name: validate results for invalid value for vtype seen
+      assert:
+        that:
+          - not invalid_flag.changed
+          - '"Invalid value provided for vtype" in invalid_flag.msg'
+
+    - name: set invalid type of value for vtype string
+      ansible.builtin.debconf:
+        name: ansible
+        question: ansible/sample_question
+        vtype: string
+        value:
+          - a
+      register: invalid_flag
+      ignore_errors: yes
+
+    - name: validate results for invalid type of value for vtype string
+      assert:
+        that:
+          - not invalid_flag.changed
+          - '"Invalid value provided for vtype" in invalid_flag.msg'
+
+    - name: Set question for test
+      set_fact:
+        question7: ansible/test7
+
+    - name: Create a string question
+      debconf:
+        name: ansible
+        question: "{{ question7 }}"
+        vtype: string
+        value: "1"
+      diff: true
+
+    - name: Mark as seen
+      debconf:
+        name: ansible
+        question: "{{ question7 }}"
+        vtype: seen
+        value: true
+      diff: true
+
+    - name: Mark as seen false
+      debconf:
+        name: ansible
+        question: "{{ question7 }}"
+        vtype: seen
+        value: false
+      diff: true
+      register: result
+
+    - name: Validate result
+      assert:
+        that:
+          - result.changed
+          - result.current[question7] == 'false'
+          - result.previous[question7] == 'true'
+
   always:
     - name: uninstall debconf-utils
       apt:
