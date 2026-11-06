@@ -1,6 +1,10 @@
 - block:
   - name: Disable ubuntu repos so system packages are not upgraded and do not change testing env
-    command: mv /etc/apt/sources.list /etc/apt/sources.list.backup
+    shell: |
+      find /etc/apt/sources.list* \
+        \( -name \*.list -or -name \*.sources \) \
+        -and -not -name file_tmp_repo.list \
+        | xargs -I{} mv {} {}.backup
 
   - name: install foo-1.0.0
     apt:
@@ -61,4 +65,7 @@
         autoclean: yes
 
     - name: Restore ubuntu repos
-      command: mv /etc/apt/sources.list.backup /etc/apt/sources.list
+      shell: |
+        find /etc/apt/sources.list* -name \*.backup \
+          | sed 's/\.backup$//' \
+          | xargs -I{} mv {}.backup {}
