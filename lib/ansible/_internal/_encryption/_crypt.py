@@ -54,7 +54,12 @@ class CryptFacade:
         self._setup()
 
     class _CryptData(ctypes.Structure):
-        _fields_ = [('_opaque', ctypes.c_char * 131072)]
+        # Sized for the largest struct crypt_data this buffer may be handed to:
+        # glibc's libcrypt has a 131232-byte struct crypt_data on LP64 and writes
+        # all of it on every MD5/SHA-256/SHA-512 hash, while libxcrypt's is
+        # 32768 bytes. Anything smaller overruns the heap and crashes the
+        # worker (https://github.com/ansible/ansible/issues/87836).
+        _fields_ = [('_opaque', ctypes.c_char * 262144)]
 
     @property
     def has_crypt_gensalt(self) -> bool:
