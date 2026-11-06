@@ -10,6 +10,7 @@ import functools
 import hashlib
 import json
 import os
+import shutil
 import stat
 import tarfile
 import time
@@ -275,14 +276,15 @@ class GalaxyAPI:
         self._server_timeout = timeout
 
         b_cache_dir = to_bytes(C.GALAXY_CACHE_DIR, errors='surrogate_or_strict')
-        makedirs_safe(b_cache_dir, mode=0o700)
         self._b_cache_path = os.path.join(b_cache_dir, b'api.json')
 
         if clear_response_cache:
             with _CACHE_LOCK:
-                if os.path.exists(self._b_cache_path):
-                    display.vvvv("Clearing cache file (%s)" % to_text(self._b_cache_path))
-                    os.remove(self._b_cache_path)
+                if os.path.exists(b_cache_dir):
+                    display.vvvv("Clearing cache directory (%s)" % to_text(b_cache_dir))
+                    shutil.rmtree(b_cache_dir)
+
+        makedirs_safe(b_cache_dir, mode=0o700)
 
         self._cache = None
         if not no_cache:

@@ -34,7 +34,7 @@
     - (download_collection_actual.files[1].path | basename) in ['requirements.yml', 'parent_dep-parent_collection-1.0.0.tar.gz']
 
 - name: download collection with multiple dependencies
-  command: ansible-galaxy collection download parent_dep.parent_collection:1.0.0 -s galaxy_ng {{ galaxy_verbosity }}
+  command: ansible-galaxy collection download parent_dep.parent_collection:1.0.0 -vvv -s galaxy_ng {{ galaxy_verbosity }}
   register: download_collection
   args:
     chdir: '{{ galaxy_dir }}/download'
@@ -57,6 +57,10 @@
     - (download_collection_actual.files[1].path | basename) in ['requirements.yml', 'child_dep-child_dep2-1.2.2.tar.gz', 'child_dep-child_collection-0.9.9.tar.gz', 'parent_dep-parent_collection-1.0.0.tar.gz']
     - (download_collection_actual.files[2].path | basename) in ['requirements.yml', 'child_dep-child_dep2-1.2.2.tar.gz', 'child_dep-child_collection-0.9.9.tar.gz', 'parent_dep-parent_collection-1.0.0.tar.gz']
     - (download_collection_actual.files[3].path | basename) in ['requirements.yml', 'child_dep-child_dep2-1.2.2.tar.gz', 'child_dep-child_collection-0.9.9.tar.gz', 'parent_dep-parent_collection-1.0.0.tar.gz']
+    - cached_artifact_msg in download_collection.stdout
+  vars:
+    cached_artifact_msg: >-
+      Collection 'parent_dep.parent_collection:1.0.0' obtained from server galaxy_ng {{ galaxy_ng_server }}. Using cached artifact matching hash
 
 - name: test install of download requirements file
   command: ansible-galaxy collection install -r requirements.yml -p '{{ galaxy_dir }}/download' {{ galaxy_verbosity }}
