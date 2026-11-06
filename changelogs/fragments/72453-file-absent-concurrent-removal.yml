@@ -1,0 +1,2 @@
+bugfixes:
+  - file - tolerate a concurrent directory removal with ``state=absent`` only when the requested path no longer exists (https://github.com/ansible/ansible/issues/72453).
