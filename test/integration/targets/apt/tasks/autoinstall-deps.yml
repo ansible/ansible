@@ -1,0 +1,65 @@
+# UNINSTALL 'python3-apt'
+#  The `apt` module has the smarts to auto-install `python3-apt`.  To test, we
+#  will first uninstall `python3-apt`.
+- name: uninstall python3-apt with apt
+  apt:
+    pkg: python3-apt
+    state: absent
+    purge: yes
+  register: apt_result
+
+# In check mode, auto-install of `python3-apt` must fail
+- name: test fail uninstall hello without required apt deps in check mode
+  apt:
+    pkg: hello
+    state: absent
+    purge: yes
+  register: apt_result
+  check_mode: yes
+  ignore_errors: yes
+
+- name: verify fail uninstall hello without required apt deps in check mode
+  assert:
+    that:
+    - apt_result is failed
+    - '"If run normally this module can auto-install it" in apt_result.msg'
+
+- name: check with dpkg
+  shell: dpkg -s python3-apt
+  register: dpkg_result
+  ignore_errors: true
+
+- name: Test the auto_install_module_deps option
+  apt:
+    pkg: hello
+    auto_install_module_deps: false
+  register: r
+  ignore_errors: true
+
+- assert:
+    that:
+      - r is failed
+      - r.msg is contains("Could not import the python3-apt module")
+
+# UNINSTALL 'hello'
+#   With 'python-apt' uninstalled, the first call to 'apt' should install
+#   python-apt without updating the cache.
+- name: uninstall hello with apt and prevent updating the cache
+  apt:
+    pkg: hello
+    state: absent
+    purge: yes
+    update_cache: no
+  register: apt_result
+
+- name: check hello with dpkg
+  shell: dpkg-query -l hello
+  failed_when: False
+  register: dpkg_result
+
+- name: verify uninstall hello with apt and prevent updating the cache
+  assert:
+    that:
+    - "'changed' in apt_result"
+    - apt_result is not changed
+    - "dpkg_result.rc == 1"
