@@ -47,3 +47,132 @@ ansible-playbook -i inventory "$@" 80981.yml | tee out.txt
 [ "$(grep -c 'SHOULD NOT HAPPEN' out.txt)" -eq 0 ]
 [ "$(grep -c 'rescuedd' out.txt)" -eq 2 ]
 [ "$(grep -c 'recovered' out.txt)" -eq 2 ]
+
+run_83292_case() {
+  local playbook="$1"
+  local rescue_marker="$2"
+  local recovered_marker="$3"
+  shift 3
+
+  set +e
+  output="$(ansible-playbook -i inventory "$@" "$playbook" 2>&1)"
+  status=$?
+  set -e
+  printf '%s\n' "$output"
+  [ "$status" -eq 0 ]
+  [ "$(grep -c 'SHOULD NOT HAPPEN' <<< "$output")" -eq 0 ]
+  for host in testhost testhost2; do
+    [ "$(grep -cF "\"$rescue_marker $host\"" <<< "$output")" -eq 1 ]
+    [ "$(grep -cF "\"$recovered_marker $host\"" <<< "$output")" -eq 1 ]
+  done
+}
+
+run_83292_case 83292_explicit.yml '83292 explicit rescue' '83292 explicit recovered' "$@"
+run_83292_case 83292_implicit.yml '83292 implicit rescue' '83292 implicit recovered' "$@"
+run_83292_case 83292_bypass.yml '83292 bypass rescue' '83292 bypass recovered' "$@"
+
+run_83292_nested_case() {
+  for max_fail_pct in 0 1 50 100; do
+    set +e
+    output="$(ansible-playbook -i inventory "$@" -e max_fail_pct="$max_fail_pct" 83292_nested.yml 2>&1)"
+    status=$?
+    set -e
+    printf '%s\n' "$output"
+    [ "$status" -eq 0 ]
+    [ "$(grep -c 'SHOULD NOT HAPPEN' <<< "$output")" -eq 0 ]
+    for host in testhost testhost2; do
+      [ "$(grep -cF '"83292 nested rescue '$host'"' <<< "$output")" -eq 1 ]
+      [ "$(grep -cF '"83292 nested recovered '$host'"' <<< "$output")" -eq 1 ]
+      [ "$(grep -cF '"83292 nested post '$host'"' <<< "$output")" -eq 1 ]
+    done
+  done
+}
+
+run_83292_nested_case "$@"
+
+run_83292_outer_fallback_case() {
+  local playbook="$1"
+  local rescue_marker="$2"
+  local recovered_marker="$3"
+  local forbidden_task="$4"
+  shift 4
+
+  for max_fail_pct in default 0; do
+    playbook_args=("$playbook")
+    if [ "$max_fail_pct" != default ]; then
+      playbook_args=(-e max_fail_pct="$max_fail_pct" "$playbook")
+    fi
+
+    set +e
+    output="$(ansible-playbook -i inventory "$@" "${playbook_args[@]}" 2>&1)"
+    status=$?
+    set -e
+    printf '%s\n' "$output"
+    [ "$status" -eq 0 ]
+    [ "$(grep -cF "TASK [$forbidden_task]" <<< "$output")" -eq 0 ]
+    for host in testhost testhost2; do
+      [ "$(grep -cF "\"$rescue_marker $host\"" <<< "$output")" -eq 1 ]
+      [ "$(grep -cF "\"$recovered_marker $host\"" <<< "$output")" -eq 1 ]
+    done
+  done
+}
+
+run_83292_outer_fallback_case 83292_outer_fallback.yml '83292 outer fallback rescue' '83292 outer fallback recovered' 'Do not continue inside the failed inner block' "$@"
+run_83292_outer_fallback_case 83292_outer_fallback_always.yml '83292 outer fallback always rescue' '83292 outer fallback always recovered' 'Do not continue inside the failed inner block' "$@"
+run_83292_outer_fallback_case 83292_inner_always_run_once.yml '83292 inner always run_once rescue' '83292 inner always run_once recovered' 'A task that must not run' "$@"
+
+run_83292_max_fail_case() {
+  local playbook="$1"
+  local rescue_marker="$2"
+  local recovered_marker="$3"
+  shift 3
+
+  for max_fail_pct in 0 1 50 100; do
+    set +e
+    output="$(ansible-playbook -i inventory "$@" -e max_fail_pct="$max_fail_pct" "$playbook" 2>&1)"
+    status=$?
+    set -e
+    printf '%s\n' "$output"
+    [ "$status" -eq 0 ]
+    [ "$(grep -c 'SHOULD NOT HAPPEN' <<< "$output")" -eq 0 ]
+    for host in testhost testhost2; do
+      [ "$(grep -cF "\"$rescue_marker $host\"" <<< "$output")" -eq 1 ]
+      [ "$(grep -cF "\"$recovered_marker $host\"" <<< "$output")" -eq 1 ]
+    done
+  done
+}
+
+run_83292_max_fail_case 83292_max_fail_explicit.yml '83292 maxfail explicit rescue' '83292 maxfail explicit recovered' "$@"
+run_83292_max_fail_case 83292_max_fail_implicit.yml '83292 maxfail implicit rescue' '83292 maxfail implicit recovered' "$@"
+
+set +e
+output="$(ansible-playbook -i inventory "$@" 83292_max_fail_control.yml 2>&1)"
+status=$?
+set -e
+printf '%s\n' "$output"
+[ "$status" -ne 0 ]
+[ "$(grep -c 'SHOULD NOT HAPPEN' <<< "$output")" -eq 0 ]
+
+run_83292_terminal_case() {
+  local playbook="$1"
+  local rescue_marker="$2"
+  local terminal_marker="$3"
+  shift 3
+
+  set +e
+  output="$(ansible-playbook -i inventory "$@" "$playbook" 2>&1)"
+  status=$?
+  set -e
+  printf '%s\n' "$output"
+  [ "$status" -ne 0 ]
+  [ "$(grep -c 'SHOULD NOT HAPPEN' <<< "$output")" -eq 0 ]
+  for host in testhost testhost2; do
+    [ "$(grep -cF "\"$rescue_marker $host\"" <<< "$output")" -eq 1 ]
+    if [ -n "$terminal_marker" ]; then
+      [ "$(grep -cF "\"$terminal_marker $host\"" <<< "$output")" -eq 1 ]
+    fi
+  done
+}
+
+run_83292_terminal_case 83292_rescue_failure.yml '83292 rescue failure' '' "$@"
+run_83292_terminal_case 83292_always_failure.yml '83292 always failure rescue' '83292 always failure always' "$@"
