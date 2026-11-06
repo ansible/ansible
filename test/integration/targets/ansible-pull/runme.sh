@@ -142,3 +142,11 @@ pass_tests
 if [ "${ORIG_CONFIG}" != "" ]; then
   export ANSIBLE_CONFIG="${ORIG_CONFIG}"
 fi
+
+# test environment variable setting with -E option (basic KEY=VALUE)
+ansible-pull -d "${pull_dir}" -U "${repo_dir}" env_var_test.yml \
+    -e 'ansble_python_interpreter={{ansible_playbook_python}}' -E 'TEST_PULL=pull_test_value' "$@"
+
+# test environment variable setting with -E option (JSON format)
+ansible-pull -d "${pull_dir}" -U "${repo_dir}" env_var_test.yml \
+    -e 'ansble_python_interpreter={{ansible_playbook_python}}' -E '{"TEST_PULL": "pull_test_value"}' "$@"
