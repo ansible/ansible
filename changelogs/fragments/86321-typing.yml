@@ -1,0 +1,2 @@
+minor_changes:
+  - "Add type hints for argument spec validation and ``AnsibleModule.__init__()`` (https://github.com/ansible/ansible/pull/86321)."
