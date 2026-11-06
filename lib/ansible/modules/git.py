@@ -874,7 +874,7 @@ def get_head_branch(git_path, module, dest, remote, bare=False):
         headfile = os.path.join(repo_path, 'refs', 'remotes', remote, 'HEAD')
     branch = head_splitter(headfile, remote, module=module, fail_on_error=True)
 
-    if branch.startswith('-'):
+    if branch is not None and branch.startswith('-'):
         # prevent branch names that can be confused as options
         module.fail_json(msg=f'Invalid branch name ({branch}) from {headfile} in {remote}')
 

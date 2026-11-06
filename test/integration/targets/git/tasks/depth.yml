@@ -230,3 +230,55 @@
   file:
     state: absent
     path: "{{ checkout_dir }}"
+
+# Test for https://github.com/ansible/ansible/issues/87881
+# Re-running the git module on a shallow checkout of a tag used to crash
+# with "AttributeError: 'NoneType' object has no attribute 'startswith'",
+# because refs/remotes/<remote>/HEAD does not exist in such a checkout
+# and head_splitter() returns None.
+- name: DEPTH | clear checkout_dir
+  file:
+    state: absent
+    path: "{{ checkout_dir }}"
+
+- name: DEPTH | Shallow clone of tag for re-run test
+  git:
+    repo: 'file://{{ repo_dir|expanduser }}/shallow'
+    dest: '{{ checkout_dir }}'
+    depth: 1
+    version: earlytag
+  register: clone_tag
+
+- name: DEPTH | assert shallow tag clone succeeded
+  assert:
+    that: clone_tag is successful
+
+- name: DEPTH | Re-run git module on shallow tag checkout
+  git:
+    repo: 'file://{{ repo_dir|expanduser }}/shallow'
+    dest: '{{ checkout_dir }}'
+    depth: 1
+    version: earlytag
+  register: update_tag
+
+- name: DEPTH | assert second run succeeds and is idempotent
+  assert:
+    that:
+      - update_tag is successful
+      - update_tag is not changed
+      - update_tag.before == update_tag.after
+
+- name: DEPTH | assert checkout is still at the tagged commit
+  command: git rev-parse HEAD
+  register: checkout_head
+  args:
+    chdir: '{{ checkout_dir }}'
+
+- name: DEPTH | assert HEAD matches the tagged commit
+  assert:
+    that: checkout_head.stdout == git_shallow_head_1.stdout
+
+- name: DEPTH | clear checkout_dir
+  file:
+    state: absent
+    path: "{{ checkout_dir }}"
