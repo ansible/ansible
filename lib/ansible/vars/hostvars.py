@@ -26,7 +26,7 @@ if t.TYPE_CHECKING:
     from ansible.inventory.manager import InventoryManager
     from ansible.parsing.dataloader import DataLoader
     from ansible._internal._templating._jinja_common import Marker
-    from ansible.vars.manager import VariableManager
+    from ansible.vars.manager import VariableManager, V
 
 
 __all__ = ['HostVars', 'HostVarsVars']
@@ -41,7 +41,7 @@ class HostVars(c.Mapping):
 
         variable_manager._hostvars = self
 
-    def raw_get(self, host_name: str) -> dict[str, t.Any] | Marker:
+    def raw_get(self, host_name: str) -> V | Marker:
         """
         Similar to __getitem__, however the returned data is not run through
         the templating engine to expand variables in the hostvars.
@@ -85,7 +85,7 @@ class HostVars(c.Mapping):
 class HostVarsVars(c.Mapping):
     """A read-only view of a specific host's vars that will template on access under that host's variable context."""
 
-    def __init__(self, variables: dict[str, t.Any], loader: DataLoader | None, host: str) -> None:
+    def __init__(self, variables: V, loader: DataLoader | None, host: str) -> None:
         from ansible._internal._templating import _engine
 
         self._vars = variables
