@@ -1,0 +1,4 @@
+bugfixes:
+  - bytes_to_human - a size one byte below a unit boundary is now rounded up to
+    the next unit (for example ``1073741823`` renders as ``1.00 GB`` instead of
+    ``1024.00 MB``), matching how the value reads after rounding to two decimals.
