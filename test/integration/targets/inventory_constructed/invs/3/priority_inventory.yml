@@ -1,0 +1,7 @@
+all:
+  children:
+    c_static_group_priority_1:
+      hosts:
+        host0:
+          keyed_group_1: ""
+          keyed_group_2: ""
