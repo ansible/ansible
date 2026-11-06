@@ -91,6 +91,13 @@ fi
 # Ensure we don't throw when an empty directory is used as inventory
 ansible-playbook -i "$tmpdir" playbook.yml
 
+# Fail on an empty inventory only when ERROR_ON_EMPTY_INVENTORY is set
+if ANSIBLE_ERROR_ON_EMPTY_INVENTORY=True ansible-playbook -i "$tmpdir" playbook.yml; then
+    echo "Empty inventory should cause failure when ANSIBLE_ERROR_ON_EMPTY_INVENTORY=True"
+    exit 1
+fi
+ANSIBLE_ERROR_ON_EMPTY_INVENTORY=True ansible-playbook -i ../../inventory playbook.yml "$@"
+
 # Ensure we can use a directory of inventories
 cp ../../inventory "$tmpdir"
 ansible-playbook -i "$tmpdir" playbook.yml
