@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-vault - Write encrypted data to a durable temporary file before shredding the plaintext, preserving a recoverable vault if the operation is interrupted.

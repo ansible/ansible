@@ -17,6 +17,7 @@
 
 from __future__ import annotations
 
+import errno
 import fcntl
 import functools
 import os
@@ -1056,35 +1057,107 @@ class VaultEditor:
         else:
             if not os.access(os.path.dirname(thefile), os.W_OK):
                 raise AnsibleError("Destination '%s' not writable" % (os.path.dirname(thefile)))
+
+            # create tempfile, write in the tempfile, shred thefile, atomic_move to thefile,
+            # Create a tempfile
+            file_dir = os.path.dirname(os.path.realpath(thefile))
+            file_basename = os.path.basename(thefile)
+
+            # when setting new umask, we get previous as return
+            current_umask = os.umask(0o077)
+            try:
+                try:
+                    # create a temp file with secure permissions, by default a unique name
+                    fd_temp, thefile_temp = tempfile.mkstemp(prefix=file_basename + '_', dir=file_dir)
+                    current_mode = os.stat(thefile_temp).st_mode & 0o777
+                    if current_mode != mode:
+                        os.chmod(thefile_temp, mode)
+                except OSError as ex:
+                    raise AnsibleError('Problem creating temporary vault file.') from ex
+
+                try:
+                    # now write to the file and ensure ours is only data in it
+                    os.ftruncate(fd_temp, 0)
+                    remaining_data = memoryview(b_file_data)
+                    while remaining_data:
+                        bytes_written = os.write(fd_temp, remaining_data)
+                        if bytes_written == 0:
+                            raise OSError(errno.EIO, 'Unable to write data to temporary vault file')
+                        remaining_data = remaining_data[bytes_written:]
+                    os.fsync(fd_temp)
+                except OSError as e:
+                    raise AnsibleError('Unable to write to temporary vault file: %s' % to_native(e))
+                finally:
+                    # Make sure the file descriptor is always closed and reset umask
+                    os.close(fd_temp)
+                self._fsync_directory(file_dir)
+            finally:
+                os.umask(current_umask)
             # file names are insecure and prone to race conditions, so remove and create securely
             if os.path.isfile(thefile):
                 if shred:
                     self._shred_file(thefile)
                 else:
                     os.remove(thefile)
+            self._atomic_move(thefile_temp, thefile, keep_dest_attrs=False)
+            self._fsync_directory(file_dir)
 
-            # when setting new umask, we get previous as return
-            current_umask = os.umask(0o077)
+    @staticmethod
+    def _fsync_directory(path):
+        directory_fd = os.open(path, os.O_RDONLY)
+        try:
+            os.fsync(directory_fd)
+        finally:
+            os.close(directory_fd)
+
+    def _atomic_move(self, src, dest, keep_dest_attrs=True):
+        dest_stat = None
+        if os.path.exists(dest) and keep_dest_attrs:
             try:
-                try:
-                    # create file with secure permissions
-                    fd = os.open(thefile, os.O_CREAT | os.O_EXCL | os.O_RDWR | os.O_TRUNC, mode)
-                except FileExistsError as ex:
-                    raise AnsibleError('Vault file got recreated while we were operating on it.') from ex
-                except OSError as ex:
-                    raise AnsibleError('Problem creating temporary vault file.') from ex
+                dest_stat = os.stat(dest)
+                os.chown(src, dest_stat.st_uid, dest_stat.st_gid)
+                shutil.copystat(dest, src)
+            except OSError as ex:
+                if ex.errno != errno.EPERM:
+                    raise
 
-                try:
-                    # now write to the file and ensure ours is only data in it
-                    os.ftruncate(fd, 0)
-                    os.write(fd, b_file_data)
-                except OSError as e:
-                    raise AnsibleError('Unable to write to temporary vault file: %s' % to_native(e))
-                finally:
-                    # Make sure the file descriptor is always closed and reset umask
-                    os.close(fd)
-            finally:
-                os.umask(current_umask)
+        try:
+            os.rename(src, dest)
+            return
+        except OSError as ex:
+            if ex.errno not in (errno.EPERM, errno.EXDEV, errno.EACCES, errno.ETXTBSY, errno.EBUSY):
+                raise AnsibleError(f'Could not replace {dest!r} with {src!r}.') from ex
+
+        dest_dir = os.path.dirname(dest)
+        suffix = os.path.basename(dest)
+        tmp_dest_name = None
+        try:
+            try:
+                tmp_dest_fd, tmp_dest_name = tempfile.mkstemp(prefix='.ansible_tmp', dir=dest_dir, suffix=suffix)
+            except OSError as ex:
+                raise AnsibleError(f'The destination directory {dest_dir!r} is not writable by the current user.') from ex
+
+            os.close(tmp_dest_fd)
+            try:
+                if keep_dest_attrs:
+                    shutil.copy2(src, tmp_dest_name)
+                else:
+                    shutil.copy(src, tmp_dest_name)
+
+                if keep_dest_attrs and dest_stat:
+                    tmp_stat = os.stat(tmp_dest_name)
+                    if tmp_stat.st_uid != dest_stat.st_uid or tmp_stat.st_gid != dest_stat.st_gid:
+                        os.chown(tmp_dest_name, dest_stat.st_uid, dest_stat.st_gid)
+
+                with open(tmp_dest_name, 'rb') as tmp_dest:
+                    os.fsync(tmp_dest.fileno())
+                os.rename(tmp_dest_name, dest)
+                os.unlink(src)
+            except (shutil.Error, OSError) as ex:
+                raise AnsibleError(f'Failed to replace {dest!r} with {src!r}.') from ex
+        finally:
+            if tmp_dest_name and os.path.exists(tmp_dest_name):
+                os.unlink(tmp_dest_name)
 
     def shuffle_files(self, src, dest):
         prev = None

@@ -18,6 +18,7 @@
 
 from __future__ import annotations
 
+import errno
 import os
 import tempfile
 from io import BytesIO, StringIO
@@ -41,6 +42,168 @@ v11_data = """$ANSIBLE_VAULT;1.1;AES256
 64336561613965383835646464623865663966323464653236343638373165343863623638316664
 3631633031323837340a396530313963373030343933616133393566366137363761373930663833
 3739"""
+
+
+def test_atomic_move_falls_back_for_cross_device_rename(tmp_path):
+    src = tmp_path / 'source'
+    dest = tmp_path / 'destination'
+    src.write_bytes(b'vault data')
+    real_rename = os.rename
+    first_rename = True
+
+    def rename_with_cross_device_error(rename_src, rename_dest):
+        nonlocal first_rename
+
+        if first_rename and rename_dest == dest:
+            first_rename = False
+            raise OSError(errno.EXDEV, 'Invalid cross-device link')
+
+        return real_rename(rename_src, rename_dest)
+
+    with patch('ansible.parsing.vault.os.rename', side_effect=rename_with_cross_device_error):
+        VaultEditor(None)._atomic_move(src, dest, keep_dest_attrs=False)
+
+    assert not src.exists()
+    assert dest.read_bytes() == b'vault data'
+
+
+def test_atomic_move_fallback_preserves_source_when_final_rename_fails(tmp_path):
+    src = tmp_path / 'source'
+    dest = tmp_path / 'destination'
+    src.write_bytes(b'vault data')
+    rename_attempt = 0
+
+    def fail_destination_renames(rename_src, rename_dest):
+        nonlocal rename_attempt
+
+        rename_attempt += 1
+        error = errno.EXDEV if rename_attempt == 1 else errno.EBUSY
+        raise OSError(error, os.strerror(error))
+
+    with (
+        patch('ansible.parsing.vault.os.rename', side_effect=fail_destination_renames),
+        pytest.raises(errors.AnsibleError, match='Failed to replace'),
+    ):
+        VaultEditor(None)._atomic_move(src, dest, keep_dest_attrs=False)
+
+    assert src.read_bytes() == b'vault data'
+    assert not dest.exists()
+    assert list(tmp_path.iterdir()) == [src]
+
+
+def test_atomic_move_fallback_preserves_source_when_copy_fails(tmp_path):
+    src = tmp_path / 'source'
+    dest = tmp_path / 'destination'
+    src.write_bytes(b'vault data')
+
+    with (
+        patch('ansible.parsing.vault.os.rename', side_effect=OSError(errno.EXDEV, 'Invalid cross-device link')),
+        patch('ansible.parsing.vault.shutil.copy', side_effect=OSError(errno.ENOSPC, 'No space left on device')),
+        pytest.raises(errors.AnsibleError, match='Failed to replace'),
+    ):
+        VaultEditor(None)._atomic_move(src, dest, keep_dest_attrs=False)
+
+    assert src.read_bytes() == b'vault data'
+    assert not dest.exists()
+    assert list(tmp_path.iterdir()) == [src]
+
+
+def test_atomic_move_wraps_unexpected_rename_error(tmp_path):
+    src = tmp_path / 'source'
+    dest = tmp_path / 'destination'
+    src.write_bytes(b'vault data')
+
+    with (
+        patch('ansible.parsing.vault.os.rename', side_effect=OSError(errno.ENOENT, 'No such file or directory')),
+        pytest.raises(errors.AnsibleError, match='Could not replace'),
+    ):
+        VaultEditor(None)._atomic_move(src, dest, keep_dest_attrs=False)
+
+    assert src.read_bytes() == b'vault data'
+    assert not dest.exists()
+
+
+def test_write_data_prepares_complete_vault_before_shredding(tmp_path):
+    target = tmp_path / 'secrets.yml'
+    target.write_bytes(b'plaintext')
+    vault_data = b'encrypted vault data'
+    vault_editor = VaultEditor(None)
+
+    def assert_recovery_vault_then_shred(path):
+        recovery_files = [candidate for candidate in tmp_path.iterdir() if candidate != target]
+        assert len(recovery_files) == 1
+        assert recovery_files[0].read_bytes() == vault_data
+        os.remove(path)
+
+    with (
+        patch.object(vault_editor, '_shred_file', side_effect=assert_recovery_vault_then_shred),
+        patch.object(vault_editor, '_fsync_directory', wraps=vault_editor._fsync_directory) as fsync_directory,
+    ):
+        vault_editor.write_data(vault_data, target)
+
+    assert target.read_bytes() == vault_data
+    assert set(tmp_path.iterdir()) == {target}
+    assert fsync_directory.call_count == 2
+
+
+def test_write_data_shred_failure_preserves_recovery_vault(tmp_path):
+    target = tmp_path / 'secrets.yml'
+    target.write_bytes(b'plaintext')
+    vault_data = b'encrypted vault data'
+    vault_editor = VaultEditor(None)
+
+    def fail_after_shredding(path):
+        os.remove(path)
+        raise OSError(errno.EIO, 'Shred failed')
+
+    with (
+        patch.object(vault_editor, '_shred_file', side_effect=fail_after_shredding),
+        pytest.raises(OSError, match='Shred failed'),
+    ):
+        vault_editor.write_data(vault_data, target)
+
+    recovery_files = list(tmp_path.iterdir())
+    assert len(recovery_files) == 1
+    assert recovery_files[0].read_bytes() == vault_data
+
+
+def test_write_data_rename_failure_preserves_recovery_vault(tmp_path):
+    target = tmp_path / 'secrets.yml'
+    target.write_bytes(b'plaintext')
+    vault_data = b'encrypted vault data'
+    vault_editor = VaultEditor(None)
+
+    with (
+        patch.object(vault_editor, '_shred_file', side_effect=os.remove),
+        patch('ansible.parsing.vault.os.rename', side_effect=OSError(errno.ENOSPC, 'No space left on device')),
+        pytest.raises(errors.AnsibleError, match='Could not replace'),
+    ):
+        vault_editor.write_data(vault_data, target)
+
+    recovery_files = list(tmp_path.iterdir())
+    assert len(recovery_files) == 1
+    assert recovery_files[0].read_bytes() == vault_data
+
+
+def test_write_data_retries_short_writes(tmp_path):
+    target = tmp_path / 'secrets.yml'
+    target.write_bytes(b'plaintext')
+    vault_data = b'encrypted vault data'
+    vault_editor = VaultEditor(None)
+    real_write = os.write
+
+    def short_write(fd, data):
+        return real_write(fd, data[:max(1, len(data) // 2)])
+
+    with (
+        patch.object(vault_editor, '_shred_file', side_effect=os.remove),
+        patch('ansible.parsing.vault.os.write', side_effect=short_write) as write,
+    ):
+        vault_editor.write_data(vault_data, target)
+
+    assert write.call_count > 1
+    assert target.read_bytes() == vault_data
+    assert set(tmp_path.iterdir()) == {target}
 
 
 @pytest.mark.skipif(not vault.HAS_CRYPTOGRAPHY,
