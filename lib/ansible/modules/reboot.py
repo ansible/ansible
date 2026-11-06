@@ -11,6 +11,11 @@ short_description: Reboot a machine
 notes:
   - E(PATH) is ignored on the remote node when searching for the C(shutdown) command. Use O(search_paths)
     to specify locations to search if the default paths do not work.
+  - If the connection drops before the connection plugin receives the response from O(reboot_command), the command will execute again
+    if the connection plugin is configured to do so. For example, if the :ansplugin:`ansible.builtin.reboot#module` task uses
+    :ansplugin:`ansible.builtin.ssh#connection`, the play can configure :ansopt:`ansible.builtin.ssh#connection:reconnection_retries=0`
+    so connection retries don't occur. For more details, see the examples and
+    U(https://docs.ansible.com/ansible/latest/user_guide/playbooks_variables.html#variable-precedence-where-should-i-put-a-variable).
 description:
     - Reboot a machine, wait for it to go down, come back up, and respond to commands.
     - For Windows targets, use the M(ansible.windows.win_reboot) module instead.
@@ -124,6 +129,10 @@ EXAMPLES = r"""
   ansible.builtin.reboot:
     msg: "Rebooting machine in 5 seconds"
 
+- name: Reboot without SSH connection retries defined in ansible.cfg
+  ansible.builtin.reboot:
+  vars:
+    ansible_ssh_retries: 0
 """
 
 RETURN = r"""
