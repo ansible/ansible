@@ -454,8 +454,7 @@ class StrategyBase:
 
             task = Task()
         else:
-            task = found_task.copy(exclude_parent=True, exclude_tasks=True)
-            task._parent = found_task._parent
+            task = found_task.copy()
 
         task.from_attrs(wire_task_result.task_fields)
 
@@ -776,8 +775,7 @@ class StrategyBase:
         """
         A proven safe and performant way to create a copy of an included file
         """
-        ti_copy = included_file._task.copy(exclude_parent=True)
-        ti_copy._parent = included_file._task._parent
+        ti_copy = included_file._task.copy()
 
         temp_vars = ti_copy.vars | included_file._vars
 
