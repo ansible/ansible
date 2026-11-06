@@ -144,6 +144,24 @@ class TestConnectionBaseClass(unittest.TestCase):
         self.assertFalse(conn._flags['become_error'])
         self.assertFalse(conn._flags['become_nopasswd_error'])
 
+        # test an unterminated become success line is kept as the remainder
+        conn._flags = dict(
+            become_prompt=False,
+            become_success=False,
+            become_error=False,
+            become_nopasswd_error=False,
+        )
+
+        output, unprocessed = conn._examine_output(u'source', u'state', b'line 1\n%s' % become_success_token, False)
+        self.assertEqual(output, b'line 1\n')
+        self.assertEqual(unprocessed, become_success_token)
+        self.assertFalse(conn._flags['become_success'])
+
+        output, unprocessed = conn._examine_output(u'source', u'state', unprocessed + b'\r\nline 3', False)
+        self.assertEqual(output, b'')
+        self.assertEqual(unprocessed, b'line 3')
+        self.assertTrue(conn._flags['become_success'])
+
         # test we dont detect become success from ssh debug: lines
         conn._flags = dict(
             become_prompt=False,
