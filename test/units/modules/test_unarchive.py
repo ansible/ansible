@@ -9,9 +9,43 @@ import pytest
 from ansible.modules.unarchive import ZipArchive, TgzArchive
 
 
+class FakeAnsibleModule:
+    def __init__(self):
+        self.params = {}
+        self.tmpdir = None
+        self.check_mode = False
+        self._name = 'unarchive'
+
+    def fail_json(self, **kwargs):
+        raise ValueError(kwargs.get('msg', ''))
+
+    def exit_json(self, **kwargs):
+        raise ValueError(kwargs.get('msg', ''))
+
+    def debug(self, msg):
+        pass
+
+    def run_command(self, cmd, **kwargs):
+        if '--version' in cmd:
+            return 0, 'tar (GNU tar) 1.34', ''
+        return 1, '', ''
+
+
 @pytest.fixture
 def fake_ansible_module():
-    return FakeAnsibleModule()
+    m = FakeAnsibleModule()
+    m.params = {
+        "extra_opts": [],
+        "exclude": [],
+        "include": [],
+        "io_buffer_size": 65536,
+    }
+    return m
+
+
+@pytest.fixture
+def gnu_tar_environment(mocker):
+    mocker.patch("ansible.modules.unarchive.get_bin_path", return_value="/bin/tar")
 
 
 def max_zip_timestamp():
@@ -22,10 +56,39 @@ def max_zip_timestamp():
         return time.mktime(time.struct_time((2038, 1, 1, 0, 0, 0, 0, 0, 0)))
 
 
-class FakeAnsibleModule:
-    def __init__(self):
-        self.params = {}
-        self.tmpdir = None
+@pytest.mark.parametrize('extra_opts', [
+    [],
+    ['--transform', 's/^xxx/yyy/'],
+])
+def test_reject_dangerous_gnu_tar_extra_opts_allows_safe_options(gnu_tar_environment, fake_ansible_module, extra_opts):
+    fake_ansible_module.params['extra_opts'] = extra_opts
+    TgzArchive(
+        src="",
+        b_dest="",
+        file_args="",
+        module=fake_ansible_module,
+    )
+
+
+@pytest.mark.parametrize('extra_opts, expected_msg', [
+    (['--checkpoint-action=exec=id'], 'Refusing unsafe tar extra option: --checkpoint-action=exec=id'),
+    (['--checkpoint-action', 'exec=id'], 'Refusing unsafe tar extra option: --checkpoint-action exec=id'),
+    (['--to-command=/bin/sh'], 'Refusing unsafe tar extra option: --to-command=/bin/sh'),
+    (['--to-command', '/bin/sh'], 'Refusing unsafe tar extra option: --to-command /bin/sh'),
+    (['--use-compress-program=/bin/sh'], 'Refusing unsafe tar extra option: --use-compress-program=/bin/sh'),
+    (['--use-compress-program', '/bin/sh'], 'Refusing unsafe tar extra option: --use-compress-program /bin/sh'),
+    (['-I', '/bin/sh'], 'Refusing unsafe tar extra option: -I /bin/sh'),
+])
+def test_reject_dangerous_gnu_tar_extra_opts(gnu_tar_environment, fake_ansible_module, extra_opts, expected_msg):
+    fake_ansible_module.params['extra_opts'] = extra_opts
+    with pytest.raises(ValueError) as exc_info:
+        TgzArchive(
+            src="",
+            b_dest="",
+            file_args="",
+            module=fake_ansible_module,
+        )
+    assert str(exc_info.value) == expected_msg
 
 
 class TestCaseZipArchive:
@@ -111,22 +174,34 @@ class TestCaseTgzArchive:
     def test_no_tar_binary(self, mocker, fake_ansible_module):
         mocker.patch("ansible.modules.unarchive.get_bin_path", side_effect=ValueError)
         fake_ansible_module.params = {
-            "extra_opts": "",
-            "exclude": "",
-            "include": "",
+            "extra_opts": [],
+            "exclude": [],
+            "include": [],
             "io_buffer_size": 65536,
         }
         fake_ansible_module.check_mode = False
 
-        t = TgzArchive(
-            src="",
-            b_dest="",
-            file_args="",
-            module=fake_ansible_module,
-        )
-        can_handle, reason = t.can_handle_archive()
+        with pytest.raises(ValueError, match='Unable to find required'):
+            TgzArchive(
+                src="",
+                b_dest="",
+                file_args="",
+                module=fake_ansible_module,
+            )
 
-        assert can_handle is False
-        assert 'Unable to find required' in reason
-        assert t.cmd_path is None
-        assert t.tar_type is None
+    def test_rejects_dangerous_extra_opts(self, gnu_tar_environment, fake_ansible_module):
+        fake_ansible_module.params = {
+            "extra_opts": ['--checkpoint-action=exec=id'],
+            "exclude": [],
+            "include": [],
+            "io_buffer_size": 65536,
+        }
+        fake_ansible_module.check_mode = False
+
+        with pytest.raises(ValueError, match='Refusing unsafe tar extra option'):
+            TgzArchive(
+                src="",
+                b_dest="",
+                file_args="",
+                module=fake_ansible_module,
+            )
