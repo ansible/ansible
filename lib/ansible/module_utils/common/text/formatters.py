@@ -104,10 +104,10 @@ def human_to_bytes(number, default_unit=None, isbits=False):
             raise ValueError(f"human_to_bytes() can't interpret a valid unit for {range_key}")
         isbits_flag = 1 if isbits else 0
         unit_name = unit_group[isbits_flag][0]
-        expect_message = 'expect %s%s, %s, %s or %ss' % (range_key, unit_class, range_key, unit_name, unit_name)
+        expect_message = f'expect {range_key!s}{unit_class!s}, {range_key!s}, {unit_name!s} or {unit_name!s}s'
         if range_key == 'B':
-            expect_message = 'expect %s, %s or %ss' % (unit_class, unit_class_name, unit_class_name)
-        if unit.lower() in (unit_name, unit_name + 's'):
+            expect_message = f'expect {unit_class!s}, {unit_class_name!s} or {unit_class_name!s}s'
+        if unit.lower() in {unit_name, unit_name + 's'}:
             pass
         elif unit != unit_group[isbits_flag][1]:
             raise ValueError("human_to_bytes() failed to convert %s. Value is not a valid string (%s)" % (number, expect_message))
