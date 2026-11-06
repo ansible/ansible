@@ -1,0 +1,2 @@
+bugfixes:
+- environment keyword now ignored errors on all variations of ansible_env.
