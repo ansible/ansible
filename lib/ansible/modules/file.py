@@ -351,25 +351,26 @@ def get_state(path):
 
 
 # This should be moved into the common file utilities
-def recursive_set_attributes(b_path, follow, file_args, mtime, atime):
+def recursive_set_attributes(b_path, follow, file_args, mtime, atime, diffs=None):
     changed = False
 
     try:
         for b_root, b_dirs, b_files in os.walk(b_path):
             for b_fsobj in b_dirs + b_files:
                 b_fsname = os.path.join(b_root, b_fsobj)
+                diff = {"before": {"path": b_fsname}, "after": {"path": b_fsname}}
                 if not os.path.islink(b_fsname):
                     tmp_file_args = file_args.copy()
                     tmp_file_args['path'] = to_native(b_fsname, errors='surrogate_or_strict')
-                    changed |= module.set_fs_attributes_if_different(tmp_file_args, changed, expand=False)
-                    changed |= update_timestamp_for_file(tmp_file_args['path'], mtime, atime)
+                    changed |= module.set_fs_attributes_if_different(tmp_file_args, changed, diff, expand=False)
+                    changed |= update_timestamp_for_file(tmp_file_args['path'], mtime, atime, diff)
 
                 else:
                     # Change perms on the link
                     tmp_file_args = file_args.copy()
                     tmp_file_args['path'] = to_native(b_fsname, errors='surrogate_or_strict')
-                    changed |= module.set_fs_attributes_if_different(tmp_file_args, changed, expand=False)
-                    changed |= update_timestamp_for_file(tmp_file_args['path'], mtime, atime)
+                    changed |= module.set_fs_attributes_if_different(tmp_file_args, changed, diff, expand=False)
+                    changed |= update_timestamp_for_file(tmp_file_args['path'], mtime, atime, diff)
 
                     if follow:
                         b_fsname = os.path.join(b_root, os.readlink(b_fsname))
@@ -377,13 +378,15 @@ def recursive_set_attributes(b_path, follow, file_args, mtime, atime):
                         if os.path.exists(b_fsname):
                             if os.path.isdir(b_fsname):
                                 # Link is a directory so change perms on the directory's contents
-                                changed |= recursive_set_attributes(b_fsname, follow, file_args, mtime, atime)
+                                changed |= recursive_set_attributes(b_fsname, follow, file_args, mtime, atime, diffs)
 
                             # Change perms on the file pointed to by the link
                             tmp_file_args = file_args.copy()
                             tmp_file_args['path'] = to_native(b_fsname, errors='surrogate_or_strict')
-                            changed |= module.set_fs_attributes_if_different(tmp_file_args, changed, expand=False)
-                            changed |= update_timestamp_for_file(tmp_file_args['path'], mtime, atime)
+                            changed |= module.set_fs_attributes_if_different(tmp_file_args, changed, diff, expand=False)
+                            changed |= update_timestamp_for_file(tmp_file_args['path'], mtime, atime, diff)
+                if diffs is not None and diff["before"] != diff["after"]:
+                    diffs.append(diff)
     except RuntimeError as e:
         # on Python3 "RecursionError" is raised which is derived from "RuntimeError"
         # TODO once this function is moved into the common file utilities, this should probably raise more general exception
@@ -651,14 +654,10 @@ def ensure_directory(path, follow, recurse, timestamps):
         file_args['path'] = path
         prev_state = get_state(b_path)
 
-    changed = False
-    diff = initial_diff(path, 'directory', prev_state)
-
     if prev_state == 'absent':
         # Create directory and assign permissions to it
-        if module.check_mode:
-            return {'path': path, 'changed': True, 'diff': diff}
         curpath = ''
+        mkdir_diffs = []
 
         try:
             # Split the path so we can apply filesystem attributes recursively
@@ -673,9 +672,12 @@ def ensure_directory(path, follow, recurse, timestamps):
                     curpath = curpath.lstrip('/')
                 b_curpath = to_bytes(curpath, errors='surrogate_or_strict')
                 if not os.path.exists(b_curpath):
+                    mkdir_diff = initial_diff(curpath, "directory", "absent")
+                    mkdir_diffs.append(mkdir_diff)
+                    if module.check_mode:
+                        continue
                     try:
                         os.mkdir(b_curpath)
-                        changed = True
                     except OSError as ex:
                         # Possibly something else created the dir since the os.path.exists
                         # check above. As long as it's a dir, we don't need to error out.
@@ -683,14 +685,14 @@ def ensure_directory(path, follow, recurse, timestamps):
                             raise
                     tmp_file_args = file_args.copy()
                     tmp_file_args['path'] = curpath
-                    changed = module.set_fs_attributes_if_different(tmp_file_args, changed, diff, expand=False)
-                    changed |= update_timestamp_for_file(file_args['path'], mtime, atime, diff)
+                    module.set_fs_attributes_if_different(tmp_file_args, False, mkdir_diff, expand=False)
+                    update_timestamp_for_file(file_args['path'], mtime, atime, mkdir_diff)
         except Exception as e:
             module.fail_json(
                 msg=f"There was an issue creating {curpath} as requested: {to_native(e)}",
                 path=path
             )
-        return {'path': path, 'changed': changed, 'diff': diff}
+        return {'path': path, 'changed': True, 'diff': mkdir_diffs}
 
     elif prev_state != 'directory':
         # We already know prev_state is not 'absent', therefore it exists in some form.
@@ -703,12 +705,17 @@ def ensure_directory(path, follow, recurse, timestamps):
     # previous state == directory
     #
 
-    changed = module.set_fs_attributes_if_different(file_args, changed, diff, expand=False)
-    changed |= update_timestamp_for_file(file_args['path'], mtime, atime, diff)
-    if recurse:
-        changed |= recursive_set_attributes(b_path, follow, file_args, mtime, atime)
+    attributes_timestamp_diffs = []
+    main_attributes_timestamp_diff = initial_diff(path, "directory", "directory")
+    changed = module.set_fs_attributes_if_different(file_args, False, main_attributes_timestamp_diff, expand=False)
+    changed |= update_timestamp_for_file(file_args['path'], mtime, atime, main_attributes_timestamp_diff)
+    if changed:
+        attributes_timestamp_diffs.append(main_attributes_timestamp_diff)
 
-    return {'path': path, 'changed': changed, 'diff': diff}
+    if recurse:
+        changed |= recursive_set_attributes(b_path, follow, file_args, mtime, atime, attributes_timestamp_diffs)
+
+    return {'path': path, 'changed': changed, 'diff': attributes_timestamp_diffs}
 
 
 def ensure_symlink(path, src, follow, force, timestamps):
