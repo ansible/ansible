@@ -1,0 +1,5 @@
+bugfixes:
+  - user - fail explicitly with a descriptive error message when C(password_expire_min) is used on
+    systems where C(chage) does not support C(-m/--mindays), and emit a warning on supported systems
+    noting that minimum password age was removed in upstream shadow-utils 4.20
+    (https://github.com/ansible/ansible/issues/87428).
