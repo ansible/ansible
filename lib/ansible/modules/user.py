@@ -496,7 +496,7 @@ system:
   sample: True
 uid:
   description: User ID of the user account.
-  returned: When O(uid) is passed to the module
+  returned: When O(state) is V(present) and the user exists
   type: int
   sample: 1044
 """
