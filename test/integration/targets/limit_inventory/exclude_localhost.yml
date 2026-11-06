@@ -1,0 +1,10 @@
+- hosts: all,localhost
+  gather_facts: false
+  tasks:
+    - debug:
+        msg: "Host: {{ inventory_hostname }}"
+
+    - assert:
+        that:
+          - inventory_hostname != 'localhost'
+        fail_msg: "localhost should have been excluded by limit"
