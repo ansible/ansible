@@ -1,0 +1,9 @@
+---
+- hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: Verify from_yaml and from_yaml_all for deprecation warnings
+      assert:
+        that:
+          - "2|from_yaml == 2"
+          - "2|from_yaml_all == 2"
