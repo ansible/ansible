@@ -361,6 +361,8 @@ class LookupModule(LookupBase):
             path = self._loader.path_dwim(relpath)
             b_path = to_bytes(path, errors='surrogate_or_strict')
             chars = _gen_candidate_chars(params['chars'])
+            if not chars:
+                raise AnsibleError("The 'chars' option cannot be empty. Omit 'chars' to use the default character set, or specify valid characters.")
             ident = None
             first_process = None
             lockfile = None
