@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-doc - display return values documented in a role's ``meta/argument_specs.yml`` (via an optional ``return:`` key per entry point, using the same format as module return values) in the role's text output, matching how module return values are shown.
