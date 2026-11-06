@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ctypes
 import errno
 import pytest
 from pytest_mock import MockerFixture
@@ -8,6 +9,16 @@ from ansible._internal._encryption._crypt import _CryptLib, CryptFacade, _FAILUR
 
 
 class TestCryptFacade:
+
+    def test_crypt_data_buffer_large_enough_for_glibc_libcrypt(self) -> None:
+        """_CryptData must hold glibc's struct crypt_data (131232 bytes on LP64).
+
+        libxcrypt's struct crypt_data is 32768 bytes, but glibc's own libcrypt
+        (glibc <= 2.38) has a 131232-byte struct crypt_data and writes all of
+        it on every MD5/SHA-256/SHA-512 hash. A smaller buffer overruns the
+        heap and crashes the worker (https://github.com/ansible/ansible/issues/87836).
+        """
+        assert ctypes.sizeof(CryptFacade._CryptData) >= 131232
 
     def test_unsupported_platform(self, mocker: MockerFixture) -> None:
         """Test that unsupported platforms are skipped."""
