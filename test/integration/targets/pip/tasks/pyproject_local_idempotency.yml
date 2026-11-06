@@ -1,0 +1,100 @@
+# Baseline test - requirements.txt
+- name: create package directory for requirements.txt test
+  file:
+    path: "{{ remote_tmp_dir }}/test_requirements_pkg/test_req_pkg"
+    state: directory
+    mode: '0755'
+
+- name: create setup.py for requirements.txt test
+  copy:
+    dest: "{{ remote_tmp_dir }}/test_requirements_pkg/setup.py"
+    content: |
+      from setuptools import setup, find_packages
+      setup(
+          name="test-requirements-package",
+          version="1.0.0",
+          packages=find_packages(),
+      )
+
+- name: create package __init__.py for requirements.txt test
+  copy:
+    dest: "{{ remote_tmp_dir }}/test_requirements_pkg/test_req_pkg/__init__.py"
+    content: |
+      """Test package for requirements.txt idempotency."""
+      __version__ = "1.0.0"
+
+- name: create requirements.txt file
+  copy:
+    dest: "{{ remote_tmp_dir }}/test_requirements.txt"
+    content: "{{ remote_tmp_dir }}/test_requirements_pkg"
+
+- name: make sure the requirements venv doesn't exist
+  file:
+    state: absent
+    name: "{{ remote_tmp_dir }}/requirements_venv"
+
+- name: install from requirements.txt (first run)
+  pip:
+    requirements: "{{ remote_tmp_dir }}/test_requirements.txt"
+    virtualenv: "{{ remote_tmp_dir }}/requirements_venv"
+  register: first_install_req
+
+- name: verify first install reported changed
+  assert:
+    that:
+      - first_install_req is changed
+
+- name: install from requirements.txt (second run - should be idempotent)
+  pip:
+    requirements: "{{ remote_tmp_dir }}/test_requirements.txt"
+    virtualenv: "{{ remote_tmp_dir }}/requirements_venv"
+  register: second_install_req
+
+- name: verify requirements.txt idempotency works (baseline)
+  assert:
+    that:
+      - second_install_req is not changed
+    success_msg: "BASELINE VERIFIED: requirements.txt installation is idempotent"
+
+- name: clean up requirements.txt test
+  file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - "{{ remote_tmp_dir }}/requirements_venv"
+    - "{{ remote_tmp_dir }}/test_requirements_pkg"
+    - "{{ remote_tmp_dir }}/test_requirements.txt"
+
+# Test pyproject.toml local package idempotency
+
+- name: make sure the pyproject idempotency venv doesn't exist
+  file:
+    state: absent
+    name: "{{ remote_tmp_dir }}/pyproject_idempotency_venv"
+
+- name: install local package with pyproject.toml (first run)
+  pip:
+    name: "{{ remote_tmp_dir }}/sample-project"
+    virtualenv: "{{ remote_tmp_dir }}/pyproject_idempotency_venv"
+  register: first_install
+
+- name: verify first install reported changed
+  assert:
+    that:
+      - first_install is changed
+
+- name: install local package with pyproject.toml (second run - should be idempotent)
+  pip:
+    name: "{{ remote_tmp_dir }}/sample-project"
+    virtualenv: "{{ remote_tmp_dir }}/pyproject_idempotency_venv"
+  register: second_install
+
+- name: verify second install is idempotent
+  assert:
+    that:
+      - second_install is not changed
+
+- name: clean up pyproject idempotency venv
+  file:
+    path: "{{ remote_tmp_dir }}/pyproject_idempotency_venv"
+    state: absent
