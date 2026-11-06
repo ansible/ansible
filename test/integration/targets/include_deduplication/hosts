@@ -1,0 +1,7 @@
+localhost0
+localhost1
+localhost3
+
+[all:vars]
+ansible_connection=local
+ansible_python_interpreter={{ansible_playbook_python}}
