@@ -6,6 +6,7 @@
 - import_tasks: test_create_system_user.yml
 - import_tasks: test_create_user_uid.yml
 - import_tasks: test_create_user_password.yml
+- import_tasks: test_password_stdin.yml
 - include_tasks: test_create_user_home.yml
   when: ansible_distribution != 'Alpine'
 - import_tasks: test_remove_user.yml
