@@ -56,6 +56,10 @@ attributes:
     platform:
         details: As long as there is a connection plugin
         platforms: all
+notes:
+- The reported C(elapsed) value is truncated to whole seconds. Because connection
+  timeouts are whole seconds too, a failed wait can last up to one second longer
+  than O(timeout).
 seealso:
 - module: ansible.builtin.wait_for
 - module: ansible.windows.win_wait_for
