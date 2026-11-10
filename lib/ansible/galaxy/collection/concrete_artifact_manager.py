@@ -7,8 +7,9 @@ from __future__ import annotations
 
 import json
 import os
-import tarfile
+import shutil
 import subprocess
+import tarfile
 import typing as t
 import yaml
 
@@ -52,6 +53,39 @@ display = Display()
 MANIFEST_FILENAME = 'MANIFEST.json'
 
 
+class PersistentArtifactsCache():
+    def __init__(self):
+        self._blobs_path = Path(C.GALAXY_CACHE_DIR) / "blobs"
+        self._no_cache = context.CLIARGS.get("no_cache")
+
+        if self._no_cache:
+            return
+
+        if not self._blobs_path.exists():
+            self._blobs_path.mkdir(parents=True, exist_ok=True)
+
+    def get(self, checksum):
+        if self._no_cache or checksum is None or not (artifact := self._blobs_path / checksum[:2] / checksum[2:]).exists():
+            return
+
+        try:
+            sha256sum = subprocess.check_output(["sha256sum", artifact], text=True).split()[0]
+        except subprocess.CalledProcessError as e:
+            raise AnsibleError(f"The cache for {checksum} is corrupt") from e
+        if checksum != sha256sum:
+            raise AnsibleError(f"The cache for {checksum} is corrupt: {sha256sum}")
+
+        return to_bytes(artifact.as_posix(), errors="surrogate_or_strict")
+
+    def set(self, checksum, artifact):
+        if self._no_cache or checksum is None:
+            return
+
+        cache_path = self._blobs_path / checksum[:2] / checksum[2:]
+        cache_path.parent.mkdir(parents=True, exist_ok=True)
+        shutil.move(artifact, cache_path)
+
+
 class ConcreteArtifactsManager:
     """Manager for on-disk collection artifacts.
 
@@ -80,6 +114,8 @@ class ConcreteArtifactsManager:
         self._required_signature_count = required_signature_count  # type: str
         self._ignore_signature_errors = ignore_signature_errors  # type: list[str]
         self._require_build_metadata = True  # type: bool
+
+        self._checksum_cache = PersistentArtifactsCache()
 
     @property
     def keyring(self):
@@ -143,6 +179,13 @@ class ConcreteArtifactsManager:
                 f'There is no known source for {collection!s}'
             ) from key_err
 
+        if (artifact := self._checksum_cache.get(metadata.artifact_sha256)):
+            display.vvv(
+                f"Collection '{collection!s}' obtained from server {api!s} {api.api_server!s}. "
+                f"Using cached artifact matching hash {metadata.artifact_sha256}."
+            )
+            return artifact
+
         display.vvvv(
             "Fetching a collection tarball for '{collection!s}' from "
             'Ansible Galaxy'.format(collection=collection),
@@ -173,8 +216,9 @@ class ConcreteArtifactsManager:
                 f"{api.api_server!s}"
             )
 
-        self._galaxy_artifact_cache[collection] = b_artifact_path
-        return b_artifact_path
+        self._checksum_cache.set(metadata.artifact_sha256, b_artifact_path)
+        self._galaxy_artifact_cache[collection] = self._checksum_cache.get(metadata.artifact_sha256) or b_artifact_path
+        return self._galaxy_artifact_cache[collection]
 
     def get_artifact_path(self, collection):
         # type: (Collection) -> bytes
