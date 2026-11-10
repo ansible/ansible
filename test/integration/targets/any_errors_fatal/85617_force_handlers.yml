@@ -1,0 +1,21 @@
+- hosts: testhost,testhost2
+  gather_facts: false
+  any_errors_fatal: true
+  force_handlers: true
+  tasks:
+    - name: everyone notifies a handler
+      ansible.builtin.command: echo hi
+      changed_when: false
+      notify: 85617_handler
+
+    - name: only testhost2 enters the rescued block; testhost diverges here
+      include_tasks: 85617_block.yml
+      when: inventory_hostname == "testhost2"
+
+    - name: any_errors_fatal must not strand a diverged host even under force_handlers
+      debug:
+        msg: "SHOULD HAPPEN for both hosts under force_handlers too"
+  handlers:
+    - name: 85617_handler
+      debug:
+        msg: "handler ran"
