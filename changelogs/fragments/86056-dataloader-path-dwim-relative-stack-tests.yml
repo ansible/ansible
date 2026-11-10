@@ -1,0 +1,2 @@
+minor_changes:
+  - "DataLoader - Expand unit test coverage for ``path_dwim_relative_stack`` when ``dirname`` or ``source`` is ``None`` (https://github.com/ansible/ansible/issues/86056)."
