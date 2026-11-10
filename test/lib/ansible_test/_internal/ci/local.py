@@ -7,6 +7,7 @@ import inspect
 import platform
 import random
 import re
+import os
 import pathlib
 import typing as t
 
@@ -117,7 +118,8 @@ class Local(CIProvider):
             args.metadata.populate_changes(result.diff)
 
             for path in result.untracked:
-                if is_binary_file(path):
+                if not os.path.isfile(path) or is_binary_file(path):
+                    # Treat like a deleted file as there are no lines
                     args.metadata.changes[path] = ((0, 0),)
                     continue
 
