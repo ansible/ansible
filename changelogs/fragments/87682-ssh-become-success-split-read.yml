@@ -1,0 +1,2 @@
+bugfixes:
+  - ssh connection plugin - fix a stray line ending at the start of the output of a become task when a read from ssh ended right after the become success line, before its line ending (https://github.com/ansible/ansible/issues/87682).
