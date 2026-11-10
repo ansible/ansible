@@ -1511,7 +1511,9 @@ def install(collection, path, artifacts_manager):  # FIXME: mv to dataclasses?
         format(coll=to_text(collection), path=collection_path),
     )
 
-    if os.path.exists(b_collection_path):
+    if os.path.islink(b_collection_path):
+        os.unlink(b_collection_path)
+    elif os.path.exists(b_collection_path):
         shutil.rmtree(b_collection_path)
 
     if collection.is_dir:
