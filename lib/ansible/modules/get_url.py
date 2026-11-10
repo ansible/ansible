@@ -605,10 +605,10 @@ def main():
             if checksum != destination_checksum:
                 checksum_mismatch = True
 
-        # Not forcing redownload, unless checksum does not match
-        if not force and checksum and not checksum_mismatch:
-            # Not forcing redownload, unless checksum does not match
-            # allow file attribute changes
+        # Do not download an existing file when force is disabled, unless its
+        # checksum does not match the requested checksum.
+        if not force and not checksum_mismatch:
+            # The file does not need downloading; allow file attribute changes.
             file_args = module.load_file_common_arguments(module.params, path=dest)
             result['changed'] = module.set_fs_attributes_if_different(file_args, False)
             if result['changed']:
