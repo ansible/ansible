@@ -1,0 +1,3 @@
+bugfixes:
+  - sudo become plugin - avoid bad arguments in become user and optimize regex use
+  - su become plugin - avoid bad arguments in become user, optimize string construction
