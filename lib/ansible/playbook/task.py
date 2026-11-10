@@ -485,23 +485,6 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
             all_vars |= self.vars
         return all_vars
 
-    def copy(self, exclude_parent: bool = False, exclude_tasks: bool = False) -> Task:
-        new_me = super(Task, self).copy()
-
-        new_me._parent = None
-        if self._parent and not exclude_parent:
-            new_me._parent = self._parent.copy(exclude_tasks=exclude_tasks)
-
-        new_me._role = None
-        if self._role:
-            new_me._role = self._role
-
-        new_me.implicit = self.implicit
-        new_me._resolved_action = self._resolved_action
-        new_me._uuid = self._uuid
-
-        return new_me
-
     def set_loader(self, loader):
         """
         Sets the loader on this object and recursively on parent, child objects.

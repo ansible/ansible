@@ -219,13 +219,11 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                     # nested includes, and we want the include order printed correctly
                     display.vv("statically imported: %s" % include_file)
 
-                    ti_copy = task.copy(exclude_parent=True)
-                    ti_copy._parent = block
                     included_blocks = load_list_of_blocks(
                         data,
                         play=play,
                         parent_block=None,
-                        task_include=ti_copy,
+                        task_include=task,
                         role=role,
                         use_handlers=use_handlers,
                         loader=loader,
