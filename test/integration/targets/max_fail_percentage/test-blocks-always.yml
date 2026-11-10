@@ -1,0 +1,48 @@
+---
+- name: Test always executes even when threshold exceeded
+  hosts: testhost1,testhost2,testhost3,testhost4
+  gather_facts: false
+  max_fail_percentage: 50%
+  tasks:
+    - block:
+        - name: Fail 3 out of 4 hosts (75%)
+          fail:
+            msg: intentional failure
+          when: inventory_hostname in ['testhost1', 'testhost2', 'testhost3']
+
+        - name: Should not execute
+          debug:
+            msg: "ALWAYS_MAIN_SHOULD_NOT_EXECUTE"
+
+      always:
+        - name: Always should execute despite threshold
+          debug:
+            msg: "ALWAYS_EXECUTED_AFTER_THRESHOLD"
+
+    - name: Task after always block
+      debug:
+        msg: "AFTER_ALWAYS_BLOCK"
+
+- name: Test threshold exceeded in always block
+  hosts: testhost5,testhost6,testhost7,testhost8
+  gather_facts: false
+  max_fail_percentage: 50%
+  tasks:
+    - block:
+        - name: Main block task
+          debug:
+            msg: "ALWAYS_THRESHOLD_MAIN_BLOCK"
+
+      always:
+        - name: Fail 3 out of 4 hosts in always (75%)
+          fail:
+            msg: intentional failure in always
+          when: inventory_hostname in ['testhost5', 'testhost6', 'testhost7']
+
+        - name: Should not execute in always
+          debug:
+            msg: "ALWAYS_THRESHOLD_SHOULD_NOT_EXECUTE"
+
+    - name: Task after always failure should not execute
+      debug:
+        msg: "AFTER_ALWAYS_THRESHOLD_SHOULD_NOT_EXECUTE"
