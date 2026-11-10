@@ -4,10 +4,18 @@
     ANSIBLE_DUPLICATE_YAML_DICT_KEY: warn
   register: duplicate_warn
 
+- name: Test ANSIBLE_DUPLICATE_YAML_DICT_KEY=warning
+  command: ansible-playbook {{ verbosity }} {{ role_path }}/playbook.yml
+  environment:
+    ANSIBLE_DUPLICATE_YAML_DICT_KEY: warning
+  register: duplicate_warning
+
 - assert:
     that:
       - duplicate_warn.stderr is contains("Found duplicate mapping key 'foo'")
       - duplicate_warn.rc == 0
+      - duplicate_warning.stderr is contains("Found duplicate mapping key 'foo'")
+      - duplicate_warning.rc == 0
 
 - name: Test ANSIBLE_DUPLICATE_YAML_DICT_KEY=error
   command: ansible-playbook {{ verbosity }} {{ role_path }}/playbook.yml
