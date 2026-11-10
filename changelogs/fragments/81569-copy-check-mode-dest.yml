@@ -1,0 +1,2 @@
+bugfixes:
+  - copy - initialize common file-copy result fields and retain the resolved destination in check mode (https://github.com/ansible/ansible/issues/81569).
