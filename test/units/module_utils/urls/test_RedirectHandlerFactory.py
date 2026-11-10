@@ -82,6 +82,54 @@ def test_redir_headers_removal(urllib_req, request_body, mocker):
                                      unverifiable=True)
 
 
+def test_redir_strips_credentials_cross_origin(urllib_req, request_body, mocker):
+    req_mock = mocker.patch('ansible.module_utils.urls.urllib.request.Request')
+    handler = HTTPRedirectHandler('all')
+    inst = handler()
+
+    urllib_req.headers = {
+        'Authorization': 'Basic Zm9vOmJhcg==',
+        'Cookie': 'session=secret',
+        'Proxy-Authorization': 'Basic Zm9vOmJhcg==',
+        'Foo': 'bar',
+    }
+
+    inst.redirect_request(urllib_req, request_body, 301, '301 Moved Permanently', {}, 'https://evil.example/')
+    req_mock.assert_called_once_with('https://evil.example/', data=None, headers={'Foo': 'bar'}, method='GET',
+                                     origin_req_host='ansible.com', unverifiable=True)
+
+
+def test_redir_strips_credentials_scheme_downgrade(urllib_req, request_body, mocker):
+    req_mock = mocker.patch('ansible.module_utils.urls.urllib.request.Request')
+    handler = HTTPRedirectHandler('all')
+    inst = handler()
+
+    urllib_req.headers = {
+        'Authorization': 'Basic Zm9vOmJhcg==',
+        'Foo': 'bar',
+    }
+
+    inst.redirect_request(urllib_req, request_body, 301, '301 Moved Permanently', {}, 'http://ansible.com/')
+    req_mock.assert_called_once_with('http://ansible.com/', data=None, headers={'Foo': 'bar'}, method='GET',
+                                     origin_req_host='ansible.com', unverifiable=True)
+
+
+def test_redir_keeps_credentials_same_origin(urllib_req, request_body, mocker):
+    req_mock = mocker.patch('ansible.module_utils.urls.urllib.request.Request')
+    handler = HTTPRedirectHandler('all')
+    inst = handler()
+
+    urllib_req.headers = {
+        'Authorization': 'Basic Zm9vOmJhcg==',
+        'Foo': 'bar',
+    }
+
+    inst.redirect_request(urllib_req, request_body, 301, '301 Moved Permanently', {}, 'https://ansible.com/other')
+    req_mock.assert_called_once_with('https://ansible.com/other', data=None,
+                                     headers={'Authorization': 'Basic Zm9vOmJhcg==', 'Foo': 'bar'}, method='GET',
+                                     origin_req_host='ansible.com', unverifiable=True)
+
+
 def test_redir_url_spaces(urllib_req, request_body, mocker):
     req_mock = mocker.patch('ansible.module_utils.urls.urllib.request.Request')
     handler = HTTPRedirectHandler('all')
