@@ -418,9 +418,9 @@ class TestBaseSubClass(TestBase):
         self.assertEqual(bsc.remote_user, 'testuser')
 
     def test_attr_example_undefined(self):
-        ds = {'test_attr_example': '{{ some_var_that_shouldnt_exist_to_test_omit }}'}
-        exc_regex_str = 'test_attr_example.*has an invalid value, which includes an undefined variable.*some_var_that_shouldnt*'
-        self.assertRaises(AnsibleParserError)
+        ds = {'test_attr_example': TrustedAsTemplate().tag('{{ some_var_that_shouldnt_exist_to_test_omit }}')}
+        exc_regex_str = 'test_attr_example.*some_var_that_shouldnt_exist_to_test_omit.* is undefined'
+        self.assertRaisesRegex(AnsibleParserError, exc_regex_str, self._base_validate, ds)
 
     def test_subclass_validate_method(self):
         ds = {'test_attr_list': ['string_list_item_1', 'string_list_item_2'],
