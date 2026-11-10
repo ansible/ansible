@@ -1,0 +1,172 @@
+# Tests for the `line_separator` option, which controls the line endings used
+# for the marker and block lines written into the file.
+
+- name: line_separator tests
+  vars:
+    base_path: "{{ remote_tmp_dir_test }}/line_separator_"
+    line_seps:
+      - {sep: LF, eol: "\n"}
+      - {sep: CR, eol: "\r"}
+      - {sep: CRLF, eol: "\r\n"}
+  block:
+    - name: create a block for each line_separator choice
+      blockinfile:
+        path: "{{ base_path }}{{ item.sep }}.txt"
+        create: true
+        line_separator: "{{ item.sep }}"
+        block: "line1{{ item.eol }}line2"
+      register: sep_insert
+      with_items: "{{ line_seps }}"
+
+    - name: run the same block again for each choice (idempotency)
+      blockinfile:
+        path: "{{ base_path }}{{ item.sep }}.txt"
+        create: true
+        line_separator: "{{ item.sep }}"
+        block: "line1{{ item.eol }}line2"
+      register: sep_reinsert
+      with_items: "{{ line_seps }}"
+
+    - name: read back each file
+      slurp:
+        src: "{{ base_path }}{{ item.sep }}.txt"
+      register: sep_slurp
+      with_items: "{{ line_seps }}"
+
+    - name: validate line endings and idempotency for each choice
+      assert:
+        that:
+          - item.0 is changed
+          - item.1 is not changed
+          - (item.2.content | b64decode) == expected
+      vars:
+        eol: "{{ item.0.item.eol }}"
+        expected: >-
+          {{ "# BEGIN ANSIBLE MANAGED BLOCK" ~ eol ~ "line1" ~ eol
+             ~ "line2" ~ eol ~ "# END ANSIBLE MANAGED BLOCK" ~ eol }}
+      loop: "{{ sep_insert.results | zip(sep_reinsert.results, sep_slurp.results) | list }}"
+      loop_control:
+        label: "{{ item.0.item.sep }}"
+
+    # An existing block is found and updated in place even when its endings differ
+    # from the requested line_separator, rather than a duplicate being appended.
+    - name: create a block written with crlf endings
+      blockinfile:
+        path: "{{ base_path }}convert.txt"
+        create: true
+        line_separator: CRLF
+        block: "line1\r\nline2"
+
+    - name: rewrite the same block with lf endings
+      blockinfile:
+        path: "{{ base_path }}convert.txt"
+        line_separator: LF
+        block: "line1\nline2"
+      register: convert_result
+
+    - name: read back the converted file
+      slurp:
+        src: "{{ base_path }}convert.txt"
+      register: convert_slurp
+
+    - name: validate the crlf block was found and converted to lf without duplication
+      assert:
+        that:
+          - convert_result is changed
+          - (convert_slurp.content | b64decode) == "# BEGIN ANSIBLE MANAGED BLOCK\nline1\nline2\n# END ANSIBLE MANAGED BLOCK\n"
+
+    - name: insert a crlf block in check mode
+      blockinfile:
+        path: "{{ base_path }}check.txt"
+        create: true
+        line_separator: CRLF
+        block: "line1\r\nline2"
+      check_mode: true
+      register: check_result
+
+    - name: stat the check-mode file
+      stat:
+        path: "{{ base_path }}check.txt"
+      register: check_stat
+
+    - name: validate check mode reports change without writing the file
+      assert:
+        that:
+          - check_result is changed
+          - not check_stat.stat.exists
+
+    - name: insert a crlf block with diff enabled
+      blockinfile:
+        path: "{{ base_path }}diff.txt"
+        create: true
+        line_separator: CRLF
+        block: "line1\r\nline2"
+      diff: true
+      register: diff_result
+
+    - name: validate diff reflects the crlf line endings within the block
+      assert:
+        that:
+          - diff_result is changed
+          - diff_result.diff[0].after == "# BEGIN ANSIBLE MANAGED BLOCK\r\nline1\r\nline2\r\n# END ANSIBLE MANAGED BLOCK\r\n"
+
+    # A block written with a different line_separator leaves surrounding endings
+    # untouched (see #66461): a CRLF block in an LF file keeps the LF lines as LF.
+    - name: seed a file with lf surrounding content
+      copy:
+        content: "before\nmiddle\nafter\n"
+        dest: "{{ base_path }}preserve.txt"
+
+    - name: insert a crlf block without disturbing the lf surrounding lines
+      blockinfile:
+        path: "{{ base_path }}preserve.txt"
+        line_separator: CRLF
+        block: "line1\r\nline2"
+        insertbefore: BOF
+      register: preserve_result
+
+    - name: read back the preserved file
+      slurp:
+        src: "{{ base_path }}preserve.txt"
+      register: preserve_slurp
+
+    - name: validate only the block is crlf and the surrounding lf lines are intact
+      assert:
+        that:
+          - preserve_result is changed
+          - (preserve_slurp.content | b64decode) ==
+            "# BEGIN ANSIBLE MANAGED BLOCK\r\nline1\r\nline2\r\n# END ANSIBLE MANAGED BLOCK\r\nbefore\nmiddle\nafter\n"
+
+    # Inserting a CRLF block after an already-terminated LF line adds no ghost
+    # blank line, even though the LF ending differs from the requested separator.
+    - name: seed a file with lf surrounding content for insertafter
+      copy:
+        content: "before\nmiddle\nafter\n"
+        dest: "{{ base_path }}ghost.txt"
+
+    - name: insert a crlf block after an lf line
+      blockinfile:
+        path: "{{ base_path }}ghost.txt"
+        line_separator: CRLF
+        block: "line1\r\nline2"
+        insertafter: "middle"
+      register: ghost_result
+
+    - name: read back the insertafter file
+      slurp:
+        src: "{{ base_path }}ghost.txt"
+      register: ghost_slurp
+
+    - name: validate no ghost line was inserted between the lf line and the crlf block
+      assert:
+        that:
+          - ghost_result is changed
+          - (ghost_slurp.content | b64decode) ==
+            "before\nmiddle\n# BEGIN ANSIBLE MANAGED BLOCK\r\nline1\r\nline2\r\n# END ANSIBLE MANAGED BLOCK\r\nafter\n"
+
+  always:
+    - name: clean up line_separator test files
+      file:
+        path: "{{ base_path }}{{ item }}.txt"
+        state: absent
+      loop: "{{ (line_seps | map(attribute='sep') | list) + ['convert', 'diff', 'preserve', 'ghost'] }}"
