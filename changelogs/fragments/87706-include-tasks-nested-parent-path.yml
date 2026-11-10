@@ -1,0 +1,2 @@
+bugfixes:
+  - include_tasks - use the already resolved path of parent includes when resolving relative paths of nested includes, instead of templating it again with the vars of the nested task (https://github.com/ansible/ansible/issues/87706).

@@ -161,3 +161,6 @@ set +e
 ansible-playbook test_nested_non_existent_tasks.yml 2>&1 | tee test_nested_non_existent_tasks.out
 set -e
 test "$(grep -c 'Could not find or access' test_nested_non_existent_tasks.out)" = 2
+
+# https://github.com/ansible/ansible/issues/87706
+ansible-playbook 87706/playbook.yml "$@"
