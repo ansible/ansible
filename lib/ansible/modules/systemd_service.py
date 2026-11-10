@@ -81,6 +81,17 @@ options:
         type: bool
         default: no
         version_added: "2.3"
+    machine:
+        description:
+            - Specify a container name to connect to, optionally prefixed by a
+              user name to connect as and a separating `@` character.
+            - If the special string `.host` is used in place of the container
+              name, a connection to the local system is made.
+            - If the `@` syntax is used either the left hand side or the right
+              hand side may be omitted (but not both) in which case the local
+              user name and `.host` are implied.
+        type: str
+        version_added: "2.22"
 extends_documentation_fragment: action_common_attributes
 attributes:
     check_mode:
@@ -149,6 +160,13 @@ EXAMPLES = """
     scope: user
   environment:
     XDG_RUNTIME_DIR: "/run/user/{{ myuid }}"
+
+- name: Run from within a specific user session
+  ansible.builtin.systemd_service:
+    name: myservice
+    state: started
+    scope: user
+    machine: "myuser@.host"
 """
 
 RETURN = """
@@ -282,6 +300,7 @@ status:
 """  # NOQA
 
 import os
+import shlex
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.facts.system.chroot import is_chroot
@@ -351,6 +370,7 @@ def main():
             daemon_reload=dict(type='bool', default=False, aliases=['daemon-reload']),
             daemon_reexec=dict(type='bool', default=False, aliases=['daemon-reexec']),
             scope=dict(type='str', default='system', choices=['system', 'user', 'global']),
+            machine=dict(type='str'),
             no_block=dict(type='bool', default=False),
         ),
         supports_check_mode=True,
@@ -378,6 +398,10 @@ def main():
     # The other choices match the corresponding switch
     if module.params['scope'] != 'system':
         systemctl += " --%s" % module.params['scope']
+
+    if module.params['machine']:
+        machine = shlex.quote(module.params['machine'])
+        systemctl += f" --machine={machine}"
 
     if module.params['no_block']:
         systemctl += " --no-block"

@@ -112,11 +112,27 @@
     enabled: true
   register: systemd_enable_ssh_2
 
+- name: Disable ssh 2 with machine
+  systemd:
+    name: '{{ ssh_service }}'
+    enabled: false
+    machine: '@.host'
+  register: systemd_disable_ssh_2_machine
+
+- name: Enable ssh 2 with machine
+  systemd:
+    name: '{{ ssh_service }}'
+    enabled: true
+    machine: '@.host'
+  register: systemd_enable_ssh_2_machine
+
 - assert:
     that:
       - systemd_disable_ssh_2 is not changed
       - systemd_enable_ssh_1 is changed
       - systemd_enable_ssh_2 is not changed
+      - systemd_disable_ssh_2_machine is changed
+      - systemd_enable_ssh_2_machine is changed
 
 - import_tasks: test_unit_template.yml
 - import_tasks: test_indirect_service.yml
