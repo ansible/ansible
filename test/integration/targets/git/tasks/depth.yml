@@ -81,6 +81,70 @@
 - assert:
     that: cloneold is successful
 
+- name: DEPTH | remove remote HEAD from detached tag checkout
+  file:
+    path: "{{ checkout_dir }}/.git/refs/remotes/origin/HEAD"
+    state: absent
+
+- name: DEPTH | request HEAD without a remote HEAD reference
+  git:
+    repo: 'file://{{ repo_dir|expanduser }}/shallow'
+    dest: '{{ checkout_dir }}'
+    depth: "{{ item }}"
+    version: HEAD
+  loop:
+    - 1
+    - 0
+  register: missing_remote_head
+  ignore_errors: yes
+
+- name: DEPTH | verify missing remote HEAD has an actionable error
+  assert:
+    that:
+      - item is failed
+      - "'Unable to determine HEAD branch from ' in item.msg"
+      - "'Specify an explicit branch or tag with version.' in item.msg"
+  loop: "{{ missing_remote_head.results }}"
+
+- name: DEPTH | create a newer tag in the source repository
+  command: git tag latertag
+  args:
+    chdir: "{{ repo_dir }}/shallow"
+
+- name: DEPTH | fetch explicit revisions without remote HEAD
+  git:
+    repo: 'file://{{ repo_dir|expanduser }}/shallow'
+    dest: '{{ checkout_dir }}'
+    depth: 1
+    version: "{{ item.version }}"
+    refspec: "{{ item.refspec | default(omit) }}"
+  loop:
+    - version: earlytag
+    - version: latertag
+    - version: latertag
+      refspec: '+refs/tags/latertag:refs/tags/latertag'
+    - version: "{{ git_default_branch }}"
+  register: detached_fetch
+
+- name: DEPTH | verify detached tag fetches and idempotence
+  assert:
+    that:
+      - detached_fetch.results[0] is not changed
+      - detached_fetch.results[1] is changed
+      - detached_fetch.results[1].after != cloneold.after
+      - detached_fetch.results[2] is not changed
+
+- name: DEPTH | read branch after switching from a detached tag
+  command: git symbolic-ref --short HEAD
+  args:
+    chdir: "{{ checkout_dir }}"
+  register: detached_fetch_branch
+
+- name: DEPTH | verify the requested branch is checked out
+  assert:
+    that:
+      - detached_fetch_branch.stdout == git_default_branch
+
 - name: DEPTH | clear checkout_dir
   file:
     state: absent
