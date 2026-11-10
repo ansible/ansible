@@ -225,6 +225,7 @@ class TaskQueueManager:
 
         # A temporary file (opened pre-fork) used by connection
         # plugins for inter-process locking.
+        # deprecated: description='remove the lock file along with PlayContext.connection_lockfd' core_version='2.26'
         self._connection_lockfile = tempfile.TemporaryFile()
 
         self._workers: list[WorkerProcess | None] = []
@@ -390,6 +391,7 @@ class TaskQueueManager:
             loader=self._loader,
         )
 
+        # deprecated: description='stop passing the removed connection_lockfd argument' core_version='2.26'
         play_context = PlayContext(new_play, self.passwords, self._connection_lockfile.fileno())
 
         for callback_plugin in self._callback_plugins:
@@ -427,10 +429,10 @@ class TaskQueueManager:
 
         self.clear_failed_hosts()
 
-        # during initialization, the PlayContext will clear the start_at_task
-        # field to signal that a matching task was found, so check that here
-        # and remember it so we don't try to skip tasks on future plays
-        if context.CLIARGS.get('start_at_task') is not None and play_context.start_at_task is None:
+        # during initialization, the PlayIterator will mark that the --start-at-task
+        # has been processed and found,  so check that here and remember it so we don't
+        # try to skip tasks on future plays
+        if iterator.start_at_matched:
             self._start_at_done = True
 
         # and run the play using the strategy and cleanup on way out

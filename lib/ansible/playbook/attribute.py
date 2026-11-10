@@ -17,12 +17,18 @@
 
 from __future__ import annotations
 
+import sys
+import types
 import typing as t
 
+from ansible.module_utils._internal import _deprecator
+from ansible.utils.display import Display
 from ansible.utils.sentinel import Sentinel
 
 if t.TYPE_CHECKING:
     from ansible.playbook.base import FieldAttributeBase
+
+display = Display()
 
 _CONTAINERS = frozenset(('list', 'dict', 'set'))
 
@@ -181,3 +187,78 @@ class FieldAttribute(Attribute):
                 value = value()
 
         return value
+
+
+class _DeprecatedFieldAttribute(FieldAttribute):
+    """
+    A `FieldAttribute` which warns when read or written by anything other than the `FieldAttributeBase` machinery.
+    Owning classes should keep populating the attribute until its removal, via its private storage (e.g. `obj._name`).
+    """
+
+    def __init__(self, *, version: str, help_text: str | None = None, **kwargs) -> None:
+        super().__init__(**kwargs)
+
+        self._version = version
+        self._help_text = help_text
+        self._msg = ''
+
+    def __set_name__(self, owner: type, name: str) -> None:
+        super().__set_name__(owner, name)
+
+        self._msg = f'The {owner.__name__}.{name} attribute is deprecated.'
+
+    def __get__(self, obj, obj_type=None):
+        if obj is not None:
+            self._deprecate(sys._getframe(1))
+
+        return super().__get__(obj, obj_type)
+
+    def __set__(self, obj, value) -> None:
+        self._deprecate(sys._getframe(1))
+
+        super().__set__(obj, value)
+
+    def _deprecate(self, frame: types.FrameType) -> None:
+        """
+        Emit a deprecation warning for the access made by `frame`.
+        The plugin responsible is named when it can be determined from the accessing frame.
+        """
+        if frame.f_globals.get('__name__') == 'ansible.playbook.base':
+            # Any internal machinery for field attributes should not trigger deprecation warnings.
+            return
+
+        help_text = self._help_text
+
+        # None when the accessor is neither core nor a collection plugin (e.g. a script, test or role-local plugin)
+        accessor = _deprecator._path_as_plugininfo(frame.f_code.co_filename)
+        if accessor and accessor != _deprecator.ANSIBLE_CORE_DEPRECATOR:
+            accessed_by = f"Accessed by {accessor.type} plugin {accessor.resolved_name!r}." if accessor.type else f"Accessed by {accessor.resolved_name!r}."
+            help_text = f'{help_text} {accessed_by}' if help_text else accessed_by
+
+        display.deprecated(
+            msg=self._msg,
+            version=self._version,
+            help_text=help_text,
+        )
+
+
+# This is not used today but is kept for when the deprecated inherited fields of PlayContext need to be marked as removed.
+class _RemovedFieldAttribute:
+    """
+    Marks an inherited field attribute as removed from the owning class. Any access raises `AttributeError` as if it never existed.
+    """
+
+    def __set_name__(self, owner: type, name: str) -> None:
+        self._msg = f'{owner.__name__!r} object has no attribute {name!r}'
+
+    def __get__(self, obj, obj_type=None):
+        if obj is None:
+            return self
+
+        raise AttributeError(self._msg)
+
+    def __set__(self, obj, value) -> None:
+        raise AttributeError(self._msg)
+
+    def __delete__(self, obj) -> None:
+        raise AttributeError(self._msg)
