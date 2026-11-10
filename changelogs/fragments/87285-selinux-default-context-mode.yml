@@ -1,0 +1,2 @@
+bugfixes:
+  - copy, template, and other file modules now resolve the correct SELinux context when multiple file-context rules apply to the same path (e.g. a regular file vs a symbolic link). selinux_default_context stats the existing path and passes its real mode to matchpathcon instead of always using the ``unknown`` mode (https://github.com/ansible/ansible/issues/87285).
