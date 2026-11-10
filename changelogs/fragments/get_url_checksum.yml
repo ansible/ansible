@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - get_url - fail with error when the checksum URL host or port differs from ``url``.

@@ -424,6 +424,14 @@
     path: "{{ remote_tmp_dir }}/27617.txt"
   register: stat_result_sha1
 
+- name: download src with sha1 checksum url with different host port
+  get_url:
+    url: 'http://localhost:{{ http_port }}/27617.txt'
+    dest: '{{ remote_tmp_dir }}'
+    checksum: 'sha1:http://localhost:9999/sha1sum.txt'
+  register: result_sha1_different_host_port
+  ignore_errors: true
+
 - name: download src with sha256 checksum url
   get_url:
     url: 'http://localhost:{{ http_port }}/27617.txt'
@@ -638,6 +646,8 @@
       - "stat_result_sha256_with_asterisk_86132.stat.exists == true"
       - result_sha256_86132_single_space is changed
       - "stat_result_sha256_86132_single_space.stat.exists == true"
+      - result_sha1_different_host_port is failed
+      - "result_sha1_different_host_port.msg == 'The checksum URL host or port differs from the url parameter'"
 
 - name: Test for incomplete data read (issue 85164)
   get_url:
