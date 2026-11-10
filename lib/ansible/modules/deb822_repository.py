@@ -169,6 +169,13 @@ options:
         - absent
         - present
         default: present
+    backup:
+        description:
+            - Create a backup file including the timestamp information so you can
+              get the original file back if you somehow clobbered it incorrectly.
+        type: bool
+        default: false
+        version_added: '2.22'
 requirements:
     - python3-debian / python-debian
 version_added: '2.15'
@@ -251,6 +258,12 @@ key_filename:
   returned: always
   type: str
   sample: /etc/apt/keyrings/debian.gpg
+
+backup_file:
+  description: Path to the backup file
+  returned: when changed and backup is true
+  type: str
+  sample: /path/to/file.txt.2015-02-12@22:09~
 """
 
 import os
@@ -503,6 +516,10 @@ def main():
                 ],
                 'default': 'present',
             },
+            'backup': {
+                'type': 'bool',
+                'default': False,
+            },
         },
         mutually_exclusive=[
             ['exclude', 'include']
@@ -569,6 +586,7 @@ def main():
     # popped non-deb822 args
     mode = params.pop('mode')
     state = params.pop('state')
+    backup = params.pop('backup')
     params.pop('install_python_debian')
 
     name = params['name']
@@ -638,19 +656,26 @@ def main():
     src_chksum = module.sha256(tmpfile)
     dest_chksum = module.sha256(sources_filename)
 
+    backup_file = None
     if src_chksum != dest_chksum:
         if not check_mode:
+            if backup and os.path.exists(sources_filename):
+                backup_file = module.backup_local(sources_filename)
             module.atomic_move(tmpfile, sources_filename)
         changed |= True
 
     changed |= module.set_mode_if_different(sources_filename, mode, False)
 
-    module.exit_json(
-        repo=repo,
-        changed=changed,
-        dest=sources_filename,
-        key_filename=signed_by_filename,
-    )
+    return_data = {
+        'repo': repo,
+        'changed': changed,
+        'dest': sources_filename,
+        'key_filename': signed_by_filename,
+    }
+    if backup_file is not None:
+        return_data['backup_file'] = backup_file
+
+    module.exit_json(**return_data)
 
 
 if __name__ == '__main__':
