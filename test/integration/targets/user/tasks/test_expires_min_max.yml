@@ -1,19 +1,110 @@
 # https://github.com/ansible/ansible/issues/68775
-- name: Test setting maximum expiration
+# https://github.com/ansible/ansible/issues/87428
+- name: Test password expiration min/max settings
   when: ansible_facts.os_family in ['RedHat', 'Debian']
   block:
-    - name: create user
+    - name: create user for min/max expiration tests
       user:
         name: ansibulluser
         state: present
 
+    # Non-mutating capability probe: inspect chage --help for -m/--mindays support.
+    # shadow-utils 4.20+ removed chage -m as a security measure (https://github.com/shadow-maint/shadow/pull/1482).
+    - name: probe chage -m/--mindays support via --help
+      command: chage --help
+      register: chage_help_probe
+      failed_when: false
+      changed_when: false
+
+    - name: set fact indicating whether chage supports -m/--mindays
+      set_fact:
+        chage_mindays_supported: "{{ (chage_help_probe.stdout + chage_help_probe.stderr) is search('(-m\\b|--mindays\\b)') }}"
+
+    # ----------------------------------------------------------------
+    # Branch A: systems where chage -m is supported (shadow-utils < 4.20)
+    # ----------------------------------------------------------------
+    - name: test password_expire_min on systems supporting chage -m
+      when: chage_mindays_supported | bool
+      block:
+        - name: add minimum expire date for password
+          user:
+            name: ansibulluser
+            password_expire_min: 5
+          register: pass_min_2_0
+
+        - name: again add minimum expire date for password (idempotency)
+          user:
+            name: ansibulluser
+            password_expire_min: 5
+          register: pass_min_2_1
+
+        - name: validate result for minimum expire date
+          assert:
+            that:
+              - pass_min_2_0 is changed
+              - pass_min_2_1 is not changed
+              - pass_min_2_0.warnings is defined
+              - "'password_expire_min has been removed in upstream shadow-utils 4.20+' in pass_min_2_0.warnings[0]"
+
+        - name: get shadow data for ansibulluser
+          getent:
+            database: shadow
+            key: ansibulluser
+
+        - name: ensure minimum password age was set properly in shadow
+          assert:
+            that:
+              - ansible_facts.getent_shadow['ansibulluser'][2] == '5'
+
+        - name: set min and max at the same time (also verifies assigning 0 works)
+          user:
+            name: ansibulluser
+            password_expire_min: 0
+            password_expire_max: 0
+
+        - name: get shadow data after setting both min and max to 0
+          getent:
+            database: shadow
+            key: ansibulluser
+
+        - name: ensure min and max were both set to 0
+          assert:
+            that:
+              - ansible_facts.getent_shadow['ansibulluser'][2] == '0'
+              - ansible_facts.getent_shadow['ansibulluser'][3] == '0'
+
+    # ----------------------------------------------------------------
+    # Branch B: systems where chage -m has been removed (shadow-utils >= 4.20)
+    # Verify that Ansible produces a clear, explicit failure rather than a
+    # silent success or a confusing chage error.
+    # ----------------------------------------------------------------
+    - name: test password_expire_min produces explicit failure when chage -m is unsupported
+      when: not (chage_mindays_supported | bool)
+      block:
+        - name: attempt to set password_expire_min (expected to fail)
+          user:
+            name: ansibulluser
+            password_expire_min: 5
+          register: pass_min_unsupported
+          failed_when: false
+
+        - name: assert that the task failed with a descriptive error
+          assert:
+            that:
+              - pass_min_unsupported is failed
+              - "'password_expire_min is not supported on this system' in pass_min_unsupported.msg"
+
+    # ----------------------------------------------------------------
+    # password_expire_max: tested independently, supported in all environments.
+    # shadow-utils 4.20 deprecated -M but did NOT remove it yet.
+    # ----------------------------------------------------------------
     - name: add maximum expire date for password
       user:
         name: ansibulluser
         password_expire_max: 10
       register: pass_max_1_0
 
-    - name: again add maximum expire date for password
+    - name: again add maximum expire date for password (idempotency)
       user:
         name: ansibulluser
         password_expire_max: 10
@@ -25,49 +116,12 @@
           - pass_max_1_0 is changed
           - pass_max_1_1 is not changed
 
-    - name: add minimum expire date for password
-      user:
-        name: ansibulluser
-        password_expire_min: 5
-      register: pass_min_2_0
-
-    - name: again add minimum expire date for password
-      user:
-        name: ansibulluser
-        password_expire_min: 5
-      register: pass_min_2_1
-
-    - name: validate result for minimum expire date
-      assert:
-        that:
-          - pass_min_2_0 is changed
-          - pass_min_2_1 is not changed
-
-    - name: Get shadow data for ansibulluser
+    - name: get shadow data after setting password_expire_max
       getent:
         database: shadow
         key: ansibulluser
 
-    - name: Ensure password expiration was set properly
+    - name: ensure maximum password age was set properly in shadow
       assert:
         that:
-          - ansible_facts.getent_shadow['ansibulluser'][2] == '5'
           - ansible_facts.getent_shadow['ansibulluser'][3] == '10'
-
-    - name: Set min and max at the same time
-      user:
-        name: ansibulluser
-        # also checks that assigning 0 works
-        password_expire_min: 0
-        password_expire_max: 0
-
-    - name: Get shadow data for ansibulluser
-      getent:
-        database: shadow
-        key: ansibulluser
-
-    - name: Ensure password expiration was set properly
-      assert:
-        that:
-          - ansible_facts.getent_shadow['ansibulluser'][2] == '0'
-          - ansible_facts.getent_shadow['ansibulluser'][3] == '0'
