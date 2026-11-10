@@ -46,6 +46,11 @@
       - data1_plaintext|vault(data1_password, salt=data1_salt) == data1_vaulted_string_with_id
       - data1_plaintext|vault(data1_password, salt=data1_salt) is not ansible._protomatter.tagged_with('VaultedValue')
       - data1_plaintext|vault(data1_password, salt=data1_salt, wrap_object=True) is ansible._protomatter.tagged_with('VaultedValue')
+      # the tag must be applied to the plaintext, not to the vault secret
+      - data1_plaintext|vault(data1_password, salt=data1_salt, wrap_object=True) == data1_plaintext
+      - data1_plaintext|vault(data1_password, salt=data1_salt, wrap_object=True) != data1_password
+      # the wrapped ciphertext must round-trip as a valid inline vault block
+      - data1_plaintext|vault(data1_password, salt=data1_salt, wrap_object=True)|to_yaml(vault_behavior='keep_encrypted') == "!vault |\n" ~ data1_vaulted_string_with_id|indent(2, first=True)
 
 - name: check round-trip without salt
   assert:
