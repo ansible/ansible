@@ -31,3 +31,16 @@
       that:
       - connected_test.results[0].stderr == "ran - 1"
       - connected_test.results[1].stderr == "ran - 2"
+
+- hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+  - name: test loop preserves declared ansible_connection
+    assert:
+      that:
+      - ansible_connection == "local"
+    loop:
+    - 1
+    - 2
+    - 3
