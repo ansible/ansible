@@ -1,0 +1,2 @@
+bugfixes:
+  - dnf5 - ``update_cache`` now forces the repository metadata to be refreshed, also when using the ``dnf`` module with the dnf5 backend. Previously no repository cache was expired and the cached metadata was used until ``metadata_expire`` elapsed (https://github.com/ansible/ansible/issues/87733).
