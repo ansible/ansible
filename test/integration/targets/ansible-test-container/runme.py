@@ -969,10 +969,11 @@ class DnfBootstrapper(Bootstrapper):
 
             run_command('dnf', 'update', '-y', 'policycoreutils')
 
-            # Podman 6.1.0 requires updated configuration from containers-common and a newer version of netavark.
-            # Since it doesn't have dependencies on those newer package versions, they're manually upgraded here.
+            if not os_release.version_id.startswith('8.'):
+                # Podman 6.1.0 requires updated configuration from containers-common and a newer version of netavark.
+                # Since it doesn't have dependencies on those newer package versions, they're manually upgraded here.
 
-            run_command('dnf', 'update', '-y', 'containers-common', 'netavark')
+                run_command('dnf', 'update', '-y', 'containers-common', 'netavark')
 
         run_command('dnf', 'install', '-y', *packages)
 
