@@ -1,0 +1,4 @@
+bugfixes:
+  - pip - fix idempotency when installing local packages with ``pyproject.toml`` (https://github.com/ansible/ansible/issues/86908).
+minor_changes:
+  - pip - drop support for pip versions <10.0.0
