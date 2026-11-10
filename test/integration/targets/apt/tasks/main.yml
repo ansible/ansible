@@ -3,7 +3,7 @@
 
 - name: skip test on unsupported platforms
   meta: end_play
-  when: ansible_distribution not in ('Ubuntu', 'Debian')
+  when: ansible_facts.distribution not in ('Ubuntu', 'Debian')
 
 - block:
   - import_tasks: 'apt.yml'
@@ -28,6 +28,23 @@
           name: "{{ repodir }}"
           state: absent
 
+  - name: Test python3-apt auto installation
+    block:
+      - name: Remove packages that depend on python3-apt
+        command:
+          cmd: apt remove shim-signed -y --allow-remove-essential
+        register: remove_depending
+      - import_tasks: 'autoinstall-deps.yml'
+    always:
+      - name: Reinstall shim-signed
+        apt:
+          name: shim-signed
+          state: present
+          update_cache: no
+        when: not_installed_msg not in remove_depending.stdout
+        vars:
+          not_installed_msg: "Package 'shim-signed' is not installed"
+  
   always:
     - name: Check if the target is managed by ansible-test
       stat:
