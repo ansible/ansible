@@ -147,6 +147,20 @@ options:
      type: path
      required: false
      version_added: "1.6"
+  checksum:
+    description:
+      - 'If a checksum is passed to this parameter, the digest of the
+        `deb` will be calculated (after it is downloaded) to ensure
+        its integrity and verify that the transfer completed successfully.
+        Format: <algorithm>:<checksum>, for example C(checksum="sha256:D98291AC[...]B6DC7B97").'
+      - If you worry about portability, only the sha1 algorithm is available
+        on all platforms and python versions.
+      - The Python C(hashlib) module is responsible for providing the available algorithms.
+        The choices vary based on Python version and OpenSSL version.
+      - On systems running in FIPS compliant mode, the C(md5) algorithm may be unavailable.
+    type: str
+    required: false
+    version_added: "2.21"
   autoremove:
     description:
       - If V(true), remove unused dependency packages for all module states except V(build-dep). It can also be used as the only option.
@@ -310,6 +324,11 @@ EXAMPLES = """
   ansible.builtin.apt:
     deb: /tmp/mypackage.deb
 
+- name: Install a verified .deb package
+  ansible.builtin.apt:
+    deb: /tmp/mypackage.deb
+    checksum: 'sha256:6cfd68f9160b620f26d34a82dc0f6bee28e97d6e78f61774bba63dbb143144ae'
+
 - name: Install the build dependencies for package "foo"
   ansible.builtin.apt:
     pkg: foo
@@ -318,6 +337,11 @@ EXAMPLES = """
 - name: Install a .deb package from the internet
   ansible.builtin.apt:
     deb: https://example.com/python-ppq_0.1-1_all.deb
+
+- name: Install a verified .deb package from the internet
+  ansible.builtin.apt:
+    deb: https://example.com/python-ppq_0.1-1_all.deb
+    checksum: 'sha256:6cfd68f9160b620f26d34a82dc0f6bee28e97d6e78f61774bba63dbb143144ae'
 
 - name: Remove useless packages from the cache
   ansible.builtin.apt:
@@ -1273,6 +1297,7 @@ def main():
             purge=dict(type='bool', default=False),
             package=dict(type='list', elements='str', aliases=['pkg', 'name']),
             deb=dict(type='path'),
+            checksum=dict(type='str', default=None),
             default_release=dict(type='str', aliases=['default-release']),
             install_recommends=dict(type='bool', aliases=['install-recommends']),
             force=dict(type='bool', default=False),
@@ -1516,6 +1541,22 @@ def main():
                     module.fail_json(msg="deb only supports state=present")
                 if '://' in p['deb']:
                     p['deb'] = fetch_file(module, p['deb'])
+                if p['checksum']:
+                    try:
+                        algorithm, checksum = p['checksum'].split(':', 1)
+                    except ValueError:
+                        module.fail_json(msg="The checksum parameter has to be in format <algorithm>:<checksum>", **retvals)
+
+                    actual_checksum = module.digest_from_file(p['deb'], algorithm)
+
+                    if checksum != actual_checksum:
+                        d = {
+                            'algorithm': algorithm,
+                            'expected': checksum,
+                            'actual': actual_checksum,
+                        }
+                        module.fail_json(msg="The %(algorithm)s checksum did not match: expected %(expected)s, got %(actual)s" % d, **retvals)
+
                 install_deb(module, p['deb'], cache,
                             install_recommends=install_recommends,
                             allow_unauthenticated=allow_unauthenticated,
