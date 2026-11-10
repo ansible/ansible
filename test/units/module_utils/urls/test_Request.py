@@ -13,6 +13,7 @@ from ansible.module_utils.urls import (Request, open_url, cookiejar,
                                        UnixHTTPHandler, UnixHTTPSConnection)
 from ansible.module_utils.urls import HTTPRedirectHandler
 
+from ansible.module_utils.urls import update_url_params
 import pytest
 from unittest.mock import call
 
@@ -460,3 +461,13 @@ def test_open_url(urlopen_mock, install_opener_mock, mocker):
                                      client_cert=None, client_key=None, cookies=None, use_gssapi=False,
                                      unix_socket=None, ca_path=None, unredirected_headers=None, decompress=True,
                                      ciphers=None, use_netrc=True)
+
+
+def test_params_parameter():
+    payload = {'key1': 'value1', 'key2': 'value2'}
+    r = update_url_params('https://httpbin.org/get', payload)
+    assert r == "https://httpbin.org/get?key1=value1&key2=value2"
+    r = update_url_params('https://httpbin.org/get?key1=oldValue', payload)
+    assert r == "https://httpbin.org/get?key1=value1&key2=value2"
+    r = update_url_params('https://httpbin.org/get?key2=oldValue', payload)
+    assert r == "https://httpbin.org/get?key2=value2&key1=value1"
