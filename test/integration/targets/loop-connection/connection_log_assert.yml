@@ -1,0 +1,20 @@
+- name: get connection log
+  set_fact:
+    actual: '{{ lookup("file", dummy_connection_log).splitlines() }}'
+
+- name: display connection log
+  debug:
+    msg:
+      actual: '{{ actual }}'
+      expected: '{{ expected }}'
+
+- name: assert connections were opened and closed as expected
+  assert:
+    that:
+    - actual == expected
+
+- name: reset connection log for the next test
+  file:
+    path: '{{ dummy_connection_log }}'
+    state: absent
+  delegate_to: localhost
