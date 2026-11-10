@@ -1,6 +1,15 @@
 - hosts: testhost
   gather_facts: no
   tasks:
+    - name: Evaluate expressions with undefined dictionary attributes in a lookup
+      assert:
+        that:
+          - lookup('evaluate_expression', 'foo.bar | default(1)') == 1
+          - lookup('evaluate_expression', 'foo["bar"] | default(1)') == 1
+          - lookup('evaluate_expression', 'foo.bar.baz | default(1)') == 1
+          - lookup('evaluate_expression', 'foo.bar is defined') is false
+          - lookup('evaluate_expression', 'foo.bar is undefined') is true
+
     - name: ensure a lookup expression with an embedded template resolving to a marker-containing list exposes the marker to the lookup
       assert:
         that: lookup('accept_no_markers', [a_dict.a_key, 42])[1] == 42
