@@ -1,0 +1,52 @@
+- name: Well-known sensitive headers are redacted without any configuration
+  hosts: testhost
+  gather_facts: false
+  tasks:
+    - name: pass headers in every shape a module might accept them
+      headers_module:
+        url: https://example.com
+        headers:
+          Authorization: Bearer SECRET_AUTHORIZATION
+          Cookie: session=SECRET_COOKIE
+          Proxy-Authorization: Basic SECRET_PROXY_AUTHORIZATION
+          Set-Cookie: session=SECRET_SET_COOKIE
+          WWW-Authenticate: Bearer realm=SECRET_WWW_AUTHENTICATE
+          Accept: application/json
+          X-Api-Key: UNCONFIGURED_API_KEY
+        json_headers: '{"Authorization": "Bearer SECRET_JSON_AUTHORIZATION", "Accept": "application/json"}'
+        unredirected_headers:
+          - Authorization
+        nested:
+          http_headers:
+            cookie: session=SECRET_NESTED_COOKIE
+        entries:
+          - headers:
+              AUTHORIZATION: Bearer SECRET_LIST_AUTHORIZATION
+        body:
+          Authorization: Bearer NOT_A_HEADERS_PARAMETER
+      register: result
+
+    - name: the well-known headers are redacted at any depth, and nothing else is touched
+      assert:
+        that:
+          - result.invocation.module_args.url == 'https://example.com'
+          - result.invocation.module_args.headers.Authorization == '$REDACTED$'
+          - result.invocation.module_args.headers.Cookie == '$REDACTED$'
+          - result.invocation.module_args.headers['Proxy-Authorization'] == '$REDACTED$'
+          - result.invocation.module_args.headers['Set-Cookie'] == '$REDACTED$'
+          - result.invocation.module_args.headers['WWW-Authenticate'] == '$REDACTED$'
+          # header names are matched case insensitively, at any depth
+          - result.invocation.module_args.nested.http_headers.cookie == '$REDACTED$'
+          - result.invocation.module_args.entries[0].headers.AUTHORIZATION == '$REDACTED$'
+          # headers serialized as a JSON object are redacted too
+          - (result.invocation.module_args.json_headers | from_json).Authorization == '$REDACTED$'
+          - (result.invocation.module_args.json_headers | from_json).Accept == 'application/json'
+          # non-sensitive headers, header names and non-header parameters are left alone
+          - result.invocation.module_args.headers.Accept == 'application/json'
+          - result.invocation.module_args.headers['X-Api-Key'] == 'UNCONFIGURED_API_KEY'
+          - result.invocation.module_args.unredirected_headers == ['Authorization']
+          - result.invocation.module_args.body.Authorization == 'Bearer NOT_A_HEADERS_PARAMETER'
+
+    - name: show the invocation so runme.sh can check the output for leaked values
+      debug:
+        var: result.invocation
