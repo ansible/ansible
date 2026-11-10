@@ -874,11 +874,14 @@ def main():
 
     # NOTE: socket.getfqdn() calls gethostbyaddr(socket.gethostname()), which can be
     # slow to return if the name does not resolve correctly.
+    # On macOS if the name ends with .local then "local network privacy"
+    # policies may be applied.
+    fqdn = socket.getfqdn()
     kw = dict(changed=changed, name=name,
               ansible_facts=dict(ansible_hostname=name.split('.')[0],
                                  ansible_nodename=name,
-                                 ansible_fqdn=socket.getfqdn(),
-                                 ansible_domain='.'.join(socket.getfqdn().split('.')[1:])))
+                                 ansible_fqdn=fqdn,
+                                 ansible_domain='.'.join(fqdn.split('.')[1:])))
 
     if changed:
         kw['diff'] = {'after': 'hostname = ' + name + '\n',
