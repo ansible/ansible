@@ -1,0 +1,2 @@
+minor_changes:
+  - module_environment, new keyword that adds the ability to pass environment variables for POSIX targets directly into the module instead of wrapping all task execution.
