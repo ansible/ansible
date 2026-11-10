@@ -1,0 +1,4 @@
+breaking_changes:
+  - ansible-galaxy - ``ansible-galaxy collection download`` now skips re-downloading collection artifacts when a matching file already exists. Use ``--force`` to restore the previous behavior.
+minor_changes:
+  - ansible-galaxy - Add ``--force``, ``--force-with-deps``, and ``--upgrade`` options to ``ansible-galaxy collection download``.
