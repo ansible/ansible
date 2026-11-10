@@ -1,0 +1,6 @@
+bugfixes:
+  - apt - Fix autoremove not working when redundant package changes are requested (https://github.com/ansible/ansible/pull/86245)
+  - apt - Fix purge option with state=present (https://github.com/ansible/ansible/pull/86245)
+  - apt - Fix autoremove and purge during upgrades (https://github.com/ansible/ansible/pull/86245)
+minor_changes:
+  - apt - The autoremove option takes precedence over the autoclean option. The autoclean option only works if no other options are specified. (https://github.com/ansible/ansible/pull/86245)
