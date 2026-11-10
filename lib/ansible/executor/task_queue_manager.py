@@ -17,6 +17,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import dataclasses
 import errno
 import os
@@ -229,6 +230,10 @@ class TaskQueueManager:
 
         self._workers: list[WorkerProcess | None] = []
 
+        self._pid = os.getpid()
+        self._interrupted = False
+        self._interrupt_deferred = False
+
         # signal handlers to propagate signals to workers
         signal.signal(signal.SIGTERM, self._signal_handler)
         signal.signal(signal.SIGINT, self._signal_handler)
@@ -257,6 +262,20 @@ class TaskQueueManager:
         Since the children become process leaders, signals will not
         automatically propagate to them.
         """
+        if os.getpid() != self._pid:
+            # a worker that has not installed its own handlers yet
+            signal.signal(signum, signal.SIG_DFL)
+            os.kill(os.getpid(), signum)
+            return
+
+        if signum == signal.SIGINT:
+            if self._interrupt_deferred and not self._interrupted:
+                # handled once the block ends, see _deferred_interrupt
+                self._interrupted = True
+                return
+
+            self._interrupted = True
+
         signal.signal(signum, signal.SIG_DFL)
 
         for worker in self._workers:
@@ -281,6 +300,29 @@ class TaskQueueManager:
         except OSError as e:
             signame = signal.strsignal(signum)
             display.error(f'Unable to send {signame} to {pid}: {e}')
+
+    @contextlib.contextmanager
+    def _deferred_interrupt(self) -> t.Iterator[None]:
+        """
+        Handle a SIGINT received in the block once the block ends.
+        Use around a fork: CPython discards an exception raised in an at-fork callback, and cuts the callback short.
+        """
+        self._interrupt_deferred = True
+
+        try:
+            yield
+        finally:
+            self._interrupt_deferred = False
+
+        self._check_interrupted()
+
+    def _check_interrupted(self) -> None:
+        """
+        Handle a SIGINT again if one was received: one deferred by `_deferred_interrupt`, or one whose KeyboardInterrupt was lost.
+        The handler can run in a finalizer or weakref callback, where CPython discards the exception, or in an RPC run on the main thread, which catches it.
+        """
+        if self._interrupted:
+            self._signal_handler(signal.SIGINT, None)
 
     def load_callbacks(self):
         """

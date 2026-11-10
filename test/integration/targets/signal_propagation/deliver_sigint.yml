@@ -1,0 +1,6 @@
+- hosts: all
+  gather_facts: false
+  tasks:
+    - debug:
+        msg: "{{ item }}"
+      loop: "{{ range(20) | list }}"

@@ -383,8 +383,7 @@ class StrategyBase:
 
                 worker_prc = self._workers[self._cur_worker]
                 if worker_prc is None or not worker_prc.is_alive():
-                    if worker_prc:
-                        worker_prc.close()
+                    finished_prc = worker_prc
 
                     self._blocked_hosts[host.name] = True
                     self._queued_task_cache[(host.name, task._uuid)] = {
@@ -409,8 +408,16 @@ class StrategyBase:
                         stacktrace_dir=self._tqm.stacktrace_dir
                     )
                     self._workers[self._cur_worker] = worker_prc
+
+                    if finished_prc:
+                        # only once it has left the list: the signal handler calls is_alive() on every worker there, which raises for a closed one
+                        finished_prc.close()
+
                     self._tqm.send_callback('v2_runner_on_start', host, task)
-                    worker_prc.start()
+
+                    with self._tqm._deferred_interrupt():
+                        worker_prc.start()
+
                     display.debug("worker is %d (out of %d available)" % (self._cur_worker + 1, len(self._workers)))
                     queued = True
 
@@ -534,6 +541,8 @@ class StrategyBase:
         Reads results off the final queue and takes appropriate action
         based on the result (executing callbacks, updating state, etc.).
         """
+        self._tqm._check_interrupted()
+
         ret_results = []
         cur_pass = 0
 
@@ -759,6 +768,8 @@ class StrategyBase:
 
         display.debug("waiting for pending results...")
         while self._pending_results > 0 and not self._tqm._terminated:
+            # before the check for dead workers: a SIGINT whose KeyboardInterrupt was lost has stopped them
+            self._tqm._check_interrupted()
 
             if self._tqm.has_dead_workers():
                 raise AnsibleError("A worker was found in a dead state")
