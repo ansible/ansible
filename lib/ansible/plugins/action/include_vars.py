@@ -10,6 +10,7 @@ import pathlib
 import ansible.constants as C
 from ansible.errors import AnsibleError
 from ansible._internal._datatag._tags import SourceWasEncrypted
+from ansible.module_utils.datatag import deprecate_value
 from ansible.module_utils.common.text.converters import to_native
 from ansible.plugins.action import ActionBase, VariableLayer
 from ansible.utils.vars import combine_vars
@@ -139,7 +140,11 @@ class ActionModule(ActionBase):
 
         if failed:
             result['failed'] = failed
-            result['message'] = err_msg
+            result['message'] = deprecate_value(err_msg,
+                                                msg="The return value `message` is deprecated",
+                                                version="2.25",
+                                                help_text="Use `msg` instead")
+            result['msg'] = err_msg
         elif self.hash_behaviour is not None and self.hash_behaviour != C.DEFAULT_HASH_BEHAVIOUR:
             merge_hashes = self.hash_behaviour == 'merge'
             existing_variables = {k: v for k, v in task_vars.items() if k in results}

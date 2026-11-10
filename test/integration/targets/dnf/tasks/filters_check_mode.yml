@@ -33,10 +33,10 @@
         that:
           - update_no_filter is changed
           - '"would have if not in check mode" in update_no_filter.msg'
-          - '"Installed: toaster-1.2.3.5-1.el8.noarch" in update_no_filter.results'
-          - '"Installed: oven-1.2.3.5-1.el8.noarch" in update_no_filter.results'
-          - '"Removed: toaster-1.2.3.4-1.el8.noarch" in update_no_filter.results'
-          - '"Removed: oven-1.2.3.4-1.el8.noarch" in update_no_filter.results'
+          - '"Installed: toaster-1.2.3.5-1.el8.noarch" in update_no_filter.transactions'
+          - '"Installed: oven-1.2.3.5-1.el8.noarch" in update_no_filter.transactions'
+          - '"Removed: toaster-1.2.3.4-1.el8.noarch" in update_no_filter.transactions'
+          - '"Removed: oven-1.2.3.4-1.el8.noarch" in update_no_filter.transactions'
 
     - name: Ask for pending updates with security=true (check_mode)
       dnf:
@@ -54,10 +54,10 @@
         that:
           - update_security is changed
           - '"would have if not in check mode" in update_security.msg'
-          - '"Installed: toaster-1.2.3.5-1.el8.noarch" in update_security.results'
-          - '"Removed: toaster-1.2.3.4-1.el8.noarch" in update_security.results'
-          - '"Installed: oven-1.2.3.5-1.el8.noarch" not in update_security.results'
-          - '"Removed: oven-1.2.3.4-1.el8.noarch" not in update_security.results'
+          - '"Installed: toaster-1.2.3.5-1.el8.noarch" in update_security.transactions'
+          - '"Removed: toaster-1.2.3.4-1.el8.noarch" in update_security.transactions'
+          - '"Installed: oven-1.2.3.5-1.el8.noarch" not in update_security.transactions'
+          - '"Removed: oven-1.2.3.4-1.el8.noarch" not in update_security.transactions'
 
     - name: Ask for pending updates with bugfix=true (check_mode)
       dnf:
@@ -75,10 +75,10 @@
         that:
           - update_bugfix is changed
           - '"would have if not in check mode" in update_bugfix.msg'
-          - '"Installed: toaster-1.2.3.5-1.el8.noarch" not in update_bugfix.results'
-          - '"Removed: toaster-1.2.3.4-1.el8.noarch" not in update_bugfix.results'
-          - '"Installed: oven-1.2.3.5-1.el8.noarch" in update_bugfix.results'
-          - '"Removed: oven-1.2.3.4-1.el8.noarch" in update_bugfix.results'
+          - '"Installed: toaster-1.2.3.5-1.el8.noarch" not in update_bugfix.transactions'
+          - '"Removed: toaster-1.2.3.4-1.el8.noarch" not in update_bugfix.transactions'
+          - '"Installed: oven-1.2.3.5-1.el8.noarch" in update_bugfix.transactions'
+          - '"Removed: oven-1.2.3.4-1.el8.noarch" in update_bugfix.transactions'
 
     - name: Ask for pending updates with bugfix=true and security=true (check_mode)
       dnf:
@@ -97,10 +97,10 @@
         that:
           - update_bugfix is changed
           - '"would have if not in check mode" in update_bugfix.msg'
-          - '"Installed: toaster-1.2.3.5-1.el8.noarch" in update_bugfix.results'
-          - '"Removed: toaster-1.2.3.4-1.el8.noarch" in update_bugfix.results'
-          - '"Installed: oven-1.2.3.5-1.el8.noarch" in update_bugfix.results'
-          - '"Removed: oven-1.2.3.4-1.el8.noarch" in update_bugfix.results'
+          - '"Installed: toaster-1.2.3.5-1.el8.noarch" in update_bugfix.transactions'
+          - '"Removed: toaster-1.2.3.4-1.el8.noarch" in update_bugfix.transactions'
+          - '"Installed: oven-1.2.3.5-1.el8.noarch" in update_bugfix.transactions'
+          - '"Removed: oven-1.2.3.4-1.el8.noarch" in update_bugfix.transactions'
 
   always:
     - name: Remove installed packages
