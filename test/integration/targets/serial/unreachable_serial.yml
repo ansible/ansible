@@ -1,0 +1,18 @@
+- hosts: unreachable,testhost
+  gather_facts: false
+  tasks:
+    - ping:
+
+
+- hosts: unreachable,testhost,testhost2
+  gather_facts: false
+  serial: 2
+  tasks:
+    - ping:
+
+    - name: fail the batch [unreachable, testhost]
+      fail:
+      when: inventory_hostname == 'testhost'
+
+    - debug:
+        msg: SHOULD NOT HAPPEN

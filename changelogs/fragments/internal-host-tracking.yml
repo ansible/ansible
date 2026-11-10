@@ -1,0 +1,3 @@
+bugfixes:
+  - playbook - a batch (or play) in which all hosts that ran failed or became unreachable now correctly ends the playbook, even if it also contains hosts that went unreachable in earlier plays
+  - meta - ``clear_host_errors`` now makes unreachable hosts available to subsequent plays
