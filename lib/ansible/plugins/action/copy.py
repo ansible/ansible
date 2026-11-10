@@ -521,6 +521,9 @@ class ActionModule(ActionBase):
         dest = self._remote_expand_user(dest)
 
         implicit_directories = set()
+        # Initialize diff list to accumulate diffs from all files in recursive copies
+        diffs = []
+
         for source_full, source_rel in source_files['files']:
             # copy files over.  This happens first as directories that have
             # a file do not need to be created later
@@ -542,8 +545,13 @@ class ActionModule(ActionBase):
             while (source_rel := os.path.dirname(source_rel)) != '':
                 implicit_directories.add(source_rel)
 
-            if 'diff' in result and not result['diff']:
-                del result['diff']
+            # The type of the "diff" key depends on whether the file changed:
+            # - for changed files, _copy_file() returns a list of diffs
+            # - for unchanged files, it invokes the file module, which returns a dict
+            diff = module_return.get('diff')
+            if isinstance(diff, list):
+                diffs.extend(diff)
+
             module_executed = True
             changed = changed or module_return.get('changed', False)
 
@@ -605,6 +613,9 @@ class ActionModule(ActionBase):
                 result['dest'] = result['path']
         else:
             result.update(dict(dest=dest, src=source, changed=changed))
+            # Include accumulated diffs, but preserve result shape of ordinary copies (no empty diff key)
+            if diffs:
+                result['diff'] = diffs
 
         # Delete tmp path
         self._remove_tmp_path(self._connection._shell.tmpdir)
