@@ -1,0 +1,2 @@
+bugfixes:
+  - file - fail with a clear error message when a path's parent component is not a directory, instead of raising an unhandled ``NotADirectoryError`` (https://github.com/ansible/ansible/pull/87289).
