@@ -137,7 +137,7 @@ def enforce_state(module, params):
     if key and not key.endswith('\n'):
         key += '\n'
 
-    sanity_check(module, host, key, sshkeygen)
+    sanity_check(module, host, key)
 
     found, replace_or_add, found_line = search_for_host_key(module, host, key, path, sshkeygen)
 
@@ -192,46 +192,59 @@ def enforce_state(module, params):
     return results
 
 
-def sanity_check(module, host, key, sshkeygen):
+def _hashed_host_matches(host, host_field):
+    """Return True if OpenSSH ``|1|salt|digest`` host_field matches host."""
+    # Format: |1|<base64 salt>|<base64 hmac-sha1(salt, host)>
+    parts = host_field.split('|')
+    if len(parts) != 4 or parts[1] != '1':
+        return False
+    try:
+        salt = base64.b64decode(parts[2])
+        digest = base64.b64decode(parts[3])
+    except (TypeError, ValueError):
+        return False
+    expected = hmac.new(salt, to_bytes(host), hashlib.sha1).digest()
+    return hmac.compare_digest(expected, digest)
+
+
+def key_entry_matches_host(host, key_line):
+    """Return True if a known_hosts entry line refers to host."""
+    key_line = key_line.strip()
+    if not key_line or key_line.startswith('#'):
+        return False
+    try:
+        parsed = normalize_known_hosts_key(key_line)
+    except (IndexError, ValueError):
+        return False
+
+    host_field = parsed['host']
+    if host_field.startswith('|1|'):
+        return _hashed_host_matches(host, host_field)
+
+    candidates = [h.strip().lower() for h in host_field.split(',') if h.strip()]
+    return host.lower() in candidates
+
+
+def sanity_check(module, host, key):
     """Check supplied key is sensible
 
     host and key are parameters provided by the user; If the host
     provided is inconsistent with the key supplied, then this function
     quits, providing an error to the user.
-    sshkeygen is the path to ssh-keygen, found earlier with get_bin_path
     """
     # If no key supplied, we're doing a removal, and have nothing to check here.
     if not key:
         return
-    # Rather than parsing the key ourselves, get ssh-keygen to do it
-    # (this is essential for hashed keys, but otherwise useful, as the
-    # key question is whether ssh-keygen thinks the key matches the host).
-
-    # The approach is to write the key to a temporary file,
-    # and then attempt to look up the specified host in that file.
 
     if re.search(r'\S+(\s+)?,(\s+)?', host):
         module.fail_json(msg="Comma separated list of names is not supported. "
                              "Please pass a single name to lookup in the known_hosts file.")
 
-    with tempfile.NamedTemporaryFile(mode='w+') as outf:
-        try:
-            outf.write(key)
-            outf.flush()
-        except OSError as ex:
-            raise Exception(f"Failed to write to temporary file {outf.name!r}.") from ex
+    for line in key.splitlines():
+        if key_entry_matches_host(host, line):
+            return
 
-        sshkeygen_command = [sshkeygen, '-F', host, '-f', outf.name]
-        rc, stdout, stderr = module.run_command(sshkeygen_command)
-
-    if stdout == '':  # host not found
-        results = {
-            "msg": "Host parameter does not match hashed host field in supplied key",
-            "rc": rc,
-        }
-        if stderr:
-            results["stderr"] = stderr
-        module.fail_json(**results)
+    module.fail_json(msg="Host parameter does not match hashed host field in supplied key")
 
 
 def search_for_host_key(module, host, key, path, sshkeygen):

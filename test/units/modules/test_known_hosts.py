@@ -1,14 +1,26 @@
 from __future__ import annotations
 
+import base64
+import hashlib
+import hmac
 import os
 import tempfile
-from ansible.module_utils import basic
 
 import unittest
-from ansible.module_utils.common.text.converters import to_bytes
-from ansible.module_utils.basic import AnsibleModule
 
-from ansible.modules.known_hosts import compute_diff, sanity_check
+from ansible.module_utils import basic
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.text.converters import to_bytes
+from ansible.modules.known_hosts import (
+    compute_diff,
+    hash_host_key,
+    key_entry_matches_host,
+    sanity_check,
+)
+
+
+class _SanityCheckFailed(Exception):
+    """Raised by the stubbed ``fail_json`` to stop execution like the real one does."""
 
 
 class KnownHostsDiffTestCase(unittest.TestCase):
@@ -99,11 +111,63 @@ class KnownHostsDiffTestCase(unittest.TestCase):
             'after': 'two.example.com ssh-rsa BBBBetc\n',
         })
 
-    def test_sanity_check(self):
+
+class KnownHostsSanityCheckTestCase(unittest.TestCase):
+
+    def _module(self):
         basic._load_params = lambda: {}
-        # Module used internally to execute ssh-keygen system executable
         module = AnsibleModule(argument_spec={})
+        failure = {}
+
+        def fail_json(msg, **kwargs):
+            failure.update(kwargs, msg=msg)
+            raise _SanityCheckFailed()
+
+        module.fail_json = fail_json
+        return module, failure
+
+    def test_sanity_check_cleartext_match(self):
+        module, _failure = self._module()
         host = '10.0.0.1'
         key = '%s ssh-rsa ASDF foo@bar' % (host,)
-        keygen = module.get_bin_path('ssh-keygen')
-        sanity_check(module, host, key, keygen)
+        sanity_check(module, host, key)
+
+    def test_sanity_check_cleartext_alias_list(self):
+        module, _failure = self._module()
+        key = 'host.example.com,10.0.0.1 ssh-rsa ASDF'
+        sanity_check(module, 'host.example.com', key)
+        sanity_check(module, '10.0.0.1', key)
+
+    def test_sanity_check_host_mismatch(self):
+        module, failure = self._module()
+        with self.assertRaises(_SanityCheckFailed):
+            sanity_check(module, '10.0.0.1', 'other.example.com ssh-rsa ASDF')
+        self.assertEqual(failure['msg'], 'Host parameter does not match hashed host field in supplied key')
+
+    def test_sanity_check_hashed_match(self):
+        module, _failure = self._module()
+        host = 'host.example.com'
+        key = hash_host_key(host, '%s ssh-rsa ASDF' % host)
+        self.assertTrue(key.startswith('|1|') or '|1|' in key)
+        sanity_check(module, host, key)
+
+    def test_sanity_check_hashed_mismatch(self):
+        module, failure = self._module()
+        key = hash_host_key('host.example.com', 'host.example.com ssh-rsa ASDF')
+        with self.assertRaises(_SanityCheckFailed):
+            sanity_check(module, 'other.example.com', key)
+        self.assertEqual(failure['msg'], 'Host parameter does not match hashed host field in supplied key')
+
+    def test_key_entry_matches_host_helpers(self):
+        host = 'example.com'
+        salt = os.urandom(20)
+        digest = hmac.new(salt, to_bytes(host), hashlib.sha1).digest()
+        hashed = '|1|%s|%s' % (
+            base64.b64encode(salt).decode(),
+            base64.b64encode(digest).decode(),
+        )
+        self.assertTrue(key_entry_matches_host(host, '%s ssh-rsa AAAA' % hashed))
+        self.assertFalse(key_entry_matches_host('other.com', '%s ssh-rsa AAAA' % hashed))
+        self.assertTrue(key_entry_matches_host(host, 'example.com,10.0.0.1 ssh-rsa AAAA'))
+        self.assertFalse(key_entry_matches_host(host, ''))
+        self.assertFalse(key_entry_matches_host(host, '# comment'))
