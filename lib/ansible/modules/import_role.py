@@ -38,11 +38,6 @@ options:
       - File to load from a role's C(defaults/) directory.
     type: str
     default: main
-  allow_duplicates:
-    description:
-      - Overrides the role's metadata setting to allow using a role more than once with the same parameters.
-    type: bool
-    default: yes
   handlers_from:
     description:
       - File to load from a role's C(handlers/) directory.
