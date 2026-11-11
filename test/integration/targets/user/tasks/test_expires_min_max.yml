@@ -2,6 +2,11 @@
 - name: Test setting maximum expiration
   when: ansible_facts.os_family in ['RedHat', 'Debian']
   block:
+    - name: determine supported features
+      set_fact:
+        # Fedora 45 has shadow-utils 4.20.0, which drops support for min password expiration (the `-m` option).
+        supports_min_expires: "{{ ansible_distribution != 'Fedora' }}"
+
     - name: create user
       user:
         name: ansibulluser
@@ -30,28 +35,36 @@
         name: ansibulluser
         password_expire_min: 5
       register: pass_min_2_0
+      when: supports_min_expires
 
     - name: again add minimum expire date for password
       user:
         name: ansibulluser
         password_expire_min: 5
       register: pass_min_2_1
+      when: supports_min_expires
 
     - name: validate result for minimum expire date
       assert:
         that:
           - pass_min_2_0 is changed
           - pass_min_2_1 is not changed
+      when: supports_min_expires
 
     - name: Get shadow data for ansibulluser
       getent:
         database: shadow
         key: ansibulluser
 
-    - name: Ensure password expiration was set properly
+    - name: Ensure password min expiration was set properly
       assert:
         that:
           - ansible_facts.getent_shadow['ansibulluser'][2] == '5'
+      when: supports_min_expires
+
+    - name: Ensure password max expiration was set properly
+      assert:
+        that:
           - ansible_facts.getent_shadow['ansibulluser'][3] == '10'
 
     - name: Set min and max at the same time
@@ -60,14 +73,26 @@
         # also checks that assigning 0 works
         password_expire_min: 0
         password_expire_max: 0
+      when: supports_min_expires
+
+    - name: Set max to zero
+      user:
+        name: ansibulluser
+        password_expire_max: 0
+      when: not supports_min_expires
 
     - name: Get shadow data for ansibulluser
       getent:
         database: shadow
         key: ansibulluser
 
-    - name: Ensure password expiration was set properly
+    - name: Ensure password min expiration was set properly
       assert:
         that:
           - ansible_facts.getent_shadow['ansibulluser'][2] == '0'
+      when: supports_min_expires
+
+    - name: Ensure password max expiration was set properly
+      assert:
+        that:
           - ansible_facts.getent_shadow['ansibulluser'][3] == '0'
