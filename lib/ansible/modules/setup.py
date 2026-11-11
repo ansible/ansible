@@ -104,7 +104,7 @@ notes:
     - The filter option filters only the first level subkey below ansible_facts.
     - If the target host is Windows, you will not currently have the ability to use
       O(filter) as this is provided by a simpler implementation of the module.
-    - This module should be run with elevated privileges on BSD systems to gather facts like ansible_product_version.
+    - This module should be run with elevated privileges on BSD systems to gather facts like ansible_facts.product_version.
     - For more information about delegated facts,
       please check U(https://docs.ansible.com/ansible/latest/user_guide/playbooks_delegation.html#delegating-facts).
 author:

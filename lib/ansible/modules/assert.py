@@ -75,7 +75,7 @@ author:
 EXAMPLES = r"""
 - name: A single condition can be supplied as string instead of list
   ansible.builtin.assert:
-    that: "ansible_os_family != 'RedHat'"
+    that: "ansible_facts.os_family != 'RedHat'"
 
 - name: Use yaml multiline strings to ease escaping
   ansible.builtin.assert:

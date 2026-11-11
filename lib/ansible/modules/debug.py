@@ -73,7 +73,7 @@ author:
 EXAMPLES = r"""
 - name: Print the gateway for each host when defined
   ansible.builtin.debug:
-    msg: System {{ inventory_hostname }} has gateway {{ ansible_default_ipv4.gateway }}
+    msg: System {{ inventory_hostname }} has gateway {{ ansible_facts.default_ipv4.gateway }}
   when: ansible_default_ipv4.gateway is defined
 
 - name: Get uptime information

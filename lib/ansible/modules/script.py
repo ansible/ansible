@@ -111,5 +111,5 @@ EXAMPLES = r"""
     executable: python3
 
 - name: Run a Powershell script on a Windows host
-  script: subdirectories/under/path/with/your/playbook/script.ps1
+  ansible.builtin.script: subdirectories/under/path/with/your/playbook/script.ps1
 """
