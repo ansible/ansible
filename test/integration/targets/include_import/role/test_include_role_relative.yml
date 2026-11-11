@@ -1,0 +1,43 @@
+- name: Test relative task files in included roles
+  hosts: testhost
+  gather_facts: false
+  tasks:
+    - name: Include the default entry point
+      include_role:
+        name: relative_tasks
+      vars:
+        selected_file: default.yml
+        expected_marker: default
+
+    - name: Include role entries with different file extensions
+      include_role:
+        name: relative_tasks
+        tasks_from: "{{ role_case.entry }}"
+      vars:
+        selected_file: "{{ role_case.file }}"
+        expected_marker: "{{ role_case.marker }}"
+      loop:
+        - {entry: main, file: default.yml, marker: default}
+        - {entry: subdir/main.yml, file: sibling.yml, marker: sibling}
+        - {entry: subdir/main, file: sibling.yml, marker: sibling}
+        - {entry: subdir/main, file: role_collision.yml, marker: role}
+        - {entry: subdir/main, file: source_collision.yml, marker: source}
+        - {entry: subdir/main, file: playbook_only.yml, marker: playbook}
+        - {entry: subdir/main, file: nested/first.yml, marker: nested}
+      loop_control:
+        loop_var: role_case
+
+    - name: Include a role through a parent role
+      include_role:
+        name: relative_tasks_parent
+
+    - name: Set the entry file before including the role
+      set_fact:
+        relative_entry: subdir/mutable.yml
+
+    - name: Resolve the entry before the role changes its variable
+      include_role:
+        name: relative_tasks
+        tasks_from: "{{ relative_entry }}"
+      vars:
+        expected_marker: sibling

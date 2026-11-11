@@ -1,0 +1,10 @@
+- name: Test missing task files in included roles
+  hosts: testhost
+  gather_facts: false
+  tasks:
+    - name: Include a role which includes a missing task file
+      include_role:
+        name: relative_tasks
+        tasks_from: subdir/main
+      vars:
+        selected_file: missing_relative_tasks.yml

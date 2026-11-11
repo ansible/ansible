@@ -47,6 +47,20 @@ ANSIBLE_STRATEGY='free' ansible-playbook role/test_include_role.yml -i inventory
 ansible-playbook -v role/test_include_role_vars_from.yml 2>&1 | tee test_include_role_vars_from.out
 test "$(grep -E -c 'Expected a string for vars_from but got' test_include_role_vars_from.out)" = 1
 
+# Relative tasks_from entry points and task-source search precedence (#84328)
+for strategy in linear free; do
+    ANSIBLE_STRATEGY="$strategy" ansible-playbook role/test_include_role_relative.yml -i inventory "$@"
+    ANSIBLE_STRATEGY="$strategy" ansible-playbook role/test_import_role_relative.yml -i inventory "$@"
+    ANSIBLE_STRATEGY="$strategy" ansible-playbook role/test_include_role_handler_paths.yml -i inventory "$@"
+done
+
+set +e
+ansible-playbook role/test_include_role_missing.yml -i inventory "$@" > test_include_role_missing.out 2>&1
+missing_status=$?
+set -e
+test "$missing_status" -ne 0
+grep -q "Could not find or access '.*/role/missing_relative_tasks.yml'" test_include_role_missing.out
+
 ## Max Recursion Depth
 # https://github.com/ansible/ansible/issues/23609
 ANSIBLE_STRATEGY='linear' ansible-playbook test_role_recursion.yml -i inventory "$@"

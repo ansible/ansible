@@ -1,0 +1,23 @@
+- name: Preserve relative task lookup from role handlers
+  hosts: testhost
+  gather_facts: false
+  tasks:
+    - name: Register a role handler
+      include_role:
+        name: relative_tasks
+      vars:
+        selected_file: default.yml
+        expected_marker: default
+
+    - name: Notify the handler
+      debug:
+        msg: Trigger the handler path check
+      changed_when: true
+      notify: Resolve legacy handler task path
+
+    - name: Run the handler
+      meta: flush_handlers
+
+    - name: Check that role tasks take precedence over the playbook
+      assert:
+        that: handler_collision_result.msg == 'role tasks'
