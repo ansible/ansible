@@ -97,6 +97,7 @@ lib/ansible/modules/stat.py validate-modules:parameter-invalid
 lib/ansible/modules/systemd_service.py validate-modules:parameter-invalid
 lib/ansible/modules/uri.py codespell:aNULL  # cipher name
 lib/ansible/modules/user.py codespell:Fromm  # contributor's name
+lib/ansible/modules/user.py codespell:chage  # shadow-utils command name
 lib/ansible/modules/user.py pylint:ansible-bad-function
 lib/ansible/modules/user.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/parsing/ajson.py pylint:ansible-deprecated-version-comment  # Deprecated core version ('2.23') found: deprecate ajson
@@ -199,6 +200,7 @@ test/integration/targets/template/files/foo.dos.txt line-endings
 test/integration/targets/template/templates/encoding_1252.j2 no-smart-quotes
 test/integration/targets/template/templates/encoding_1252.j2 no-unwanted-characters
 test/integration/targets/unicode/unicode.yml no-smart-quotes
+test/integration/targets/user/tasks/test_expires_min_max.yml codespell:chage  # shadow-utils command name
 test/integration/targets/win_app_control/files/New-AnsiblePowerShellSignature.ps1 pslint:PSCustomUseLiteralPath  # We want to use wildcard matching with -Path
 test/integration/targets/win_app_control/files/New-AnsiblePowerShellSignature.ps1 shebang  # We want to run with pwsh from the environment in the test
 test/integration/targets/win_app_control/files/Set-ManifestSignature.ps1 shebang  # We want to run with pwsh from the environment in the test
@@ -305,6 +307,7 @@ test/units/modules/test_mount_facts.py mypy-3.12:index
 test/units/modules/test_mount_facts.py mypy-3.13:index
 test/units/modules/test_mount_facts.py mypy-3.14:index
 test/units/modules/test_mount_facts.py mypy-3.15:index
+test/units/modules/test_user.py codespell:chage  # shadow-utils command name
 test/units/utils/collection_loader/fixtures/collections/ansible_collections/testns/testcoll/plugins/action/my_action.py pylint:relative-beyond-top-level
 test/units/utils/collection_loader/fixtures/collections/ansible_collections/testns/testcoll/plugins/module_utils/my_util.py boilerplate  # test requires missing boilerplate
 test/units/utils/collection_loader/fixtures/collections/ansible_collections/testns/testcoll/plugins/modules/__init__.py empty-init  # testing that collections don't need inits
