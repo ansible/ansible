@@ -20,7 +20,7 @@ from __future__ import annotations
 import os
 
 from ansible import constants as C
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, AnsibleFileNotFound
 from ansible._internal._task import HostTaskResult
 from ansible.inventory.host import Host
 from ansible.module_utils.common.text.converters import to_text
@@ -140,7 +140,20 @@ class IncludedFile:
                     if original_task.action in C._ACTION_INCLUDE_TASKS:
                         include_file = None
 
-                        if original_task._parent:
+                        # Search the resolved task source after its role dependency chain, before
+                        # legacy ancestor lookups can select a playbook-relative fallback.
+                        if original_task._role and original_task._role.from_include and not isinstance(original_task, Handler):
+                            try:
+                                include_file = loader.path_dwim_relative_stack(
+                                    original_task.get_search_path(),
+                                    'tasks',
+                                    include_utr.include_file,
+                                    is_role=True,
+                                )
+                            except AnsibleFileNotFound:
+                                pass  # Preserve legacy ancestor lookup and missing-file handling.
+
+                        if include_file is None and original_task._parent:
                             # handle relative includes by walking up the list of parent include
                             # tasks and checking the relative result to see if it exists
                             parent_include = original_task._parent

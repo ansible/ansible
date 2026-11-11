@@ -1,0 +1,3 @@
+- name: Check selected task source
+  assert:
+    that: expected_marker == 'parent'
