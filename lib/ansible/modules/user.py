@@ -263,13 +263,8 @@ options:
     password_expire_min:
         description:
             - Minimum number of days between password change.
-            - Supported on Linux only, where it is applied with C(chage --mindays).
-            - Only supported with shadow-utils earlier than 4.20. C(chage --mindays) was removed in
-              shadow-utils 4.20, so using this option on a system with shadow-utils 4.20 or later
-              fails.
-            - Omitting this option avoids C(chage --mindays) entirely, so the remaining
-              O(password_expire_max) and O(password_expire_warn) options keep working with
-              shadow-utils 4.20 and later.
+            - Only supported on Linux, with shadow-utils before 4.20, applied with C(change --mindays),
+              so it fails on higher versions.
         type: int
         version_added: "2.11"
     password_expire_warn:
@@ -1195,7 +1190,7 @@ class User(object):
         command_name = 'chage'
         cmd = [self.module.get_bin_path(command_name, True)]
         if min_needs_change:
-            cmd.extend(["-m", self.password_expire_min])
+            cmd.extend(["--mindays", self.password_expire_min])
         if max_needs_change:
             cmd.extend(["-M", self.password_expire_max])
         if warn_needs_change:
@@ -3596,9 +3591,13 @@ def main():
             pass  # target state reached, nothing to do
         else:
             if rc != 0:
+                if 'mindays' in err.lower():
+                    err = (
+                        'password_expire_min is not supported on this system: '
+                        'chage does not provide --mindays (removed in shadow-utils 4.20 and later)'
+                    )
                 module.fail_json(name=user.name, msg=err, rc=rc)
-            else:
-                result['changed'] = True
+            result['changed'] = True
 
     module.exit_json(**result)
 

@@ -46,6 +46,23 @@
         that:
           - ansible_facts.getent_shadow['ansibulluser'][3] == '10'
 
+    - name: password_expire_min fails clearly without --mindays
+      when: "'--mindays' not in (chage_help.stdout + chage_help.stderr)"
+      block:
+        - name: attempt minimum expire date when unsupported
+          user:
+            name: ansibulluser
+            password_expire_min: 5
+          register: pass_min_unsupported
+          ignore_errors: true
+
+        - name: validate clear error when --mindays is missing
+          assert:
+            that:
+              - pass_min_unsupported is failed
+              - "'password_expire_min is not supported' in pass_min_unsupported.msg"
+              - "'--mindays' in pass_min_unsupported.msg"
+
     - name: Test setting minimum expiration
       when: "'--mindays' in chage_help.stdout + chage_help.stderr"
       block:
