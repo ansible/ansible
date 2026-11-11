@@ -307,7 +307,6 @@ test/units/modules/test_mount_facts.py mypy-3.12:index
 test/units/modules/test_mount_facts.py mypy-3.13:index
 test/units/modules/test_mount_facts.py mypy-3.14:index
 test/units/modules/test_mount_facts.py mypy-3.15:index
-test/units/modules/test_user.py codespell:chage  # shadow-utils command name
 test/units/utils/collection_loader/fixtures/collections/ansible_collections/testns/testcoll/plugins/action/my_action.py pylint:relative-beyond-top-level
 test/units/utils/collection_loader/fixtures/collections/ansible_collections/testns/testcoll/plugins/module_utils/my_util.py boilerplate  # test requires missing boilerplate
 test/units/utils/collection_loader/fixtures/collections/ansible_collections/testns/testcoll/plugins/modules/__init__.py empty-init  # testing that collections don't need inits
