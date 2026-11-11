@@ -1,0 +1,2 @@
+bugfixes:
+  - password hashing - correct the size of the ``crypt_data`` structure passed to ``crypt_r``, which was too small for the glibc definition and could allow the library to write past the end of the buffer.
