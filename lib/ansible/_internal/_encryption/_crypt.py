@@ -54,7 +54,8 @@ class CryptFacade:
         self._setup()
 
     class _CryptData(ctypes.Structure):
-        _fields_ = [('_opaque', ctypes.c_char * 131072)]
+        # For glibc, the size of this structure is 131232 bytes. For libxcrypt, it's closer to 32K. Choose the larger.
+        _fields_ = [('_opaque', ctypes.c_char * 131232)]
 
     @property
     def has_crypt_gensalt(self) -> bool:
