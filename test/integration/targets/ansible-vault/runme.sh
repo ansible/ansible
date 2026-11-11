@@ -547,8 +547,8 @@ echo "rc was $WRONG_RC (1 is expected)"
 EXPECTED_ERROR='Vault format unhexlify error: Non-hexadecimal digit found'
 ansible-playbook "$@" -i invalid_format/inventory --vault-id invalid_format/vault-secret invalid_format/broken-host-vars-tasks.yml 2>&1 | grep "${EXPECTED_ERROR}"
 
-EXPECTED_ERROR='Vault format unhexlify error: Odd-length string'
-ansible-playbook "$@" -i invalid_format/inventory --vault-id invalid_format/vault-secret invalid_format/broken-group-vars-tasks.yml 2>&1 | grep "${EXPECTED_ERROR}"
+EXPECTED_ERROR='Vault format unhexlify error: (Odd-length string|Odd number of hexadecimal digits)'
+ansible-playbook "$@" -i invalid_format/inventory --vault-id invalid_format/vault-secret invalid_format/broken-group-vars-tasks.yml 2>&1 | grep -E "${EXPECTED_ERROR}"
 
 # Run playbook with vault file with unicode in filename (https://github.com/ansible/ansible/issues/50316)
 ansible-playbook -i ../../inventory -v "$@" --vault-password-file vault-password test_utf8_value_in_filename.yml
