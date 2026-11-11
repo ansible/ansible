@@ -33,7 +33,7 @@ from ansible._internal import _task
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.executor.task_executor import TaskExecutor
-from ansible.executor.task_queue_manager import FinalQueue, STDIN_FILENO, STDOUT_FILENO, STDERR_FILENO
+from ansible.executor.task_queue_manager import FinalQueue, STDIN_FILENO, STDOUT_FILENO, STDERR_FILENO, WORKER_SIGNALS
 from ansible.inventory.host import Host
 from ansible.module_utils._internal import _debug
 from ansible.parsing.dataloader import DataLoader
@@ -200,8 +200,11 @@ class WorkerProcess(multiprocessing_context.Process):  # type: ignore[name-defin
         _debug.register_for_stacktrace(self._stacktrace_dir)
 
         # propagate signals
-        signal.signal(signal.SIGINT, self._term)
-        signal.signal(signal.SIGTERM, self._term)
+        for sig in WORKER_SIGNALS:
+            signal.signal(sig, self._term)
+
+        # see TQM._deferred_signals
+        signal.pthread_sigmask(signal.SIG_UNBLOCK, WORKER_SIGNALS)
 
         try:
             with _task.TaskContext.create(task=self._task, task_vars=self._task_vars, host_name=self._host.name):
