@@ -7,6 +7,15 @@
         name: ansibulluser
         state: present
 
+    # chage --mindays was removed in shadow-utils 4.20, so password_expire_min can only
+    # be exercised where the underlying option still exists.
+    # https://github.com/ansible/ansible/issues/87428
+    - name: check whether chage supports --mindays
+      command: chage --help
+      register: chage_help
+      changed_when: false
+      failed_when: false
+
     - name: add maximum expire date for password
       user:
         name: ansibulluser
@@ -25,49 +34,81 @@
           - pass_max_1_0 is changed
           - pass_max_1_1 is not changed
 
-    - name: add minimum expire date for password
-      user:
-        name: ansibulluser
-        password_expire_min: 5
-      register: pass_min_2_0
-
-    - name: again add minimum expire date for password
-      user:
-        name: ansibulluser
-        password_expire_min: 5
-      register: pass_min_2_1
-
-    - name: validate result for minimum expire date
-      assert:
-        that:
-          - pass_min_2_0 is changed
-          - pass_min_2_1 is not changed
-
     - name: Get shadow data for ansibulluser
       getent:
         database: shadow
         key: ansibulluser
 
-    - name: Ensure password expiration was set properly
+    # this also covers that chage --mindays is not used when password_expire_min is omitted,
+    # otherwise the tasks above would fail on shadow-utils 4.20 and later
+    - name: Ensure maximum password expiration was set properly
       assert:
         that:
-          - ansible_facts.getent_shadow['ansibulluser'][2] == '5'
           - ansible_facts.getent_shadow['ansibulluser'][3] == '10'
 
-    - name: Set min and max at the same time
-      user:
-        name: ansibulluser
-        # also checks that assigning 0 works
-        password_expire_min: 0
-        password_expire_max: 0
+    - name: password_expire_min fails clearly without --mindays
+      when: "'--mindays' not in (chage_help.stdout + chage_help.stderr)"
+      block:
+        - name: attempt minimum expire date when unsupported
+          user:
+            name: ansibulluser
+            password_expire_min: 5
+          register: pass_min_unsupported
+          ignore_errors: true
 
-    - name: Get shadow data for ansibulluser
-      getent:
-        database: shadow
-        key: ansibulluser
+        - name: validate clear error when --mindays is missing
+          assert:
+            that:
+              - pass_min_unsupported is failed
+              - "'password_expire_min is not supported' in pass_min_unsupported.msg"
+              - "'--mindays' in pass_min_unsupported.msg"
 
-    - name: Ensure password expiration was set properly
-      assert:
-        that:
-          - ansible_facts.getent_shadow['ansibulluser'][2] == '0'
-          - ansible_facts.getent_shadow['ansibulluser'][3] == '0'
+    - name: Test setting minimum expiration
+      when: "'--mindays' in chage_help.stdout + chage_help.stderr"
+      block:
+        - name: add minimum expire date for password
+          user:
+            name: ansibulluser
+            password_expire_min: 5
+          register: pass_min_2_0
+
+        - name: again add minimum expire date for password
+          user:
+            name: ansibulluser
+            password_expire_min: 5
+          register: pass_min_2_1
+
+        - name: validate result for minimum expire date
+          assert:
+            that:
+              - pass_min_2_0 is changed
+              - pass_min_2_1 is not changed
+
+        - name: Get shadow data for ansibulluser
+          getent:
+            database: shadow
+            key: ansibulluser
+
+        - name: Ensure password expiration was set properly
+          assert:
+            that:
+              - ansible_facts.getent_shadow['ansibulluser'][2] == '5'
+              - ansible_facts.getent_shadow['ansibulluser'][3] == '10'
+
+        - name: Set min and max at the same time
+          user:
+            name: ansibulluser
+            # also checks that assigning 0 works
+            password_expire_min: 0
+            password_expire_max: 0
+
+        - name: Get shadow data for ansibulluser
+          getent:
+            database: shadow
+            key: ansibulluser
+
+        - name: Ensure password expiration was set properly
+          assert:
+            that:
+              - ansible_facts.getent_shadow['ansibulluser'][2] == '0'
+              - ansible_facts.getent_shadow['ansibulluser'][3] == '0'

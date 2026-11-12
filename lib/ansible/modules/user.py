@@ -263,7 +263,8 @@ options:
     password_expire_min:
         description:
             - Minimum number of days between password change.
-            - Supported on Linux only.
+            - Only supported on Linux, with shadow-utils before 4.20, applied with C(change --mindays),
+              so it fails on higher versions.
         type: int
         version_added: "2.11"
     password_expire_warn:
@@ -384,7 +385,7 @@ EXAMPLES = r"""
     name: ram19
     password_expire_max: 10
 
-- name: Set minimum expiration date for password
+- name: Set minimum expiration date for password (requires shadow-utils < 4.20)
   ansible.builtin.user:
     name: pushkar15
     password_expire_min: 5
@@ -1189,7 +1190,7 @@ class User(object):
         command_name = 'chage'
         cmd = [self.module.get_bin_path(command_name, True)]
         if min_needs_change:
-            cmd.extend(["-m", self.password_expire_min])
+            cmd.extend(["--mindays", self.password_expire_min])
         if max_needs_change:
             cmd.extend(["-M", self.password_expire_max])
         if warn_needs_change:
@@ -3590,9 +3591,13 @@ def main():
             pass  # target state reached, nothing to do
         else:
             if rc != 0:
+                if 'mindays' in err.lower():
+                    err = (
+                        'password_expire_min is not supported on this system: '
+                        'chage does not provide --mindays (removed in shadow-utils 4.20 and later)'
+                    )
                 module.fail_json(name=user.name, msg=err, rc=rc)
-            else:
-                result['changed'] = True
+            result['changed'] = True
 
     module.exit_json(**result)
 
