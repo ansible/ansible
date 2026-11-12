@@ -61,3 +61,32 @@
       assert:
         that:
           - ansible_facts.getent_shadow['ansibulluser'][1] == '0'
+
+    # setting a password updates the last changed field to today, so the module must apply
+    # password_expire_last_changed after the password for the user to be forced to change it
+    - name: set a new password and force a change at next login
+      user:
+        name: ansibulluser
+        password: "$6$rounds=656000$TT4O7jz2M57npccl$33LF6FcUMSW11qrESXL1HX0BS.bsiT6aenFLLiVpsQh6hDtI9pJh5iY7x8J7ePkN4fP8hmElidHXaeD51pbGS."
+        password_expire_last_changed: 0
+      register: pass_last_changed_3_0
+
+    - name: set the same password and force a change at next login again
+      user:
+        name: ansibulluser
+        password: "$6$rounds=656000$TT4O7jz2M57npccl$33LF6FcUMSW11qrESXL1HX0BS.bsiT6aenFLLiVpsQh6hDtI9pJh5iY7x8J7ePkN4fP8hmElidHXaeD51pbGS."
+        password_expire_last_changed: 0
+      register: pass_last_changed_3_1
+
+    - name: Get shadow data for ansibulluser after password update
+      getent:
+        database: shadow
+        key: ansibulluser
+
+    - name: Ensure the password was set and a change is still forced at next login
+      assert:
+        that:
+          - pass_last_changed_3_0 is changed
+          - pass_last_changed_3_1 is not changed
+          - ansible_facts.getent_shadow['ansibulluser'][0].startswith('$6$rounds=656000$TT4O7jz2M57npccl$')
+          - ansible_facts.getent_shadow['ansibulluser'][1] == '0'

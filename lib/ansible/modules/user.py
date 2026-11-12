@@ -1223,7 +1223,8 @@ class User(object):
 
         return self.execute_command(cmd)
 
-    def get_shadow_info(self):
+    def get_shadow_info(self) -> tuple[str, int | str, int | str]:
+        """Return the password hash, account expiry and last password change fields from the shadow database."""
         passwd = ''
         expires = ''
         last_changed = ''
@@ -3020,7 +3021,9 @@ class AIX(User):
 
         passwd = to_native(b_passwd)
         expires = to_native(b_expires) or -1
-        return passwd, expires
+        # AIX stores lastupdate in seconds and password_expire_last_changed is not supported here
+        last_changed = ''
+        return passwd, expires, last_changed
 
 
 class HPUX(User):
