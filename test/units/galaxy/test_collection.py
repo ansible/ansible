@@ -1011,7 +1011,9 @@ def test_extract_tar_file_missing_parent_dir(tmp_tarfile):
     output_file = os.path.join(output_dir, to_bytes(filename))
 
     collection._extract_tar_file(tfile, filename, output_dir, temp_dir, checksum)
-    os.path.isfile(output_file)
+
+    assert os.path.isdir(output_dir)
+    assert os.path.isfile(output_file)
 
 
 def test_extract_tar_file_outside_dir(tmp_path_factory):

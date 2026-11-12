@@ -166,7 +166,11 @@ def test_Request_open_ftp(urlopen_mock, install_opener_mock, mocker):
     mocker.patch('ansible.module_utils.urls.ParseResultDottedDict.as_list', side_effect=AssertionError)
 
     # Using ftp scheme should prevent the AssertionError side effect to fire
-    r = Request().open('GET', 'ftp://foo@ansible.com/')
+    Request().open('GET', 'ftp://foo@ansible.com/')
+
+    req = urlopen_mock.call_args[0][0]
+    assert req.type == 'ftp'
+    assert req.get_full_url() == 'ftp://foo@ansible.com/'
 
 
 def test_Request_open_headers(urlopen_mock, install_opener_mock):
