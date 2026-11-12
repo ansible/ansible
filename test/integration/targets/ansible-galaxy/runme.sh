@@ -566,6 +566,30 @@ f_ansible_galaxy_status \
 
 ## end ansible-galaxy collection list
 
+f_ansible_galaxy_status \
+    "collection install with spaces in the version range"
+
+    cat <<EOF > version-range.yml
+collections:
+  - name: ansible_test.museum
+    version: '>= 1.0.0, < 2.0.0'
+EOF
+
+    ansible-galaxy collection install -r version-range.yml -p ./install --offline "$@" | tee out.txt
+
+    grep 'Nothing to do' out.txt
+
+f_ansible_galaxy_status \
+    "collection install with an invalid version range"
+
+    for version_spec in "'>=1.0.0,'" "'>=1.0.0, '" "''" "\"''\"" "'<'" "'True'" 'True'; do
+        printf 'collections:\n  - name: ansible_test.museum\n    version: %s\n' "${version_spec}" > version-range.yml
+
+        ansible-galaxy collection install -r version-range.yml -p ./install --offline "$@" 2>&1 | tee out.txt || echo "expected failure"
+
+        grep '\[ERROR\]: Invalid version' out.txt
+    done
+
 
 popd # ${galaxy_testdir}
 
