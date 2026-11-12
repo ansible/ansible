@@ -84,7 +84,10 @@ options:
 extends_documentation_fragment: action_common_attributes
 attributes:
     check_mode:
-        support: full
+        details: >-
+          Enabling or disabling a unit that C(systemctl) cannot change, for example a unit without an C([Install]) section,
+          is reported as changed in check mode.
+        support: partial
     diff_mode:
         support: none
     platform:
@@ -511,7 +514,7 @@ def main():
             # do we need to enable the service?
             enabled = False
             (rc, out, err) = module.run_command("%s is-enabled '%s' -l" % (systemctl, unit))
-            enabled_runtime = rc == 0 and out.rstrip() == "enabled-runtime"
+            unit_file_state = out.rstrip()
 
             # check systemctl result or if it is a init script
             if rc == 0:
@@ -537,20 +540,20 @@ def main():
 
             # Change enable/disable if needed
             if enabled != module.params['enabled']:
-                result['changed'] = True
+                enabled_changed = True
                 if not module.check_mode:
                     (rc, out, err) = module.run_command("%s %s '%s'" % (systemctl, action, unit))
                     if rc != 0:
                         module.fail_json(msg="Unable to %s service %s: %s" % (action, unit, out + err))
 
-                    if enabled_runtime:
-                        # a unit enabled at runtime without an [Install] section (for example linked by a generator)
-                        # cannot be enabled persistently, systemctl enable is a no-op in that case
-                        systemctl_enable_cmd = [systemctl, "is-enabled", unit, "-l"]
-                        (rc, out, err) = module.run_command(systemctl_enable_cmd)
-                        if rc == 0 and out.rstrip() == "enabled-runtime":
-                            result['changed'] = False
+                    # systemctl can succeed without changing anything, for example for a unit without an [Install] section.
+                    # The -l output also lists the symlinks of indirect and alias units, so their changes are detected too.
+                    if unit_file_state:
+                        (rc, out, err) = module.run_command(f"{systemctl} is-enabled '{unit}' -l")
+                        enabled_changed = out.rstrip() != unit_file_state
 
+                if enabled_changed:
+                    result['changed'] = True
                 result['enabled'] = not enabled
 
         # set service state if requested

@@ -28,3 +28,4 @@
   loop:
     - /run/systemd/system/multi-user.target.wants/qux.service
     - /etc/systemd/system/qux.service
+    - /usr/lib/systemd/system/qux.service
