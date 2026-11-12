@@ -97,7 +97,6 @@ lib/ansible/modules/stat.py validate-modules:parameter-invalid
 lib/ansible/modules/systemd_service.py validate-modules:parameter-invalid
 lib/ansible/modules/uri.py codespell:aNULL  # cipher name
 lib/ansible/modules/user.py codespell:Fromm  # contributor's name
-lib/ansible/modules/user.py codespell:chage  # shadow-utils command name
 lib/ansible/modules/user.py pylint:ansible-bad-function
 lib/ansible/modules/user.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/parsing/ajson.py pylint:ansible-deprecated-version-comment  # Deprecated core version ('2.23') found: deprecate ajson
