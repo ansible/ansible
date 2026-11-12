@@ -68,6 +68,16 @@ class TestCopyResultExclude(unittest.TestCase):
         task.check_mode = True
 
         self.mock_am = ActionModule(task, self.connection, self.play_context, loader=None, templar=None, shared_loader_obj=None)
+        self.mock_am._low_level_execute_command = Mock(return_value={})
+        self.mock_am.display = Mock()
+
+        result = self.mock_am.run()
+
+        # in check mode raw never runs the command, it reports itself as skipped instead
+        self.mock_am._low_level_execute_command.assert_not_called()
+        self.assertTrue(result['skipped'])
+        self.assertFalse(result['changed'])
+        self.assertEqual(result['msg'], 'Task `raw` did not execute due to check_mode')
 
     def test_raw_test_environment_is_None(self):
 

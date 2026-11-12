@@ -20,6 +20,7 @@ from __future__ import annotations
 import unittest
 from ansible.errors import AnsibleParserError
 from ansible.playbook import Playbook
+from ansible.playbook.play import Play
 from ansible.vars.manager import VariableManager
 
 from units.mock.loader import DictDataLoader
@@ -39,6 +40,10 @@ class TestPlaybook(unittest.TestCase):
         })
         p = Playbook.load("test_file.yml", loader=fake_loader)
         plays = p.get_plays()
+
+        self.assertEqual(len(plays), 1)
+        self.assertIsInstance(plays[0], Play)
+        self.assertEqual(plays[0].hosts, 'all')
 
     def test_bad_playbook_files(self):
         fake_loader = DictDataLoader({
