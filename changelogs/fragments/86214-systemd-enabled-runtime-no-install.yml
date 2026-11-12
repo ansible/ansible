@@ -1,0 +1,4 @@
+bugfixes:
+  - systemd_service - do not report a change when enabling or disabling a unit does not change its state,
+    for example when enabling a unit without an ``[Install]`` section that is enabled at runtime by a generator,
+    or when disabling a static unit (https://github.com/ansible/ansible/issues/86214).
