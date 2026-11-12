@@ -1,0 +1,2 @@
+bugfixes:
+  - yaml - quoted ``!unsafe`` scalars with leading zeros, such as ``'00'`` and ``'000123456'``, remain strings instead of being parsed as octal integers.
