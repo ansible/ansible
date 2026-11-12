@@ -44,10 +44,11 @@ def meets_requirements(version: str, requirements: str) -> bool:
     }
 
     for req in requirements.split(','):
+        req = req.strip()
         op_pos = 2 if len(req) > 1 and req[1] == '=' else 1
         op = op_map.get(req[:op_pos])
 
-        requirement = req[op_pos:]
+        requirement = req[op_pos:].lstrip()
         if not op:
             requirement = req
             op = operator.eq

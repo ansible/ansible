@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-galaxy - allow spaces after the commas and operators in a collection version range, for example ``>=1.0.0, <2.0.0``, instead of failing with ``Non integer values in LooseVersion`` (https://github.com/ansible/ansible/issues/87917).
