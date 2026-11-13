@@ -499,9 +499,9 @@ def mode_filter(st, mode, exact, module):
     return bool(st_mode & mode)
 
 
-def ownerfilter(st, uids, gids):
+def ownerfilter(st: os.stat_result, uids: set[int], gids: set[int]) -> bool:
     """filter files by owner uid set and/or group gid set"""
-    return (uids is None or st.st_uid in uids) and (gids is None or st.st_gid in gids)
+    return (not uids or st.st_uid in uids) and (not gids or st.st_gid in gids)
 
 
 def statinfo(st):
@@ -646,18 +646,20 @@ def main():
     prune_paths = {os.path.abspath(p) for p in params['prune'] or []}
 
     uids = set(params['uid'] or [])
-    try:
-        uids.update(pwd.getpwnam(name).pw_uid for name in (params['username'] or []))
-    except KeyError as err:
-        module.fail_json(msg="Failed to resolve username: %s" % err)
-    uids = uids or None
-
     gids = set(params['gid'] or [])
-    try:
-        gids.update(grp.getgrnam(name).gr_gid for name in (params['group'] or []))
-    except KeyError as err:
-        module.fail_json(msg="Failed to resolve group: %s" % err)
-    gids = gids or None
+    bad_names = []
+    for name in (params['username'] or []):
+        try:
+            uids.add(pwd.getpwnam(name).pw_uid)
+        except KeyError:
+            bad_names.append('user: %s' % name)
+    for name in (params['group'] or []):
+        try:
+            gids.add(grp.getgrnam(name).gr_gid)
+        except KeyError:
+            bad_names.append('group: %s' % name)
+    if bad_names:
+        module.fail_json(msg="Failed to resolve: %s" % ', '.join(bad_names))
 
     now = time.time()
     msg = 'All paths examined'
@@ -729,9 +731,9 @@ def main():
                         if (pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex']) and
                                 agefilter(st, now, age, params['age_stamp']) and
                                 sizefilter(st, size) and
-                                contentfilter(fsname, params['contains'], params['encoding'], params['read_whole_file']) and
                                 mode_filter(st, params['mode'], params['exact_mode'], module) and
-                                ownerfilter(st, uids, gids)):
+                                ownerfilter(st, uids, gids) and
+                                contentfilter(fsname, params['contains'], params['encoding'], params['read_whole_file'])):
 
                             r.update(statinfo(st))
                             if params['get_checksum']:

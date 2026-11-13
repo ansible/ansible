@@ -698,11 +698,9 @@
 
 - name: look up test user primary group name
   command: id -gn {{ test_user_name }}
-  register: test_group_name_output
+  register:
+    test_group_name: _task.result.stdout
   changed_when: false
-
-- set_fact:
-    test_group_name: "{{ test_group_name_output.stdout }}"
 
 - name: create file owned by test user
   copy:
@@ -756,10 +754,10 @@
     group: "{{ test_group_name }}"
   register: find_by_groupname
 
-- name: assert group name filter returns at least the test user file
+- name: assert group name filter matches the test user file
   assert:
     that:
-      - find_by_groupname.matched >= 1
+      - find_by_groupname.matched == 1
 
 # --- filter by GID ---
 
@@ -769,10 +767,10 @@
     gid: "{{ test_user.group | int }}"
   register: find_by_gid
 
-- name: assert GID filter works
+- name: assert GID filter matches the test user file
   assert:
     that:
-      - find_by_gid.matched >= 1
+      - find_by_gid.matched == 1
 
 # --- combined username + group ---
 
@@ -849,7 +847,7 @@
   assert:
     that:
       - find_bad_user is failed
-      - "'Failed to resolve username' in find_bad_user.msg"
+      - "'Failed to resolve' in find_bad_user.msg"
 
 # --- non-existent group fails ---
 
@@ -864,7 +862,7 @@
   assert:
     that:
       - find_bad_group is failed
-      - "'Failed to resolve group' in find_bad_group.msg"
+      - "'Failed to resolve' in find_bad_group.msg"
 
 # --- username as a list ---
 
