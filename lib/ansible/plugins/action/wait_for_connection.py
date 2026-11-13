@@ -18,8 +18,9 @@
 # CI-required python3 boilerplate
 from __future__ import annotations
 
+import math
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import datetime
 
 from ansible.module_utils.common.text.converters import to_text
 from ansible.plugins.action import ActionBase
@@ -42,21 +43,39 @@ class ActionModule(ActionBase):
     DEFAULT_TIMEOUT = 600
 
     def do_until_success_or_timeout(self, what, timeout, connect_timeout, what_desc, sleep=1):
-        max_end_time = datetime.now(timezone.utc) + timedelta(seconds=timeout)
+        max_end_time = time.monotonic() + timeout
+        error = None
+        while True:
+            time_left = max_end_time - time.monotonic()
+            if time_left <= 0:
+                break
 
-        e = None
-        while datetime.now(timezone.utc) < max_end_time:
+            # Connection plugin timeouts are whole seconds, so give the attempt
+            # the time left rounded up. It can then finish up to one second
+            # past the deadline.
+            attempt_timeout = min(connect_timeout, math.ceil(time_left))
+            if attempt_timeout < 1:
+                # SSH treats 0 as no timeout; a non-positive connect_timeout is
+                # not a usable budget either.
+                break
+
             try:
-                what(connect_timeout)
+                what(attempt_timeout)
                 if what_desc:
                     display.debug("wait_for_connection: %s success" % what_desc)
                 return
             except Exception as e:
                 error = e  # PY3 compatibility to store exception for use outside of this block
+                time_left = max_end_time - time.monotonic()
+                if time_left <= 0:
+                    break
+                sleep_time = min(sleep, time_left)
                 if what_desc:
-                    display.debug("wait_for_connection: %s fail (expected), retrying in %d seconds..." % (what_desc, sleep))
-                time.sleep(sleep)
+                    display.debug("wait_for_connection: %s fail (expected), retrying in %.1f seconds..." % (what_desc, sleep_time))
+                time.sleep(sleep_time)
 
+        if error is None:
+            raise TimedOutException("timed out waiting for %s" % what_desc)
         raise TimedOutException("timed out waiting for %s: %s" % (what_desc, error))
 
     def run(self, tmp=None, task_vars=None):
@@ -77,7 +96,14 @@ class ActionModule(ActionBase):
         result = super(ActionModule, self).run(tmp, task_vars)
         del tmp  # tmp no longer has any effect
 
-        def ping_module_test(connect_timeout):
+        original_connection_timeout = None
+        original_reconnection_retries = None
+        if self._connection.has_option('timeout'):
+            original_connection_timeout = self._connection.get_option('timeout')
+        if self._connection.has_option('reconnection_retries'):
+            original_reconnection_retries = self._connection.get_option('reconnection_retries')
+
+        def ping_module_test(attempt_timeout):
             """ Test ping module, if available """
             display.vvv("wait_for_connection: attempting ping module test")
             # re-run interpreter discovery if we ran it in the first iteration
@@ -88,6 +114,9 @@ class ActionModule(ActionBase):
                 self._connection.reset()
             except AttributeError:
                 pass
+
+            if original_connection_timeout is not None:
+                self._connection.set_option('timeout', attempt_timeout)
 
             ping_result = self._execute_module(module_name='ansible.legacy.ping', module_args=dict(), task_vars=task_vars)
 
@@ -105,12 +134,21 @@ class ActionModule(ActionBase):
             if hasattr(self._connection, 'transport_test'):
                 self.do_until_success_or_timeout(self._connection.transport_test, timeout, connect_timeout, what_desc="connection port up", sleep=sleep)
 
+            # The outer loop owns retries, so do not let the connection plugin retry inside one attempt.
+            if original_reconnection_retries is not None:
+                self._connection.set_option('reconnection_retries', 0)
+
             # Use the ping module test to determine end-to-end connectivity
             self.do_until_success_or_timeout(ping_module_test, timeout, connect_timeout, what_desc="ping module test", sleep=sleep)
 
         except TimedOutException as e:
             result['failed'] = True
             result['msg'] = to_text(e)
+        finally:
+            if original_connection_timeout is not None:
+                self._connection.set_option('timeout', original_connection_timeout)
+            if original_reconnection_retries is not None:
+                self._connection.set_option('reconnection_retries', original_reconnection_retries)
 
         elapsed = datetime.now() - start
         result['elapsed'] = elapsed.seconds
