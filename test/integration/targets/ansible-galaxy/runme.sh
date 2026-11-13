@@ -566,6 +566,49 @@ f_ansible_galaxy_status \
 
 ## end ansible-galaxy collection list
 
+f_ansible_galaxy_status \
+    "collection install with spaces in the version range"
+
+    cat <<EOF > version-range.yml
+collections:
+  - name: ansible_test.museum
+    version: '>= 1.0.0, < 2.0.0'
+EOF
+
+    ansible-galaxy collection install -r version-range.yml -p ./install --offline "$@" | tee out.txt
+
+    grep 'Nothing to do' out.txt
+
+f_ansible_galaxy_status \
+    "collection install with an invalid version specifier"
+
+    for version_spec in "'>=1.0.0,'" "'>=1.0.0, '" "''" "\"''\"" "'<'" "'True'" 'True' '1.0' 'null'; do
+        expected_repr="${version_spec}"
+        if [[ "${version_spec}" == "null" ]]; then
+            expected_repr="None"
+        fi
+
+        printf 'collections:\n  - name: ansible_test.museum\n    version: %s\n' "${version_spec}" > version-range.yml
+
+        set +e
+        ANSIBLE_FORCE_COLOR=0 ansible-galaxy collection install -r version-range.yml -p ./install --offline "$@" 2>&1 | tee out.txt
+        rc="$?"
+        set -e
+
+        [[ "${rc}" -ne 0 ]]
+        grep -Fx "[ERROR]: Invalid version for the collection 'ansible_test.museum': ${expected_repr}" out.txt
+        grep -Fx "Use '*' or a string of comma-separated version requirements, for example '>= 1.0.0, <2.0.0'." out.txt
+    done
+
+    set +e
+    ANSIBLE_FORCE_COLOR=0 ansible-galaxy collection install 'ansible_test.not_installed:>=1.0.0,' -p ./install --offline "$@" 2>&1 | tee out.txt
+    rc="$?"
+    set -e
+
+    [[ "${rc}" -ne 0 ]]
+    grep -Fx "[ERROR]: Invalid version for the collection 'ansible_test.not_installed': '>=1.0.0,'" out.txt
+    grep -Fx "Use '*' or a string of comma-separated version requirements, for example '>= 1.0.0, <2.0.0'." out.txt
+
 
 popd # ${galaxy_testdir}
 

@@ -1,0 +1,8 @@
+bugfixes:
+  - >-
+    ansible-galaxy - allow spaces in collection version ranges, for example ``>= 1.0.0, <2.0.0``
+    (https://github.com/ansible/ansible/issues/87917).
+  - >-
+    ansible-galaxy - validate Galaxy collection version specifiers up front so malformed or non-string
+    values such as ``>=1.0.0,``, ``<``, ``""``, or ``true`` fail with an ``Invalid version`` error
+    instead of raising an unexpected exception (https://github.com/ansible/ansible/pull/87918).

@@ -29,6 +29,7 @@ if t.TYPE_CHECKING:
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.galaxy.api import GalaxyAPI
+from ansible.galaxy.dependency_resolution.versioning import is_valid_version_spec
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.module_utils.common.arg_spec import ArgumentSpecValidator
 from ansible.plugins.loader import _does_collection_support_ansible_version
@@ -444,6 +445,12 @@ class _ComputedReqKindsMixin:
                 'Collections requirement entry should contain '
                 "the key 'name' if it's requested from a Galaxy-like "
                 'index server.',
+            )
+
+        if req_type == 'galaxy' and not is_valid_version_spec(req_version):
+            raise AnsibleError(
+                f"Invalid version for the collection '{req_name}': {req_version!r}\n\n"
+                "Use '*' or a string of comma-separated version requirements, for example '>= 1.0.0, <2.0.0'."
             )
 
         if req_type != 'galaxy' and req_source is None:
