@@ -131,8 +131,8 @@ EXAMPLES = r"""
   vars:
     params:
       files:
-        - '{{ansible_facts.distribution}}.yaml'
-        - '{{ansible_facts.os_family}}.yaml'
+        - '{{ansible_distribution}}.yaml'
+        - '{{ansible_os_family}}.yaml'
         - default.yaml
       paths:
         - 'vars'

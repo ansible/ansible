@@ -212,7 +212,7 @@ EXAMPLES = """
     name: example
     types: deb
     uris: https://download.example.com/linux/ubuntu
-    suites: '{{ ansible_facts["distribution_release"] }}'
+    suites: '{{ ansible_distribution_release }}'
     components: stable
     architectures: amd64
     signed_by: https://download.example.com/linux/ubuntu/gpg
