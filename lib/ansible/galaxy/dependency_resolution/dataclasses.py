@@ -449,8 +449,8 @@ class _ComputedReqKindsMixin:
 
         if req_type == 'galaxy' and not is_valid_version_spec(req_version):
             raise AnsibleError(
-                f"Invalid version {req_version!r} for the collection '{req_name}'. "
-                "Use '*' or a string of comma-separated version requirements, for example '>=1.0.0,<2.0.0'."
+                f"Invalid version for the collection '{req_name}': {req_version!r}\n\n"
+                "Use '*' or a string of comma-separated version requirements, for example '>= 1.0.0, <2.0.0'."
             )
 
         if req_type != 'galaxy' and req_source is None:
