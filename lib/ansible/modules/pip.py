@@ -248,14 +248,14 @@ EXAMPLES = """
 - name: Run a module inside a virtual environment
   block:
     - name: Ensure the virtual environment exists
-      pip:
+      ansible.builtin.pip:
         name: psutil
         virtualenv: "{{ venv_dir }}"
         # On Debian-based systems the correct python*-venv package must be installed to use the `venv` module.
         virtualenv_command: "{{ ansible_python_interpreter }} -m venv"
 
     - name: Run a module inside the virtual environment
-      wait_for:
+      ansible.builtin.wait_for:
         port: 22
       vars:
         # Alternatively, use a block to affect multiple tasks, or use set_fact to affect the remainder of the playbook.

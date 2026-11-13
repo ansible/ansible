@@ -105,7 +105,7 @@ EXAMPLES = r"""
 
 # Example showing how to refresh inventory during play
 - name: Reload inventory, useful with dynamic inventories when play makes changes to the existing hosts
-  cloud_guest:            # this is fake module
+  ns.col.cloud_guest:            # this is fake module
     name: newhost
     state: present
 

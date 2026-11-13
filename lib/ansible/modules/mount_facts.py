@@ -86,11 +86,11 @@ author:
 
 EXAMPLES = """
 - name: Get non-local devices
-  mount_facts:
+  ansible.builtin.mount_facts:
     devices: "[!/]*"
 
 - name: Get FUSE subtype mounts
-  mount_facts:
+  ansible.builtin.mount_facts:
     fstypes:
       - "fuse.*"
 
@@ -108,12 +108,12 @@ EXAMPLES = """
         - nfs4
 
 - name: Get mounts from a non-default location
-  mount_facts:
+  ansible.builtin.mount_facts:
     sources:
       - /usr/etc/fstab
 
 - name: Get mounts from the mount binary
-  mount_facts:
+  ansible.builtin.mount_facts:
     sources:
       - mount
     mount_binary: /sbin/mount
