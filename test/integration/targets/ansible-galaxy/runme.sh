@@ -591,7 +591,7 @@ f_ansible_galaxy_status \
         printf 'collections:\n  - name: ansible_test.museum\n    version: %s\n' "${version_spec}" > version-range.yml
 
         set +e
-        ansible-galaxy collection install -r version-range.yml -p ./install --offline "$@" 2>&1 | tee out.txt
+        ANSIBLE_FORCE_COLOR=0 ansible-galaxy collection install -r version-range.yml -p ./install --offline "$@" 2>&1 | tee out.txt
         rc="$?"
         set -e
 
@@ -601,7 +601,7 @@ f_ansible_galaxy_status \
     done
 
     set +e
-    ansible-galaxy collection install 'ansible_test.not_installed:>=1.0.0,' -p ./install --offline "$@" 2>&1 | tee out.txt
+    ANSIBLE_FORCE_COLOR=0 ansible-galaxy collection install 'ansible_test.not_installed:>=1.0.0,' -p ./install --offline "$@" 2>&1 | tee out.txt
     rc="$?"
     set -e
 
