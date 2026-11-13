@@ -174,6 +174,40 @@ options:
         type: list
         elements: path
         version_added: "2.23"
+    username:
+        description:
+            - Select files owned by the specified user name or names.
+            - A file matches when its owner is any of the listed values.
+            - Names that do not exist on the remote system cause the task to fail.
+            - May be combined with O(uid) to match either by name or numeric id.
+        type: list
+        elements: str
+        version_added: "2.23"
+    uid:
+        description:
+            - Select files owned by the specified numeric user id or ids.
+            - A file matches when its owner is any of the listed values.
+            - May be combined with O(username) to match either by name or numeric id.
+        type: list
+        elements: int
+        version_added: "2.23"
+    group:
+        description:
+            - Select files owned by the specified group name or names.
+            - A file matches when its group is any of the listed values.
+            - Names that do not exist on the remote system cause the task to fail.
+            - May be combined with O(gid) to match either by name or numeric id.
+        type: list
+        elements: str
+        version_added: "2.23"
+    gid:
+        description:
+            - Select files owned by the specified numeric group id or ids.
+            - A file matches when its group is any of the listed values.
+            - May be combined with O(group) to match either by name or numeric id.
+        type: list
+        elements: int
+        version_added: "2.23"
 extends_documentation_fragment: [action_common_attributes, checksum_common]
 attributes:
     check_mode:
@@ -267,6 +301,27 @@ EXAMPLES = r"""
       - /proc
       - /sys
       - /dev
+
+- name: Find all files owned by user 'deploy' under /opt
+  ansible.builtin.find:
+    paths: /opt
+    recurse: true
+    username: deploy
+
+- name: Find files owned by UID 1234 and group 'www-data'
+  ansible.builtin.find:
+    paths: /var/www
+    recurse: true
+    uid: 1234
+    group: www-data
+
+- name: Find files owned by either 'alice' or 'bob'
+  ansible.builtin.find:
+    paths: /shared
+    recurse: true
+    username:
+      - alice
+      - bob
 """
 
 RETURN = r"""
@@ -444,6 +499,11 @@ def mode_filter(st, mode, exact, module):
     return bool(st_mode & mode)
 
 
+def ownerfilter(st: os.stat_result, uids: set[int], gids: set[int]) -> bool:
+    """filter files by owner uid set and/or group gid set"""
+    return (not uids or st.st_uid in uids) and (not gids or st.st_gid in gids)
+
+
 def statinfo(st):
     pw_name = ""
     gr_name = ""
@@ -524,6 +584,10 @@ def main():
             encoding=dict(type='str'),
             limit=dict(type='int'),
             prune=dict(type='list', elements='path'),
+            username=dict(type='list', elements='str'),
+            uid=dict(type='list', elements='int'),
+            group=dict(type='list', elements='str'),
+            gid=dict(type='list', elements='int'),
         ),
         supports_check_mode=True,
     )
@@ -580,6 +644,23 @@ def main():
         module.fail_json(msg="limit cannot be %d (use None for unlimited)" % params['limit'])
 
     prune_paths = {os.path.abspath(p) for p in params['prune'] or []}
+
+    uids = set(params['uid'] or [])
+    gids = set(params['gid'] or [])
+    bad_names = []
+    for name in (params['username'] or []):
+        try:
+            uids.add(pwd.getpwnam(name).pw_uid)
+        except KeyError:
+            bad_names.append('user: %s' % name)
+    for name in (params['group'] or []):
+        try:
+            gids.add(grp.getgrnam(name).gr_gid)
+        except KeyError:
+            bad_names.append('group: %s' % name)
+    if bad_names:
+        module.fail_json(msg="Failed to resolve: %s" % ', '.join(bad_names))
+
     now = time.time()
     msg = 'All paths examined'
     looked = 0
@@ -624,7 +705,8 @@ def main():
                     if params['file_type'] == 'any':
                         if (pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex']) and
                                 agefilter(st, now, age, params['age_stamp']) and
-                                mode_filter(st, params['mode'], params['exact_mode'], module)):
+                                mode_filter(st, params['mode'], params['exact_mode'], module) and
+                                ownerfilter(st, uids, gids)):
 
                             r.update(statinfo(st))
                             if stat.S_ISREG(st.st_mode) and params['get_checksum']:
@@ -639,7 +721,8 @@ def main():
                     elif stat.S_ISDIR(st.st_mode) and params['file_type'] == 'directory':
                         if (pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex']) and
                                 agefilter(st, now, age, params['age_stamp']) and
-                                mode_filter(st, params['mode'], params['exact_mode'], module)):
+                                mode_filter(st, params['mode'], params['exact_mode'], module) and
+                                ownerfilter(st, uids, gids)):
 
                             r.update(statinfo(st))
                             filelist.append(r)
@@ -648,8 +731,9 @@ def main():
                         if (pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex']) and
                                 agefilter(st, now, age, params['age_stamp']) and
                                 sizefilter(st, size) and
-                                contentfilter(fsname, params['contains'], params['encoding'], params['read_whole_file']) and
-                                mode_filter(st, params['mode'], params['exact_mode'], module)):
+                                mode_filter(st, params['mode'], params['exact_mode'], module) and
+                                ownerfilter(st, uids, gids) and
+                                contentfilter(fsname, params['contains'], params['encoding'], params['read_whole_file'])):
 
                             r.update(statinfo(st))
                             if params['get_checksum']:
@@ -659,7 +743,8 @@ def main():
                     elif stat.S_ISLNK(st.st_mode) and params['file_type'] == 'link':
                         if (pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex']) and
                                 agefilter(st, now, age, params['age_stamp']) and
-                                mode_filter(st, params['mode'], params['exact_mode'], module)):
+                                mode_filter(st, params['mode'], params['exact_mode'], module) and
+                                ownerfilter(st, uids, gids)):
 
                             r.update(statinfo(st))
                             filelist.append(r)
