@@ -500,7 +500,8 @@
   assert:
     that:
       - apt_result is failed
-      - "apt_result.msg is match('Failed to update apt cache after 1 retries: .+')"
+      - "'Failed to update apt cache after 1 retries: ' in apt_result.msg"
+      - "'W:Failed to fetch http://127.0.0.1:1/debian' in apt_result.msg"
 
 - name: Clean up
   file:
