@@ -1,0 +1,2 @@
+bugfixes:
+  - apt - report ``unknown reason`` instead of an empty reason when updating the cache fails without an error message, for example when apt only reports warnings (https://github.com/ansible/ansible/issues/87921).
