@@ -1461,10 +1461,10 @@ def main():
                                 cache.update()
                             break
                         except apt.cache.FetchFailedException as fetch_failed_exc:
-                            err = fetch_failed_exc
+                            err = to_native(fetch_failed_exc)
                             module.warn(
                                 f"Failed to update cache after {retry + 1} retries due "
-                                f"to {to_native(fetch_failed_exc)}, retrying"
+                                f"to {err or 'unknown reason'}, retrying"
                             )
 
                         # Use exponential backoff plus a little bit of randomness

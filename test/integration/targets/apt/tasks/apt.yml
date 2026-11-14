@@ -483,6 +483,32 @@
     name: /etc/apt/sources.list.d/non-existing.list
     state: absent
 
+# https://github.com/ansible/ansible/issues/87921
+- name: create a repo file for a host that cannot be resolved
+  copy:
+    dest: /etc/apt/sources.list.d/unresolvable.list
+    content: deb http://unresolvable.invalid/ubuntu noble main
+
+- name: update the cache when apt only reports warnings
+  apt:
+    update_cache: yes
+    update_cache_retries: 1
+  register: apt_result
+  ignore_errors: yes
+
+- name: verify the error message and retry warning give a reason
+  assert:
+    that:
+      - apt_result is failed
+      - "'Failed to update apt cache' in apt_result['msg']"
+      - "not apt_result['msg'].endswith(': ')"
+      - "apt_result['warnings'] | select('search', 'due to , retrying') | length == 0"
+
+- name: Clean up
+  file:
+    name: /etc/apt/sources.list.d/unresolvable.list
+    state: absent
+
 # https://github.com/ansible/ansible/issues/28907
 - name: Install parent package
   apt:
