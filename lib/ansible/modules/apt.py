@@ -1236,6 +1236,15 @@ def recreate_cache(module, max_retries=2):
     return rc, stdout, stderr
 
 
+def fetch_failed_reason(exc: Exception, apt_warnings: list[warnings.WarningMessage]) -> str:
+    """Return the reason for a failed cache update.
+
+    python-apt raises an exception without text when apt reports a failed download only as warnings.
+    python-apt 2.7.1 and later emits those warnings as Python warnings, so they are the reason in that case.
+    """
+    return to_native(exc) or ', '.join(to_native(apt_warning.message) for apt_warning in apt_warnings) or 'unknown reason'
+
+
 # https://github.com/ansible/ansible-modules-core/issues/2951
 def get_cache(module):
     """Attempt to get the cache object and update till it works"""
@@ -1458,13 +1467,18 @@ def main():
                     for retry in range(update_cache_retries):
                         try:
                             if not module.check_mode:
-                                cache.update()
+                                with warnings.catch_warnings(record=True) as apt_warnings:
+                                    warnings.simplefilter('always')
+                                    cache.update()
+                                # The update worked, so emit the recorded warnings again.
+                                for apt_warning in apt_warnings:
+                                    warnings.warn_explicit(apt_warning.message, apt_warning.category, apt_warning.filename, apt_warning.lineno)
                             break
                         except apt.cache.FetchFailedException as fetch_failed_exc:
-                            err = fetch_failed_exc
+                            err = fetch_failed_reason(fetch_failed_exc, apt_warnings)
                             module.warn(
                                 f"Failed to update cache after {retry + 1} retries due "
-                                f"to {to_native(fetch_failed_exc)}, retrying"
+                                f"to {err}, retrying"
                             )
 
                         # Use exponential backoff plus a little bit of randomness
