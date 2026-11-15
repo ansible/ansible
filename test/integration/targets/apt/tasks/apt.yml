@@ -503,6 +503,21 @@
       - "'Failed to update apt cache after 1 retries: ' in apt_result.msg"
       - "'W:Failed to fetch http://127.0.0.1:1/debian' in apt_result.msg"
 
+- name: test that a warning filter on the target does not hide the reason
+  apt:
+    update_cache: yes
+    update_cache_retries: 1
+  environment:
+    PYTHONWARNINGS: ignore
+  register: apt_result
+  ignore_errors: yes
+
+- name: verify that the error message still has the apt warning
+  assert:
+    that:
+      - apt_result is failed
+      - "'W:Failed to fetch http://127.0.0.1:1/debian' in apt_result.msg"
+
 - name: Clean up
   file:
     name: /etc/apt/sources.list.d/connection-refused.list
