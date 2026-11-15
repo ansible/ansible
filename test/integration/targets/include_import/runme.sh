@@ -91,6 +91,40 @@ fi
 ANSIBLE_STRATEGY='linear' ANSIBLE_PLAYBOOK_VARS_ROOT=all ansible-playbook apply/include_apply_65710.yml -i inventory "$@"
 ANSIBLE_STRATEGY='free' ANSIBLE_PLAYBOOK_VARS_ROOT=all ansible-playbook apply/include_apply_65710.yml -i inventory "$@"
 
+# include_tasks + apply is inherited by nested includes and imports
+# https://github.com/ansible/ansible/issues/82114
+# Usage: check_apply_nested PLAYBOOK HOURLY_COUNT DAILY_COUNT DEEP_COUNT [ansible-playbook options]
+function check_apply_nested() {
+    local playbook="$1" hourly="$2" daily="$3" deep="$4"
+    local strategy marker
+    shift 4
+    for strategy in linear free; do
+        ANSIBLE_STRATEGY="${strategy}" ansible-playbook "apply/${playbook}" -i inventory "$@" | tee apply_nested.out
+        test "$(grep -c '"apply_nested_hourly"' apply_nested.out)" = "${hourly}"
+        test "$(grep -c '"apply_nested_daily"' apply_nested.out)" = "${daily}"
+        for marker in deeper role imported; do
+            test "$(grep -c "\"apply_nested_${marker}\"" apply_nested.out)" = "${deep}"
+        done
+    done
+}
+
+# the applied 'always' tag is inherited, so all nested tasks run even though only 'hourly' is selected
+check_apply_nested include_apply_nested_always.yml 1 1 1 --tags hourly "$@"
+test "$(grep -c '"apply_nested_env="' apply_nested.out)" = 1
+# the applied tag selects every nested task, at any depth
+check_apply_nested include_apply_nested.yml 1 1 1 --tags outer "$@"
+# keywords other than tags are inherited too
+test "$(grep -c '"apply_nested_env=inherited"' apply_nested.out)" = 1
+# without tag selection every nested task runs
+check_apply_nested include_apply_nested.yml 1 1 1 "$@"
+test "$(grep -c '"apply_nested_env=inherited"' apply_nested.out)" = 1
+# tags added by a nested apply are combined with the inherited tags
+check_apply_nested include_apply_nested.yml 1 0 1 --tags outer --skip-tags daily "$@"
+# nested include tasks only have the inherited 'outer' tag, so selecting a nested apply tag runs nothing
+check_apply_nested include_apply_nested.yml 0 0 0 --tags hourly "$@"
+# skipping the inherited tag skips every nested task
+check_apply_nested include_apply_nested.yml 0 0 0 --skip-tags outer "$@"
+
 # Test that duplicate items in loop are not deduped
 ANSIBLE_STRATEGY='linear' ansible-playbook tasks/test_include_dupe_loop.yml -i inventory "$@" | tee test_include_dupe_loop.out
 test "$(grep -c '"item=foo"' test_include_dupe_loop.out)" = 3

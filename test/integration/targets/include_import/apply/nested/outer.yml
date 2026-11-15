@@ -1,0 +1,17 @@
+- include_tasks:
+    file: inner.yml
+    apply:
+      tags:
+        - hourly
+  vars:
+    kind: hourly
+
+- include_tasks:
+    file: inner.yml
+    apply:
+      tags:
+        - daily
+  vars:
+    kind: daily
+
+- include_tasks: deep.yml

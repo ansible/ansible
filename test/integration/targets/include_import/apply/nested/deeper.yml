@@ -1,0 +1,8 @@
+- debug:
+    msg: apply_nested_deeper
+
+- shell: echo "${APPLY_NESTED_ENV:-}"
+  register: apply_nested_env
+
+- debug:
+    msg: "apply_nested_env={{ apply_nested_env.stdout }}"
