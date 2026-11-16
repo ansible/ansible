@@ -1,0 +1,3 @@
+bugfixes:
+  - inventory - expand hexadecimal host ranges in IPv6 addresses, such as ``2001:db8::[ab:ef]`` or ``2001:db8::[1:ff]``, as hexadecimal.
+    They are accepted by the address parser, but were expanded to the wrong hosts or failed with ``invalid literal for int() with base 10``.

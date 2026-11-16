@@ -59,6 +59,20 @@ def detect_range(line=None):
     return '[' in line
 
 
+def _is_hexadecimal_range(beg: str, end: str) -> bool:
+    """Return True if the range bounds are hexadecimal, but neither both decimal nor both single letters."""
+    if not all(c in string.hexdigits for c in beg + end):
+        return False
+
+    if beg.isdigit() and end.isdigit():
+        return False  # decimal range
+
+    if len(beg) == 1 and len(end) == 1 and beg.isalpha() and end.isalpha():
+        return False  # alphabetic range
+
+    return True
+
+
 def expand_hostname_range(line=None):
     """
     A helper function that expands a given line that contains a pattern
@@ -111,14 +125,19 @@ def expand_hostname_range(line=None):
         else:
             fill = str
 
-        try:
-            i_beg = string.ascii_letters.index(beg)
-            i_end = string.ascii_letters.index(end)
-            if i_beg > i_end:
-                raise AnsibleError("host range must have begin <= end")
-            seq = list(string.ascii_letters[i_beg:i_end + 1:int(step)])
-        except ValueError:  # not an alpha range
-            seq = range(int(beg), int(end) + 1, int(step))
+        if _is_hexadecimal_range(beg, end):
+            # e.g. a hexadecimal range in an IPv6 address
+            hex_format = 'X' if (beg + end).isupper() else 'x'
+            seq = [format(i, hex_format) for i in range(int(beg, 16), int(end, 16) + 1, int(step))]
+        else:
+            try:
+                i_beg = string.ascii_letters.index(beg)
+                i_end = string.ascii_letters.index(end)
+                if i_beg > i_end:
+                    raise AnsibleError("host range must have begin <= end")
+                seq = list(string.ascii_letters[i_beg:i_end + 1:int(step)])
+            except ValueError:  # not an alpha range
+                seq = range(int(beg), int(end) + 1, int(step))
 
         for rseq in seq:
             hname = ''.join((head, fill(rseq), tail))
