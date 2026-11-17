@@ -373,6 +373,60 @@
       - create_no_path_test is changed
       - create_no_path_file.stat.exists
 
+# https://github.com/ansible/ansible/issues/71828
+- name: Use backrefs with create=true on a missing file in a missing directory
+  lineinfile:
+    path: "{{ remote_tmp_dir }}/backrefs_create_dir/backrefs_create.txt"
+    regexp: '^(foo)=.*'
+    line: '\1=bar'
+    backrefs: yes
+    create: yes
+  register: backrefs_create_test
+
+- name: Stat the directory that would have contained the file
+  stat:
+    path: "{{ remote_tmp_dir }}/backrefs_create_dir"
+  register: backrefs_create_dir
+
+- name: Ensure nothing was created when backrefs did not match
+  assert:
+    that:
+      - backrefs_create_test is not changed
+      - not backrefs_create_dir.stat.exists
+
+- name: Use backrefs with create=true and file attributes on a missing file
+  lineinfile:
+    path: "{{ remote_tmp_dir }}/backrefs_create_mode.txt"
+    regexp: '^(foo)=.*'
+    line: '\1=bar'
+    backrefs: yes
+    create: yes
+    mode: '0644'
+  register: backrefs_create_mode_test
+
+- name: Use backrefs with create=true and file attributes on a missing file (check mode)
+  lineinfile:
+    path: "{{ remote_tmp_dir }}/backrefs_create_mode.txt"
+    regexp: '^(foo)=.*'
+    line: '\1=bar'
+    backrefs: yes
+    create: yes
+    mode: '0644'
+  check_mode: yes
+  register: backrefs_create_mode_check_test
+
+- name: Stat the file that would have been created
+  stat:
+    path: "{{ remote_tmp_dir }}/backrefs_create_mode.txt"
+  register: backrefs_create_mode_file
+
+- name: Ensure the file was not created and no attributes were applied
+  assert:
+    that:
+      - backrefs_create_mode_test is not changed
+      - backrefs_create_mode_check_test is not changed
+      - not backrefs_create_mode_file.stat.exists
+
 # Test EOF in cases where file has no newline at EOF
 - name: testnoeof deploy the file for lineinfile
   copy:
