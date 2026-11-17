@@ -99,6 +99,7 @@
   environment:
     FAKETIME: "+0y x10"
     LD_PRELOAD: "{{ libfaketime_path }}"
+    NO_FAKE_STAT: "1"
   when: ansible_distribution == 'Alpine'
 
 - name: See if /etc/pam.d/crond exists
