@@ -1,0 +1,2 @@
+bugfixes:
+  - git module - fix crash when changing the requested version of an existing shallow clone that was created at a tag, which leaves the checkout in detached HEAD state without a ``refs/remotes/<remote>/HEAD`` reference.

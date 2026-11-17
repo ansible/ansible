@@ -874,6 +874,14 @@ def get_head_branch(git_path, module, dest, remote, bare=False):
         headfile = os.path.join(repo_path, 'refs', 'remotes', remote, 'HEAD')
     branch = head_splitter(headfile, remote, module=module, fail_on_error=True)
 
+    if branch is None:
+        # Shallow clones (git clone --depth) do not create
+        # refs/remotes/<remote>/HEAD, so a detached-HEAD checkout has no
+        # branch to report. Callers only compare this value against the
+        # requested version or use it as a fetch refspec, both of which
+        # remain valid when returning 'HEAD'.
+        return 'HEAD'
+
     if branch.startswith('-'):
         # prevent branch names that can be confused as options
         module.fail_json(msg=f'Invalid branch name ({branch}) from {headfile} in {remote}')

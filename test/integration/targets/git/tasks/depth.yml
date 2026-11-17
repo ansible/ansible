@@ -86,6 +86,41 @@
     state: absent
     path: "{{ checkout_dir }}"
 
+# Changing the version of a shallow clone that was created at a tag used to
+# crash with "'NoneType' object has no attribute 'startswith'": such clones
+# are in detached HEAD state and git does not create
+# refs/remotes/<remote>/HEAD for them, so get_head_branch() had no branch
+# to report.
+
+- name: DEPTH | Shallow clone with tag for version change
+  git:
+    repo: 'file://{{ repo_dir|expanduser }}/shallow'
+    dest: '{{ checkout_dir }}'
+    depth: 1
+    version: earlytag
+  register: shallow_tag_clone
+
+- assert:
+    that: shallow_tag_clone is successful
+
+- name: DEPTH | switch version of a shallow tag clone (uses fetch)
+  git:
+    repo: 'file://{{ repo_dir|expanduser }}/shallow'
+    dest: '{{ checkout_dir }}'
+    depth: 1
+    version: '{{ git_default_branch }}'
+  register: switch_tag_clone
+
+- assert:
+    that:
+      - switch_tag_clone is successful
+      - switch_tag_clone is changed
+
+- name: DEPTH | clear checkout_dir
+  file:
+    state: absent
+    path: "{{ checkout_dir }}"
+
 
   # Test for https://github.com/ansible/ansible-modules-core/issues/3456
   # clone a repo with depth and version specified
