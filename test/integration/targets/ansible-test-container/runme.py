@@ -1078,18 +1078,7 @@ class ApkBootstrapper(Bootstrapper):
         # The `crun` package must be explicitly installed since podman won't install it as dep if `runc` is present.
         packages = ['docker', 'podman', 'openssl', 'crun']
 
-        if os_release.version_id.startswith('3.18.'):
-            # The 3.19 `crun` package installed below requires `ip6tables`, but depends on the `iptables` package.
-            # In 3.19, the `iptables` package includes `ip6tables`, but in 3.18 they are separate packages.
-            # Remove once 3.18 is no longer tested.
-            packages.append('ip6tables')
-
         run_command('apk', 'add', *packages)
-
-        if os_release.version_id.startswith('3.18.'):
-            # 3.18 only contains `crun` 1.8.4, to get a newer version that resolves the run/shm issue, install `crun` from 3.19.
-            # Remove once 3.18 is no longer tested.
-            run_command('apk', 'upgrade', '-U', '--repository=http://dl-cdn.alpinelinux.org/alpine/v3.19/community', 'crun')
 
         run_command('service', 'docker', 'start')
         run_command('modprobe', 'tun')
