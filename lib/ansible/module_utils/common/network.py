@@ -88,13 +88,31 @@ def to_subnet(addr, mask, dotted_notation=False):
     return '%s/%s' % ('.'.join(network), cidr)
 
 
+def _ipv6_prefix(addr, groups):
+    """ Return the part of addr before ``::``, expanding ``::`` when it stands for
+    fewer zero groups than the first ``groups`` groups still need, so the groups
+    after it are kept. """
+    ipv6_prefix, double_colon, ipv6_suffix = addr.partition('::')
+    if not double_colon:
+        return ipv6_prefix
+
+    prefix_groups = ipv6_prefix.split(':') if ipv6_prefix else []
+    suffix_groups = ipv6_suffix.split(':') if ipv6_suffix else []
+    # An embedded IPv4 address (e.g. ::ffff:192.0.2.1) takes up two groups
+    suffix_size = len(suffix_groups) + (1 if '.' in ipv6_suffix else 0)
+    omitted = 8 - len(prefix_groups) - suffix_size
+    if len(prefix_groups) + omitted >= groups:
+        return ipv6_prefix
+    return ':'.join(prefix_groups + ['0'] * omitted + suffix_groups)
+
+
 def to_ipv6_subnet(addr):
     """ IPv6 addresses are eight groupings. The first four groupings (64 bits) comprise the subnet address. """
 
     # https://tools.ietf.org/rfc/rfc2374.txt
 
     # Split by :: to identify omitted zeros
-    ipv6_prefix = addr.split('::')[0]
+    ipv6_prefix = _ipv6_prefix(addr, 4)
 
     # Get the first four groups, or as many as are found + ::
     found_groups = []
@@ -122,7 +140,7 @@ def to_ipv6_network(addr):
     """ IPv6 addresses are eight groupings. The first three groupings (48 bits) comprise the network address. """
 
     # Split by :: to identify omitted zeros
-    ipv6_prefix = addr.split('::')[0]
+    ipv6_prefix = _ipv6_prefix(addr, 3)
 
     # Get the first three groups, or as many as are found + ::
     found_groups = []
