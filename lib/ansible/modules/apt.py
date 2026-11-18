@@ -1241,6 +1241,7 @@ def fetch_failed_reason(exc: Exception, apt_warnings: list[warnings.WarningMessa
 
     python-apt raises an exception without text when apt reports a failed download only as warnings.
     python-apt 2.7.1 and later emits those warnings as Python warnings, so they are the reason in that case.
+    The reason is the exception text, or else the warnings joined with ', ', or else 'unknown reason'.
     """
     return to_native(exc) or ', '.join(to_native(apt_warning.message) for apt_warning in apt_warnings) or 'unknown reason'
 
