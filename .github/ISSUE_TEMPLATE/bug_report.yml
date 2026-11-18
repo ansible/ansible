@@ -33,10 +33,33 @@ body:
       [XKCD 1172]: https://xkcd.com/1172/
 
 
+- type: markdown
+  attributes:
+    value: >
+      **Using an AI assistant to file this report?** Please keep it focused
+      on *observable behavior*: what you ran, what happened, and what you
+      expected.
+
+
+      Do **not** include guesses about the root cause, references to specific
+      source files or line numbers, or proposed code fixes unless you
+      verified them against a current checkout of this repository
+      (`devel` or the latest release). Assistants frequently fabricate file
+      paths, line numbers, and patches from unrelated or outdated code, which
+      wastes maintainer time. Unverified code references and suggested fixes
+      will be disregarded.
+
+
+      A clear reproducer is far more valuable to us than an explanation of
+      what you think is wrong internally.
+
+
 - type: textarea
   attributes:
     label: Summary
-    description: Explain the problem briefly below.
+    description: >-
+      Explain the problem briefly below. Describe what you observe, not what
+      you believe the cause is in the source code.
     placeholder: >-
       When I try to do X with ansible-core from the devel branch on GitHub, Y
       breaks in a way Z under the env E. Here are all the details I know
@@ -179,7 +202,11 @@ body:
     description: |
       Describe what actually happened. If possible run with extra verbosity (`-vvvv`).
 
-      Paste verbatim command output and don't wrap it with triple backticks — your
+      Paste verbatim command output here. Please don't replace it with a
+      summary, your analysis of the cause, or references to source files —
+      the raw output is what we need.
+
+      Don't wrap it with triple backticks — your
       whole input will be turned into a code snippet automatically.
     render: console
     placeholder: >-
