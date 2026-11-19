@@ -4,7 +4,35 @@
 
 from __future__ import annotations
 
+from email.message import Message
+
 from ansible.module_utils import urls
+
+
+class _FakeResponse:
+    def __init__(self, url, content_disposition=None):
+        self._url = url
+        self.headers = Message()
+        if content_disposition is not None:
+            self.headers['content-disposition'] = content_disposition
+
+    def geturl(self):
+        return self._url
+
+
+def test_get_response_filename_from_content_disposition():
+    resp = _FakeResponse('http://ansible.com/', 'attachment; filename="report.tar.gz"')
+    assert urls.get_response_filename(resp) == 'report.tar.gz'
+
+
+def test_get_response_filename_from_url_path():
+    resp = _FakeResponse('http://ansible.com/files/data%20set.txt')
+    assert urls.get_response_filename(resp) == 'data set.txt'
+
+
+def test_get_response_filename_strips_encoded_traversal():
+    resp = _FakeResponse('http://ansible.com/a/%2e%2e%2f%2e%2e%2fetc%2fpasswd')
+    assert urls.get_response_filename(resp) == 'passwd'
 
 
 def test_basic_auth_header():
