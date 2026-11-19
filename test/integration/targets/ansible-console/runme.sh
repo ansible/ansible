@@ -14,3 +14,8 @@ if grep -q "ERROR" err.txt; then
   echo "Failed to execute end_play"
   exit 1
 fi
+
+# test environment variable setting with -E option (basic KEY=VALUE)
+echo 'gather_facts gather_subset=env' | ansible-console localhost -E 'TEST_CONSOLE_VAR=console_test_value' | grep '"TEST_CONSOLE_VAR": "console_test_value"'
+# test environment variable setting with -E option (JSON format)
+echo 'gather_facts gather_subset=env' | ansible-console localhost -E '{"TEST_CONSOLE_JSON": "console_json_value"}' | grep '"TEST_CONSOLE_JSON": "console_json_value"'
