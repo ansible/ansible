@@ -1,0 +1,2 @@
+bugfixes:
+  - groupby filter plugin - fix default parameter when key is missing (https://github.com/ansible/ansible/issues/86827).
