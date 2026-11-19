@@ -38,6 +38,7 @@ from ansible.module_utils.common.process import get_bin_path
 from ansible.module_utils.common.sentinel import Sentinel
 from ansible.module_utils.common.yaml import yaml_load
 from ansible.module_utils.urls import open_url
+from ansible.utils.collection_loader import AnsibleCollectionRef
 from ansible.utils.display import Display
 
 import ansible.constants as C
@@ -259,10 +260,17 @@ class ConcreteArtifactsManager:
             # NOTE: should it be something like "<virtual>"?
             return None
 
-        return '.'.join((  # type: ignore[type-var]
+        fqcn = '.'.join((  # type: ignore[type-var]
             self._get_direct_collection_namespace(collection),  # type: ignore[arg-type]
             self._get_direct_collection_name(collection),
         ))
+
+        if not AnsibleCollectionRef.is_valid_collection_name(fqcn):
+            raise ValueError(
+                f"Collection metadata at '{collection.src}' specifies an invalid collection name '{fqcn}'. "
+                "The namespace and name must be in the format <namespace>.<name> and contain characters from [a-zA-Z0-9_] only."
+            )
+        return fqcn
 
     def get_direct_collection_version(self, collection):
         # type: (Collection) -> str
