@@ -23,14 +23,7 @@ options:
   apply:
     description:
       - Accepts a hash of task keywords (for example C(tags), C(become)) that will be applied to the tasks within the include.
-      - The keywords are inherited by every task in the included file. This includes tasks that the included file adds through
-        nested includes and imports, such as M(ansible.builtin.include_tasks), M(ansible.builtin.include_role),
-        M(ansible.builtin.import_tasks), and M(ansible.builtin.import_role), at any depth.
-      - This inheritance cannot be turned off. A nested include can add more tags with its own O(apply),
-        but the tasks still get the tags from the outer O(apply).
-      - For example, if O(apply) sets the V(always) tag, every nested task also gets the V(always) tag.
-        These tasks run even when C(--tags) selects other tags.
-        To filter nested includes by tag, do not use the V(always) tag in O(apply) on the outer include.
+      - The keywords are inherited like keywords on a block, so they also apply to tasks from nested includes and imports.
     type: str
     version_added: '2.7'
   free-form:
@@ -58,6 +51,15 @@ seealso:
 - module: ansible.builtin.include_role
 - ref: playbooks_reuse
   description: More information related to including and importing playbooks, roles and tasks.
+- ref: apply_keyword
+  description: Using the O(apply) option to add tags to the tasks within an include.
+- ref: tag_inheritance
+  description: How tags are inherited by child tasks.
+- ref: playbooks_blocks
+  description: How keywords set on a block are inherited by the tasks within it.
+- name: Playbook keywords
+  link: https://docs.ansible.com/projects/ansible/latest/reference_appendices/playbooks_keywords.html
+  description: The keywords that can be set on plays, roles, blocks, and tasks.
 """
 
 EXAMPLES = r"""
@@ -97,18 +99,6 @@ EXAMPLES = r"""
     apply:
       tags:
         - install
-  tags:
-    - always
-
-# Keywords set with apply are inherited by nested includes.
-# Every task in outer.yml gets the 'deploy' tag. If outer.yml includes inner.yml,
-# every task in inner.yml gets the 'deploy' tag too.
-- name: Apply tags to tasks within included file and its nested includes
-  ansible.builtin.include_tasks:
-    file: outer.yml
-    apply:
-      tags:
-        - deploy
   tags:
     - always
 """

@@ -1,2 +1,2 @@
 minor_changes:
-  - include_tasks - clarify that keywords set with the ``apply`` option are inherited by nested includes and imports, and that this cannot be turned off (https://github.com/ansible/ansible/issues/82114)
+  - include_tasks - clarify that keywords set with the ``apply`` option are inherited by nested includes and imports, and link to the existing keyword inheritance documentation (https://github.com/ansible/ansible/issues/82114)
