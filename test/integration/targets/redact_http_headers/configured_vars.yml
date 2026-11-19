@@ -1,0 +1,31 @@
+- name: REDACT_HTTP_HEADERS can be set from a variable, which is resolved per task
+  hosts: testhost
+  gather_facts: false
+  tasks:
+    - name: redact a header named by a task scoped variable
+      headers_module:
+        headers:
+          X-Var-Key: SECRET_VAR_KEY
+          Accept: application/json
+      vars:
+        ansible_redact_http_headers:
+          - X-Var-Key
+      register: with_var
+
+    - name: pass the same header without the variable in scope
+      headers_module:
+        headers:
+          X-Var-Key: UNCONFIGURED_VAR_KEY
+          Accept: application/json
+      register: without_var
+
+    - name: the variable applies only to the task which set it
+      assert:
+        that:
+          - with_var.invocation.module_args.headers['X-Var-Key'] == '$REDACTED$'
+          - with_var.invocation.module_args.headers.Accept == 'application/json'
+          - without_var.invocation.module_args.headers['X-Var-Key'] == 'UNCONFIGURED_VAR_KEY'
+
+    - name: show the invocation so runme.sh can check the output for leaked values
+      debug:
+        var: with_var.invocation
