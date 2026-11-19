@@ -467,13 +467,13 @@ EXAMPLES = r"""
     set_dscp_mark_class: CS1
     protocol: tcp
 
-# Create the user-defined chain ALLOWLIST
-- iptables:
+- name: Create the user-defined chain ALLOWLIST
+  ansible.builtin.iptables:
     chain: ALLOWLIST
     chain_management: true
 
-# Delete the user-defined chain ALLOWLIST
-- iptables:
+- name: Delete the user-defined chain ALLOWLIST
+  ansible.builtin.iptables:
     chain: ALLOWLIST
     chain_management: true
     state: absent

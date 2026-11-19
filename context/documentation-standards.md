@@ -3,6 +3,7 @@
 ## Module and plugin documentation
 
 - Modules and plugins require `DOCUMENTATION`, `EXAMPLES`, and `RETURN` blocks as static YAML string variables.
+- Modules should use FQCNs in the `EXAMPLES` block.
 - These blocks cannot be dynamically generated -- they are parsed via AST/token parsing.
 - Alternative: "sidecar" documentation as `.yml` files with same stem name adjacent to plugin files.
 - All modules should have a `main()` function and `if __name__ == '__main__':` block.

@@ -188,7 +188,7 @@ EXAMPLES = r"""
     - { name: host3, ip: 10.10.1.12 }
 
 - name: Search with a multiline search flags regex and if found insert after
-  blockinfile:
+  ansible.builtin.blockinfile:
     path: listener.ora
     block: "{{ listener_line | indent(width=8, first=True) }}"
     insertafter: '(?m)SID_LIST_LISTENER_DG =\n.*\(SID_LIST ='
