@@ -1,0 +1,2 @@
+minor_changes:
+  - task executor - avoid starting a Python helper process when synchronizing task state with an existing persistent connection
