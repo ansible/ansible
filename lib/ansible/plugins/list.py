@@ -231,6 +231,7 @@ def _list_plugins_with_info(
     ptype: str,
     collections: list[str] = None,
     search_paths: list[str] | None = None,
+    include_internal: bool = True,
 ) -> dict[str, _PluginDocMetadata]:
     if isinstance(collections, str):
         collections = [collections]
@@ -242,7 +243,7 @@ def _list_plugins_with_info(
         # list all collections, add synthetic ones
         plugin_collections['ansible.builtin'] = b''
         plugin_collections['ansible.legacy'] = b''
-        plugin_collections.update(list_collections(search_paths=search_paths, dedupe=True))
+        plugin_collections.update(list_collections(search_paths=search_paths, dedupe=True, include_internal=include_internal))
     else:
         for collection in collections:
             if collection == 'ansible.legacy':
