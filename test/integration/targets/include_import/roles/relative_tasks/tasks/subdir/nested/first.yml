@@ -1,0 +1,2 @@
+- name: Include a sibling from another nested task file
+  include_tasks: nested_sibling.yml

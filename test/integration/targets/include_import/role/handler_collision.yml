@@ -1,0 +1,4 @@
+- name: Report the playbook candidate
+  debug:
+    msg: playbook
+  register: handler_collision_result

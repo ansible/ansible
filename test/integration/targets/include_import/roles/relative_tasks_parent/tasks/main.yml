@@ -1,0 +1,7 @@
+- name: Include a child role with a task in the parent role
+  include_role:
+    name: relative_tasks
+    tasks_from: subdir/main
+  vars:
+    selected_file: parent_collision.yml
+    expected_marker: parent
