@@ -1,0 +1,3 @@
+bugfixes:
+  - human_to_bytes - accept the plural of a spelled-out unit name, such as ``bytes`` or ``kilobytes``, which stopped parsing in ansible-core 2.18.
+    This lets ``human_to_bytes`` read back what ``human_readable`` writes for sizes below 1 KB, ``Bytes`` and ``bits``.

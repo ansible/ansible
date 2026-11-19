@@ -217,6 +217,10 @@
       - "   '11 MB'|human_to_bytes == 11534336"
       - "  '1.1 GB'|human_to_bytes == 1181116006"
       - "'10.00 Kb'|human_to_bytes(isbits=True) == 10240"
+      - "'1.00 Bytes'|human_to_bytes == 1"
+      - "'2 kilobytes'|human_to_bytes == 2048"
+      - "1023|human_readable|human_to_bytes == 1023"
+      - "1023|human_readable(isbits=True)|human_to_bytes(isbits=True) == 1023"
 
 - name: Verify human_to_bytes (bad string)
   set_fact:

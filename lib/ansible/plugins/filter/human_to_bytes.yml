@@ -34,6 +34,12 @@ EXAMPLES: |
   # size => 1073741824
   size: '{{ "1 Gigabyte" | human_to_bytes }}'
 
+  # size => 2048, the unit name can also be plural
+  size: '{{ "2 kilobytes" | human_to_bytes }}'
+
+  # size => 1
+  size: '{{ "1.00 Bytes" | human_to_bytes }}'
+
   # this is an error, because gigggabyte is not a valid unit
   size: '{{ "1 gigggabyte" | human_to_bytes }}'
 
