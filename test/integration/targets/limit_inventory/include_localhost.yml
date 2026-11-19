@@ -1,0 +1,10 @@
+- hosts: all,localhost
+  gather_facts: false
+  tasks:
+    - set_fact:
+        include_localhost: true
+
+    - assert:
+        that:
+          - hostvars.localhost.include_localhost is true
+      run_once: true
