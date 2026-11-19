@@ -5,7 +5,8 @@
     state: directory
 
 - name: install simple collection from specific server
-  command: ansible-galaxy collection install namespace1.name1 -s galaxy_ng_token -vvvv
+  command: ansible-galaxy collection install namespace1.name1 -s galaxy_ng_token -vvvv --clear-response-cache
+  register: from_specific_server
   environment:
     ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
 
@@ -13,6 +14,12 @@
   file:
     path: '{{ galaxy_dir }}/ansible_collections/namespace1/name1'
     state: absent
+
+- name: assert installing the expected version succeeded
+  assert:
+    that:
+      - '"Installing ''namespace1.name1:1.0.9'' to" in from_specific_server.stdout'
+      - '"Using cached artifact matching hash" not in from_specific_server.stdout'
 
 - name: install simple collection from first accessible server
   command: ansible-galaxy collection install namespace1.name1 -vvvv
@@ -41,8 +48,12 @@
     - install_normal_files.files[2].path | basename in ['MANIFEST.json', 'FILES.json', 'README.md']
     - (install_normal_manifest.content | b64decode | from_json).collection_info.version == '1.0.9'
     - "info_dir is is_dir"
+    # the checksum from the previous installation is identical to this server's artifact so the cache is used
+    - cached_artifact_msg in from_first_good_server.stdout
   vars:
     info_dir: "{{ galaxy_dir }}/ansible_collections/namespace1.name1-1.0.9.info"
+    cached_artifact_msg: >-
+      Collection 'namespace1.name1:1.0.9' obtained from server galaxy_ng {{ galaxy_ng_server }}. Using cached artifact matching hash
 
 - name: Remove the collection
   file:

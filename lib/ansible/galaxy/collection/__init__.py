@@ -567,9 +567,15 @@ def download_collections(
 
             b_src_path = artifacts_manager.get_artifact_path_from_unknown(concrete_coll_pin)
 
+            if concrete_coll_pin.type == "galaxy":
+                download_url = artifacts_manager._galaxy_collection_cache[concrete_coll_pin][0].download_url
+                b_filename = os.path.basename(to_bytes(download_url, errors="surrogate_or_strict"))
+            else:
+                b_filename = os.path.basename(b_src_path)
+
             b_dest_path = os.path.join(
                 b_output_path,
-                os.path.basename(b_src_path),
+                b_filename,
             )
 
             if concrete_coll_pin.is_dir:
