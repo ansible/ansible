@@ -1,0 +1,5 @@
+bugfixes:
+  - >-
+    ``ansible.builtin.unarchive`` - Module ``unarchive`` now sets the ``owner`` and ``group`` metadata of ALL created files and directories even if the directory is not explicitly contained in the archive.
+    Previously, certain directories would retain their previous ownership because the archive did not explicitly contain those directories.
+    (https://github.com/ansible/ansible/pull/85815)
