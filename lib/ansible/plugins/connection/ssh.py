@@ -85,6 +85,7 @@ DOCUMENTATION = """
               - Defaults to C(assword) when O(password_mechanism) set to V(ssh_askpass).
           default: ''
           type: string
+          secret: false
           ini:
               - section: 'ssh_connection'
                 key: 'sshpass_prompt'
