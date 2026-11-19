@@ -250,10 +250,11 @@ class _ComputedReqKindsMixin:
             )
 
         tmp_inst_req = cls(None, None, dir_path, 'dir', None)
-        req_version = art_mgr.get_direct_collection_version(tmp_inst_req)
         try:
+            # valid metadata may be optional, ensure the user sees a warning before reraising
+            req_version = art_mgr.get_direct_collection_version(tmp_inst_req)
             req_name = art_mgr.get_direct_collection_fqcn(tmp_inst_req)
-        except TypeError as err:
+        except (ValueError, TypeError) as err:
             # Looks like installed/source dir but isn't: doesn't have valid metadata.
             display.warning(
                 u"Collection at '{path!s}' has a {manifest_json!s} "
@@ -467,6 +468,13 @@ class _ComputedReqKindsMixin:
 
         if req_type not in {'galaxy', 'subdirs'} and req_name is None:
             req_name = art_mgr.get_direct_collection_fqcn(tmp_inst_req)  # TODO: fix the cache key in artifacts manager?
+        elif req_type not in {'subdirs', 'git'} and req_name is not None and not AnsibleCollectionRef.is_valid_collection_name(req_name):
+            raise AnsibleError(
+                "The collection requirement entry has an invalid collection name '{name!s}'. "
+                'A collection name must be in the format <namespace>.<name> and contain '
+                'characters from [a-zA-Z0-9_] only.'.
+                format(name=to_native(req_name)),
+            )
 
         if req_type not in {'galaxy', 'subdirs'} and req_version == '*':
             req_version = art_mgr.get_direct_collection_version(tmp_inst_req)

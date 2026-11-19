@@ -117,6 +117,12 @@ mutually_exclusive_group.add_argument(
 mutually_exclusive_group.add_argument(
     "--symlink-linkname", help="Add a symlink linkname to the collection artifact.",
 )
+mutually_exclusive_group.add_argument(
+    "--name", dest="name", help="The collection name in the MANIFEST.json",
+)
+mutually_exclusive_group.add_argument(
+    "--namespace", dest="namespace", help="The collection namespace in the MANIFEST.json",
+)
 parser.add_argument(
     "--symlink", help="The name of the symlink to use with --symlink-linkname. Defaults to 'symlink'.",
 )
@@ -142,6 +148,10 @@ with tarfile.open(collection_tar, mode='w:gz') as tar_file:
         add_dir(tar_file, dirname, symlink_linkname=args.symlink_linkname)
     elif filename:
         add_file(tar_file, filename, b"#!/usr/bin/env bash\necho \"you got pwned\"", symlink_linkname=args.symlink_linkname)
+    elif args.namespace:
+        manifest['collection_info']['namespace'] = args.namespace
+    elif args.name:
+        manifest['collection_info']['name'] = args.name
 
     b_files = json.dumps(files).encode('utf-8')
     b_files_hash = hashlib.sha256()

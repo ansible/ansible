@@ -95,3 +95,101 @@
     - <<: *realpath_symlink
     - <<: *assert_symlink
     - <<: *cleanup
+
+- name: setup tarball with invalid name - {{ test_id }}
+  script: build_bad_tar.py {{ galaxy_dir | quote }} --name /etc/suspicious
+
+- name: fail to install a collection from tarfile with invalid name
+  command: ansible-galaxy collection install suspicious-test-1.0.0.tar.gz {{ galaxy_verbosity }}
+  args:
+    chdir: '{{ galaxy_dir }}'
+  environment:
+    ANSIBLE_NOCOLOR: True
+    ANSIBLE_FORCE_COLOR: False
+    ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
+  register: fail_bad_tar_name
+  ignore_errors: true
+
+- name: get result of failed collection install - {{ test_id }}
+  stat:
+    path: /etc/suspicious
+  register: fail_bad_tar_name_actual
+
+- assert:
+    that:
+      - fail_bad_tar_name is failed
+      - fail_bad_tar_name.stderr is search(expected_error)
+      - not fail_bad_tar_name_actual.stat.exists
+  vars:
+    expected_error: >-
+      Collection metadata at 'suspicious-test-1\.0\.0\.tar\.gz' specifies an invalid collection name 'suspicious\./etc/suspicious'\.
+      The namespace and name must be in the format <namespace>\.<name> and contain characters from \[a-zA-Z0-9_\] only\.
+
+- name: setup tarball with invalid namespace - {{ test_id }}
+  script: build_bad_tar.py {{ galaxy_dir | quote }} --namespace /etc/
+
+- name: fail to install a collection from a tarfile with invalid namespace
+  command: ansible-galaxy collection install suspicious-test-1.0.0.tar.gz {{ galaxy_verbosity }}
+  args:
+    chdir: "{{ galaxy_dir }}"
+  environment:
+    ANSIBLE_NOCOLOR: True
+    ANSIBLE_FORCE_COLOR: False
+    ANSIBLE_COLLECTIONS_PATH: "{{ galaxy_dir }}/ansible_collections"
+  register: fail_bad_tar_namespace
+  ignore_errors: true
+
+- name: get result of failed collection install - {{ test_id }}
+  stat:
+    path: /etc/test
+  register: fail_bad_tar_namespace_actual
+
+- assert:
+    that:
+      - fail_bad_tar_namespace is failed
+      - fail_bad_tar_namespace.stderr is search(expected_error)
+      - not fail_bad_tar_namespace_actual.stat.exists
+  vars:
+    expected_error: >-
+      Collection metadata at 'suspicious-test-1\.0\.0\.tar\.gz' specifies an invalid collection name '/etc/\.test'\.
+      The namespace and name must be in the format <namespace>\.<name> and contain characters from \[a-zA-Z0-9_\] only\.
+
+- name: test syntax that circumvents normal FQCN validation
+  block:
+    - name: create a requirements file
+      copy:
+        content: |
+          collections:
+            # NOTE: this syntax should be deprecated, as source should be a Galaxy server name/URL
+            - source: {{ galaxy_dir }}/suspicious-test-1.0.0.tar.gz
+              name: /etc/test.invalid
+              type: file
+        dest: "{{ galaxy_dir }}/broken_requirements.yml"
+
+    - name: install the requirements file
+      command: ansible-galaxy collection install -r {{ galaxy_dir }}/broken_requirements.yml {{ galaxy_verbosity }}
+      register: fail_bad_tar_namespace
+      ignore_errors: True
+
+    - name: get result of failed collection install - {{ test_id }}
+      stat:
+        path: /etc/test/invalid
+      register: fail_bad_tar_namespace_actual
+
+    - assert:
+        that:
+          - fail_bad_tar_namespace is failed
+          - fail_bad_tar_namespace.stderr is search(expected_error)
+          - not fail_bad_tar_namespace_actual.stat.exists
+      vars:
+        expected_error: >-
+          The collection requirement entry has an invalid collection name '/etc/test\.invalid'\.
+          A collection name must be in the format <namespace>\.<name> and contain characters from \[a-zA-Z0-9_\] only\.
+  always:
+    - name: Remove requirements file and tarfile
+      file:
+        path: "{{ galaxy_dir }}/{{ item }}"
+        state: absent
+      loop:
+        - broken_requirements.yml
+        - suspicious-test-1.0.0.tar.gz
