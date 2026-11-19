@@ -46,6 +46,7 @@ if t.TYPE_CHECKING:
     from ansible.playbook import Play
     from ansible.playbook.task import Task
 
+HOST_INTERNAL = frozenset({'inventory_hostname', 'inventory_hostname_short', 'group_names', 'inventory_file', 'inventory_dir'})
 display = Display()
 
 _DEPRECATE_TOP_LEVEL_FACT_TAG = _tags.Deprecated(
@@ -137,6 +138,7 @@ class VariableManager:
 
         # load extra vars
         self._extra_vars = load_extra_vars(loader=self._loader)
+        warn_if_reserved(self._extra_vars.keys())
 
         # load fact cache
         try:
@@ -198,6 +200,19 @@ class VariableManager:
             _hosts=_hosts,
             _hosts_all=_hosts_all,
         )
+
+        internal = {}
+
+        def _clean_task_vars(tv):
+            """
+            Preserve task special vars
+            """
+            # don't allow clobber of loop vars
+            for x in ('ansible_loop_var', 'ansible_index_var'):
+                if x in tv:
+                    internal[tv[x]] = tv.pop(tv[x])
+                    internal[x] = tv.pop(x)
+            return tv
 
         def _combine_and_track(data, new_data, source):
             # FIXME: this no longer does any tracking, only a slight optimization for empty new_data
@@ -294,7 +309,12 @@ class VariableManager:
                     display.warning('Ignoring unknown variable precedence entry: %s' % (entry))
 
             # host vars, from inventory, inventory adjacent and play adjacent via plugins
-            all_vars = _combine_and_track(all_vars, host.get_vars(), "host vars for '%s'" % host)
+            host_vars = host.get_vars()
+            for i in HOST_INTERNAL:
+                # keep internal vars to avoid overwrites
+                if i in host_vars:
+                    internal[i] = host_vars.pop(i)
+            all_vars = _combine_and_track(all_vars, host_vars, "host vars for '%s'" % host)
             all_vars = _combine_and_track(all_vars, _plugins_inventory([host]), "inventory host_vars for '%s'" % host)
             all_vars = _combine_and_track(all_vars, _plugins_play([host]), "playbook host_vars for '%s'" % host)
 
@@ -305,7 +325,10 @@ class VariableManager:
                 except KeyError:
                     facts = {}
 
-                all_vars |= namespace_facts(facts)
+                ns = namespace_facts(facts)
+                internal['ansible_facts'] = ns.pop('ansible_facts', {})
+                internal['ansible_local'] = internal['ansible_facts'].get('ansible_local', {})  # always have 'local'
+                all_vars |= ns
 
                 # push facts to main namespace
                 if _INJECT_FACTS:
@@ -394,7 +417,7 @@ class VariableManager:
             if task._role:
                 all_vars = _combine_and_track(all_vars, task._role.get_vars(task.get_dep_chain(), include_params=False, only_exports=False),
                                               "role '%s' all vars" % task._role.name)
-            all_vars = _combine_and_track(all_vars, task.get_vars(), "task vars")
+            all_vars = _combine_and_track(all_vars, _clean_task_vars(task.get_vars()), "task vars")
 
         # next, we merge in the vars cache (include vars) and nonpersistent
         # facts cache (set_fact/register), in that order
@@ -411,13 +434,16 @@ class VariableManager:
             # have higher precedence than the vars/np facts above
             if task._role:
                 all_vars = _combine_and_track(all_vars, task._role.get_role_params(task.get_dep_chain()), "role params")
-            all_vars = _combine_and_track(all_vars, task.get_include_params(), "include params")
+            all_vars = _combine_and_track(all_vars, _clean_task_vars(task.get_include_params()), "include params")
 
         # extra vars
         all_vars = _combine_and_track(all_vars, self._extra_vars, "extra vars")
 
-        # before we add 'reserved vars', check we didn't add any reserved vars
+        # before we add 'reserved vars', check we didn't add any reserved/internal vars
         warn_if_reserved(all_vars)
+
+        # re-add internal, overwrites attempted overwrites, skips 'warning' above
+        all_vars = _combine_and_track(all_vars, internal, "internal_vars")
 
         # magic variables
         all_vars = _combine_and_track(all_vars, magic_variables, "magic vars")
