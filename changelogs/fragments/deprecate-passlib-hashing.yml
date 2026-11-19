@@ -1,0 +1,4 @@
+deprecated_features:
+  - encrypt - password hashing with the ``passlib`` Python package is deprecated
+    and will be removed in ansible-core 2.27. Install ``libxcrypt`` so the built-in
+    ``crypt`` support can be used instead.
