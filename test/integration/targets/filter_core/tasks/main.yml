@@ -160,7 +160,7 @@
 - assert:
     that:
       - "unsupported_hash_type_res is failed"
-      - "'unsupported hash type' in unsupported_hash_type_res.msg"
+      - "'unsupported hash type' in unsupported_hash_type_res.msg or 'unsupported hash algorithm' in unsupported_hash_type_res.msg"
 
 - name: Flatten tests
   tags: flatten

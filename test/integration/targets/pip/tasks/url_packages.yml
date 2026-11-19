@@ -68,6 +68,7 @@
       pip:
         name: pip=={{outdated_pip_venv_version}}
         virtualenv: "{{ outdated_pip_venv_path }}"
+      when: ansible_facts.python_version is version(operator='<', version='3.15')  # outdated pip doesn't work on 3.15+
 
 - name: Check vcs package installation and checking functionality
   vars:
@@ -156,6 +157,7 @@
   vars:
     repo_path: "{{ remote_tmp_dir }}/pip_vcs_pkgs"
     venv_path: "{{ outdated_pip_venv_path }}"
+  when: ansible_facts.python_version is version(operator='<', version='3.15')  # outdated pip doesn't work on 3.15+
   block:
     - name: Install file-path package to fresh outdated venv
       pip:
