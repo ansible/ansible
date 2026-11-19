@@ -1,0 +1,9 @@
+- hosts: all
+  strategy: free
+  gather_facts: false
+  # Tasks after the first start workers after head has exited.
+  # With one task the play completes and only the final stdout flush fails, with or without the fix.
+  tasks:
+    - command: sleep 1
+    - command: sleep 1
+    - command: sleep 1
