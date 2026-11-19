@@ -1,0 +1,2 @@
+bugfixes:
+  - "callback plugins - fix displaying the delegated host's ``ansible_host`` address for all loop items, not just the first (https://github.com/ansible/ansible/issues/87358)."
