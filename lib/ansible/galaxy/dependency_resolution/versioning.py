@@ -6,9 +6,20 @@
 from __future__ import annotations
 
 import operator
+import typing as t
 
 from ansible.module_utils.compat.version import LooseVersion
 from ansible.utils.version import SemanticVersion
+
+_OPERATORS = {
+    '!=': operator.ne,
+    '==': operator.eq,
+    '=': operator.eq,
+    '>=': operator.ge,
+    '>': operator.gt,
+    '<=': operator.le,
+    '<': operator.lt,
+}
 
 
 def is_pre_release(version: str) -> bool:
@@ -17,6 +28,37 @@ def is_pre_release(version: str) -> bool:
         return SemanticVersion(version).is_prerelease
     except ValueError:
         return False
+
+
+def _split_requirement(req: str) -> tuple[t.Callable[[SemanticVersion, SemanticVersion], bool], str]:
+    """Split a single requirement into its operator and version, ignoring surrounding whitespace."""
+    req = req.strip()
+    op_pos = 2 if len(req) > 1 and req[1] == '=' else 1
+    if op := _OPERATORS.get(req[:op_pos]):
+        return op, req[op_pos:].lstrip()
+
+    return operator.eq, req
+
+
+def is_valid_version_spec(version_spec: object) -> bool:
+    """Check that every ','-delimited requirement is '*' or an optional operator followed by a version."""
+    if not isinstance(version_spec, str):
+        return False
+
+    for req in version_spec.split(','):
+        requirement = _split_requirement(req)[1]
+        if requirement == '*':
+            continue
+
+        if not requirement:
+            return False
+
+        try:
+            SemanticVersion.from_loose_version(LooseVersion(requirement))
+        except ValueError:
+            return False
+
+    return True
 
 
 def meets_requirements(version: str, requirements: str) -> bool:
@@ -33,24 +75,8 @@ def meets_requirements(version: str, requirements: str) -> bool:
 
     Each requirement is delimited by ','.
     """
-    op_map = {
-        '!=': operator.ne,
-        '==': operator.eq,
-        '=': operator.eq,
-        '>=': operator.ge,
-        '>': operator.gt,
-        '<=': operator.le,
-        '<': operator.lt,
-    }
-
     for req in requirements.split(','):
-        op_pos = 2 if len(req) > 1 and req[1] == '=' else 1
-        op = op_map.get(req[:op_pos])
-
-        requirement = req[op_pos:]
-        if not op:
-            requirement = req
-            op = operator.eq
+        op, requirement = _split_requirement(req)
 
         if requirement == '*' or version == '*':
             continue
