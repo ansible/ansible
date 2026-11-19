@@ -1,0 +1,2 @@
+bugfixes:
+  - file - fix relative destination path handling when atomically replacing symlinks and hardlinks.
