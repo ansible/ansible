@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - vault filter - fix serialization of wrapped vault values with ``to_yaml`` so plaintext and encrypted output are handled correctly (https://github.com/ansible/ansible/issues/87389).
