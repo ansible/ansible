@@ -1,0 +1,2 @@
+minor_changes:
+  - from_yaml, from_yaml_all - added a ``duplicate_key_mode`` option to control the behavior when duplicate mapping keys are found, overriding the ``DUPLICATE_YAML_DICT_KEY`` configuration setting for that call (https://github.com/ansible/ansible/issues/87577)

@@ -1,0 +1,78 @@
+- name: Test from_yaml duplicate_key_mode=warn
+  command: ansible-playbook {{ verbosity }} {{ role_path }}/from_yaml_duplicate_keys.yml -e mode=warn
+  register: filter_warn
+
+- assert:
+    that:
+      - filter_warn.stderr is contains("Found duplicate mapping key 'foo'")
+      - filter_warn.stderr is contains("Found duplicate mapping key 'qux'")
+      - filter_warn.stderr is contains("Found duplicate mapping key 'zap'")
+      - filter_warn.rc == 0
+
+- name: Test from_yaml duplicate_key_mode=error
+  command: ansible-playbook {{ verbosity }} {{ role_path }}/from_yaml_duplicate_keys.yml -e mode=error
+  failed_when: filter_error.rc != 2
+  register: filter_error
+
+- assert:
+    that:
+      - filter_error.stdout is contains("Found duplicate mapping key 'foo'")
+      - filter_error.stdout is contains("Found duplicate mapping key 'qux'")
+      - filter_error.rc == 2
+
+- name: Test from_yaml duplicate_key_mode=ignore
+  command: ansible-playbook {{ verbosity }} {{ role_path }}/from_yaml_duplicate_keys.yml -e mode=ignore
+  register: filter_ignore
+
+- assert:
+    that:
+      - filter_ignore.stderr is not contains("Found duplicate mapping key")
+      - filter_ignore.stdout is not contains("Found duplicate mapping key")
+      - filter_ignore.rc == 0
+
+- name: Test duplicate_key_mode=ignore overrides ANSIBLE_DUPLICATE_YAML_DICT_KEY=error
+  command: ansible-playbook {{ verbosity }} {{ role_path }}/from_yaml_duplicate_keys.yml -e mode=ignore
+  environment:
+    ANSIBLE_DUPLICATE_YAML_DICT_KEY: error
+  register: filter_beats_config_error
+
+- assert:
+    that:
+      - filter_beats_config_error.stderr is not contains("Found duplicate mapping key")
+      - filter_beats_config_error.stdout is not contains("Found duplicate mapping key")
+      - filter_beats_config_error.rc == 0
+
+- name: Test duplicate_key_mode=error overrides ANSIBLE_DUPLICATE_YAML_DICT_KEY=ignore
+  command: ansible-playbook {{ verbosity }} {{ role_path }}/from_yaml_duplicate_keys.yml -e mode=error
+  failed_when: filter_beats_config_ignore.rc != 2
+  environment:
+    ANSIBLE_DUPLICATE_YAML_DICT_KEY: ignore
+  register: filter_beats_config_ignore
+
+- assert:
+    that:
+      - filter_beats_config_ignore.stdout is contains("Found duplicate mapping key 'foo'")
+      - filter_beats_config_ignore.rc == 2
+
+- name: Test ANSIBLE_DUPLICATE_YAML_DICT_KEY applies when duplicate_key_mode is omitted
+  command: ansible-playbook {{ verbosity }} {{ role_path }}/from_yaml_duplicate_keys.yml
+  failed_when: filter_config_fallback.rc != 2
+  environment:
+    ANSIBLE_DUPLICATE_YAML_DICT_KEY: error
+  register: filter_config_fallback
+
+- assert:
+    that:
+      - filter_config_fallback.stdout is contains("Found duplicate mapping key 'foo'")
+      - filter_config_fallback.rc == 2
+
+- name: Test from_yaml with an invalid duplicate_key_mode
+  command: ansible-playbook {{ verbosity }} {{ role_path }}/from_yaml_duplicate_keys.yml -e mode=bogus
+  failed_when: filter_invalid.rc != 2
+  register: filter_invalid
+
+- assert:
+    that:
+      - filter_invalid.stdout is contains("Invalid duplicate_key_mode ('bogus')")
+      - 'filter_invalid.stdout is contains("Valid values are: error, warn, ignore")'
+      - filter_invalid.rc == 2

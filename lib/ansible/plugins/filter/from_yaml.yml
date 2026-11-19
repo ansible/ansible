@@ -12,6 +12,16 @@ DOCUMENTATION:
       description: A YAML string.
       type: string
       required: true
+    duplicate_key_mode:
+      description:
+        - Controls the behavior when a duplicate mapping key is found in the input.
+        - If not specified, the C(DUPLICATE_YAML_DICT_KEY) configuration setting is used.
+      type: string
+      choices:
+        error: issue a 'fatal' error and stop the play
+        warn: issue a warning but continue
+        ignore: just continue silently
+      version_added: '2.23'
 EXAMPLES: |
   # variable from string variable containing a YAML document
   {{ github_workflow | from_yaml }}
