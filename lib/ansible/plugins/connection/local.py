@@ -204,6 +204,13 @@ class Connection(ConnectionBase):
                     self.become.check_password_prompt(bytes(become_stderr[last_stderr_prompt_offset:]))
                 ):
                     if sent_password:
+                        # A second prompt after the password was sent means the
+                        # password was rejected, not duplicated. Mirror the ssh
+                        # connection plugin and report the incorrect password.
+                        if self.become.check_incorrect_password(bytes(become_stdout[last_stdout_prompt_offset:])) or \
+                                self.become.check_incorrect_password(bytes(become_stderr[last_stderr_prompt_offset:])):
+                            raise AnsibleError(become_error_msg('Incorrect %s password' % self.become.name))
+
                         raise AnsibleError(become_error_msg('Duplicate become password prompt encountered'))
 
                     last_stdout_prompt_offset = len(become_stdout)
