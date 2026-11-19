@@ -1,0 +1,53 @@
+---
+- name: Test clear_host_errors before threshold and recovered hosts count for threshold
+  hosts: testhost1,testhost2,testhost3,testhost4,testhost5
+  gather_facts: false
+  max_fail_percentage: 50%
+  tasks:
+    - name: Fail 2 hosts (40% < 50%)
+      fail:
+        msg: intentional failure
+      when: inventory_hostname in ['testhost1', 'testhost2']
+
+    - name: Clear host errors
+      meta: clear_host_errors
+
+    - name: Fail 3 recovered hosts (60% > 50%)
+      fail:
+        msg: second failure after recovery
+      when: inventory_hostname in ['testhost1', 'testhost2', 'testhost3']
+
+    - name: Should not execute - threshold exceeded after recovery
+      debug:
+        msg: "{{ 'RECOVERY' ~ '_SHOULD_NOT_EXECUTE_THRESHOLD_EXCEEDED' }}"
+
+- name: Test recovery in rescue after threshold exceeded
+  hosts: testhost6,testhost7,testhost8
+  gather_facts: false
+  max_fail_percentage: 50%
+  tasks:
+    - block:
+        - name: Fail all 3 hosts (100% > 50%)
+          fail:
+            msg: intentional failure
+
+        - name: Should not execute
+          debug:
+            msg: "{{ 'RECOVERY' ~ '_SHOULD_NOT_EXECUTE_IN_BLOCK' }}"
+
+      rescue:
+        - name: Clear host errors in rescue
+          meta: clear_host_errors
+
+        - name: Should execute on all 3 hosts after recovery
+          debug:
+            msg: "{{ 'RECOVERY' ~ '_RESCUE_EXECUTED' }}"
+
+- name: Test recovered hosts available in next play
+  hosts: testhost6,testhost7,testhost8
+  gather_facts: false
+  max_fail_percentage: 50%
+  tasks:
+    - name: All 3 hosts should be available
+      debug:
+        msg: "{{ 'RECOVERY' ~ '_NEXT_PLAY_EXECUTED' }}"
