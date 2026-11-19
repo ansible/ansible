@@ -44,8 +44,9 @@ class IncludedFile:
     IncludedFile, allowing the strategy to load and process the included tasks once for all affected hosts.
     """
 
-    def __init__(self, filename, args, vars, task, is_role: bool = False) -> None:
+    def __init__(self, filename, args, vars, task, is_role: bool = False, include_path: str | None = None) -> None:
         self._filename = filename
+        self._include_path = include_path
         self._args = args
         self._vars = vars
         self._task = task
@@ -151,10 +152,10 @@ class IncludedFile:
                                     continue
                                 if isinstance(parent_include, IncludeRole):
                                     parent_include_dir = parent_include._role_path
+                                elif parent_include._resolved_include_path is not None:
+                                    parent_include_dir = os.path.dirname(parent_include._resolved_include_path)
                                 else:
                                     try:
-                                        # FUTURE: Since the parent include path has already been resolved, it should be used here.
-                                        #         Unfortunately it's not currently stored anywhere, so it must be calculated again.
                                         parent_include_dir = os.path.dirname(templar.template(parent_include.args.get('_raw_params')))
                                     except AnsibleError as e:
                                         parent_include_dir = ''
@@ -202,7 +203,7 @@ class IncludedFile:
                             else:
                                 include_file = loader.path_dwim(include_utr.include_file)
 
-                        inc_file = IncludedFile(include_file, include_args, special_vars, original_task)
+                        inc_file = IncludedFile(include_file, include_args, special_vars, original_task, include_path=include_utr.include_file)
                     else:
                         # template the included role's name here
                         role_name = include_args.pop('name', include_args.pop('role', None))
