@@ -1488,7 +1488,7 @@ def main():
 
                 # If there is nothing else to do exit. This will set state as
                 #  changed based on if the cache was updated.
-                if not p['package'] and not p['upgrade'] and not p['deb']:
+                if not p['package'] and not p['upgrade'] and not p['deb'] and not (autoremove or autoclean):
                     module.exit_json(
                         changed=updated_cache,
                         cache_updated=updated_cache,
