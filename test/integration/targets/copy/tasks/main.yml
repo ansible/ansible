@@ -93,6 +93,8 @@
 
     - import_tasks: check_mode.yml
 
+    - import_tasks: recursive_diff.yml
+
     # https://github.com/ansible/ansible/issues/57618
     # https://github.com/ansible/ansible/issues/79749
     - name: Test diff contents
