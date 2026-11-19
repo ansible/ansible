@@ -1,0 +1,10 @@
+- hosts: localhost
+  gather_facts: no
+  vars:
+    data:
+      param: 1
+  tasks:
+    - assert:
+        success_msg: SUCCESS
+        that:
+          - data | deepcopy == data
