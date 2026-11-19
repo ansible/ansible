@@ -710,6 +710,41 @@ class User(object):
             cmd = [str(x) for x in cmd]
             return self.module.run_command(cmd, use_unsafe_shell=use_unsafe_shell, data=data)
 
+    def _get_chpasswd_path(self, password):
+        """
+        Return the path to chpasswd if it can be used to set the already
+        encrypted password over stdin, or None if the password must be passed
+        on the useradd/usermod command line instead.
+
+        Passing the hash on stdin keeps it out of the process list (argv).
+        """
+        if self.local:
+            # luseradd/lusermod (libuser) manage the account, keep using them
+            return None
+
+        if any(char in value for value in (self.name, password) for char in ':\r\n'):
+            # These characters would split or add records in the chpasswd input.
+            # They are not valid in a password field, let useradd/usermod reject them as before.
+            return None
+
+        chpasswd = self.module.get_bin_path('chpasswd')
+        if chpasswd is None:
+            self.module.warn("Unable to find 'chpasswd', the password hash will be passed on the command line "
+                             "and may be visible in the process list while the command runs.")
+        return chpasswd
+
+    def _set_password_chpasswd(self, chpasswd, password):
+        # chpasswd -e reads 'name:hash' from stdin and stores the hash as given
+        (rc, out, err) = self.execute_command([chpasswd, '-e'], data='%s:%s' % (self.name, password))
+        if rc != 0:
+            # Recent shadow-utils releases validate the hash and reject values that
+            # usermod -p accepts (for example a value that is not a crypt hash, which
+            # this module already warns about). Keep the previous behavior for those.
+            (rc, _out, _err) = self.execute_command([self.module.get_bin_path('usermod', True), '-p', password, self.name])
+            out += _out
+            err += _err
+        return (rc, out, err)
+
     def backup_shadow(self):
         if not self.module.check_mode and self.SHADOWFILE:
             return self.module.backup_local(self.SHADOWFILE)
@@ -817,12 +852,17 @@ class User(object):
             cmd.append('-f')
             cmd.append(int(self.inactive))
 
+        chpasswd = password = None
         if self.password is not None:
-            cmd.append('-p')
             if self.password_lock:
-                cmd.append('!%s' % self.password)
+                password = '!%s' % self.password
             else:
-                cmd.append(self.password)
+                password = self.password
+
+            chpasswd = self._get_chpasswd_path(password)
+            if chpasswd is None:
+                cmd.append('-p')
+                cmd.append(password)
 
         if self.create_home:
             if not self.local:
@@ -851,6 +891,13 @@ class User(object):
 
         cmd.append(self.name)
         (rc, out, err) = self.execute_command(cmd)
+
+        if chpasswd is not None and rc == 0:
+            # set the hash over stdin so it is not exposed in the process list
+            (rc, _out, _err) = self._set_password_chpasswd(chpasswd, password)
+            out += _out
+            err += _err
+
         if not self.local or rc != 0:
             return (rc, out, err)
 
@@ -1029,15 +1076,20 @@ class User(object):
             # usermod will refuse to unlock a user with no password, module shows 'changed' regardless
             cmd.append('-U')
 
+        chpasswd = password = None
         if self.update_password == 'always' and self.password is not None and info[1].lstrip('!') != self.password.lstrip('!'):
-            # Remove options that are mutually exclusive with -p
+            # Remove options that are mutually exclusive with setting the hash
             cmd = [c for c in cmd if c not in ['-U', '-L']]
-            cmd.append('-p')
             if self.password_lock:
-                # Lock the account and set the hash in a single command
-                cmd.append('!%s' % self.password)
+                # Lock the account and set the hash in a single operation
+                password = '!%s' % self.password
             else:
-                cmd.append(self.password)
+                password = self.password
+
+            chpasswd = self._get_chpasswd_path(password)
+            if chpasswd is None:
+                cmd.append('-p')
+                cmd.append(password)
 
         (rc, out, err) = (None, '', '')
 
@@ -1045,6 +1097,12 @@ class User(object):
         if len(cmd) > 1:
             cmd.append(self.name)
             (rc, out, err) = self.execute_command(cmd)
+
+        if chpasswd is not None and (rc is None or rc == 0):
+            # set the hash over stdin so it is not exposed in the process list
+            (rc, _out, _err) = self._set_password_chpasswd(chpasswd, password)
+            out += _out
+            err += _err
 
         if not self.local or not (rc is None or rc == 0):
             return (rc, out, err)
