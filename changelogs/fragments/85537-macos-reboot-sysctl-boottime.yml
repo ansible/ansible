@@ -1,0 +1,2 @@
+bugfixes:
+  - reboot - change the BOOT_TIME_COMMAND for macOS to use ``/usr/sbin/sysctl kern.boottime`` instead of ``who -b`` to get higher time precision (https://github.com/ansible/ansible/issues/85070).
