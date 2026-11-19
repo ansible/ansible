@@ -77,6 +77,8 @@ options:
         does not match anywhere in the file, the file will be left unchanged.
       - If the O(regexp) does match, the last matching line will be replaced by
         the expanded line parameter.
+      - If O(path) does not exist, it will not be created even with O(create=true),
+        since the O(regexp) cannot match.
       - Mutually exclusive with O(search_string).
     type: bool
     default: no
@@ -107,6 +109,7 @@ options:
     description:
       - Used with O(state=present).
       - If specified, the file will be created if it does not already exist.
+      - The file is not created when O(backrefs=true), see O(backrefs).
       - By default it will fail if the file is missing.
     type: bool
     default: no
@@ -305,13 +308,6 @@ def present(module, dest, regexp, search_string, line, insertafter, insertbefore
     if not os.path.exists(b_dest):
         if not create:
             module.fail_json(rc=257, msg='Destination %s does not exist !' % dest)
-        b_destpath = os.path.dirname(b_dest)
-        if b_destpath and not os.path.exists(b_destpath) and not module.check_mode:
-            try:
-                os.makedirs(b_destpath)
-            except Exception as e:
-                module.fail_json(msg='Error creating %s (%s)' % (to_text(b_destpath), to_text(e)))
-
         lines = []
     else:
         with open(b_dest, 'r', encoding=encoding) as f:
@@ -490,9 +486,16 @@ def present(module, dest, regexp, search_string, line, insertafter, insertbefore
     if changed and not module.check_mode:
         if backup and os.path.exists(b_dest):
             backupdest = module.backup_local(dest)
+        # Create missing parent directories only when there are changes to write.
+        b_destpath = os.path.dirname(b_dest)
+        if b_destpath and not os.path.exists(b_destpath):
+            try:
+                os.makedirs(b_destpath)
+            except Exception as e:
+                module.fail_json(msg='Error creating %s (%s)' % (to_text(b_destpath), to_text(e)))
         write_changes(module, lines, dest, encoding)
 
-    if module.check_mode and not os.path.exists(b_dest):
+    if not os.path.exists(b_dest):
         module.exit_json(changed=changed, msg=msg, backup=backupdest, diff=diff)
 
     attr_diff = {}

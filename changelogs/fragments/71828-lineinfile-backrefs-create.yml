@@ -1,0 +1,5 @@
+bugfixes:
+  - lineinfile - when ``backrefs=true`` and ``create=true`` were used on a file that does not exist,
+    the module created missing parent directories and failed with a traceback if file attributes
+    such as ``mode`` were set. The file and its parent directories are now left untouched
+    because the ``regexp`` cannot match (https://github.com/ansible/ansible/issues/71828).
