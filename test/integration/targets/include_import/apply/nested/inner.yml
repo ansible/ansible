@@ -1,2 +1,0 @@
-- debug:
-    msg: "apply_nested_{{ kind }}"
