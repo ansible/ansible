@@ -1,2 +1,2 @@
 security_fixes:
-  - ansible-galaxy collection install - fix validating the collection name before using it to build the installation path.
+  - ansible-galaxy collection install - fix validating the collection name before using it to build the installation path. (CVE-2026-130644)
