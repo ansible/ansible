@@ -1,0 +1,9 @@
+---
+
+minor_changes:
+- >-
+  Role dependencies, default and role vars now get cached instead of being recalculated during each Task (https://github.com/ansible/ansible/issues/85206).
+- >-
+  Role dependencies now get checked for redundancies in the dependency tree before being added (https://github.com/ansible/ansible/issues/85206).
+
+...
