@@ -1,0 +1,5 @@
+minor_changes:
+  - "ansible-test acme cloud plugin - update to the 2.4.1 ACME test image, and add new variables ``acme_endpoint_root_ca_certificate_content``,
+     ``acme_endpoint_root_ca_certificate_filename``, and ``acme_directory`` to the ACME cloud plugin. The ``acme_host`` variable is now
+     consistently set to ``pebble``, which is covered by the certificate the ACME endpoint is using. There are now also module defaults set
+     for ``group/acme``, which define ``acme_version``, ``acme_directory``, and ``ca_path`` (https://github.com/ansible/ansible/pull/86741)."
