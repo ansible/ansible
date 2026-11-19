@@ -1,0 +1,5 @@
+---
+bugfixes:
+  - include_vars - The ``dir`` parameter now resolves relative paths the same way as the ``file`` parameter. 
+    Updates docs for clarity.
+    (https://github.com/ansible/ansible/issues/84406)
