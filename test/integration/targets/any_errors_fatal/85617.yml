@@ -1,0 +1,11 @@
+- hosts: testhost,testhost2
+  gather_facts: false
+  any_errors_fatal: true
+  tasks:
+    - name: only testhost2 enters the rescued block; testhost diverges here (skips the include entirely)
+      include_tasks: 85617_block.yml
+      when: inventory_hostname == "testhost2"
+
+    - name: any_errors_fatal must not strand a host that never entered the rescued block
+      debug:
+        msg: "SHOULD HAPPEN for both hosts"
