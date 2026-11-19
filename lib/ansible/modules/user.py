@@ -521,7 +521,7 @@ import typing as t
 
 from ansible.module_utils import distro
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, _load_params
 from ansible.module_utils.common.locale import get_best_parsable_locale
 from ansible.module_utils.common.sys_info import get_platform_subclass
 
@@ -3412,6 +3412,9 @@ class Buildroot(BusyBox):
 
 
 def main():
+    password = (_load_params() or {}).get('password')
+    # macOS uses cleartext passwords, so even lock markers must remain secret.
+    password_is_secret = get_platform_subclass(User).platform == 'Darwin' or password not in ('*', '!', '*************')
     ssh_defaults = dict(
         bits=0,
         type='rsa',
@@ -3429,7 +3432,7 @@ def main():
             comment=dict(type='str'),
             home=dict(type='path'),
             shell=dict(type='path'),
-            password=dict(type='str', no_log=True),
+            password=dict(type='str', no_log=password_is_secret),
             login_class=dict(type='str'),
             password_expire_max=dict(type='int', no_log=False),
             password_expire_min=dict(type='int', no_log=False),
