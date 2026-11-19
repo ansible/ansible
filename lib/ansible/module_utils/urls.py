@@ -333,7 +333,7 @@ def mask_url(url: str) -> str:
         raise ValueError(msg)
 
     netloc: str
-    if parsed_url.password:
+    if parsed_url.password is not None:
         netloc = parsed_url.netloc.replace(f'{parsed_url.username}:{parsed_url.password}@', f'{mask}:{mask}@')
     else:
         netloc = parsed_url.netloc.replace(f'{parsed_url.username}@', f'{mask}@')
