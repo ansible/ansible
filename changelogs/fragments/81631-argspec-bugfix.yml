@@ -1,0 +1,2 @@
+bugfixes:
+  - "argspec validation - when an unexpected value like a number of boolean is specified for a dictionary, the validation resulted in an internal error (https://github.com/ansible/ansible/pull/81631)."
