@@ -18,7 +18,7 @@
     - name: Verify dnf module outputs
       assert:
         that:
-            - "'results' in dnf_result"
+            - "'transactions' in dnf_result"
 
     - shell: dnf history list | wc -l
       register: dnf_history_lines_before
@@ -88,7 +88,7 @@
     - name: Verify dnf module outputs
       assert:
         that:
-            - "'results' in dnf_result"
+            - "'transactions' in dnf_result"
     # ============================================================================
     - name: Update to the latest dinginessentail
       dnf:
@@ -109,7 +109,7 @@
     - name: Verify dnf module outputs
       assert:
         that:
-            - "'results' in dnf_result"
+            - "'transactions' in dnf_result"
     # ============================================================================
     - name: Install dinginessentail-1.0-1 from a file (higher version is already installed)
       dnf:
@@ -133,7 +133,7 @@
         that:
             - "'msg' in dnf_result"
             - "'rc' in dnf_result"
-            - "'results' in dnf_result"
+            - "'transactions' in dnf_result"
     # ============================================================================
     - name: Install dinginessentail-1.0-1 from a file (downgrade)
       dnf:
@@ -156,7 +156,7 @@
     - name: Verify dnf module outputs
       assert:
         that:
-            - "'results' in dnf_result"
+            - "'transactions' in dnf_result"
 
     - name: Remove dinginessentail
       dnf:
@@ -183,7 +183,7 @@
     - name: Verify dnf module outputs
       assert:
         that:
-            - "'results' in dnf_result"
+            - "'transactions' in dnf_result"
     # ============================================================================
     - name: Install dinginessentail-1.0-1 from a file again
       dnf:
@@ -222,7 +222,7 @@
     - name: Verify dnf module outputs
       assert:
         that:
-            - "'results' in dnf_result"
+            - "'transactions' in dnf_result"
     # ============================================================================
     - name: Install dinginessentail-1.0-2 from a file again
       dnf:
@@ -329,12 +329,12 @@
     - name: check that dnf returns nevra for backwards compat
       assert:
         that:
-          - '"envra" in list_out["results"][0]'
-          - '"nevra" in list_out["results"][0]'
+          - '"envra" in list_out["transactions"][0]'
+          - '"nevra" in list_out["transactions"][0]'
 
     - set_fact:
         passed: true
-      loop: "{{ list_out.results }}"
+      loop: "{{ list_out.transactions }}"
       when: item.yumstate == 'installed'
 
     - name: Test that there is yumstate=installed in the result
@@ -369,7 +369,7 @@
         that:
             - "'msg' in dnf_result"
             - "'rc' in dnf_result"
-            - "'results' in dnf_result"
+            - "'transactions' in dnf_result"
   always:
     - name: Clean up
       dnf:
@@ -414,7 +414,7 @@
         that:
             - "'msg' in dnf_result"
             - "'rc' in dnf_result"
-            - "'results' in dnf_result"
+            - "'transactions' in dnf_result"
   always:
     - name: Clean up
       dnf:
@@ -521,7 +521,7 @@
     - assert:
         that:
           - dnf_results is changed
-          - "'Installed: provides_foo_b' in dnf_results['results'][0]"
+          - "'Installed: provides_foo_b' in dnf_results['transactions'][0]"
   always:
     - name: Clean up
       dnf:
@@ -676,7 +676,7 @@
             - "dnf_result is changed"
             - "'msg' in dnf_result"
             - "'rc' in dnf_result"
-            - "'results' in dnf_result"
+            - "'transactions' in dnf_result"
   always:
     - name: Clean up
       dnf:
