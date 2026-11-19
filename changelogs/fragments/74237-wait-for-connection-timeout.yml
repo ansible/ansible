@@ -1,0 +1,3 @@
+bugfixes:
+  - wait_for_connection - honor ``connect_timeout`` for each connection attempt and cap the sleep between attempts to the remaining ``timeout``. Because connection timeouts are whole seconds, the last attempt can finish up to one second after ``timeout`` (https://github.com/ansible/ansible/issues/74237).
+  - wait_for_connection - fail cleanly when ``timeout`` is zero or negative instead of raising ``UnboundLocalError`` (https://github.com/ansible/ansible/issues/74237).
