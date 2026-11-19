@@ -1,0 +1,82 @@
+---
+## local user password last changed (uses lchage)
+
+- name: Remove local_ansibulluser
+  user:
+    name: local_ansibulluser
+    state: absent
+    remove: yes
+    local: yes
+  tags:
+    - user_test_local_mode
+
+- name: Create local_ansibulluser
+  user:
+    name: local_ansibulluser
+    state: present
+    local: yes
+  tags:
+    - user_test_local_mode
+
+- name: Set password last changed days for local user
+  user:
+    name: local_ansibulluser
+    local: yes
+    password_expire_last_changed: 3652
+  register: local_pass_last_changed_1
+  tags:
+    - user_test_local_mode
+
+- name: Set password last changed days for local user again
+  user:
+    name: local_ansibulluser
+    local: yes
+    password_expire_last_changed: 3652
+  register: local_pass_last_changed_2
+  tags:
+    - user_test_local_mode
+
+- name: Set password last changed days to epoch together with max days for local user
+  user:
+    name: local_ansibulluser
+    local: yes
+    password_expire_last_changed: 0
+    password_expire_max: 90
+  register: local_pass_last_changed_3
+  tags:
+    - user_test_local_mode
+
+- name: Set password last changed days to epoch together with max days for local user again
+  user:
+    name: local_ansibulluser
+    local: yes
+    password_expire_last_changed: 0
+    password_expire_max: 90
+  register: local_pass_last_changed_4
+  tags:
+    - user_test_local_mode
+
+- name: Ensure password last changed days changed only when needed for local user
+  assert:
+    that:
+      - local_pass_last_changed_1 is changed
+      - local_pass_last_changed_2 is not changed
+      - local_pass_last_changed_3 is changed
+      - local_pass_last_changed_4 is not changed
+  tags:
+    - user_test_local_mode
+
+- name: Get shadow data for local_ansibulluser
+  getent:
+    database: shadow
+    key: local_ansibulluser
+  tags:
+    - user_test_local_mode
+
+- name: Ensure password last changed and max days were set properly for local user
+  assert:
+    that:
+      - ansible_facts.getent_shadow['local_ansibulluser'][1] == '0'
+      - ansible_facts.getent_shadow['local_ansibulluser'][3] == '90'
+  tags:
+    - user_test_local_mode
