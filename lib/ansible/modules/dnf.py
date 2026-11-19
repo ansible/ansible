@@ -269,6 +269,7 @@ options:
 extends_documentation_fragment:
 - action_common_attributes
 - action_common_attributes.flow
+- dnf
 attributes:
     action:
         details: dnf has 2 action plugins that use it under the hood, M(ansible.builtin.dnf) and M(ansible.builtin.package).
@@ -433,6 +434,7 @@ class DnfModule(YumDnf):
             'download_dir': self.download_dir,
             'cacheonly': self.cacheonly,
             'autoremove': self.autoremove,
+            'clean_requirements_on_remove': self.clean_requirements_on_remove,
             'install_weak_deps': self.install_weak_deps,
             'disablerepo': self.disablerepo,
             'enablerepo': self.enablerepo,
