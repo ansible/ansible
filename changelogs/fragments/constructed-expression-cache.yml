@@ -1,0 +1,3 @@
+minor_changes:
+  - constructed inventory - reuse compiled expressions within each inventory source parse to reduce overhead for large inventories
+    while evaluating every host separately.

@@ -1,0 +1,13 @@
+plugin: ansible.builtin.constructed
+strict: false
+use_vars_plugins: false
+compose:
+  doubled: ordinal * 2
+  role_upper: role | upper
+  optional_feature: feature
+groups:
+  selected: ordinal % 2 == 1
+keyed_groups:
+  - key: role
+    prefix: role
+    parent_group: '{{ region }}'
