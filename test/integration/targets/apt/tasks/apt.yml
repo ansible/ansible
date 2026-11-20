@@ -484,44 +484,48 @@
     state: absent
 
 # https://github.com/ansible/ansible/issues/87921
-- name: create a repo file for a server that refuses the connection
-  copy:
-    dest: /etc/apt/sources.list.d/connection-refused.list
-    content: deb http://127.0.0.1:1/debian stable main
+- name: Ensure a reasonable warning message is issued
+  vars:
+    list_path: /etc/apt/sources.list.d/connection-refused.list
+  block:
+    - name: create a repo file for a server that refuses the connection
+      copy:
+        dest: "{{ list_path }}"
+        content: deb http://127.0.0.1:1/debian stable main
 
-- name: test for an error message with a reason when apt reports the failure only as warnings
-  apt:
-    update_cache: yes
-    update_cache_retries: 1
-  register: apt_result
-  ignore_errors: yes
+    - name: test for an error message with a reason when apt reports the failure only as warnings
+      apt:
+        update_cache: yes
+        update_cache_retries: 1
+      register: apt_result
+      ignore_errors: yes
 
-- name: verify that the error message has a reason
-  assert:
-    that:
-      - apt_result is failed
-      - "'Failed to update apt cache after 1 retries: ' in apt_result.msg"
-      - "'W:Failed to fetch http://127.0.0.1:1/debian' in apt_result.msg"
+    - name: verify that the error message has a reason
+      assert:
+        that:
+          - apt_result is failed
+          - "'Failed to update apt cache after 1 retries: ' in apt_result.msg"
+          - "'W:Failed to fetch http://127.0.0.1:1/debian' in apt_result.msg"
 
-- name: test that a warning filter on the target does not hide the reason
-  apt:
-    update_cache: yes
-    update_cache_retries: 1
-  environment:
-    PYTHONWARNINGS: ignore
-  register: apt_result
-  ignore_errors: yes
+    - name: test that a warning filter on the target does not hide the reason
+      apt:
+        update_cache: yes
+        update_cache_retries: 1
+      environment:
+        PYTHONWARNINGS: ignore
+      register: apt_result
+      ignore_errors: yes
 
-- name: verify that the error message still has the apt warning
-  assert:
-    that:
-      - apt_result is failed
-      - "'W:Failed to fetch http://127.0.0.1:1/debian' in apt_result.msg"
-
-- name: Clean up
-  file:
-    name: /etc/apt/sources.list.d/connection-refused.list
-    state: absent
+    - name: verify that the error message still has the apt warning
+      assert:
+        that:
+          - apt_result is failed
+          - "'W:Failed to fetch http://127.0.0.1:1/debian' in apt_result.msg"
+  always:
+    - name: Clean up
+      file:
+        name: "{{ list_path }}"
+        state: absent
 
 # https://github.com/ansible/ansible/issues/28907
 - name: Install parent package
