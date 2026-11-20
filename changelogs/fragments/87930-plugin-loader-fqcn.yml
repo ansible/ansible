@@ -1,0 +1,2 @@
+bugfixes:
+  - Plugin loader - reject fully qualified plugin names that use a Python module as a package (https://github.com/ansible/ansible/issues/87930).
