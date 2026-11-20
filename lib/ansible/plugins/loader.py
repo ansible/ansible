@@ -688,6 +688,13 @@ class PluginLoader:
             except ImportError:
                 return plugin_load_context.nope('Python package {0} not found'.format(acr.n_python_package_name))
 
+        if not hasattr(pkg, '__path__'):
+            # the import above can succeed by returning a module instead of a package
+            # (for example, an over-long FQCN such as ns.coll.mymodule.mymodule resolves
+            # the mymodule module as the "package"), which would let the plugin be found
+            # under an incorrect name; only a real package can contain plugins
+            return plugin_load_context.nope('Python package {0} not found'.format(acr.n_python_package_name))
+
         pkg_path = os.path.dirname(pkg.__file__)
 
         n_resource_path = os.path.join(pkg_path, n_resource)

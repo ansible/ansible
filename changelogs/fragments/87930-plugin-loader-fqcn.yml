@@ -1,0 +1,6 @@
+bugfixes:
+  - plugin loader - an over-long fully qualified collection name such as
+    ``community.general.ufw.ufw`` no longer resolves the ``ufw`` plugin.
+    The plugin loader now verifies that the imported location is actually a
+    package before looking for the plugin inside it
+    (https://github.com/ansible/ansible/issues/87930).

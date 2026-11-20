@@ -20,10 +20,50 @@ from __future__ import annotations
 
 import os
 import sys
+import tempfile
 
 import unittest
 from unittest.mock import patch, MagicMock
-from ansible.plugins.loader import PluginLoader, PluginPathContext
+from ansible.module_utils._internal._collection_loader._collection_finder import _AnsibleCollectionFinder
+from ansible.plugins.loader import PluginLoader, PluginPathContext, module_loader
+
+
+class TestFindFqPlugin(unittest.TestCase):
+    """Regression tests for https://github.com/ansible/ansible/issues/87930
+
+    An over-long FQCN such as ``testns.testcoll.mymodule.mymodule`` used to
+    resolve the ``mymodule`` plugin: ``AnsibleCollectionRef.from_fqcr`` splits
+    it so the "package" to import is the ``mymodule`` module itself, and
+    ``import_module`` happily returns that module instead of a package.
+    """
+
+    def setUp(self):
+        self._tmpdir = tempfile.TemporaryDirectory()
+        modules_dir = os.path.join(self._tmpdir.name, 'ansible_collections', 'testns', 'testcoll', 'plugins', 'modules')
+        os.makedirs(modules_dir)
+        with open(os.path.join(modules_dir, '__init__.py'), 'w'):
+            pass
+        # a real, importable module that does nothing on import
+        with open(os.path.join(modules_dir, 'mymodule.py'), 'w') as f:
+            f.write('DOCUMENTATION = ""\n')
+        self._finder = _AnsibleCollectionFinder(paths=[self._tmpdir.name])
+        self._finder._install()
+
+    def tearDown(self):
+        self._finder._remove()
+        for module_name in [m for m in sys.modules if m.startswith('ansible_collections')]:
+            sys.modules.pop(module_name)
+        self._tmpdir.cleanup()
+
+    def test_find_plugin_with_correct_fqcn(self):
+        ctx = module_loader.find_plugin_with_context('testns.testcoll.mymodule')
+        self.assertTrue(ctx.resolved)
+        self.assertTrue(ctx.plugin_resolved_path.endswith('mymodule.py'))
+
+    def test_find_plugin_with_overlong_fqcn_does_not_resolve(self):
+        ctx = module_loader.find_plugin_with_context('testns.testcoll.mymodule.mymodule')
+        self.assertFalse(ctx.resolved)
+        self.assertIsNone(ctx.plugin_resolved_path)
 
 
 class TestErrors(unittest.TestCase):
