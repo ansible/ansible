@@ -17,11 +17,13 @@
 
 from __future__ import annotations
 
-import functools
 import os
+import sys
 
 from ansible import constants as C
 from ansible import context
+from ansible.errors import AnsibleError
+from ansible._internal._datatag._tags import TrustedAsTemplate
 from ansible.executor.task_queue_manager import TaskQueueManager, AnsibleEndPlay
 from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.parsing.convert_bool import boolean
@@ -140,17 +142,38 @@ class PlaybookExecutor:
                             salt = var.get("salt", None)
                             unsafe = boolean(var.get("unsafe", False))
                             if vname not in self._variable_manager.extra_vars:
-                                if (validate := var.get("validate")) is not None:
-                                    validator = functools.partial(templar.evaluate_expression, validate)
-                                else:
-                                    validator = None
-
                                 if self._tqm:
                                     self._tqm.send_callback('v2_playbook_on_vars_prompt', vname, private, prompt, encrypt, confirm, salt_size, salt,
                                                             default, unsafe)
-                                    play.vars[vname] = display._do_var_prompt(
-                                        vname, private, prompt, encrypt, confirm, salt_size, salt, default, unsafe, validate=validator,
-                                    )
+                                    validate = var.get("validate")
+                                    while True:
+                                        value = display.do_var_prompt(
+                                            vname, private, prompt, encrypt if validate is None else None, confirm, salt_size, salt, default,
+                                            unsafe or validate is not None,
+                                        )
+                                        if validate is None:
+                                            break
+                                        try:
+                                            valid = templar.evaluate_expression(validate, local_variables={vname: value})
+                                        except Exception as ex:
+                                            raise AnsibleError(f"Error evaluating vars_prompt validation for {vname!r}.") from ex
+                                        if valid:
+                                            break
+                                        if not sys.__stdin__.isatty():
+                                            raise AnsibleError(
+                                                f"No valid value is available for vars_prompt variable {vname!r} in non-interactive mode.",
+                                                help_text="Provide a matching default, or supply the variable through --extra-vars "
+                                                          "and validate it with an assert task.",
+                                            )
+                                        display.display("***** INVALID INPUT ****")
+
+                                    if validate is not None:
+                                        if encrypt:
+                                            from ansible.utils.encrypt import do_encrypt
+                                            value = do_encrypt(value, encrypt, salt_size=salt_size, salt=salt)
+                                        if not unsafe:
+                                            value = TrustedAsTemplate().tag(value)
+                                    play.vars[vname] = value
                                 else:  # we are either in --list-<option> or syntax check
                                     play.vars[vname] = default
 
