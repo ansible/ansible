@@ -1,0 +1,3 @@
+bugfixes:
+  - git - avoid resolving the remote HEAD when shallow-fetching an explicit tag, branch, or refspec from a detached checkout, which could fail if the remote HEAD reference was missing.
+  - git - report an actionable error instead of an exception when version=HEAD cannot resolve the current branch or the remote HEAD reference.
