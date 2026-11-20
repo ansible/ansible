@@ -103,7 +103,9 @@
     that:
       - item is failed
       - "'Unable to determine HEAD branch from ' in item.msg"
-      - "'Specify an explicit branch or tag with version.' in item.msg"
+      - "'Check the repository at ' in item.msg"
+      - "'for a valid HEAD reference' in item.msg"
+      - "'or specify an explicit branch or tag with version.' in item.msg"
   loop: "{{ missing_remote_head.results }}"
 
 - name: DEPTH | create a newer tag in the source repository

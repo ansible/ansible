@@ -876,7 +876,11 @@ def get_head_branch(git_path, module, dest, remote, bare=False):
 
     if not branch:
         module.fail_json(
-            msg=f'Unable to determine HEAD branch from {headfile}. Specify an explicit branch or tag with version.',
+            msg=(
+                f'Unable to determine HEAD branch from {headfile}. '
+                f'Check the repository at {dest} and the {remote!r} remote for a valid HEAD reference, '
+                'or specify an explicit branch or tag with version.'
+            ),
         )
 
     if branch.startswith('-'):
