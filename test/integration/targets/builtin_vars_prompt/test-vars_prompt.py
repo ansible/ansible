@@ -127,9 +127,9 @@ tests = [
     {'playbook': 'validate.yml',
      'test_spec': [
          [('Enter number', '\r'),
-          ('Invalid input', ''),
+          ('INVALID INPUT', ''),
           ('Enter number', 'prefix123suffix\r'),
-          ('Invalid input', ''),
+          ('INVALID INPUT', ''),
           ('Enter number', '123\r')],
          'All assertions passed']},
 
@@ -139,7 +139,7 @@ tests = [
      'test_spec': [
          [('Enter password:', 'invalid-secret\r'),
           ('confirm Enter password:', 'invalid-secret\r'),
-          ('Invalid input', ''),
+          ('INVALID INPUT', ''),
           ('Enter password:', '123\r'),
           ('confirm Enter password:', '456\r'),
           (r'\*\*\*\*\* VALUES ENTERED DO NOT MATCH', ''),
@@ -151,16 +151,16 @@ tests = [
     {'playbook': 'validate-jinja.yml',
      'test_spec': [
          [('Enter environment:', 'unknown\r'),
-          ('Invalid input', ''),
+          ('INVALID INPUT', ''),
           ('Enter environment:', 'prod\r'),
           ('Confirm environment:', 'staging\r'),
-          ('Invalid input', ''),
+          ('INVALID INPUT', ''),
           ('Confirm environment:', 'prod\r'),
           ('Enter URL:', 'http://example.org\r'),
-          ('Invalid input', ''),
+          ('INVALID INPUT', ''),
           ('Enter URL:', 'https://example.org\r'),
           ('Enter code:', 'long\r'),
-          ('Invalid input', ''),
+          ('INVALID INPUT', ''),
           ('Enter code:', 'abc\r')],
          'All assertions passed']},
 
@@ -194,19 +194,19 @@ def run_noninteractive(args: list[str], expected_status: int, playbook: str = 'v
 assert 'All assertions passed' in run_noninteractive(['-e', 'number=123'], 0)
 output = run_noninteractive(['-e', 'number=outside-pattern'], 2)
 assert 'Assertion failed' in output
-assert 'Invalid input' not in output
+assert 'INVALID INPUT' not in output
 assert 'non-interactive mode' not in output
 
 # Listing and syntax checks must not attempt input or reject the unused default.
 for option in ['--syntax-check', '--list-hosts', '--list-tasks', '--list-tags']:
     output = run_noninteractive([option], 0)
     assert 'Not prompting' not in output
-    assert 'Invalid input' not in output
+    assert 'INVALID INPUT' not in output
 
 # An invalid default must fail promptly when no interactive input is possible.
 output = run_noninteractive([], 1)
 assert 'non-interactive mode' in output
-assert 'Invalid input' not in output
+assert 'INVALID INPUT' not in output
 
 
 # Expressions refer to play variables; an invalid regex is an evaluation error at runtime.
@@ -215,7 +215,14 @@ assert 'non-interactive mode' not in output
 assert 'Error evaluating vars_prompt validation' in output
 
 
-output = run_noninteractive(['--syntax-check'], 1, 'validate-invalid-expression.yml')
-assert 'Invalid Jinja2 expression in vars_prompt validate' in output
-output = run_noninteractive(['--syntax-check'], 1, 'validate-invalid-type.yml')
-assert 'vars_prompt validate option must be a non-empty Jinja2 expression string' in output
+# Unused validation expressions are not evaluated by syntax checks or listing commands.
+for playbook in ['validate-invalid-expression.yml', 'validate-invalid-type.yml']:
+    for option in ['--syntax-check', '--list-hosts', '--list-tasks', '--list-tags']:
+        output = run_noninteractive([option], 0, playbook)
+        assert 'Error evaluating vars_prompt validation' not in output
+    output = run_noninteractive(['-e', 'number=123'], 0, playbook)
+    assert 'Error evaluating vars_prompt validation' not in output
+
+    # The same invalid expression must still fail when a candidate is evaluated.
+    output = run_noninteractive([], 1, playbook)
+    assert 'Error evaluating vars_prompt validation' in output

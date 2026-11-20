@@ -2,12 +2,15 @@
   hosts: testhost
   gather_facts: false
   vars:
+    prompt_name: target_env
+    validation_expression: target_env in allowed_environments
+    target_env: from-play-vars
     allowed_environments: [dev, staging, prod]
   vars_prompt:
-    - name: target_env
+    - name: "{{ prompt_name }}"
       prompt: Enter environment
       private: false
-      validate: target_env in allowed_environments
+      validate: "{{ validation_expression }}"
     - name: confirmation
       prompt: Confirm environment
       private: false

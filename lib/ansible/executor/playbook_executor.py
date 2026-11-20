@@ -17,9 +17,9 @@
 
 from __future__ import annotations
 
+import functools
 import os
 
-from ansible._internal._prompt import build_prompt_validator
 from ansible import constants as C
 from ansible import context
 from ansible.executor.task_queue_manager import TaskQueueManager, AnsibleEndPlay
@@ -125,15 +125,7 @@ class PlaybookExecutor:
                     # Allow variables to be used in vars_prompt fields.
                     all_vars = self._variable_manager.get_vars(play=play)
                     templar = TemplateEngine(loader=self._loader, variables=all_vars)
-                    vars_prompts = []
-                    for prompt_data in play.vars_prompt:
-                        # Conditions must see the candidate input, not be templated before prompting.
-                        prompt_fields = {key: value for key, value in prompt_data.items() if key != 'validate'}
-                        templated_prompt = templar.template(prompt_fields)
-                        if 'validate' in prompt_data:
-                            templated_prompt['validate'] = prompt_data['validate']
-                        vars_prompts.append(templated_prompt)
-                    setattr(play, 'vars_prompt', vars_prompts)
+                    setattr(play, 'vars_prompt', templar.template(play.vars_prompt))
 
                     # FIXME: this should be a play 'sub object' like loop_control
                     if play.vars_prompt:
@@ -147,20 +139,22 @@ class PlaybookExecutor:
                             salt_size = var.get("salt_size", None)
                             salt = var.get("salt", None)
                             unsafe = boolean(var.get("unsafe", False))
-                            validator = None
-                            if var.get("validate") is not None:
-                                validation_engine = templar.extend(variables=self._variable_manager.get_vars(play=play))
-                                validator = build_prompt_validator(var["validate"], vname, validation_engine)
-
                             if vname not in self._variable_manager.extra_vars:
+                                if (validate := var.get("validate")) is not None:
+                                    validator = functools.partial(templar.evaluate_expression, validate)
+                                else:
+                                    validator = None
+
                                 if self._tqm:
                                     self._tqm.send_callback('v2_playbook_on_vars_prompt', vname, private, prompt, encrypt, confirm, salt_size, salt,
                                                             default, unsafe)
-                                    play.vars[vname] = display.do_var_prompt(
+                                    play.vars[vname] = display._do_var_prompt(
                                         vname, private, prompt, encrypt, confirm, salt_size, salt, default, unsafe, validate=validator,
                                     )
                                 else:  # we are either in --list-<option> or syntax check
                                     play.vars[vname] = default
+
+                                templar.available_variables = {**templar.available_variables, vname: play.vars[vname]}
 
                     # Post validate so any play level variables are templated
                     all_vars = self._variable_manager.get_vars(play=play)

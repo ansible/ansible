@@ -916,7 +916,7 @@ class Display(metaclass=Singleton):
         else:
             return input(msg)
 
-    def do_var_prompt(
+    def _do_var_prompt(
         self,
         varname: str,
         private: bool = True,
@@ -928,10 +928,51 @@ class Display(metaclass=Singleton):
         default: str | None = None,
         unsafe: bool = False,
         *,
-        validate: t.Callable[[str], bool] | None = None,
+        validate: t.Callable[..., t.Any] | None = None,
     ) -> str:
+        """Validate playbook prompt input before applying hashing and template trust."""
+        if validate is None:
+            return self.do_var_prompt(varname, private, prompt, encrypt, confirm, salt_size, salt, default, unsafe)
+
+        result = self.do_var_prompt(varname, private, prompt, confirm=confirm, default=default, unsafe=True)
         interactive = sys.__stdin__.isatty()
-        if interactive:
+        try:
+            valid = (interactive or default is not None) and validate(local_variables={varname: result})
+        except Exception as ex:
+            raise AnsibleError(f"Error evaluating vars_prompt validation for {varname!r}.") from ex
+
+        if not valid:
+            if interactive:
+                self.display("***** INVALID INPUT ****")
+                return self._do_var_prompt(varname, private, prompt, encrypt, confirm, salt_size, salt, default, unsafe, validate=validate)
+            raise AnsibleError(
+                f"No valid value is available for vars_prompt variable {varname!r} in non-interactive mode.",
+                help_text="Provide a matching default, or supply the variable through --extra-vars and validate it with an assert task.",
+            )
+
+        if encrypt:
+            from ansible.utils.encrypt import do_encrypt
+            result = do_encrypt(result, encrypt, salt_size=salt_size, salt=salt)
+
+        if not unsafe:
+            result = TrustedAsTemplate().tag(result)
+
+        return result
+
+    def do_var_prompt(
+        self,
+        varname: str,
+        private: bool = True,
+        prompt: str | None = None,
+        encrypt: str | None = None,
+        confirm: bool = False,
+        salt_size: int | None = None,
+        salt: str | None = None,
+        default: str | None = None,
+        unsafe: bool = False,
+    ) -> str:
+        result = None
+        if sys.__stdin__.isatty():
 
             do_prompt = self.prompt
 
@@ -942,37 +983,28 @@ class Display(metaclass=Singleton):
             else:
                 msg = 'input for %s: ' % varname
 
-        while True:
-            if interactive:
-                if confirm:
-                    while True:
-                        result = do_prompt(msg, private)
-                        second = do_prompt("confirm " + msg, private)
-                        if result == second:
-                            break
-                        self.display("***** VALUES ENTERED DO NOT MATCH ****")
-                else:
+            if confirm:
+                while True:
                     result = do_prompt(msg, private)
+                    second = do_prompt("confirm " + msg, private)
+                    if result == second:
+                        break
+                    self.display("***** VALUES ENTERED DO NOT MATCH ****")
             else:
-                result = None
-                self.warning("Not prompting as we are not in interactive mode")
+                result = do_prompt(msg, private)
+        else:
+            result = None
+            self.warning("Not prompting as we are not in interactive mode")
 
-            if not result and default is not None:
-                result = default
+        # if result is false and default is not None
+        if not result and default is not None:
+            result = default
 
-            result_str = to_text(result, errors='surrogate_or_strict')
+        # handle utf-8 chars
+        result_str = to_text(result, errors='surrogate_or_strict')
 
-            if private and result:
-                register_secret(result_str)
-
-            if validate is None or (result is not None and validate(result_str)):
-                break
-            if not interactive:
-                raise AnsibleError(
-                    f"No valid value is available for vars_prompt variable {varname!r} in non-interactive mode.",
-                    help_text="Provide a matching default, or supply the variable through --extra-vars and validate it with an assert task.",
-                )
-            self.display(f"Invalid input for {varname!r}: the validate condition must be true.", color=C.COLOR_ERROR)
+        if private and result:
+            register_secret(result_str)
 
         if encrypt:
             # Circular import because encrypt needs a display class
