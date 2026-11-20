@@ -1236,16 +1236,6 @@ def recreate_cache(module, max_retries=2):
     return rc, stdout, stderr
 
 
-def fetch_failed_reason(exc: Exception, apt_warnings: list[warnings.WarningMessage]) -> str:
-    """Return the reason for a failed cache update.
-
-    python-apt raises an exception without text when apt reports a failed download only as warnings.
-    python-apt 2.7.1 and later emits those warnings as Python warnings, so they are the reason in that case.
-    The reason is the exception text, or else the warnings joined with ', ', or else 'unknown reason'.
-    """
-    return to_native(exc) or ', '.join(to_native(apt_warning.message) for apt_warning in apt_warnings) or 'unknown reason'
-
-
 # https://github.com/ansible/ansible-modules-core/issues/2951
 def get_cache(module):
     """Attempt to get the cache object and update till it works"""
@@ -1476,7 +1466,8 @@ def main():
                                     warnings.warn_explicit(apt_warning.message, apt_warning.category, apt_warning.filename, apt_warning.lineno)
                             break
                         except apt.cache.FetchFailedException as fetch_failed_exc:
-                            err = fetch_failed_reason(fetch_failed_exc, apt_warnings)
+                            # The exception has no text when apt reports the failure only as warnings.
+                            err = str(fetch_failed_exc) or ', '.join(str(apt_warning.message) for apt_warning in apt_warnings) or 'unknown reason'
                             module.warn(
                                 f"Failed to update cache after {retry + 1} retries due "
                                 f"to {err}, retrying"
