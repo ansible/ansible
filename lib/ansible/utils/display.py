@@ -937,7 +937,7 @@ class Display(metaclass=Singleton):
         result = self.do_var_prompt(varname, private, prompt, confirm=confirm, default=default, unsafe=True)
         interactive = sys.__stdin__.isatty()
         try:
-            valid = (interactive or default is not None) and validate(local_variables={varname: result})
+            valid = validate(local_variables={varname: result})
         except Exception as ex:
             raise AnsibleError(f"Error evaluating vars_prompt validation for {varname!r}.") from ex
 

@@ -186,7 +186,7 @@ def run_noninteractive(args: list[str], expected_status: int, playbook: str = 'v
         text=True, timeout=30, env=env, check=False,
     )
     sys.stdout.write(result.stdout)
-    assert result.returncode == expected_status, result.stdout
+    assert result.returncode == expected_status
     return result.stdout
 
 
@@ -207,6 +207,13 @@ for option in ['--syntax-check', '--list-hosts', '--list-tasks', '--list-tags']:
 output = run_noninteractive([], 1)
 assert 'non-interactive mode' in output
 assert 'INVALID INPUT' not in output
+
+
+# A None default is accepted or rejected by the expression, not by an implicit guard.
+assert 'All assertions passed' in run_noninteractive([], 0, 'validate-none-default.yml')
+output = run_noninteractive(['-e', '{"accept_missing": false}'], 1, 'validate-none-default.yml')
+assert 'non-interactive mode' in output
+assert 'Error evaluating vars_prompt validation' not in output
 
 
 # Expressions refer to play variables; an invalid regex is an evaluation error at runtime.
