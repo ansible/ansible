@@ -50,6 +50,15 @@ seealso:
 - module: ansible.builtin.include_role
 - ref: playbooks_reuse
   description: More information related to including and importing playbooks, roles and tasks.
+- ref: apply_keyword
+  description: Using the O(apply) option to add tags to the tasks within an include.
+- ref: tag_inheritance
+  description: How tags are inherited by child tasks.
+- ref: playbooks_blocks
+  description: How keywords set on a block are inherited by the tasks within it.
+- name: Playbook keywords
+  link: https://docs.ansible.com/projects/ansible/latest/reference_appendices/playbooks_keywords.html
+  description: The keywords that can be set on plays, roles, blocks, and tasks.
 """
 
 EXAMPLES = r"""
