@@ -20,6 +20,8 @@ from __future__ import annotations
 import unittest
 from unittest.mock import MagicMock
 
+from ansible import context
+from ansible.errors import ExitCode
 from ansible.executor.playbook_executor import PlaybookExecutor
 from ansible.playbook import Playbook
 from ansible._internal._templating._engine import TemplateEngine
