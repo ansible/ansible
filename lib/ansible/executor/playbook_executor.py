@@ -21,6 +21,7 @@ import os
 
 from ansible import constants as C
 from ansible import context
+from ansible.errors import ExitCode
 from ansible.executor.task_queue_manager import TaskQueueManager, AnsibleEndPlay
 from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.parsing.convert_bool import boolean
@@ -254,6 +255,7 @@ class PlaybookExecutor:
                 " Note: --start-at-task can only follow static includes."
                 % context.CLIARGS['start_at_task']
             )
+            result = ExitCode.GENERIC_ERROR
 
         return result
 

@@ -20,6 +20,8 @@ from __future__ import annotations
 import unittest
 from unittest.mock import MagicMock
 
+from ansible import context
+from ansible.errors import ExitCode
 from ansible.executor.playbook_executor import PlaybookExecutor
 from ansible.playbook import Playbook
 from ansible._internal._templating._engine import TemplateEngine
@@ -144,3 +146,57 @@ class TestPlaybookExecutor(unittest.TestCase):
             pbe._get_serialized_batches(play),
             [['host0', 'host1'], ['host2', 'host3'], ['host4', 'host5'], ['host6', 'host7'], ['host8', 'host9'], ['host10']]
         )
+
+    def test_run_start_at_task_no_match_returns_nonzero(self):
+        fake_loader = DictDataLoader({
+            'startat.yml': """
+            - hosts: all
+              gather_facts: no
+              tasks:
+              - debug: var=inventory_hostname
+            """,
+        })
+
+        mock_inventory = MagicMock()
+        mock_var_manager = MagicMock()
+        mock_inventory.get_hosts.return_value = ['host0']
+
+        # Build the executor in a listing mode so no real TaskQueueManager
+        # is created, then switch to a normal run with a mocked one.
+        listing_options = MagicMock()
+        listing_options.listhosts = False
+        listing_options.listtasks = False
+        listing_options.listtags = False
+        listing_options.syntax = True
+        listing_options.start_at_task = None
+        listing_options.forks = 5
+        context._init_global_context(listing_options)
+
+        pbe = PlaybookExecutor(
+            playbooks=['startat.yml'],
+            inventory=mock_inventory,
+            variable_manager=mock_var_manager,
+            loader=fake_loader,
+            passwords=[],
+        )
+
+        run_options = MagicMock()
+        run_options.listhosts = False
+        run_options.listtasks = False
+        run_options.listtags = False
+        run_options.syntax = False
+        run_options.start_at_task = 'Nonexistent task'
+        run_options.forks = 5
+        co.GlobalCLIArgs._Singleton__instance = None
+        context._init_global_context(run_options)
+
+        mock_tqm = MagicMock()
+        mock_tqm.run.return_value = 0
+        mock_tqm._start_at_done = False
+        mock_tqm._failed_hosts = {}
+        mock_tqm._unreachable_hosts = {}
+        mock_tqm.RUN_FAILED_HOSTS = 2
+        mock_tqm.RUN_FAILED_BREAK_PLAY = 8
+        pbe._tqm = mock_tqm
+
+        self.assertEqual(pbe.run(), ExitCode.GENERIC_ERROR)
