@@ -23,7 +23,6 @@ options:
   apply:
     description:
       - Accepts a hash of task keywords (for example C(tags), C(become)) that will be applied to the tasks within the include.
-      - The keywords are inherited like keywords on a block, so they also apply to tasks from nested includes and imports.
     type: str
     version_added: '2.7'
   free-form:
