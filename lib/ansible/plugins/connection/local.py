@@ -178,8 +178,9 @@ class Connection(ConnectionBase):
             if expect_password_prompt and not sent_password:
                 error_message += ' or become password prompt'
 
-            error_message += '.'
+            return with_become_output(error_message + '.')
 
+        def with_become_output(error_message: str) -> str:
             if become_stdout:
                 error_message += f'\n>>> Standard Output\n{to_text(bytes(become_stdout))}'
 
@@ -187,6 +188,16 @@ class Connection(ConnectionBase):
                 error_message += f'\n>>> Standard Error\n{to_text(bytes(become_stderr))}'
 
             return error_message
+
+        def incorrect_password_msg() -> str:
+            return with_become_output(f'Incorrect {self.become.name} password.')
+
+        def password_rejected() -> bool:
+            """Return True if the output after the password was sent reports it as wrong."""
+            return (
+                self.become.check_incorrect_password(bytes(become_stdout[last_stdout_prompt_offset:])) or
+                self.become.check_incorrect_password(bytes(become_stderr[last_stderr_prompt_offset:]))
+            )
 
         os.set_blocking(p.stdout.fileno(), False)
         os.set_blocking(p.stderr.fileno(), False)
@@ -197,6 +208,9 @@ class Connection(ConnectionBase):
 
             while not self.become.check_success(become_stdout):
                 if not selector.get_map():  # we only reach end of stream after all descriptors are EOF
+                    if sent_password and password_rejected():
+                        raise AnsibleError(incorrect_password_msg())
+
                     raise AnsibleError(become_error_msg('Premature end of stream'))
 
                 if expect_password_prompt and (
@@ -204,7 +218,8 @@ class Connection(ConnectionBase):
                     self.become.check_password_prompt(bytes(become_stderr[last_stderr_prompt_offset:]))
                 ):
                     if sent_password:
-                        raise AnsibleError(become_error_msg('Duplicate become password prompt encountered'))
+                        # the password was sent and another prompt followed, so it was not accepted
+                        raise AnsibleError(incorrect_password_msg())
 
                     last_stdout_prompt_offset = len(become_stdout)
                     last_stderr_prompt_offset = len(become_stderr)
