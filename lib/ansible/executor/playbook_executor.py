@@ -255,6 +255,7 @@ class PlaybookExecutor:
                 " Note: --start-at-task can only follow static includes."
                 % context.CLIARGS['start_at_task']
             )
+            result = ExitCode.GENERIC_ERROR
 
         return result
 
