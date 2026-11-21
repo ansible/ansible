@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-playbook --start-at-task - return a non-zero exit code when no task matches the given name instead of exiting 0 after printing an error (https://github.com/ansible/ansible/issues/87951).
