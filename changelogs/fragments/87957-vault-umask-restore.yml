@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-vault - Ensure ``VaultCLI.run()`` restores the umask even when an exception is raised (https://github.com/ansible/ansible/issues/87957).
