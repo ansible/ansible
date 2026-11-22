@@ -47,3 +47,5 @@ ANSIBLE_LIBRARY=lib_with_extension ANSIBLE_ROLES_PATH=multiple_roles ansible-pla
 # all right now.
 ANSIBLE_LIBRARY=lib_with_extension ansible-playbook modules_test_envvar_ext.yml -i ../../inventory -v "$@"
 ANSIBLE_ROLES_PATH=roles_with_extension ansible-playbook modules_test_role_ext.yml -i ../../inventory -v "$@"
+
+ansible-playbook modules_test_envvar_ext.yml -i ../../inventory -M lib_with_extension --syntax-check -v "$@"
