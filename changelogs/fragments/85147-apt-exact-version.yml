@@ -1,0 +1,2 @@
+bugfixes:
+  - apt - honor an exact package version even when APT pins another version at a higher priority (https://github.com/ansible/ansible/issues/85147).

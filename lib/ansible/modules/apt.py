@@ -220,7 +220,7 @@ notes:
      Since there are no warnings and prompts before installing, we disallow this. Use an explicit fnmatch pattern if you want wildcarding).
    - When used with a C(loop:) each package will be processed individually, it is much more efficient to pass the list directly to the O(name) option.
    - When O(default_release) is used, an implicit priority of 990 is used. This is the same behavior as C(apt-get -t).
-   - When an exact version is specified, an implicit priority of 1001 is used.
+   - When an exact version is specified with O(name), the matching version takes precedence over APT pin priorities.
    - If the interpreter can't import C(python3-apt) the module will check for it in system-owned interpreters as well.
      If the dependency can't be found, depending on the value of O(auto_install_module_deps) the module will attempt to install it.
      If the dependency is found or installed, the module will be respawned under the correct interpreter.
@@ -503,6 +503,10 @@ def package_version_compare(version, other_version):
 
 
 def package_best_match(pkgname, version_cmp, version, release, cache):
+    pkg = cache[pkgname]
+    if version_cmp == "=" and any(pkgver.ver_str == version for pkgver in pkg.version_list):
+        return version
+
     policy = apt_pkg.Policy(cache)
 
     policy.read_pinfile(apt_pkg.config.find_file("Dir::Etc::preferences"))
@@ -512,10 +516,7 @@ def package_best_match(pkgname, version_cmp, version, release, cache):
         # 990 is the priority used in `apt-get -t`
         policy.create_pin('Release', pkgname, release, 990)
     if version_cmp == "=":
-        # Installing a specific version from command line overrides all pinning
-        # We don't mimic this exactly, but instead set a priority which is higher than all APT built-in pin priorities.
         policy.create_pin('Version', pkgname, version, 1001)
-    pkg = cache[pkgname]
     pkgver = policy.get_candidate_ver(pkg)
     if not pkgver:
         return None
