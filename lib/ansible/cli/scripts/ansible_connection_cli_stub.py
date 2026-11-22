@@ -31,6 +31,26 @@ from ansible.utils.jsonrpc import JsonRpcServer
 display = Display()
 
 
+def _is_transport_connection_error(exc):
+    if getattr(exc, 'code', None) is not None:
+        return False
+    if exc.__cause__ is not None:
+        return True
+    return 'does not exist' in to_text(exc)
+
+
+def _remove_stale_socket(socket_path, result):
+    try:
+        os.remove(socket_path)
+    except FileNotFoundError:
+        pass
+    except OSError as exc:
+        result.update({
+            'error': to_text(exc),
+            'exception': traceback.format_exc()
+        })
+
+
 def read_stream(byte_stream):
     size = int(byte_stream.readline().strip())
 
@@ -72,6 +92,7 @@ class ConnectionProcess(object):
 
         self.srv = JsonRpcServer()
         self.sock = None
+        self._socket_file_id = None
 
         self.connection = None
         self._ansible_playbook_pid = ansible_playbook_pid
@@ -102,6 +123,8 @@ class ConnectionProcess(object):
 
             self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
             self.sock.bind(self.socket_path)
+            path_stat = os.stat(self.socket_path)
+            self._socket_file_id = (path_stat.st_dev, path_stat.st_ino)
             self.sock.listen(1)
             messages.append(('vvvv', 'local domain socket listeners started successfully'))
         except Exception as exc:
@@ -181,26 +204,41 @@ class ConnectionProcess(object):
         display.display(msg, log_only=True)
         raise Exception(msg)
 
+    def _owns_socket_file(self):
+        if self._socket_file_id is None:
+            return False
+        try:
+            path_stat = os.stat(self.socket_path)
+        except OSError:
+            return False
+        return (path_stat.st_dev, path_stat.st_ino) == self._socket_file_id
+
     def shutdown(self):
         """ Shuts down the local domain socket
         """
         lock_path = unfrackpath("%s/.ansible_pc_lock_%s" % os.path.split(self.socket_path))
-        if os.path.exists(self.socket_path):
+        if self._owns_socket_file():
+            # Unlink first so no new client discovers a daemon that has stopped serving
+            # while the connection below is torn down. Only unlink the file this
+            # process bound, so a newer daemon's socket is never removed.
             try:
-                if self.sock:
-                    self.sock.close()
-                if self.connection:
-                    self.connection.close()
-                    if self.connection.get_option("persistent_log_messages"):
-                        for _level, message in self.connection.pop_messages():
-                            display.display(message, log_only=True)
-            except Exception:
+                os.remove(self.socket_path)
+            except OSError:
                 pass
-            finally:
-                if os.path.exists(self.socket_path):
-                    os.remove(self.socket_path)
-                    setattr(self.connection, '_socket_path', None)
-                    setattr(self.connection, '_connected', False)
+        try:
+            if self.sock:
+                self.sock.close()
+            if self.connection:
+                self.connection.close()
+                if self.connection.get_option("persistent_log_messages"):
+                    for _level, message in self.connection.pop_messages():
+                        display.display(message, log_only=True)
+        except Exception:
+            pass
+        finally:
+            if self.connection:
+                setattr(self.connection, '_socket_path', None)
+                setattr(self.connection, '_connected', False)
 
         if os.path.exists(lock_path):
             os.remove(lock_path)
@@ -266,7 +304,45 @@ def main(args=None):
         lock_path = unfrackpath("%s/.ansible_pc_lock_%s" % os.path.split(socket_path))
 
         with file_lock(lock_path):
-            if not os.path.exists(socket_path):
+            reused_connection = False
+            if os.path.exists(socket_path):
+                messages.append(('vvvv', 'found existing local domain socket, using it!'))
+                conn = Connection(socket_path)
+                try:
+                    conn.set_options(direct=options)
+                except ConnectionError as exc:
+                    if not _is_transport_connection_error(exc):
+                        raise
+                    # The daemon may have shut down after the socket was found; fall back to
+                    # starting a new one instead of failing the task on a stale socket.
+                    messages.append(('debug', to_text(exc)))
+                    messages.append(('vvvv', 'existing local domain socket did not respond, starting a new one'))
+                    _remove_stale_socket(socket_path, result)
+                else:
+                    reused_connection = True
+                    pc_data = to_text(init_data)
+                    try:
+                        conn.update_play_context(pc_data)
+                        conn.set_check_prompt(task_uuid)
+                    except Exception as exc:
+                        # Only network_cli has update_play context and set_check_prompt, so missing this is
+                        # not fatal e.g. netconf
+                        if isinstance(exc, ConnectionError) and getattr(exc, 'code', None) == -32601:
+                            pass
+                        elif isinstance(exc, ConnectionError) and _is_transport_connection_error(exc):
+                            # The daemon died after the probe succeeded; fall back to a fresh
+                            # daemon, which is built from the same play context and task uuid.
+                            messages.append(('debug', to_text(exc)))
+                            messages.append(('vvvv', 'existing local domain socket stopped responding, starting a new one'))
+                            _remove_stale_socket(socket_path, result)
+                            reused_connection = False
+                        else:
+                            result.update({
+                                'error': to_text(exc),
+                                'exception': traceback.format_exc()
+                            })
+
+            if not reused_connection:
                 messages.append(('vvvv', 'local domain socket does not exist, starting it'))
                 original_path = os.getcwd()
                 r, w = os.pipe()
@@ -295,29 +371,6 @@ def main(args=None):
                     data = json.loads(rfd.read(), cls=_tagless.Decoder)
                     messages.extend(data.pop('messages'))
                     result.update(data)
-
-            else:
-                messages.append(('vvvv', 'found existing local domain socket, using it!'))
-                conn = Connection(socket_path)
-                try:
-                    conn.set_options(direct=options)
-                except ConnectionError as exc:
-                    messages.append(('debug', to_text(exc)))
-                    raise ConnectionError('Unable to decode JSON from response set_options. See the debug log for more information.')
-                pc_data = to_text(init_data)
-                try:
-                    conn.update_play_context(pc_data)
-                    conn.set_check_prompt(task_uuid)
-                except Exception as exc:
-                    # Only network_cli has update_play context and set_check_prompt, so missing this is
-                    # not fatal e.g. netconf
-                    if isinstance(exc, ConnectionError) and getattr(exc, 'code', None) == -32601:
-                        pass
-                    else:
-                        result.update({
-                            'error': to_text(exc),
-                            'exception': traceback.format_exc()
-                        })
 
     if os.path.exists(socket_path):
         messages.extend(Connection(socket_path).pop_messages())

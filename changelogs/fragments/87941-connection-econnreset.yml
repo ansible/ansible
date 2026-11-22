@@ -1,0 +1,10 @@
+bugfixes:
+  - ansible-connection - Fall back to starting a new persistent connection daemon when
+    the existing local domain socket does not respond, instead of failing with
+    "Unable to decode JSON from response set_options". The fallback only triggers
+    on transport failures, so errors from a live but misbehaving daemon still
+    surface, and it also applies if the daemon dies after the initial probe.
+    Also unlink the socket file before tearing down the connection during
+    shutdown, so new clients stop discovering a daemon that has stopped
+    serving, but only when the file is the socket this daemon bound
+    (https://github.com/ansible/ansible/issues/87941).
