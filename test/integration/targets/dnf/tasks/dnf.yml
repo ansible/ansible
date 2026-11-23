@@ -40,6 +40,11 @@
         - "not dnf_result.changed"
 
 # INSTALL
+- name: get the time dummy-repo metadata was last refreshed
+  shell: dnf5 repo info dummy-repo | grep 'Metadata expire'
+  register: refreshed_before
+  when: dnf5
+
 - name: install sos (check_mode)
   dnf:
     name: sos
@@ -53,6 +58,12 @@
       - dnf_result is success
       - dnf_result.results|length > 0
       - "dnf_result.results[0].startswith('Installed: ')"
+
+- name: verify update_cache refreshed the cached metadata
+  command: dnf5 repo info dummy-repo
+  register: r
+  failed_when: refreshed_before.stdout in r.stdout
+  when: dnf5
 
 - name: install sos
   dnf:
