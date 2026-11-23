@@ -1,0 +1,2 @@
+bugfixes:
+  - Prevent "A worker was found in a dead state" errors or hangs caused by `SIGINT` (https://github.com/ansible/ansible/issues/87812)

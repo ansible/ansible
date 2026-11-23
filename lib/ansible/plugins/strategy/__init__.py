@@ -384,6 +384,7 @@ class StrategyBase:
                 worker_prc = self._workers[self._cur_worker]
                 if worker_prc is None or not worker_prc.is_alive():
                     if worker_prc:
+                        self._workers[self._cur_worker] = None
                         worker_prc.close()
 
                     self._blocked_hosts[host.name] = True
@@ -410,7 +411,8 @@ class StrategyBase:
                     )
                     self._workers[self._cur_worker] = worker_prc
                     self._tqm.send_callback('v2_runner_on_start', host, task)
-                    worker_prc.start()
+                    with self._tqm._deferred_signals():
+                        worker_prc.start()
                     display.debug("worker is %d (out of %d available)" % (self._cur_worker + 1, len(self._workers)))
                     queued = True
 
