@@ -245,7 +245,7 @@ def get_device_by_uuid(module: AnsibleModule, uuid : str) -> str | None:
         cmd = [blkid_binary, "--uuid", uuid]
         with suppress(subprocess.CalledProcessError):
             blkid_output = handle_timeout(module)(subprocess.check_output)(cmd, text=True, timeout=module.params["timeout"])
-    return blkid_output
+    return blkid_output.strip() if blkid_output else None
 
 
 @functools.lru_cache(maxsize=None)
