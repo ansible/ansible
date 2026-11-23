@@ -1,0 +1,7 @@
+bugfixes:
+  - lineinfile - fail with a clear error when ``backrefs=true`` and ``create=true`` are used on a file that does not exist.
+    Previously the module created missing parent directories, then reported success or failed with ``FileNotFoundError``
+    (https://github.com/ansible/ansible/issues/71828).
+deprecated_features:
+  - lineinfile - using ``create=true`` with ``backrefs=true`` is deprecated and will be rejected in ansible-core 2.26.
+    Remove ``create``, as ``backrefs`` cannot create a missing file.
