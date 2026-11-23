@@ -1,0 +1,7 @@
+# https://github.com/ansible/ansible/issues/87706
+- hosts: localhost
+  gather_facts: no
+  tasks:
+    - include_tasks: "{{ item }}"
+      loop:
+        - tasks/middle.yml

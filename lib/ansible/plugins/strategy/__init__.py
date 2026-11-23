@@ -778,6 +778,7 @@ class StrategyBase:
         """
         ti_copy = included_file._task.copy(exclude_parent=True)
         ti_copy._parent = included_file._task._parent
+        ti_copy._resolved_include_path = included_file._include_path
 
         temp_vars = ti_copy.vars | included_file._vars
 
