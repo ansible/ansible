@@ -381,51 +381,76 @@
     line: '\1=bar'
     backrefs: yes
     create: yes
+    mode: '0644'
   register: backrefs_create_test
+  ignore_errors: yes
+
+- name: Use backrefs with create=true and no file attributes on a missing file (check mode)
+  lineinfile:
+    path: "{{ remote_tmp_dir }}/backrefs_create_dir/backrefs_create.txt"
+    regexp: '^(foo)=.*'
+    line: '\1=bar'
+    backrefs: yes
+    create: yes
+  check_mode: yes
+  register: backrefs_create_check_test
+  ignore_errors: yes
 
 - name: Stat the directory that would have contained the file
   stat:
     path: "{{ remote_tmp_dir }}/backrefs_create_dir"
   register: backrefs_create_dir
 
-- name: Ensure nothing was created when backrefs did not match
+- name: Ensure the module failed with a clear message and created nothing
   assert:
     that:
-      - backrefs_create_test is not changed
+      - backrefs_create_test is failed
+      - backrefs_create_test.rc == 257
+      - backrefs_create_test.msg == backrefs_create_msg
+      - backrefs_create_test.deprecations | selectattr('msg', 'contains', 'create=true with backrefs=true') | map(attribute='version') | list == ['2.26']
+      - backrefs_create_check_test is failed
+      - backrefs_create_check_test.rc == 257
+      - backrefs_create_check_test.msg == backrefs_create_msg
+      - backrefs_create_check_test.deprecations | selectattr('msg', 'contains', 'create=true with backrefs=true') | map(attribute='version') | list == ['2.26']
       - not backrefs_create_dir.stat.exists
+  vars:
+    backrefs_create_msg: "Destination {{ remote_tmp_dir }}/backrefs_create_dir/backrefs_create.txt does not exist and backrefs=true cannot create it"
 
-- name: Use backrefs with create=true and file attributes on a missing file
+- name: Deploy a file to edit with backrefs
+  copy:
+    content: "foo=baz\n"
+    dest: "{{ remote_tmp_dir }}/backrefs_create_exists.txt"
+
+- name: Use backrefs with create=true on an existing file
   lineinfile:
-    path: "{{ remote_tmp_dir }}/backrefs_create_mode.txt"
+    path: "{{ remote_tmp_dir }}/backrefs_create_exists.txt"
     regexp: '^(foo)=.*'
     line: '\1=bar'
     backrefs: yes
     create: yes
-    mode: '0644'
-  register: backrefs_create_mode_test
+  register: backrefs_create_exists_test
 
-- name: Use backrefs with create=true and file attributes on a missing file (check mode)
+- name: Use backrefs without create on an existing file
   lineinfile:
-    path: "{{ remote_tmp_dir }}/backrefs_create_mode.txt"
+    path: "{{ remote_tmp_dir }}/backrefs_create_exists.txt"
     regexp: '^(foo)=.*'
     line: '\1=bar'
     backrefs: yes
-    create: yes
-    mode: '0644'
-  check_mode: yes
-  register: backrefs_create_mode_check_test
+  register: backrefs_no_create_test
 
-- name: Stat the file that would have been created
-  stat:
-    path: "{{ remote_tmp_dir }}/backrefs_create_mode.txt"
-  register: backrefs_create_mode_file
+- name: Read the edited file
+  slurp:
+    src: "{{ remote_tmp_dir }}/backrefs_create_exists.txt"
+  register: backrefs_create_exists_content
 
-- name: Ensure the file was not created and no attributes were applied
+- name: Ensure the existing file was edited and only create=true was deprecated
   assert:
     that:
-      - backrefs_create_mode_test is not changed
-      - backrefs_create_mode_check_test is not changed
-      - not backrefs_create_mode_file.stat.exists
+      - backrefs_create_exists_test is changed
+      - backrefs_create_exists_test.deprecations | selectattr('msg', 'contains', 'create=true with backrefs=true') | map(attribute='version') | list == ['2.26']
+      - backrefs_create_exists_content.content | b64decode == "foo=bar\n"
+      - backrefs_no_create_test is not changed
+      - backrefs_no_create_test.deprecations | default([]) | selectattr('msg', 'contains', 'create=true with backrefs=true') | list == []
 
 # Test EOF in cases where file has no newline at EOF
 - name: testnoeof deploy the file for lineinfile
