@@ -73,6 +73,23 @@ class TestVaultCli(unittest.TestCase):
                                cli.run)
 
     @patch('ansible.cli.vault.VaultCLI.setup_vault_secrets')
+    def test_run_restores_umask_on_error(self, mock_setup_vault_secrets):
+        mock_setup_vault_secrets.return_value = []
+        cli = VaultCLI(args=['ansible-vault', 'view', '/dev/null/foo'])
+        cli.parse()
+        sentinel_umask = 0o022
+        old_umask = os.umask(sentinel_umask)
+        try:
+            self.assertRaisesRegex(errors.AnsibleOptionsError,
+                                   "A vault password is required to use Ansible's Vault",
+                                   cli.run)
+            # the restrictive umask set by run() must be restored even
+            # though the action raised
+            self.assertEqual(os.umask(old_umask), sentinel_umask)
+        finally:
+            os.umask(old_umask)
+
+    @patch('ansible.cli.vault.VaultCLI.setup_vault_secrets')
     def test_encrypt_missing_file_no_secret(self, mock_setup_vault_secrets):
         mock_setup_vault_secrets.return_value = []
         cli = VaultCLI(args=['ansible-vault', 'encrypt', '/dev/null/foo'])
