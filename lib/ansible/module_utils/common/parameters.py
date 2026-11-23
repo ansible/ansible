@@ -804,8 +804,9 @@ def _validate_sub_spec(
                 _validate_argument_values(sub_spec, sub_parameters, options_context, errors=errors)
 
                 for check in _ADDITIONAL_CHECKS:
+                    check_kwargs = {'argument_spec': sub_spec} if check['attr'] == 'required_one_of' else {}
                     try:
-                        check['func'](value.get(check['attr']), sub_parameters, options_context)
+                        check['func'](value.get(check['attr']), sub_parameters, options_context, **check_kwargs)
                     except TypeError as e:
                         errors.append(check['err'](to_native(e)))
 
