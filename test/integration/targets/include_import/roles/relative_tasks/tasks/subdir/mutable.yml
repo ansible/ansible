@@ -1,0 +1,6 @@
+- name: Change the variable used to select this entry
+  set_fact:
+    relative_entry: nonexistent.yml
+
+- name: Include a sibling using the resolved task source
+  include_tasks: sibling.yml

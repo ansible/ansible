@@ -1,0 +1,4 @@
+- name: Report the legacy role tasks candidate
+  debug:
+    msg: role tasks
+  register: handler_collision_result

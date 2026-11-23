@@ -1,0 +1,2 @@
+- name: Resolve legacy handler task path
+  include_tasks: handler_collision.yml

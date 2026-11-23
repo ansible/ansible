@@ -1,0 +1,30 @@
+- name: Test relative task files in imported roles
+  hosts: testhost
+  gather_facts: false
+  tasks:
+    - name: Import the default entry point
+      import_role:
+        name: relative_tasks
+      vars:
+        selected_file: default.yml
+        expected_marker: default
+
+    - name: Import a nested entry point
+      import_role:
+        name: relative_tasks
+        tasks_from: subdir/main.yml
+      vars:
+        selected_file: source_collision.yml
+        expected_marker: source
+
+    - name: Import nested tasks without the entry extension
+      import_role:
+        name: relative_tasks
+        tasks_from: subdir/main
+      vars:
+        selected_file: nested/first.yml
+        expected_marker: nested
+
+    - name: Import through a parent role
+      import_role:
+        name: relative_tasks_parent
