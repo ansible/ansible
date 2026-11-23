@@ -1,0 +1,3 @@
+[targets]
+hosta ansible_host=127.0.0.3
+hostb ansible_host=127.0.0.4

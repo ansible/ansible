@@ -60,6 +60,13 @@ if grep '{{ hostip }}' out; then
   exit 1
 fi
 
+# ensure delegate_to shows ansible_host for all loop items (not just the first)
+ANSIBLE_TIMEOUT=3 ansible-playbook delegate_loop_label.yml -i delegate_loop_label_inventory -v | tee out
+if ! grep 'hosta(127.0.0.3)' out || ! grep 'hostb(127.0.0.4)' out; then
+  echo 'Callback did not display ansible_host for all delegated hosts in a loop.'
+  exit 1
+fi
+
 ansible-playbook has_hostvars.yml -i inventory -v "$@"
 
 # test ansible_x_interpreter
