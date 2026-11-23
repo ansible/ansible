@@ -2,7 +2,7 @@ galaxy_verbosity: "{{ '' if not ansible_verbosity else '-' ~ ('v' * ansible_verb
 
 gpg_homedir: "{{ galaxy_dir }}/gpg"
 
-offline_server: https://test-hub.demolab.local/api/galaxy/content/api/
+offline_server: "{{ galaxy_ng_server }}content/broken/"
 
 # Test oldest and most recently supported, and versions with notable changes.
 # NOTE: If ansible-galaxy incorporates new resolvelib features, this matrix should be updated to verify the features work on all supported versions.
