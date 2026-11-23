@@ -111,6 +111,27 @@ class TestVariableManager(unittest.TestCase):
         with _tag_ignore_magicmock():
             self.assertEqual(v.get_vars(play=mock_play, use_cache=False).get("foo"), "bar")
 
+    def test_variable_manager_play_vars_files_as_expression(self):
+
+        fake_loader = DictDataLoader({
+            __file__: """
+               foo: bar
+            """
+        })
+
+        mock_play = MagicMock()
+
+        mock_play.get_vars.return_value = dict(
+            test_vars_files=[__file__]
+        )
+
+        mock_play.get_roles.return_value = []
+        mock_play.get_vars_files.return_value = ["{{ test_vars_files }}"]
+
+        mock_inventory = MagicMock()
+        v = VariableManager(inventory=mock_inventory, loader=fake_loader)
+        self.assertEqual(v.get_vars(play=mock_play, use_cache=False).get("foo"), "bar")
+
     @patch('ansible.playbook.role.definition.unfrackpath', mock_unfrackpath_noop)
     def test_variable_manager_role_vars_dependencies(self):
         """
