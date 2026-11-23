@@ -167,6 +167,18 @@ class TestPathDwimRelativeStackDataLoader(unittest.TestCase):
     def test_none(self):
         self.assertRaisesRegex(AnsibleFileNotFound, 'on the Ansible Controller', self._loader.path_dwim_relative_stack, None, None, None)
 
+    def test_none_dirname(self):
+        with tempfile.TemporaryDirectory() as temp_dir_path:
+            temp_dir = pathlib.Path(temp_dir_path)
+            source_path = temp_dir / 'source.yml'
+            source_path.touch()
+
+            self.assertEqual(self._loader.path_dwim_relative_stack([str(temp_dir)], None, source_path.name), str(source_path))
+
+    def test_none_source(self):
+        with pytest.raises(AnsibleFileNotFound, match='on the Ansible Controller'):
+            self._loader.path_dwim_relative_stack([], 'files', None)
+
     def test_empty_strings(self):
         self.assertEqual(self._loader.path_dwim_relative_stack('', '', ''), os.path.abspath('./') + '/')
 
