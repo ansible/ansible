@@ -1,0 +1,2 @@
+bugfixes:
+  - apt - give the apt warnings as the reason when the cache update fails and apt reports no error, instead of an empty reason (https://github.com/ansible/ansible/issues/87921).

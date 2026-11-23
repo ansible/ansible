@@ -1458,13 +1458,19 @@ def main():
                     for retry in range(update_cache_retries):
                         try:
                             if not module.check_mode:
-                                cache.update()
+                                with warnings.catch_warnings(record=True) as apt_warnings:
+                                    warnings.simplefilter('always')
+                                    cache.update()
+                                # The update worked, so emit the recorded warnings again.
+                                for apt_warning in apt_warnings:
+                                    warnings.warn_explicit(apt_warning.message, apt_warning.category, apt_warning.filename, apt_warning.lineno)
                             break
                         except apt.cache.FetchFailedException as fetch_failed_exc:
-                            err = fetch_failed_exc
+                            # The exception has no text when apt reports the failure only as warnings.
+                            err = str(fetch_failed_exc) or ', '.join(str(apt_warning.message) for apt_warning in apt_warnings) or 'unknown reason'
                             module.warn(
                                 f"Failed to update cache after {retry + 1} retries due "
-                                f"to {to_native(fetch_failed_exc)}, retrying"
+                                f"to {err}, retrying"
                             )
 
                         # Use exponential backoff plus a little bit of randomness
