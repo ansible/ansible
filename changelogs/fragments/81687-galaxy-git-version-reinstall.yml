@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-galaxy - fix ``collection install`` crashing with ``Non integer values in LooseVersion`` when re-installing a ``git`` type requirement that has an explicit ``name`` and a non-SemVer ``version`` (a ``v``-prefixed tag, a branch, or ``HEAD``); virtual (SCM and subdirs) requirements are now consistently treated as unsatisfied during the already-installed check, matching the resolver, so they are always reinstalled instead of being version-compared against the installed copy (https://github.com/ansible/ansible/issues/81687).
