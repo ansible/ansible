@@ -1,0 +1,2 @@
+bugfixes:
+  - ssh connection - check the become plugin ``require_tty`` field when evaluating if a TTY is requested. (https://github.com/ansible/ansible/issues/86298)

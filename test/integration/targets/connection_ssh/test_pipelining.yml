@@ -1,0 +1,63 @@
+- hosts: localhost
+  gather_facts: no
+  vars:
+    run_test: ansible ssh-pipelining -i test_connection.inventory -m ping -vvv
+    become_msg: Escalation succeeded
+  tasks:
+    - name: Test no pipelining
+      command: ansible -i test_connection.inventory -m ping -vvv ssh-no-pipelining,ssh-defaults
+      failed_when: _task.result.stdout | regex_findall('PUT') | length == 0
+
+    - name: Test pipelining
+      command: "{{ run_test }}"
+      failed_when: _task.result.stdout | regex_findall('PUT') | length != 0
+
+    - name: Test ssh arguments do not use pipelining
+      command: "{{ run_test }} -e {{ arguments | quote }}"
+      loop_control:
+        loop_var: arguments
+      loop:
+        - "ansible_ssh_args='-C -o ControlMaster=auto -o ControlPersist=60s -t'"
+        - "ansible_ssh_extra_args='-o RequestTTY=force'"
+        - "ansible_ssh_common_args='-o RequestTTY=yes'"
+      register: ssh_requires_tty
+
+    - assert:
+        that:
+          - item.stdout | regex_findall('PUT') | length != 0
+      loop: "{{ ssh_requires_tty.results }}"
+
+    - name: Test become plugin implicitly requires a TTY
+      command: "{{ run_test }} -b --become-method su"
+      failed_when:
+        - _task.result.stdout | regex_findall('PUT') | length == 0
+        - _task.result.stdout is not search(become_msg)
+
+    - name: Test become plugin can disallow pipelining
+      command: "{{ run_test }} -b --become-method noop"
+      environment:
+        ANSIBLE_BECOME_PLUGINS: ./become_plugins
+        ANSIBLE_TEST_BECOME_PIPELINING: False
+      failed_when:
+        - _task.result.stdout | regex_findall('PUT') | length == 0
+        - _task.result.stdout is not search(become_msg)
+
+    # https://github.com/ansible/ansible/issues/86298
+    - name: Test become plugin requiring TTY
+      command: "{{ run_test }} -b --become-method noop"
+      environment:
+        ANSIBLE_BECOME_PLUGINS: ./become_plugins
+        ANSIBLE_TEST_BECOME_REQUIRE_TTY: True
+      failed_when:
+        - _task.result.stdout | regex_findall('PUT') | length == 0
+        - _task.result.stdout is not search(become_msg)
+
+    - name: Test error when become plugin requires a TTY and use_tty is false
+      command: "{{ run_test }} -b --become-method noop"
+      environment:
+        ANSIBLE_BECOME_PLUGINS: ./become_plugins
+        ANSIBLE_TEST_BECOME_REQUIRE_TTY: True
+        ANSIBLE_SSH_USETTY: False
+      failed_when:
+        - _task.result is success
+        - _task.msg is not search("The 'ssh' connection does not provide a TTY which is required for the selected become plugin: noop")
