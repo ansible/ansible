@@ -93,6 +93,7 @@ from ansible.galaxy.collection.concrete_artifact_manager import (
     _download_file,
     _get_json_from_installed_dir,
     _get_meta_from_src_dir,
+    _get_meta_from_tar,
     _tarfile_extract,
 )
 from ansible.galaxy.collection.galaxy_api_proxy import MultiGalaxyAPIProxy
@@ -511,6 +512,31 @@ def build_collection(u_collection_path, u_output_path, force):
     return collection_output
 
 
+def _find_existing_download_artifacts(b_output_path):
+    # type: (bytes) -> dict[tuple[str, str], bytes]
+    """Scan a download directory for existing collection tarballs.
+
+    Returns a mapping of (fqcn, version) to the full tarball path.
+    """
+    existing = {}  # type: dict[tuple[str, str], bytes]
+    for b_tarball in glob.glob(os.path.join(b_output_path, b'*.tar.gz')):
+        try:
+            meta = _get_meta_from_tar(b_tarball)
+        except AnsibleError:
+            continue
+
+        namespace = meta.get('namespace')
+        name = meta.get('name')
+        version = meta.get('version')
+        if not isinstance(namespace, str) or not isinstance(name, str) or not isinstance(version, str):
+            continue
+
+        fqcn = '%s.%s' % (namespace, name)
+        existing[(fqcn, version)] = b_tarball
+
+    return existing
+
+
 def download_collections(
         collections,  # type: t.Iterable[Requirement]
         output_path,  # type: str
@@ -518,6 +544,9 @@ def download_collections(
         no_deps,  # type: bool
         allow_pre_release,  # type: bool
         artifacts_manager,  # type: ConcreteArtifactsManager
+        force=False,  # type: bool
+        force_deps=False,  # type: bool
+        upgrade=False,  # type: bool
 ):  # type: (...) -> None
     """Download Ansible collections as their tarball from a Galaxy server to the path specified and creates a requirements
     file of the downloaded requirements to be used for an install.
@@ -528,22 +557,47 @@ def download_collections(
     :param validate_certs: Whether to validate the certificate if downloading a tarball from a non-Galaxy host.
     :param no_deps: Ignore any collection dependencies and only download the base requirements.
     :param allow_pre_release: Do not ignore pre-release versions when selecting the latest.
+    :param force: Force re-download of requested collections.
+    :param force_deps: Force re-download of requested collections and their dependencies.
+    :param upgrade: Upgrade existing downloaded collections to the latest available version.
     """
+    b_output_path = to_bytes(output_path, errors='surrogate_or_strict')
+
+    existing_collections = _find_existing_download_artifacts(b_output_path)
+    requested_fqcns = {req.fqcn for req in collections if req.fqcn}
+
+    existing_non_requested = {
+        k: v for k, v in existing_collections.items()
+        if k[0] not in requested_fqcns
+    }
+
+    if force_deps:
+        preferred_existing = {}
+    elif force:
+        preferred_existing = existing_non_requested
+    else:
+        preferred_existing = existing_collections
+
+    preferred_candidates = None
+    if preferred_existing:
+        preferred_candidates = {
+            Candidate(fqcn, ver, to_native(preferred_existing[(fqcn, ver)]), 'file', None)
+            for fqcn, ver in preferred_existing
+        }
+
     with _display_progress("Process download dependency map"):
         dep_map = _resolve_depenency_map(
             set(collections),
             galaxy_apis=apis,
-            preferred_candidates=None,
+            preferred_candidates=preferred_candidates,
             concrete_artifacts_manager=artifacts_manager,
             no_deps=no_deps,
             allow_pre_release=allow_pre_release,
-            upgrade=False,
+            upgrade=upgrade,
             # Avoid overhead getting signatures since they are not currently applicable to downloaded collections
             include_signatures=False,
             offline=False,
         )
-
-    b_output_path = to_bytes(output_path, errors='surrogate_or_strict')
 
     requirements = []
     with _display_progress(
@@ -558,6 +612,18 @@ def download_collections(
                     '{coll!s} is not downloadable'.
                     format(coll=to_text(concrete_coll_pin)),
                 )
+                continue
+
+            coll_key = (concrete_coll_pin.fqcn, concrete_coll_pin.ver)
+            if coll_key in preferred_existing:
+                display.display(
+                    "'{coll!s}' is already downloaded, skipping.".
+                    format(coll=to_text(concrete_coll_pin)),
+                )
+                requirements.append({
+                    'name': to_native(os.path.basename(preferred_existing[coll_key])),
+                    'version': concrete_coll_pin.ver,
+                })
                 continue
 
             display.display(

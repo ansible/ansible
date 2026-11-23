@@ -291,7 +291,7 @@ class GalaxyCLI(CLI):
         collection.set_defaults(func=self.execute_collection)  # to satisfy doc build
         collection_parser = collection.add_subparsers(metavar='COLLECTION_ACTION', dest='action')
         collection_parser.required = True
-        self.add_download_options(collection_parser, parents=[common, cache_options])
+        self.add_download_options(collection_parser, parents=[common, cache_options, force])
         self.add_init_options(collection_parser, parents=[common, force])
         self.add_build_options(collection_parser, parents=[common, force])
         self.add_publish_options(collection_parser, parents=[common])
@@ -323,9 +323,14 @@ class GalaxyCLI(CLI):
 
         download_parser.add_argument('args', help='Collection(s)', metavar='collection', nargs='*')
 
-        download_parser.add_argument('-n', '--no-deps', dest='no_deps', action='store_true', default=False,
-                                     help="Don't download collection(s) listed as dependencies.")
+        download_exclusive = download_parser.add_mutually_exclusive_group()
+        download_exclusive.add_argument('-n', '--no-deps', dest='no_deps', action='store_true', default=False,
+                                        help="Don't download collection(s) listed as dependencies.")
+        download_exclusive.add_argument('--force-with-deps', dest='force_with_deps', action='store_true', default=False,
+                                        help="Force overwriting an existing collection and its dependencies.")
 
+        download_parser.add_argument('-U', '--upgrade', dest='upgrade', action='store_true', default=False,
+                                     help='Upgrade downloaded collection artifacts. This will also update dependencies unless --no-deps is provided')
         download_parser.add_argument('-p', '--download-path', dest='download_path',
                                      default='./collections',
                                      help='The directory to download the collections to.')
@@ -1051,10 +1056,17 @@ class GalaxyCLI(CLI):
         if not os.path.exists(b_download_path):
             os.makedirs(b_download_path)
 
+        force_deps = context.CLIARGS['force_with_deps']
+        force = context.CLIARGS['force'] or force_deps
+        upgrade = context.CLIARGS['upgrade']
+
         download_collections(
             requirements, download_path, self.api_servers, no_deps,
             context.CLIARGS['allow_pre_release'],
             artifacts_manager=artifacts_manager,
+            force=force,
+            force_deps=force_deps,
+            upgrade=upgrade,
         )
 
         return 0
