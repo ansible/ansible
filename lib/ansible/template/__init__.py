@@ -55,6 +55,10 @@ class Templar:
 
         return templar
 
+    def _expression_cache(self) -> _engine._ExpressionCacheContext:
+        """Reuse compiled expressions for one inventory-source parse, without caching evaluated values."""
+        return self._engine.expression_cache()
+
     def resolve_variable_expression(
         self,
         expression: str,
