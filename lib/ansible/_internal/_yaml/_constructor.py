@@ -23,6 +23,15 @@ display = Display()
 _TRUSTED_AS_TEMPLATE: t.Final[TrustedAsTemplate] = TrustedAsTemplate()
 
 
+def _quoted_leading_zero_unsafe(node: Node) -> bool:
+    """True when a quoted !unsafe scalar would be parsed as a YAML 1.1 octal integer."""
+    if node.tag != '!unsafe' or not isinstance(node, ScalarNode) or node.style not in ("'", '"'):
+        return False
+
+    value = node.value[1:] if node.value[:1] in '+-' else node.value
+    return len(value) > 1 and value[0] == '0' and not value.strip('01234567_')
+
+
 class _BaseConstructor(SafeConstructor, metaclass=abc.ABCMeta):
     """Base class for Ansible YAML constructors."""
 
@@ -171,7 +180,8 @@ class AnsibleInstrumentedConstructor(_BaseConstructor):
         # use a copied node to avoid mutating existing node and tripping the recursion check in construct_object
         copied_node = copy.copy(node)
         # repeat implicit resolution process to determine the proper tag for the value in the unsafe node
-        copied_node.tag = t.cast(BaseResolver, self).resolve(type(node), node.value, (True, False))
+        implicit = (False, True) if _quoted_leading_zero_unsafe(node) else (True, False)
+        copied_node.tag = t.cast(BaseResolver, self).resolve(type(node), node.value, implicit)
 
         # re-entrant call using the correct tag
         # non-deferred construction of hierarchical nodes so the result is a fully realized object, and so our stateful unsafe propagation behavior works

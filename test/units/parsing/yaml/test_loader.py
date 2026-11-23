@@ -469,3 +469,52 @@ def test_string_trust_propagation(trust_input_str: bool) -> None:
     res = yaml.load(data, Loader=AnsibleLoader)  # type: ignore[arg-type]
 
     assert trust_input_str == TrustedAsTemplate.is_tagged_on(res['foo'])
+
+
+def _load_yaml_value(yaml_text: str):
+    stream = StringIO(yaml_text if yaml_text.endswith('\n') else yaml_text + '\n')
+    stream.name = file_name
+    return yaml.load(stream, Loader=AnsibleLoader)  # type: ignore[arg-type]
+
+
+@pytest.mark.parametrize(
+    "yaml_text, expected_type, expected_value",
+    (
+        ("!unsafe '00'", str, "00"),
+        ('!unsafe "000123456"', str, "000123456"),
+        ("!unsafe '007'", str, "007"),
+        ("!unsafe 00", int, 0),
+        ("!unsafe 000123456", int, 42798),
+        ("!unsafe '123'", int, 123),
+        ("!unsafe 'yes'", bool, True),
+        ('!unsafe ""', type(None), None),
+        ("!unsafe |\n  00\n", int, 0),
+        ("!unsafe 123", int, 123),
+        ("!unsafe yes", bool, True),
+        ("!unsafe null", type(None), None),
+    ),
+)
+def test_unsafe_scalar_preserves_quoted_leading_zeros(yaml_text: str, expected_type: type, expected_value: t.Any) -> None:
+    """Quoted leading-zero !unsafe scalars stay strings. Every other !unsafe scalar keeps its existing type."""
+    result = _load_yaml_value(yaml_text)
+
+    if expected_type is str:
+        assert isinstance(result, str)
+        assert not TrustedAsTemplate.is_tagged_on(result)
+    elif expected_type is bool:
+        assert isinstance(result, bool)
+    elif expected_type is int:
+        assert isinstance(result, int) and not isinstance(result, bool)
+    else:
+        assert result is None
+
+    assert result == expected_value
+
+
+def test_unsafe_quoted_mapping_value_preserves_leading_zeros() -> None:
+    """Controller writes survey and extra vars as quoted !unsafe strings."""
+    result = _load_yaml_value("!unsafe 'project_id': !unsafe '00'")
+
+    assert isinstance(result["project_id"], str)
+    assert result["project_id"] == "00"
+    assert not TrustedAsTemplate.is_tagged_on(result["project_id"])
