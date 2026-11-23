@@ -39,3 +39,60 @@
     that: unexpected_warning not in local_wait_for_connection.stderr
   vars:
     unexpected_warning: "Reset is not implemented for this connection"
+
+- name: Test timeout with an unreachable host
+  wait_for_connection:
+    timeout: 3
+    connect_timeout: 1
+  register: timeout_unreachable
+  delegate_to: 198.51.100.2  # TEST-NET-2 (RFC 5737), which should not have hosts in it
+  ignore_errors: true
+
+- name: Verify the timeout is honored
+  assert:
+    that:
+      - timeout_unreachable is failed
+      - timeout_unreachable.elapsed <= 4
+
+- name: Test that a connection attempt does not exceed the timeout
+  wait_for_connection:
+    timeout: 7
+    connect_timeout: 4
+  register: timeout_attempt
+  delegate_to: 198.51.100.2  # TEST-NET-2 (RFC 5737), which should not have hosts in it
+  ignore_errors: true
+
+- name: Verify the attempt does not exceed the timeout
+  assert:
+    that:
+      - timeout_attempt is failed
+      - timeout_attempt.elapsed <= 8
+
+- name: Test that the sleep between attempts does not exceed the timeout
+  wait_for_connection:
+    timeout: 3
+    connect_timeout: 1
+    sleep: 10
+  register: timeout_sleep
+  delegate_to: 198.51.100.2  # TEST-NET-2 (RFC 5737), which should not have hosts in it
+  ignore_errors: true
+
+- name: Verify the sleep does not extend past the timeout
+  assert:
+    that:
+      - timeout_sleep is failed
+      - timeout_sleep.elapsed <= 4
+
+- name: Test that a one-second timeout still makes an attempt
+  wait_for_connection:
+    timeout: 1
+    connect_timeout: 1
+  register: timeout_one
+  delegate_to: 198.51.100.2  # TEST-NET-2 (RFC 5737), which should not have hosts in it
+  ignore_errors: true
+
+- name: Verify an attempt was made
+  assert:
+    that:
+      - timeout_one is failed
+      - "'Failed to connect' in timeout_one.msg"
