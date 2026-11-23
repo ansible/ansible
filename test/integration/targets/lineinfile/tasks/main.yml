@@ -407,14 +407,14 @@
       - backrefs_create_test is failed
       - backrefs_create_test.rc == 257
       - backrefs_create_test.msg == backrefs_create_msg
-      - backrefs_create_test.deprecations | selectattr('msg', 'contains', 'create=true with backrefs=true') | map(attribute='version') | list == ['2.26']
+      - backrefs_create_test.deprecations | selectattr('msg', 'contains', '`create=true` with `backrefs=true`') | map(attribute='version') | list == ['2.26']
       - backrefs_create_check_test is failed
       - backrefs_create_check_test.rc == 257
       - backrefs_create_check_test.msg == backrefs_create_msg
-      - backrefs_create_check_test.deprecations | selectattr('msg', 'contains', 'create=true with backrefs=true') | map(attribute='version') | list == ['2.26']
+      - backrefs_create_check_test.deprecations | selectattr('msg', 'contains', '`create=true` with `backrefs=true`') | map(attribute='version') | list == ['2.26']
       - not backrefs_create_dir.stat.exists
   vars:
-    backrefs_create_msg: "Destination {{ remote_tmp_dir }}/backrefs_create_dir/backrefs_create.txt does not exist and backrefs=true cannot create it"
+    backrefs_create_msg: "Destination {{ remote_tmp_dir }}/backrefs_create_dir/backrefs_create.txt does not exist, and create=true is ignored when backrefs=true"
 
 - name: Deploy a file to edit with backrefs
   copy:
@@ -447,10 +447,10 @@
   assert:
     that:
       - backrefs_create_exists_test is changed
-      - backrefs_create_exists_test.deprecations | selectattr('msg', 'contains', 'create=true with backrefs=true') | map(attribute='version') | list == ['2.26']
+      - backrefs_create_exists_test.deprecations | selectattr('msg', 'contains', '`create=true` with `backrefs=true`') | map(attribute='version') | list == ['2.26']
       - backrefs_create_exists_content.content | b64decode == "foo=bar\n"
       - backrefs_no_create_test is not changed
-      - backrefs_no_create_test.deprecations | default([]) | selectattr('msg', 'contains', 'create=true with backrefs=true') | list == []
+      - backrefs_no_create_test.deprecations | default([]) | selectattr('msg', 'contains', '`create=true` with `backrefs=true`') | list == []
 
 # Test EOF in cases where file has no newline at EOF
 - name: testnoeof deploy the file for lineinfile

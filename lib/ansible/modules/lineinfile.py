@@ -309,7 +309,7 @@ def present(module, dest, regexp, search_string, line, insertafter, insertbefore
         if not create:
             module.fail_json(rc=257, msg='Destination %s does not exist !' % dest)
         if backrefs:
-            module.fail_json(rc=257, msg='Destination %s does not exist and backrefs=true cannot create it' % dest)
+            module.fail_json(rc=257, msg='Destination %s does not exist, and create=true is ignored when backrefs=true' % dest)
         b_destpath = os.path.dirname(b_dest)
         if b_destpath and not os.path.exists(b_destpath) and not module.check_mode:
             try:
@@ -615,9 +615,9 @@ def main():
 
     if create and backrefs:
         module.deprecate(
-            'Using create=true with backrefs=true is deprecated.',
+            'Using `create=true` with `backrefs=true` is deprecated.',
             version='2.26',
-            help_text='backrefs never creates a missing file. Remove create, or create the file in an earlier task.',
+            help_text='Remove `create`, or create the file in an earlier task.',
         )
 
     b_path = to_bytes(path, errors='surrogate_or_strict')
