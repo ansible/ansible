@@ -4,6 +4,31 @@ ansible-core 2.22 "Thank You" Release Notes
 
 .. contents:: Topics
 
+v2.22.1rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2026-11-23
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.22/porting_guides/porting_guide_core_2.22.html>`__
+
+Minor Changes
+-------------
+
+- ansible-test - Update base and default containers.
+
+Security Fixes
+--------------
+
+- ansible-galaxy collection install - fix validating the collection name before using it to build the installation path. (CVE-2026-130644)
+
+Bugfixes
+--------
+
+- ansible-test - Fix the ``--include`` option for integration tests. Previously this option accepted an argument but could be overridden by positional argument processing. (https://github.com/ansible/ansible/issues/87839)
+- password hashing - correct the size of the ``crypt_data`` structure passed to ``crypt_r``, which was too small for the glibc definition and could allow the library to write past the end of the buffer.
+
 v2.22.0
 =======
 
