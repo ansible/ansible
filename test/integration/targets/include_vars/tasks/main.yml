@@ -106,13 +106,13 @@
       - "invalid_ignore_files is failed"
       - "'option must be a list' in invalid_ignore_files.msg"
       - "non_existent_dir_results is failed"
-      - "'directory does not exist' in non_existent_dir_results.message"
+      - "'directory does not exist' in non_existent_dir_results.msg"
       - "invalid_option_results is failed"
       - "'is not a valid option' in invalid_option_results.msg"
       - "invalid_files_dir_results is failed"
       - "'these are incompatible' in invalid_files_dir_results.msg"
       - "non_file_dir_results is failed"
-      - "'is not a directory' in non_file_dir_results.message"
+      - "'is not a directory' in non_file_dir_results.msg"
       - "invalid_extensions_results is failed"
       - "'option must be a list' in invalid_extensions_results.msg"
 
@@ -186,7 +186,7 @@
 - name: verify that files without valid extensions are loaded
   assert:
     that:
-      - "'a valid extension' in include_with_unknown_file_extension.message"
+      - "'a valid extension' in include_with_unknown_file_extension.msg"
 
 - name: include var with raw params
   include_vars: >
@@ -209,7 +209,7 @@
 - name: Verify that file and raw_params provide correct error message to user
   assert:
     that:
-      - "'Could not find file' in include_with_non_existent_file.message"
+      - "'Could not find file' in include_with_non_existent_file.msg"
 
 - name: include var (FQCN) with raw params
   ansible.builtin.include_vars: >
