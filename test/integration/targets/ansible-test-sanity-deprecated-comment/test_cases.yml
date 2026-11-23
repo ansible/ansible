@@ -1,0 +1,3 @@
+# deprecated: description='expired yml root comment' core_version='2.0'
+foo: # deprecated: description='expired yml after `key:`' core_version='2.0'
+key: value # deprecated: description='expired yml after `key: value`' core_version='2.0'
