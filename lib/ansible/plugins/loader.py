@@ -688,6 +688,9 @@ class PluginLoader:
             except ImportError:
                 return plugin_load_context.nope('Python package {0} not found'.format(acr.n_python_package_name))
 
+        # acr.n_python_package_name is the plugin resource's parent and must import as a package.
+        # An extra FQCN component (e.g. ns.col.mod.mod) can make it resolve to a module,
+        # which has nothing to search beneath it, so the lookup fails.
         if not hasattr(pkg, '__path__'):
             return plugin_load_context.nope(f'{acr.n_python_package_name!r} is not a Python package')
 
