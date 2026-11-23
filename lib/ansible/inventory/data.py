@@ -63,8 +63,10 @@ class InventoryData:
 
     def _create_implicit_localhost(self, pattern: str) -> Host:
 
-        if self.localhost:
+        if self.localhost and self.localhost.implicit:
             new_host = self.localhost
+        elif self.localhost:
+            return None
         else:
             new_host = Host(pattern)
 
