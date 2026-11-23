@@ -1,0 +1,11 @@
+- hosts: host0,host1,host2
+  gather_facts: no
+  strategy: free
+  tasks:
+    - block:
+        - fail:
+          when: inventory_hostname == "host0"
+          run_once: True
+      rescue:
+        - assert:
+            that: inventory_hostname == "host0"
