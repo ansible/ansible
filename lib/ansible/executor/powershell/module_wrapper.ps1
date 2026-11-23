@@ -49,8 +49,8 @@ param(
     $WaitForDebugger,
 
     [Parameter()]
-    [IDictionary]
-    $DebugParam = @{}
+    [PSObject]
+    $DebugParam
 )
 
 Function Convert-JsonObject {
@@ -217,6 +217,12 @@ $pwshUtilInfo = @(
     }
 )
 
+# The manifest JSON gives a PSCustomObject, splatting needs a hashtable.
+$debugSplat = @{}
+foreach ($p in $DebugParam.PSObject.Properties) {
+    $debugSplat[$p.Name] = $p.Value
+}
+
 $debugger = $null
 if ($scriptInfo.ShouldConstrain) {
     # Fail if there are any module utils, in the future we may allow unsigned
@@ -225,7 +231,7 @@ if ($scriptInfo.ShouldConstrain) {
         throw "Cannot run untrusted PowerShell script '$Script' in ConstrainedLanguage mode with module util imports."
     }
 
-    if ($DebugParam.Count) {
+    if ($debugSplat.Count) {
         throw "Cannot run untrusted PowerShell script '$Script' in ConstrainedLanguage mode with a debugger."
     }
 
@@ -285,11 +291,11 @@ ${function:<AnsibleModule>} = @($input)[0]
     $ps.Commands.Clear()
     $ps.Streams.ClearStreams()
 
-    if ($DebugParam.Count) {
+    if ($debugSplat.Count) {
         # Get a more friendly name for debug session but fallback to the original
         # name if using an unexpected format.
         $extraMappings = @()
-        $DebugParam.Name = if ($scriptInfo.Name.StartsWith('ansible.builtin.script.')) {
+        $debugSplat.Name = if ($scriptInfo.Name.StartsWith('ansible.builtin.script.')) {
             "script: $($scriptInfo.Name.Substring(23))"
 
             # We want to set the local root to the actual script path rather than
@@ -309,8 +315,8 @@ ${function:<AnsibleModule>} = @($input)[0]
             $scriptInfo.Name
         }
 
-        $DebugParam.Pipeline = $ps
-        $DebugParam.PathMapping = @(
+        $debugSplat.Pipeline = $ps
+        $debugSplat.PathMapping = @(
             # It is important the path mappings are set before to ensure
             # script paths take priority over the stub name.
             $extraMappings
@@ -327,7 +333,7 @@ ${function:<AnsibleModule>} = @($input)[0]
             }
         )
         $debugWrapper = Get-AnsibleScript -Name 'debug_wrapper.ps1' -IncludeScriptBlock
-        $debugger = & $debugWrapper.ScriptBlock @DebugParam
+        $debugger = & $debugWrapper.ScriptBlock @debugSplat
 
         if ($WaitForDebugger -or $PSVersionTable.PSVersion -lt '6.0') {
             # The debugger is set to stop on the next command which is the module
