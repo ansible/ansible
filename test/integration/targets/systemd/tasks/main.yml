@@ -123,3 +123,8 @@
 - import_tasks: test_enabled_runtime.yml
 - import_tasks: test_systemd_version.yml
 - import_tasks: test_mask.yml
+
+- name: Ignore global scope on daemon reload, otherwise systemctl will fail
+  systemd_service:
+    scope: global
+    daemon_reload: True

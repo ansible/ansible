@@ -1,0 +1,2 @@
+bugfixes:
+  - systemd_service module - Update to handle systemctl new error on previouslly ignored --global option on some commands.
