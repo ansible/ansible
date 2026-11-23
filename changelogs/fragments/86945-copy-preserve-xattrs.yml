@@ -1,0 +1,14 @@
+minor_changes:
+  - copy, template - add ``preserve_xattrs`` and ``xattr_error_mode`` options to
+    control how Linux extended attributes (xattrs) are reconciled on the destination.
+    ``preserve_xattrs`` accepts ``no``, ``target`` (keep the destination's existing
+    xattrs), ``source`` (carry the source's xattrs onto the destination) and ``merge``
+    (overlay source onto target). Useful for IMA-enabled systems where
+    ``security.ima`` / ``security.evm`` signatures must travel with the file
+    (https://github.com/ansible/ansible/issues/86945).
+  - atomic_move - explicitly preserve the destination's xattrs across the swap, so
+    in-place modifiers built on top of ``atomic_move`` (``lineinfile``, ``replace``,
+    ``blockinfile``, ``assemble``, ``template`` and friends) no longer drop them.
+  - module_utils.common.xattrs - new helpers (``read_xattrs``, ``apply_xattrs``,
+    ``encode_xattrs``, ``decode_xattrs``, ``reconcile_desired``) that consolidate
+    xattr handling so external xattr-aware modules can share one implementation.
