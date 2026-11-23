@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-vault - restore the process umask on all exit paths of ``VaultCLI.run()``. Previously, the restrictive umask (``0o077``) was not restored when option validation or the vault action raised, leaking the restrictive umask into the calling process (https://github.com/ansible/ansible/issues/87957).
