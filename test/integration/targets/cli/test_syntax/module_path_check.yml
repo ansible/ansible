@@ -1,0 +1,6 @@
+- name: Resolve a module provided only via --module-path
+  hosts: testhost
+  gather_facts: false
+  tasks:
+    - name: Call a module that only exists under the custom module path
+      custom_syntax_module:

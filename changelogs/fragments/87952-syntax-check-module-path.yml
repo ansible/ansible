@@ -1,0 +1,3 @@
+bugfixes:
+  - ansible-playbook - honor ``-M``/``--module-path`` when ``--syntax-check``,
+   ``--list-tasks``, ``--list-hosts`` or ``--list-tags`` is used (https://github.com/ansible/ansible/issues/87952).
