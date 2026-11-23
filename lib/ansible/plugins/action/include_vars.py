@@ -104,11 +104,12 @@ class ActionModule(ActionBase):
         failed = False
         if self.source_dir:
             self._set_dir_defaults()
-            self._set_root_dir()
-            if not path.exists(self.source_dir):
+            try:
+                self.source_dir = self._find_needle('vars', self.source_dir)
+            except AnsibleError as e:
                 failed = True
-                err_msg = f"{self.source_dir} directory does not exist"
-            elif not path.isdir(self.source_dir):
+                err_msg = to_native(e)
+            if not path.isdir(self.source_dir):
                 failed = True
                 err_msg = f"{self.source_dir} is not a directory"
             else:
@@ -139,7 +140,8 @@ class ActionModule(ActionBase):
 
         if failed:
             result['failed'] = failed
-            result['message'] = err_msg
+            result['message'] = err_msg  # FOLLOWUP: 'message' should probably be deprecated
+            result['msg'] = err_msg
         elif self.hash_behaviour is not None and self.hash_behaviour != C.DEFAULT_HASH_BEHAVIOUR:
             merge_hashes = self.hash_behaviour == 'merge'
             existing_variables = {k: v for k, v in task_vars.items() if k in results}
@@ -153,28 +155,6 @@ class ActionModule(ActionBase):
         result['_ansible_no_log'] = not self.show_content
 
         return result
-
-    def _set_root_dir(self):
-        if self._task._role:
-            if self.source_dir.split('/')[0] == 'vars':
-                path_to_use = (
-                    path.join(self._task._role._role_path, self.source_dir)
-                )
-                if path.exists(path_to_use):
-                    self.source_dir = path_to_use
-            else:
-                path_to_use = (
-                    path.join(
-                        self._task._role._role_path, 'vars', self.source_dir
-                    )
-                )
-                self.source_dir = path_to_use
-        else:
-            if (origin := self._task._origin) and origin.path:  # origin.path is not present for ad-hoc tasks
-                current_dir = (
-                    "/".join(origin.path.split('/')[:-1])
-                )
-                self.source_dir = path.join(current_dir, self.source_dir)
 
     def _log_walk(self, error):
         self._display.vvv(f"Issue with walking through {error.filename}: {error}")
