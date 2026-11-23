@@ -4,6 +4,25 @@ ansible-core 2.20 "Good Times Bad Times" Release Notes
 
 .. contents:: Topics
 
+v2.20.12rc1
+===========
+
+Release Summary
+---------------
+
+| Release Date: 2026-11-23
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.20/porting_guides/porting_guide_core_2.20.html>`__
+
+Security Fixes
+--------------
+
+- ansible-galaxy collection install - fix validating the collection name before using it to build the installation path. (CVE-2026-130644)
+
+Bugfixes
+--------
+
+- ansible-test - Fix the ``--include`` option for integration tests. Previously this option accepted an argument but could be overridden by positional argument processing. (https://github.com/ansible/ansible/issues/87839)
+
 v2.20.11
 ========
 
