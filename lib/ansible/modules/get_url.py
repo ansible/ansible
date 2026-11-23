@@ -25,6 +25,11 @@ description:
      - For Windows targets, use the M(ansible.windows.win_get_url) module instead.
 version_added: '0.6'
 options:
+  ca_path:
+    description:
+      - PEM formatted file that contains a CA certificate to be used for validation.
+    type: path
+    version_added: '2.23'
   ciphers:
     description:
       - SSL/TLS Ciphers to use for the request.
@@ -392,7 +397,7 @@ def url_filename(url):
 
 
 def url_get(module, url, dest, use_proxy, last_mod_time, force, timeout=10, headers=None, tmp_dest='', method='GET', unredirected_headers=None,
-            decompress=True, ciphers=None, use_netrc=True):
+            decompress=True, ciphers=None, use_netrc=True, ca_path=None):
     """
     Download data from the url and store in a temporary file.
 
@@ -401,7 +406,7 @@ def url_get(module, url, dest, use_proxy, last_mod_time, force, timeout=10, head
 
     start = datetime.now(timezone.utc)
     rsp, info = fetch_url(module, url, use_proxy=use_proxy, force=force, last_mod_time=last_mod_time, timeout=timeout, headers=headers, method=method,
-                          unredirected_headers=unredirected_headers, decompress=decompress, ciphers=ciphers, use_netrc=use_netrc)
+                          unredirected_headers=unredirected_headers, decompress=decompress, ciphers=ciphers, use_netrc=use_netrc, ca_path=ca_path)
     elapsed = (datetime.now(timezone.utc) - start).seconds
 
     if info['status'] == 304:
@@ -523,6 +528,7 @@ def main():
         decompress=dict(type='bool', default=True),
         ciphers=dict(type='list', elements='str'),
         use_netrc=dict(type='bool', default=True),
+        ca_path=dict(type='path', default=None),
     )
 
     module = AnsibleModule(
@@ -545,6 +551,7 @@ def main():
     decompress = module.params['decompress']
     ciphers = module.params['ciphers']
     use_netrc = module.params['use_netrc']
+    ca_path = module.params['ca_path']
 
     result = dict(
         changed=False,
@@ -569,7 +576,8 @@ def main():
             checksum_url = checksum
             # download checksum file to checksum_tmpsrc
             checksum_tmpsrc, _dummy = url_get(module, checksum_url, dest, use_proxy, last_mod_time, force, timeout, headers, tmp_dest,
-                                              unredirected_headers=unredirected_headers, ciphers=ciphers, use_netrc=use_netrc)
+                                              unredirected_headers=unredirected_headers, ciphers=ciphers, use_netrc=use_netrc,
+                                              ca_path=ca_path)
             with open(checksum_tmpsrc) as f:
                 lines = [line.rstrip('\n') for line in f]
             os.remove(checksum_tmpsrc)
@@ -629,7 +637,8 @@ def main():
     start = datetime.now(timezone.utc)
     method = 'HEAD' if module.check_mode else 'GET'
     tmpsrc, info = url_get(module, url, dest, use_proxy, last_mod_time, force, timeout, headers, tmp_dest, method,
-                           unredirected_headers=unredirected_headers, decompress=decompress, ciphers=ciphers, use_netrc=use_netrc)
+                           unredirected_headers=unredirected_headers, decompress=decompress, ciphers=ciphers, use_netrc=use_netrc,
+                           ca_path=ca_path)
     result['elapsed'] = (datetime.now(timezone.utc) - start).seconds
     result['src'] = tmpsrc
 

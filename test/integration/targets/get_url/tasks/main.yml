@@ -773,6 +773,9 @@
 - name: Test use_netrc=False
   import_tasks: use_netrc.yml
 
+- name: Test ca_path
+  import_tasks: ca_path.yml
+
 # https://github.com/ansible/ansible/pull/64092
 # Calling get_url with bad checksum should not delete the target file
 - name: Define test files for checksum verification
