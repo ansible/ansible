@@ -130,7 +130,7 @@ from ansible.module_utils.common.sentinel import Sentinel
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.common.yaml import yaml_dump
-from ansible.utils.collection_loader import AnsibleCollectionRef
+from ansible.utils.collection_loader import AnsibleCollectionRef, AnsibleCollectionConfig
 from ansible.utils.display import Display
 from ansible.utils.hashing import secure_hash, secure_hash_s
 
@@ -1426,11 +1426,15 @@ def _normalize_collection_path(path):
     ).expanduser().absolute()
 
 
-def find_existing_collections(path_filter, artifacts_manager, namespace_filter=None, collection_filter=None, dedupe=True):
+def find_existing_collections(
+    path_filter,
+    artifacts_manager,
+    namespace_filter=None,
+    collection_filter=None,
+    dedupe=True,
+    include_internal=True,
+):
     """Locate all collections under a given path.
-
-    :param path: Collection dirs layout search path.
-    :param artifacts_manager: Artifacts manager.
     """
     if path_filter and not is_sequence(path_filter):
         path_filter = [path_filter]
@@ -1444,6 +1448,13 @@ def find_existing_collections(path_filter, artifacts_manager, namespace_filter=N
         path = _normalize_collection_path(path)
         if not path.is_dir():
             continue
+        if not include_internal:
+            try:
+                path.relative_to(AnsibleCollectionConfig._internal_collections)
+            except ValueError:
+                pass
+            else:
+                continue
         if path_filter:
             for pf in path_filter:
                 try:
