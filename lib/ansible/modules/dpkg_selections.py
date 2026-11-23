@@ -76,19 +76,24 @@ def main():
 
     # Get current settings.
     rc, out, err = module.run_command([dpkg, '--get-selections', name], check_rc=True)
-    if 'no packages found matching' in err:
-        module.fail_json(msg="Failed to find package '%s' to perform selection '%s'." % (name, selection))
-    elif not out:
-        current = 'not present'
-    else:
+    if rc == 0 and out:
         current = out.split()[1]
+    elif 'no packages found matching' in err:
+        current = 'not found'
+    else:
+        current = 'not present'
 
     changed = current != selection
 
     if module.check_mode or not changed:
         module.exit_json(changed=changed, before=current, after=selection)
 
-    module.run_command([dpkg, '--set-selections'], data="%s %s" % (name, selection), check_rc=True)
+    rc, out, err = module.run_command([dpkg, '--set-selections'], data="%s %s" % (name, selection), check_rc=True)
+    if rc != 0:
+        if 'package not in' in err:
+            module.fail_json(msg="Failed to find package '%s' to perform selection '%s'." % (name, selection))
+        module.fail_json(msg="Unexpected error when setting package '%s' to '%s': %s." % (name, selection, err))
+
     module.exit_json(changed=changed, before=current, after=selection)
 
 
