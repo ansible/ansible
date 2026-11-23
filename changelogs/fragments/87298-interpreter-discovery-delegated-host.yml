@@ -1,0 +1,5 @@
+bugfixes:
+  - interpreter discovery - discovery messages named the inventory host
+    instead of the delegated host when a task used ``delegate_to``. They now
+    name the host the interpreter was actually discovered on
+    (https://github.com/ansible/ansible/issues/87310).
