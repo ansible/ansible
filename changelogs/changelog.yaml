@@ -566,3 +566,30 @@ releases:
     - rc_fail_inference.yml
     - user-busybox-password-lock.yml
     release_date: '2026-10-27'
+  2.22.1rc1:
+    changes:
+      bugfixes:
+      - ansible-test - Fix the ``--include`` option for integration tests. Previously
+        this option accepted an argument but could be overridden by positional argument
+        processing. (https://github.com/ansible/ansible/issues/87839)
+      - password hashing - correct the size of the ``crypt_data`` structure passed
+        to ``crypt_r``, which was too small for the glibc definition and could allow
+        the library to write past the end of the buffer.
+      minor_changes:
+      - ansible-test - Update base and default containers.
+      release_summary: '| Release Date: 2026-11-23
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.22/porting_guides/porting_guide_core_2.22.html>`__
+
+        '
+      security_fixes:
+      - ansible-galaxy collection install - fix validating the collection name before
+        using it to build the installation path. (CVE-2026-130644)
+    codename: Thank You
+    fragments:
+    - 2.22.1rc1_summary.yaml
+    - 87912-crypt-data-struct-size.yml
+    - ansible-test-base-default-container-update.yml
+    - ansible-test-integration-include-arg.yml
+    - validate-collection-name-from-artifact-metadata.yml
+    release_date: '2026-11-23'
