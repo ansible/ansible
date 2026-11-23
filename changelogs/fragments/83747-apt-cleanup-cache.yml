@@ -1,0 +1,2 @@
+bugfixes:
+  - apt - Run requested autoremove or autoclean operations when update_cache or cache_valid_time is also set (https://github.com/ansible/ansible/issues/83747).
