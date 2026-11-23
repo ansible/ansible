@@ -1,0 +1,5 @@
+- block:
+    - fail:
+  rescue:
+    - debug:
+        msg: rescued
