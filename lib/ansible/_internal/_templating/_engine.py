@@ -469,6 +469,7 @@ class TemplateEngine:
         with (
             TemplateContext(template_value=expression, templar=self, options=options, _render_jinja_const_template=_render_jinja_const_template) as ctx,
             DeprecatedAccessAuditContext.when(ctx.is_top_level),
+            JinjaCallContext(accept_lazy_markers=True),  # apply Jinja marker handling instead of the calling plugin's behavior
         ):
             try:
                 if not TrustedAsTemplate.is_tagged_on(expression):
