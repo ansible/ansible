@@ -1,0 +1,2 @@
+bugfixes:
+  - Remove internal ``ansible_parsed`` key from module task results.

@@ -59,3 +59,4 @@
     that:
       - timeout_jid is failed
       - timeout_jid.msg == "async task did not complete within the requested time - 1s"
+      - timeout_jid.ansible_parsed is undefined
