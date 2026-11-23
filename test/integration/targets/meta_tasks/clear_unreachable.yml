@@ -1,0 +1,18 @@
+- hosts: unreachable,testhost
+  gather_facts: false
+  tasks:
+    - ping:
+
+
+- hosts: unreachable,testhost
+  gather_facts: false
+  tasks:
+    - meta: clear_host_errors
+
+
+- hosts: unreachable
+  gather_facts: false
+  tasks:
+    # NOTE debug doesn't connect but asserts that unreachable state was cleared above
+    - debug:
+        msg: PASSED
