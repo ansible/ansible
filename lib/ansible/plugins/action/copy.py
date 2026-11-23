@@ -223,10 +223,9 @@ class ActionModule(ActionBase):
                 result['invocation']['module_args'] = self._task.args.copy()
 
         if isinstance(result['invocation'], dict):
+            # NOTE: also deprecate and remove once we have DT
             if 'content' in result['invocation']:
                 result['invocation']['content'] = 'CENSORED: content is a no_log parameter'
-            if result['invocation'].get('module_args', {}).get('content') is not None:
-                result['invocation']['module_args']['content'] = 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER'
 
         return result
 
