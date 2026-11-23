@@ -266,6 +266,30 @@ class ShellConfig(EnvironmentConfig):
         self.display_stderr = True
 
 
+class DebugConfig(CommonConfig):
+    """Configuration for the debug command."""
+
+    def __init__(self, args: t.Any, command: str) -> None:
+        super().__init__(args, command)
+
+        self.cmd: list[str] = args.cmd
+        self.check_layout = False
+        self.limit = args.limit
+        self.inventory = args.inventory
+        self.interactive = sys.stdin.isatty() and not args.cmd  # debug should only be interactive when stdin is a TTY and no command was given
+        self.display_stderr = True
+        self.nologo = args.nologo
+
+
+class PwshDebugConfig(DebugConfig):
+    """Configuration for the pwsh-debug command."""
+
+    def __init__(self, args: t.Any) -> None:
+        super().__init__(args, 'pwsh-debug')
+
+        self.wait_at_entry = args.wait_at_entry
+
+
 class SanityConfig(TestConfig):
     """Configuration for the sanity command."""
 
