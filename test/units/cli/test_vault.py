@@ -28,6 +28,7 @@ from units.mock.vault_helper import TextVaultSecret
 from ansible import context, errors
 from ansible.cli.vault import VaultCLI
 from ansible.module_utils.common.text.converters import to_text
+from ansible.parsing.vault import VaultSecretsContext
 from ansible.utils import context_objects as co
 
 
@@ -38,8 +39,10 @@ from ansible.utils import context_objects as co
 @pytest.fixture(autouse=True)
 def reset_cli_args():
     co.GlobalCLIArgs._Singleton__instance = None
+    VaultSecretsContext._current = None
     yield
     co.GlobalCLIArgs._Singleton__instance = None
+    VaultSecretsContext._current = None
 
 
 class TestVaultCli(unittest.TestCase):
@@ -71,6 +74,20 @@ class TestVaultCli(unittest.TestCase):
         self.assertRaisesRegex(errors.AnsibleOptionsError,
                                "A vault password is required to use Ansible's Vault",
                                cli.run)
+
+    @patch('ansible.cli.vault.VaultCLI.setup_vault_secrets')
+    def test_run_restores_umask_on_exception(self, mock_setup_vault_secrets):
+        mock_setup_vault_secrets.return_value = []
+        prev_umask = os.umask(0o022)
+        try:
+            cli = VaultCLI(args=['ansible-vault', 'view', '/dev/null/foo'])
+            cli.parse()
+            with pytest.raises(errors.AnsibleOptionsError):
+                cli.run()
+            current_umask = os.umask(0o022)
+            assert current_umask == 0o022
+        finally:
+            os.umask(prev_umask)
 
     @patch('ansible.cli.vault.VaultCLI.setup_vault_secrets')
     def test_encrypt_missing_file_no_secret(self, mock_setup_vault_secrets):
