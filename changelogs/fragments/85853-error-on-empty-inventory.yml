@@ -1,0 +1,2 @@
+minor_changes:
+  - add new configuration option ``ERROR_ON_EMPTY_INVENTORY`` (env var ``ANSIBLE_ERROR_ON_EMPTY_INVENTORY``) to control whether empty inventories should raise an error or show a warning. (https://github.com/ansible/ansible/issues/85853)
