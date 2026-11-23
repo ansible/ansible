@@ -13,6 +13,9 @@ module: deb822_repository
 notes:
 - This module will not automatically update caches, call the M(ansible.builtin.apt) module based
   on the changed state.
+seealso:
+    - plugin_type: filter
+      plugin: ansible.builtin.ppa_to_url
 options:
     allow_downgrade_to_insecure:
         description:
@@ -216,6 +219,17 @@ EXAMPLES = """
     components: stable
     architectures: amd64
     signed_by: https://download.example.com/linux/ubuntu/gpg
+
+- name: Add repo using PPA
+  deb822_repository:
+    name: example
+    types: deb
+    uris: "{{ 'ppa:user/ppa-name' | ppa_to_url }}"
+    suites: '{{ ansible_distribution_release }}'
+    components: stable
+    architectures: amd64
+    signed_by: "{{ 'ppa:user/ppa-name' | ppa_to_url }}/gpg"
+
 """
 
 RETURN = """

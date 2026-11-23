@@ -1,0 +1,25 @@
+- name: Test url_to_ppa filter
+  set_fact:
+    launchpad_url: 'https://launchpad.net/~user/+archive/ubuntu/package'
+    ppa_url: 'https://ppa.launchpad.net/user/package/ubuntu'
+    expected_ppa: 'ppa:user/package'
+    invalid_url: 'https://launchpad.net/~user/+archive/ubuntu/package/invalid'
+    invalid_netloc: 'https://invalid.launchpad.net/~user/+archive/ubuntu/package/ubuntu'
+
+- set_fact:
+    foo: '{{ invalid_url | url_to_ppa }}'
+  ignore_errors: yes
+  register: url_to_ppa_invalid_url
+
+- set_fact:
+    foo: '{{ invalid_netloc | url_to_ppa }}'
+  ignore_errors: yes
+  register: url_to_ppa_invalid_netloc
+
+- name: Verify url_to_ppa filter
+  assert:
+    that:
+      - url_to_ppa_invalid_url is failed
+      - "'Invalid URL format' in url_to_ppa_invalid_url.msg"
+      - url_to_ppa_invalid_netloc is failed
+      - "'Invalid URL format' in url_to_ppa_invalid_netloc.msg"
