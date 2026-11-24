@@ -46,7 +46,7 @@ from ansible.parsing.dataloader import DataLoader
 from ansible.playbook.play_context import PlayContext
 from ansible.playbook.task import Task
 from ansible.plugins.callback import CallbackBase
-from ansible.plugins.loader import callback_loader, strategy_loader, module_loader
+from ansible.plugins.loader import callback_loader, strategy_loader
 from ansible._internal._plugins import _strategy
 from ansible._internal._templating._engine import TemplateEngine
 from ansible._internal._task import UnifiedTaskResult, WireTaskResult, HostTaskResult, TaskContext
