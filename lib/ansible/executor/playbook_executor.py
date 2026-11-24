@@ -52,15 +52,15 @@ class PlaybookExecutor:
         self.passwords = passwords
         self._unreachable_hosts = dict()
 
+        # Handle module paths for listing modes
+        if context.CLIARGS.get('module_path', False):
+            for path in context.CLIARGS['module_path']:
+                if path:
+                    module_loader.add_directory(path)
+
         if context.CLIARGS.get('listhosts') or context.CLIARGS.get('listtasks') or \
                 context.CLIARGS.get('listtags') or context.CLIARGS.get('syntax'):
             self._tqm = None
-
-            # Handle module paths for listing modes
-            if context.CLIARGS.get('module_path', False):
-                for path in context.CLIARGS['module_path']:
-                    if path:
-                        module_loader.add_directory(path)
         else:
             self._tqm = TaskQueueManager(
                 inventory=inventory,

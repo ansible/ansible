@@ -196,12 +196,6 @@ class TaskQueueManager:
 
         _rpc_host.LocalManager.shared_instance()  # ensure the RPC host is available
 
-        # make sure any module paths (if specified) are added to the module_loader
-        if context.CLIARGS.get('module_path', False):
-            for path in context.CLIARGS['module_path']:
-                if path:
-                    module_loader.add_directory(path)
-
         # a special flag to help us exit cleanly
         self._terminated = False
 
