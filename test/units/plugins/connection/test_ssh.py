@@ -67,8 +67,19 @@ class TestConnectionBaseClass(unittest.TestCase):
         conn.get_option = MagicMock()
         conn.get_option.return_value = True
 
+        # without in_data a tty is requested and nothing is piped to the remote command
         res, stdout, stderr = conn.exec_command('ssh')
+
+        self.assertEqual((res, stdout, stderr), (0, 'stdout', 'stderr'))
+        self.assertIn('-tt', conn._build_command.call_args[0])
+        conn._run.assert_called_with('ssh something something', None, sudoable=True)
+
+        # with in_data no tty is requested and the data is piped to the remote command
         res, stdout, stderr = conn.exec_command('ssh', 'this is some data')
+
+        self.assertEqual((res, stdout, stderr), (0, 'stdout', 'stderr'))
+        self.assertNotIn('-tt', conn._build_command.call_args[0])
+        conn._run.assert_called_with('ssh something something', 'this is some data', sudoable=True)
 
     def test_plugins_connection_ssh__examine_output(self):
         pc = PlayContext()
