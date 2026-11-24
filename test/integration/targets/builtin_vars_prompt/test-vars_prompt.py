@@ -209,6 +209,12 @@ assert 'non-interactive mode' in output
 assert 'INVALID INPUT' not in output
 
 
+# Both prompt paths hash accepted defaults once, after any validation.
+output = run_noninteractive([], 0, 'hash-defaults.yml')
+assert 'All assertions passed' in output
+assert 'default-secret' not in output
+
+
 # A None default is accepted or rejected by the expression, not by an implicit guard.
 assert 'All assertions passed' in run_noninteractive([], 0, 'validate-none-default.yml')
 output = run_noninteractive(['-e', '{"accept_missing": false}'], 1, 'validate-none-default.yml')

@@ -18,7 +18,6 @@
 from __future__ import annotations
 
 import os
-import sys
 
 from ansible import constants as C
 from ansible import context
@@ -148,8 +147,7 @@ class PlaybookExecutor:
                                     validate = var.get("validate")
                                     while True:
                                         value = display.do_var_prompt(
-                                            vname, private, prompt, encrypt if validate is None else None, confirm, salt_size, salt, default,
-                                            unsafe or validate is not None,
+                                            vname, private, prompt, confirm=confirm, default=default, unsafe=True,
                                         )
                                         if validate is None:
                                             break
@@ -159,20 +157,13 @@ class PlaybookExecutor:
                                             raise AnsibleError(f"Error evaluating vars_prompt validation for {vname!r}.") from ex
                                         if valid:
                                             break
-                                        if not sys.__stdin__.isatty():
-                                            raise AnsibleError(
-                                                f"No valid value is available for vars_prompt variable {vname!r} in non-interactive mode.",
-                                                help_text="Provide a matching default, or supply the variable through --extra-vars "
-                                                          "and validate it with an assert task.",
-                                            )
-                                        display.display("***** INVALID INPUT ****")
+                                        display._report_invalid_var_prompt(vname)
 
-                                    if validate is not None:
-                                        if encrypt:
-                                            from ansible.utils.encrypt import do_encrypt
-                                            value = do_encrypt(value, encrypt, salt_size=salt_size, salt=salt)
-                                        if not unsafe:
-                                            value = TrustedAsTemplate().tag(value)
+                                    if encrypt:
+                                        from ansible.utils.encrypt import do_encrypt
+                                        value = do_encrypt(value, encrypt, salt_size=salt_size, salt=salt)
+                                    if not unsafe:
+                                        value = TrustedAsTemplate().tag(value)
                                     play.vars[vname] = value
                                 else:  # we are either in --list-<option> or syntax check
                                     play.vars[vname] = default
