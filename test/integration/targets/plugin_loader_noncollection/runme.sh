@@ -5,8 +5,8 @@ set -eux
 for plugin_dir in \
     adjacent/library \
     adjacent/filter_plugins \
-    module_path \
-    configured \
+    module_path/library \
+    configured/library \
     playbook_dir_only/library
 do
     test ! -e "${plugin_dir}/__init__.py"
@@ -26,7 +26,7 @@ fi
 printf '%s\n' "${missing_mp}"
 grep -F 'mp_mod' <<< "${missing_mp}"
 
-ansible-playbook plays/module_path.yml -i ../../inventory -M "${PWD}/module_path" "$@"
+ansible-playbook plays/module_path.yml -i ../../inventory -M "${PWD}/module_path/library" "$@"
 
 set +e
 missing_pb="$(ansible testhost -i ../../inventory -m pbdir_mod -c local "$@" 2>&1)"
@@ -56,4 +56,4 @@ fi
 printf '%s\n' "${missing_cfg}"
 grep -F 'cfg_mod' <<< "${missing_cfg}"
 
-ANSIBLE_LIBRARY="${PWD}/configured" ansible-playbook plays/configured.yml -i ../../inventory "$@"
+ANSIBLE_LIBRARY="${PWD}/configured/library" ansible-playbook plays/configured.yml -i ../../inventory "$@"
