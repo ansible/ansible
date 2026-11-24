@@ -1,0 +1,10 @@
+- hosts: testhost
+  gather_facts: false
+  tasks:
+    - name: run the module from ANSIBLE_LIBRARY
+      cfg_mod:
+      register: module_result
+
+    - assert:
+        that:
+          - module_result.source == 'configured_path'

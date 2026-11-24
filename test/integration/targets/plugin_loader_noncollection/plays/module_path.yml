@@ -1,0 +1,10 @@
+- hosts: testhost
+  gather_facts: false
+  tasks:
+    - name: run the module from --module-path
+      mp_mod:
+      register: module_result
+
+    - assert:
+        that:
+          - module_result.source == 'module_path'
