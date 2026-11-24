@@ -46,7 +46,7 @@ from ansible.parsing.dataloader import DataLoader
 from ansible.playbook.play_context import PlayContext
 from ansible.playbook.task import Task
 from ansible.plugins.callback import CallbackBase
-from ansible.plugins.loader import callback_loader, strategy_loader, module_loader
+from ansible.plugins.loader import callback_loader, strategy_loader
 from ansible._internal._plugins import _strategy
 from ansible._internal._templating._engine import TemplateEngine
 from ansible._internal._task import UnifiedTaskResult, WireTaskResult, HostTaskResult, TaskContext
@@ -195,12 +195,6 @@ class TaskQueueManager:
         self._start_at_done = False
 
         _rpc_host.LocalManager.shared_instance()  # ensure the RPC host is available
-
-        # make sure any module paths (if specified) are added to the module_loader
-        if context.CLIARGS.get('module_path', False):
-            for path in context.CLIARGS['module_path']:
-                if path:
-                    module_loader.add_directory(path)
 
         # a special flag to help us exit cleanly
         self._terminated = False

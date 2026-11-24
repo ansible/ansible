@@ -24,7 +24,7 @@ from ansible import context
 from ansible.executor.task_queue_manager import TaskQueueManager, AnsibleEndPlay
 from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.parsing.convert_bool import boolean
-from ansible.plugins.loader import become_loader, connection_loader, shell_loader
+from ansible.plugins.loader import become_loader, connection_loader, module_loader, shell_loader
 from ansible.playbook import Playbook
 from ansible._internal._templating._engine import TemplateEngine
 from ansible.utils.helpers import pct_to_int
@@ -51,6 +51,12 @@ class PlaybookExecutor:
         self._loader = loader
         self.passwords = passwords
         self._unreachable_hosts = dict()
+
+        # Handle module paths for listing modes
+        if context.CLIARGS.get('module_path', False):
+            for path in context.CLIARGS['module_path']:
+                if path:
+                    module_loader.add_directory(path)
 
         if context.CLIARGS.get('listhosts') or context.CLIARGS.get('listtasks') or \
                 context.CLIARGS.get('listtags') or context.CLIARGS.get('syntax'):
