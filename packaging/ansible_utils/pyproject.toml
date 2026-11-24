@@ -1,0 +1,46 @@
+[build-system]
+requires = ["setuptools >= 77.0.3, <= 80.3.1"]  # lower bound to support license/license-files (PEP 639), upper bound for latest version tested at release
+build-backend = "setuptools.build_meta"
+
+[project]
+requires-python = ">=3.9"
+name = "ansible-utils"
+version = "1.0.0"
+authors = [
+    {name = "Ansible Project"},
+]
+description = "Standalone Ansible utilities (collection loader and doc extractor), usable without ansible-core"
+readme = "README.md"
+license = "GPL-3.0-or-later"
+license-files = [
+    "COPYING",
+    "PSF-license.txt",
+]
+dependencies = [
+    "PyYAML",
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Natural Language :: English",
+    "Operating System :: POSIX",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.15",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Utilities",
+]
+
+[project.urls]
+"Homepage" = "https://ansible.com/"
+"Source Code" = "https://github.com/ansible/ansible/"
+"Bug Tracker" = "https://github.com/ansible/ansible/issues/"
+
+[tool.setuptools]
+include-package-data = false
+packages = ["ansible_utils", "ansible_utils.collection_loader", "ansible_utils.doc_extractor"]

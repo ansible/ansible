@@ -74,7 +74,7 @@ def mock_from_path(mocker, monkeypatch):
         return Requirement(*collection_args[to_native(path)])
 
     files_mock = mocker.MagicMock()
-    mocker.patch('ansible.galaxy.collection.files', return_value=files_mock)
+    mocker.patch('ansible.module_utils._internal._collection_loader._collection_finder.files', return_value=files_mock)
     files_mock.glob.return_value = []
 
     mocker.patch.object(pathlib.Path, 'is_dir', return_value=True)

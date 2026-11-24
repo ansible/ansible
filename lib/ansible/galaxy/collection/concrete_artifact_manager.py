@@ -10,7 +10,6 @@ import os
 import tarfile
 import subprocess
 import typing as t
-import yaml
 
 from collections.abc import Mapping
 from contextlib import contextmanager, suppress
@@ -42,6 +41,12 @@ from ansible.module_utils.common.process import get_bin_path
 from ansible.module_utils.common.sentinel import Sentinel
 from ansible.module_utils.common.yaml import yaml_load
 from ansible.module_utils.urls import open_url
+from ansible.module_utils._internal._collection_loader._collection_meta import (
+    CollectionMetadataError,
+    CollectionMetadataNotMapping,
+    _read_galaxy_yml,
+    _read_manifest_json,
+)
 from ansible.utils.collection_loader import AnsibleCollectionRef
 from ansible.utils.display import Display
 
@@ -663,25 +668,23 @@ def _get_meta_from_src_dir(
             format(path=to_native(galaxy_yml))
         )
 
-    with open(galaxy_yml, 'rb') as manifest_file_obj:
-        try:
-            manifest = yaml_load(manifest_file_obj)
-        except yaml.error.YAMLError as yaml_err:
-            raise AnsibleError(
-                "Failed to parse the galaxy.yml at '{path!s}' with "
-                'the following error:\n{err_txt!s}'.
-                format(
-                    path=to_native(galaxy_yml),
-                    err_txt=to_native(yaml_err),
-                ),
-            ) from yaml_err
-
-    if not isinstance(manifest, dict):
+    try:
+        manifest = _read_galaxy_yml(to_text(b_path, errors='surrogate_or_strict'))
+    except CollectionMetadataNotMapping:
         if require_build_metadata:
             raise AnsibleError(f"The collection galaxy.yml at '{to_native(galaxy_yml)}' is incorrectly formatted.")
         # Valid build metadata is not required by ansible-galaxy list. Raise ValueError to fall back to implicit metadata.
         display.warning(f"The collection galaxy.yml at '{to_native(galaxy_yml)}' is incorrectly formatted.")
         raise ValueError(f"The collection galaxy.yml at '{to_native(galaxy_yml)}' is incorrectly formatted.")
+    except CollectionMetadataError as val_err:
+        raise AnsibleError(
+            "Failed to parse the galaxy.yml at '{path!s}' with "
+            'the following error:\n{err_txt!s}'.
+            format(
+                path=to_native(galaxy_yml),
+                err_txt=to_native(val_err),
+            ),
+        ) from val_err
 
     return _normalize_galaxy_yml_manifest(manifest, galaxy_yml, require_build_metadata)
 
@@ -716,8 +719,15 @@ def _get_json_from_installed_dir(
 def _get_meta_from_installed_dir(
         b_path,  # type: bytes
 ):  # type: (...) -> dict[str, t.Union[str, list[str], dict[str, str], None, t.Type[Sentinel]]]
-    manifest = _get_json_from_installed_dir(b_path, MANIFEST_FILENAME)
-    collection_info = manifest['collection_info']
+    try:
+        collection_info = _read_manifest_json(to_text(b_path, errors='surrogate_or_strict'))
+    except CollectionMetadataError as ex:
+        raise AnsibleError(
+            f'Collection tar file member {MANIFEST_FILENAME} does not contain a valid json string.'
+        ) from ex
+
+    if collection_info is None:
+        raise LookupError(f"The collection {MANIFEST_FILENAME!r} path in {to_text(b_path)!r} does not exist.")
 
     version = collection_info.get('version')
     if not version:

@@ -13,3 +13,5 @@ ANSIBLE_COLLECTIONS_PATH="${PWD}../../../" \
     ANSIBLE_LOCALHOST_WARNING=false \
     PYTHONPATH="./temp_pythonpath:${PYTHONPATH}" \
     ansible-playbook "${PLAYBOOK_DIR}/main.yml" "$@"
+
+python "${PLAYBOOK_DIR}/runme.py"
