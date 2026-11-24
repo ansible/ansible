@@ -847,3 +847,6 @@
   assert:
     that:
       - "'secret' not in auth_error|to_json"
+
+- name: Test secret masking of sensitive headers
+  import_tasks: secret-headers.yml

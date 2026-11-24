@@ -57,3 +57,29 @@
       assert:
         that:
           - "'Authorization' in web_data.headers"
+
+- vars:
+    # request header values supplied by the user, which must be registered as secrets
+    secret_authorization: "Bearer LookupAuthorization0001Secret"
+    secret_cookie: "session=LookupCookie0002Secret"
+    # a request header which must not be masked
+    marker_header: "LookupMarker0003NotSecret"
+  block:
+    - name: Test sensitive headers
+      set_fact:
+        web_data: "{{ lookup('url', 'https://' ~ httpbin_host ~ '/headers', split_lines=False, headers=headers) | from_json }}"
+      vars:
+        headers:
+          Authorization: "{{ secret_authorization }}"
+          Cookie: "{{ secret_cookie }}"
+          X-Marker: "{{ marker_header }}"
+
+    - name: Assert that the sensitive headers were sent and registered as secrets
+      assert:
+        that:
+          - "'Authorization' in web_data.headers"
+          # the values the user supplied are masked once the lookup has registered them
+          - (secret_authorization | mask_secrets) == '$REDACTED$'
+          - (secret_cookie | mask_secrets) == '$REDACTED$'
+          # headers which are not sensitive are left alone
+          - (marker_header | mask_secrets) == marker_header

@@ -128,6 +128,8 @@ options:
         - The hash/dict format was added in Ansible 2.6.
         - Previous versions used a C("key:value,key:value") string format.
         - The C("key:value,key:value") string format is deprecated and has been removed in version 2.10.
+        - The values of the C(Authorization), C(Cookie), C(Proxy-Authorization), C(Set-Cookie) and C(WWW-Authenticate)
+          headers are treated as secrets and are redacted from output.
     type: dict
     version_added: '2.0'
   url_username:
@@ -378,7 +380,7 @@ from urllib.parse import urlsplit
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.text.converters import to_native
-from ansible.module_utils.urls import fetch_url, is_fetch_success, mask_url, url_argument_spec
+from ansible.module_utils.urls import fetch_url, is_fetch_success, mask_url, _register_secret_headers, url_argument_spec
 
 # ==============================================================
 # url handling
@@ -545,6 +547,8 @@ def main():
     decompress = module.params['decompress']
     ciphers = module.params['ciphers']
     use_netrc = module.params['use_netrc']
+
+    _register_secret_headers(headers)
 
     result = dict(
         changed=False,
