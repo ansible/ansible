@@ -68,6 +68,7 @@ from ansible.module_utils.basic import missing_required_lib
 from ansible.module_utils.common.collections import Mapping, OrderedSet, is_sequence
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.module_utils.compat import typing as _t
+from ansible.module_utils.secrets import register_secrets
 
 try:
     import ssl
@@ -339,6 +340,31 @@ def mask_url(url: str) -> str:
         netloc = parsed_url.netloc.replace(f'{parsed_url.username}@', f'{mask}@')
 
     return urlunparse(parsed_url._replace(netloc=netloc))
+
+
+SECRET_HEADERS = frozenset((
+    'authorization',
+    'cookie',
+    'proxy-authorization',
+    'set-cookie',
+    'www-authenticate',
+))
+
+
+def _register_secret_headers(headers: _t.Optional[_t.Mapping[str, _t.Any]], /) -> None:
+    """
+    Register the values of any sensitive headers in `headers` so they are redacted from output.
+
+    Header names are matched against `SECRET_HEADERS` case-insensitively.
+    Values which are `None` are ignored; any other non-string value is converted to text before being registered.
+    """
+    if not headers:
+        return
+
+    register_secrets(
+        to_text(value) for name, value in headers.items()
+        if value is not None and to_text(name).lower() in SECRET_HEADERS
+    )
 
 
 def generic_urlparse(parts):

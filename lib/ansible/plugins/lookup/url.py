@@ -36,7 +36,10 @@ options:
     secret: true
     version_added: "2.8"
   headers:
-    description: HTTP request headers
+    description:
+      - HTTP request headers
+      - The values of the C(Authorization), C(Cookie), C(Proxy-Authorization), C(Set-Cookie) and C(WWW-Authenticate)
+        headers are treated as secrets and are redacted from output.
     type: dictionary
     default: {}
     version_added: "2.9"
@@ -214,7 +217,7 @@ from urllib.error import HTTPError, URLError
 
 from ansible.errors import AnsibleError
 from ansible.module_utils.common.text.converters import to_text
-from ansible.module_utils.urls import open_url, mask_url, ConnectionError, SSLValidationError
+from ansible.module_utils.urls import open_url, mask_url, _register_secret_headers, ConnectionError, SSLValidationError
 from ansible.plugins.lookup import LookupBase
 from ansible.utils.display import Display
 
@@ -226,6 +229,8 @@ class LookupModule(LookupBase):
     def run(self, terms, variables=None, **kwargs):
 
         self.set_options(var_options=variables, direct=kwargs)
+
+        _register_secret_headers(self.get_option('headers'))
 
         ret = []
         for term in terms:
