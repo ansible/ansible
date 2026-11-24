@@ -47,6 +47,10 @@ current_out="$(ansible-doc --playbook-dir ./ testns.testcol.fakemodule | sed '1 
 expected_out="$(sed '1 s/\(^> MODULE testns\.testcol\.fakemodule\).*(.*)$/\1/' fakemodule.output)"
 test "$current_out" == "$expected_out"
 
+echo "reject an extra FQCN component naming a module"
+current_out="$(ansible-doc --playbook-dir ./ testns.testcol.fakemodule.fakemodule 2>&1)"
+echo "$current_out" | grep "${GREP_OPTS[@]}" -F 'testns.testcol.fakemodule.fakemodule was not found'
+
 echo "test randommodule docs from collection"
 # we use sed to strip the plugin path from the first line, and fix-urls.py to unbreak and replace URLs from stable-X branches
 current_out="$(ansible-doc --playbook-dir ./ testns.testcol.randommodule | sed '1 s/\(^> MODULE testns\.testcol\.randommodule\).*(.*)$/\1/' | python fix-urls.py)"

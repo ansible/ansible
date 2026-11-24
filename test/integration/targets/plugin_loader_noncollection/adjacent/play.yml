@@ -1,0 +1,15 @@
+- hosts: testhost
+  gather_facts: false
+  tasks:
+    - name: run the playbook-adjacent module
+      adjacent_mod:
+      register: module_result
+
+    - name: apply the playbook-adjacent filter
+      set_fact:
+        filtered: "{{ 'ok' | adjacent_marker }}"
+
+    - assert:
+        that:
+          - module_result.source == 'adjacent_library'
+          - filtered == 'adjacent-ok'
