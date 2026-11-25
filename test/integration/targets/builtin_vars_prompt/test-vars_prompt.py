@@ -164,6 +164,13 @@ tests = [
           ('Enter code:', 'abc\r')],
          'All assertions passed']},
 
+    # Interrupts from the Display input API retain the CLI's normal exit behavior.
+    {'playbook': 'validate.yml',
+     'expected_status': 99,
+     'test_spec': [
+         [('Enter number', '\x03')],
+         'User interrupted execution']},
+
     # Test unsupported keys
     {'playbook': 'unsupported.yml',
      'expected_status': 4,

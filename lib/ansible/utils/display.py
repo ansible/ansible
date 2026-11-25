@@ -916,15 +916,6 @@ class Display(metaclass=Singleton):
         else:
             return input(msg)
 
-    def _report_invalid_var_prompt(self, varname: str) -> None:
-        """Report rejected prompt input, failing if another attempt cannot read user input."""
-        if not sys.__stdin__.isatty():
-            raise AnsibleError(
-                f"No valid value is available for vars_prompt variable {varname!r} in non-interactive mode.",
-                help_text="Provide a matching default, or supply the variable through --extra-vars and validate it with an assert task.",
-            )
-        self.display("***** INVALID INPUT ****")
-
     def do_var_prompt(
         self,
         varname: str,
