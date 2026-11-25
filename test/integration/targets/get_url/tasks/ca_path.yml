@@ -37,9 +37,6 @@
       - with_ca_path is changed
       - with_ca_path_stat.stat.exists
 
-# The checksum file is downloaded by a separate request, which must also honor ca_path.
-# The self signed host does not serve a digest file, so the request is expected to fail while
-# parsing the response. Reaching that failure proves the TLS handshake succeeded.
 - name: Fetch a checksum file from a self signed host without ca_path
   get_url:
     url: "https://{{ self_signed_host }}:444/"
@@ -67,4 +64,5 @@
   assert:
     that:
       - checksum_with_ca_path is failed
-      - "'Unable to find a checksum for file' in checksum_with_ca_path.msg"
+      - "'certificate verify failed' not in checksum_with_ca_path.msg"
+      - "'The checksum format is invalid' in checksum_with_ca_path.msg"
