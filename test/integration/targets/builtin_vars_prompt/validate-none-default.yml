@@ -1,0 +1,13 @@
+- hosts: testhost
+  gather_facts: false
+  vars:
+    accept_missing: true
+  vars_prompt:
+    - name: value
+      private: false
+      default: null
+      validate: accept_missing and value == 'None'
+  tasks:
+    - ansible.builtin.assert:
+        that:
+          - value == 'None'

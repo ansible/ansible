@@ -21,9 +21,12 @@ import os
 
 from ansible import constants as C
 from ansible import context
+from ansible.errors import AnsibleError, AnsiblePromptInterrupt, AnsiblePromptNoninteractive
+from ansible._internal._datatag._tags import TrustedAsTemplate
 from ansible.executor.task_queue_manager import TaskQueueManager, AnsibleEndPlay
 from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.parsing.convert_bool import boolean
+from ansible.module_utils.secrets import register_secret
 from ansible.plugins.loader import become_loader, connection_loader, shell_loader
 from ansible.playbook import Playbook
 from ansible._internal._templating._engine import TemplateEngine
@@ -138,14 +141,64 @@ class PlaybookExecutor:
                             salt_size = var.get("salt_size", None)
                             salt = var.get("salt", None)
                             unsafe = boolean(var.get("unsafe", False))
-
                             if vname not in self._variable_manager.extra_vars:
                                 if self._tqm:
                                     self._tqm.send_callback('v2_playbook_on_vars_prompt', vname, private, prompt, encrypt, confirm, salt_size, salt,
                                                             default, unsafe)
-                                    play.vars[vname] = display.do_var_prompt(vname, private, prompt, encrypt, confirm, salt_size, salt, default, unsafe)
+                                    validate = var.get("validate")
+                                    if prompt and default is not None:
+                                        msg = f"{prompt} [{default}]: "
+                                    elif prompt:
+                                        msg = f"{prompt}: "
+                                    else:
+                                        msg = f"input for {vname}: "
+                                    while True:
+                                        noninteractive = False
+                                        try:
+                                            value = display.prompt_until(msg, private=private)
+                                            if confirm:
+                                                second = display.prompt_until("confirm " + msg, private=private)
+                                                if value != second:
+                                                    display.display("***** VALUES ENTERED DO NOT MATCH ****")
+                                                    continue
+                                        except AnsiblePromptNoninteractive:
+                                            noninteractive = True
+                                            value = None
+                                            display.warning("Not prompting as we are not in interactive mode")
+                                        except AnsiblePromptInterrupt as ex:
+                                            raise KeyboardInterrupt from ex
+
+                                        if not value and default is not None:
+                                            value = default
+                                        if private and value:
+                                            register_secret(to_text(value, errors='surrogate_or_strict'))
+                                        value = to_text(value, errors='surrogate_or_strict')
+                                        if validate is None:
+                                            break
+                                        try:
+                                            valid = templar.evaluate_expression(validate, local_variables={vname: value})
+                                        except Exception as ex:
+                                            raise AnsibleError(f"Error evaluating vars_prompt validation for {vname!r}.") from ex
+                                        if valid:
+                                            break
+                                        if noninteractive:
+                                            raise AnsibleError(
+                                                f"No valid value is available for vars_prompt variable {vname!r} in non-interactive mode.",
+                                                help_text="Provide a matching default, or supply the variable through --extra-vars "
+                                                          "and validate it with an assert task.",
+                                            )
+                                        display.display("***** INVALID INPUT ****")
+
+                                    if encrypt:
+                                        from ansible.utils.encrypt import do_encrypt
+                                        value = do_encrypt(value, encrypt, salt_size=salt_size, salt=salt)
+                                    if not unsafe:
+                                        value = TrustedAsTemplate().tag(value)
+                                    play.vars[vname] = value
                                 else:  # we are either in --list-<option> or syntax check
                                     play.vars[vname] = default
+
+                                templar.available_variables = {**templar.available_variables, vname: play.vars[vname]}
 
                     # Post validate so any play level variables are templated
                     all_vars = self._variable_manager.get_vars(play=play)
