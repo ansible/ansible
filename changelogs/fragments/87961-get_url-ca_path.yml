@@ -1,0 +1,3 @@
+minor_changes:
+  - get_url - add the ``ca_path`` option to allow specifying a PEM formatted file containing a CA certificate used to validate the remote server
+    certificate, matching the option already available in the ``uri`` module (https://github.com/ansible/ansible/issues/87961).

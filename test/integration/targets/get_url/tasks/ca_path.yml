@@ -1,0 +1,68 @@
+- name: Get CA certificate for {{ self_signed_host }}
+  get_url:
+    url: "http://{{ httpbin_host }}/ca2cert.pem"
+    dest: "{{ remote_tmp_dir }}/ca2cert.pem"
+
+- name: Fetch from a self signed host without ca_path
+  get_url:
+    url: "https://{{ self_signed_host }}:444/"
+    dest: "{{ remote_tmp_dir }}/self-signed-without-ca-path.html"
+  ignore_errors: true
+  register: without_ca_path
+
+- stat:
+    path: "{{ remote_tmp_dir }}/self-signed-without-ca-path.html"
+  register: without_ca_path_stat
+
+- name: Assert that the fetch failed and nothing was downloaded
+  assert:
+    that:
+      - without_ca_path is failed
+      - not without_ca_path_stat.stat.exists
+
+- name: Fetch from a self signed host with ca_path
+  get_url:
+    url: "https://{{ self_signed_host }}:444/"
+    dest: "{{ remote_tmp_dir }}/self-signed-with-ca-path.html"
+    ca_path: "{{ remote_tmp_dir }}/ca2cert.pem"
+  register: with_ca_path
+
+- stat:
+    path: "{{ remote_tmp_dir }}/self-signed-with-ca-path.html"
+  register: with_ca_path_stat
+
+- name: Assert that the file was downloaded
+  assert:
+    that:
+      - with_ca_path is changed
+      - with_ca_path_stat.stat.exists
+
+- name: Fetch a checksum file from a self signed host without ca_path
+  get_url:
+    url: "https://{{ self_signed_host }}:444/"
+    dest: "{{ remote_tmp_dir }}/self-signed-checksum-without-ca-path.html"
+    checksum: "sha256:https://{{ self_signed_host }}:444/"
+  ignore_errors: true
+  register: checksum_without_ca_path
+
+- name: Assert that fetching the checksum file failed on certificate validation
+  assert:
+    that:
+      - checksum_without_ca_path is failed
+      - "'certificate verify failed' in checksum_without_ca_path.msg"
+
+- name: Fetch a checksum file from a self signed host with ca_path
+  get_url:
+    url: "https://{{ self_signed_host }}:444/"
+    dest: "{{ remote_tmp_dir }}/self-signed-checksum-with-ca-path.html"
+    ca_path: "{{ remote_tmp_dir }}/ca2cert.pem"
+    checksum: "sha256:https://{{ self_signed_host }}:444/"
+  ignore_errors: true
+  register: checksum_with_ca_path
+
+- name: Assert that the checksum file was retrieved using ca_path
+  assert:
+    that:
+      - checksum_with_ca_path is failed
+      - "'certificate verify failed' not in checksum_with_ca_path.msg"
+      - "'The checksum format is invalid' in checksum_with_ca_path.msg"
