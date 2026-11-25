@@ -157,6 +157,15 @@ class LinuxHardware(Hardware):
         return memory_facts
 
     def get_cpu_facts(self, collected_facts=None):
+
+        def _dd_socket():
+            return {
+                'cores': [],
+                'core_count': 1,
+                'cpus': [],
+                'siblings': 1,
+            }
+
         cpu_facts = {}
         collected_facts = collected_facts or {}
 
@@ -166,8 +175,8 @@ class LinuxHardware(Hardware):
         processor_occurrence = 0
         physid = 0
         coreid = 0
-        sockets = {}
-        cores = {}
+        processorid = 0
+        sockets = collections.defaultdict(_dd_socket)
         zp = 0
         zmt = 0
 
@@ -190,6 +199,26 @@ class LinuxHardware(Hardware):
 
         cpu_facts['processor'] = []
         for line in get_file_lines('/proc/cpuinfo'):
+            # This builds a map of the sockets, cores, and CPUs on the system.
+            # Cores and logical CPU IDs are listed for each socket. The value for
+            # 'siblings' indicates threads per core.
+            #
+            # Example output once /proc/cpuinfo is parsed:
+            # sockets = {
+            #     0: {
+            #         'core_count': 2,
+            #         'cores': [0, 1],
+            #         'cpus': [0, 1],
+            #         'siblings': 2
+            #     },
+            #     1: {
+            #         'core_count': 2,
+            #          'cores': [0, 1],
+            #          'cpus': [2, 3],
+            #          'siblings': 2
+            #      }
+            #  }
+
             data = line.split(":", 1)
             key = data[0].strip()
 
@@ -221,20 +250,19 @@ class LinuxHardware(Hardware):
                 if key == 'model name':
                     model_name_occurrence += 1
                 if key == 'processor':
+                    processorid = int(val)
                     processor_occurrence += 1
                 i += 1
             elif key == 'physical id':
-                physid = val
-                if physid not in sockets:
-                    sockets[physid] = 1
+                physid = int(val)
             elif key == 'core id':
-                coreid = val
-                if coreid not in sockets:
-                    cores[coreid] = 1
+                coreid = int(val)
+                sockets[physid]['cores'].append(coreid)
+                sockets[physid]['cpus'].append(processorid)
             elif key == 'cpu cores':
-                sockets[physid] = int(val)
+                sockets[physid]['core_count'] = int(val)
             elif key == 'siblings':
-                cores[coreid] = int(val)
+                sockets[physid]['siblings'] = int(val)
             # S390x classic cpuinfo
             elif key == '# processors':
                 zp = int(val)
@@ -273,23 +301,23 @@ class LinuxHardware(Hardware):
             else:
                 if sockets:
                     cpu_facts['processor_count'] = len(sockets)
+                    cpu_facts['processor_vcpus'] = sum(len(s['cpus']) for s in sockets.values())
+
+                    # 'siblings' is the number of logical CPUs per socket, so the number of
+                    # threads per core is 'siblings' divided by that socket's core count.
+                    # Index the first socket that is actually present rather than sockets[0],
+                    # since physical IDs do not always start at zero.
+                    first_socket = next(iter(sockets.values()))
+                    cpu_facts['processor_threads_per_core'] = round(
+                        first_socket['siblings'] / first_socket['core_count'])
+
+                    # processor_cores is the total number of physical cores on the system.
+                    cpu_facts['processor_cores'] = sum(s['core_count'] for s in sockets.values())
                 else:
                     cpu_facts['processor_count'] = i
-
-                socket_values = list(sockets.values())
-                if socket_values and socket_values[0]:
-                    cpu_facts['processor_cores'] = socket_values[0]
-                else:
+                    cpu_facts['processor_vcpus'] = i
+                    cpu_facts['processor_threads_per_core'] = 1
                     cpu_facts['processor_cores'] = 1
-
-                core_values = list(cores.values())
-                if core_values:
-                    cpu_facts['processor_threads_per_core'] = round(core_values[0] / cpu_facts['processor_cores'])
-                else:
-                    cpu_facts['processor_threads_per_core'] = round(1 / cpu_facts['processor_cores'])
-
-                cpu_facts['processor_vcpus'] = (cpu_facts['processor_threads_per_core'] *
-                                                cpu_facts['processor_count'] * cpu_facts['processor_cores'])
 
                 cpu_facts['processor_nproc'] = processor_occurrence
 
