@@ -1,0 +1,4 @@
+bugfixes:
+  - >-
+      yaml - The YAML parser now honors the scalar style of ``!unsafe`` tagged values, for example ``!unsafe 'yes'`` is parsed as the string ``'yes'`` rather
+      than be parsed and converted to the native bool type ``True``.

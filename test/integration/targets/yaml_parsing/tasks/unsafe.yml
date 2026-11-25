@@ -31,6 +31,34 @@
       udict: !unsafe
         a: b{{nottemplate}}
         c: d
+
+  - name: check unsafe scalars keep the type implied by their style
+    assert:
+      that:
+        - unsafe_quoted_bool is string
+        - unsafe_quoted_bool == 'yes'
+        - unsafe_literal_bool is string
+        - unsafe_literal_bool == 'yes'
+        - unsafe_plain_bool is boolean
+        - unsafe_plain_bool
+        - unsafe_quoted_int is string
+        - unsafe_quoted_int == '5'
+        - unsafe_plain_int is integer
+        - unsafe_plain_int == 5
+        - unsafe_folded_octal is string
+        - unsafe_folded_octal == '001234'
+        - unsafe_plain_octal is integer
+        - unsafe_plain_octal == 668
+
   vars:
     nottemplate: FAIL
     resolved: 'b{{nottemplate}}'
+    unsafe_quoted_bool: !unsafe 'yes'
+    unsafe_literal_bool: !unsafe |-
+      yes
+    unsafe_plain_bool: !unsafe yes
+    unsafe_quoted_int: !unsafe '5'
+    unsafe_plain_int: !unsafe 5
+    unsafe_folded_octal: !unsafe >-
+      001234
+    unsafe_plain_octal: !unsafe 001234
