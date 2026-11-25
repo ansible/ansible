@@ -170,8 +170,17 @@ class AnsibleInstrumentedConstructor(_BaseConstructor):
     def _resolve_and_construct_object(self, node):
         # use a copied node to avoid mutating existing node and tripping the recursion check in construct_object
         copied_node = copy.copy(node)
+
+        # NB: style == '' in libyaml and == None in the pure Python parser when a plain scalar is used
+        if isinstance(node, ScalarNode) and node.style:
+            # If non-plain scalars (quoted/literal/folded) we do not perform implicit resolution and treat
+            # them as strings. E.g. `foo: !unsafe 'yes'` stays as 'yes' and not converted to a bool.
+            implicit = (False, True)
+        else:
+            implicit = (True, False)
+
         # repeat implicit resolution process to determine the proper tag for the value in the unsafe node
-        copied_node.tag = t.cast(BaseResolver, self).resolve(type(node), node.value, (True, False))
+        copied_node.tag = t.cast(BaseResolver, self).resolve(type(node), node.value, implicit)
 
         # re-entrant call using the correct tag
         # non-deferred construction of hierarchical nodes so the result is a fully realized object, and so our stateful unsafe propagation behavior works
