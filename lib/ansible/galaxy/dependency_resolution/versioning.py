@@ -30,12 +30,12 @@ def is_pre_release(version: str) -> bool:
         return False
 
 
-def _split_requirement(req: str) -> tuple[t.Callable[[SemanticVersion, SemanticVersion], bool], str]:
+def _split_requirement(req: str) -> tuple[t.Callable[[object, object], bool], str]:
     """Split a single requirement into its operator and version, ignoring surrounding whitespace."""
     req = req.strip()
     op_pos = 2 if len(req) > 1 and req[1] == '=' else 1
     if op := _OPERATORS.get(req[:op_pos]):
-        return op, req[op_pos:].lstrip()
+        return t.cast(t.Callable[[object, object], bool], op), req[op_pos:].lstrip()
 
     return operator.eq, req
 

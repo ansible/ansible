@@ -237,3 +237,26 @@ def test__validate_v1_source_info_schema(
 def test__validate_v1_source_info_schema_fail(provided_arguments: t.Any) -> None:
     with pytest.raises(AnsibleError, match="^Invalid offline source info for foo.bar:1.2.3, expected a dict and got "):
         _validate_v1_source_info_schema("foo", "bar", "1.2.3", provided_arguments)
+
+
+@pytest.mark.parametrize(
+    ("version", "expected_repr"),
+    [
+        pytest.param(">=1.0.0, ", "'>=1.0.0, '", id="trailing-comma-and-space"),
+        pytest.param("''", '"\'\'"', id="quoted-empty-string"),
+        pytest.param("<", "'<'", id="operator-only"),
+        pytest.param("True", "'True'", id="string-true"),
+        pytest.param(True, "True", id="boolean-true"),
+    ],
+)
+def test_requirement_from_requirement_dict_rejects_invalid_galaxy_version(
+        version: object,
+        expected_repr: str,
+) -> None:
+    with pytest.raises(AnsibleError) as exc_info:
+        Requirement.from_requirement_dict({"name": "ns.coll", "version": version}, None)
+
+    assert str(exc_info.value) == (
+        f"Invalid version for the collection 'ns.coll': {expected_repr}\n\n"
+        "Use '*' or a string of comma-separated version requirements, for example '>= 1.0.0, <2.0.0'."
+    )
