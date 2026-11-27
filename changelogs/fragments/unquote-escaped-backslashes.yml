@@ -1,2 +1,2 @@
 bugfixes:
-  - unquote - treat a quote preceded by an even number of backslashes as unescaped.
+  - unquote - treat a quote preceded by an even number of backslashes as unescaped (https://github.com/ansible/ansible/pull/87986).
