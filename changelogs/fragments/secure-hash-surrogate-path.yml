@@ -1,0 +1,2 @@
+bugfixes:
+  - secure_hash - avoid a ``UnicodeEncodeError`` when checking whether a path containing surrogate-escaped bytes is a directory.
