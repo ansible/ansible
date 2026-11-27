@@ -1,0 +1,4 @@
+bugfixes:
+  - ansible, ansible-playbook, ansible-console - fail early when the connection plugin given via ``-c``/``--connection`` does not exist,
+    instead of silently ignoring it when inventory or play keywords override it,
+    e.g. a mistyped ``-check`` being parsed as ``-c heck`` (https://github.com/ansible/ansible/issues/79618).
