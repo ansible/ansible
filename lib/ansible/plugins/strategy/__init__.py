@@ -1114,6 +1114,8 @@ class Debugger(cmd.Cmd):
         """Recreate the task from ``task._ds``, and template with updated ``task_vars``"""
         templar = TemplateEngine(variables=self.scope['task_vars'])
         task = self.scope['task']
+        # load_data sets the raw datastructure values again, so the load-time validation (which turns ``register`` into projections) must run again
+        task._validated = False
         task = task.load_data(task._ds)
         task.post_validate(templar)
         self.scope['task'] = task
