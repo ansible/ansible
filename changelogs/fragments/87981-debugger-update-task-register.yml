@@ -1,0 +1,2 @@
+bugfixes:
+  - debugger - ``update_task`` no longer breaks a following ``redo`` for a task that uses ``register`` (https://github.com/ansible/ansible/issues/87981).
