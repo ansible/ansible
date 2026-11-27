@@ -102,7 +102,7 @@ from ansible.module_utils.common.file import is_executable
 from ansible.module_utils.secrets import register_secret
 from ansible.parsing.dataloader import DataLoader
 from ansible.parsing.vault import PromptVaultSecret, get_file_vault_secret, VaultSecretsContext
-from ansible.plugins.loader import add_all_plugin_dirs, init_plugin_loader
+from ansible.plugins.loader import add_all_plugin_dirs, connection_loader, init_plugin_loader
 from ansible.release import __version__
 from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.module_utils._internal._collection_loader._collection_finder import _get_collection_name_from_path
@@ -564,6 +564,10 @@ class CLI(ABC):
         loader.set_vault_secrets(vault_secrets)
 
         if self.USES_CONNECTION:
+            # validate eagerly; the CLI value may otherwise be silently overridden by inventory (#79618)
+            if not connection_loader.has_plugin(options['connection']):
+                raise AnsibleError(f"The connection plugin {options['connection']!r} was not found.")
+
             _agent_launch.launch_ssh_agent()
 
         # create the inventory, and filter it based on the subset specified (if any)
