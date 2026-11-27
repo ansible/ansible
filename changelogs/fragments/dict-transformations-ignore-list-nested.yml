@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible.module_utils.common.dict_transformations - apply ``ignore_list`` to nested dictionaries and dictionaries inside lists when converting camel case keys to snake case.
