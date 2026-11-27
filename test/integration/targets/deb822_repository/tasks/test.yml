@@ -241,3 +241,37 @@
 - assert:
     that:
       - ansible_test_http_agent is changed
+
+- name: Create deb822 repo with snapshot
+  deb822_repository:
+    name: ansible-test-snapshot
+    uris: http://deb.debian.org/debian
+    suites: stable
+    components: main
+    snapshot: 20250311T030104Z
+  register: deb822_snapshot
+
+- name: Create deb822 repo with snapshot idempotency
+  deb822_repository:
+    name: ansible-test-snapshot
+    uris: http://deb.debian.org/debian
+    suites: stable
+    components: main
+    snapshot: 20250311T030104Z
+  register: deb822_snapshot_idem
+
+- name: Read deb822 repo with snapshot
+  slurp:
+    src: /etc/apt/sources.list.d/ansible-test-snapshot.sources
+  register: deb822_snapshot_file
+
+- assert:
+    that:
+      - deb822_snapshot is changed
+      - deb822_snapshot_idem is not changed
+      - "'Snapshot: 20250311T030104Z' in (deb822_snapshot_file.content | b64decode).splitlines()"
+
+- name: Remove deb822 repo with snapshot
+  deb822_repository:
+    name: ansible-test-snapshot
+    state: absent

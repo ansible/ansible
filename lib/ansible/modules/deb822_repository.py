@@ -118,6 +118,14 @@ options:
           the keyrings in the C(trusted.gpg.d/) directory, or an ASCII armored
           GPG public key block.
         type: str
+    snapshot:
+        description:
+        - Selects an earlier version of the archive from the snapshot service.
+        - V(enable) allows selecting a snapshot with C(apt --snapshot), V(disable) excludes the source from snapshots,
+          and any other value is used as snapshot ID, usually a timestamp like V(20250311T030104Z).
+        - This option is supported by apt>=2.7.0.
+        type: str
+        version_added: '2.23'
     suites:
         description:
         - >-
@@ -462,6 +470,9 @@ def main():
                 'type': 'bool',
             },
             'signed_by': {
+                'type': 'str',
+            },
+            'snapshot': {
                 'type': 'str',
             },
             'suites': {
