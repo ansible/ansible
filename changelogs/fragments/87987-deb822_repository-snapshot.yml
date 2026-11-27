@@ -1,0 +1,2 @@
+minor_changes:
+  - deb822_repository - add ``snapshot`` parameter to select an archive snapshot (https://github.com/ansible/ansible/issues/87987).
