@@ -1,0 +1,2 @@
+bugfixes:
+  - is_subpath - correctly report paths under the filesystem root as subpaths of the root.

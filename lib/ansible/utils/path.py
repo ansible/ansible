@@ -147,8 +147,8 @@ def is_subpath(child, parent, real=False):
         abs_child = os.path.realpath(abs_child)
         abs_parent = os.path.realpath(abs_parent)
 
-    c = abs_child.split(os.path.sep)
-    p = abs_parent.split(os.path.sep)
+    c = abs_child.rstrip(os.path.sep).split(os.path.sep)
+    p = abs_parent.rstrip(os.path.sep).split(os.path.sep)
 
     try:
         test = c[:len(p)] == p
