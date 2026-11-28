@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible.utils.hashing - avoid a ``UnicodeEncodeError`` when hashing a file whose path contains surrogate-escaped characters.

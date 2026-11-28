@@ -43,7 +43,8 @@ def secure_hash_s(data, hash_func=sha1):
 def secure_hash(filename, hash_func=sha1):
     """ Return a secure hash hex digest of local file, None if file is not present or a directory. """
 
-    if not os.path.exists(to_bytes(filename, errors='surrogate_or_strict')) or os.path.isdir(to_bytes(filename, errors='strict')):
+    b_filename = to_bytes(filename, errors='surrogate_or_strict')
+    if not os.path.exists(b_filename) or os.path.isdir(b_filename):
         return None
     digest = hash_func()
     blocksize = 64 * 1024
