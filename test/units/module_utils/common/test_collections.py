@@ -147,6 +147,26 @@ class TestImmutableDict:
         expected_repr = "ImmutableDict({0})".format(initial_data_repr)
         assert actual_repr == expected_repr
 
+    def test_eq_with_mapping(self):
+        assert ImmutableDict({'a': 1}) == {'a': 1}
+        assert ImmutableDict({'a': 1}) != {'a': 2}
+
+    def test_eq_with_hash_collision(self):
+        class CollidingKey:
+            def __init__(self, value):
+                self.value = value
+
+            def __hash__(self):
+                return 0
+
+            def __eq__(self, other):
+                return isinstance(other, CollidingKey) and self.value == other.value
+
+        left = ImmutableDict({CollidingKey(1): 'x'})
+        right = ImmutableDict({CollidingKey(2): 'x'})
+        assert hash(left) == hash(right)
+        assert left != right
+
 
 class TestOrderedSet:
     def test_init_empty(self):

@@ -40,13 +40,9 @@ class ImmutableDict(_c.Hashable, _c.Mapping[_KT, _VT], _t.Generic[_KT, _VT]):
         return hash(frozenset(self.items()))
 
     def __eq__(self, other: object) -> bool:
-        try:
-            if self.__hash__() == hash(other):
-                return True
-        except TypeError:
-            pass
-
-        return False
+        if isinstance(other, _c.Mapping):
+            return self._store == dict(other)
+        return NotImplemented
 
     def __repr__(self) -> str:
         return 'ImmutableDict({0})'.format(repr(self._store))
