@@ -107,7 +107,7 @@ def merge_hash(x, y, recursive=True, list_merge='replace'):
     if x == {} or x == y:
         return y.copy()
     if y == {}:
-        return x
+        return x.copy()
 
     # in the following we will copy elements from y to x, but
     # we don't want to modify x, so we create a copy of it

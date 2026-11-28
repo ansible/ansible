@@ -1,0 +1,2 @@
+bugfixes:
+  - merge_hash - return a copy of the low-priority dictionary when the high-priority dictionary is empty, instead of returning the input dictionary itself.

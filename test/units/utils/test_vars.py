@@ -132,6 +132,13 @@ class TestVariableUtils(unittest.TestCase):
         }
         self.assertEqual(merge_hash(low, high), expected)
 
+    def test_merge_hash_empty_high_prio_returns_copy(self):
+        low = {'a': 1}
+        result = merge_hash(low, {})
+        self.assertIsNot(result, low)
+        result['b'] = 2
+        self.assertEqual(low, {'a': 1})
+
     def test_merge_hash_non_recursive_and_list_replace(self):
         low = self.merge_hash_data['low_prio']
         high = self.merge_hash_data['high_prio']
