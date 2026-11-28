@@ -592,7 +592,7 @@ f_ansible_galaxy_status \
 
         set +e
         ANSIBLE_FORCE_COLOR=0 ansible-galaxy collection install -r version-range.yml -p ./install --offline "$@" 2>&1 | tee out.txt
-        rc="$?"
+        rc="${PIPESTATUS[0]}"
         set -e
 
         [[ "${rc}" -ne 0 ]]
@@ -602,7 +602,7 @@ f_ansible_galaxy_status \
 
     set +e
     ANSIBLE_FORCE_COLOR=0 ansible-galaxy collection install 'ansible_test.not_installed:>=1.0.0,' -p ./install --offline "$@" 2>&1 | tee out.txt
-    rc="$?"
+    rc="${PIPESTATUS[0]}"
     set -e
 
     [[ "${rc}" -ne 0 ]]
