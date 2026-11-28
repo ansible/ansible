@@ -66,6 +66,21 @@ class TestCaseCamelDictToSnakeDict:
         assert snake_dict['hello'] == dict(one='one', two='two')
         assert snake_dict['world'] == dict(Three='three', Four='four')
 
+    def test_ignore_list_nested(self):
+        camel_dict = {
+            'Outer': {
+                'Tags': {'Key': 'Value'},
+                'Items': [{'Tags': {'Key': 'Value'}, 'Name': 'one'}],
+            },
+        }
+        snake_dict = camel_dict_to_snake_dict(camel_dict, ignore_list=('Tags',))
+        assert snake_dict == {
+            'outer': {
+                'tags': {'Key': 'Value'},
+                'items': [{'tags': {'Key': 'Value'}, 'name': 'one'}],
+            },
+        }
+
 
 class TestCaseDictMerge:
     def test_dict_merge(self):

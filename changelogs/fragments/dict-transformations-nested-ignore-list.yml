@@ -1,0 +1,2 @@
+bugfixes:
+  - dict_transformations - ``camel_dict_to_snake_dict`` now preserves ``ignore_list`` subtrees nested inside dictionaries and lists.
