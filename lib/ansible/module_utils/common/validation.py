@@ -310,7 +310,7 @@ def check_missing_parameters(parameters, required_parameters=None):
         return missing_params
 
     for param in required_parameters:
-        if not parameters.get(param):
+        if param not in parameters or parameters[param] is None:
             missing_params.append(param)
 
     if missing_params:

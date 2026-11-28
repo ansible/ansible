@@ -1,0 +1,2 @@
+bugfixes:
+  - check_missing_parameters - no longer reports a present required parameter as missing when its value is falsy such as 0, False, or an empty container (https://github.com/ansible/ansible/pull/87995).
