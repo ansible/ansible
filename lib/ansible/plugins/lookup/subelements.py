@@ -158,7 +158,7 @@ class LookupModule(LookupBase):
                     if not isinstance(subvalue[subkey], list):
                         raise AnsibleError("the key %s should point to a list, got '%s'" % (subkey, subvalue[subkey]))
                     else:
-                        sublist = subvalue.pop(subkey, [])
+                        sublist = subvalue[subkey]
             for item1 in sublist:
                 ret.append((item0, item1))
 

@@ -1,0 +1,2 @@
+bugfixes:
+  - subelements lookup - stop mutating the input data when traversing nested keys.
