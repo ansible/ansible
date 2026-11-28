@@ -70,3 +70,24 @@ class TestBlock(unittest.TestCase):
         b = Block.load(ds)
         self.assertEqual(len(b.block), 1)
         self.assertIsInstance(b.block[0], Task)
+
+    def test_filter_tagged_tasks_keeps_role_complete_on_skip_always(self):
+        from ansible.playbook.play import Play
+
+        play = Play.load(dict(name='test', hosts='all', gather_facts=False))
+        play.skip_tags = ['always']
+
+        b = Block(play=play)
+        regular = Task(block=b)
+        regular.action = 'debug'
+        regular.tags = ['always']
+
+        eor = Task(block=b)
+        eor.action = 'meta'
+        eor.args = {'_raw_params': 'role_complete'}
+        eor.implicit = True
+        eor.tags = ['always']
+
+        b.block = [regular, eor]
+        filtered = b.filter_tagged_tasks(all_vars={})
+        self.assertEqual(filtered.block, [eor])
