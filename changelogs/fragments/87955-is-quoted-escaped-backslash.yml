@@ -1,0 +1,2 @@
+bugfixes:
+  - parsing - ``ansible.parsing.quoting.is_quoted`` no longer treats a closing quote preceded by an even number of backslashes as escaped, so ``unquote`` strips quotes from values ending in a literal backslash.

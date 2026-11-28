@@ -18,7 +18,7 @@
 
 from __future__ import annotations
 
-from ansible.parsing.quoting import unquote
+from ansible.parsing.quoting import is_quoted, unquote
 
 import pytest
 
@@ -47,3 +47,15 @@ UNQUOTE_DATA = (
 @pytest.mark.parametrize("quoted, expected", UNQUOTE_DATA)
 def test_unquote(quoted, expected):
     assert unquote(quoted) == expected
+
+
+@pytest.mark.parametrize("value", ('"value\\\\"', "'value\\\\'"))
+def test_is_quoted_even_trailing_backslashes(value):
+    assert is_quoted(value)
+    assert unquote(value) == value[1:-1]
+
+
+@pytest.mark.parametrize("value", ('"value\\"', "'value\\'"))
+def test_is_quoted_odd_trailing_backslashes(value):
+    assert not is_quoted(value)
+    assert unquote(value) == value

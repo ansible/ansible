@@ -19,7 +19,10 @@ from __future__ import annotations
 
 
 def is_quoted(data):
-    return len(data) > 1 and data[0] == data[-1] and data[0] in ('"', "'") and data[-2] != '\\'
+    if len(data) < 2 or data[0] != data[-1] or data[0] not in ('"', "'"):
+        return False
+    body = data[:-1]
+    return (len(body) - len(body.rstrip('\\'))) % 2 == 0
 
 
 def unquote(data):
